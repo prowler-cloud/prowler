@@ -1,4 +1,4 @@
-name: UI - E2E Tests
+name: UI - E2E Cloud Tests
 
 on:
   pull_request:
@@ -6,125 +6,185 @@ on:
       - master
       - "v5.*"
     paths:
-      - '.github/workflows/ui-e2e-tests.yml'
-      - 'ui/**'
+      - ".github/workflows/ui-e2e-tests.yml"
+      - "ui/**"
+  push:
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - ".github/workflows/ui-e2e-cloud-tests.yml"
+      - "ui/**"
+  workflow_run:
+    workflows:
+      - "API - Build, Push and Deploy"
+      - "UI - Build, Push and Deploy"
+    types: [completed]
+    branches: [master, v5.*]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to test"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - stg
+          - pro
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
 
 jobs:
-
   e2e-tests:
-    if: github.repository == 'prowler-cloud/prowler'
+    if: github.repository == 'prowler-cloud/prowler-cloud'
     runs-on: ubuntu-latest
     env:
-      AUTH_SECRET: 'fallback-ci-secret-for-testing'
-      AUTH_TRUST_HOST: true
-      NEXTAUTH_URL: 'http://localhost:3000'
-      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
-      E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
-      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-      E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
-      E2E_AWS_PROVIDER_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
-      E2E_AWS_PROVIDER_SECRET_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
-      E2E_AWS_PROVIDER_ROLE_ARN: ${{ secrets.E2E_AWS_PROVIDER_ROLE_ARN }}
-      E2E_AZURE_SUBSCRIPTION_ID: ${{ secrets.E2E_AZURE_SUBSCRIPTION_ID }}
-      E2E_AZURE_CLIENT_ID: ${{ secrets.E2E_AZURE_CLIENT_ID }}
-      E2E_AZURE_SECRET_ID: ${{ secrets.E2E_AZURE_SECRET_ID }}
-      E2E_AZURE_TENANT_ID: ${{ secrets.E2E_AZURE_TENANT_ID }}
-      E2E_M365_DOMAIN_ID: ${{ secrets.E2E_M365_DOMAIN_ID }}
-      E2E_M365_CLIENT_ID: ${{ secrets.E2E_M365_CLIENT_ID }}
-      E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
-      E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
-      E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_KUBERNETES_CONTEXT: 'kind-kind'
-      E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
-      E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
-      E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
-      E2E_GITHUB_APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
-      E2E_GITHUB_BASE64_APP_PRIVATE_KEY: ${{ secrets.E2E_GITHUB_BASE64_APP_PRIVATE_KEY }}
-      E2E_GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
-      E2E_GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_PERSONAL_ACCESS_TOKEN }}
-      E2E_GITHUB_ORGANIZATION: ${{ secrets.E2E_GITHUB_ORGANIZATION }}
-      E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN }}
-      E2E_ORGANIZATION_ID: ${{ secrets.E2E_ORGANIZATION_ID }}
-      E2E_OCI_TENANCY_ID: ${{ secrets.E2E_OCI_TENANCY_ID }}
-      E2E_OCI_USER_ID: ${{ secrets.E2E_OCI_USER_ID }}
-      E2E_OCI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
-      E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
-      E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
-      E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
-
+      NEXTAUTH_URL: "http://localhost:3000"
+      AUTH_SECRET: "fallback-ci-secret-for-testing"
+      AUTH_TRUST_HOST: "true"
     steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "push" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "workflow_run" && "${{ github.event.workflow_run.conclusion }}" == "success" && "${{ github.event.workflow_run.event }}" == "release" ]]; then
+            echo "environment=stg" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "Unknown trigger, skipping..."
+            exit 1
+          fi
+      - name: Set environment variables
+        id: vars
+        run: |
+          case "${{ steps.env.outputs.environment }}" in
+            "dev")
+              echo "api_url=https://api.dev.prowler.com/api/v1" >> $GITHUB_OUTPUT
+              echo "e2e_user_secret=DEV_E2E_USER" >> $GITHUB_OUTPUT
+              echo "e2e_password_secret=DEV_E2E_PASSWORD" >> $GITHUB_OUTPUT
+              echo "environment_name=DEV" >> $GITHUB_OUTPUT
+              ;;
+            "stg")
+              echo "api_url=https://api.stg.prowler.com/api/v1" >> $GITHUB_OUTPUT
+              echo "e2e_user_secret=STG_E2E_USER" >> $GITHUB_OUTPUT
+              echo "e2e_password_secret=STG_E2E_PASSWORD" >> $GITHUB_OUTPUT
+              echo "environment_name=STG" >> $GITHUB_OUTPUT
+              ;;
+            "pro")
+              echo "api_url=https://api.prowler.com/api/v1" >> $GITHUB_OUTPUT
+              echo "e2e_user_secret=PRO_E2E_USER" >> $GITHUB_OUTPUT
+              echo "e2e_password_secret=PRO_E2E_PASSWORD" >> $GITHUB_OUTPUT
+              echo "environment_name=PRO" >> $GITHUB_OUTPUT
+              ;;
+          esac
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1
+      - name: Environment info
+        env:
+          ENV_NAME: ${{ steps.vars.outputs.environment_name }}
+          API_URL: ${{ steps.vars.outputs.api_url }}
+        run: |
+          echo "Environment: $ENV_NAME"
+          echo "API URL: $API_URL"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Started at: $(date)"
+      - name: Verify both STG deployments completed
+        if: steps.env.outputs.environment == 'stg'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verifying that both API and UI deployments completed successfully..."
+
+          # Get the latest runs for both workflows triggered by the same release
+          API_RUN=$(gh run list --workflow="API - Build, Push and Deploy" --event=release --limit=1 --json status,conclusion,createdAt --jq '.[0]')
+          API_STATUS=$(echo "$API_RUN" | jq -r '.status')
+          API_CONCLUSION=$(echo "$API_RUN" | jq -r '.conclusion')
+
+          UI_RUN=$(gh run list --workflow="UI - Build, Push and Deploy" --event=release --limit=1 --json status,conclusion,createdAt --jq '.[0]')
+          UI_STATUS=$(echo "$UI_RUN" | jq -r '.status')
+          UI_CONCLUSION=$(echo "$UI_RUN" | jq -r '.conclusion')
+
+          echo "API workflow - Status: $API_STATUS, Conclusion: $API_CONCLUSION"
+          echo "UI workflow - Status: $UI_STATUS, Conclusion: $UI_CONCLUSION"
+
+          # Verify both workflows completed successfully
+          if [[ "$API_STATUS" != "completed" || "$API_CONCLUSION" != "success" ]]; then
+            echo "API deployment not ready (Status: $API_STATUS, Conclusion: $API_CONCLUSION)"
+            exit 1
+          fi
+
+          if [[ "$UI_STATUS" != "completed" || "$UI_CONCLUSION" != "success" ]]; then
+            echo "UI deployment not ready (Status: $UI_STATUS, Conclusion: $UI_CONCLUSION)"
+            exit 1
+          fi
+
+          echo "Both API and UI deployments completed successfully for STG"
+      - name: Verify both PRO deployments completed
+        if: steps.env.outputs.environment == 'pro'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verifying that both API and UI deployments completed successfully..."
+
+          # Get the latest manual runs for both workflows
+          API_RUN=$(gh run list --workflow="API - Build, Push and Deploy" --event=workflow_dispatch --limit=1 --json status,conclusion,createdAt --jq '.[0]')
+          API_STATUS=$(echo "$API_RUN" | jq -r '.status')
+          API_CONCLUSION=$(echo "$API_RUN" | jq -r '.conclusion')
+
+          UI_RUN=$(gh run list --workflow="UI - Build, Push and Deploy" --event=workflow_dispatch --limit=1 --json status,conclusion,createdAt --jq '.[0]')
+          UI_STATUS=$(echo "$UI_RUN" | jq -r '.status')
+          UI_CONCLUSION=$(echo "$UI_RUN" | jq -r '.conclusion')
+
+          echo "API workflow - Status: $API_STATUS, Conclusion: $API_CONCLUSION"
+          echo "UI workflow - Status: $UI_STATUS, Conclusion: $UI_CONCLUSION"
+
+          # Verify both workflows completed successfully
+          if [[ "$API_STATUS" != "completed" || "$API_CONCLUSION" != "success" ]]; then
+            echo "API deployment not ready (Status: $API_STATUS, Conclusion: $API_CONCLUSION)"
+            exit 1
+          fi
+
+          if [[ "$UI_STATUS" != "completed" || "$UI_CONCLUSION" != "success" ]]; then
+            echo "UI deployment not ready (Status: $UI_STATUS, Conclusion: $UI_CONCLUSION)"
+            exit 1
+          fi
+
+          echo "Both API and UI deployments completed successfully for PRO"
+      - name: Setup Tailscale
+        if: steps.env.outputs.environment != 'pro'
+        uses: tailscale/github-action@84a3f23bb4d843bcf4da6cf824ec1be473daf4de # v3.2.3
         with:
-          cluster_name: kind
-      - name: Modify kubeconfig
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-actions
+      - name: Verify API is accessible
+        env:
+          API_URL: ${{ steps.vars.outputs.api_url }}
+          ENV_NAME: ${{ steps.vars.outputs.environment_name }}
         run: |
-            # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443
-            # from worker service into docker-compose.yml
-            kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
-            kubectl config view
-      - name: Add network kind to docker compose
-        run: |
-          # Add the network kind to the docker compose to interconnect to kind cluster
-          yq -i '.networks.kind.external = true' docker-compose.yml
-          # Add network kind to worker service and default network too
-          yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
-      - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
-      - name: Add AWS credentials for testing AWS SDK Default Adding Provider
-        run: |
-          echo "Adding AWS credentials for testing AWS SDK Default Adding Provider..."
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
-      - name: Start API services
-        run: |
-          # Override docker-compose image tag to use latest instead of stable
-          # This overrides any PROWLER_API_VERSION set in .env file
-          export PROWLER_API_VERSION=latest
-          echo "Using PROWLER_API_VERSION=${PROWLER_API_VERSION}"
-          docker compose up -d api worker worker-beat
-      - name: Wait for API to be ready
-        run: |
-          echo "Waiting for prowler-api..."
-          timeout=150  # 5 minutes max
-          elapsed=0
-          while [ $elapsed -lt $timeout ]; do
-            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-              echo "Prowler API is ready!"
-              exit 0
-            fi
-            echo "Waiting for prowler-api... (${elapsed}s elapsed)"
-            sleep 5
-            elapsed=$((elapsed + 5))
-          done
-          echo "Timeout waiting for prowler-api to start"
-          exit 1
-      - name: Load database fixtures for E2E tests
-        run: |
-          docker compose exec -T api sh -c '
-            echo "Loading all fixtures from api/fixtures/dev/..."
-            for fixture in api/fixtures/dev/*.json; do
-              if [ -f "$fixture" ]; then
-                echo "Loading $fixture"
-                poetry run python manage.py loaddata "$fixture" --database admin
-              fi
-            done
-            echo "All database fixtures loaded successfully!"
-          '
+          echo "Checking $ENV_NAME API at $API_URL/docs..."
+          curl -f --connect-timeout 30 --max-time 60 ${API_URL}/docs
+          echo "$ENV_NAME API is accessible"
       - name: Setup Node.js environment
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: '20.x'
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          node-version: "20.x"
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
         with:
-          version: 10
+          version: 9
           run_install: false
       - name: Get pnpm store directory
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Setup pnpm cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -137,6 +197,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build UI application
         working-directory: ./ui
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ steps.vars.outputs.api_url }}
+          NEXT_PUBLIC_IS_CLOUD_ENV: "true"
+          CLOUD_API_BASE_URL: ${{ steps.vars.outputs.api_url }}
         run: pnpm run build
       - name: Cache Playwright browsers
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -152,17 +216,50 @@ jobs:
         run: pnpm run test:e2e:install
       - name: Run E2E tests
         working-directory: ./ui
-        run: pnpm run test:e2e
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ steps.vars.outputs.api_url }}
+          NEXT_PUBLIC_IS_CLOUD_ENV: "true"
+          CLOUD_API_BASE_URL: ${{ steps.vars.outputs.api_url }}
+          E2E_USER: ${{ secrets[steps.vars.outputs.e2e_user_secret] }}
+          E2E_PASSWORD: ${{ secrets[steps.vars.outputs.e2e_password_secret] }}
+          E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
+          E2E_AWS_PROVIDER_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
+          E2E_AWS_PROVIDER_SECRET_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
+          E2E_AWS_PROVIDER_ROLE_ARN: ${{ secrets.E2E_AWS_PROVIDER_ROLE_ARN }}
+          E2E_AZURE_SUBSCRIPTION_ID: ${{ secrets.E2E_AZURE_SUBSCRIPTION_ID }}
+          E2E_AZURE_CLIENT_ID: ${{ secrets.E2E_AZURE_CLIENT_ID }}
+          E2E_AZURE_SECRET_ID: ${{ secrets.E2E_AZURE_SECRET_ID }}
+          E2E_AZURE_TENANT_ID: ${{ secrets.E2E_AZURE_TENANT_ID }}
+          E2E_M365_DOMAIN_ID: ${{ secrets.E2E_M365_DOMAIN_ID }}
+          E2E_M365_CLIENT_ID: ${{ secrets.E2E_M365_CLIENT_ID }}
+          E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
+          E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
+          E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
+          E2E_KUBERNETES_CONTEXT: "kind-kind"
+          E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
+          E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
+          E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
+          E2E_GITHUB_APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
+          E2E_GITHUB_BASE64_APP_PRIVATE_KEY: ${{ secrets.E2E_GITHUB_BASE64_APP_PRIVATE_KEY }}
+          E2E_GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
+          E2E_GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_PERSONAL_ACCESS_TOKEN }}
+          E2E_GITHUB_ORGANIZATION: ${{ secrets.E2E_GITHUB_ORGANIZATION }}
+          E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN }}
+          E2E_ORGANIZATION_ID: ${{ secrets.E2E_ORGANIZATION_ID }}
+          E2E_OCI_TENANCY_ID: ${{ secrets.E2E_OCI_TENANCY_ID }}
+          E2E_OCI_USER_ID: ${{ secrets.E2E_OCI_USER_ID }}
+          E2E_OCI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
+          E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
+          E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
+          E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
+
+        run: pnpm run test:e2e-cloud
       - name: Upload test reports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: failure()
+        if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ steps.env.outputs.environment }}-${{ github.run_number }}
           path: ui/playwright-report/
           retention-days: 30
-      - name: Cleanup services
-        if: always()
-        run: |
-          echo "Shutting down services..."
-          docker compose down -v || true
-          echo "Cleanup completed"
