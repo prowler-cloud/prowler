@@ -32,19 +32,12 @@ def init_parser(self):
 
     scope_group = cloudflare_parser.add_argument_group("Scope")
     scope_group.add_argument(
-        "--cloudflare-account-id",
-        "--cloudflare-account",
-        nargs="*",
+        "--region",
+        "--filter-region",
+        "-f",
+        nargs="+",
         default=None,
-        metavar="CLOUDFLARE_ACCOUNT_ID",
-        help="Restrict the scan to one or more Cloudflare accounts (IDs).",
-    )
-    scope_group.add_argument(
-        "--cloudflare-zone",
-        "--cloudflare-zone-id",
-        nargs="*",
-        default=None,
-        metavar="CLOUDFLARE_ZONE",
+        metavar="ZONE",
         help="Restrict the scan to one or more Cloudflare zones (name or ID).",
     )
 

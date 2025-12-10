@@ -17,7 +17,6 @@ from prowler.providers.cloudflare.exceptions.exceptions import (
     CloudflareAPIError,
     CloudflareCredentialsError,
     CloudflareIdentityError,
-    CloudflareInvalidAccountError,
     CloudflareSessionError,
 )
 from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
@@ -50,7 +49,6 @@ class CloudflareProvider(Provider):
         api_token: str = None,
         api_key: str = None,
         api_email: str = None,
-        account_ids: Iterable[str] | None = None,
         zones: Iterable[str] | None = None,
         config_path: str = None,
         config_content: dict | None = None,
@@ -76,9 +74,7 @@ class CloudflareProvider(Provider):
             max_retries=max_retries,
         )
 
-        self._identity = CloudflareProvider.setup_identity(
-            self._session, account_ids=account_ids
-        )
+        self._identity = CloudflareProvider.setup_identity(self._session)
 
         self._fixer_config = fixer_config
 
@@ -199,9 +195,7 @@ class CloudflareProvider(Provider):
                 os.environ["CLOUDFLARE_API_EMAIL"] = env_email
 
     @staticmethod
-    def setup_identity(
-        session: CloudflareSession, account_ids: Iterable[str] | None = None
-    ) -> CloudflareIdentityInfo:
+    def setup_identity(session: CloudflareSession) -> CloudflareIdentityInfo:
         """Fetch user and account metadata for Cloudflare."""
         try:
             client = session.client
@@ -217,7 +211,6 @@ class CloudflareProvider(Provider):
                 )
 
             accounts: list[CloudflareAccount] = []
-            provided_accounts = set(account_ids) if account_ids else set()
             seen_account_ids: set[str] = set()
 
             for account in client.accounts.list():
@@ -229,8 +222,6 @@ class CloudflareProvider(Provider):
 
                 account_name = getattr(account, "name", None)
                 account_type = getattr(account, "type", None)
-                if provided_accounts and account_id not in provided_accounts:
-                    continue
                 accounts.append(
                     CloudflareAccount(
                         id=account_id,
@@ -239,16 +230,7 @@ class CloudflareProvider(Provider):
                     )
                 )
 
-            if provided_accounts and not accounts:
-                raise CloudflareInvalidAccountError(
-                    message="None of the supplied Cloudflare accounts are accessible with the provided credentials."
-                )
-
-            audited_accounts = (
-                [account.id for account in accounts]
-                if accounts
-                else list(provided_accounts)
-            )
+            audited_accounts = [account.id for account in accounts]
 
             return CloudflareIdentityInfo(
                 user_id=user_id,
@@ -256,8 +238,6 @@ class CloudflareProvider(Provider):
                 accounts=accounts,
                 audited_accounts=audited_accounts,
             )
-        except CloudflareInvalidAccountError:
-            raise
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

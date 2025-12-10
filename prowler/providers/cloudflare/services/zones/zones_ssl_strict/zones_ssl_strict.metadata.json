@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
-  "Description": "**Cloudflare zones** are assessed for **SSL/TLS encryption mode** by checking if the mode is set to `Full (Strict)` to ensure **end-to-end encryption** with certificate validation.",
+  "Description": "**Cloudflare zones** are assessed for **SSL/TLS encryption mode** by checking if the mode is set to `Full` to ensure **end-to-end encryption** with certificate validation.",
   "Risk": "Without **strict SSL mode**, traffic between Cloudflare and origin may use unvalidated or unencrypted connections.\n- **Confidentiality**: sensitive data can be intercepted in transit via man-in-the-middle attacks\n- **Integrity**: responses can be modified without detection between Cloudflare and origin\n- **Compliance**: may violate PCI-DSS, HIPAA, and other regulatory requirements for encrypted transport",
   "RelatedUrl": "",
   "AdditionalURLs": [
