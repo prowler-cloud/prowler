@@ -57,7 +57,6 @@
     "@react-stately/utils": "3.10.8",
     "@react-types/datepicker": "3.13.2",
     "@react-types/shared": "3.26.0",
-    "@sentry/browser": "10.11.0",
     "@sentry/nextjs": "10.27.0",
     "@tailwindcss/postcss": "4.1.13",
     "@tailwindcss/typography": "0.5.16",

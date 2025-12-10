@@ -265,14 +265,6 @@
   },
   {
     "section": "dependencies",
-    "name": "@sentry/browser",
-    "from": "10.11.0",
-    "to": "10.11.0",
-    "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@sentry/nextjs",
     "from": "10.11.0",
     "to": "10.27.0",
