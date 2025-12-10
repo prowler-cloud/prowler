@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
@@ -466,6 +467,8 @@ export function SankeyChart({
       mapProviderFiltersForFindings(params);
 
       params.set("filter[severity__in]", severityFilter);
+      params.set("filter[status__in]", "FAIL");
+      params.set("filter[muted]", "false");
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -474,13 +477,21 @@ export function SankeyChart({
     const providerType = PROVIDER_TYPE_MAP[sourceName];
     const severityFilter = SEVERITY_FILTER_MAP[targetName];
 
-    if (providerType && severityFilter) {
+    if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
 
       mapProviderFiltersForFindings(params);
 
-      params.set("filter[provider_type__in]", providerType);
+      // Always set provider_type filter based on the clicked link's source (provider)
+      // This ensures clicking "AWS → High" filters by AWS even when no global filter is set
+      const hasProviderIdFilter = searchParams.has("filter[provider_id__in]");
+      if (providerType && !hasProviderIdFilter) {
+        params.set("filter[provider_type__in]", providerType);
+      }
+
       params.set("filter[severity__in]", severityFilter);
+      params.set("filter[status__in]", "FAIL");
+      params.set("filter[muted]", "false");
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -523,6 +534,25 @@ export function SankeyChart({
       onLinkClick={handleLinkClick}
     />
   );
+
+  // Check if there's actual data to display (links with values > 0)
+  const hasData = data.links.some((link) => link.value > 0);
+
+  if (!hasData) {
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{ height: `${height}px` }}
+      >
+        <div className="flex flex-col items-center gap-2 text-center">
+          <Info size={48} className="text-text-neutral-tertiary" />
+          <p className="text-text-neutral-secondary text-sm">
+            No failed findings to display
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

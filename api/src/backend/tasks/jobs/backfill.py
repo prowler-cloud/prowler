@@ -1,14 +1,20 @@
 from collections import defaultdict
+from datetime import timedelta
+
+from django.db.models import Sum
+from django.utils import timezone
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
     Scan,
+    ScanSummary,
     StateChoices,
 )
 
@@ -175,3 +181,96 @@ def backfill_compliance_summaries(tenant_id: str, scan_id: str):
             )
 
     return {"status": "backfilled", "inserted": len(summary_objects)}
+
+
+def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
+    """
+    Backfill DailySeveritySummary from completed scans.
+    Groups by provider+date, keeps latest scan per day.
+    """
+    created_count = 0
+    updated_count = 0
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan_filter = {
+            "tenant_id": tenant_id,
+            "state": StateChoices.COMPLETED,
+            "completed_at__isnull": False,
+        }
+
+        if days is not None:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            scan_filter["completed_at__gte"] = cutoff_date
+
+        completed_scans = (
+            Scan.objects.filter(**scan_filter)
+            .order_by("provider_id", "-completed_at")
+            .values("id", "provider_id", "completed_at")
+        )
+
+        if not completed_scans:
+            return {"status": "no scans to backfill"}
+
+        # Keep only latest scan per provider/day
+        latest_scans_by_day = {}
+        for scan in completed_scans:
+            key = (scan["provider_id"], scan["completed_at"].date())
+            if key not in latest_scans_by_day:
+                latest_scans_by_day[key] = scan
+
+    # Process each provider/day
+    for (provider_id, scan_date), scan in latest_scans_by_day.items():
+        scan_id = scan["id"]
+
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            severity_totals = (
+                ScanSummary.objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                )
+                .values("severity")
+                .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
+            )
+
+            severity_data = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+
+            for row in severity_totals:
+                severity = row["severity"]
+                if severity in severity_data:
+                    severity_data[severity] = row["total_fail"] or 0
+                severity_data["muted"] += row["total_muted"] or 0
+
+        with rls_transaction(tenant_id):
+            _, created = DailySeveritySummary.objects.update_or_create(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                date=scan_date,
+                defaults={
+                    "scan_id": scan_id,
+                    "critical": severity_data["critical"],
+                    "high": severity_data["high"],
+                    "medium": severity_data["medium"],
+                    "low": severity_data["low"],
+                    "informational": severity_data["informational"],
+                    "muted": severity_data["muted"],
+                },
+            )
+
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+
+    return {
+        "status": "backfilled",
+        "created": created_count,
+        "updated": updated_count,
+        "total_days": len(latest_scans_by_day),
+    }

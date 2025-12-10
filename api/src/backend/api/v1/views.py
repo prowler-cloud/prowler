@@ -74,7 +74,9 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
+from tasks.jobs.scan import _get_attack_surface_mapping_from_provider
 from tasks.tasks import (
+    backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
@@ -97,8 +99,10 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackSurfaceOverviewFilter,
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
+    DailySeveritySummaryFilter,
     FindingFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
@@ -125,7 +129,10 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackSurfaceOverview,
+    ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -170,6 +177,7 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackSurfaceOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
     ComplianceOverviewDetailThreatscoreSerializer,
@@ -178,6 +186,7 @@ from api.v1.serializers import (
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
@@ -348,7 +357,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.15.0"
+        spectacular_settings.VERSION = "1.16.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -3522,6 +3531,126 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
+    def _compliance_summaries_queryset(self, scan_id):
+        """Return pre-aggregated summaries constrained by RBAC visibility."""
+        role = get_role(self.request.user)
+        unlimited_visibility = getattr(
+            role, Permissions.UNLIMITED_VISIBILITY.value, False
+        )
+        summaries = ComplianceOverviewSummary.objects.filter(
+            tenant_id=self.request.tenant_id,
+            scan_id=scan_id,
+        )
+
+        if not unlimited_visibility:
+            providers = Provider.all_objects.filter(
+                provider_groups__in=role.provider_groups.all()
+            ).distinct()
+            summaries = summaries.filter(scan__provider__in=providers)
+
+        return summaries
+
+    def _get_compliance_template(self, *, provider=None, scan_id=None):
+        """Return the compliance template for the given provider or scan."""
+        if provider is None and scan_id is not None:
+            try:
+                scan = Scan.all_objects.select_related("provider").get(pk=scan_id)
+            except Scan.DoesNotExist:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "Scan not found",
+                            "status": 404,
+                            "source": {"pointer": "filter[scan_id]"},
+                            "code": "not_found",
+                        }
+                    ]
+                )
+            provider = scan.provider
+
+        if not provider:
+            return {}
+
+        return PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(provider.provider, {})
+
+    def _aggregate_compliance_overview(self, queryset, template_metadata=None):
+        """
+        Aggregate requirement rows into compliance overview dictionaries.
+
+        Args:
+            queryset: ComplianceRequirementOverview queryset already filtered.
+            template_metadata: Optional dict mapping compliance_id -> metadata.
+        """
+        template_metadata = template_metadata or {}
+        requirement_status_subquery = queryset.values(
+            "compliance_id", "requirement_id"
+        ).annotate(
+            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
+            pass_count=Count("id", filter=Q(requirement_status="PASS")),
+            total_count=Count("id"),
+        )
+
+        compliance_data = {}
+        fallback_metadata = {
+            item["compliance_id"]: {
+                "framework": item["framework"],
+                "version": item["version"],
+            }
+            for item in queryset.values(
+                "compliance_id", "framework", "version"
+            ).distinct()
+        }
+
+        for item in requirement_status_subquery:
+            compliance_id = item["compliance_id"]
+
+            if item["fail_count"] > 0:
+                req_status = "FAIL"
+            elif item["pass_count"] == item["total_count"]:
+                req_status = "PASS"
+            else:
+                req_status = "MANUAL"
+
+            compliance_status = compliance_data.setdefault(
+                compliance_id,
+                {
+                    "total_requirements": 0,
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                },
+            )
+
+            compliance_status["total_requirements"] += 1
+            if req_status == "PASS":
+                compliance_status["requirements_passed"] += 1
+            elif req_status == "FAIL":
+                compliance_status["requirements_failed"] += 1
+            else:
+                compliance_status["requirements_manual"] += 1
+
+        response_data = []
+        for compliance_id, data in compliance_data.items():
+            template = template_metadata.get(compliance_id, {})
+            fallback = fallback_metadata.get(compliance_id, {})
+
+            response_data.append(
+                {
+                    "id": compliance_id,
+                    "compliance_id": compliance_id,
+                    "framework": template.get("framework")
+                    or fallback.get("framework", ""),
+                    "version": template.get("version") or fallback.get("version", ""),
+                    "requirements_passed": data["requirements_passed"],
+                    "requirements_failed": data["requirements_failed"],
+                    "requirements_manual": data["requirements_manual"],
+                    "total_requirements": data["total_requirements"],
+                }
+            )
+
+        serializer = self.get_serializer(response_data, many=True)
+        return serializer.data
+
     def _task_response_if_running(self, scan_id):
         """Check for an in-progress task only when no compliance data exists."""
         try:
@@ -3536,90 +3665,84 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def list(self, request, *args, **kwargs):
-        scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
-        try:
-            if task := self.get_task_response_if_running(
-                task_name="scan-compliance-overviews",
-                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
-                raise_on_not_found=False,
-            ):
-                return task
-        except TaskFailedException:
-            return Response(
-                {"detail": "Task failed to generate compliance overview data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
-
-        requirement_status_subquery = queryset.values(
-            "compliance_id", "requirement_id"
-        ).annotate(
-            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
-            pass_count=Count("id", filter=Q(requirement_status="PASS")),
-            total_count=Count("id"),
+    def _list_with_region_filter(self, scan_id, region_filter):
+        """
+        Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
+        This uses the original aggregation logic across filtered regions.
+        """
+        regions = region_filter.split(",") if "," in region_filter else [region_filter]
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            scan_id=scan_id,
+            region__in=regions,
         )
 
-        compliance_data = {}
-        framework_info = {}
+        data = self._aggregate_compliance_overview(queryset)
+        if data:
+            return Response(data)
 
-        for item in queryset.values("compliance_id", "framework", "version").distinct():
-            framework_info[item["compliance_id"]] = {
-                "framework": item["framework"],
-                "version": item["version"],
-            }
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
 
-        for item in requirement_status_subquery:
-            compliance_id = item["compliance_id"]
+        return Response(data)
 
-            if item["fail_count"] > 0:
-                req_status = "FAIL"
-            elif item["pass_count"] == item["total_count"]:
-                req_status = "PASS"
-            else:
-                req_status = "MANUAL"
+    def _list_without_region_aggregation(self, scan_id):
+        """
+        Fall back aggregation when compliance summaries don't exist yet.
+        Aggregates ComplianceRequirementOverview data across ALL regions.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).filter(scan_id=scan_id)
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
+        data = self._aggregate_compliance_overview(
+            queryset, template_metadata=compliance_template
+        )
+        if data:
+            return Response(data)
 
-            if compliance_id not in compliance_data:
-                compliance_data[compliance_id] = {
-                    "total_requirements": 0,
-                    "requirements_passed": 0,
-                    "requirements_failed": 0,
-                    "requirements_manual": 0,
-                }
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
 
-            compliance_data[compliance_id]["total_requirements"] += 1
-            if req_status == "PASS":
-                compliance_data[compliance_id]["requirements_passed"] += 1
-            elif req_status == "FAIL":
-                compliance_data[compliance_id]["requirements_failed"] += 1
-            else:
-                compliance_data[compliance_id]["requirements_manual"] += 1
+        return Response(data)
 
+    def list(self, request, *args, **kwargs):
+        scan_id = request.query_params.get("filter[scan_id]")
+
+        # Specific scan requested - use optimized summaries with region support
+        region_filter = request.query_params.get(
+            "filter[region]"
+        ) or request.query_params.get("filter[region__in]")
+
+        if region_filter:
+            # Fall back to detailed query with region filtering
+            return self._list_with_region_filter(scan_id, region_filter)
+
+        summaries = list(self._compliance_summaries_queryset(scan_id))
+        if not summaries:
+            # Trigger async backfill for next time
+            backfill_compliance_summaries_task.delay(
+                tenant_id=self.request.tenant_id, scan_id=scan_id
+            )
+            # Use fallback aggregation for this request
+            return self._list_without_region_aggregation(scan_id)
+
+        # Get compliance template for provider to enrich with framework/version
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
+
+        # Convert to response format with framework/version enrichment
         response_data = []
-        for compliance_id, data in compliance_data.items():
-            framework = framework_info.get(compliance_id, {})
-
+        for summary in summaries:
+            compliance_metadata = compliance_template.get(summary.compliance_id, {})
             response_data.append(
                 {
-                    "id": compliance_id,
-                    "compliance_id": compliance_id,
-                    "framework": framework.get("framework", ""),
-                    "version": framework.get("version", ""),
-                    "requirements_passed": data["requirements_passed"],
-                    "requirements_failed": data["requirements_failed"],
-                    "requirements_manual": data["requirements_manual"],
-                    "total_requirements": data["total_requirements"],
+                    "id": summary.compliance_id,
+                    "compliance_id": summary.compliance_id,
+                    "framework": compliance_metadata.get("framework", ""),
+                    "version": compliance_metadata.get("version", ""),
+                    "requirements_passed": summary.requirements_passed,
+                    "requirements_failed": summary.requirements_failed,
+                    "requirements_manual": summary.requirements_manual,
+                    "total_requirements": summary.total_requirements,
                 }
             )
 
@@ -3889,6 +4012,47 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    findings_severity_timeseries=extend_schema(
+        summary="Get findings severity data over time",
+        description=(
+            "Retrieve daily aggregated findings data grouped by severity levels over a date range. "
+            "Returns one data point per day with counts of failed findings by severity (critical, high, "
+            "medium, low, informational) and muted findings. Days without scans are filled forward with "
+            "the most recent known values. Use date_from (required) and date_to filters to specify the range."
+        ),
+        filters=True,
+    ),
+    attack_surface=extend_schema(
+        summary="Get attack surface overview",
+        description="Retrieve aggregated attack surface metrics from latest completed scans per provider.",
+        tags=["Overview"],
+        parameters=[
+            OpenApiParameter(
+                name="filter[provider_id]",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID",
+            ),
+            OpenApiParameter(
+                name="filter[provider_id.in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated UUIDs)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (aws, azure, gcp, etc.)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type.in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated)",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -3906,7 +4070,16 @@ class OverviewViewSet(BaseRLSViewSet):
         if not role.unlimited_visibility:
             self.allowed_providers = providers
 
-        return ScanSummary.all_objects.filter(tenant_id=self.request.tenant_id)
+        tenant_id = self.request.tenant_id
+
+        # Return appropriate queryset per action
+        if self.action == "findings_severity_timeseries":
+            qs = DailySeveritySummary.objects.filter(tenant_id=tenant_id)
+            if hasattr(self, "allowed_providers"):
+                qs = qs.filter(provider_id__in=self.allowed_providers)
+            return qs
+
+        return ScanSummary.all_objects.filter(tenant_id=tenant_id)
 
     def get_serializer_class(self):
         if self.action == "providers":
@@ -3917,12 +4090,16 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "findings_severity_timeseries":
+            return FindingsSeverityOverTimeSerializer
         elif self.action == "services":
             return OverviewServiceSerializer
         elif self.action == "regions":
             return OverviewRegionSerializer
         elif self.action == "threatscore":
             return ThreatScoreSnapshotSerializer
+        elif self.action == "attack_surface":
+            return AttackSurfaceOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -3932,7 +4109,17 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
+        elif self.action == "findings_severity_timeseries":
+            return DailySeveritySummaryFilter
         return None
+
+    def filter_queryset(self, queryset):
+        # Skip OrderingFilter for findings_severity_timeseries (no inserted_at field)
+        if self.action == "findings_severity_timeseries":
+            return CustomDjangoFilterBackend().filter_queryset(
+                self.request, queryset, self
+            )
+        return super().filter_queryset(queryset)
 
     @extend_schema(exclude=True)
     def list(self, request, *args, **kwargs):
@@ -3970,6 +4157,68 @@ class OverviewViewSet(BaseRLSViewSet):
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
+
+    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
+        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
+        exclude_keys = exclude_keys or set()
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            if normalized_key not in exclude_keys:
+                normalized.setlist(normalized_key, values)
+        return normalized
+
+    def _ensure_allowed_providers(self):
+        """Populate allowed providers for RBAC-aware queries once per request."""
+        if getattr(self, "_providers_initialized", False):
+            return
+        self.get_queryset()
+        self._providers_initialized = True
+
+    def _get_provider_filter(self, provider_field="provider"):
+        self._ensure_allowed_providers()
+        if hasattr(self, "allowed_providers"):
+            return {f"{provider_field}__in": self.allowed_providers}
+        return {}
+
+    def _apply_provider_filter(self, queryset, provider_field="provider"):
+        provider_filter = self._get_provider_filter(provider_field)
+        if provider_filter:
+            return queryset.filter(**provider_filter)
+        return queryset
+
+    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
+        normalized_params = self._normalize_jsonapi_params(
+            self.request.query_params, exclude_keys=set(exclude_keys or [])
+        )
+        filterset = filterset_class(normalized_params, queryset=queryset)
+        return filterset.qs
+
+    def _latest_scan_ids_for_allowed_providers(self, tenant_id):
+        provider_filter = self._get_provider_filter()
+        return (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _attack_surface_check_ids_by_provider_types(self, provider_types):
+        check_ids_by_type = {
+            attack_surface_type: set()
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for provider_type in provider_types:
+            attack_surface_mapping = _get_attack_surface_mapping_from_provider(
+                provider_type=provider_type
+            )
+            for attack_surface_type, check_ids in attack_surface_mapping.items():
+                check_ids_by_type[attack_surface_type].update(check_ids)
+        return check_ids_by_type
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -4148,6 +4397,108 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="findings_severity/timeseries",
+        url_name="findings_severity_timeseries",
+    )
+    def findings_severity_timeseries(self, request):
+        """
+        Daily severity trends for charts. Uses DailySeveritySummary pre-aggregation.
+        Requires date_from filter.
+        """
+        # Get queryset with RBAC, provider, and date filters applied
+        # Date validation is handled by DailySeveritySummaryFilter
+        daily_qs = self.filter_queryset(self.get_queryset())
+
+        date_from = request._date_from
+        date_to = request._date_to
+
+        if not daily_qs.exists():
+            # No data matches filters - return zeros
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Fetch all data for fill-forward logic
+        daily_summaries = list(
+            daily_qs.order_by("provider_id", "-date").values(
+                "provider_id",
+                "scan_id",
+                "date",
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "informational",
+                "muted",
+            )
+        )
+
+        if not daily_summaries:
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Build provider_data: {provider_id: [(date, data), ...]} sorted by date desc
+        provider_data = defaultdict(list)
+        for summary in daily_summaries:
+            provider_data[summary["provider_id"]].append(summary)
+
+        # For each day, find the latest data per provider and sum values
+        result = []
+        current_date = date_from
+        while current_date <= date_to:
+            day_totals = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+            day_scan_ids = []
+
+            for provider_id, summaries in provider_data.items():
+                # Find the latest data for this provider <= current_date
+                for summary in summaries:  # Already sorted by date desc
+                    if summary["date"] <= current_date:
+                        day_totals["critical"] += summary["critical"] or 0
+                        day_totals["high"] += summary["high"] or 0
+                        day_totals["medium"] += summary["medium"] or 0
+                        day_totals["low"] += summary["low"] or 0
+                        day_totals["informational"] += summary["informational"] or 0
+                        day_totals["muted"] += summary["muted"] or 0
+                        day_scan_ids.append(summary["scan_id"])
+                        break  # Found the latest data for this provider
+
+            result.append(
+                {"date": current_date, "scan_ids": day_scan_ids, **day_totals}
+            )
+            current_date += timedelta(days=1)
+
+        serializer = self.get_serializer(result, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _generate_zero_result(self, date_from, date_to):
+        """Generate a list of zero-filled results for each date in range."""
+        result = []
+        current_date = date_from
+        zero_values = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+            "muted": 0,
+            "scan_ids": [],
+        }
+        while current_date <= date_to:
+            result.append({"date": current_date, **zero_values})
+            current_date += timedelta(days=1)
+        return result
+
     @extend_schema(
         summary="Get ThreatScore snapshots",
         description=(
@@ -4200,11 +4551,9 @@ class OverviewViewSet(BaseRLSViewSet):
         snapshot_id = request.query_params.get("snapshot_id")
 
         # Base queryset with RLS
-        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
-
-        # Apply RBAC filtering
-        if hasattr(self, "allowed_providers"):
-            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
+        base_queryset = self._apply_provider_filter(
+            ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+        )
 
         # Case 1: Specific snapshot requested
         if snapshot_id:
@@ -4220,17 +4569,9 @@ class OverviewViewSet(BaseRLSViewSet):
         # Case 2: Latest snapshot per provider (default)
         # Apply filters manually: this @action is outside the standard list endpoint flow,
         # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
-        normalized_params = QueryDict(mutable=True)
-        for param_key, values in request.query_params.lists():
-            normalized_key = param_key
-            if param_key.startswith("filter[") and param_key.endswith("]"):
-                normalized_key = param_key[7:-1]
-            if normalized_key == "snapshot_id":
-                continue
-            normalized_params.setlist(normalized_key, values)
-
-        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
-        filtered_queryset = filterset.qs
+        filtered_queryset = self._apply_filterset(
+            base_queryset, ThreatScoreSnapshotFilter, exclude_keys={"snapshot_id"}
+        )
 
         # Get distinct provider IDs from filtered queryset
         # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
@@ -4473,6 +4814,67 @@ class OverviewViewSet(BaseRLSViewSet):
         aggregated_snapshot._aggregated = True
 
         return aggregated_snapshot
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="attack-surface",
+        url_path="attack-surfaces",
+    )
+    def attack_surface(self, request):
+        tenant_id = request.tenant_id
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
+
+        # Build base queryset and apply user filters via FilterSet
+        base_queryset = AttackSurfaceOverview.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        filtered_queryset = self._apply_filterset(
+            base_queryset, AttackSurfaceOverviewFilter
+        )
+        provider_types = list(
+            filtered_queryset.values_list(
+                "scan__provider__provider", flat=True
+            ).distinct()
+        )
+        attack_surface_check_ids = self._attack_surface_check_ids_by_provider_types(
+            provider_types
+        )
+        # Aggregate attack surface data
+        aggregation = filtered_queryset.values("attack_surface_type").annotate(
+            total_findings=Coalesce(Sum("total_findings"), 0),
+            failed_findings=Coalesce(Sum("failed_findings"), 0),
+            muted_failed_findings=Coalesce(Sum("muted_failed_findings"), 0),
+        )
+
+        results = {
+            attack_surface_type: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "muted_failed_findings": 0,
+            }
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for item in aggregation:
+            results[item["attack_surface_type"]] = {
+                "total_findings": item["total_findings"],
+                "failed_findings": item["failed_findings"],
+                "muted_failed_findings": item["muted_failed_findings"],
+            }
+
+        response_data = [
+            {
+                "attack_surface_type": key,
+                **value,
+                "check_ids": attack_surface_check_ids.get(key, []),
+            }
+            for key, value in results.items()
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["Schedule"])

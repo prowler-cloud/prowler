@@ -288,6 +288,32 @@ class Provider(ABC):
                     )
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
+                        auth_url=getattr(arguments, "os_auth_url", None),
+                        identity_api_version=getattr(
+                            arguments, "os_identity_api_version", None
+                        ),
+                        username=getattr(arguments, "os_username", None),
+                        password=getattr(arguments, "os_password", None),
+                        project_id=getattr(arguments, "os_project_id", None),
+                        region_name=getattr(arguments, "os_region_name", None),
+                        user_domain_name=getattr(
+                            arguments, "os_user_domain_name", None
+                        ),
+                        project_domain_name=getattr(
+                            arguments, "os_project_domain_name", None
+                        ),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "alibabacloud" in provider_class_name.lower():
+                    provider_class(
+                        role_arn=arguments.role_arn,
+                        role_session_name=arguments.role_session_name,
+                        ecs_ram_role=arguments.ecs_ram_role,
+                        oidc_role_arn=arguments.oidc_role_arn,
+                        credentials_uri=arguments.credentials_uri,
+                        regions=arguments.regions,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

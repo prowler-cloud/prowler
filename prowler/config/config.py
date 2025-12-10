@@ -60,6 +60,7 @@ class Provider(str, Enum):
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
     ORACLECLOUD = "oraclecloud"
+    ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
 
 
