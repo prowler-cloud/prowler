@@ -1,6 +1,6 @@
-"""Cloud Provider Management tools for Prowler App MCP Server.
+"""Provider Management tools for Prowler App MCP Server.
 
-This module provides tools for managing cloud provider connections,
+This module provides tools for managing provider connections,
 including searching, connecting, and deleting providers.
 """
 
@@ -15,15 +15,15 @@ from pydantic import Field
 
 
 class ProvidersTools(BaseTool):
-    """Tools for cloud provider management operations
+    """Tools for provider management operations
 
     Provides tools for:
-    - prowler_app_search_cloud_providers: Search and view configured cloud providers with their connection status
-    - prowler_app_connect_provider: Connect or register a cloud provider account for security scanning in Prowler
-    - prowler_app_delete_provider: Permanently remove a cloud provider from Prowler
+    - prowler_app_search_providers: Search and view configured providers with their connection status
+    - prowler_app_connect_provider: Connect or register a provider for security scanning in Prowler
+    - prowler_app_delete_provider: Permanently remove a provider from Prowler
     """
 
-    async def search_cloud_providers(
+    async def search_providers(
         self,
         provider_id: list[str] = Field(
             default=[],
@@ -35,7 +35,7 @@ class ProvidersTools(BaseTool):
         ),
         provider_type: list[str] = Field(
             default=[],
-            description="Filter by cloud provider type. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.",
+            description="Filter by provider type. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.",
         ),
         alias: str | None = Field(
             default=None,
@@ -55,18 +55,18 @@ class ProvidersTools(BaseTool):
             description="Page number to retrieve (1-indexed)",
         ),
     ) -> dict[str, Any]:
-        """Search and view configured cloud providers with their connection status.
+        """Search and view configured providers to be scanned with Prowler.
 
         This tool returns a unified view of all providers configured in Prowler.
 
-        For getting more details about what types of providers are available or
-        what are the IDs format for each provider type, please refer to Prowler Hub/Prowler Documentation
+        For getting more details about what types of providers are available to be scanned with Prowler or
+        what are the UIDs are accepted for each provider type, please refer to Prowler Hub/Prowler Documentation
         that you can also find in form of tools in this MCP Server.
 
         Each provider includes:
-        - Provider identification: id, uid, alias
-        - Provider context: provider type
-        - Connection status: connected
+        - Provider identification: Prowler Internal ID, External Provider UID, Provider Alias
+        - Provider context: Provider Type
+        - Connection status: Connected (true), Failed (false), Not Tested (null)
         """
         self.api_client.validate_page_size(page_size)
 
@@ -113,7 +113,7 @@ class ProvidersTools(BaseTool):
             description="Provider's unique identifier. For supported UID provider formats, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server"
         ),
         provider_type: str = Field(
-            description="Type of cloud provider. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server."
+            description="Type of provider to be scanned with Prowler. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server."
         ),
         alias: str | None = Field(
             default=None,
@@ -121,13 +121,13 @@ class ProvidersTools(BaseTool):
         ),
         credentials: dict[str, Any] | None = Field(
             default=None,
-            description="Cloud-specific credentials for authentication. Optional - if not provided, provider is created but not connected. Structure varies by provider type. For supported provider types, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
+            description="Provider-specific credentials for authentication. Optional - if not provided, provider is created but not connected. Structure varies by provider type. For supported provider types, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
         ),
     ) -> dict[str, Any]:
-        """Register a provider for security scanning with Prowler.
+        """Register a provider to be scanned with Prowler.
 
-        This tool will register a provider in Prowler, even if the UID is wrong.
-        If the provider is already registered, it will be updated with the new provided alias or credentials.
+        This tool will register a provider in Prowler App, even if the UID is wrong.
+        If the provider is already registered, it will be updated with the new provided alias or credentials if provided.
         If credentials are provided, they will be added to the indicated provider, if the provider does not exist, it will be created and the credentials will be added to it.
         If the connection test is successful, the provider will be connected.
         If the connection test fails, the provider will be created but not connected.
@@ -250,7 +250,7 @@ class ProvidersTools(BaseTool):
     async def delete_provider(
         self,
         provider_id: str = Field(
-            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_app_search_cloud_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
+            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_app_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
         ),
     ) -> dict[str, Any]:
         """Permanently remove a registered provider from Prowler.
@@ -291,7 +291,7 @@ class ProvidersTools(BaseTool):
         """Check if a provider already exists by its UID.
 
         Args:
-            provider_uid: The cloud provider's unique identifier (e.g., AWS account ID)
+            provider_uid: The provider's unique identifier (e.g., AWS account ID)
 
         Returns:
             The Prowler-generated provider ID if exists, None otherwise
@@ -328,8 +328,8 @@ class ProvidersTools(BaseTool):
         """Create a new provider.
 
         Args:
-            provider_uid: The cloud provider's unique identifier
-            provider_type: Type of cloud provider (aws, azure, gcp, etc.)
+            provider_uid: The provider's unique identifier
+            provider_type: Type of provider to be scanned with Prowler (aws, azure, gcp, etc.)
             alias: Optional human-friendly name for the provider
 
         Returns:
