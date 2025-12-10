@@ -2761,12 +2761,15 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
         scan_based_filters = {}
+        category_scan_filters = {}  # Filters for ScanCategorySummary
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
         ):
-            queryset = queryset.filter(scan_id__in=scans.split(","))
-            scan_based_filters = {"id__in": scans.split(",")}
+            scan_ids_list = scans.split(",")
+            queryset = queryset.filter(scan_id__in=scan_ids_list)
+            scan_based_filters = {"id__in": scan_ids_list}
+            category_scan_filters = {"scan_id__in": scan_ids_list}
         else:
             exact = query_params.get("filter[inserted_at]")
             gte = query_params.get("filter[inserted_at__gte]")
@@ -2810,6 +2813,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 scan_based_filters = {
                     key.lstrip("scan_"): value for key, value in date_filters.items()
                 }
+                category_scan_filters = date_filters
 
         # ToRemove: Temporary fallback mechanism
         if not queryset.exists():
@@ -2856,24 +2860,25 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Get categories from ScanCategorySummary table
-        scan_ids = list(queryset.values_list("scan_id", flat=True).distinct())
-        categories_set = set()
-        for cat_list in ScanCategorySummary.objects.filter(
-            tenant_id=tenant_id, scan_id__in=scan_ids
-        ).values_list("categories", flat=True):
-            if cat_list:
-                categories_set.update(cat_list)
+        # Get categories from ScanCategorySummary using same scan filters
+        categories = list(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, **category_scan_filters
+            )
+            .values_list("category", flat=True)
+            .distinct()
+            .order_by("category")
+        )
 
         # Fallback to finding aggregation if no ScanCategorySummary exists
-        if not categories_set:
+        if not categories:
+            categories_set = set()
             for categories_list in filtered_queryset.values_list(
                 "categories", flat=True
             ):
                 if categories_list:
                     categories_set.update(categories_list)
-
-        categories = sorted(categories_set)
+            categories = sorted(categories_set)
 
         result = {
             "services": services,
@@ -2984,28 +2989,30 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Get categories from ScanCategorySummary table for latest scans
-        categories_set = set()
-        for cat_list in ScanCategorySummary.objects.filter(
-            tenant_id=tenant_id,
-            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
-        ).values_list("categories", flat=True):
-            if cat_list:
-                categories_set.update(cat_list)
+        # Get categories from ScanCategorySummary for latest scans
+        categories = list(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            .values_list("category", flat=True)
+            .distinct()
+            .order_by("category")
+        )
 
         # Fallback to finding aggregation if no ScanCategorySummary exists
-        if not categories_set:
+        if not categories:
             filtered_queryset = self.filter_queryset(self.get_queryset()).filter(
                 tenant_id=tenant_id,
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
+            categories_set = set()
             for categories_list in filtered_queryset.values_list(
                 "categories", flat=True
             ):
                 if categories_list:
                     categories_set.update(categories_list)
-
-        categories = sorted(categories_set)
+            categories = sorted(categories_set)
 
         result = {
             "services": services,

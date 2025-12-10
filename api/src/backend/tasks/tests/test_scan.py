@@ -1377,7 +1377,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
-        scan_categories_cache: set[str] = set()
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1488,7 +1488,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
-        scan_categories_cache: set[str] = set()
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1614,7 +1614,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
-        scan_categories_cache: set[str] = set()
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1710,7 +1710,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
-        scan_categories_cache: set[str] = set()
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1731,7 +1731,35 @@ class TestProcessFindingMicroBatch:
                 scan_categories_cache,
             )
 
-        assert scan_categories_cache == {"gen-ai", "security", "iam"}
+        # finding1: PASS, severity=low, categories=["gen-ai", "security"]
+        # finding2: FAIL, severity=high, categories=["security", "iam"]
+        # Keys are (category, severity) tuples
+        assert set(scan_categories_cache.keys()) == {
+            ("gen-ai", "low"),
+            ("security", "low"),
+            ("security", "high"),
+            ("iam", "high"),
+        }
+        assert scan_categories_cache[("gen-ai", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+        assert scan_categories_cache[("iam", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
 
         created_finding1 = Finding.objects.get(uid="finding-cat-1")
         created_finding2 = Finding.objects.get(uid="finding-cat-2")

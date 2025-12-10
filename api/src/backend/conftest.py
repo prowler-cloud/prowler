@@ -11,7 +11,10 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
-from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.backfill import (
+    backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+)
 
 from api.db_utils import rls_transaction
 from api.models import (
@@ -1374,6 +1377,7 @@ def latest_scan_finding_with_categories(
     )
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    backfill_scan_category_summaries(tenant_id, str(scan.id))
     return finding
 
 

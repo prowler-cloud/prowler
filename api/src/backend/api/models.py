@@ -1960,11 +1960,41 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
 
 
 class ScanCategorySummary(RowLevelSecurityProtectedModel):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    scan = models.OneToOneField(Scan, on_delete=models.CASCADE)
-    categories = ArrayField(models.CharField(max_length=100), default=list)
+    """
+    Pre-aggregated category metrics per scan by severity.
 
-    class Meta:
+    Stores one row per (category, severity) combination per scan for efficient
+    overview queries. Categories come from check_metadata.categories.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="category_summaries",
+        related_query_name="category_summary",
+    )
+
+    category = models.CharField(max_length=100)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "scan_category_summaries"
 
         indexes = [
@@ -1972,12 +2002,19 @@ class ScanCategorySummary(RowLevelSecurityProtectedModel):
         ]
 
         constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "category", "severity"),
+                name="unique_category_severity_per_scan",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-category-summaries"
 
 
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):

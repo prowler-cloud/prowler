@@ -16,6 +16,7 @@ from api.models import (
     ScanCategorySummary,
     ScanSummary,
     StateChoices,
+    StatusChoices,
 )
 
 
@@ -284,8 +285,8 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
-    Aggregates unique categories from all findings in the scan and creates
-    a single ScanCategorySummary row.
+    Aggregates category counts from all findings in the scan and creates
+    one ScanCategorySummary row per (category, severity) combination.
 
     Args:
         tenant_id: Target tenant UUID
@@ -308,21 +309,52 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         ).exists():
             return {"status": "scan is not completed"}
 
-        categories_set = set()
-        for categories_list in Finding.all_objects.filter(
+        # total_findings: non-muted findings only
+        # failed_findings: non-muted FAIL (subset of total)
+        # new_failed_findings: non-muted FAIL with delta='new' (subset of failed)
+        category_counts: dict[tuple[str, str], dict[str, int]] = {}
+        for finding in Finding.all_objects.filter(
             tenant_id=tenant_id, scan_id=scan_id
-        ).values_list("categories", flat=True):
-            if categories_list:
-                categories_set.update(categories_list)
+        ).values("categories", "severity", "status", "delta", "muted"):
+            categories_list = finding.get("categories") or []
+            severity = finding.get("severity")
+            status = finding.get("status")
+            delta = finding.get("delta")
+            muted = finding.get("muted", False)
 
-        if not categories_set:
+            is_failed = status == StatusChoices.FAIL and not muted
+            is_new_failed = is_failed and delta == Finding.DeltaChoices.NEW
+
+            for cat in categories_list:
+                key = (cat, severity)
+                if key not in category_counts:
+                    category_counts[key] = {"total": 0, "failed": 0, "new_failed": 0}
+                if not muted:
+                    category_counts[key]["total"] += 1
+                if is_failed:
+                    category_counts[key]["failed"] += 1
+                if is_new_failed:
+                    category_counts[key]["new_failed"] += 1
+
+        if not category_counts:
             return {"status": "no categories to backfill"}
 
-    with rls_transaction(tenant_id):
-        ScanCategorySummary.objects.update_or_create(
+    category_summaries = [
+        ScanCategorySummary(
             tenant_id=tenant_id,
             scan_id=scan_id,
-            defaults={"categories": sorted(categories_set)},
+            category=category,
+            severity=severity,
+            total_findings=counts["total"],
+            failed_findings=counts["failed"],
+            new_failed_findings=counts["new_failed"],
+        )
+        for (category, severity), counts in category_counts.items()
+    ]
+
+    with rls_transaction(tenant_id):
+        ScanCategorySummary.objects.bulk_create(
+            category_summaries, batch_size=500, ignore_conflicts=True
         )
 
-    return {"status": "backfilled", "categories_count": len(categories_set)}
+    return {"status": "backfilled", "categories_count": len(category_counts)}

@@ -400,7 +400,7 @@ def _process_finding_micro_batch(
     unique_resources: set,
     scan_resource_cache: set,
     mute_rules_cache: dict,
-    scan_categories_cache: set,
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]],
 ) -> None:
     """
     Process a micro-batch of findings and persist them using bulk operations.
@@ -421,7 +421,7 @@ def _process_finding_micro_batch(
         unique_resources: Set tracking (uid, region) pairs seen in the scan.
         scan_resource_cache: Set of tuples used to create `ResourceScanSummary` rows.
         mute_rules_cache: Map of finding UID -> mute reason gathered before the scan.
-        scan_categories_cache: Set collecting unique categories across all findings.
+        scan_categories_cache: Dict tracking category counts {(category, severity): {"total", "failed", "new_failed"}}.
     """
     # Accumulate objects for bulk operations
     findings_to_create = []
@@ -610,9 +610,24 @@ def _process_finding_micro_batch(
             )
         )
 
-        # Track categories for ScanCategorySummary
+        # Track categories with counts for ScanCategorySummary by (category, severity)
+        # total_findings: non-muted findings only
+        # failed_findings: non-muted FAIL (subset of total)
+        # new_failed_findings: non-muted FAIL with delta='new' (subset of failed)
         finding_categories = check_metadata.get("categories", []) or []
-        scan_categories_cache.update(finding_categories)
+        finding_severity = finding.severity.value
+        is_failed = status == FindingStatus.FAIL and not is_muted
+        is_new_failed = is_failed and delta == Finding.DeltaChoices.NEW
+        for cat in finding_categories:
+            key = (cat, finding_severity)
+            if key not in scan_categories_cache:
+                scan_categories_cache[key] = {"total": 0, "failed": 0, "new_failed": 0}
+            if not is_muted:
+                scan_categories_cache[key]["total"] += 1
+            if is_failed:
+                scan_categories_cache[key]["failed"] += 1
+            if is_new_failed:
+                scan_categories_cache[key]["new_failed"] += 1
 
     # Bulk operations within single transaction
     with rls_transaction(tenant_id):
@@ -713,7 +728,7 @@ def perform_prowler_scan(
     exception = None
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
-    scan_categories_cache: set[str] = set()
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
     start_time = time.time()
     exc = None
 
@@ -869,12 +884,23 @@ def perform_prowler_scan(
         )
 
     try:
-        with rls_transaction(tenant_id):
-            ScanCategorySummary.objects.update_or_create(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                defaults={"categories": sorted(scan_categories_cache)},
-            )
+        if scan_categories_cache:
+            category_summaries = [
+                ScanCategorySummary(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    category=category,
+                    severity=severity,
+                    total_findings=counts["total"],
+                    failed_findings=counts["failed"],
+                    new_failed_findings=counts["new_failed"],
+                )
+                for (category, severity), counts in scan_categories_cache.items()
+            ]
+            with rls_transaction(tenant_id):
+                ScanCategorySummary.objects.bulk_create(
+                    category_summaries, batch_size=500, ignore_conflicts=True
+                )
     except Exception as cat_exception:
         sentry_sdk.capture_exception(cat_exception)
         logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")

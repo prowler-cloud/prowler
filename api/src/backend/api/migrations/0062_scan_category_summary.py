@@ -1,9 +1,9 @@
 import uuid
 
-import django.contrib.postgres.fields
 import django.db.models.deletion
 from django.db import migrations, models
 
+import api.db_utils
 import api.rls
 
 
@@ -30,18 +30,53 @@ class Migration(migrations.Migration):
                     models.UUIDField(db_index=True, editable=False),
                 ),
                 (
+                    "inserted_at",
+                    models.DateTimeField(auto_now_add=True),
+                ),
+                (
                     "scan",
-                    models.OneToOneField(
+                    models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
+                        related_name="category_summaries",
+                        related_query_name="category_summary",
                         to="api.scan",
                     ),
                 ),
                 (
-                    "categories",
-                    django.contrib.postgres.fields.ArrayField(
-                        base_field=models.CharField(max_length=100),
-                        default=list,
-                        size=None,
+                    "category",
+                    models.CharField(max_length=100),
+                ),
+                (
+                    "severity",
+                    api.db_utils.SeverityEnumField(
+                        choices=[
+                            ("critical", "Critical"),
+                            ("high", "High"),
+                            ("medium", "Medium"),
+                            ("low", "Low"),
+                            ("informational", "Informational"),
+                        ],
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "total_findings",
+                    models.IntegerField(
+                        default=0, help_text="Non-muted findings (PASS + FAIL)"
+                    ),
+                ),
+                (
+                    "failed_findings",
+                    models.IntegerField(
+                        default=0,
+                        help_text="Non-muted FAIL findings (subset of total_findings)",
+                    ),
+                ),
+                (
+                    "new_failed_findings",
+                    models.IntegerField(
+                        default=0,
+                        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
                     ),
                 ),
             ],
@@ -53,6 +88,13 @@ class Migration(migrations.Migration):
             model_name="scancategorysummary",
             index=models.Index(
                 fields=["tenant_id", "scan"], name="scs_tenant_scan_idx"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="scancategorysummary",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "category", "severity"),
+                name="unique_category_severity_per_scan",
             ),
         ),
         migrations.AddConstraint(

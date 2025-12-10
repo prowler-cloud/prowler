@@ -60,7 +60,7 @@ def findings_with_categories_fixture(scans_fixture, resources_fixture):
         tenant_id=scan.tenant_id,
         uid="finding_with_categories",
         scan=scan,
-        delta=None,
+        delta="new",
         status=Status.FAIL,
         status_extended="test status",
         impact=Severity.critical,
@@ -82,7 +82,11 @@ def scan_category_summary_fixture(scans_fixture):
     return ScanCategorySummary.objects.create(
         tenant_id=scan.tenant_id,
         scan=scan,
-        categories=["existing-category"],
+        category="existing-category",
+        severity=Severity.critical,
+        total_findings=1,
+        failed_findings=0,
+        new_failed_findings=0,
     )
 
 
@@ -241,7 +245,18 @@ class TestBackfillScanCategorySummaries:
 
         result = backfill_scan_category_summaries(tenant_id, scan_id)
 
+        # 2 categories × 1 severity = 2 rows
         assert result == {"status": "backfilled", "categories_count": 2}
 
-        summary = ScanCategorySummary.objects.get(tenant_id=tenant_id, scan_id=scan_id)
-        assert set(summary.categories) == {"gen-ai", "security"}
+        summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+        assert summaries.count() == 2
+        categories = set(summaries.values_list("category", flat=True))
+        assert categories == {"gen-ai", "security"}
+
+        for summary in summaries:
+            assert summary.severity == Severity.critical
+            assert summary.total_findings == 1
+            assert summary.failed_findings == 1
+            assert summary.new_failed_findings == 1
