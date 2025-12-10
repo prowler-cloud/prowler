@@ -21,8 +21,7 @@
     "test:e2e:headed": "playwright test --project=chromium --project=sign-up --project=providers --project=invitations --project=scans --headed",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install",
-    "audit": "npm audit",
-    "audit:fix": "npm audit fix"
+    "audit:fix": "pnpm audit fix"
   },
   "dependencies": {
     "@ai-sdk/langchain": "1.0.59",
