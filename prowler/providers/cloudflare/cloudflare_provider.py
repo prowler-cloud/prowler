@@ -28,6 +28,11 @@ from prowler.providers.cloudflare.models import (
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
+# TYPE_CHECKING import to maintain Prowler's provider structure where models live in service modules.
+# This breaks the following import cycle at runtime:
+#   cloudflare_provider.py -> zones_service.py -> service.py -> cloudflare_provider.py
+# Safe because: (1) `from __future__ import annotations` (PEP 563) defers annotation evaluation,
+# and (2) TYPE_CHECKING blocks only execute for type checkers, not at runtime.
 if TYPE_CHECKING:
     from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
 

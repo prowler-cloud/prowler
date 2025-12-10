@@ -5,6 +5,12 @@ from typing import TYPE_CHECKING
 
 from prowler.lib.logger import logger
 
+# TYPE_CHECKING imports to maintain Prowler's provider structure where models live in their modules.
+# This breaks the following import cycles at runtime:
+#   service.py -> cloudflare_provider.py -> zones_service.py -> service.py (for CloudflareProvider)
+#   service.py -> zones_service.py -> service.py (for CloudflareZone)
+# Safe because: (1) `from __future__ import annotations` (PEP 563) defers annotation evaluation,
+# and (2) TYPE_CHECKING blocks only execute for type checkers, not at runtime.
 if TYPE_CHECKING:
     from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
     from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
