@@ -868,6 +868,14 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         null=True,
     )
 
+    # Check metadata denormalization
+    categories = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Categories from check metadata for efficient filtering",
+    )
+
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
 
@@ -1940,6 +1948,27 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "scan_id", "region", "resource_type"],
                 name="rss_tenant_scan_reg_type_idx",
             ),
+        ]
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+
+class ScanCategorySummary(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    scan = models.OneToOneField(Scan, on_delete=models.CASCADE)
+    categories = ArrayField(models.CharField(max_length=100), default=list)
+
+    class Meta:
+        db_table = "scan_category_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="scs_tenant_scan_idx"),
         ]
 
         constraints = [
