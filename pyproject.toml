@@ -78,6 +78,7 @@ dependencies = [
   "alibabacloud_ecs20140526==7.2.5",
   "alibabacloud_sas20181203==6.1.0",
   "alibabacloud_oss20190517==1.0.6",
+  "alibabacloud-gateway-oss-util==0.0.3",
   "alibabacloud_actiontrail20200706==2.4.1",
   "alibabacloud_cs20151215==6.1.0",
   "alibabacloud-rds20140815==12.0.0",

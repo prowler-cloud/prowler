@@ -1,13 +1,64 @@
 import {
+  Category,
   CategoryData,
+  Control,
   FailedSection,
   Framework,
-  Requirement,
   REQUIREMENT_STATUS,
   RequirementItemData,
   RequirementsData,
   RequirementStatus,
+  TOP_FAILED_DATA_TYPE,
+  TopFailedDataType,
+  TopFailedResult,
 } from "@/types/compliance";
+
+// Type for the internal map used in getTopFailedSections
+interface FailedSectionData {
+  total: number;
+  types: Record<string, number>;
+}
+
+/**
+ * Builds the TopFailedResult from the accumulated map data
+ */
+const buildTopFailedResult = (
+  map: Map<string, FailedSectionData>,
+  type: TopFailedDataType,
+): TopFailedResult => ({
+  items: Array.from(map.entries())
+    .map(([name, data]): FailedSection => ({ name, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5),
+  type,
+});
+
+/**
+ * Checks if the framework uses a flat structure (requirements directly on framework)
+ * vs hierarchical structure (categories -> controls -> requirements)
+ */
+const hasFlatStructure = (frameworks: Framework[]): boolean =>
+  frameworks.some(
+    (framework) =>
+      (framework.requirements?.length ?? 0) > 0 &&
+      framework.categories.length === 0,
+  );
+
+/**
+ * Increments the failed count for a given name in the map
+ */
+const incrementFailedCount = (
+  map: Map<string, FailedSectionData>,
+  name: string,
+  type: string,
+): void => {
+  if (!map.has(name)) {
+    map.set(name, { total: 0, types: {} });
+  }
+  const data = map.get(name)!;
+  data.total += 1;
+  data.types[type] = (data.types[type] || 0) + 1;
+};
 
 export const updateCounters = (
   target: { pass: number; fail: number; manual: number },
@@ -24,38 +75,45 @@ export const updateCounters = (
 
 export const getTopFailedSections = (
   mappedData: Framework[],
-): FailedSection[] => {
-  const failedSectionMap = new Map();
+): TopFailedResult => {
+  const failedSectionMap = new Map<string, FailedSectionData>();
 
+  if (hasFlatStructure(mappedData)) {
+    // Handle flat structure: count failed requirements directly
+    mappedData.forEach((framework) => {
+      const directRequirements = framework.requirements ?? [];
+
+      directRequirements.forEach((requirement) => {
+        if (requirement.status === REQUIREMENT_STATUS.FAIL) {
+          const type =
+            typeof requirement.type === "string" ? requirement.type : "Fails";
+          incrementFailedCount(failedSectionMap, requirement.name, type);
+        }
+      });
+    });
+
+    return buildTopFailedResult(
+      failedSectionMap,
+      TOP_FAILED_DATA_TYPE.REQUIREMENTS,
+    );
+  }
+
+  // Handle hierarchical structure: count by category (section)
   mappedData.forEach((framework) => {
     framework.categories.forEach((category) => {
       category.controls.forEach((control) => {
         control.requirements.forEach((requirement) => {
           if (requirement.status === REQUIREMENT_STATUS.FAIL) {
-            const sectionName = category.name;
-
-            if (!failedSectionMap.has(sectionName)) {
-              failedSectionMap.set(sectionName, { total: 0, types: {} });
-            }
-
-            const sectionData = failedSectionMap.get(sectionName);
-            sectionData.total += 1;
-
-            const type = requirement.type || "Fails";
-
-            sectionData.types[type as string] =
-              (sectionData.types[type as string] || 0) + 1;
+            const type =
+              typeof requirement.type === "string" ? requirement.type : "Fails";
+            incrementFailedCount(failedSectionMap, category.name, type);
           }
         });
       });
     });
   });
 
-  // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
+  return buildTopFailedResult(failedSectionMap, TOP_FAILED_DATA_TYPE.SECTIONS);
 };
 
 export const calculateCategoryHeatmapData = (
@@ -146,9 +204,9 @@ export const findOrCreateFramework = (
 };
 
 export const findOrCreateCategory = (
-  categories: any[],
+  categories: Category[],
   categoryName: string,
-) => {
+): Category => {
   let category = categories.find((c) => c.name === categoryName);
   if (!category) {
     category = {
@@ -163,7 +221,10 @@ export const findOrCreateCategory = (
   return category;
 };
 
-export const findOrCreateControl = (controls: any[], controlLabel: string) => {
+export const findOrCreateControl = (
+  controls: Control[],
+  controlLabel: string,
+): Control => {
   let control = controls.find((c) => c.label === controlLabel);
   if (!control) {
     control = {
@@ -178,7 +239,7 @@ export const findOrCreateControl = (controls: any[], controlLabel: string) => {
   return control;
 };
 
-export const calculateFrameworkCounters = (frameworks: Framework[]) => {
+export const calculateFrameworkCounters = (frameworks: Framework[]): void => {
   frameworks.forEach((framework) => {
     // Reset framework counters
     framework.pass = 0;
@@ -186,9 +247,9 @@ export const calculateFrameworkCounters = (frameworks: Framework[]) => {
     framework.manual = 0;
 
     // Handle flat structure (requirements directly in framework)
-    const directRequirements = (framework as any).requirements || [];
+    const directRequirements = framework.requirements ?? [];
     if (directRequirements.length > 0) {
-      directRequirements.forEach((requirement: Requirement) => {
+      directRequirements.forEach((requirement) => {
         updateCounters(framework, requirement.status);
       });
       return;
