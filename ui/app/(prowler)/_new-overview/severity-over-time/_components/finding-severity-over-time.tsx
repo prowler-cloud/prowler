@@ -37,10 +37,12 @@ export const FindingSeverityOverTime = ({
     dataKey?: string;
   }) => {
     const params = new URLSearchParams();
-    params.set("filter[inserted_at]", point.date);
 
     // Always filter by FAIL status since this chart shows failed findings
     params.set("filter[status__in]", "FAIL");
+
+    // Exclude muted findings
+    params.set("filter[muted]", "false");
 
     // Add scan_ids filter
     if (
