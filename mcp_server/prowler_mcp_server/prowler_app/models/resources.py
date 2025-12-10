@@ -9,11 +9,11 @@ class SimplifiedResource(MinimalSerializerMixin, BaseModel):
 
     id: str
     uid: str
-    name: str | None = None
-    region: str | None = None
-    service: str | None = None
-    type: str | None = None
-    failed_findings_count: int | None = None
+    name: str
+    region: str
+    service: str
+    type: str
+    failed_findings_count: int
     tags: dict[str, str] | None = None
     provider_id: str | None = None
 
@@ -52,8 +52,8 @@ class DetailedResource(SimplifiedResource):
 
     metadata: str | None = None
     partition: str | None = None
-    inserted_at: str | None = None
-    updated_at: str | None = None
+    inserted_at: str
+    updated_at: str
     finding_ids: list[str] | None = None
 
     @classmethod
