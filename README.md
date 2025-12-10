@@ -57,7 +57,6 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 
 Prowler App / [Prowler Cloud](https://cloud.prowler.com/) is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
-![Prowler App](docs/images/products/overview.png)
 ![Risk Pipeline](docs/images/products/risk-pipeline.png)
 ![Threat Map](docs/images/products/threat-map.png)
 
