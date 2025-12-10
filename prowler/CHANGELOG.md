@@ -27,13 +27,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix duplicate requirement IDs in ISO 27001:2013 AWS compliance framework by adding unique letter suffixes
+- Removed incorrect threat-detection category from checks metadata [(#9489)](https://github.com/prowler-cloud/prowler/pull/9489)
 
 ---
 
-## [v5.14.2] (Prowler v5.14.2)
+## [v5.14.2] (Prowler 5.14.2)
 
 ### Fixed
 - Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to address missing dependency [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
 
 ---
 
