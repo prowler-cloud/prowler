@@ -14,6 +14,15 @@ class SimplifiedProvider(MinimalSerializerMixin, BaseModel):
     alias: str | None = None
     provider: str
     connected: bool | None = None
+    secret_type: Literal["role", "service_account", "static"] | None = None
+
+    def _should_exclude(self, key: str, value: Any) -> bool:
+        """Override to always include connected and secret_type fields even when None."""
+        # Always include these fields regardless of value (None has semantic meaning)
+        if key == "connected" or key == "secret_type":
+            return False
+        # Use parent class logic for other fields
+        return super()._should_exclude(key, value)
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "SimplifiedProvider":
@@ -27,6 +36,7 @@ class SimplifiedProvider(MinimalSerializerMixin, BaseModel):
             alias=attributes.get("alias"),
             provider=attributes["provider"],
             connected=connection_data.get("connected"),
+            secret_type=None,  # Will be populated separately via secret endpoint
         )
 
 

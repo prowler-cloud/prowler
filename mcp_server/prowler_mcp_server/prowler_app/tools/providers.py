@@ -71,7 +71,7 @@ class ProvidersTools(BaseTool):
         self.api_client.validate_page_size(page_size)
 
         params = {
-            "fields[providers]": "uid,alias,provider,connection",
+            "fields[providers]": "uid,alias,provider,connection,secret",
             "page[number]": page_number,
             "page[size]": page_size,
         }
@@ -104,6 +104,26 @@ class ProvidersTools(BaseTool):
             "/api/v1/providers", params=clean_params
         )
         simplified_response = ProvidersListResponse.from_api_response(api_response)
+
+        # Fetch secret_type for each provider that has a secret
+        for provider in simplified_response.providers:
+            # Get the provider data from the API response to access relationships
+            provider_data = next(
+                (
+                    provider_api_response
+                    for provider_api_response in api_response["data"]
+                    if provider_api_response["id"] == provider.id
+                ),
+                None,
+            )
+            if provider_data:
+                secret_relationship = provider_data.get("relationships", {}).get(
+                    "secret", {}
+                )
+                secret_data = secret_relationship.get("data")
+                if secret_data:
+                    secret_id = secret_data["id"]
+                    provider.secret_type = await self._get_secret_type(secret_id)
 
         return simplified_response.model_dump()
 
@@ -229,9 +249,12 @@ class ProvidersTools(BaseTool):
         elif alias:
             await self._update_provider_alias(prowler_provider_id, alias)
 
-        # Step 3: Handle credentials if provided
+        # Step 3: Handle credentials if provided and capture secret response
+        secret_response = None
         if credentials:
-            await self._store_credentials(prowler_provider_id, credentials)
+            secret_response = await self._store_credentials(
+                prowler_provider_id, credentials
+            )
 
         # Step 4: Test connection
         connection_status = await self._test_connection(prowler_provider_id)
@@ -244,6 +267,26 @@ class ProvidersTools(BaseTool):
             provider_data=final_provider["data"],
             connection_status=connection_status,
         )
+
+        if secret_response:
+            # We just stored credentials, use the secret_type from the response
+            connection_result.provider.secret_type = (
+                secret_response.get("data", {}).get("attributes", {}).get("secret_type")
+            )
+        else:
+            # No new credentials provided, check if provider has an existing secret
+            secret_data = (
+                final_provider.get("data", {})
+                .get("relationships", {})
+                .get("secret", {})
+                .get("data")
+            )
+            if secret_data:
+                # Provider has existing secret, fetch its type
+                secret_id = secret_data["id"]
+                connection_result.provider.secret_type = await self._get_secret_type(
+                    secret_id
+                )
 
         return connection_result.model_dump()
 
@@ -427,14 +470,39 @@ class ProvidersTools(BaseTool):
             self.logger.error(f"Error checking for existing secret: {e}")
             return None
 
+    async def _get_secret_type(self, secret_id: str) -> str | None:
+        """Get the secret type for a given secret ID.
+
+        Args:
+            secret_id: The secret ID from provider relationships
+
+        Returns:
+            The secret type ("role", "service_account", or "static") if found, None otherwise
+        """
+        try:
+            response = await self.api_client.get(
+                f"/api/v1/providers/secrets/{secret_id}",
+                params={"fields[provider-secrets]": "secret_type"},
+            )
+            secret_type = (
+                response.get("data", {}).get("attributes", {}).get("secret_type")
+            )
+            return secret_type
+        except Exception as e:
+            self.logger.error(f"Error fetching secret type for {secret_id}: {e}")
+            return None
+
     async def _store_credentials(
         self, prowler_provider_id: str, credentials: dict[str, Any]
-    ) -> None:
+    ) -> dict[str, Any]:
         """Store or update credentials for a provider.
 
         Args:
             prowler_provider_id: The Prowler-generated provider ID
             credentials: The credentials to store
+
+        Returns:
+            The API response with the secret data
         """
         self.logger.info(
             f"Adding/updating credentials for provider {prowler_provider_id}..."
@@ -467,13 +535,15 @@ class ProvidersTools(BaseTool):
                 }
             }
             try:
-                await self.api_client.patch(
+                response = await self.api_client.patch(
                     f"/api/v1/providers/secrets/{existing_secret_id}",
                     json_data=update_body,
                 )
                 self.logger.info("Credentials updated successfully")
+                return response
             except Exception as e:
                 self.logger.error(f"Error updating credentials: {e}")
+                raise
         else:
             # Create new secret
             self.logger.info("Creating new secret...")
@@ -496,12 +566,14 @@ class ProvidersTools(BaseTool):
             }
 
             try:
-                await self.api_client.post(
+                response = await self.api_client.post(
                     "/api/v1/providers/secrets", json_data=secret_body
                 )
                 self.logger.info("Credentials added successfully")
+                return response
             except Exception as e:
                 self.logger.error(f"Error adding credentials: {e}")
+                raise
 
     async def _test_connection(self, prowler_provider_id: str) -> dict[str, Any]:
         """Test connection to a provider.
