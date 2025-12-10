@@ -1500,6 +1500,65 @@ class ScanSummary(RowLevelSecurityProtectedModel):
         resource_name = "scan-summaries"
 
 
+class DailySeveritySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated daily severity counts per provider.
+    Used by findings_severity/timeseries endpoint for efficient queries.
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    date = models.DateField()
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+
+    # Aggregated fail counts by severity
+    critical = models.IntegerField(default=0)
+    high = models.IntegerField(default=0)
+    medium = models.IntegerField(default=0)
+    low = models.IntegerField(default=0)
+    informational = models.IntegerField(default=0)
+    muted = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "daily_severity_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider", "date"),
+                name="unique_daily_severity_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="dss_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="dss_tenant_provider_idx",
+            ),
+        ]
+
+
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         AMAZON_S3 = "amazon_s3", _("Amazon S3")
