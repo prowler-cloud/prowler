@@ -39,6 +39,7 @@ from api.models import (
     SAMLConfiguration,
     SAMLDomainIndex,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -1590,6 +1591,30 @@ def create_attack_surface_overview():
             total_findings=total,
             failed_findings=failed,
             muted_failed_findings=muted_failed,
+        )
+
+    return _create
+
+
+@pytest.fixture
+def create_scan_category_summary():
+    def _create(
+        tenant,
+        scan,
+        category,
+        severity,
+        total_findings=10,
+        failed_findings=5,
+        new_failed_findings=2,
+    ):
+        return ScanCategorySummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            category=category,
+            severity=severity,
+            total_findings=total_findings,
+            failed_findings=failed_findings,
+            new_failed_findings=new_failed_findings,
         )
 
     return _create
