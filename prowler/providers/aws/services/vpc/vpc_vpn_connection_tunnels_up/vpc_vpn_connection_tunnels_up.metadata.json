@@ -1,32 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_vpn_connection_tunnels_up",
-  "CheckTitle": "Both VPN tunnels for an AWS Site-to-Site VPN connection should be up",
+  "CheckTitle": "AWS Site-to-Site VPN connection has both tunnels up",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "vpc",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:vpn-connection/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEc2ClientVpnEndpoint",
-  "Description": "A VPN tunnel is an encrypted link where data can pass from the customer network to or from AWS within an AWS Site-to-Site VPN connection. Each VPN connection includes two VPN tunnels which you can simultaneously use for high availability. Ensuring that both VPN tunnels are up for a VPN connection is important for confirming a secure and highly available connection between an AWS VPC and your remote network.",
-  "Risk": "If one or both VPN tunnels are down, it can compromise the security and availability of the connection between your AWS VPC and your remote network. This could result in connectivity issues and potential data exposure or loss during the downtime, affecting business operations and overall network security.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-vpn-2-tunnels-up.html",
+  "ResourceType": "AwsEc2Vpc",
+  "Description": "**AWS Site-to-Site VPN** connections have two IPsec tunnels. This evaluates tunnel status and detects when any tunnel is not `UP`, indicating whether both tunnels are concurrently available for high availability.",
+  "Risk": "With only one active tunnel or none, the link loses redundancy, degrading **availability** and increasing the chance of outages, session drops, or route blackholing. Failover cannot occur, disrupting critical workloads and cross-environment operations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpn/latest/s2svpn/modify-vpn-tunnel-options.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-20",
+    "https://docs.aws.amazon.com/config/latest/developerguide/vpc-vpn-2-tunnels-up.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-20",
+      "Other": "1. In the AWS Console, go to VPC > Site-to-Site VPN connections and select the VPN connection with a tunnel DOWN\n2. Open the Tunnel details tab\n3. For each tunnel (1 and 2), choose Actions > Download configuration, select your device/vendor, and download the config\n4. On your customer gateway device, configure BOTH tunnels using the downloaded parameters (pre-shared key, IKE/IPsec settings, inside CIDR, and routing/BGP as applicable)\n5. If your device requires different parameters, in the AWS console choose Actions > Modify VPN tunnel options, select the tunnel outside IP, adjust only the necessary options (for example IKE version or pre-shared key), and Save\n6. Wait a few minutes and verify both tunnels show Status: UP under Tunnel details",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To modify VPN tunnel options, see Modifying Site-to-Site VPN tunnel options in the AWS Site-to-Site VPN User Guide.",
-      "Url": "https://docs.aws.amazon.com/vpn/latest/s2svpn/modify-vpn-tunnel-options.html"
+      "Text": "Maintain both tunnels healthy and ready for failover:\n- Deploy redundant customer gateways and resilient routing\n- Monitor tunnel health with alerts\n- Periodically test failover and document runbooks\n\nApply **high availability** and **defense-in-depth** to avoid single points of failure.",
+      "Url": "https://hub.prowler.com/check/vpc_vpn_connection_tunnels_up"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

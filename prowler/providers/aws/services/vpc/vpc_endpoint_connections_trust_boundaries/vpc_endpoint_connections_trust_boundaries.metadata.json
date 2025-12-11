@@ -1,32 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_endpoint_connections_trust_boundaries",
-  "CheckTitle": "Find trust boundaries in VPC endpoint connections.",
+  "CheckTitle": "VPC endpoint policy allows access only from trusted AWS accounts",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "vpc",
-  "SubServiceName": "endpoint",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2VpcEndpointService",
-  "Description": "Find trust boundaries in VPC endpoint connections.",
-  "Risk": "Account VPC could be linked to other accounts.",
+  "Description": "**VPC endpoint policies** are assessed for restriction to configured **trusted AWS accounts**. If `Principal` values (including `*`) or account ARNs permit non-trusted principals, or conditions aren't sufficiently restrictive, the endpoint is identified. *Endpoints without editable policies are excluded.*",
+  "Risk": "Non-trusted principals using your endpoint can access AWS services as if from your VPC, weakening segmentation. This enables unauthorized reads/writes and data exfiltration from resources tied to the endpoint, harming **confidentiality** and **integrity**, and potentially increasing **costs**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
+    "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
-      "Terraform": ""
+      "CLI": "aws ec2 modify-vpc-endpoint --vpc-endpoint-id <example_resource_id> --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\",\"Condition\":{\"StringEquals\":{\"aws:PrincipalAccount\":[\"<TRUSTED_ACCOUNT_ID_1>\",\"<TRUSTED_ACCOUNT_ID_2>\"]}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict VPC endpoint access to trusted accounts only\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::VPCEndpoint\n    Properties:\n      VpcId: <example_resource_id>\n      ServiceName: com.amazonaws.<region>.<service>\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal: \"*\"\n            Action: \"*\"\n            Resource: \"*\"\n            Condition:                  # CRITICAL: restrict by trusted accounts\n              StringEquals:             # CRITICAL: only allow specified accounts\n                \"aws:PrincipalAccount\":   # CRITICAL: limits usage to these accounts\n                  - \"<TRUSTED_ACCOUNT_ID_1>\"\n                  - \"<TRUSTED_ACCOUNT_ID_2>\"\n```",
+      "Other": "1. Open the AWS Console and go to VPC > Endpoints\n2. Select the endpoint and choose Actions > Manage policy\n3. Select Custom and paste this minimal policy, replacing with your trusted account IDs:\n   ```json\n   {\n     \"Version\": \"2012-10-17\",\n     \"Statement\": [\n       {\n         \"Effect\": \"Allow\",\n         \"Principal\": \"*\",\n         \"Action\": \"*\",\n         \"Resource\": \"*\",\n         \"Condition\": {\n           \"StringEquals\": {\n             \"aws:PrincipalAccount\": [\n               \"<TRUSTED_ACCOUNT_ID_1>\",\n               \"<TRUSTED_ACCOUNT_ID_2>\"\n             ]\n           }\n         }\n       }\n     ]\n   }\n   ```\n4. Click Save",
+      "Terraform": "```hcl\n# Add this to the existing VPC endpoint resource to restrict access\nresource \"aws_vpc_endpoint\" \"<example_resource_name>\" {\n  # ...existing required arguments for the endpoint...\n\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = \"*\"\n      Action    = \"*\"\n      Resource  = \"*\"\n      Condition = {                       # CRITICAL: restrict by trusted accounts\n        StringEquals = {\n          \"aws:PrincipalAccount\" = [      # CRITICAL: only these accounts can use the endpoint\n            \"<TRUSTED_ACCOUNT_ID_1>\",\n            \"<TRUSTED_ACCOUNT_ID_2>\"\n          ]\n        }\n      }\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "In multi Account environments identify untrusted links. Check trust chaining and dependencies between accounts.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
+      "Text": "Apply **least privilege**: restrict endpoint policies to your account and an explicit allowlist of **trusted accounts**. Avoid `*` principals unless coupled with strict conditions. Prevent transitive trust across network links, and use resource policies and monitoring as **defense in depth** to limit endpoint use.",
+      "Url": "https://hub.prowler.com/check/vpc_endpoint_connections_trust_boundaries"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

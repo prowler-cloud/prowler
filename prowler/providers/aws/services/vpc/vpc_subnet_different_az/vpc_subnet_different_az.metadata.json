@@ -1,32 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_subnet_different_az",
-  "CheckTitle": "Ensure all VPC has subnets in more than one availability zone",
+  "CheckTitle": "VPC has subnets in more than one Availability Zone",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "vpc",
-  "SubServiceName": "subnet",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure all VPC has subnets in more than one availability zone",
-  "Risk": "",
-  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
+  "Description": "**VPCs** are assessed for **subnets spread across multiple Availability Zones**. The finding distinguishes VPCs with subnets confined to a single AZ or with no subnets from those with subnets in `2+` distinct AZs.",
+  "Risk": "Single-AZ subnet layouts create a **single point of failure**, leading to **service downtime** during AZ outages, maintenance, or capacity events. Lack of **zonal redundancy** constrains load balancing and egress design, reduces **fault isolation**, and undermines availability and recovery objectives.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000233587-ensure-all-vpc-has-subnets-in-more-than-one-availability-zone",
+    "https://docs.aws.amazon.com/pdfs/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/building-scalable-secure-multi-vpc-network-infrastructure.pdf",
+    "https://stackoverflow.com/questions/75678808/creating-multiple-subnets-in-order-per-availability-zone-with-terraform/75679053",
+    "https://medium.com/@raj.shivaram/building-a-rock-solid-aws-vpc-best-practices-for-cloud-security-scalability-5da37467e20b",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
+    "https://quizlet.com/306327931/aws-scenario-vpc-multiple-subnetsavailability-zones-diagram/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 create-subnet",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: create two subnets in different AZs to ensure VPC spans multiple AZs\nResources:\n  SubnetA:\n    Type: AWS::EC2::Subnet\n    Properties:\n      VpcId: <example_resource_id>\n      CidrBlock: 10.0.0.0/24\n      AvailabilityZone: <example_az_1>  # Critical: place subnet in AZ1 to start AZ diversity\n  SubnetB:\n    Type: AWS::EC2::Subnet\n    Properties:\n      VpcId: <example_resource_id>\n      CidrBlock: 10.0.1.0/24\n      AvailabilityZone: <example_az_2>  # Critical: second AZ ensures VPC has subnets in more than one AZ\n```",
+      "Other": "1. In the AWS Console, go to VPC > Subnets\n2. Click Create subnet\n3. Select the target VPC (<example_resource_id>)\n4. Add two subnets with non-overlapping CIDRs in different Availability Zones (e.g., <example_az_1> and <example_az_2>)\n5. Click Create subnet to save\n",
+      "Terraform": "```hcl\n# Create two subnets in different AZs so the VPC spans multiple Availability Zones\nresource \"aws_subnet\" \"subnet_a\" {\n  vpc_id            = \"<example_resource_id>\"\n  cidr_block        = \"10.0.0.0/24\"\n  availability_zone = \"<example_az_1>\" # Critical: first AZ\n}\n\nresource \"aws_subnet\" \"subnet_b\" {\n  vpc_id            = \"<example_resource_id>\"\n  cidr_block        = \"10.0.1.0/24\"\n  availability_zone = \"<example_az_2>\" # Critical: second AZ; ensures subnets in more than one AZ\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure all VPC has subnets in more than one availability zone",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html"
+      "Text": "Distribute subnets across `2+` **Availability Zones** and deploy workloads in separate AZs for **high availability**. Mirror network tiers per AZ, align routing and egress per AZ, and enforce multi-AZ layouts with IaC and policy guardrails. *Regularly test failover* to validate resilience.",
+      "Url": "https://hub.prowler.com/check/vpc_subnet_different_az"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

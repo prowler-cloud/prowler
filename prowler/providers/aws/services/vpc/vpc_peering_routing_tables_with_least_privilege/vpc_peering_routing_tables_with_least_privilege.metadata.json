@@ -1,31 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_peering_routing_tables_with_least_privilege",
-  "CheckTitle": "Ensure routing tables for VPC peering are least access.",
+  "CheckTitle": "VPC peering connection route tables do not include 0.0.0.0/0 or entire requester/accepter VPC CIDR routes",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Lateral Movement",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "vpc",
-  "SubServiceName": "route_table",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2VpcPeeringConnection",
-  "Description": "Ensure routing tables for VPC peering are least access.",
-  "Risk": "Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
+  "Description": "**AWS VPC peering** route tables are assessed for **least-privilege routing**. Routes that target `0.0.0.0/0` or an entire peer VPC CIDR are considered overly broad; only specific subnets or narrower prefixes should be advertised across the peering link.",
+  "Risk": "Broad peering routes expand cross-VPC reachability, enabling lateral movement and unauthorized discovery, harming **confidentiality** and **integrity**. Using `0.0.0.0/0` or full-CIDR paths also increases misrouting with overlapping ranges, reducing network **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://medium.com/devpulse/breaking-the-cloud-mastering-vpc-peering-gateway-endpoints-network-segmentation-like-a-pro-4ebb0228ad68",
+    "https://stackoverflow.com/questions/43452208/aws-vpc-peering-and-route-tables/48711758",
+    "https://docs.datadoghq.com/security/code_security/iac_security/iac_rules/terraform/aws/vpc_peering_route_table_with_unrestricted_cidr/",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_5",
+    "https://github.com/Heeyaichen/aws-network-monitoring-infra",
+    "https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_5",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict VPC peering route to a specific subnet (least privilege)\nResources:\n  PeeringSpecificRoute:\n    Type: AWS::EC2::Route\n    Properties:\n      RouteTableId: <example_resource_id>\n      DestinationCidrBlock: 10.0.1.0/24  # CRITICAL: use a specific subnet, not 0.0.0.0/0 or full VPC CIDR\n      VpcPeeringConnectionId: <example_resource_id>\n```",
+      "Other": "1. In AWS Console, go to VPC > Route tables\n2. Select the route table(s) used to reach the peered VPC and click Routes > Edit routes\n3. Delete any route to 0.0.0.0/0 or to the entire requester/accepter VPC CIDR that targets the VPC peering connection\n4. Add route(s) only to required subnet CIDR(s) in the peer VPC, targeting the same VPC peering connection\n5. Save changes and repeat in the peer VPC's route table(s)",
+      "Terraform": "```hcl\n# Restrict VPC peering route to a specific subnet (least privilege)\nresource \"aws_route\" \"peering_specific\" {\n  route_table_id             = \"<example_resource_id>\"\n  destination_cidr_block     = \"10.0.1.0/24\"  # CRITICAL: specific subnet, not 0.0.0.0/0 or full VPC CIDR\n  vpc_peering_connection_id  = \"<example_resource_id>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review routing tables of peered VPCs for whether they route all subnets of each VPC and whether that is necessary to accomplish the intended purposes for peering the VPCs.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html"
+      "Text": "Enforce **least privilege** in peering: advertise only required subnets or more specific prefixes; avoid `0.0.0.0/0` and whole VPC ranges. Keep routes symmetric on both sides, and layer **defense in depth** with security groups and NACLs. *If broad connectivity is required*, prefer segmented designs or a transit gateway.",
+      "Url": "https://hub.prowler.com/check/vpc_peering_routing_tables_with_least_privilege"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
