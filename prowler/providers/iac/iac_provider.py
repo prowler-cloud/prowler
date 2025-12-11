@@ -391,6 +391,8 @@ class IacProvider(Provider):
                 "--parallel",
                 "0",
                 "--include-non-failures",
+                "--timeout",
+                "300m",
             ]
             if exclude_path:
                 trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
