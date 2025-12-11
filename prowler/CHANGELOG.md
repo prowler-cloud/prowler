@@ -15,7 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update SOC2 - GCP with Processing Integrity requirements [(#9464)](https://github.com/prowler-cloud/prowler/pull/9464)
 - Update SOC2 - AWS with Processing Integrity requirements [(#9462)](https://github.com/prowler-cloud/prowler/pull/9462)
 - RBI Cyber Security Framework compliance for Azure provider [(#8822)](https://github.com/prowler-cloud/prowler/pull/8822)
-
+- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 
 ### Changed
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
