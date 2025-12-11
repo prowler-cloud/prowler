@@ -83,6 +83,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
+    ProwlerThreatScoreAlibaba,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
@@ -1039,6 +1042,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_alibabacloud":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreAlibaba(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
