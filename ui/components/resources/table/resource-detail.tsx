@@ -83,6 +83,12 @@ export const ResourceDetail = ({
   resourceId: string;
   initialResourceData: ResourceProps;
 }) => {
+  console.log("[ResourceDetail] Backend response:", initialResourceData);
+  console.log(
+    "[ResourceDetail] Resource attributes:",
+    initialResourceData?.attributes,
+  );
+
   const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
@@ -288,6 +294,14 @@ export const ResourceDetail = ({
             </InfoField>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(attributes.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(attributes.details)}
+            </InfoField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Created At">
               <DateWithTime inline dateTime={attributes.inserted_at} />
             </InfoField>
@@ -295,6 +309,24 @@ export const ResourceDetail = ({
               <DateWithTime inline dateTime={attributes.updated_at} />
             </InfoField>
           </div>
+
+          {attributes.metadata &&
+          Object.entries(attributes.metadata).length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                Metadata
+              </h4>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {Object.entries(attributes.metadata).map(([key, value]) => (
+                  <InfoField key={key} label={key}>
+                    {typeof value === "object"
+                      ? JSON.stringify(value)
+                      : renderValue(String(value))}
+                  </InfoField>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {resourceTags && Object.entries(resourceTags).length > 0 ? (
             <div className="flex flex-col gap-4">

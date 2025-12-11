@@ -55,6 +55,9 @@ export const FindingDetail = ({
 }: {
   findingDetails: FindingProps;
 }) => {
+  console.log("[FindingDetail] Backend response:", findingDetails);
+  console.log("[FindingDetail] Resource data:", findingDetails.relationships?.resource);
+
   const finding = findingDetails;
   const attributes = finding.attributes;
   const resource = finding.relationships.resource.attributes;
@@ -305,6 +308,15 @@ export const FindingDetail = ({
               {renderValue(resource.service)}
             </InfoField>
             <InfoField label="Region">{renderValue(resource.region)}</InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(resource.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(resource.details)}
+            </InfoField>
           </div>
 
           {resource.tags && Object.entries(resource.tags).length > 0 && (
