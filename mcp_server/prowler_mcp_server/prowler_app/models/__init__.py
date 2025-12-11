@@ -9,6 +9,12 @@ from prowler_mcp_server.prowler_app.models.findings import (
     FindingsOverview,
     SimplifiedFinding,
 )
+from prowler_mcp_server.prowler_app.models.muting import (
+    DetailedMuteRule,
+    MutelistResponse,
+    MuteRulesListResponse,
+    SimplifiedMuteRule,
+)
 
 __all__ = [
     # Base models
@@ -20,4 +26,9 @@ __all__ = [
     "FindingsListResponse",
     "FindingsOverview",
     "SimplifiedFinding",
+    # Muting models
+    "DetailedMuteRule",
+    "MutelistResponse",
+    "MuteRulesListResponse",
+    "SimplifiedMuteRule",
 ]

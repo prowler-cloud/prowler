@@ -84,7 +84,13 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             )
             response.raise_for_status()
 
-            return response.json()
+            if not response.content:
+                return {
+                    "success": True,
+                    "status_code": response.status_code,
+                }
+            else:
+                return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error during {method.value} {path}: {e}")
             error_detail: str = ""
