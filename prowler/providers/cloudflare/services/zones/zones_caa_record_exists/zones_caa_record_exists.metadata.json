@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_caa_record_exists",
+  "CheckTitle": "CAA record exists to restrict certificate authority issuance",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that a CAA (Certificate Authority Authorization) DNS record exists to specify which certificate authorities are permitted to issue certificates for the domain.",
+  "Risk": "Without CAA records, any certificate authority can issue certificates for the domain, increasing the risk of unauthorized certificate issuance through CA compromise or social engineering attacks against CAs.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/caa-records/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_record\" \"caa\" {\n  zone_id = var.zone_id\n  name    = \"@\"\n  type    = \"CAA\"\n  data {\n    flags = \"0\"\n    tag   = \"issue\"\n    value = \"letsencrypt.org\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Add CAA records specifying authorized certificate authorities for your domain. This provides an additional layer of defense against unauthorized certificate issuance as part of a comprehensive PKI security strategy.",
+      "Url": "https://hub.prowler.com/checks/zones_caa_record_exists"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CAA records help prevent unauthorized SSL/TLS certificate issuance."
+}
