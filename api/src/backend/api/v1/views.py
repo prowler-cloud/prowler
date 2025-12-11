@@ -100,6 +100,7 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     AttackSurfaceOverviewFilter,
+    CategoryOverviewFilter,
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
@@ -179,6 +180,7 @@ from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     AttackSurfaceOverviewSerializer,
+    CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
     ComplianceOverviewDetailThreatscoreSerializer,
@@ -4078,32 +4080,17 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         summary="Get attack surface overview",
         description="Retrieve aggregated attack surface metrics from latest completed scans per provider.",
         tags=["Overview"],
-        parameters=[
-            OpenApiParameter(
-                name="filter[provider_id]",
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Filter by specific provider ID",
-            ),
-            OpenApiParameter(
-                name="filter[provider_id.in]",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider IDs (comma-separated UUIDs)",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type]",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by provider type (aws, azure, gcp, etc.)",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type.in]",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider types (comma-separated)",
-            ),
-        ],
+        filters=True,
+    ),
+    categories=extend_schema(
+        summary="Get category overview",
+        description=(
+            "Retrieve aggregated category metrics from latest completed scans per provider. "
+            "Returns one row per category with total, failed, and new failed findings counts, "
+            "plus a severity breakdown showing failed findings per severity level. "
+        ),
+        tags=["Overview"],
+        filters=True,
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -4152,6 +4139,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return ThreatScoreSnapshotSerializer
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewSerializer
+        elif self.action == "categories":
+            return CategoryOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4163,6 +4152,10 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummarySeverityFilter
         elif self.action == "findings_severity_timeseries":
             return DailySeveritySummaryFilter
+        elif self.action == "categories":
+            return CategoryOverviewFilter
+        elif self.action == "attack_surface":
+            return AttackSurfaceOverviewFilter
         return None
 
     def filter_queryset(self, queryset):
@@ -4921,6 +4914,59 @@ class OverviewViewSet(BaseRLSViewSet):
                 "check_ids": attack_surface_check_ids.get(key, []),
             }
             for key, value in results.items()
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"], url_name="categories")
+    def categories(self, request):
+        tenant_id = request.tenant_id
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
+
+        base_queryset = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        filtered_queryset = self._apply_filterset(base_queryset, CategoryOverviewFilter)
+
+        aggregation = (
+            filtered_queryset.values("category", "severity")
+            .annotate(
+                total=Coalesce(Sum("total_findings"), 0),
+                failed=Coalesce(Sum("failed_findings"), 0),
+                new_failed=Coalesce(Sum("new_failed_findings"), 0),
+            )
+            .order_by("category", "severity")
+        )
+
+        category_data = defaultdict(
+            lambda: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "new_failed_findings": 0,
+                "severity": {
+                    "informational": 0,
+                    "low": 0,
+                    "medium": 0,
+                    "high": 0,
+                    "critical": 0,
+                },
+            }
+        )
+
+        for row in aggregation:
+            cat = row["category"]
+            sev = row["severity"]
+            category_data[cat]["total_findings"] += row["total"]
+            category_data[cat]["failed_findings"] += row["failed"]
+            category_data[cat]["new_failed_findings"] += row["new_failed"]
+            if sev in category_data[cat]["severity"]:
+                category_data[cat]["severity"][sev] = row["failed"]
+
+        response_data = [
+            {"category": cat, **data} for cat, data in sorted(category_data.items())
         ]
 
         return Response(

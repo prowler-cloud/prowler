@@ -43,6 +43,7 @@ from api.models import (
     ResourceTag,
     Role,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -1101,4 +1102,23 @@ class AttackSurfaceOverviewFilter(FilterSet):
 
     class Meta:
         model = AttackSurfaceOverview
+        fields = {}
+
+
+class CategoryOverviewFilter(FilterSet):
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    category = CharFilter(field_name="category", lookup_expr="exact")
+    category__in = CharInFilter(field_name="category", lookup_expr="in")
+
+    class Meta:
+        model = ScanCategorySummary
         fields = {}

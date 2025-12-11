@@ -2252,6 +2252,21 @@ class AttackSurfaceOverviewSerializer(BaseSerializerV1):
         resource_name = "attack-surface-overviews"
 
 
+class CategoryOverviewSerializer(BaseSerializerV1):
+    """Serializer for category overview aggregations."""
+
+    id = serializers.CharField(source="category")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "category-overviews"
+
+
 class OverviewRegionSerializer(serializers.Serializer):
     id = serializers.SerializerMethodField()
     provider_type = serializers.CharField()
