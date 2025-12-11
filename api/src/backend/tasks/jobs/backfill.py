@@ -1,6 +1,8 @@
 from collections import defaultdict
+from datetime import timedelta
 
 from django.db.models import Sum
+from django.utils import timezone
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
@@ -186,10 +188,6 @@ def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
     Backfill DailySeveritySummary from completed scans.
     Groups by provider+date, keeps latest scan per day.
     """
-    from datetime import timedelta
-
-    from django.utils import timezone
-
     created_count = 0
     updated_count = 0
 
