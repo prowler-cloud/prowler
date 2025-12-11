@@ -91,9 +91,9 @@
     "section": "dependencies",
     "name": "@next/third-parties",
     "from": "15.3.5",
-    "to": "15.3.5",
+    "to": "15.5.7",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-11T10:09:35.092Z"
   },
   {
     "section": "dependencies",
