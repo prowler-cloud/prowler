@@ -11,6 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Finding Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
 - Add Alibaba Cloud provider [(#9501)](https://github.com/prowler-cloud/prowler/pull/9501)
+- Add searchbar when adding a provider [(#9514)](https://github.com/prowler-cloud/prowler/pull/9514)
 
 ### 🔄 Changed
 
