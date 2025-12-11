@@ -23,7 +23,6 @@
     "test:e2e:install": "playwright install"
   },
   "dependencies": {
-    "@ai-sdk/langchain": "1.0.109",
     "@ai-sdk/react": "2.0.111",
     "@aws-sdk/client-bedrock-runtime": "3.948.0",
     "@heroui/react": "2.8.4",

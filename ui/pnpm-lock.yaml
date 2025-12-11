@@ -18,9 +18,6 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/langchain':
-        specifier: 1.0.109
-        version: 1.0.109(zod@4.1.11)
       '@ai-sdk/react':
         specifier: 2.0.111
         version: 2.0.111(react@19.2.1)(zod@4.1.11)
@@ -360,10 +357,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/langchain@1.0.109':
-    resolution: {integrity: sha512-ZsMGMQt8cSp5xdLlNll1FoIfJWkqGsXFutTbENM7CYeNfK+YhWn7iWnbsbQOUuWIlhpIBa96yE5pAOjbnyW+dg==}
-    engines: {node: '>=18'}
 
   '@ai-sdk/provider-utils@3.0.18':
     resolution: {integrity: sha512-ypv1xXMsgGcNKUP+hglKqtdDuMg68nWHucPPAhIENrbFAI+xCHiqPVN8Zllxyv1TNZwGWUghPxJXU+Mqps0YRQ==}
@@ -8508,12 +8501,6 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.18(zod@4.1.11)
       '@vercel/oidc': 3.0.5
       zod: 4.1.11
-
-  '@ai-sdk/langchain@1.0.109(zod@4.1.11)':
-    dependencies:
-      ai: 5.0.109(zod@4.1.11)
-    transitivePeerDependencies:
-      - zod
 
   '@ai-sdk/provider-utils@3.0.18(zod@4.1.11)':
     dependencies:
