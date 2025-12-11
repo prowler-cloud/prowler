@@ -83,12 +83,6 @@ export const ResourceDetail = ({
   resourceId: string;
   initialResourceData: ResourceProps;
 }) => {
-  console.log("[ResourceDetail] Backend response:", initialResourceData);
-  console.log(
-    "[ResourceDetail] Resource attributes:",
-    initialResourceData?.attributes,
-  );
-
   const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
@@ -312,20 +306,34 @@ export const ResourceDetail = ({
 
           {attributes.metadata &&
           Object.entries(attributes.metadata).length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                Metadata
-              </h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(attributes.metadata).map(([key, value]) => (
-                  <InfoField key={key} label={key}>
-                    {typeof value === "object"
-                      ? JSON.stringify(value)
-                      : renderValue(String(value))}
-                  </InfoField>
-                ))}
+            <InfoField label="Metadata" variant="simple">
+              <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
+                <Snippet
+                  className="absolute top-2 right-2 z-10 bg-transparent"
+                  classNames={{
+                    base: "bg-transparent p-0 min-w-0",
+                    pre: "hidden",
+                  }}
+                >
+                  {JSON.stringify(
+                    typeof attributes.metadata === "string"
+                      ? JSON.parse(attributes.metadata)
+                      : attributes.metadata,
+                    null,
+                    2,
+                  )}
+                </Snippet>
+                <pre className="minimal-scrollbar mr-10 max-h-[100px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                  {JSON.stringify(
+                    typeof attributes.metadata === "string"
+                      ? JSON.parse(attributes.metadata)
+                      : attributes.metadata,
+                    null,
+                    2,
+                  )}
+                </pre>
               </div>
-            </div>
+            </InfoField>
           ) : null}
 
           {resourceTags && Object.entries(resourceTags).length > 0 ? (

@@ -55,9 +55,6 @@ export const FindingDetail = ({
 }: {
   findingDetails: FindingProps;
 }) => {
-  console.log("[FindingDetail] Backend response:", findingDetails);
-  console.log("[FindingDetail] Resource data:", findingDetails.relationships?.resource);
-
   const finding = findingDetails;
   const attributes = finding.attributes;
   const resource = finding.relationships.resource.attributes;
