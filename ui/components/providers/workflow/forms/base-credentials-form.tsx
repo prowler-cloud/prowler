@@ -13,7 +13,7 @@ import { requiresBackButton } from "@/lib/provider-helpers";
 import {
   AlibabaCloudCredentials,
   AlibabaCloudCredentialsRole,
-  ApiError,
+  ApiResponse,
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
@@ -47,14 +47,6 @@ import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
-
-type ApiResponse = {
-  error?: string;
-  errors?: ApiError[];
-  data?: unknown;
-  success?: boolean;
-  status?: number;
-};
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;

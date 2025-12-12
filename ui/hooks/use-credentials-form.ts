@@ -11,17 +11,9 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
-  ApiError,
+  ApiResponse,
   ProviderType,
 } from "@/types";
-
-type ApiResponse = {
-  error?: string;
-  errors?: ApiError[];
-  data?: unknown;
-  success?: boolean;
-  status?: number;
-};
 
 type UseCredentialsFormProps = {
   providerType: ProviderType;
@@ -186,7 +178,6 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
         };
       case "alibabacloud":
-        // AlibabaCloud Role credentials
         if (via === "role") {
           return {
             ...baseDefaults,
