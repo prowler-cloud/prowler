@@ -87,6 +87,41 @@ ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
     "ec2-imdsv1": ["aws"],
 }
 
+
+def aggregate_category_counts(
+    categories: list[str],
+    severity: str,
+    status: str,
+    delta: str | None,
+    muted: bool,
+    cache: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """
+    Increment category counters in-place for a finding.
+
+    Args:
+        categories: List of categories from finding metadata.
+        severity: Severity level (e.g., "high", "medium").
+        status: Finding status as string ("FAIL", "PASS").
+        delta: Delta value as string ("new", "changed") or None.
+        muted: Whether the finding is muted.
+        cache: Dict {(category, severity): {"total", "failed", "new_failed"}} to update.
+    """
+    is_failed = status == "FAIL" and not muted
+    is_new_failed = is_failed and delta == "new"
+
+    for cat in categories:
+        key = (cat, severity)
+        if key not in cache:
+            cache[key] = {"total": 0, "failed": 0, "new_failed": 0}
+        if not muted:
+            cache[key]["total"] += 1
+        if is_failed:
+            cache[key]["failed"] += 1
+        if is_new_failed:
+            cache[key]["new_failed"] += 1
+
+
 _ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
 
 
@@ -611,23 +646,14 @@ def _process_finding_micro_batch(
         )
 
         # Track categories with counts for ScanCategorySummary by (category, severity)
-        # total_findings: non-muted findings only
-        # failed_findings: non-muted FAIL (subset of total)
-        # new_failed_findings: non-muted FAIL with delta='new' (subset of failed)
-        finding_categories = check_metadata.get("categories", []) or []
-        finding_severity = finding.severity.value
-        is_failed = status == FindingStatus.FAIL and not is_muted
-        is_new_failed = is_failed and delta == Finding.DeltaChoices.NEW
-        for cat in finding_categories:
-            key = (cat, finding_severity)
-            if key not in scan_categories_cache:
-                scan_categories_cache[key] = {"total": 0, "failed": 0, "new_failed": 0}
-            if not is_muted:
-                scan_categories_cache[key]["total"] += 1
-            if is_failed:
-                scan_categories_cache[key]["failed"] += 1
-            if is_new_failed:
-                scan_categories_cache[key]["new_failed"] += 1
+        aggregate_category_counts(
+            categories=check_metadata.get("categories", []) or [],
+            severity=finding.severity.value,
+            status=status.value,
+            delta=delta.value if delta else None,
+            muted=is_muted,
+            cache=scan_categories_cache,
+        )
 
     # Bulk operations within single transaction
     with rls_transaction(tenant_id):

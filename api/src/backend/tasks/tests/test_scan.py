@@ -20,6 +20,7 @@ from tasks.jobs.scan import (
     _process_finding_micro_batch,
     _store_resources,
     aggregate_attack_surface,
+    aggregate_category_counts,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -3874,3 +3875,150 @@ class TestAggregateAttackSurface:
             aggregate_attack_surface(str(tenant.id), str(scan.id))
 
         mock_select_related.assert_called_once_with("provider")
+
+
+class TestAggregateCategoryCounts:
+    """Test aggregate_category_counts helper function."""
+
+    def test_aggregate_category_counts_basic(self):
+        """Test basic category counting for a non-muted PASS finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "iam"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert ("security", "high") in cache
+        assert ("iam", "high") in cache
+        assert cache[("security", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+        assert cache[("iam", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_fail_not_muted(self):
+        """Test category counting for a non-muted FAIL finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="critical",
+            status="FAIL",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "critical")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 0,
+        }
+
+    def test_aggregate_category_counts_new_fail(self):
+        """Test category counting for a new FAIL finding (delta='new')."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["gen-ai"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("gen-ai", "high")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+    def test_aggregate_category_counts_muted_finding(self):
+        """Test that muted findings are excluded from all counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=True,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 0, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_accumulates(self):
+        """Test that multiple calls accumulate counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+
+        # First finding: PASS
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        # Second finding: FAIL (new)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        # Third finding: FAIL (changed)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 3, "failed": 2, "new_failed": 1}
+
+    def test_aggregate_category_counts_empty_categories(self):
+        """Test with empty categories list."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=[],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache == {}
+
+    def test_aggregate_category_counts_changed_delta(self):
+        """Test that changed delta increments failed but not new_failed."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["iam"],
+            severity="medium",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("iam", "medium")] == {"total": 1, "failed": 1, "new_failed": 0}
+
+    def test_aggregate_category_counts_multiple_categories_single_finding(self):
+        """Test single finding with multiple categories."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "compliance", "data-protection"],
+            severity="low",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert len(cache) == 3
+        for cat in ["security", "compliance", "data-protection"]:
+            assert cache[(cat, "low")] == {"total": 1, "failed": 1, "new_failed": 1}

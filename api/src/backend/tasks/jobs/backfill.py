@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
+from tasks.jobs.scan import aggregate_category_counts
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
@@ -18,7 +19,6 @@ from api.models import (
     ScanCategorySummary,
     ScanSummary,
     StateChoices,
-    StatusChoices,
 )
 
 
@@ -299,7 +299,6 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         ).exists():
             return {"status": "already backfilled"}
 
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if not Scan.objects.filter(
             tenant_id=tenant_id,
             id=scan_id,
@@ -307,32 +306,18 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         ).exists():
             return {"status": "scan is not completed"}
 
-        # total_findings: non-muted findings only
-        # failed_findings: non-muted FAIL (subset of total)
-        # new_failed_findings: non-muted FAIL with delta='new' (subset of failed)
         category_counts: dict[tuple[str, str], dict[str, int]] = {}
         for finding in Finding.all_objects.filter(
             tenant_id=tenant_id, scan_id=scan_id
         ).values("categories", "severity", "status", "delta", "muted"):
-            categories_list = finding.get("categories") or []
-            severity = finding.get("severity")
-            status = finding.get("status")
-            delta = finding.get("delta")
-            muted = finding.get("muted", False)
-
-            is_failed = status == StatusChoices.FAIL and not muted
-            is_new_failed = is_failed and delta == Finding.DeltaChoices.NEW
-
-            for cat in categories_list:
-                key = (cat, severity)
-                if key not in category_counts:
-                    category_counts[key] = {"total": 0, "failed": 0, "new_failed": 0}
-                if not muted:
-                    category_counts[key]["total"] += 1
-                if is_failed:
-                    category_counts[key]["failed"] += 1
-                if is_new_failed:
-                    category_counts[key]["new_failed"] += 1
+            aggregate_category_counts(
+                categories=finding.get("categories") or [],
+                severity=finding.get("severity"),
+                status=finding.get("status"),
+                delta=finding.get("delta"),
+                muted=finding.get("muted", False),
+                cache=category_counts,
+            )
 
         if not category_counts:
             return {"status": "no categories to backfill"}
