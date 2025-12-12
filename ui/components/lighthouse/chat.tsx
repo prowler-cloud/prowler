@@ -311,7 +311,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col overflow-hidden">
+    <div className="relative flex h-full min-w-0 flex-col overflow-hidden">
       {/* Header with New Chat button */}
       {messages.length > 0 && (
         <div className="border-default-200 dark:border-default-100 border-b px-2 py-3 sm:px-4">
