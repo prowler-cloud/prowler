@@ -4,20 +4,20 @@ export const GRAPH_TABS = [
     label: "New Findings",
   },
   {
-    id: "risk-pipeline",
-    label: "Risk Pipeline",
-  },
-  {
     id: "threat-map",
     label: "Threat Map",
   },
   {
-    id: "risk-plot",
-    label: "Risk Plot",
-  },
-  {
     id: "risk-radar",
     label: "Risk Radar",
+  },
+  {
+    id: "risk-pipeline",
+    label: "Risk Pipeline",
+  },
+  {
+    id: "risk-plot",
+    label: "Risk Plot",
   },
 ] as const;
 

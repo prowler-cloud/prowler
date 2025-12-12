@@ -56,6 +56,17 @@ function getCategoryLabel(id: string): string {
 }
 
 /**
+ * Calculates the percentage of new failed findings relative to total failed findings.
+ */
+function calculateChangePercentage(
+  newFailedFindings: number,
+  failedFindings: number,
+): number {
+  if (failedFindings === 0) return 0;
+  return Math.round((newFailedFindings / failedFindings) * 100);
+}
+
+/**
  * Maps a single category overview item to a RadarDataPoint.
  */
 function mapCategoryToRadarPoint(item: CategoryOverview): RadarDataPoint {
@@ -65,7 +76,7 @@ function mapCategoryToRadarPoint(item: CategoryOverview): RadarDataPoint {
   return {
     category: getCategoryLabel(id),
     value: failed_findings,
-    change: new_failed_findings,
+    change: calculateChangePercentage(new_failed_findings, failed_findings),
     severityData: [
       { name: "Critical", value: severity.critical },
       { name: "High", value: severity.high },
