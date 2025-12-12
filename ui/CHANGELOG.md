@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.16.0] (Prowler Unreleased)
+
+### 🚀 Added
+
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
 ## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
