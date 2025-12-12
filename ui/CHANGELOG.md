@@ -2,28 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.16.0] (Prowler Unreleased)
-
-### 🚀 Added
-
-- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
-
-### 🔄 Changed
-
-### 🐞 Fixed
-
----
-
-## [1.15.1] (Prowler Unreleased)
+## [1.15.1] (Prowler v5.15.1)
 
 ### 🔐 Security
 
 - Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
 - Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
 
->>>>>>> 0c2c5ea26 (chore: update React 19.2.2 for security improvements (#9534))
+---
+
 ## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
