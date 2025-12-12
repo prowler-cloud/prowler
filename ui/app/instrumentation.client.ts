@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Client-side Sentry instrumentation
  *
@@ -8,13 +10,12 @@
  * For runtime-specific configs, see: sentry/sentry.server.config.ts and sentry/sentry.edge.config.ts
  */
 
-import { browserTracingIntegration } from "@sentry/browser";
 import * as Sentry from "@sentry/nextjs";
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
-// Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
+// Only initialize Sentry in the browser (not during SSR)
+if (typeof window !== "undefined" && SENTRY_DSN) {
   const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "local";
 
   /**
@@ -43,12 +44,12 @@ if (SENTRY_DSN) {
     tracesSampleRate: isDevelopment ? 1.0 : 0.5,
     profilesSampleRate: isDevelopment ? 1.0 : 0.5,
 
-    // 🔌 Integrations
+    // 🔌 Integrations - browserTracingIntegration is client-only
     integrations: [
       // 📊 Performance Monitoring: Core Web Vitals + RUM
       // Tracks LCP, FID, CLS, INP
       // Real User Monitoring captures actual user experience, not synthetic tests
-      browserTracingIntegration({
+      Sentry.browserTracingIntegration({
         enableLongTask: true, // Detect tasks that block UI (>50ms)
         enableInp: true, // Interaction to Next Paint (Core Web Vital)
       }),

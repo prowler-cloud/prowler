@@ -61,4 +61,5 @@ def schedule_provider_scan(provider_instance: Provider):
             "tenant_id": str(provider_instance.tenant_id),
             "provider_id": provider_id,
         },
+        countdown=1,  # Avoid race conditions between the worker and the database
     )
