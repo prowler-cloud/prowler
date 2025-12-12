@@ -6,12 +6,13 @@ including searching, connecting, and deleting providers.
 
 from typing import Any
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.providers import (
     ProviderConnectionStatus,
     ProvidersListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class ProvidersTools(BaseTool):
@@ -100,9 +101,7 @@ class ProvidersTools(BaseTool):
 
         clean_params = self.api_client.build_filter_params(params)
 
-        api_response = await self.api_client.get(
-            "/api/v1/providers", params=clean_params
-        )
+        api_response = await self.api_client.get("/providers", params=clean_params)
         simplified_response = ProvidersListResponse.from_api_response(api_response)
 
         # Fetch secret_type for each provider that has a secret
@@ -306,9 +305,7 @@ class ProvidersTools(BaseTool):
         self.logger.info(f"Deleting provider {provider_id}...")
         try:
             # Initiate the deletion task
-            task_response = await self.api_client.delete(
-                f"/api/v1/providers/{provider_id}"
-            )
+            task_response = await self.api_client.delete(f"/providers/{provider_id}")
             task_id = task_response.get("data", {}).get("id")
 
             # Poll until task completes (with 60 second timeout)
@@ -345,7 +342,7 @@ class ProvidersTools(BaseTool):
         """
         self.logger.info(f"Checking if provider {provider_uid} exists...")
         response = await self.api_client.get(
-            "/api/v1/providers", params={"filter[uid]": provider_uid}
+            "/providers", params={"filter[uid]": provider_uid}
         )
         providers = response.get("data", [])
 
@@ -391,7 +388,7 @@ class ProvidersTools(BaseTool):
         if alias:
             provider_body["data"]["attributes"]["alias"] = alias
 
-        await self.api_client.post("/api/v1/providers", json_data=provider_body)
+        await self.api_client.post("/providers", json_data=provider_body)
 
         provider_id = await self._check_provider_exists(provider_uid)
         if provider_id is None:
@@ -418,7 +415,7 @@ class ProvidersTools(BaseTool):
             }
         }
         result = await self.api_client.patch(
-            f"/api/v1/providers/{prowler_provider_id}", json_data=update_body
+            f"/providers/{prowler_provider_id}", json_data=update_body
         )
         if result.get("data", {}).get("attributes", {}).get("alias") != alias:
             raise Exception(f"Provider {prowler_provider_id} alias update failed")
@@ -450,7 +447,7 @@ class ProvidersTools(BaseTool):
         """
         try:
             response = await self.api_client.get(
-                "/api/v1/providers/secrets",
+                "/providers/secrets",
                 params={"filter[provider]": prowler_provider_id},
             )
             secrets = response.get("data", [])
@@ -481,7 +478,7 @@ class ProvidersTools(BaseTool):
         """
         try:
             response = await self.api_client.get(
-                f"/api/v1/providers/secrets/{secret_id}",
+                f"/providers/secrets/{secret_id}",
                 params={"fields[provider-secrets]": "secret_type"},
             )
             secret_type = (
@@ -536,7 +533,7 @@ class ProvidersTools(BaseTool):
             }
             try:
                 response = await self.api_client.patch(
-                    f"/api/v1/providers/secrets/{existing_secret_id}",
+                    f"/providers/secrets/{existing_secret_id}",
                     json_data=update_body,
                 )
                 self.logger.info("Credentials updated successfully")
@@ -567,7 +564,7 @@ class ProvidersTools(BaseTool):
 
             try:
                 response = await self.api_client.post(
-                    "/api/v1/providers/secrets", json_data=secret_body
+                    "/providers/secrets", json_data=secret_body
                 )
                 self.logger.info("Credentials added successfully")
                 return response
@@ -588,7 +585,7 @@ class ProvidersTools(BaseTool):
         try:
             # Initiate the connection test task
             task_response = await self.api_client.post(
-                f"/api/v1/providers/{prowler_provider_id}/connection", json_data={}
+                f"/providers/{prowler_provider_id}/connection", json_data={}
             )
             task_id = task_response.get("data", {}).get("id")
 
@@ -619,5 +616,5 @@ class ProvidersTools(BaseTool):
             Provider data dictionary
         """
         return await self.api_client.get(
-            f"/api/v1/providers/{prowler_provider_id}",
+            f"/providers/{prowler_provider_id}",
         )

@@ -6,13 +6,14 @@ across all cloud providers.
 
 from typing import Any, Literal
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.findings import (
     DetailedFinding,
     FindingsListResponse,
     FindingsOverview,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class FindingsTools(BaseTool):
@@ -122,11 +123,11 @@ class FindingsTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest findings endpoint
-            endpoint = "/api/v1/findings/latest"
+            endpoint = "/findings/latest"
             params = {}
         else:
             # Dates provided - use historical findings endpoint
-            endpoint = "/api/v1/findings"
+            endpoint = "/findings"
             params = {
                 "filter[inserted_at__gte]": date_range[0],
                 "filter[inserted_at__lte]": date_range[1],
@@ -228,7 +229,7 @@ class FindingsTools(BaseTool):
 
         # Get API response and transform to detailed format
         api_response = await self.api_client.get(
-            f"/api/v1/findings/{finding_id}", params=params
+            f"/findings/{finding_id}", params=params
         )
         detailed_finding = DetailedFinding.from_api_response(
             api_response.get("data", {})
@@ -281,7 +282,7 @@ class FindingsTools(BaseTool):
 
         # Get API response and transform to simplified format
         api_response = await self.api_client.get(
-            "/api/v1/overviews/findings", params=clean_params
+            "/overviews/findings", params=clean_params
         )
         overview = FindingsOverview.from_api_response(api_response)
 
