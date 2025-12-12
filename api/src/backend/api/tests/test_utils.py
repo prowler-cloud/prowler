@@ -16,6 +16,7 @@ from api.utils import (
     return_prowler_provider,
     validate_invitation,
 )
+from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -116,6 +117,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.MONGODBATLAS.value, MongodbatlasProvider),
             (Provider.ProviderChoices.ORACLECLOUD.value, OraclecloudProvider),
             (Provider.ProviderChoices.IAC.value, IacProvider),
+            (Provider.ProviderChoices.ALIBABACLOUD.value, AlibabacloudProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
