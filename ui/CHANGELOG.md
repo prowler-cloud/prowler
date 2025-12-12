@@ -2,7 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.15.0] (Prowler Unreleased)
+## [1.16.0] (Prowler Unreleased)
+
+### 🚀 Added
+
+- Resource details (partition, details and metadata) [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
 
@@ -10,7 +22,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation progress bar for page transitions using Next.js `onRouterTransitionStart` [(#9465)](https://github.com/prowler-cloud/prowler/pull/9465)
 - Finding Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
-- Resource details (partition, details and metadata) [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
 
 ### 🔄 Changed
 
@@ -25,7 +36,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.14.3] (Prowler Unreleased)
+## [1.14.3] (Prowler v5.14.3)
 
 ### 🐞 Fixed
 
