@@ -4241,16 +4241,41 @@ class OverviewViewSet(BaseRLSViewSet):
         filterset = filterset_class(normalized_params, queryset=queryset)
         return filterset.qs
 
-    def _latest_scan_ids_for_allowed_providers(self, tenant_id):
+    def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
+        queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+        )
+        if provider_filters:
+            queryset = queryset.filter(**provider_filters)
         return (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
+            queryset.order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
+
+    def _extract_provider_filters_from_params(self):
+        """Extract provider filters from query params to apply on Scan queryset."""
+        params = self.request.query_params
+        filters = {}
+
+        provider_id = params.get("filter[provider_id]")
+        if provider_id:
+            filters["provider_id"] = provider_id
+
+        provider_id_in = params.get("filter[provider_id__in]")
+        if provider_id_in:
+            filters["provider_id__in"] = provider_id_in.split(",")
+
+        provider_type = params.get("filter[provider_type]")
+        if provider_type:
+            filters["provider__provider"] = provider_type
+
+        provider_type_in = params.get("filter[provider_type__in]")
+        if provider_type_in:
+            filters["provider__provider__in"] = provider_type_in.split(",")
+
+        return filters
 
     def _attack_surface_check_ids_by_provider_types(self, provider_types):
         check_ids_by_type = {
@@ -4924,12 +4949,23 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="categories")
     def categories(self, request):
         tenant_id = request.tenant_id
-        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
+        provider_filters = self._extract_provider_filters_from_params()
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(
+            tenant_id, provider_filters
+        )
 
         base_queryset = ScanCategorySummary.objects.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
-        filtered_queryset = self._apply_filterset(base_queryset, CategoryOverviewFilter)
+        provider_filter_keys = {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+        }
+        filtered_queryset = self._apply_filterset(
+            base_queryset, CategoryOverviewFilter, exclude_keys=provider_filter_keys
+        )
 
         aggregation = (
             filtered_queryset.values("category", "severity")
