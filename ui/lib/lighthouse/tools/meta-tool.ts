@@ -1,8 +1,22 @@
+import "server-only";
+
 import type { StructuredTool } from "@langchain/core/tools";
 import { tool } from "@langchain/core/tools";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse/mcp-client";
+
+/** Input type for describe_tool */
+interface DescribeToolInput {
+  toolName: string;
+}
+
+/** Input type for execute_tool */
+interface ExecuteToolInput {
+  toolName: string;
+  toolInput: Record<string, unknown>;
+}
 
 /**
  * Get all available tools (MCP only)
@@ -18,10 +32,17 @@ function getAllTools(): StructuredTool[] {
  * Describe a tool by getting its full schema
  */
 export const describeTool = tool(
-  async ({ toolName }) => {
+  async ({ toolName }: DescribeToolInput) => {
     const allTools = getAllTools();
 
     if (allTools.length === 0) {
+      Sentry.addBreadcrumb({
+        category: "meta-tool",
+        message: "describe_tool called but no tools available",
+        level: "warning",
+        data: { toolName },
+      });
+
       return {
         found: false,
         message: "No tools available. MCP server may not be connected.",
@@ -29,9 +50,16 @@ export const describeTool = tool(
     }
 
     // Find exact tool by name
-    const targetTool = allTools.find((tool) => tool.name === toolName);
+    const targetTool = allTools.find((t) => t.name === toolName);
 
     if (!targetTool) {
+      Sentry.addBreadcrumb({
+        category: "meta-tool",
+        message: `Tool not found: ${toolName}`,
+        level: "info",
+        data: { toolName, availableCount: allTools.length },
+      });
+
       return {
         found: false,
         message: `Tool '${toolName}' not found.`,
@@ -78,11 +106,18 @@ Returns:
  * Execute a tool with parameters
  */
 export const executeTool = tool(
-  async ({ toolName, toolInput }) => {
+  async ({ toolName, toolInput }: ExecuteToolInput) => {
     const allTools = getAllTools();
-    const targetTool = allTools.find((tool) => tool.name === toolName);
+    const targetTool = allTools.find((t) => t.name === toolName);
 
     if (!targetTool) {
+      Sentry.addBreadcrumb({
+        category: "meta-tool",
+        message: `execute_tool: Tool not found: ${toolName}`,
+        level: "warning",
+        data: { toolName, toolInput },
+      });
+
       return {
         error: `Tool '${toolName}' not found. Use describe_tool to check available tools.`,
         suggestion:
@@ -97,6 +132,13 @@ export const executeTool = tool(
           ? undefined
           : toolInput;
 
+      Sentry.addBreadcrumb({
+        category: "meta-tool",
+        message: `Executing tool: ${toolName}`,
+        level: "info",
+        data: { toolName, hasInput: !!input },
+      });
+
       // Execute the tool directly - let errors propagate so LLM can handle retries
       const result = await targetTool.invoke(input);
 
@@ -106,8 +148,26 @@ export const executeTool = tool(
         result,
       };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      Sentry.captureException(error, {
+        tags: {
+          component: "meta-tool",
+          tool_name: toolName,
+          error_type: "tool_execution_failed",
+        },
+        level: "error",
+        contexts: {
+          tool_execution: {
+            tool_name: toolName,
+            tool_input: JSON.stringify(toolInput),
+          },
+        },
+      });
+
       return {
-        error: `Failed to execute '${toolName}': ${error instanceof Error ? error.message : String(error)}`,
+        error: `Failed to execute '${toolName}': ${errorMessage}`,
         toolName,
         toolInput,
       };
