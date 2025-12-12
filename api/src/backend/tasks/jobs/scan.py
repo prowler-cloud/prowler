@@ -79,13 +79,14 @@ FINDINGS_MICRO_BATCH_SIZE = env.int("DJANGO_FINDINGS_MICRO_BATCH_SIZE", default=
 # Controls how many rows each ORM bulk_create/bulk_update call sends to Postgres
 SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=500)
 
-
 ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
     "internet-exposed": None,  # Compatible with all providers
     "secrets": None,  # Compatible with all providers
     "privilege-escalation": ["aws", "kubernetes"],
     "ec2-imdsv1": ["aws"],
 }
+
+_ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
 
 
 def aggregate_category_counts(
@@ -120,9 +121,6 @@ def aggregate_category_counts(
             cache[key]["failed"] += 1
         if is_new_failed:
             cache[key]["new_failed"] += 1
-
-
-_ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
 
 
 def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
