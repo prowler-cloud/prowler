@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 
-- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXX)
+- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
 
 ---
 
