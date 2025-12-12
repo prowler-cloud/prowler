@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
-export interface ActiveFilterBadgeProps {
+export interface FilterBadgeConfig {
   /**
    * The filter key without the "filter[]" wrapper.
    * Example: "scan__in", "check_id__in", "provider__in"
@@ -33,14 +33,45 @@ export interface ActiveFilterBadgeProps {
   formatMultiple?: (count: number, label: string) => string;
 }
 
-export const ActiveFilterBadge = ({
-  filterKey,
-  label,
-  formatValue = (v) => v,
-  formatMultiple = (count, lbl) => `${count} ${lbl}s filtered`,
-}: ActiveFilterBadgeProps) => {
+/**
+ * Default filter badge configurations for common use cases.
+ * Add new filters here to automatically show them as badges.
+ */
+export const DEFAULT_FILTER_BADGES: FilterBadgeConfig[] = [
+  {
+    filterKey: "check_id__in",
+    label: "Check ID",
+    formatMultiple: (count) => `${count} Check IDs filtered`,
+  },
+  {
+    filterKey: "category__in",
+    label: "Category",
+    formatMultiple: (count) => `${count} Categories filtered`,
+  },
+  {
+    filterKey: "scan__in",
+    label: "Scan",
+    formatValue: (id) => `${id.slice(0, 8)}...`,
+  },
+];
+
+interface ActiveFilterBadgeProps {
+  config: FilterBadgeConfig;
+}
+
+/**
+ * Single filter badge component that reads from URL and displays if active.
+ */
+const ActiveFilterBadge = ({ config }: ActiveFilterBadgeProps) => {
   const searchParams = useSearchParams();
   const { clearFilter } = useUrlFilters();
+
+  const {
+    filterKey,
+    label,
+    formatValue = (v) => v,
+    formatMultiple = (count, lbl) => `${count} ${lbl}s filtered`,
+  } = config;
 
   const fullKey = filterKey.startsWith("filter[")
     ? filterKey
@@ -70,29 +101,26 @@ export const ActiveFilterBadge = ({
   );
 };
 
+interface ActiveFilterBadgesProps {
+  /**
+   * Filter configurations to render as badges.
+   * Defaults to DEFAULT_FILTER_BADGES if not provided.
+   */
+  filters?: FilterBadgeConfig[];
+}
+
 /**
- * Pre-configured filter badges for common use cases
+ * Renders filter badges for all configured filters that are active in the URL.
+ * Only shows badges for filters that have values in the URL params.
  */
-export const ScanFilterBadge = () => (
-  <ActiveFilterBadge
-    filterKey="scan__in"
-    label="Scan"
-    formatValue={(id) => `${id.slice(0, 8)}...`}
-  />
-);
-
-export const CheckIdFilterBadge = () => (
-  <ActiveFilterBadge
-    filterKey="check_id__in"
-    label="Check ID"
-    formatMultiple={(count) => `${count} Check IDs filtered`}
-  />
-);
-
-export const CategoryFilterBadge = () => (
-  <ActiveFilterBadge
-    filterKey="category__in"
-    label="Category"
-    formatMultiple={(count) => `${count} Categories filtered`}
-  />
-);
+export const ActiveFilterBadges = ({
+  filters = DEFAULT_FILTER_BADGES,
+}: ActiveFilterBadgesProps) => {
+  return (
+    <>
+      {filters.map((config) => (
+        <ActiveFilterBadge key={config.filterKey} config={config} />
+      ))}
+    </>
+  );
+};

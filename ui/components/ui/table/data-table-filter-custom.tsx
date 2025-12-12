@@ -3,8 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
-import { ActiveCheckIdFilter } from "@/components/filters/active-check-id-filter";
-import { CategoryFilterBadge } from "@/components/filters/active-filter-badge";
+import { ActiveFilterBadges } from "@/components/filters/active-filter-badge";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import {
   MultiSelect,
@@ -167,8 +166,7 @@ export const DataTableFilterCustom = ({
         );
       })}
       <div className="flex items-center justify-start gap-2">
-        <ActiveCheckIdFilter />
-        <CategoryFilterBadge />
+        <ActiveFilterBadges />
         <ClearFiltersButton />
       </div>
     </div>
