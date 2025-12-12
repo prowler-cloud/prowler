@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Resource details (partition, details and metadata) [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
 
 ### 🔄 Changed
 
