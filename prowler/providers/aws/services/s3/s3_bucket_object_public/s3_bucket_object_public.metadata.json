@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_object_public",
+  "CheckTitle": "Ensure that S3 buckets do not have public objects",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::resource",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "This check verifies if S3 buckets have public objects by random sampling.",
+  "Risk": "Public objects can be accessed by anyone on the internet, potentially leaking sensitive data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-object-acl --bucket <bucket_name> --key <object_key> --acl private",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that your S3 objects are not public. You can block public access at the bucket or account level to prevent this.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+    }
+  },
+  "Categories": [
+    "public-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check samples 3 objects per bucket to verify public access."
+}
