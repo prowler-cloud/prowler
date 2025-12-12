@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.17.0] (Unreleased)
+
+### Changed
+
+- OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
+
+---
+
 ## [1.16.0] (Prowler v5.15.0)
 
 ### Added
