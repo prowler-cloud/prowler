@@ -115,6 +115,9 @@ const SSRDataTable = async ({
       "inserted_at",
       "updated_at",
       "uid",
+      "partition",
+      "details",
+      "metadata",
     ],
   });
 

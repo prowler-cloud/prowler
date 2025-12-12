@@ -2,11 +2,25 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [Unreleased]
+## [1.16.0] (Prowler Unreleased)
 
 ### 🚀 Added
 
 - Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.15.1] (Prowler Unreleased)
+
+### 🔐 Security
+
+- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
+- Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
 
 ---
 
@@ -33,10 +47,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
-
-### 🔐 Security
-
-- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522)
 
 ---
 

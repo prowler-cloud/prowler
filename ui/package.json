@@ -81,8 +81,8 @@
     "next-auth": "5.0.0-beta.30",
     "next-themes": "0.2.1",
     "radix-ui": "1.4.2",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
+    "react": "19.2.2",
+    "react-dom": "19.2.2",
     "react-hook-form": "7.62.0",
     "react-markdown": "10.1.0",
     "recharts": "2.15.4",
@@ -141,12 +141,12 @@
       "@react-types/shared": "3.26.0",
       "@langchain/core": "0.3.77",
       "@internationalized/date": "3.10.0",
-      "alert>react": "19.2.1",
-      "alert>react-dom": "19.2.1",
-      "@react-aria/ssr>react": "19.2.1",
-      "@react-aria/ssr>react-dom": "19.2.1",
-      "@react-aria/visually-hidden>react": "19.2.1",
-      "@react-aria/interactions>react": "19.2.1"
+      "alert>react": "19.2.2",
+      "alert>react-dom": "19.2.2",
+      "@react-aria/ssr>react": "19.2.2",
+      "@react-aria/ssr>react-dom": "19.2.2",
+      "@react-aria/visually-hidden>react": "19.2.2",
+      "@react-aria/interactions>react": "19.2.2"
     }
   },
   "version": "0.0.1"

@@ -11,6 +11,9 @@ export interface ResourceProps {
     tags: Record<string, string>;
     type: string;
     failed_findings_count: number;
+    details: string | null;
+    partition: string | null;
+    metadata: Record<string, unknown> | null;
   };
   relationships: {
     provider: {
