@@ -73,7 +73,7 @@ We continuously monitor our dependencies for known vulnerabilities and ensure ti
 All container images are scanned before deployment:
 
 - **Trivy Vulnerability Scanning**:
-  - Scans for CRITICAL, HIGH, MEDIUM, and LOW severity vulnerabilities
+  - Scans images for vulnerabilities and misconfigurations
   - Generates SARIF reports uploaded to GitHub Security tab
   - Creates PR comments with scan summaries
   - Configurable to fail builds on critical findings
