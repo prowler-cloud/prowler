@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 28 tools | Yes |
+| Prowler Cloud/App | 22 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -19,6 +19,66 @@ All tools follow a consistent naming pattern with prefixes:
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
 - `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
+
+## Prowler Cloud/App Tools
+
+Manage Prowler Cloud or Prowler App (Self-Managed) features. **Requires authentication.**
+
+<Note>
+These tools require a valid API key. See the [Configuration Guide](/getting-started/basic-usage/prowler-mcp) for authentication setup.
+</Note>
+
+### Findings Management
+
+Tools for searching, viewing, and analyzing security findings across all cloud providers.
+
+- **`prowler_app_search_security_findings`** - Search and filter security findings with advanced filtering options (severity, status, provider, region, service, check ID, date range, muted status)
+- **`prowler_app_get_finding_details`** - Get comprehensive details about a specific finding including remediation guidance, check metadata, and resource relationships
+- **`prowler_app_get_findings_overview`** - Get aggregate statistics and trends about security findings as a markdown report
+
+### Provider Management
+
+Tools for managing cloud provider connections in Prowler.
+
+- **`prowler_app_search_providers`** - Search and view configured providers with their connection status
+- **`prowler_app_connect_provider`** - Register and connect a provider with credentials for security scanning
+- **`prowler_app_delete_provider`** - Permanently remove a provider from Prowler
+
+### Scan Management
+
+Tools for managing and monitoring security scans.
+
+- **`prowler_app_list_scans`** - List and filter security scans across all providers
+- **`prowler_app_get_scan`** - Get comprehensive details about a specific scan (progress, duration, resource counts)
+- **`prowler_app_trigger_scan`** - Trigger a manual security scan for a provider
+- **`prowler_app_schedule_daily_scan`** - Schedule automated daily scans for continuous monitoring
+- **`prowler_app_update_scan`** - Update scan name for better organization
+
+### Resources Management
+
+Tools for searching, viewing, and analyzing cloud resources discovered by Prowler.
+
+- **`prowler_app_list_resources`** - List and filter cloud resources with advanced filtering options (provider, region, service, resource type, tags)
+- **`prowler_app_get_resource`** - Get comprehensive details about a specific resource including configuration, metadata, and finding relationships
+- **`prowler_app_get_resources_overview`** - Get aggregate statistics about cloud resources as a markdown report
+
+### Muting Management
+
+Tools for managing finding muting, including pattern-based bulk muting (mutelist) and finding-specific mute rules.
+
+#### Mutelist (Pattern-Based Muting)
+
+- **`prowler_app_get_mutelist`** - Retrieve the current mutelist configuration for the tenant
+- **`prowler_app_set_mutelist`** - Create or update the mutelist configuration for pattern-based bulk muting
+- **`prowler_app_delete_mutelist`** - Remove the mutelist configuration from the tenant
+
+#### Mute Rules (Finding-Specific Muting)
+
+- **`prowler_app_list_mute_rules`** - Search and filter mute rules with pagination support
+- **`prowler_app_get_mute_rule`** - Retrieve comprehensive details about a specific mute rule
+- **`prowler_app_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
+- **`prowler_app_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
+- **`prowler_app_delete_mute_rule`** - Delete a mute rule from the system
 
 ## Prowler Hub Tools
 
@@ -52,60 +112,6 @@ Search and access official Prowler documentation. **No authentication required.*
 
 - **`prowler_docs_search`** - Search the official Prowler documentation using full-text search
 - **`prowler_docs_get_document`** - Retrieve the full markdown content of a specific documentation file
-
-## Prowler Cloud/App Tools
-
-Manage Prowler Cloud or Prowler App (Self-Managed) features. **Requires authentication.**
-
-<Note>
-These tools require a valid API key. See the [Configuration Guide](/getting-started/basic-usage/prowler-mcp) for authentication setup.
-</Note>
-
-### Findings Management
-
-- **`prowler_app_list_findings`** - List security findings with advanced filtering
-- **`prowler_app_get_finding`** - Get detailed information about a specific finding
-- **`prowler_app_get_latest_findings`** - Retrieve latest findings from the most recent scans
-- **`prowler_app_get_findings_metadata`** - Get unique metadata values from filtered findings
-- **`prowler_app_get_latest_findings_metadata`** - Get metadata from latest findings across all providers
-
-### Provider Management
-
-- **`prowler_app_list_providers`** - List all providers with filtering options
-- **`prowler_app_create_provider`** - Create a new provider in the current tenant
-- **`prowler_app_get_provider`** - Get detailed information about a specific provider
-- **`prowler_app_update_provider`** - Update provider details (alias, etc.)
-- **`prowler_app_delete_provider`** - Delete a specific provider
-- **`prowler_app_test_provider_connection`** - Test provider connection status
-
-### Provider Secrets Management
-
-- **`prowler_app_list_provider_secrets`** - List all provider secrets with filtering
-- **`prowler_app_add_provider_secret`** - Add or update credentials for a provider
-- **`prowler_app_get_provider_secret`** - Get detailed information about a provider secret
-- **`prowler_app_update_provider_secret`** - Update provider secret details
-- **`prowler_app_delete_provider_secret`** - Delete a provider secret
-
-### Scan Management
-
-- **`prowler_app_list_scans`** - List all scans with filtering options
-- **`prowler_app_create_scan`** - Trigger a manual scan for a specific provider
-- **`prowler_app_get_scan`** - Get detailed information about a specific scan
-- **`prowler_app_update_scan`** - Update scan details
-- **`prowler_app_get_scan_compliance_report`** - Download compliance report as CSV
-- **`prowler_app_get_scan_report`** - Download ZIP file containing complete scan report
-
-### Schedule Management
-
-- **`prowler_app_schedules_daily_scan`** - Create a daily scheduled scan for a provider
-
-### Processor Management
-
-- **`prowler_app_processors_list`** - List all processors with filtering
-- **`prowler_app_processors_create`** - Create a new processor (currently only mute lists supported)
-- **`prowler_app_processors_retrieve`** - Get processor details by ID
-- **`prowler_app_processors_partial_update`** - Update processor configuration
-- **`prowler_app_processors_destroy`** - Delete a processor
 
 ## Usage Tips
 
