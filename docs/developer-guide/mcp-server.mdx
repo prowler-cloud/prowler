@@ -8,8 +8,8 @@ This guide explains how to extend the Prowler MCP Server with new tools and feat
 **New to Prowler MCP Server?** Start with the user documentation:
 - [Overview](/getting-started/products/prowler-mcp) - Key capabilities, use cases, and deployment options
 - [Installation](/getting-started/installation/prowler-mcp) - Install locally or use the managed server
-- [Configuration](/getting-started/basic-usage/prowler-mcp) - Configure Claude Desktop, Cursor, and other MCP clients
-- [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools) - Complete list of all 34 available tools
+- [Configuration](/getting-started/basic-usage/prowler-mcp) - Configure Claude Desktop, Cursor, and other MCP hosts
+- [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools) - Complete list of all available tools
 </Info>
 
 ## Introduction
@@ -18,11 +18,11 @@ The Prowler MCP Server brings the entire Prowler ecosystem to AI assistants thro
 
 The server follows a modular architecture with three independent sub-servers:
 
-| Sub-Server | Tool Count | Auth Required | Description |
-|------------|------------|---------------|-------------|
-| Prowler Hub | 10 tools | No | Security checks catalog with **over 1000 checks**, fixers, and **70+ compliance frameworks** |
-| Prowler App | 22 tools | Yes | Full access to Prowler Cloud and Self-Managed features |
-| Prowler Documentation | 2 tools | No | Full-text search and retrieval of official documentation |
+| Sub-Server | Auth Required | Description |
+|------------|---------------|-------------|
+| Prowler App | Yes | Full access to Prowler Cloud and Self-Managed features |
+| Prowler Hub | No | Security checks catalog with **over 1000 checks**, fixers, and **70+ compliance frameworks** |
+| Prowler Documentation | No | Full-text search and retrieval of official documentation |
 
 <Note>
 For a complete list of tools and their descriptions, see the [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools).
@@ -40,37 +40,22 @@ The main server orchestrates three sub-servers with prefixed namespacing:
 mcp_server/prowler_mcp_server/
 ├── server.py                 # Main orchestrator
 ├── main.py                   # CLI entry point
-├── prowler_hub/              # 10 tools (no auth)
-├── prowler_app/              # 22 tools (auth required)
+├── prowler_hub/
+├── prowler_app/
 │   ├── tools/                # Tool implementations
 │   ├── models/               # Pydantic models
 │   └── utils/                # API client, auth, loader
-└── prowler_documentation/    # 2 tools (no auth)
+└── prowler_documentation/
 ```
-
-### Tool Naming Convention
-
-All tools follow a consistent naming pattern with prefixes:
-- `prowler_hub_*` - Prowler Hub catalog and compliance tools
-- `prowler_docs_*` - Prowler documentation search and retrieval
-- `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
 
 ### Tool Registration Patterns
 
 The MCP Server uses two patterns for tool registration:
 
 1. **Direct Decorators** (Prowler Hub/Docs): Tools are registered using `@mcp.tool()` decorators
-2. **Auto-Discovery** (Prowler App): Tools extending `BaseTool` are automatically discovered and registered
+2. **Auto-Discovery** (Prowler App): All public methods of `BaseTool` subclasses are auto-registered
 
 ## Adding Tools to Prowler App
-
-Prowler App tools use the `BaseTool` abstract class with automatic registration. This pattern supports the key capabilities documented in the [Overview](/getting-started/products/prowler-mcp#key-capabilities):
-- Provider Management
-- Scan Orchestration
-- Findings Analysis
-- Compliance Reporting
-- Secrets Management
-- Processor Configuration
 
 ### Step 1: Create the Tool Class
 
@@ -363,7 +348,7 @@ result = await self.api_client.poll_task_until_complete(
 
 ### Tool Docstrings
 
-Tool docstrings become LLM descriptions. Write them to support the [use cases](/getting-started/products/prowler-mcp#use-cases) documented in the Overview:
+Tool docstrings become description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
 
 ```python
 async def search_items(self, status: str = Field(...)) -> dict:
@@ -394,7 +379,8 @@ async def get_item(self, item_id: str) -> dict:
 
 ### Parameter Descriptions
 
-Use Pydantic `Field()` with clear descriptions:
+Use Pydantic `Field()` with clear descriptions. This also helps LLMs understand
+the purpose of each parameter, so be as descriptive as possible:
 
 ```python
 async def list_items(
@@ -409,7 +395,7 @@ async def list_items(
     ),
     page_size: int = Field(
         default=50,
-        description="Results per page (1-100, default: 50)"
+        description="Results per page"
     ),
 ) -> dict:
 ```
@@ -431,8 +417,10 @@ PROWLER_APP_API_KEY="pk_xxx" uv run prowler-mcp
 ```
 
 For complete installation and deployment options, see:
-- [Installation Guide](/getting-started/installation/prowler-mcp) - Docker, PyPI, and source installation
+- [Installation Guide](/getting-started/installation/prowler-mcp#from-source-development) - Development setup instructions
 - [Configuration Guide](/getting-started/basic-usage/prowler-mcp) - MCP client configuration
+
+For development I recommend to use the [Model Context Protocol Inspector](https://github.com/modelcontextprotocol/inspector) as MCP client to test and debug your tools.
 
 ## Related Documentation
 
@@ -441,13 +429,13 @@ For complete installation and deployment options, see:
     Key capabilities, use cases, and deployment options
   </Card>
   <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
-    Complete reference of all 34 available tools
+    Complete reference of all available tools
   </Card>
   <Card title="Prowler Hub" icon="database" href="/getting-started/products/prowler-hub">
     Security checks and compliance frameworks catalog
   </Card>
   <Card title="Lighthouse AI" icon="robot" href="/getting-started/products/prowler-lighthouse-ai">
-    AI-powered security analyst using similar architecture
+    AI-powered security analyst
   </Card>
 </CardGroup>
 
