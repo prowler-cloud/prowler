@@ -7,6 +7,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
 import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
   PromptInput,
   PromptInputBody,
   PromptInputSubmit,
@@ -247,8 +252,6 @@ export const Chat = ({
     },
   });
 
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-
   const restoreLastUserMessage = () => {
     let restoredText = "";
 
@@ -291,14 +294,6 @@ export const Chat = ({
       stop();
     }
   };
-
-  // Auto-scroll to bottom when new messages arrive or when streaming
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, status]);
 
   // Handlers
   const handleNewChat = () => {
@@ -432,39 +427,39 @@ export const Chat = ({
           </div>
         </div>
       ) : (
-        <div
-          className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 sm:p-4"
-          ref={messagesContainerRef}
-        >
-          {messages.map((message, idx) => (
-            <MessageItem
-              key={`${message.id}-${idx}-${message.role}`}
-              message={message}
-              index={idx}
-              isLastMessage={idx === messages.length - 1}
-              status={status}
-              onCopy={(text) => {
-                navigator.clipboard.writeText(text);
-                toast({
-                  title: "Copied",
-                  description: "Message copied to clipboard",
-                });
-              }}
-              onRegenerate={regenerate}
-            />
-          ))}
-          {/* Show loader only if no assistant message exists yet */}
-          {(status === MESSAGE_STATUS.SUBMITTED ||
-            status === MESSAGE_STATUS.STREAMING) &&
-            messages.length > 0 &&
-            messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
-              <div className="flex justify-start">
-                <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                  <Loader size="default" text="Thinking..." />
+        <Conversation className="flex-1">
+          <ConversationContent className="gap-4 px-2 py-4 sm:p-4">
+            {messages.map((message, idx) => (
+              <MessageItem
+                key={`${message.id}-${idx}-${message.role}`}
+                message={message}
+                index={idx}
+                isLastMessage={idx === messages.length - 1}
+                status={status}
+                onCopy={(text) => {
+                  navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                onRegenerate={regenerate}
+              />
+            ))}
+            {/* Show loader only if no assistant message exists yet */}
+            {(status === MESSAGE_STATUS.SUBMITTED ||
+              status === MESSAGE_STATUS.STREAMING) &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
+                <div className="flex justify-start">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                    <Loader size="default" text="Thinking..." />
+                  </div>
                 </div>
-              </div>
-            )}
-        </div>
+              )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       )}
 
       <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
