@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [Unreleased]
+
+### 🚀 Added
+
+- Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
+
+---
+
 ## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
