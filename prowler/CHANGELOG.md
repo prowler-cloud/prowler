@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.16.0] (Prowler v5.16.0)
+
+### Added
+
+- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXX)
+
+---
+
 ## [5.15.0] (Prowler v5.15.0)
 
 ### Added
