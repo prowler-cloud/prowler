@@ -26,7 +26,9 @@
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "privilege-escalation"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
