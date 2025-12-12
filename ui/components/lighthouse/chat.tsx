@@ -2,12 +2,10 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Copy, Plus, RotateCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Streamdown } from "streamdown";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
-import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
 import {
   PromptInput,
   PromptInputBody,
@@ -16,7 +14,13 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/lighthouse/ai-elements/prompt-input";
+import {
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+} from "@/components/lighthouse/chat-utils";
 import { Loader } from "@/components/lighthouse/loader";
+import { MessageItem } from "@/components/lighthouse/message-item";
 import {
   Button,
   Card,
@@ -206,11 +210,9 @@ export const Chat = ({
       if (
         firstTextPart &&
         "text" in firstTextPart &&
-        firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+        firstTextPart.text.startsWith(ERROR_PREFIX)
       ) {
-        const errorText = firstTextPart.text
-          .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
-          .trim();
+        const errorText = firstTextPart.text.replace(ERROR_PREFIX, "").trim();
         setErrorMessage(errorText);
         // Remove error message from chat history
         setMessages((prev) =>
@@ -219,7 +221,7 @@ export const Chat = ({
             return !(
               textPart &&
               "text" in textPart &&
-              textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+              textPart.text.startsWith(ERROR_PREFIX)
             );
           }),
         );
@@ -282,7 +284,10 @@ export const Chat = ({
   };
 
   const stopGeneration = () => {
-    if (status === "streaming" || status === "submitted") {
+    if (
+      status === MESSAGE_STATUS.STREAMING ||
+      status === MESSAGE_STATUS.SUBMITTED
+    ) {
       stop();
     }
   };
@@ -431,96 +436,28 @@ export const Chat = ({
           className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 sm:p-4"
           ref={messagesContainerRef}
         >
-          {messages.map((message, idx) => {
-            const isLastMessage = idx === messages.length - 1;
-            const messageText = message.parts
-              .filter((p) => p.type === "text")
-              .map((p) => ("text" in p ? p.text : ""))
-              .join("");
-
-            // Check if this is the streaming assistant message (last message, assistant role, while streaming)
-            const isStreamingAssistant =
-              isLastMessage &&
-              message.role === "assistant" &&
-              status === "streaming";
-
-            // Use a composite key to ensure uniqueness even if IDs are duplicated temporarily
-            const uniqueKey = `${message.id}-${idx}-${message.role}`;
-
-            return (
-              <div key={uniqueKey}>
-                <div
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === "user"
-                        ? "bg-bg-neutral-tertiary border-border-neutral-secondary border"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {/* Show loader before text appears or while streaming empty content */}
-                    {isStreamingAssistant && !messageText ? (
-                      <Loader size="default" text="Thinking..." />
-                    ) : (
-                      <div>
-                        <Streamdown
-                          parseIncompleteMarkdown={true}
-                          shikiTheme={["github-light", "github-dark"]}
-                          controls={{
-                            code: true,
-                            table: true,
-                            mermaid: true,
-                          }}
-                          allowedLinkPrefixes={["*"]}
-                          allowedImagePrefixes={["*"]}
-                        >
-                          {messageText}
-                        </Streamdown>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions for assistant messages */}
-                {message.role === "assistant" &&
-                  isLastMessage &&
-                  messageText &&
-                  status !== "streaming" && (
-                    <div className="mt-2 flex justify-start">
-                      <Actions className="max-w-[80%]">
-                        <Action
-                          tooltip="Copy message"
-                          label="Copy"
-                          onClick={() => {
-                            navigator.clipboard.writeText(messageText);
-                            toast({
-                              title: "Copied",
-                              description: "Message copied to clipboard",
-                            });
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Action>
-                        <Action
-                          tooltip="Regenerate response"
-                          label="Retry"
-                          onClick={() => regenerate()}
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Action>
-                      </Actions>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
+          {messages.map((message, idx) => (
+            <MessageItem
+              key={`${message.id}-${idx}-${message.role}`}
+              message={message}
+              index={idx}
+              isLastMessage={idx === messages.length - 1}
+              status={status}
+              onCopy={(text) => {
+                navigator.clipboard.writeText(text);
+                toast({
+                  title: "Copied",
+                  description: "Message copied to clipboard",
+                });
+              }}
+              onRegenerate={regenerate}
+            />
+          ))}
           {/* Show loader only if no assistant message exists yet */}
-          {(status === "submitted" || status === "streaming") &&
+          {(status === MESSAGE_STATUS.SUBMITTED ||
+            status === MESSAGE_STATUS.STREAMING) &&
             messages.length > 0 &&
-            messages[messages.length - 1].role === "user" && (
+            messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
               <div className="flex justify-start">
                 <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
                   <Loader size="default" text="Thinking..." />
@@ -533,7 +470,10 @@ export const Chat = ({
       <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
         <PromptInput
           onSubmit={(message) => {
-            if (status === "streaming" || status === "submitted") {
+            if (
+              status === MESSAGE_STATUS.STREAMING ||
+              status === MESSAGE_STATUS.SUBMITTED
+            ) {
               return;
             }
             if (message.text?.trim()) {
@@ -599,20 +539,24 @@ export const Chat = ({
             <PromptInputSubmit
               status={status}
               type={
-                status === "streaming" || status === "submitted"
+                status === MESSAGE_STATUS.STREAMING ||
+                status === MESSAGE_STATUS.SUBMITTED
                   ? "button"
                   : "submit"
               }
               onClick={(event) => {
-                if (status === "streaming" || status === "submitted") {
+                if (
+                  status === MESSAGE_STATUS.STREAMING ||
+                  status === MESSAGE_STATUS.SUBMITTED
+                ) {
                   event.preventDefault();
                   stopGeneration();
                 }
               }}
               disabled={
                 !uiState.inputValue?.trim() &&
-                status !== "streaming" &&
-                status !== "submitted"
+                status !== MESSAGE_STATUS.STREAMING &&
+                status !== MESSAGE_STATUS.SUBMITTED
               }
             />
           </PromptInputToolbar>
