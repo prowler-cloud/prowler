@@ -1,0 +1,372 @@
+from __future__ import annotations
+
+import os
+from typing import TYPE_CHECKING, Iterable
+
+from cloudflare import Cloudflare
+from colorama import Fore, Style
+
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
+from prowler.lib.logger import logger
+from prowler.lib.utils.utils import print_boxes
+from prowler.providers.cloudflare.exceptions.exceptions import (
+    CloudflareAPIError,
+    CloudflareCredentialsError,
+    CloudflareIdentityError,
+    CloudflareSessionError,
+)
+from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
+from prowler.providers.cloudflare.models import (
+    CloudflareAccount,
+    CloudflareIdentityInfo,
+    CloudflareSession,
+)
+from prowler.providers.common.models import Audit_Metadata, Connection
+from prowler.providers.common.provider import Provider
+
+# TYPE_CHECKING import to maintain Prowler's provider structure where models live in service modules.
+# This breaks the following import cycle at runtime:
+#   cloudflare_provider.py -> zones_service.py -> service.py -> cloudflare_provider.py
+# Safe because: (1) `from __future__ import annotations` (PEP 563) defers annotation evaluation,
+# and (2) TYPE_CHECKING blocks only execute for type checkers, not at runtime.
+if TYPE_CHECKING:
+    from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
+
+
+class CloudflareProvider(Provider):
+    """Cloudflare provider."""
+
+    _type: str = "cloudflare"
+    _session: CloudflareSession
+    _identity: CloudflareIdentityInfo
+    _audit_config: dict
+    _fixer_config: dict
+    _mutelist: CloudflareMutelist
+    _zones: list[CloudflareZone]
+    audit_metadata: Audit_Metadata
+
+    def __init__(
+        self,
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+        zones: Iterable[str] | None = None,
+        config_path: str = None,
+        config_content: dict | None = None,
+        fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
+    ):
+        logger.info("Instantiating Cloudflare provider...")
+
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        max_retries = self._audit_config.get("max_retries", 2)
+
+        self._session = CloudflareProvider.setup_session(
+            api_token=api_token,
+            api_key=api_key,
+            api_email=api_email,
+            max_retries=max_retries,
+        )
+
+        self._identity = CloudflareProvider.setup_identity(self._session)
+
+        self._fixer_config = fixer_config
+
+        if mutelist_content:
+            self._mutelist = CloudflareMutelist(mutelist_content=mutelist_content)
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = CloudflareMutelist(mutelist_path=mutelist_path)
+
+        self._zones = self._discover_zones(zones)
+        self._identity.audited_zones = [zone.id for zone in self._zones]
+
+        Provider.set_global_provider(self)
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
+
+    @property
+    def mutelist(self) -> CloudflareMutelist:
+        return self._mutelist
+
+    @property
+    def zones(self) -> list[CloudflareZone]:
+        return self._zones
+
+    @property
+    def accounts(self) -> list[CloudflareAccount]:
+        return self._identity.accounts
+
+    @staticmethod
+    def setup_session(
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+        max_retries: int = 2,
+    ) -> CloudflareSession:
+        """Initialize Cloudflare SDK client.
+
+        Args:
+            api_token: Cloudflare API token.
+            api_key: Cloudflare API key.
+            api_email: Cloudflare API email.
+            max_retries: Maximum number of retries for API requests (default is 2).
+        """
+        token = api_token or os.environ.get("CLOUDFLARE_API_TOKEN", "")
+        key = api_key or os.environ.get("CLOUDFLARE_API_KEY", "")
+        email = api_email or os.environ.get("CLOUDFLARE_API_EMAIL", "")
+
+        # Warn if both auth methods are set, use API Token (recommended)
+        if token and key and email:
+            logger.error(
+                "Both API Token and API Key + Email credentials are set. "
+                "Using API Token (recommended). "
+                "To avoid this error, unset CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL, or CLOUDFLARE_API_TOKEN. "
+                "Note: The Cloudflare SDK automatically reads credentials from environment variables, which causes conflicts."
+            )
+
+        # The Cloudflare SDK reads credentials from environment variables automatically.
+        # To ensure we use only the selected auth method, temporarily unset env vars.
+        env_token = os.environ.pop("CLOUDFLARE_API_TOKEN", None)
+        env_key = os.environ.pop("CLOUDFLARE_API_KEY", None)
+        env_email = os.environ.pop("CLOUDFLARE_API_EMAIL", None)
+
+        try:
+            if token:
+                client = Cloudflare(api_token=token, max_retries=max_retries)
+            elif key and email:
+                client = Cloudflare(
+                    api_key=key, api_email=email, max_retries=max_retries
+                )
+            else:
+                raise CloudflareCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="Cloudflare credentials not found. Available authentication methods: "
+                    "(1) API Token: use --cloudflare-api-token or set CLOUDFLARE_API_TOKEN environment variable; "
+                    "(2) API Key + Email: use --cloudflare-api-key and --cloudflare-api-email or set CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL environment variables.",
+                )
+
+            return CloudflareSession(
+                client=client,
+                api_token=client.api_token,
+                api_key=key or None,
+                api_email=email or None,
+            )
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise CloudflareSessionError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        finally:
+            # Restore environment variables
+            if env_token:
+                os.environ["CLOUDFLARE_API_TOKEN"] = env_token
+            if env_key:
+                os.environ["CLOUDFLARE_API_KEY"] = env_key
+            if env_email:
+                os.environ["CLOUDFLARE_API_EMAIL"] = env_email
+
+    @staticmethod
+    def setup_identity(session: CloudflareSession) -> CloudflareIdentityInfo:
+        """Fetch user and account metadata for Cloudflare."""
+        try:
+            client = session.client
+            user_id = None
+            email = None
+            try:
+                user_info = client.user.get()
+                user_id = getattr(user_info, "id", None)
+                email = getattr(user_info, "email", None)
+            except Exception as error:
+                logger.warning(
+                    f"Unable to retrieve Cloudflare user info: {error}. Continuing with limited identity details."
+                )
+
+            accounts: list[CloudflareAccount] = []
+            seen_account_ids: set[str] = set()
+
+            for account in client.accounts.list():
+                account_id = getattr(account, "id", None)
+                # Prevent infinite loop - skip if we've seen this account
+                if account_id in seen_account_ids:
+                    break
+                seen_account_ids.add(account_id)
+
+                account_name = getattr(account, "name", None)
+                account_type = getattr(account, "type", None)
+                accounts.append(
+                    CloudflareAccount(
+                        id=account_id,
+                        name=account_name,
+                        type=account_type,
+                    )
+                )
+
+            audited_accounts = [account.id for account in accounts]
+
+            return CloudflareIdentityInfo(
+                user_id=user_id,
+                email=email,
+                accounts=accounts,
+                audited_accounts=audited_accounts,
+            )
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise CloudflareIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+
+    def _discover_zones(
+        self, provided_zones: Iterable[str] | None = None
+    ) -> list[CloudflareZone]:
+        """Enumerate Cloudflare zones available to the authenticated identity."""
+        # Late import to avoid circular dependency
+        from prowler.providers.cloudflare.services.zones.zones_service import (
+            CloudflareZone,
+        )
+
+        zones: list[CloudflareZone] = []
+        filters = set(provided_zones) if provided_zones else set()
+        seen_zone_ids: set[str] = set()
+        try:
+            for zone in self._session.client.zones.list():
+                zone_id = getattr(zone, "id", None)
+                # Prevent infinite loop - skip if we've seen this zone
+                if zone_id in seen_zone_ids:
+                    break
+                seen_zone_ids.add(zone_id)
+
+                zone_account = getattr(zone, "account", None)
+                account_id = getattr(zone_account, "id", None) if zone_account else None
+                if (
+                    self._identity.audited_accounts
+                    and account_id not in self._identity.audited_accounts
+                ):
+                    continue
+                zone_name = getattr(zone, "name", None)
+                if filters and zone_id not in filters and zone_name not in filters:
+                    continue
+                zone_plan = getattr(zone, "plan", None)
+                zones.append(
+                    CloudflareZone(
+                        id=zone_id,
+                        name=zone_name,
+                        status=getattr(zone, "status", None),
+                        paused=getattr(zone, "paused", False),
+                        account=(
+                            CloudflareAccount(
+                                id=account_id,
+                                name=(
+                                    getattr(zone_account, "name", "")
+                                    if zone_account
+                                    else ""
+                                ),
+                                type=(
+                                    getattr(zone_account, "type", None)
+                                    if zone_account
+                                    else None
+                                ),
+                            )
+                            if zone_account
+                            else None
+                        ),
+                        plan=getattr(zone_plan, "name", None) if zone_plan else None,
+                    )
+                )
+
+            if not zones:
+                logger.warning(
+                    "No Cloudflare zones discovered with current credentials and filters."
+                )
+            return zones
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise CloudflareAPIError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message="Failed to enumerate Cloudflare zones.",
+            )
+
+    def print_credentials(self) -> None:
+        report_title = (
+            f"{Style.BRIGHT}Using the Cloudflare credentials below:{Style.RESET_ALL}"
+        )
+        report_lines = []
+
+        # Authentication method
+        if self._session.api_token:
+            report_lines.append(
+                f"Authentication: {Fore.YELLOW}API Token{Style.RESET_ALL}"
+            )
+        elif self._session.api_key and self._session.api_email:
+            report_lines.append(
+                f"Authentication: {Fore.YELLOW}API Key + Email{Style.RESET_ALL}"
+            )
+
+        # Email (from identity or session)
+        email = self.identity.email or self._session.api_email
+        if email:
+            report_lines.append(f"Email: {Fore.YELLOW}{email}{Style.RESET_ALL}")
+
+        # Accounts
+        if self.accounts:
+            accounts = ", ".join([account.id for account in self.accounts])
+            report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
+
+        # Zones
+        if self._zones:
+            zones = ", ".join([zone.name for zone in self._zones])
+            report_lines.append(f"Zones: {Fore.YELLOW}{zones}{Style.RESET_ALL}")
+
+        print_boxes(report_lines, report_title)
+
+    def test_connection(self) -> Connection:
+        try:
+            _ = self._session.client.user.get()
+            return Connection(is_connected=True)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return Connection(is_connected=False, error=error)
+
+    def validate_arguments(self) -> None:
+        return None

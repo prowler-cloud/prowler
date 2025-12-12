@@ -53,6 +53,7 @@ class Provider(str, Enum):
     AWS = "aws"
     GCP = "gcp"
     AZURE = "azure"
+    CLOUDFLARE = "cloudflare"
     KUBERNETES = "kubernetes"
     M365 = "m365"
     GITHUB = "github"
