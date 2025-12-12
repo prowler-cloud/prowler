@@ -2,6 +2,17 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.17.0] (Prowler UNRELEASED)
+
+### Added
+- New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- Endpoints `GET /findings` and `GET /findings/latests` can now use the category filter [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+
+### Changed
+- Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+
+---
+
 ## [1.16.1] (Prowler v5.15.1)
 
 ### Fixed
