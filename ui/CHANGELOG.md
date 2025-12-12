@@ -26,6 +26,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
 
+### 🔐 Security
+
+- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522)
+
 ---
 
 ## [1.14.2] (Prowler v5.14.2)
@@ -36,7 +40,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Sort compliance cards by name from the compliance overview [(#9422)](https://github.com/prowler-cloud/prowler/pull/9422)
 - Risk severity chart must show only FAIL findings [(#9452)](https://github.com/prowler-cloud/prowler/pull/9452)
 
-### Security
+### 🔐 Security
 
 - Bump Next.js and React for CVE-2025-66478 [(#9447)](https://github.com/prowler-cloud/prowler/pull/9447)
 
