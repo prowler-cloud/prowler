@@ -86,8 +86,7 @@ export function MessageItem({
                   table: true,
                   mermaid: true,
                 }}
-                allowedLinkPrefixes={["*"]}
-                allowedImagePrefixes={["*"]}
+                isAnimating={isStreamingAssistant}
               >
                 {messageText}
               </Streamdown>
