@@ -75,6 +75,7 @@ function mapCategoryToRadarPoint(item: CategoryOverview): RadarDataPoint {
 
   return {
     category: getCategoryLabel(id),
+    categoryId: id,
     value: failed_findings,
     change: calculateChangePercentage(new_failed_findings, failed_findings),
     severityData: [
