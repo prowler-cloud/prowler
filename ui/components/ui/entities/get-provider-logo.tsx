@@ -1,6 +1,5 @@
-import React from "react";
-
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
@@ -33,6 +32,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <OracleCloudProviderBadge width={35} height={35} />;
     case "mongodbatlas":
       return <MongoDBAtlasProviderBadge width={35} height={35} />;
+    case "alibabacloud":
+      return <AlibabaCloudProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -58,6 +59,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Oracle Cloud Infrastructure";
     case "mongodbatlas":
       return "MongoDB Atlas";
+    case "alibabacloud":
+      return "Alibaba Cloud";
     default:
       return "Unknown Provider";
   }

@@ -122,7 +122,13 @@ export const getProviderFormType = (
   via?: string,
 ): ProviderFormType => {
   // Providers that need credential type selection
-  const needsSelector = ["aws", "gcp", "github", "m365"].includes(providerType);
+  const needsSelector = [
+    "aws",
+    "gcp",
+    "github",
+    "m365",
+    "alibabacloud",
+  ].includes(providerType);
 
   // Show selector if no via parameter and provider needs it
   if (needsSelector && !via) {
@@ -157,6 +163,12 @@ export const getProviderFormType = (
     return "credentials";
   }
 
+  // AlibabaCloud specific forms
+  if (providerType === "alibabacloud") {
+    if (via === "role") return "role";
+    if (via === "credentials") return "credentials";
+  }
+
   // Other providers go directly to credentials form
   if (!needsSelector) {
     return "credentials";
@@ -179,6 +191,7 @@ export const requiresBackButton = (via?: string | null): boolean => {
     "app_client_secret",
     "app_certificate",
   ];
+  // Note: "role" is already included for AWS, now also used by AlibabaCloud
 
   return validViaTypes.includes(via);
 };

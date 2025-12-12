@@ -61,6 +61,12 @@ export const ProviderCredentialFields = {
   OCI_TENANCY: "tenancy",
   OCI_REGION: "region",
   OCI_PASS_PHRASE: "pass_phrase",
+
+  // Alibaba Cloud fields
+  ALIBABACLOUD_ACCESS_KEY_ID: "access_key_id",
+  ALIBABACLOUD_ACCESS_KEY_SECRET: "access_key_secret",
+  ALIBABACLOUD_ROLE_ARN: "role_arn",
+  ALIBABACLOUD_ROLE_SESSION_NAME: "role_session_name",
 } as const;
 
 // Type for credential field values
@@ -101,6 +107,10 @@ export const ErrorPointers = {
   OCI_PASS_PHRASE: "/data/attributes/secret/pass_phrase",
   ATLAS_PUBLIC_KEY: "/data/attributes/secret/atlas_public_key",
   ATLAS_PRIVATE_KEY: "/data/attributes/secret/atlas_private_key",
+  ALIBABACLOUD_ACCESS_KEY_ID: "/data/attributes/secret/access_key_id",
+  ALIBABACLOUD_ACCESS_KEY_SECRET: "/data/attributes/secret/access_key_secret",
+  ALIBABACLOUD_ROLE_ARN: "/data/attributes/secret/role_arn",
+  ALIBABACLOUD_ROLE_SESSION_NAME: "/data/attributes/secret/role_session_name",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];
