@@ -4569,7 +4569,7 @@ paths:
           description: No response body
   /api/v1/overviews/attack-surfaces:
     get:
-      operationId: overviews_attack_surfaces_retrieve
+      operationId: overviews_attack_surfaces_list
       description: Retrieve aggregated attack surface metrics from latest completed
         scans per provider.
       summary: Get attack surface overview
@@ -4665,6 +4665,18 @@ paths:
         description: A search term.
         schema:
           type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: sort
         required: false
         in: query
@@ -4692,11 +4704,11 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/AttackSurfaceOverviewResponse'
+                $ref: '#/components/schemas/PaginatedAttackSurfaceOverviewList'
           description: ''
   /api/v1/overviews/categories:
     get:
-      operationId: overviews_categories_retrieve
+      operationId: overviews_categories_list
       description: 'Retrieve aggregated category metrics from latest completed scans
         per provider. Returns one row per category with total, failed, and new failed
         findings counts, plus a severity breakdown showing failed findings per severity
@@ -4808,6 +4820,18 @@ paths:
         description: A search term.
         schema:
           type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: sort
         required: false
         in: query
@@ -4837,7 +4861,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/CategoryOverviewResponse'
+                $ref: '#/components/schemas/PaginatedCategoryOverviewList'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -11141,13 +11165,6 @@ components:
           - total_findings
           - failed_findings
           - muted_failed_findings
-    AttackSurfaceOverviewResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/AttackSurfaceOverview'
-      required:
-      - data
     CategoryOverview:
       type: object
       required:
@@ -11183,13 +11200,6 @@ components:
           - failed_findings
           - new_failed_findings
           - severity
-    CategoryOverviewResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/CategoryOverview'
-      required:
-      - data
     ComplianceOverview:
       type: object
       required:
@@ -14272,6 +14282,24 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/OverviewSeverity'
+      required:
+      - data
+    PaginatedAttackSurfaceOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackSurfaceOverview'
+      required:
+      - data
+    PaginatedCategoryOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryOverview'
       required:
       - data
     PaginatedComplianceOverviewAttributesList:

@@ -4080,6 +4080,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         description="Retrieve aggregated attack surface metrics from latest completed scans per provider.",
         tags=["Overview"],
         filters=True,
+        responses={200: AttackSurfaceOverviewSerializer(many=True)},
     ),
     categories=extend_schema(
         summary="Get category overview",
@@ -4090,6 +4091,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         tags=["Overview"],
         filters=True,
+        responses={200: CategoryOverviewSerializer(many=True)},
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
