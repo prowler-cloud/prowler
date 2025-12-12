@@ -1,10 +1,19 @@
-import { toUIMessageStream } from "@ai-sdk/langchain";
 import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
 import { auth } from "@/auth.config";
 import { getErrorMessage } from "@/lib/helper";
+import {
+  CHAIN_OF_THOUGHT_ACTIONS,
+  createTextDeltaEvent,
+  createTextEndEvent,
+  createTextStartEvent,
+  handleChatModelEndEvent,
+  handleChatModelStreamEvent,
+  handleToolEvent,
+  STREAM_MESSAGE_ID,
+} from "@/lib/lighthouse/analyst-stream";
 import { authContextStorage } from "@/lib/lighthouse/auth-context";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
@@ -56,6 +65,7 @@ export async function POST(req: Request) {
 
       const app = await initLighthouseWorkflow(runtimeConfig);
 
+      // Use streamEvents to get token-by-token streaming + tool events
       const agentStream = app.streamEvents(
         {
           messages: messages
@@ -66,26 +76,60 @@ export async function POST(req: Request) {
             .map(convertVercelMessageToLangChainMessage),
         },
         {
-          streamMode: ["values", "messages", "custom"],
           version: "v2",
         },
       );
 
+      // Custom stream transformer that handles both text and tool events
       const stream = new ReadableStream({
         async start(controller) {
+          let hasStarted = false;
+
           try {
+            // Emit text-start at the beginning
+            controller.enqueue(createTextStartEvent(STREAM_MESSAGE_ID));
+
             for await (const streamEvent of agentStream) {
-              const { event, data, tags } = streamEvent;
+              const { event, data, tags, name } = streamEvent;
+
+              // Stream model tokens (smooth text streaming)
               if (event === "on_chat_model_stream") {
-                if (
-                  data.chunk.content &&
-                  !!tags &&
-                  tags.includes("lighthouse-agent")
-                ) {
-                  controller.enqueue(streamEvent);
+                const wasHandled = handleChatModelStreamEvent(
+                  controller,
+                  data,
+                  tags,
+                );
+                if (wasHandled) {
+                  hasStarted = true;
                 }
               }
+              // Model finished - check for tool calls
+              else if (event === "on_chat_model_end") {
+                handleChatModelEndEvent(controller, data);
+              }
+              // Tool execution started
+              else if (event === "on_tool_start") {
+                handleToolEvent(
+                  controller,
+                  CHAIN_OF_THOUGHT_ACTIONS.START,
+                  name,
+                  data?.input,
+                );
+              }
+              // Tool execution completed
+              else if (event === "on_tool_end") {
+                handleToolEvent(
+                  controller,
+                  CHAIN_OF_THOUGHT_ACTIONS.COMPLETE,
+                  name,
+                  data?.input,
+                );
+              }
             }
+
+            // Emit text-end at the end
+            controller.enqueue(createTextEndEvent(STREAM_MESSAGE_ID));
+
             controller.close();
           } catch (error) {
             const errorMessage =
@@ -107,15 +151,31 @@ export async function POST(req: Request) {
               },
             });
 
-            controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
+            // Emit error as text if stream has started
+            if (hasStarted) {
+              controller.enqueue(
+                createTextDeltaEvent(
+                  STREAM_MESSAGE_ID,
+                  `\n\n[Error: ${errorMessage}]`,
+                ),
+              );
+            } else {
+              controller.enqueue(
+                createTextDeltaEvent(
+                  STREAM_MESSAGE_ID,
+                  `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
+                ),
+              );
+            }
+
+            controller.enqueue(createTextEndEvent(STREAM_MESSAGE_ID));
+
             controller.close();
           }
         },
       });
 
-      return createUIMessageStreamResponse({
-        stream: toUIMessageStream(stream),
-      });
+      return createUIMessageStreamResponse({ stream });
     });
   } catch (error) {
     console.error("Error in POST request:", error);
