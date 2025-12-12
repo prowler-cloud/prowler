@@ -74,7 +74,6 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
-from tasks.jobs.scan import _get_attack_surface_mapping_from_provider
 from tasks.tasks import (
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
@@ -4277,19 +4276,6 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return filters
 
-    def _attack_surface_check_ids_by_provider_types(self, provider_types):
-        check_ids_by_type = {
-            attack_surface_type: set()
-            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
-        }
-        for provider_type in provider_types:
-            attack_surface_mapping = _get_attack_surface_mapping_from_provider(
-                provider_type=provider_type
-            )
-            for attack_surface_type, check_ids in attack_surface_mapping.items():
-                check_ids_by_type[attack_surface_type].update(check_ids)
-        return check_ids_by_type
-
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
@@ -4895,22 +4881,13 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
 
-        # Build base queryset and apply user filters via FilterSet
         base_queryset = AttackSurfaceOverview.objects.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
         filtered_queryset = self._apply_filterset(
             base_queryset, AttackSurfaceOverviewFilter
         )
-        provider_types = list(
-            filtered_queryset.values_list(
-                "scan__provider__provider", flat=True
-            ).distinct()
-        )
-        attack_surface_check_ids = self._attack_surface_check_ids_by_provider_types(
-            provider_types
-        )
-        # Aggregate attack surface data
+
         aggregation = filtered_queryset.values("attack_surface_type").annotate(
             total_findings=Coalesce(Sum("total_findings"), 0),
             failed_findings=Coalesce(Sum("failed_findings"), 0),
@@ -4933,12 +4910,7 @@ class OverviewViewSet(BaseRLSViewSet):
             }
 
         response_data = [
-            {
-                "attack_surface_type": key,
-                **value,
-                "check_ids": attack_surface_check_ids.get(key, []),
-            }
-            for key, value in results.items()
+            {"attack_surface_type": key, **value} for key, value in results.items()
         ]
 
         return Response(

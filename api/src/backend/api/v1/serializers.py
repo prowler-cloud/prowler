@@ -2244,9 +2244,6 @@ class AttackSurfaceOverviewSerializer(BaseSerializerV1):
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     muted_failed_findings = serializers.IntegerField()
-    check_ids = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True, default=list, read_only=True
-    )
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"

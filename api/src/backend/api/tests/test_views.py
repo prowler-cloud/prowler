@@ -7326,7 +7326,6 @@ class TestOverviewViewSet:
             assert item["attributes"]["total_findings"] == 0
             assert item["attributes"]["failed_findings"] == 0
             assert item["attributes"]["muted_failed_findings"] == 0
-            assert item["attributes"]["check_ids"] == []
 
     def test_overview_attack_surface_with_data(
         self,
@@ -7337,13 +7336,6 @@ class TestOverviewViewSet:
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
-
-        mapping = {
-            "internet-exposed": {"aws-check-1", "aws-check-2"},
-            "secrets": {"aws-secret-check"},
-            "privilege-escalation": {"aws-priv-check"},
-            "ec2-imdsv1": {"aws-imdsv1-check"},
-        }
 
         scan = Scan.objects.create(
             name="attack-surface-scan",
@@ -7370,11 +7362,7 @@ class TestOverviewViewSet:
             muted_failed=2,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(reverse("overview-attack-surface"))
+        response = authenticated_client.get(reverse("overview-attack-surface"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 4
@@ -7382,19 +7370,10 @@ class TestOverviewViewSet:
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 20
         assert results_by_type["internet-exposed"]["failed_findings"] == 10
-        assert set(results_by_type["internet-exposed"]["check_ids"]) == {
-            "aws-check-1",
-            "aws-check-2",
-        }
         assert results_by_type["secrets"]["total_findings"] == 15
         assert results_by_type["secrets"]["failed_findings"] == 8
-        assert set(results_by_type["secrets"]["check_ids"]) == {"aws-secret-check"}
         assert results_by_type["privilege-escalation"]["total_findings"] == 0
-        assert set(results_by_type["privilege-escalation"]["check_ids"]) == {
-            "aws-priv-check"
-        }
         assert results_by_type["ec2-imdsv1"]["total_findings"] == 0
-        assert set(results_by_type["ec2-imdsv1"]["check_ids"]) == {"aws-imdsv1-check"}
 
     def test_overview_attack_surface_provider_filter(
         self,
@@ -7421,13 +7400,6 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
-        mapping = {
-            "internet-exposed": {"shared-check", "shared-check"},
-            "secrets": set(),
-            "privilege-escalation": {"priv-check"},
-            "ec2-imdsv1": {"imdsv1-check"},
-        }
-
         create_attack_surface_overview(
             tenant,
             scan1,
@@ -7445,20 +7417,15 @@ class TestOverviewViewSet:
             muted_failed=3,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(
-                reverse("overview-attack-surface"),
-                {"filter[provider_id]": str(provider1.id)},
-            )
+        response = authenticated_client.get(
+            reverse("overview-attack-surface"),
+            {"filter[provider_id]": str(provider1.id)},
+        )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 10
         assert results_by_type["internet-exposed"]["failed_findings"] == 5
-        assert results_by_type["internet-exposed"]["check_ids"] == ["shared-check"]
 
     def test_overview_services_region_filter(
         self, authenticated_client, scan_summaries_fixture
