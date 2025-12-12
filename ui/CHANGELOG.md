@@ -19,7 +19,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔐 Security
 
 - Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522)
-- Bump React to version 19.2.2 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522)
+- Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
 
 ## [1.15.0] (Prowler v5.15.0)
 
