@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.15.1] (Prowler UNRELEASED)
+
+### Fixed
+- Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
+---
+
 ## [5.15.0] (Prowler v5.15.0)
 
 ### Added
@@ -119,7 +125,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
 - Update documentation URLs from docs.prowler.cloud to docs.prowler.com [(#9240)](https://github.com/prowler-cloud/prowler/pull/9240)
-- Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
 - Refresh output report timestamps for each scan [(#9272)](https://github.com/prowler-cloud/prowler/pull/9272)
 - Fix file name parsing for checks on Windows [(#9268)](https://github.com/prowler-cloud/prowler/pull/9268)
 - Remove typo for Prowler ThreatScore - M365 [(#9274)](https://github.com/prowler-cloud/prowler/pull/9274)
