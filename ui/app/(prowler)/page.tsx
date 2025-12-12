@@ -14,6 +14,10 @@ import { CheckFindingsSSR } from "./_new-overview/check-findings";
 import { GraphsTabsWrapper } from "./_new-overview/graphs-tabs/graphs-tabs-wrapper";
 import { RiskPipelineViewSkeleton } from "./_new-overview/graphs-tabs/risk-pipeline-view";
 import {
+  ResourcesInventorySkeleton,
+  ResourcesInventorySSR,
+} from "./_new-overview/resources-inventory";
+import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
 } from "./_new-overview/risk-severity";
@@ -63,6 +67,12 @@ export default async function Home({
       <div className="mt-6">
         <Suspense fallback={<AttackSurfaceSkeleton />}>
           <AttackSurfaceSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6">
+        <Suspense fallback={<ResourcesInventorySkeleton />}>
+          <ResourcesInventorySSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
 
