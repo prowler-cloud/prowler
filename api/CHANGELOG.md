@@ -2,7 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.16.0] (Unreleased)
+## [1.16.1] (Prowler v5.15.1)
+
+### Fixed
+- Race condition in scheduled scan creation by adding countdown to task [(#9516)](https://github.com/prowler-cloud/prowler/pull/9516)
+
+## [1.16.0] (Prowler v5.15.0)
 
 ### Added
 - New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
@@ -12,7 +17,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
 
 ### Changed
-
 - Error messages from Lighthouse celery tasks [(#9165)](https://github.com/prowler-cloud/prowler/pull/9165)
 - Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
 
