@@ -283,20 +283,74 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
     """
     Fetch available models from OpenAI API.
 
+    Filters out models that don't support text input/output and tool calling,
+    such as image generation (DALL-E), audio transcription (Whisper),
+    text-to-speech (TTS), embeddings, and moderation models.
+
     Args:
         api_key: OpenAI API key for authentication.
 
     Returns:
         Dict mapping model_id to model_name. For OpenAI, both are the same
-        as the API doesn't provide separate display names.
+        as the API doesn't provide separate display names. Only includes
+        models that support text input, text output or tool calling.
 
     Raises:
         Exception: If the API call fails.
     """
+    # Model prefixes to exclude (don't support text input, text output or tool calling)
+    EXCLUDED_MODEL_PREFIXES = (
+        "dall-e",  # Image generation
+        "whisper",  # Audio transcription
+        "tts-",  # Text-to-speech (tts-1, tts-1-hd, etc.)
+        "sora",  # Text-to-video (sora-2, sora-2-pro, etc.)
+        "text-embedding",  # Embeddings
+        "embedding",  # Embeddings (alternative naming)
+        "text-moderation",  # Content moderation
+        "omni-moderation",  # Content moderation
+        "text-davinci",  # Legacy completion models
+        "text-curie",  # Legacy completion models
+        "text-babbage",  # Legacy completion models
+        "text-ada",  # Legacy completion models
+        "davinci",  # Legacy completion models
+        "curie",  # Legacy completion models
+        "babbage",  # Legacy completion models
+        "ada",  # Legacy completion models
+        "computer-use",  # Computer control agent
+        "gpt-image",  # Image generation
+        "gpt-audio",  # Audio models
+        "gpt-realtime",  # Realtime voice API
+    )
+
+    # Substrings to exclude (patterns that can appear anywhere in model name)
+    EXCLUDED_MODEL_SUBSTRINGS = (
+        "-audio-",  # Audio preview models (gpt-4o-audio-preview, gpt-4o-mini-audio-preview)
+        "-realtime-",  # Realtime preview models (gpt-4o-realtime-preview, gpt-4o-mini-realtime-preview)
+        "-transcribe",  # Transcription models (gpt-4o-transcribe, gpt-4o-mini-transcribe, gpt-4o-transcribe-diarize)
+        "-tts",  # TTS models (gpt-4o-mini-tts)
+        "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, gpt-3.5-turbo-instruct-0914)
+    )
+
     client = openai.OpenAI(api_key=api_key)
     models = client.models.list()
-    # OpenAI uses model.id for both ID and display name
-    return {m.id: m.id for m in getattr(models, "data", [])}
+
+    # Filter models to only include those supporting chat completions + tool calling
+    filtered_models = {}
+    for model in getattr(models, "data", []):
+        model_id = model.id
+
+        # Skip if model ID starts with excluded prefixes
+        if model_id.startswith(EXCLUDED_MODEL_PREFIXES):
+            continue
+
+        # Skip if model ID contains excluded substrings
+        if any(substring in model_id for substring in EXCLUDED_MODEL_SUBSTRINGS):
+            continue
+
+        # Include model (supports chat completions + tool calling)
+        filtered_models[model_id] = model_id
+
+    return filtered_models
 
 
 def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, str]:
