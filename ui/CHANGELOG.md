@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.15.1] (Prowler v5.15.1)
+
+### 🔐 Security
+
+- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
+- Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
+
+---
+
 ## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
@@ -25,10 +34,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
-
-### 🔐 Security
-
-- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522)
 
 ---
 
