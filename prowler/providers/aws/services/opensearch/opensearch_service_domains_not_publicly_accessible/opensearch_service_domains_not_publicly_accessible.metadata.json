@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_not_publicly_accessible",
-  "CheckTitle": "Check if Amazon Opensearch/Elasticsearch domains are publicly accessible",
+  "CheckTitle": "Amazon OpenSearch Service domain is not publicly accessible",
   "CheckType": [
-    "Effects/Data Exposure"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Opensearch/Elasticsearch domains are publicly accessible via their access policies.",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
+  "Description": "**Amazon OpenSearch domains** are assessed for **public exposure** via their resource-based access policies. Domains inside a VPC are treated as **privately reachable**; domains with overly permissive policies that allow broad, unauthenticated access are identified as **publicly accessible**.",
+  "Risk": "Public exposure lets anyone query, index, or delete data, impacting **confidentiality** (record disclosure), **integrity** (unauthorized writes, index tampering), and **availability** (disruption, deletion). Attackers can harvest sensitive logs/PII, alter analytics, or wipe indices, enabling lateral movement and operational outage.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/domain-exposed.html",
+    "https://stackoverflow.com/questions/76880510/anonymous-user-access-to-amazon-opensearch-dashboard"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/domain-exposed.html",
-      "Terraform": ""
+      "CLI": "aws opensearch update-domain-config --domain-name <DOMAIN_NAME> --access-policies '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<ACCOUNT_ID>:root\"},\"Action\":\"es:*\",\"Resource\":\"arn:aws:es:<REGION>:<ACCOUNT_ID>:domain/<DOMAIN_NAME>/*\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict OpenSearch access policy to your account only\nResources:\n  <example_resource_name>:\n    Type: AWS::OpenSearchService::Domain\n    Properties:\n      DomainName: <example_resource_name>\n      AccessPolicies:  # critical: restricts access to your account only, removing public access\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::<ACCOUNT_ID>:root  # critical: only this account can access\n            Action: es:*\n            Resource: arn:aws:es:<REGION>:<ACCOUNT_ID>:domain/<example_resource_name>/*\n```",
+      "Other": "1. In the AWS console, open Amazon OpenSearch Service and select your domain\n2. Go to Security configuration > Edit\n3. Choose Access policy > JSON\n4. Replace the policy with the following (use your values) and Save changes:\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\"AWS\": \"arn:aws:iam::<ACCOUNT_ID>:root\"},\n      \"Action\": \"es:*\",\n      \"Resource\": \"arn:aws:es:<REGION>:<ACCOUNT_ID>:domain/<DOMAIN_NAME>/*\"\n    }\n  ]\n}\n```\n5. Verify the domain endpoint is no longer accessible publicly except by your account's IAM principals",
+      "Terraform": "```hcl\n# Restrict OpenSearch access policy to your account only\nresource \"aws_opensearch_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_resource_name>\"\n\n  # critical: limits access to the owning account, removing public access\n  access_policies = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = \"arn:aws:iam::<ACCOUNT_ID>:root\" }\n      Action    = \"es:*\"\n      Resource  = \"arn:aws:es:<REGION>:<ACCOUNT_ID>:domain/<example_resource_name>/*\"\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the access policy attached to your Amazon OpenSearch domain and replace the 'Principal' element value (i.e. '*') with the ARN of the trusted AWS account. You can also add a Condition clause to the policy statement to limit the domain access to a specific (trusted) IP address/IP range only.",
-      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html"
+      "Text": "Apply **least privilege** and **defense in depth**:\n- Place domains in a **VPC** and restrict reachability with security groups\n- Use narrow resource policies; avoid `Principal:\"*\"`\n- Require authenticated access (fine-grained controls); *if unavoidable*, limit public endpoints by IP and roles\n- Monitor access with logs and alerts",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_not_publicly_accessible"
     }
   },
   "Categories": [

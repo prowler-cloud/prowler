@@ -1,30 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_node_to_node_encryption_enabled",
-  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains have node-to-node encryption enabled",
+  "CheckTitle": "Amazon OpenSearch Service domain has node-to-node encryption enabled",
   "CheckType": [
-    "Protect",
-    "Data protection",
-    "Encryption of data in transit"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST CSF Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have node-to-node encryption enabled",
-  "Risk": "Node-to-node encryption provides an additional layer of security on top of the default features of Amazon ES. This architecture prevents potential attackers from intercepting traffic between Elasticsearch nodes and keeps the cluster secure.",
+  "Description": "**Amazon OpenSearch domains** with **node-to-node encryption** use TLS to protect traffic between cluster nodes. The finding evaluates the domain's `node_to_node_encryption` configuration for intra-cluster communications.",
+  "Risk": "Unencrypted intra-cluster traffic enables interception and manipulation by anyone with network foothold.\n- **Confidentiality**: exposure of documents, credentials, metadata\n- **Integrity**: tampering with queries and shard replication\n- **Availability**: spoofing/MITM can disrupt coordination and cause outages",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/ntn.html",
+    "https://cloud-kb.sentinelone.com/elasticsearch-node-to-node-encryption-disabled",
+    "https://github.com/vumdao/aws-opensearch",
+    "https://www.pulumi.com/ai/answers/4kCSBDD3MytyLVjKJBypyA/deploying-aws-opensearch-with-c",
+    "https://www.cloudanix.com/docs/aws/audit/opensearchmonitoring/rules/opensearch_node_to_node_encryption",
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ntn.html",
+    "https://docs.datadoghq.com/security/default_rules/def-000-h9o/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws es update-elasticsearch-domain-config --domain-name <DOMAIN_NAME> --node-to-node-encryption-options Enabled=true",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_5#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html",
-      "Terraform": ""
+      "CLI": "aws opensearchservice update-domain-config --domain-name <DOMAIN_NAME> --node-to-node-encryption-options Enabled=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable node-to-node encryption for an OpenSearch domain\nResources:\n  OpenSearchDomain:\n    Type: AWS::OpenSearchService::Domain\n    Properties:\n      NodeToNodeEncryptionOptions:\n        Enabled: true  # Critical: enables TLS between nodes to pass the check\n```",
+      "Other": "1. In the AWS Console, go to OpenSearch Service > Domains\n2. Select the target domain\n3. Click Edit (or Actions > Edit security configuration)\n4. Under Encryption, enable Node-to-node encryption\n5. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: Enable node-to-node encryption for an OpenSearch domain\nresource \"aws_opensearch_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_resource_name>\"\n\n  node_to_node_encryption {\n    enabled = true  # Critical: encrypts intra-cluster traffic to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Node-to-node encryption on new domains requires Elasticsearch 6.0 or later. Enabling the feature on existing domains requires Elasticsearch 6.7 or later. Choose the existing domain in the AWS console, Actions, and Modify encryption.",
-      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/ntn.html"
+      "Text": "Enable **node-to-node encryption** (`node_to_node_encryption: true`) to enforce TLS for inter-node traffic. Apply **defense in depth**: require HTTPS for clients, restrict network exposure, and use least privilege. Validate performance in staging and plan carefully, as the setting is effectively irreversible.",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_node_to_node_encryption_enabled"
     }
   },
   "Categories": [
