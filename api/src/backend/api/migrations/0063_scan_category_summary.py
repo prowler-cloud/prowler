@@ -9,7 +9,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0061_daily_severity_summary"),
+        ("api", "0062_backfill_daily_severity_summaries"),
     ]
 
     operations = [
