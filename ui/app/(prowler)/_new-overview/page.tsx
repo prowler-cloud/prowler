@@ -4,23 +4,23 @@ import { getProviders } from "@/actions/providers";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
-import { AccountsSelector } from "./components/accounts-selector";
-import { CheckFindingsSSR } from "./components/check-findings";
+import { AccountsSelector } from "./_components/accounts-selector";
+import { ProviderTypeSelector } from "./_components/provider-type-selector";
+import { CheckFindingsSSR } from "./check-findings";
+import { GraphsTabsWrapper } from "./graphs-tabs/graphs-tabs-wrapper";
+import { RiskSeverityChartSkeleton } from "./risk-severity";
+import { RiskSeverityChartSSR } from "./risk-severity/risk-severity-chart.ssr";
 import {
   FindingSeverityOverTimeSkeleton,
   FindingSeverityOverTimeSSR,
-} from "./components/finding-severity-over-time/finding-severity-over-time.ssr";
-import { GraphsTabsWrapper } from "./components/graphs-tabs/graphs-tabs-wrapper";
-import { ProviderTypeSelector } from "./components/provider-type-selector";
-import { RiskSeverityChartSkeleton } from "./components/risk-severity-chart";
-import { RiskSeverityChartSSR } from "./components/risk-severity-chart/risk-severity-chart.ssr";
-import { StatusChartSkeleton } from "./components/status-chart";
-import { ThreatScoreSkeleton, ThreatScoreSSR } from "./components/threat-score";
+} from "./severity-over-time/finding-severity-over-time.ssr";
+import { StatusChartSkeleton } from "./status-chart";
+import { ThreatScoreSkeleton, ThreatScoreSSR } from "./threat-score";
 import {
   ComplianceWatchlistSSR,
   ServiceWatchlistSSR,
   WatchlistCardSkeleton,
-} from "./components/watchlist";
+} from "./watchlist";
 
 export default async function NewOverviewPage({
   searchParams,

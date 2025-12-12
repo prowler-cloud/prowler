@@ -1,28 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "guardduty_s3_protection_enabled",
-  "CheckTitle": "Check if GuardDuty S3 Protection is enabled.",
+  "CheckTitle": "GuardDuty detector has S3 Protection enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exfiltration"
   ],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:guardduty:<region>:<account-id>:detector/<detector-id>",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
-  "Description": "This control checks whether GuardDuty S3 Protection is enabled in the account.",
-  "Risk": "Without GuardDuty S3 Protection enabled, your S3 buckets are not monitored for potential security risks at the object level, which may lead to undetected malicious activities and data breaches.",
-  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
+  "Description": "Amazon GuardDuty detectors are evaluated for **S3 Protection**, which analyzes CloudTrail S3 data events to monitor **object-level API activity** (`GetObject`, `PutObject`, `DeleteObject`) across S3 buckets in the account and Region.",
+  "Risk": "Without S3 Protection, **object-level S3 activity** isn't analyzed, enabling:\n- **Exfiltration** via mass reads/copies\n- **Destructive deletes**\n- **Policy/ACL tampering**\n\nUndetected actions degrade data confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.amazonaws.cn/en_us/guardduty/latest/ug/guardduty_finding-types-s3.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/enable-s3-protection.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/s3-protection.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources S3Logs={Enable=true}}'",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10",
-      "Terraform": ""
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources S3Logs={Enable=true}",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable S3 Protection on a GuardDuty detector\nResources:\n  <example_resource_name>:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true\n      DataSources:\n        S3Logs:\n          Enable: true  # Critical: Enables GuardDuty S3 Protection\n```",
+      "Other": "1. Open the AWS Management Console and go to GuardDuty\n2. In the left menu, select Settings\n3. Find the S3 Protection section and click Enable (or toggle On)\n4. Click Save",
+      "Terraform": "```hcl\n# Enable S3 Protection on a GuardDuty detector\nresource \"aws_guardduty_detector\" \"<example_resource_name>\" {\n  enable = true\n\n  datasources {\n    s3_logs {\n      enable = true  # Critical: Enables GuardDuty S3 Protection\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable GuardDuty S3 Protection to monitor object-level API operations in your S3 buckets.",
-      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html"
+      "Text": "Enable **S3 Protection** across all accounts and Regions to add **defense in depth** for S3. Apply **least privilege** to IAM and bucket policies, keep **Block Public Access** enforced, integrate findings with alerting, and regularly review anomalies to prevent data loss and tampering.",
+      "Url": "https://hub.prowler.com/check/guardduty_s3_protection_enabled"
     }
   },
   "Categories": [],

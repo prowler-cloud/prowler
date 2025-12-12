@@ -24,8 +24,8 @@ import {
   hasDateOrScanFilter,
 } from "@/lib";
 import {
-  createProviderDetailsMapping,
-  extractProviderUIDs,
+  createProviderDetailsMappingById,
+  extractProviderIds,
 } from "@/lib/provider-helpers";
 import { FilterEntity, ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
@@ -59,11 +59,11 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
 
-  // Extract provider UIDs and details using helper functions
-  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  // Extract provider IDs and details using helper functions
+  const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
-        [uid: string]: FilterEntity;
+    ? (createProviderDetailsMappingById(providerIds, providersData) as {
+        [id: string]: FilterEntity;
       }[])
     : [];
 
@@ -85,7 +85,7 @@ export default async function Findings({
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
       <FindingsFilters
-        providerUIDs={providerUIDs}
+        providerIds={providerIds}
         providerDetails={providerDetails}
         completedScans={completedScans || []}
         completedScanIds={completedScanIds}

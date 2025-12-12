@@ -199,6 +199,13 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",

@@ -3,6 +3,8 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { SEVERITY_ORDER } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
 import { BarDataPoint } from "./types";
@@ -62,8 +64,10 @@ export function HorizontalBarChart({
           return (
             <div
               key={item.name}
-              className="flex items-center gap-6"
-              style={{ cursor: isClickable ? "pointer" : "default" }}
+              className={cn(
+                "flex items-center gap-6",
+                isClickable && "cursor-pointer",
+              )}
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
@@ -128,7 +132,9 @@ export function HorizontalBarChart({
                         <p className="text-text-neutral-primary text-xs leading-5 font-medium">
                           {item.value.toLocaleString()}{" "}
                           {item.name === "Informational" ? "Info" : item.name}{" "}
-                          Risk
+                          {item.name === "Fail" || item.name === "Pass"
+                            ? "Findings"
+                            : "Risk"}
                         </p>
                       </div>
 

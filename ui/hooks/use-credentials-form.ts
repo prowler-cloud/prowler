@@ -167,6 +167,12 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OCI_REGION]: "",
           [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
         };
+      case "mongodbatlas":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: "",
+          [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
+        };
       default:
         return baseDefaults;
     }
