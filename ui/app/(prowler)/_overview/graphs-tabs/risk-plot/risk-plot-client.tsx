@@ -34,7 +34,7 @@ import type { BarDataPoint } from "@/components/graphs/types";
 import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
-// ThreatScore colors (0-100 scale, higher = better)
+// Threat Score colors (0-100 scale, higher = better)
 const THREAT_COLORS = {
   DANGER: "var(--bg-fail-primary)", // 0-30
   WARNING: "var(--bg-warning-primary)", // 31-60
@@ -100,7 +100,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
       </p>
       <p className="text-text-neutral-secondary text-sm font-medium">
         <span style={{ color: scoreColor, fontWeight: "bold" }}>{x}%</span>{" "}
-        Prowler ThreatScore
+        Threat Score
       </p>
       <div className="mt-2">
         <AlertPill value={y} />
@@ -268,8 +268,8 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                 Risk Plot
               </h3>
               <p className="text-text-neutral-tertiary mt-1 text-xs">
-                Prowler ThreatScore is severity-weighted, not quantity-based.
-                Higher severity findings have greater impact on the score.
+                Threat Score is severity-weighted, not quantity-based. Higher
+                severity findings have greater impact on the score.
               </p>
             </div>
 
@@ -287,9 +287,9 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   <XAxis
                     type="number"
                     dataKey="x"
-                    name="Prowler ThreatScore"
+                    name="Threat Score"
                     label={{
-                      value: "Prowler ThreatScore",
+                      value: "Threat Score",
                       position: "bottom",
                       offset: 10,
                       fill: "var(--color-text-neutral-secondary)",
@@ -367,7 +367,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   {selectedPoint.name}
                 </h4>
                 <p className="text-text-neutral-tertiary text-xs">
-                  Prowler ThreatScore: {selectedPoint.x}% | Fail Findings:{" "}
+                  Threat Score: {selectedPoint.x}% | Fail Findings:{" "}
                   {selectedPoint.y}
                 </p>
               </div>
