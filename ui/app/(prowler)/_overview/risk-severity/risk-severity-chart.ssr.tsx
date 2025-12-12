@@ -4,7 +4,7 @@ import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
 import { RiskSeverityChart } from "./_components/risk-severity-chart";
 
-export const RiskSeverityChartDetailSSR = async ({
+export const RiskSeverityChartSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);

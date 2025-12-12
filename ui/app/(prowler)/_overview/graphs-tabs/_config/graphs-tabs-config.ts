@@ -15,11 +15,10 @@ export const GRAPH_TABS = [
     id: "risk-plot",
     label: "Risk Plot",
   },
-  // TODO: Uncomment when ready to enable other tabs
-  // {
-  //   id: "risk-radar",
-  //   label: "Risk Radar",
-  // },
+  {
+    id: "risk-radar",
+    label: "Risk Radar",
+  },
 ] as const;
 
 export type TabId = (typeof GRAPH_TABS)[number]["id"];
