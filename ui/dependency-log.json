@@ -3,17 +3,17 @@
     "section": "dependencies",
     "name": "@ai-sdk/langchain",
     "from": "1.0.59",
-    "to": "1.0.106",
+    "to": "1.0.59",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
     "name": "@ai-sdk/react",
     "from": "2.0.59",
-    "to": "2.0.106",
+    "to": "2.0.59",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
@@ -21,7 +21,7 @@
     "from": "3.943.0",
     "to": "3.943.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -45,39 +45,47 @@
     "from": "3.10.0",
     "to": "3.10.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/aws",
-    "from": "1.0.1",
-    "to": "1.1.0",
+    "from": "0.1.15",
+    "to": "0.1.15",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "1.1.3",
+    "from": "0.3.78",
+    "to": "0.3.77",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:59:36.291Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
-    "name": "@langchain/mcp-adapters",
-    "from": "1.0.0",
-    "to": "1.0.3",
+    "name": "@langchain/langgraph",
+    "from": "0.4.9",
+    "to": "0.4.9",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/langgraph-supervisor",
+    "from": "0.0.20",
+    "to": "0.0.20",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/openai",
-    "from": "1.1.1",
-    "to": "1.1.3",
+    "from": "0.5.18",
+    "to": "0.6.16",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -101,7 +109,7 @@
     "from": "1.1.11",
     "to": "1.1.11",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -109,7 +117,7 @@
     "from": "1.1.12",
     "to": "1.1.12",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -157,7 +165,7 @@
     "from": "1.2.10",
     "to": "1.2.10",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -189,7 +197,7 @@
     "from": "1.1.13",
     "to": "1.1.13",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -205,7 +213,7 @@
     "from": "1.2.8",
     "to": "1.2.8",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -213,7 +221,7 @@
     "from": "3.12.13",
     "to": "3.12.13",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -237,7 +245,7 @@
     "from": "3.10.8",
     "to": "3.10.8",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -245,7 +253,7 @@
     "from": "3.13.2",
     "to": "3.13.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -253,23 +261,15 @@
     "from": "3.26.0",
     "to": "3.26.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@sentry/browser",
-    "from": "10.11.0",
-    "to": "10.11.0",
-    "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
     "name": "@sentry/nextjs",
     "from": "10.11.0",
-    "to": "10.11.0",
+    "to": "10.27.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T15:52:15.849Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",
@@ -307,9 +307,9 @@
     "section": "dependencies",
     "name": "ai",
     "from": "5.0.59",
-    "to": "5.0.106",
+    "to": "5.0.59",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
+    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
@@ -387,9 +387,9 @@
     "section": "dependencies",
     "name": "js-yaml",
     "from": "4.1.0",
-    "to": "4.1.0",
+    "to": "4.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",
@@ -398,14 +398,6 @@
     "to": "4.0.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "langchain",
-    "from": "1.0.4",
-    "to": "1.1.4",
-    "strategy": "installed",
-    "generatedAt": "2025-12-05T07:53:30.692Z"
   },
   {
     "section": "dependencies",
@@ -429,7 +421,7 @@
     "from": "5.1.6",
     "to": "5.1.6",
     "strategy": "installed",
-    "generatedAt": "2025-12-05T07:21:41.258Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -443,9 +435,9 @@
     "section": "dependencies",
     "name": "next-auth",
     "from": "5.0.0-beta.29",
-    "to": "5.0.0-beta.29",
+    "to": "5.0.0-beta.30",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",

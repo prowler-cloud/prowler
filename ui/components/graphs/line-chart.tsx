@@ -68,9 +68,30 @@ const CustomLineTooltip = ({
   const typedPayload = payload as unknown as TooltipPayloadItem[];
 
   // Filter payload if a line is selected or hovered
-  const displayPayload = filterLine
+  const filteredPayload = filterLine
     ? typedPayload.filter((item) => item.dataKey === filterLine)
     : typedPayload;
+
+  // Sort by severity order: critical, high, medium, low, informational
+  const severityOrder = [
+    "critical",
+    "high",
+    "medium",
+    "low",
+    "informational",
+  ] as const;
+  const displayPayload = [...filteredPayload].sort((a, b) => {
+    const aIndex = severityOrder.indexOf(
+      a.dataKey as (typeof severityOrder)[number],
+    );
+    const bIndex = severityOrder.indexOf(
+      b.dataKey as (typeof severityOrder)[number],
+    );
+    // Items not in severityOrder go to the end
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
 
   if (displayPayload.length === 0) {
     return null;
@@ -96,12 +117,17 @@ const CustomLineTooltip = ({
 
           return (
             <div key={item.dataKey} className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: item.stroke }}
-                />
-                <span className="text-text-neutral-primary text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: item.stroke }}
+                  />
+                  <span className="text-text-neutral-secondary text-sm">
+                    {item.name}
+                  </span>
+                </div>
+                <span className="text-text-neutral-primary text-sm font-medium">
                   {item.value}
                 </span>
               </div>
@@ -260,7 +286,7 @@ export function LineChart({
 
       <div className="mt-4 flex flex-col items-start gap-2">
         <p className="text-text-neutral-tertiary pl-2 text-xs">
-          Click to filter by severity.
+          Click to filter by severity
         </p>
         <ChartLegend
           items={legendItems}
