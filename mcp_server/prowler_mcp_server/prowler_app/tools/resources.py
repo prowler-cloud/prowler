@@ -6,13 +6,14 @@ across all providers.
 
 from typing import Any
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
     ResourcesListResponse,
     ResourcesMetadataResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class ResourcesTools(BaseTool):
@@ -121,11 +122,11 @@ class ResourcesTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest resources endpoint
-            endpoint = "/api/v1/resources/latest"
+            endpoint = "/resources/latest"
             params = {}
         else:
             # Dates provided - use historical resources endpoint
-            endpoint = "/api/v1/resources"
+            endpoint = "/resources"
             params = {
                 "filter[updated_at__gte]": date_range[0],
                 "filter[updated_at__lte]": date_range[1],
@@ -206,7 +207,7 @@ class ResourcesTools(BaseTool):
 
         # Get API response and transform to detailed format
         api_response = await self.api_client.get(
-            f"/api/v1/resources/{resource_id}", params=params
+            f"/resources/{resource_id}", params=params
         )
         self.logger.info(f"API response: {api_response}")
         detailed_resource = DetailedResource.from_api_response(
@@ -265,13 +266,13 @@ class ResourcesTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest metadata endpoint
-            metadata_endpoint = "/api/v1/resources/metadata/latest"
-            list_endpoint = "/api/v1/resources/latest"
+            metadata_endpoint = "/resources/metadata/latest"
+            list_endpoint = "/resources/latest"
             params = {}
         else:
             # Dates provided - use historical endpoints
-            metadata_endpoint = "/api/v1/resources/metadata"
-            list_endpoint = "/api/v1/resources"
+            metadata_endpoint = "/resources/metadata"
+            list_endpoint = "/resources"
             params = {
                 "filter[updated_at__gte]": date_range[0],
                 "filter[updated_at__lte]": date_range[1],

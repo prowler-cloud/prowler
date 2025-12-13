@@ -228,7 +228,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                 )
 
             # Fetch current task state
-            response = await self.get(f"/api/v1/tasks/{task_id}")
+            response = await self.get(f"/tasks/{task_id}")
             task_data = response.get("data", {})
             task_attrs = task_data.get("attributes", {})
             state = task_attrs.get("state")

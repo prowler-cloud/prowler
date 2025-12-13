@@ -78,7 +78,7 @@ With environment variables:
 ```bash
 docker run --rm -i \
   -e PROWLER_APP_API_KEY="pk_your_api_key" \
-  -e PROWLER_API_BASE_URL="https://api.prowler.com" \
+  -e PROWLER_API_BASE_URL="https://api.prowler.com/api/v1" \
   prowlercloud/prowler-mcp
 ```
 
@@ -147,7 +147,7 @@ uv run prowler-mcp --transport http --host 0.0.0.0 --port 8080
 For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_TRANSPORT_MODE`.
 
 ```bash
-export PROWLER_API_BASE_URL="https://api.prowler.com"
+export PROWLER_API_BASE_URL="https://api.prowler.com/api/v1"
 export PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 
@@ -319,7 +319,7 @@ For STDIO mode, authentication is handled via environment variables using an API
 export PROWLER_APP_API_KEY="pk_your_api_key_here"
 
 # Optional - for custom API endpoint, in case not provided Prowler Cloud API will be used
-export PROWLER_API_BASE_URL="https://api.prowler.com"
+export PROWLER_API_BASE_URL="https://api.prowler.com/api/v1"
 ```
 
 #### HTTP Mode Authentication
@@ -370,7 +370,7 @@ For local execution, configure your MCP client to launch the server directly. Be
       "args": ["/path/to/prowler/mcp_server/"],
       "env": {
         "PROWLER_APP_API_KEY": "pk_your_api_key_here",
-        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional, in case not provided Prowler Cloud API will be used
+        "PROWLER_API_BASE_URL": "https://api.prowler.com/api/v1"  // Optional, in case not provided Prowler Cloud API will be used
       }
     }
   }
@@ -387,7 +387,7 @@ For local execution, configure your MCP client to launch the server directly. Be
       "args": [
         "run", "--rm", "-i",
         "--env", "PROWLER_APP_API_KEY=pk_your_api_key_here",
-        "--env", "PROWLER_API_BASE_URL=https://api.prowler.com",  // Optional, in case not provided Prowler Cloud API will be used
+        "--env", "PROWLER_API_BASE_URL=https://api.prowler.com/api/v1",  // Optional, in case not provided Prowler Cloud API will be used
         "prowler-mcp"
       ]
     }
