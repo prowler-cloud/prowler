@@ -17,7 +17,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-kms-have-rotation-policy#terraform",
     "https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/"
   ],
   "Remediation": {
