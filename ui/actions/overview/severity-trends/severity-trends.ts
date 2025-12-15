@@ -3,7 +3,7 @@
 import {
   getDateFromForTimeRange,
   type TimeRange,
-} from "@/app/(prowler)/_new-overview/severity-over-time/_constants/time-range.constants";
+} from "@/app/(prowler)/_overview/severity-over-time/_constants/time-range.constants";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 

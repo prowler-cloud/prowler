@@ -13,16 +13,12 @@ export function AttackSurfaceCardItem({
   item,
   filters = {},
 }: AttackSurfaceCardItemProps) {
-  const hasCheckIds = item.checkIds.length > 0;
-
   // Build URL with current filters + attack surface specific filters
   const buildFindingsUrl = () => {
-    if (!hasCheckIds) return null;
-
     const params = new URLSearchParams();
 
-    // Add attack surface specific filters
-    params.set("filter[check_id__in]", item.checkIds.join(","));
+    // Add attack surface category filter
+    params.set("filter[category__in]", item.id);
     params.set("filter[status__in]", "FAIL");
     params.set("filter[muted]", "false");
 
@@ -44,11 +40,8 @@ export function AttackSurfaceCardItem({
   const hasFindings = item.failedFindings > 0;
 
   const getCardStyles = () => {
-    if (!hasCheckIds) {
-      return "opacity-50 cursor-not-allowed";
-    }
     if (hasFindings) {
-      return "cursor-pointer border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.2)] transition-all hover:border-rose-500/60 hover:shadow-[0_0_16px_rgba(244,63,94,0.3)]";
+      return "cursor-pointer border-rose-500/40 shadow-rose-500/20 shadow-lg transition-all hover:border-rose-500/60 hover:shadow-rose-500/30";
     }
     return "cursor-pointer transition-colors hover:bg-accent";
   };
@@ -74,13 +67,9 @@ export function AttackSurfaceCardItem({
     </Card>
   );
 
-  if (findingsUrl) {
-    return (
-      <Link href={findingsUrl} className="flex min-w-[200px] flex-1">
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return cardContent;
+  return (
+    <Link href={findingsUrl} className="flex min-w-[200px] flex-1">
+      {cardContent}
+    </Link>
+  );
 }
