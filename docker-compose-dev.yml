@@ -60,7 +60,11 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -138,7 +142,11 @@ services:
       - ./mcp_server/entrypoint.sh:/app/entrypoint.sh
     command: ["uvicorn", "--host", "0.0.0.0", "--port", "8000"]
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8000/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1:8000/health || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3

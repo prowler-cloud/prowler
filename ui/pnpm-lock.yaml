@@ -153,6 +153,9 @@ importers:
       framer-motion:
         specifier: 11.18.2
         version: 11.18.2(react-dom@19.2.2(react@19.2.2))(react@19.2.2)
+      import-in-the-middle:
+        specifier: 2.0.0
+        version: 2.0.0
       intl-messageformat:
         specifier: 10.7.16
         version: 10.7.16
@@ -204,6 +207,9 @@ importers:
       recharts:
         specifier: 2.15.4
         version: 2.15.4(react-dom@19.2.2(react@19.2.2))(react@19.2.2)
+      require-in-the-middle:
+        specifier: 8.0.1
+        version: 8.0.1
       rss-parser:
         specifier: 3.13.0
         version: 3.13.0
@@ -213,6 +219,9 @@ importers:
       sharp:
         specifier: 0.33.5
         version: 0.33.5
+      shiki:
+        specifier: 3.20.0
+        version: 3.20.0
       streamdown:
         specifier: 1.6.10
         version: 1.6.10(@types/mdast@4.0.4)(micromark-util-types@2.0.2)(micromark@4.0.2)(react@19.2.2)
