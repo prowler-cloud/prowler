@@ -2,13 +2,13 @@ name: 'API: Container Checks'
 
 on:
   push:
-    branches:
-      - 'master'
-      - 'v5.*'
-  pull_request:
-    branches:
-      - 'master'
-      - 'v5.*'
+  #   branches:
+  #     - 'master'
+  #     - 'v5.*'
+  # pull_request:
+  #   branches:
+  #     - 'master'
+  #     - 'v5.*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
