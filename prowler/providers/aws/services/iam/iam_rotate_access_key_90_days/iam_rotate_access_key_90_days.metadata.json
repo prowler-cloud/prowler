@@ -1,33 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "iam_rotate_access_key_90_days",
-  "CheckTitle": "Ensure access keys are rotated every 90 days or less",
+  "CheckTitle": "IAM user does not have active access keys older than 90 days",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsIamAccessKey",
-  "Description": "Ensure access keys are rotated every 90 days or less",
-  "Risk": "Access keys consist of an access key ID and secret access key which are used to sign programmatic requests that you make to AWS. AWS users need their own access keys to make programmatic calls to AWS from the AWS Command Line Interface (AWS CLI)- Tools for Windows PowerShell- the AWS SDKs- or direct HTTP calls using the APIs for individual AWS services. It is recommended that all access keys be regularly rotated.",
+  "ResourceType": "AwsIamUser",
+  "Description": "**IAM user access keys** are assessed via the credential report. For each active key, the `last_rotated` timestamp is compared to `90 days`; keys exceeding this age are identified. Users without keys or with only recent rotations are noted.",
+  "Risk": "Long-lived access keys widen the attack window. If a key is leaked in code, logs, or tooling, lack of rotation keeps it valid for abuse, enabling unauthorized API calls, data exfiltration, and tampering. This degrades **confidentiality** and **integrity** and can impact **availability** and cost through destructive or excessive operations.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws iam update-access-key --user-name <USER_NAME> --access-key-id <ACCESS_KEY_ID> --status Inactive",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Open the IAM console and go to Users\n2. Select the affected user\n3. Open the Security credentials tab\n4. Under Access keys, find any key older than 90 days\n5. Click Actions > Deactivate (or Delete) for that key\n6. Repeat for any other active keys older than 90 days",
+      "Terraform": "```hcl\nresource \"aws_iam_access_key\" \"<example_resource_name>\" {\n  user   = \"<example_resource_name>\"\n  status = \"Inactive\" # Critical: disables the access key to ensure no active key is older than 90 days\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use the credential report to  ensure  access_key_X_last_rotated  is less than 90 days ago.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
+      "Text": "Apply **least privilege** and limit static credentials:\n- Rotate active access keys at or before `90 days`\n- Prefer **IAM roles** with short-lived tokens\n- Maintain only one active key during rotation; delete the old one\n- Monitor `last_used` and remove dormant keys\n- Automate alerts and periodic reviews of key age",
+      "Url": "https://hub.prowler.com/check/iam_rotate_access_key_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

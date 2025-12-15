@@ -1,33 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "iam_user_hardware_mfa_enabled",
-  "CheckTitle": "Check if IAM users have Hardware MFA enabled.",
+  "CheckTitle": "IAM user has hardware MFA enabled",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsIamUser",
-  "Description": "Check if IAM users have Hardware MFA enabled.",
-  "Risk": "Hardware MFA is preferred over virtual MFA.",
+  "Description": "**IAM users** are evaluated for **hardware MFA** enrollment, identifying physical tokens or security keys and distinguishing them from *virtual* or *SMS* MFA, as well as users without any MFA.",
+  "Risk": "Without **hardware MFA**, authentication is weaker:\n- **SIM-swap** can bypass SMS\n- **Phishing** can steal TOTP from virtual apps\n- No MFA allows password-only takeover\nThis enables unauthorized console/API access, causing data exfiltration (C), privilege abuse (I), and service disruption (A).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://medium.com/avmconsulting-blog/how-to-secure-aws-accounts-with-multi-factor-authentication-mfa-25099269de08",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html",
+    "https://partnerpens.hashnode.dev/aws-iam-hands-on-a-step-by-step-guide"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the AWS Console and open IAM\n2. Go to Users > select <user> > Security credentials\n3. Under Multi-factor authentication (MFA), if a Virtual MFA device or SMS MFA is listed, choose Deactivate/Remove and confirm\n4. Click Assign MFA device\n5. Select Hardware TOTP token or Security key (FIDO2) and choose Next\n6. For Hardware TOTP: enter the device serial, then enter MFA code 1 and MFA code 2 from the token; for Security key: insert/tap the key and follow the prompts\n7. Choose Add/Save to complete",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable hardware MFA device for an IAM user from the AWS Management Console, the command line, or the IAM API.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
+      "Text": "Require **hardware-backed MFA** for all IAM users. Prefer **FIDO2 security keys** for phishing resistance over TOTP or SMS. Disallow SMS/virtual MFA for privileged roles. Enforce MFA for all access paths, apply **least privilege**, and provision multiple MFA devices per user for continuity.",
+      "Url": "https://hub.prowler.com/check/iam_user_hardware_mfa_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

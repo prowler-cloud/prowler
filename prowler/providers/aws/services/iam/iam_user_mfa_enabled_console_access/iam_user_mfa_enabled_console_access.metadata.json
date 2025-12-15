@@ -1,33 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "iam_user_mfa_enabled_console_access",
-  "CheckTitle": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password.",
+  "CheckTitle": "IAM user has MFA enabled for console access or no console password is set",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamUser",
-  "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password.",
-  "Risk": "Unauthorized access to this critical account if password is not secure or it is disclosed in any way.",
+  "Description": "**IAM users** that have a console password are expected to have **multi-factor authentication** enabled. The evaluation identifies users who can sign in to the AWS Management Console but do not have an active MFA device associated.",
+  "Risk": "Without **MFA**, a stolen or brute-forced password grants full interactive access. Attackers can: - Change policies or keys - Exfiltrate data - Create backdoor users - Disable logging. This enables account takeover, threatens confidentiality and integrity, and can disrupt availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws iam delete-login-profile --user-name <IAM_USER_NAME>",
+      "NativeIaC": "```yaml\n# CloudFormation: IAM user without a console password\nResources:\n  IamUser:\n    Type: AWS::IAM::User\n    Properties:\n      UserName: <example_resource_name>\n      # Critical: Do NOT include the LoginProfile property.\n      # Omitting LoginProfile ensures no console password is set, making the check pass.\n```",
+      "Other": "1. Sign in to the AWS Console and open IAM\n2. Go to Users and select the affected user\n3. Open the Security credentials tab\n4. Under Console sign-in, click Remove console password and confirm\n5. Verify that Console password shows Not enabled",
+      "Terraform": "```hcl\n# IAM user without console password\nresource \"aws_iam_user\" \"user\" {\n  name = \"<example_resource_name>\"\n  # Critical: Do NOT create an aws_iam_user_login_profile resource.\n  # Without a login profile, no console password is set, so the check passes.\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable MFA for the user's account. MFA is a simple best practice that adds an extra layer of protection on top of your user name and password. Recommended to use hardware keys over virtual MFA.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+      "Text": "Enforce **MFA** for all console-capable IAM users; prefer **phishing-resistant** authenticators (FIDO2/security keys) and register backups. Remove console passwords for users that don't need them and favor **federation/SSO**. Apply least privilege and require MFA for sensitive actions to prevent unauthorized changes.",
+      "Url": "https://hub.prowler.com/check/iam_user_mfa_enabled_console_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,33 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "iam_user_two_active_access_key",
-  "CheckTitle": "Check if IAM users have two active access keys",
+  "CheckTitle": "IAM user has at most one active access key",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
-  "Description": "Check if IAM users have two active access keys",
-  "Risk": "Access Keys could be lost or stolen. It creates a critical risk.",
+  "Description": "**IAM users** are evaluated for having **two `Active` access keys** simultaneously.\n\nThe check identifies users whose two access key slots are enabled at the same time.",
+  "Risk": "**Two active keys per user** widen exposure and weaken credential governance.\n- Any leaked key enables unauthorized API actions, risking data exfiltration and resource changes\n- Rotation and response become error-prone, allowing attacker persistence if one key remains unnoticed",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/unnecessary-access-keys.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id-credentials-access-keys-update.html",
+    "https://derflounder.wordpress.com/2025/02/28/rotating-the-credentials-for-a-jamf-pro-aws-cloud-distribution-point/",
+    "https://support.icompaas.com/support/solutions/articles/62000233813-ensure-iam-users-have-two-active-access-keys",
+    "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListAccessKeys.html",
+    "https://medium.com/@terminalsandcoffee/setting-up-the-aws-cli-iam-user-api-keys-b83554e314e4"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws iam update-access-key --user-name <IAM_USER_NAME> --access-key-id <ACCESS_KEY_ID> --status Inactive",
+      "NativeIaC": "```yaml\n# CloudFormation: set one IAM access key to Inactive to ensure only one active key\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::AccessKey\n    Properties:\n      UserName: <example_resource_name>\n      Status: Inactive  # Critical: deactivates this key so the user doesn't have 2 active keys\n```",
+      "Other": "1. In the AWS Console, go to IAM > Users\n2. Open the affected user and select the Security credentials tab\n3. In Access keys, find one of the two Active keys\n4. Click Actions > Deactivate on that key\n5. Verify only one key remains Active",
+      "Terraform": "```hcl\n# Deactivate one IAM access key so the user has at most one active key\nresource \"aws_iam_access_key\" \"<example_resource_name>\" {\n  user   = \"<example_resource_name>\"\n  status = \"Inactive\"  # Critical: deactivates this key to avoid 2 active keys\n}\n```"
     },
     "Recommendation": {
-      "Text": "Avoid using long lived access keys.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListAccessKeys.html"
+      "Text": "Maintain **one `Active` access key** per IAM user; permit only a brief overlap for rotation, then promptly deactivate and delete the old key. Prefer **temporary credentials** via roles/federation over long-lived keys. Apply **least privilege**, periodic rotation, and monitor for unused or aged keys.",
+      "Url": "https://hub.prowler.com/check/iam_user_two_active_access_key"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,33 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "iam_root_hardware_mfa_enabled",
-  "CheckTitle": "Ensure only hardware MFA is enabled for the root account",
+  "CheckTitle": "Root account has a hardware MFA device enabled",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamUser",
-  "Description": "Ensure only hardware MFA is enabled for the root account",
-  "Risk": "The root account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled when a user signs in to an AWS website they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2 it is recommended that the root account be protected with only a hardware MFA.",
+  "Description": "**AWS root user** credentials are assessed for **MFA status** and device type. The check detects whether MFA is absent or implemented with a **virtual device** instead of **hardware MFA** on the root user, and notes when centralized root credential management is in effect.",
+  "Risk": "Without **hardware MFA** on the root user:\n- No MFA: stolen password/keys enable full account takeover.\n- Virtual MFA: device compromise or backup restoration weakens second-factor assurance.\nAn attacker could delete resources, change policies, and disable logging, harming **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/questions/QU5L-kBxDrRG6fwq2jftwH4w/security-hub-ensure-hardware-mfa-is-enabled-for-the-root-user-account",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/root-hardware-mfa.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-hardware-mfa-is-enabled-for-the-root-user-account"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the AWS Management Console as the root user\n2. Open My Security Credentials: https://console.aws.amazon.com/iam/home?#/security_credentials\n3. In the Multi-factor authentication (MFA) section, choose Activate/Assign MFA\n4. Select a hardware option (Security key or Hardware TOTP token) and complete the prompts (for TOTP: enter the device serial and two consecutive codes)\n5. After the hardware MFA is added, locate any Virtual MFA device listed for root and Deactivate/Remove it\n6. Confirm only the hardware MFA remains assigned",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Using IAM console navigate to Dashboard and expand Activate MFA on your root account. If using AWS Organizations, consider enabling Centralized Root Management and removing individual root credentials.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa"
+      "Text": "Require a **hardware MFA token** for the root user and remove any virtual MFA. Apply **least privilege**: avoid using root, disable access keys, and eliminate long-term credentials. In organizations, **centralize root management**. Keep a controlled break-glass process with strict recovery checks and continuous monitoring.",
+      "Url": "https://hub.prowler.com/check/iam_root_hardware_mfa_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

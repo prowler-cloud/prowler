@@ -1,29 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "iam_user_administrator_access_policy",
-  "CheckTitle": "Ensure No IAM Users Have Administrator Access Policy",
-  "CheckType": [],
+  "CheckTitle": "IAM user does not have AdministratorAccess policy attached",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Privilege Escalation"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "high",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsIamUser",
-  "Description": "This check ensures that no IAM users in your AWS account have the 'AdministratorAccess' policy attached. IAM users with this policy have unrestricted access to all AWS services and resources, which poses a significant security risk if misused.",
-  "Risk": "IAM users with administrator-level permissions can perform any action on any resource in your AWS environment. If these permissions are granted to users unnecessarily or to individuals without sufficient knowledge, it can lead to security vulnerabilities, data leaks, data loss, or unexpected charges.",
-  "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html",
+  "Description": "**IAM users** are evaluated for a direct attachment of the AWS managed policy `AdministratorAccess`. The finding identifies identities where this policy appears among the user's attached policies.",
+  "Risk": "Assigning an IAM user full admin rights concentrates power in long-lived credentials. If compromised, attackers gain:\n- **Confidentiality**: read/export all data\n- **Integrity**: change configs, policies, code\n- **Availability**: delete resources, disrupt services\nAlso enables persistence and uncontrolled spend.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.datadoghq.com/security/default_rules/542-ddc-8ba/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/admin-permissions.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html",
+    "https://www.elastic.co/guide/en/security/8.19/prebuilt-rule-8-19-9-aws-iam-administratoraccess-policy-attached-to-user.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws iam detach-user-policy --user-name <username> --policy-arn arn:aws:iam::aws:policy/AdministratorAccess",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/admin-permissions.html",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure IAM user does NOT have AdministratorAccess attached\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::User\n    Properties:\n      ManagedPolicyArns: []  # Critical: empty list ensures 'AdministratorAccess' is NOT attached to this user\n```",
+      "Other": "1. Sign in to the AWS Console and open IAM\n2. Go to Users and select the target user\n3. Open the Permissions tab\n4. In Attached policies (or Permissions policies), find AdministratorAccess\n5. Select it and click Detach policy (or Remove)\n6. Confirm to detach",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Replace the 'AdministratorAccess' policy with more specific permissions that follow the Principle of Least Privilege. Consider implementing IAM roles such as 'IAM Master' and 'IAM Manager' to manage permissions more securely.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Remove direct `AdministratorAccess` from users.\n- Apply **least privilege** with scoped policies\n- Use **federation** and **roles** for temporary admin access\n- Enforce **separation of duties** and approvals\n- Add guardrails (SCPs, permissions boundaries)\n- Require **MFA** and rotate any remaining long-lived credentials",
+      "Url": "https://hub.prowler.com/check/iam_user_administrator_access_policy"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

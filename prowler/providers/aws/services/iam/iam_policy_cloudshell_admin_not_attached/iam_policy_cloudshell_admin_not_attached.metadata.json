@@ -1,32 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "iam_policy_cloudshell_admin_not_attached",
-  "CheckTitle": "Check if IAM identities (users,groups,roles) have the AWSCloudShellFullAccess policy attached.",
+  "CheckTitle": "No IAM users, groups, or roles have the AWSCloudShellFullAccess policy attached",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:iam::{account-id}:{resource-type}/{resource-id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
-  "Description": "This control checks whether an IAM identity (user, role, or group) has the AWS managed policy AWSCloudShellFullAccess attached. The control fails if an IAM identity has the AWSCloudShellFullAccess policy attached.",
-  "Risk": "Attaching the AWSCloudShellFullAccess policy to IAM identities grants broad permissions, including internet access and file transfer capabilities, which can lead to security risks such as data exfiltration. The principle of least privilege should be followed to avoid excessive permissions.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-blacklisted-check.html",
+  "Description": "**IAM identities** with the AWS managed policy `AWSCloudShellFullAccess` attached are identified across users, groups, and roles.\n\nThis indicates principals are granted `cloudshell:*` on `*`, enabling full CloudShell features, including environment startup and file transfer.",
+  "Risk": "Granting `cloudshell:*` enables an interactive shell with Internet egress and file upload/download, degrading **confidentiality** and **integrity**.\n\nCompromised principals can exfiltrate data, stage tooling with sudo, persist artifacts in CloudShell, and operate from AWS IP space to bypass endpoint controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-27",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-access-to-awscloudshellfullaccess-is-restricted",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/unapproved-iam-policy-in-use.html",
+    "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCloudShellFullAccess.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-blacklisted-check.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html",
+    "https://icompaas.freshdesk.com/support/solutions/articles/62000233099-1-22-restrict-access-to-awscloudshellfullaccess-manual-"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws iam detach-user/role/group-policy --user/role/group-name <user/role/group-name> --policy-arn arn:aws:iam::aws:policy/AWSCloudShellFullAccess",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-27",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure AWSCloudShellFullAccess is NOT attached to the IAM user\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::User\n    Properties:\n      ManagedPolicyArns: []  # Critical: empty list ensures AWSCloudShellFullAccess is not attached\n```",
+      "Other": "1. In the AWS console, go to IAM > Policies\n2. Search for AWSCloudShellFullAccess and open it\n3. Select the Entities attached tab\n4. Select all Users, Groups, and Roles listed\n5. Click Detach and confirm",
+      "Terraform": "```hcl\n# Terraform: ensure AWSCloudShellFullAccess is NOT attached\nresource \"aws_iam_user_policy_attachment\" \"<example_resource_name>\" {\n  count      = 0  # Critical: prevents creation, ensuring the policy is detached/not attached\n  user       = \"<example_resource_name>\"\n  policy_arn = \"arn:aws:iam::aws:policy/AWSCloudShellFullAccess\"  # Denied policy\n}\n```"
     },
     "Recommendation": {
-      "Text": "Detach the AWSCloudShellFullAccess policy from the IAM identity to restrict excessive permissions and adhere to the principle of least privilege.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html"
+      "Text": "Detach `AWSCloudShellFullAccess` from identities.\n\nApply **least privilege**: permit CloudShell only when necessary via narrowly scoped permissions, restricted roles, short-lived sessions, and approvals. Prefer controlled alternatives (local CLI, bastion, or Session Manager). Enforce **separation of duties** and monitor usage.",
+      "Url": "https://hub.prowler.com/check/iam_policy_cloudshell_admin_not_attached"
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

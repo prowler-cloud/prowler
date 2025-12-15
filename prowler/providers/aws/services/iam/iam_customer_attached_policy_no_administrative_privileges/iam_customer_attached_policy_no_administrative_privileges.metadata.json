@@ -1,33 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "iam_customer_attached_policy_no_administrative_privileges",
-  "CheckTitle": "Ensure IAM Customer-Managed policies that allow full \"*:*\" administrative privileges are not attached",
+  "CheckTitle": "Attached IAM customer-managed policy does not allow '*:*' administrative privileges",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Privilege Escalation"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "high",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsIamPolicy",
-  "Description": "Ensure IAM Customer-Managed policies that allow full \"*:*\" administrative privileges are not attached",
-  "Risk": "IAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended and considered a standard security advice to grant least privilege—that is, granting only the permissions required to perform a task. Determine what users need to do and then craft policies for them that let the users perform only those tasks instead of allowing full administrative privileges. Providing full administrative privileges instead of restricting to the minimum set of permissions that the user is required to do exposes the resources to potentially unwanted actions.",
+  "Description": "Attached **customer-managed IAM policies** are evaluated for statements granting full admin access via `Action: \"*\"`, `Resource: \"*\"`, i.e., `*:*`. Only policies you created and attached to identities are considered.",
+  "Risk": "**Unrestricted admin access** lets any attached principal perform any action on any resource, enabling data exfiltration, policy tampering, credential creation, logging disablement, and destructive deletions-compromising **confidentiality, integrity, and availability** across the account.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform",
+    "https://github.com/ministryofjustice/cloud-platform/issues/2800",
+    "https://www.linkedin.com/pulse/security-best-practices-aws-s3-jigisha-araniya",
+    "https://qandahub.org/blog/iam-policies-secure-aws-by",
+    "https://www.cloudquery.io/blog/announcing-aws-fsbp-policies-snowflake",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
+    "https://repost.aws/questions/QUB6UG9RwKSyakSXEyvotQ7A/iam-policies-with-full-administrative-privileges-and-mfa-questions",
+    "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
-      "Terraform": "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+      "CLI": "aws iam create-policy-version --policy-arn <EXAMPLE_POLICY_ARN> --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"iam:GetUser\",\"Resource\":\"*\"}]}' --set-as-default",
+      "NativeIaC": "```yaml\n# CloudFormation: Replace admin '*' access with a specific action\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::ManagedPolicy\n    Properties:\n      PolicyDocument:\n        Version: \"2012-10-17\"\n        Statement:\n          - Effect: Allow\n            Action: iam:GetUser  # CRITICAL: removes '*:*' by allowing only a specific action\n            Resource: \"*\"        # CRITICAL: no full admin since Action is not '*'\n```",
+      "Other": "1. In the AWS Console, go to IAM > Policies and open the customer managed policy from the finding\n2. Select the Policy versions tab and click Create version\n3. Replace the JSON with:\n   {\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"iam:GetUser\",\"Resource\":\"*\"}]}\n4. Check Set as default version and click Create version\n5. Confirm the policy no longer contains an Allow with Action \"*\" (or \"*:*\") over Resource \"*\"",
+      "Terraform": "```hcl\n# Terraform: Managed policy without '*:*' admin privileges\nresource \"aws_iam_policy\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = \"iam:GetUser\"  # CRITICAL: not \"*\" or \"*:*\"; removes admin privileges\n      Resource = \"*\"             # CRITICAL: paired with specific action to avoid full admin\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities.",
-      "Url": "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Enforce **least privilege**: replace wildcards with specific actions, scope `Resource` to needed ARNs, and add restrictive `Condition`s. Prefer role-based access and separation of duties. Use **permissions boundaries** and organization guardrails, and regularly review policies with policy validation and Access Analyzer.",
+      "Url": "https://hub.prowler.com/check/iam_customer_attached_policy_no_administrative_privileges"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "CAF Security Epic: IAM"

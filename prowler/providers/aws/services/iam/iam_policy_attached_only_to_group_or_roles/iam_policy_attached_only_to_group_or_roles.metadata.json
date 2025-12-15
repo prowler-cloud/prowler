@@ -1,33 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "iam_policy_attached_only_to_group_or_roles",
-  "CheckTitle": "Ensure IAM policies are attached only to groups or roles",
+  "CheckTitle": "IAM user has no inline or attached policies",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "low",
-  "ResourceType": "AwsIamPolicy",
-  "Description": "Ensure IAM policies are attached only to groups or roles",
-  "Risk": "By default IAM users, groups, and roles have no access to AWS resources. IAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended that IAM policies be applied directly to groups and roles but not users. Assigning privileges at the group or role level reduces the complexity of access management as the number of users grow. Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamUser",
+  "Description": "**IAM users** have identity-based policies attached directly (managed or inline) instead of inheriting permissions via **groups** or **roles**.",
+  "Risk": "Directly attached user policies hinder centralized control and cause privilege creep. If a user is compromised, excessive rights enable data exposure, resource tampering, and lateral movement, harming **confidentiality** and **integrity**. Revocation is error-prone, weakening **separation of duties** and auditability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://mf-akbar.medium.com/most-pentesters-conducting-aws-assessments-fail-to-find-real-attack-paths-how-to-attack-iam-9caa4875c110",
+    "https://readmedium.com/how-to-secure-your-aws-infrastructure-with-iam-best-practices-7ef75523af17",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure IAM user has no policies\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::User\n    Properties:\n      UserName: <example_resource_name>\n      ManagedPolicyArns: []  # CRITICAL: empty list detaches all managed (attached) policies\n      Policies: []           # CRITICAL: empty list removes all inline policies\n```",
+      "Other": "1. In AWS Console, go to IAM > Users and select the target user\n2. Open the Permissions tab\n3. Under Permissions policies, remove each attached policy\n4. Under Inline policies, delete each inline policy\n5. Confirm changes; the user should show no inline or attached policies",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove any policy attached directly to the user. Use groups or roles instead.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Assign permissions to **groups** (humans) and **roles** (workloads); avoid user-attached policies. Enforce **least privilege**, prefer federation and temporary credentials, and use tags or **permissions boundaries** to constrain scope. Review regularly to remove direct user policies and right-size access.",
+      "Url": "https://hub.prowler.com/check/iam_policy_attached_only_to_group_or_roles"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "CAF Security Epic: IAM"

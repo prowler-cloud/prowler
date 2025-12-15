@@ -1,33 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "iam_no_root_access_key",
-  "CheckTitle": "Ensure no root account access key exists",
+  "CheckTitle": "Root account has no active access keys",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamAccessKey",
-  "Description": "Ensure no root account access key exists",
-  "Risk": "The root account is the most privileged user in an AWS account. AWS Access Keys provide programmatic access to a given AWS account. It is recommended that all access keys associated with the root account be removed. Removing access keys associated with the root account limits vectors by which the account can be compromised. Removing the root access keys encourages the creation and use of role based accounts that are least privileged.",
+  "Description": "**AWS root user** is evaluated for **active access keys**. It identifies whether the root identity has one or two programmatic credentials and notes when organization-level root credential management is present.",
+  "Risk": "**Root access keys** provide unrestricted API access. If exposed or misused, attackers can:\n- Turn off logging and alter policies (**integrity**)\n- Read or export data (**confidentiality**)\n- Delete resources and lock out admins (**availability**)\nLong-lived keys can persist and may bypass console-only MFA.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/secure-aws-account-root-user-onkar-gadhave-1mv3f",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+    "https://www.rdocumentation.org/packages/paws.security.identity/versions/0.1.12/topics/iam_delete_access_key",
+    "https://www.examtopics.com/discussions/amazon/view/87564-exam-aws-certified-cloud-practitioner-topic-1-question-352/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
+    "https://medium.com/@manimj_42945/your-aws-account-has-been-compromised-cb4e367a4bdb",
+    "https://repost.aws/fr/questions/QUdYus2RJkRNadcapHTQUIAw/deactivate-or-delete-access-keys-for-root-user?sc_ichannel=ha&sc_ilang=en&sc_isite=repost&sc_iplace=hp&sc_icontent=QUdYus2RJkRNadcapHTQUIAw&sc_ipos=12"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the AWS Management Console as the root user\n2. Open My Security Credentials (account menu) or go to https://console.aws.amazon.com/iam/home?#/security_credentials\n3. Expand Access keys\n4. For each key with Status \"Active\", choose Delete and confirm\n5. Verify no Active keys remain for the root user",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use the credential report to check the user and ensure the access_key_1_active and access_key_2_active fields are set to FALSE. If using AWS Organizations, consider enabling Centralized Root Management and removing individual root credentials.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
+      "Text": "Delete and prohibit **root access keys**. Use **IAM roles** and temporary credentials with **least privilege** for all automation. Enable **MFA on root**, limit root to break-glass use, and continuously monitor for any new root keys. *Where applicable*, apply organization-wide controls to enforce this.",
+      "Url": "https://hub.prowler.com/check/iam_no_root_access_key"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
