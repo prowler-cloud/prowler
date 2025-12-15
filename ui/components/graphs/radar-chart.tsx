@@ -112,6 +112,7 @@ const CustomDot = ({
         );
         const point: RadarDataPoint = {
           category: currentCategory,
+          categoryId: fullDataItem?.categoryId || payload.categoryId || "",
           value: payload.value,
           change: payload.change,
           severityData: fullDataItem?.severityData || payload.severityData,
