@@ -15,9 +15,7 @@ class ProwlerAppAuth:
     def __init__(
         self,
         mode: str = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio"),
-        base_url: str = os.getenv(
-            "PROWLER_API_BASE_URL", "https://api.prowler.com/api/v1"
-        ),
+        base_url: str = os.getenv("API_BASE_URL", "https://api.prowler.com/api/v1"),
     ):
         self.base_url = base_url.rstrip("/")
         logger.info(f"Using Prowler App API base URL: {self.base_url}")
