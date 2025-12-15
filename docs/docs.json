@@ -19,7 +19,9 @@
         "groups": [
           {
             "group": "Welcome",
-            "pages": ["introduction"]
+            "pages": [
+              "introduction"
+            ]
           },
           {
             "group": "Prowler Cloud",
@@ -49,7 +51,9 @@
           },
           {
             "group": "Prowler Lighthouse AI",
-            "pages": ["getting-started/products/prowler-lighthouse-ai"]
+            "pages": [
+              "getting-started/products/prowler-lighthouse-ai"
+            ]
           },
           {
             "group": "Prowler MCP Server",
@@ -149,7 +153,9 @@
               "user-guide/cli/tutorials/quick-inventory",
               {
                 "group": "Tutorials",
-                "pages": ["user-guide/cli/tutorials/parallel-execution"]
+                "pages": [
+                  "user-guide/cli/tutorials/parallel-execution"
+                ]
               }
             ]
           },
@@ -237,7 +243,9 @@
               },
               {
                 "group": "LLM",
-                "pages": ["user-guide/providers/llm/getting-started-llm"]
+                "pages": [
+                  "user-guide/providers/llm/getting-started-llm"
+                ]
               },
               {
                 "group": "Oracle Cloud Infrastructure",
@@ -250,7 +258,9 @@
           },
           {
             "group": "Compliance",
-            "pages": ["user-guide/compliance/tutorials/threatscore"]
+            "pages": [
+              "user-guide/compliance/tutorials/threatscore"
+            ]
           }
         ]
       },
@@ -291,7 +301,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",
@@ -304,15 +315,21 @@
       },
       {
         "tab": "Security",
-        "pages": ["security"]
+        "pages": [
+          "security"
+        ]
       },
       {
         "tab": "Contact Us",
-        "pages": ["contact"]
+        "pages": [
+          "contact"
+        ]
       },
       {
         "tab": "Troubleshooting",
-        "pages": ["troubleshooting"]
+        "pages": [
+          "troubleshooting"
+        ]
       },
       {
         "tab": "About Us",

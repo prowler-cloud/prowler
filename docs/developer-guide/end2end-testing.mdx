@@ -1,0 +1,163 @@
+---
+title: 'End-2-End Tests for Prowler App'
+---
+
+End-to-end (E2E) tests validate complete user flows in Prowler App (UI + API). These tests are implemented with [Playwright](https://playwright.dev/) under the `ui/tests` folder and are designed to run against a Prowler App environment.
+
+## General Recommendations
+
+When adding or maintaining E2E tests for Prowler App, follow these guidelines:
+
+1. **Test real user journeys**
+   Focus on full workflows (for example, sign-up → login → add provider → launch scan) instead of low-level UI details already covered by unit or integration tests.
+
+2. **Keep tests deterministic and isolated**
+   - Avoid hard-coding values that may already exist in the environment.
+   - Use unique identifiers (for example, random suffixes for emails or labels) to prevent data collisions.
+   - Clean up or reuse test resources when possible, especially for providers and scans.
+
+3. **Use environment variables for secrets and dynamic data**
+   Credentials and provider identifiers must come from environment variables (for example, `E2E_AWS_PROVIDER_ACCOUNT_ID`, `E2E_GCP_PROJECT_ID`, `E2E_NEW_USER_PASSWORD`).
+   Never commit real secrets, tokens, or account IDs to the repository.
+
+4. **Use a Page Model (Page Object Model)**
+   - Encapsulate selectors and common actions in page classes instead of repeating them in each test.
+   - Leverage and extend the existing Playwright page models in `ui/tests`—such as `ProvidersPage`, `ScansPage`, and others—which are all based on the shared `BasePage`.
+   - This approach improves readability, reduces duplication, and makes refactors safer.
+
+5. **Tag and document scenarios**
+   - Use tags such as `@e2e`, `@serial`, and feature tags (for example, `@providers`, `@scans`) to filter and organize tests.
+   - Follow the existing naming convention for suites and test cases (for example, `SIGNUP-E2E`, `SCANS-E2E-001`, `PROVIDER-E2E-003`) and document each one in the Markdown files under `ui/tests`, including **preconditions**, **flow steps**, **expected results**, and tags.
+
+6. **Minimize cross-test coupling**
+   - Tests that depend on specific state (for example, registered providers) must either create that state explicitly or declare that they run serially.
+   - Prefer self-contained flows where each test prepares its own data and does not rely on previous test outcomes.
+
+## Running Prowler Tests
+
+E2E tests for Prowler App run from the `ui` project using Playwright. The Playwright configuration lives in `ui/playwright.config.ts` and defines:
+
+- `testDir: "./tests"` – location of E2E test files.
+- `webServer` – how to start the Next.js development server and connect to Prowler API.
+- `use.baseURL` – base URL for browser interactions (defaults to `http://localhost:3000` or `AUTH_URL` if set).
+- Projects for each E2E suite (for example, `sign-up`, `providers`, `invitations`, `scans`) and authentication setup projects, where the latter are used as dependencies to generate authenticated states that other E2E projects reuse.
+
+### Prerequisites
+
+Before running E2E tests:
+
+- **Install root and UI dependencies**
+  - Follow the [developer guide introduction](/developer-guide/introduction#getting-the-code-and-installing-all-dependencies) to clone the repository and install core dependencies.
+  - From the `ui` directory, install frontend dependencies:
+
+    ```bash
+    cd ui
+    pnpm install
+    pnpm run test:e2e:install  # Install Playwright browsers
+    ```
+
+- **Ensure Prowler API is available**
+  - By default, Playwright uses `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
+  - Start Prowler API so it is reachable on that URL (for example, via `docker-compose-dev.yml` or the development orchestration used locally).
+  - If a different API URL is required, set `NEXT_PUBLIC_API_BASE_URL` accordingly before running the tests.
+
+- **Ensure Prowler App UI is available**
+  - Playwright automatically starts the Next.js server through the `webServer` block in `playwright.config.ts` (`pnpm run dev` by default).
+  - If the UI is already running on `http://localhost:3000`, Playwright will reuse the existing server when `reuseExistingServer` is `true`.
+
+- **Configure E2E environment variables**
+  - Suite-specific variables (for example, provider account IDs, credentials, and E2E user data) must be provided before running tests.
+  - They can be defined either:
+    - As exported environment variables in the shell before executing the Playwright commands, or
+    - In a `.env.local` or `.env` file under `ui/`, and then loaded into the shell before running tests, for example:
+
+      ```bash
+      cd ui
+      set -a
+      source .env.local  # or .env
+      set +a
+      ```
+  - Refer to the Markdown documentation files in `ui/tests` for each E2E suite (for example, the `*.md` files that describe sign-up, providers, scans, invitations, and other flows) to see the exact list of required variables and their meaning.
+  - Each E2E test suite explicitly checks that its required environment variables are defined at runtime and will fail with a clear error message if any mandatory variable is missing, making misconfiguration easy to detect.
+
+### Executing Tests
+
+To execute E2E tests for Prowler App:
+
+1. **Run the full E2E suite (headless)**
+
+   From the `ui` directory:
+
+   ```bash
+   pnpm run test:e2e
+   ```
+
+   This command runs Playwright with the configured projects
+
+2. **Run E2E tests with the Playwright UI runner**
+
+   ```bash
+   pnpm run test:e2e:ui
+   ```
+
+   This opens the Playwright test runner UI to inspect, debug, and rerun specific tests or projects.
+
+3. **Debug E2E tests interactively**
+
+   ```bash
+   pnpm run test:e2e:debug
+   ```
+
+   Use this mode to step through flows, inspect selectors, and adjust timings. It runs tests in headed mode with debugging tools enabled.
+
+4. **Run tests in headed mode without debugger**
+
+   ```bash
+   pnpm run test:e2e:headed
+   ```
+
+   This is useful to visually confirm flows while still running the full suite.
+
+5. **View previous test reports**
+
+   ```bash
+   pnpm run test:e2e:report
+   ```
+
+   This opens the latest Playwright HTML report, including traces and screenshots when enabled.
+
+6. **Run specific tests or subsets**
+
+   In addition to the predefined scripts, Playwright allows filtering which tests run. These examples use the Playwright CLI directly through `pnpm`:
+
+   - **By test ID (`@ID` in the test metadata or description)**
+
+     To run a single test case identified by its ID (for example, `@PROVIDER-E2E-001` or `@SCANS-E2E-001`):
+
+     ```bash
+     pnpm playwright test --grep @PROVIDER-E2E-001
+     ```
+
+   - **By tags**
+
+     To run all tests that share a common tag (for example, all provider E2E tests tagged with `@providers`):
+
+     ```bash
+     pnpm playwright test --grep @providers
+     ```
+
+     This is useful to focus on a specific feature area such as providers, scans, invitations, or sign-up.
+
+   - **By Playwright project**
+
+     To run only the tests associated with a given project defined in `playwright.config.ts` (for example, `providers` or `scans`):
+
+     ```bash
+     pnpm playwright test --project=providers
+     ```
+
+     Combining project and grep filters is also supported, enabling very narrow runs (for example, a single test ID within the `providers` project). For additional CLI options and combinations, see the [Playwright command line documentation](https://playwright.dev/docs/test-cli).
+
+<Note>
+For detailed flows, preconditions, and environment variable requirements per feature, always refer to the Markdown files in `ui/tests`. Those documents are the single source of truth for business expectations and validation points in each E2E suite.
+</Note>
