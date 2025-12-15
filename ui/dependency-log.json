@@ -466,18 +466,18 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-12T12:19:31.784Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-12T12:19:31.784Z"
   },
   {
     "section": "dependencies",
