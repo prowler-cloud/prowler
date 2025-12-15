@@ -17,10 +17,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html",
-    "https://docs.aws.amazon.com/zh_cn/controltower/latest/userguide/msk-rules.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/public-access-msk-cluster.html",
-    "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html",
-    "https://docs.ansible.com/projects/ansible/latest/collections/community/aws/msk_cluster_module.html"
+    "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html"
   ],
   "Remediation": {
     "Code": {

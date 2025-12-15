@@ -17,10 +17,6 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/msk/latest/developerguide/metrics-details.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-enhanced-monitoring-for-apache-kafka-brokers.html#",
-    "https://github.com/angelabad/terraform-aws-msk-cluster",
-    "https://codefarm0.medium.com/we-finally-tamed-kafka-lag-in-ecs-using-just-terraform-and-msk-native-metrics-627b5fd19325",
-    "https://www.ibm.com/docs/en/instana-observability/286?topic=technologies-monitoring-amazon-msk",
-    "https://library.tf/modules/aws-terraform-module/msk-cluster/aws/latest",
     "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html"
   ],
   "Remediation": {

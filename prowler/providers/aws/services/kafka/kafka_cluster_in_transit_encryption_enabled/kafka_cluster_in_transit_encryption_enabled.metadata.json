@@ -15,12 +15,7 @@
   "Risk": "Unencrypted or mixed (`TLS_PLAINTEXT`/`PLAINTEXT`) traffic enables interception of records, credentials, and metadata, supporting **MITM**, replay, and message tampering.\n\nPlaintext inter-broker links expose replication data within the VPC, enabling **lateral movement** and topic poisoning, degrading data **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/",
-    "https://aws-exploration.vercel.app/aws-services-exploration/msk",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform",
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
-    "https://docs.ansible.com/projects/ansible/latest/collections/community/aws/msk_cluster_module.html",
-    "https://www.amazonaws.cn/en/msk/faqs/",
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html"
   ],

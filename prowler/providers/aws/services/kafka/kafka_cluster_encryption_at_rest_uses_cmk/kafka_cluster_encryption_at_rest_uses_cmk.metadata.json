@@ -20,8 +20,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/msk-encryption-at-rest-with-cmk.html",
-    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html"
   ],
   "Remediation": {
     "Code": {

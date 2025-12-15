@@ -16,9 +16,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",
-    "https://docs.aws.amazon.com/MSKC/latest/mskc/API_CreateConnector.html",
-    "https://github.com/aws-cloudformation/cloudformation-coverage-roadmap/issues/929",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/msk-controls.html#msk-3",
     "https://docs.aws.amazon.com/msk/latest/developerguide/mkc-create-connector-intro.html"
   ],
   "Remediation": {
