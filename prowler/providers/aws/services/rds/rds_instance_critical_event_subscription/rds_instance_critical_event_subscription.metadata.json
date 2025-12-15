@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_critical_event_subscription",
-  "CheckTitle": "Check if RDS Instances events are subscribed.",
+  "CheckTitle": "RDS instance event subscription is enabled for maintenance, configuration change, and failure categories",
   "CheckType": [
-    "Software and Configuration Checks, AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
-  "Severity": "low",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "AwsRdsEventSubscription",
-  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database database events, particularly maintenance, configuration change and failure.",
-  "Risk": "Without event subscriptions for critical events, such as maintenance, configuration changes and failures, you may not be aware of issues affecting your RDS instances, leading to downtime or security vulnerabilities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+  "Description": "**Amazon RDS event subscriptions** for DB instances are assessed for coverage of the critical categories `maintenance`, `configuration change`, and `failure`.\n\nThe evaluation looks for enabled `db-instance` subscriptions and confirms these categories are included or that all events are selected.",
+  "Risk": "Without these notifications, critical DB events go unseen, undermining **availability** and **integrity**. Missed outages, unexpected restarts, or silent parameter changes can delay response, prolong downtime, corrupt data flows, and leave misconfigurations unaddressed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+    "https://repost.aws/questions/QU53S7OYh-Tni0zF0NPR3o9w/unexpected-az-change-in-singleaz-installations",
+    "https://trustedinstitute.com/concept/aws-solution-architect/amazon-rds/amazon-rds-event-subscriptions/",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html",
+    "https://www.cloudquery.io/docs/plugins/sources/aws/tables/aws_rds_event_subscriptions",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-instance-level-events.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-20",
+    "https://github.com/devsecops-studio/terraform-aws-rds-event-notification"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-event-subscription --source-type db-instance --event-categories 'failure' 'maintenance' 'configuration change' --sns-topic-arn <sns-topic-arn>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-20",
-      "Terraform": ""
+      "CLI": "aws rds create-event-subscription --subscription-name <example_resource_name> --sns-topic-arn <sns-topic-arn> --source-type db-instance --event-categories maintenance \"configuration change\" failure",
+      "NativeIaC": "```yaml\n# CloudFormation: RDS DB instance event subscription\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::EventSubscription\n    Properties:\n      SnsTopicArn: <sns-topic-arn>           # critical: SNS topic to receive notifications\n      SourceType: db-instance                # critical: subscribe to DB instance events\n      EventCategories:                       # critical: required categories for PASS\n        - maintenance\n        - configuration change\n        - failure\n```",
+      "Other": "1. Open the AWS Console and go to RDS\n2. In the left menu, select Event subscriptions > Create event subscription\n3. Send notifications to: select an existing SNS topic (<sns-topic-arn>)\n4. Source type: choose Instances\n5. Event categories: select Maintenance, Configuration change, and Failure\n6. Create the subscription",
+      "Terraform": "```hcl\n# Terraform: RDS DB instance event subscription\nresource \"aws_db_event_subscription\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  sns_topic       = \"<sns-topic-arn>\"\n  source_type     = \"db-instance\"                           # critical: DB instance events\n  event_categories = [\"maintenance\", \"configuration change\", \"failure\"]  # critical: required categories\n}\n```"
     },
     "Recommendation": {
-      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html"
+      "Text": "Establish and sustain **RDS event subscriptions** for `db-instance` that include `maintenance`, `configuration change`, and `failure`.\n- Deliver to monitored channels (ticketing/chat/paging)\n- Enforce **least privilege** on topics\n- Test alert delivery and runbooks\n- Periodically review coverage across Regions",
+      "Url": "https://hub.prowler.com/check/rds_instance_critical_event_subscription"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

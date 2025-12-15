@@ -1,29 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_copy_tags_to_snapshots",
-  "CheckTitle": "Check if RDS DB instances have copy tags to snapshots enabled",
-  "CheckType": [],
+  "CheckTitle": "RDS DB instance has copy tags to snapshots enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
-  "Severity": "low",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS DB instances have copy tags to snapshots enabled, Aurora instances can not have this feature enabled at this level, they will have it at cluster level",
-  "Risk": "If RDS instances are not configured to copy tags to snapshots, it could lead to compliance issues as the snapshots will not inherit necessary metadata such as environment, owner, or purpose tags. This could result in inefficient tracking and management of RDS resources and their snapshots.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags",
+  "Description": "**Amazon RDS DB instances** are assessed for propagating instance tags to their **DB snapshots** using `CopyTagsToSnapshot`.\n\n*Aurora engines manage this at the cluster level and aren't evaluated per instance.*",
+  "Risk": "Snapshots without inherited tags lose ownership, environment, and sensitivity context, degrading visibility and governance. Missing metadata weakens **ABAC**, cost allocation, and lifecycle policies, enabling unintended backup access, orphaned snapshots, and retention drift that impact confidentiality and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/UserGuide/USER_Tagging.html",
+    "https://www.stream.security/rules/ensure-rds-database-instances-have-copy-tags-to-snapshots-enabled",
+    "https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-aws-enable-tags-snapshot-rds-instance.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-17",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags",
+    "https://km.oslo.systems/updates/update-guides/946-copy-rds-tags-to-snapshot/",
+    "https://support.icompaas.com/support/solutions/articles/62000233711-ensure-rds-db-instances-have-copy-tags-to-snapshots-enabled",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/copy-tags-to-snapshot.html",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <instance-identifier> --copy-tags-to-snapshot",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-17",
-      "Terraform": ""
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <example_resource_id> --copy-tags-to-snapshot --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable copying tags to snapshots on an RDS DB instance\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      CopyTagsToSnapshot: true  # Critical: ensures DB instance tags are copied to snapshots\n```",
+      "Other": "1. In the AWS Console, go to RDS > Databases and select the non-Aurora DB instance\n2. Click Modify\n3. Under Additional configuration, enable Copy tags to snapshots\n4. Check Apply immediately and click Modify DB instance",
+      "Terraform": "```hcl\n# Terraform: enable copying tags to snapshots on an RDS DB instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  copy_tags_to_snapshot = true  # Critical: ensures DB instance tags are copied to snapshots\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the `CopyTagsToSnapshot` setting is enabled for all RDS instances to propagate instance tags to their snapshots for improved tracking and compliance.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+      "Text": "Enable `CopyTagsToSnapshot` on non-Aurora RDS instances so snapshots inherit required metadata. Establish a consistent **tag taxonomy** and automate enforcement to support **least privilege** via ABAC, cost tracking, and retention controls. For Aurora, configure tag copy at the cluster level.",
+      "Url": "https://hub.prowler.com/check/rds_instance_copy_tags_to_snapshots"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

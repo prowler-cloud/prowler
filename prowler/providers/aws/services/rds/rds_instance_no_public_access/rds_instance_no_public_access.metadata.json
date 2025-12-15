@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_no_public_access",
-  "CheckTitle": "Ensure there are no Public Accessible RDS instances.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance is not publicly exposed to the Internet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Ensure there are no Public Accessible RDS instances.",
-  "Risk": "Publicly accessible databases could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html",
+  "Description": "Amazon RDS instances are assessed for **internet exposure** using the `PubliclyAccessible` setting, security group ingress to the DB port from any address, and whether subnets are **public**. Instances that combine an internet-facing endpoint, open ingress, and public subnets are identified.",
+  "Risk": "An internet-reachable database invites:\n- Brute-force and vulnerability probing, risking **availability** and **integrity**\n- Unauthorized queries and dumps leading to **confidentiality** loss\n\nCompromise can enable **lateral movement** and persistence within the VPC.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/public-policies/public_2#terraform",
+    "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --no-publicly-accessible --apply-immediately",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_2#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_2#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: make the RDS instance private\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      DBInstanceIdentifier: <example_resource_id>\n      PubliclyAccessible: false  # CRITICAL: disables public access so the instance is not Internet-facing\n```",
+      "Other": "1. In the AWS console, go to RDS > Databases and select your DB instance\n2. Click Modify\n3. In Connectivity (Connectivity & security), set Public access to No (Not publicly accessible)\n4. Choose Continue, select Apply immediately (or during the next window), then click Modify DB instance",
+      "Terraform": "```hcl\n# Ensure the RDS instance is not publicly accessible\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  publicly_accessible = false  # CRITICAL: disables public access (no public endpoint)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Using an AWS Config rule check for RDS public instances periodically and check there is a business reason for it.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html"
+      "Text": "Keep databases private by applying **least privilege** at the network layer:\n- Set `PubliclyAccessible` to `false`\n- Place instances in private subnets\n- Deny `0.0.0.0/0` and `::/0` on the DB port\n- Expose access via private endpoints, VPN, or an application tier/DB proxy\n\nAdopt **defense in depth** with monitoring and strong auth.",
+      "Url": "https://hub.prowler.com/check/rds_instance_no_public_access"
     }
   },
   "Categories": [

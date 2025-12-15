@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "rds_cluster_critical_event_subscription",
-  "CheckTitle": "Check if RDS Cluster critical events are subscribed.",
+  "CheckTitle": "RDS cluster event subscription is enabled for maintenance and failure categories",
   "CheckType": [
-    "Software and Configuration Checks, AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:account",
-  "Severity": "low",
-  "ResourceType": "AwsAccount",
-  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database cluster events, particularly maintenance and failure.",
-  "Risk": "Without event subscriptions for critical events, such as maintenance and failures, you may not be aware of issues affecting your RDS clusters, leading to downtime or security vulnerabilities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsEventSubscription",
+  "Description": "**RDS event subscriptions** for the `db-cluster` source type are enabled and cover critical cluster event categories: **`maintenance`** and **`failure`** (or all cluster events).",
+  "Risk": "Without notifications for **cluster maintenance** and **failure**, teams may miss engine updates, failovers, or node crashes, impacting **availability** and increasing MTTR. Prolonged degraded states can cause replication lag and potential **data integrity** issues, hindering timely containment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-19"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-event-subscription --source-type db-cluster --event-categories 'failure' 'maintenance' --sns-topic-arn <sns-topic-arn>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-19",
-      "Terraform": ""
+      "CLI": "aws rds create-event-subscription --subscription-name <example_resource_name> --sns-topic-arn <example_resource_arn> --source-type db-cluster --event-categories maintenance failure --enabled",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::EventSubscription\n    Properties:\n      SnsTopicArn: <example_resource_arn>       # Critical: SNS topic to receive notifications\n      SourceType: db-cluster                    # Critical: Scope to DB clusters\n      EventCategories:                          # Critical: Subscribe to required categories only\n        - maintenance\n        - failure\n      Enabled: true                             # Critical: Must be enabled to pass\n```",
+      "Other": "1. In the AWS Console, go to RDS > Event subscriptions > Create event subscription\n2. Name: enter <example_resource_name>\n3. Send notifications to: Choose existing Amazon SNS ARN and select <example_resource_arn>\n4. Source type: select Clusters\n5. Event categories: select only Maintenance and Failure (unselect others)\n6. Ensure Enabled is on\n7. Click Create",
+      "Terraform": "```hcl\nresource \"aws_db_event_subscription\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  sns_topic       = \"<example_resource_arn>\"           # Critical: SNS topic ARN\n  source_type     = \"db-cluster\"                        # Critical: Scope to clusters\n  event_categories = [\"maintenance\", \"failure\"]        # Critical: Required categories\n  enabled         = true                                  # Critical: Must be enabled\n}\n```"
     },
     "Recommendation": {
-      "Text": "To subscribe to RDS cluster event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html"
+      "Text": "Enable **event subscriptions** for RDS clusters that include `maintenance` and `failure`, delivered via **SNS** to monitored channels.\n- Enforce **least privilege** on topics\n- Separate topics per environment\n- Integrate with on-call/IR playbooks and test alerts\n- Add multiple recipients and escalation for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/rds_cluster_critical_event_subscription"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

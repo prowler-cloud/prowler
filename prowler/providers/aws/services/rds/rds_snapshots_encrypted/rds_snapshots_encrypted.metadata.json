@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "rds_snapshots_encrypted",
-  "CheckTitle": "Check if RDS Snapshots and Cluster Snapshots are encrypted.",
-  "CheckType": [],
+  "CheckTitle": "RDS DB instance snapshot or DB cluster snapshot is encrypted",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:snapshot",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsRdsDbSnapshot",
-  "Description": "Check if RDS Snapshots and Cluster Snapshots are encrypted.",
-  "Risk": "Ensure that your manual Amazon RDS database snapshots are encrypted in order to achieve compliance for data-at-rest encryption within your organization.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4",
+  "Description": "**RDS DB snapshots** and **DB cluster snapshots** are evaluated for **encryption at rest**, identifying snapshots created with a KMS key versus unencrypted ones.",
+  "Risk": "Unencrypted snapshots enable direct access to full database data if backups are leaked, cross-account shared, or stolen. Adversaries can harvest data offline, bypassing network controls, leading to **loss of confidentiality**. Restores from such snapshots propagate the exposure to new instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#"
+      "CLI": "aws rds copy-db-snapshot --source-db-snapshot-identifier <example_resource_id> --target-db-snapshot-identifier <example_resource_id>-encrypted --kms-key-id <KMS_KEY_ID>",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, go to RDS > Snapshots\n2. Select the unencrypted snapshot (for clusters, use the DB cluster snapshots tab)\n3. Click Actions > Copy snapshot\n4. Check Enable encryption and choose a KMS key\n5. Click Copy snapshot and wait for completion\n6. After verifying the new encrypted snapshot, delete the original unencrypted snapshot (Actions > Delete snapshot)",
+      "Terraform": "```hcl\nresource \"aws_db_snapshot_copy\" \"<example_resource_name>\" {\n  source_db_snapshot_identifier = \"<example_resource_id>\"\n  target_db_snapshot_identifier = \"<example_resource_id>-encrypted\"\n  kms_key_id                    = \"<KMS_KEY_ID>\" # Critical: encrypts the copied snapshot using the specified KMS key\n}\n```"
     },
     "Recommendation": {
-      "Text": "When working with production databases that hold sensitive and critical data, it is strongly recommended to implement encryption at rest and protect your data from attackers or unauthorized personnel. ",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4"
+      "Text": "Encrypt all RDS snapshots at rest using **KMS**, preferably **customer-managed keys**. Apply **least privilege** to key usage, enforce encryption via templates and automation, and prevent sharing of unencrypted backups. Use **key rotation**, separation of duties, and ensure copies and cross-account shares remain encrypted.",
+      "Url": "https://hub.prowler.com/check/rds_snapshots_encrypted"
     }
   },
   "Categories": [

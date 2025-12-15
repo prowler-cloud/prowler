@@ -1,29 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "rds_cluster_backtrack_enabled",
-  "CheckTitle": "Check if RDS Aurora MySQL Clusters have backtrack enabled.",
-  "CheckType": [],
+  "CheckTitle": "RDS Aurora MySQL cluster has Backtrack enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Ensure that the Backtrack feature is enabled for your Amazon Aurora (with MySQL compatibility) database clusters in order to backtrack your clusters to a specific time, without using backups. Backtrack is an Amazon RDS feature that allows you to specify the amount of time that an Aurora MySQL database cluster needs to retain change records, in order to have a fast way to recover from user errors, such as dropping the wrong table or deleting the wrong row by moving your MySQL database to a prior point in time without the need to restore from a recent backup.",
-  "Risk": "Once the Backtrack feature is enabled, Amazon RDS can quickly 'rewind' your Aurora MySQL database cluster to a point in time that you specify. In contrast to the backup and restore method, with Backtrack you can easily undo a destructive action, such as a DELETE query without a WHERE clause, with minimal downtime, you can rewind your Aurora cluster in just few minutes, and you can repeatedly backtrack a database cluster back and forth in time to help determine when a particular data change occurred.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
+  "Description": "**Aurora MySQL DB clusters** have **Backtrack** configured with a non-zero `BacktrackWindow`, retaining change records to allow rewinding to a consistent earlier time. *Applies to `aurora-mysql` engines only.*",
+  "Risk": "Without **Backtrack**, destructive queries or admin mistakes can't be quickly undone, forcing snapshot/point-in-time restores. This increases recovery time, disrupts availability, and risks data **integrity** from partial restores or rollbacks.\n\nAdversaries who alter data can cause longer impact windows before containment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.examtopics.com/discussions/amazon/view/25405-exam-aws-certified-database-specialty-topic-1-question-25/",
+    "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/Aurora.Modifying.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/aurora-mysql-backtracking-enabled.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
+    "https://github.com/aws-cloudformation/aws-guard-rules-registry/blob/main/rules/aws/amazon_rds/aurora_mysql_backtracking_enabled.guard",
+    "https://docs.aws.amazon.com/en_us/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.Configuring.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds restore-db-cluster-to-point-in-time --region <REGION> --source-db-cluster-identifier <SOURCE_DB_CLUSTER_ID> --db-cluster-identifier <DB_CLUSTER_ID> --restore-type copy-on-write --use-latest-restorable-time --backtrack-window 86400",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#"
+      "CLI": "aws rds restore-db-cluster-to-point-in-time --source-db-cluster-identifier <SOURCE_DB_CLUSTER_ID> --db-cluster-identifier <DB_CLUSTER_ID> --use-latest-restorable-time --backtrack-window 3600",
+      "NativeIaC": "```yaml\n# CloudFormation: Create Aurora MySQL cluster with Backtrack enabled\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      Engine: aurora-mysql\n      MasterUsername: \"<MASTER_USERNAME>\"\n      MasterUserPassword: \"<MASTER_PASSWORD>\"\n      BacktrackWindow: 3600  # CRITICAL: Enables Backtrack (seconds) so the check passes\n```",
+      "Other": "1. In the AWS Console, go to RDS > Databases and select the Aurora MySQL cluster\n2. Click Actions > Restore to point in time\n3. Choose Use latest restorable time\n4. Set Backtrack window (seconds) to a value > 0 (e.g., 3600)\n5. Enter a new DB cluster identifier and click Restore DB cluster\n6. Cut over applications to the new cluster",
+      "Terraform": "```hcl\n# Terraform: Aurora MySQL cluster with Backtrack enabled\nresource \"aws_rds_cluster\" \"<example_resource_name>\" {\n  engine          = \"aurora-mysql\"\n  master_username = \"<MASTER_USERNAME>\"\n  master_password = \"<MASTER_PASSWORD>\"\n  backtrack_window = 3600  # CRITICAL: Enables Backtrack (seconds) so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Backups help you to recover more quickly from a security incident. They also strengthens the resilience of your systems. Aurora backtracking reduces the time to recover a database to a point in time. It does not require a database restore to do so. You cannot enable backtracking on an existing cluster. Instead, you can create a clone that has backtracking enabled.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14"
+      "Text": "Enable **Backtrack** on Aurora MySQL clusters and set `BacktrackWindow` to meet RTO while balancing cost and workload. Use it with automated backups for **defense in depth** and resilience.\n\n*For clusters without Backtrack*, provision a clone or new cluster with it enabled; monitor usage and adjust the window as change rates evolve.",
+      "Url": "https://hub.prowler.com/check/rds_cluster_backtrack_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

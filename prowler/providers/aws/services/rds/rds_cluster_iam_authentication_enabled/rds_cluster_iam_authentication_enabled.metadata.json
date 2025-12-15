@@ -1,29 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "rds_cluster_iam_authentication_enabled",
-  "CheckTitle": "Check if RDS clusters have IAM authentication enabled.",
-  "CheckType": [],
+  "CheckTitle": "RDS cluster has IAM authentication enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Credential Access"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if RDS clusters have IAM authentication enabled.",
-  "Risk": "Ensure that the IAM Database Authentication feature is enabled for your RDS database clusters in order to use the Identity and Access Management (IAM) service to manage database access to your MySQL and PostgreSQL database clusters. With this feature enabled, you don't have to use a password when you connect to your MySQL/PostgreSQL database, instead you can use an authentication token. An authentication token is a unique string of characters with a lifetime of 15 minutes that Amazon RDS generates on your request. IAM Database Authentication removes the need of storing user credentials within the database configuration, because authentication is managed externally using Amazon IAM.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
+  "Description": "**RDS/Aurora DB clusters** on supported engines (MySQL/MariaDB/PostgreSQL/Aurora) have **IAM database authentication** enabled for database logins, indicating token-based access managed by IAM instead of static passwords.",
+  "Risk": "Without **IAM DB authentication**, databases depend on long-lived passwords. Stolen or reused creds can enable unauthorized connections, data exfiltration, and tampering, harming **confidentiality** and **integrity**. Lacking short-lived tokens and centralized revocation expands blast radius and weakens **access control**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
+    "https://clickhouse.com/docs/integrations/clickpipes/secure-rds",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
+    "https://repost.aws/knowledge-center/rds-postgresql-connect-using-iam",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-12",
+    "https://documentation.red-gate.com/monitor14/enabling-aws-iam-postgresql-authentication-246972466.html",
+    "https://www.datavail.com/blog/aws-iam-to-authenticate-against-rds-instances-aurora-clusters/?noamp=mobile"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --region <REGION> --db-instance-identifier <DB_CLUSTER_ID> --enable-iam-database-authentication --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-12",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#"
+      "CLI": "aws rds modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --enable-iam-database-authentication --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable IAM authentication on an existing RDS/Aurora DB Cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      EnableIAMDatabaseAuthentication: true  # Critical: turns on IAM DB auth for the cluster\n```",
+      "Other": "1. In the AWS Console, go to RDS > Databases\n2. Select the DB Cluster (not the instances)\n3. Click Modify\n4. In Database authentication, enable IAM database authentication\n5. Choose Apply immediately and click Modify cluster",
+      "Terraform": "```hcl\n# Enable IAM authentication on an existing RDS/Aurora cluster\nresource \"aws_rds_cluster\" \"<example_resource_name>\" {\n  cluster_identifier                   = \"<example_resource_id>\"\n  iam_database_authentication_enabled = true  # Critical: enables IAM DB auth so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable IAM authentication for supported RDS clusters.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html"
+      "Text": "Enable **IAM database authentication** on supported clusters and enforce **least privilege**. Grant only necessary `rds-db:connect` permissions to specific principals, prefer role-based access for workloads to obtain short-lived tokens, require **TLS**, and deprecate static DB passwords. Pair with auditing and segmentation for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/rds_cluster_iam_authentication_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

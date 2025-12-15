@@ -1,29 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_event_subscription_security_groups",
-  "CheckTitle": "Check if RDS Security Group events are subscribed.",
-  "CheckType": [],
+  "CheckTitle": "RDS event subscription for DB security groups is enabled for configuration change and failure events",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:es",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsEventSubscription",
-  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database security groups events.",
-  "Risk": "Amazon RDS event subscriptions for database security groups are designed to provide incident notification of events that may affect the security, availability, and reliability of the RDS database instances associated with these security groups.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22",
+  "Description": "**Amazon RDS event subscriptions** are evaluated for **database security group** events. The check expects an enabled subscription with source type `db-security-group` that includes the `configuration change` and `failure` event categories.",
+  "Risk": "Missing alerts on **security group changes** or **failures** reduces visibility and slows response. Undetected rule changes can expose databases, while unnoticed failures prolong outages, impacting **confidentiality** and **availability** through unauthorized access or service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#"
+      "CLI": "aws rds create-event-subscription --subscription-name <SUBSCRIPTION_NAME> --sns-topic-arn <SNS_TOPIC_ARN> --source-type db-security-group --event-categories \"configuration change\" failure",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::EventSubscription\n    Properties:\n      SnsTopicArn: <SNS_TOPIC_ARN>\n      SourceType: db-security-group  # Critical: subscribe to DB security group events\n      EventCategories:               # Critical: required categories\n        - configuration change\n        - failure\n```",
+      "Other": "1. Open the AWS Console > RDS > Event subscriptions\n2. Click Create event subscription\n3. Set Name to <SUBSCRIPTION_NAME> and select an existing SNS topic\n4. Set Source type to Security group\n5. Under Event categories, select Configuration change and Failure\n6. Leave Targets as All security groups (no specific IDs)\n7. Ensure Enabled is On and click Create",
+      "Terraform": "```hcl\nresource \"aws_db_event_subscription\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  sns_topic       = \"<SNS_TOPIC_ARN>\"\n  source_type     = \"db-security-group\"        # Critical: DB security group events\n  event_categories = [\"configuration change\", \"failure\"]  # Critical: required categories\n}\n```"
     },
     "Recommendation": {
-      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22"
+      "Text": "Create or update an **RDS event subscription** for source type `db-security-group` including `configuration change` and `failure`. Route alerts to monitored channels, restrict topic access (**least privilege**), integrate with **incident response**, and enforce change control and **separation of duties** for security group updates.",
+      "Url": "https://hub.prowler.com/check/rds_instance_event_subscription_security_groups"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
