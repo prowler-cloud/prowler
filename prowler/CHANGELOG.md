@@ -10,7 +10,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
+
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
+- Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 
 ---
 

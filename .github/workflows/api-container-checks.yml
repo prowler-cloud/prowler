@@ -20,6 +20,7 @@ env:
 
 jobs:
   api-dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,7 +44,8 @@ jobs:
           ignore: DL3013
 
   api-container-build-and-scan:
-    runs-on: ${{ matrix.arch == 'arm64' && github.repository == 'prowler-cloud/prowler' && 'ubuntu-24.04-arm' || matrix.runner }}
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -51,7 +53,7 @@ jobs:
             runner: ubuntu-latest
             arch: amd64
           - platform: linux/arm64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04-arm
             arch: arm64
     timeout-minutes: 30
     permissions:
@@ -73,12 +75,6 @@ jobs:
             api/README.md
             api/CHANGELOG.md
 
-      - name: Set up QEMU
-        if: steps.check-changes.outputs.any_changed == 'true' && matrix.arch == 'arm64' && github.repository != 'prowler-cloud/prowler'
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
-        with:
-          platforms: arm64
-
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
@@ -96,7 +92,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
       - name: Scan container with Trivy for ${{ matrix.arch }}
-        if: github.repository == 'prowler-cloud/prowler' && steps.check-changes.outputs.any_changed == 'true'
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}
