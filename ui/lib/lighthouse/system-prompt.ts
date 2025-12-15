@@ -57,7 +57,7 @@ You have access to TWO meta-tools to interact with the available tools:
    - Use empty object {} for tools with no parameters
    - You must always provide the toolName and toolInput keys in the JSON object
    - Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": {} })
-   - Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": { "query": "dummyvalue1" } })
+   - Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
 
 ## General Instructions
 
