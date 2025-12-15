@@ -8,20 +8,57 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
 
+const CHART_COLORS = {
+  emptyState: "var(--border-neutral-tertiary)",
+};
+
+interface TooltipPayloadData {
+  percentage?: number;
+  change?: number;
+  color?: string;
+}
+
+interface TooltipPayloadEntry {
+  name: string;
+  color?: string;
+  payload?: TooltipPayloadData;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
+
+interface LegendPayloadData {
+  percentage?: number;
+}
+
+interface LegendPayloadEntry {
+  value: string;
+  color: string;
+  payload: LegendPayloadData;
+}
+
+interface CustomLegendProps {
+  payload: LegendPayloadEntry[];
+}
+
+interface CenterLabel {
+  value: string | number;
+  label: string;
+}
+
 interface DonutChartProps {
   data: DonutDataPoint[];
   height?: number;
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
-  centerLabel?: {
-    value: string | number;
-    label: string;
-  };
+  centerLabel?: CenterLabel;
   onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const entry = payload[0];
@@ -58,9 +95,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const items = payload.map((entry: any) => ({
-    label: `${entry.value} (${entry.payload.percentage}%)`,
+const CustomLegend = ({ payload }: CustomLegendProps) => {
+  const items = payload.map((entry: LegendPayloadEntry) => ({
+    label: `${entry.value} (${entry.payload.percentage ?? 0}%)`,
     color: entry.color,
   }));
 
@@ -104,8 +141,8 @@ export function DonutChart({
     {
       name: "No data",
       value: 1,
-      fill: "var(--border-neutral-tertiary)",
-      color: "var(--border-neutral-tertiary)",
+      fill: CHART_COLORS.emptyState,
+      color: CHART_COLORS.emptyState,
       percentage: 0,
       change: undefined,
     },
@@ -145,9 +182,9 @@ export function DonutChart({
                   key={`cell-${index}`}
                   fill={entry.fill}
                   opacity={opacity}
+                  className={isClickable ? "cursor-pointer" : ""}
                   style={{
                     transition: "opacity 0.2s",
-                    cursor: isClickable ? "pointer" : "default",
                   }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}

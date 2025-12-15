@@ -196,15 +196,15 @@ ui/
 ## COMMANDS
 
 ```
-npm install && npm run dev          (Setup & start)
-npm run typecheck                   (Type check)
-npm run lint:fix                    (Fix linting)
-npm run format:write                (Format)
-npm run healthcheck                 (typecheck + lint)
-npm run test:e2e                    (E2E tests)
-npm run test:e2e:ui                 (E2E with UI)
-npm run test:e2e:debug              (Debug E2E)
-npm run build && npm start          (Build & start)
+pnpm install && pnpm run dev        (Setup & start)
+pnpm run typecheck                  (Type check)
+pnpm run lint:fix                   (Fix linting)
+pnpm run format:write               (Format)
+pnpm run healthcheck                (typecheck + lint)
+pnpm run test:e2e                   (E2E tests)
+pnpm run test:e2e:ui                (E2E with UI)
+pnpm run test:e2e:debug             (Debug E2E)
+pnpm run build && pnpm start        (Build & start)
 ```
 
 ---

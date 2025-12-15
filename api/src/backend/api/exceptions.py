@@ -66,6 +66,10 @@ class ProviderConnectionError(Exception):
     """Base exception for provider connection errors."""
 
 
+class ProviderDeletedException(Exception):
+    """Raised when a provider has been deleted during scan/task execution."""
+
+
 def custom_exception_handler(exc, context):
     if isinstance(exc, django_validation_error):
         if hasattr(exc, "error_dict"):

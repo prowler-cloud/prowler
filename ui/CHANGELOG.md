@@ -2,6 +2,65 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.16.0] (Prowler Unreleased)
+
+### 🚀 Added
+
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.15.1] (Prowler Unreleased)
+
+### 🔐 Security
+
+- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
+- Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
+
+## [1.15.0] (Prowler v5.15.0)
+
+### 🚀 Added
+
+- Risk Plot component with interactive legend and severity navigation to Overview page [(#9469)](https://github.com/prowler-cloud/prowler/pull/9469)
+- Navigation progress bar for page transitions using Next.js `onRouterTransitionStart` [(#9465)](https://github.com/prowler-cloud/prowler/pull/9465)
+- Findings Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
+- Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+
+### 🔄 Changed
+
+- Migrate package manager from npm to pnpm for faster installs and stricter dependency resolution [(#9442)](https://github.com/prowler-cloud/prowler/pull/9442)
+- Pin pnpm to version 10 in Dockerfile for consistent builds [(#9452)](https://github.com/prowler-cloud/prowler/pull/9452)
+- Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
+- Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
+- Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
+- Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
+- MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
+- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
+
+### 🐞 Fixed
+
+- Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
+
+---
+
+## [1.14.2] (Prowler v5.14.2)
+
+### 🐞 Fixed
+
+- Models list in Lighthouse selector when default model is not set for provider [(#9402)](https://github.com/prowler-cloud/prowler/pull/9402)
+- Sort compliance cards by name from the compliance overview [(#9422)](https://github.com/prowler-cloud/prowler/pull/9422)
+- Risk severity chart must show only FAIL findings [(#9452)](https://github.com/prowler-cloud/prowler/pull/9452)
+
+### 🔐 Security
+
+- Bump Next.js and React for CVE-2025-66478 [(#9447)](https://github.com/prowler-cloud/prowler/pull/9447)
+
+---
+
 ## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
@@ -25,7 +84,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prowler v5.13.1)
 
 ### 🔄 Changed
 
@@ -87,7 +146,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+- Handle 4XX errors consistently and 204 responses properly [(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
 
 ## [1.12.1] (Prowler v5.12.1)
 
@@ -102,7 +161,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640),[(#8649)](https://github.com/prowler-cloud/prowler/pull/8649)
+- Jira integration [(#8640)](https://github.com/prowler-cloud/prowler/pull/8640), [(#8649)](https://github.com/prowler-cloud/prowler/pull/8649)
 
 ### 🔄 Changed
 
@@ -264,7 +323,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Sync between filter buttons and URL when filters change [(#7928)](https://github.com/prowler-cloud/prowler/pull/7928)
 - Improve heatmap perfomance [(#7934)](https://github.com/prowler-cloud/prowler/pull/7934)
 - SelectScanProvider warning fixed with empty alias [(#7998)](https://github.com/prowler-cloud/prowler/pull/7998)
-- Prevent console warnings for accessibility and SVG[(#8019)](https://github.com/prowler-cloud/prowler/pull/8019)
+- Prevent console warnings for accessibility and SVG [(#8019)](https://github.com/prowler-cloud/prowler/pull/8019)
 
 ---
 
@@ -281,9 +340,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Download report behaviour updated to show feedback based on API response [(#7758)](https://github.com/prowler-cloud/prowler/pull/7758)
-- Missing KISA and ProwlerThreat icons added to the compliance page [(#7860)(https://github.com/prowler-cloud/prowler/pull/7860)]
+- Missing KISA and ProwlerThreat icons added to the compliance page [(#7860)](https://github.com/prowler-cloud/prowler/pull/7860)
 - Retrieve more than 10 scans in /compliance page [(#7865)](https://github.com/prowler-cloud/prowler/pull/7865)
-- Improve CustomDropdownFilter component [(#7868)(https://github.com/prowler-cloud/prowler/pull/7868)]
+- Improve CustomDropdownFilter component [(#7868)](https://github.com/prowler-cloud/prowler/pull/7868)
 
 ---
 
@@ -368,7 +427,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - `exports` feature: Users can now download artifacts via a new button [(#7006)](https://github.com/prowler-cloud/prowler/pull/7006)
 - New sidebar with nested menus and integrated mobile navigation [(#7018)](https://github.com/prowler-cloud/prowler/pull/7018)
-- Animation for scan execution progress—it now updates automatically.[(#6972)](https://github.com/prowler-cloud/prowler/pull/6972)
+- Animation for scan execution progress—it now updates automatically [(#6972)](https://github.com/prowler-cloud/prowler/pull/6972)
 - `status_extended` attribute to finding details [(#6997)](https://github.com/prowler-cloud/prowler/pull/6997)
 - `Prowler version` to the sidebar [(#7086)](https://github.com/prowler-cloud/prowler/pull/7086)
 
