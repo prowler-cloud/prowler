@@ -39,7 +39,9 @@ export const getProviders = async ({
       headers,
     });
 
-    return handleApiResponse(response);
+    return (await handleApiResponse(response)) as
+      | ProvidersApiResponse
+      | undefined;
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;

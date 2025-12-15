@@ -1,30 +1,95 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 
-import { ClearFiltersButton } from "@/components/filters";
-import { CustomFilterIcon } from "@/components/icons";
-import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
+import { ActiveCheckIdFilter } from "@/components/filters/active-check-id-filter";
+import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectSelectAll,
+  MultiSelectSeparator,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
+import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { FilterOption } from "@/types";
+import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
+import {
+  FilterEntity,
+  FilterOption,
+  ProviderEntity,
+  ScanEntity,
+} from "@/types";
+import { ProviderConnectionStatus } from "@/types/providers";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
-  defaultOpen?: boolean;
-  showClearButton?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
-  defaultOpen = true,
-  showClearButton = false,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
-  const [showFilters, setShowFilters] = useState(defaultOpen);
+  const searchParams = useSearchParams();
+
+  // Helper function to get entity from valueLabelMapping
+  const getEntityForValue = (
+    filter: FilterOption,
+    value: string,
+  ): FilterEntity | undefined => {
+    if (!filter.valueLabelMapping) return undefined;
+    const entry = filter.valueLabelMapping.find((mapping) => mapping[value]);
+    return entry ? entry[value] : undefined;
+  };
+
+  // Helper function to get badge label from entity
+  const getBadgeLabel = (
+    entity: FilterEntity | undefined,
+    value: string,
+  ): string => {
+    if (!entity) return value;
+
+    if (isScanEntity(entity as ScanEntity)) {
+      const scanEntity = entity as ScanEntity;
+      return (
+        scanEntity.providerInfo?.alias || scanEntity.providerInfo?.uid || value
+      );
+    }
+    if (isConnectionStatus(entity)) {
+      const connectionStatus = entity as ProviderConnectionStatus;
+      return connectionStatus.label;
+    }
+    // Provider entity
+    const providerEntity = entity as ProviderEntity;
+    return providerEntity.alias || providerEntity.uid || value;
+  };
+
+  // Render custom content for entity (scan, provider, or connection status)
+  const renderEntityContent = (entity: FilterEntity) => {
+    if (isScanEntity(entity as ScanEntity)) {
+      return <ComplianceScanInfo scan={entity as ScanEntity} />;
+    }
+    if (isConnectionStatus(entity)) {
+      const connectionStatus = entity as ProviderConnectionStatus;
+      return <span>{connectionStatus.label}</span>;
+    }
+    // Provider entity
+    const providerEntity = entity as ProviderEntity;
+    return (
+      <EntityInfo
+        cloudProvider={providerEntity.provider}
+        entityAlias={providerEntity.alias ?? undefined}
+        entityId={providerEntity.uid}
+        showCopyAction={false}
+      />
+    );
+  };
 
   // Sort filters by index property, with fallback to original order for filters without index
-  const sortedFilters = useMemo(() => {
+  const sortedFilters = () => {
     return [...filters].sort((a, b) => {
       // If both have index, sort by index
       if (a.index !== undefined && b.index !== undefined) {
@@ -36,54 +101,73 @@ export const DataTableFilterCustom = ({
       // If neither has index, maintain original order
       return 0;
     });
-  }, [filters]);
+  };
 
-  const pushDropdownFilter = useCallback(
-    (key: string, values: string[]) => {
-      updateFilter(key, values.length > 0 ? values : null);
-    },
-    [updateFilter],
-  );
+  const pushDropdownFilter = (filter: FilterOption, values: string[]) => {
+    // If this filter defaults to "all selected" and the user selected all items,
+    // clear the URL param to represent "no specific filter" (i.e., all).
+    const allSelected =
+      filter.values.length > 0 && values.length === filter.values.length;
+
+    if (filter.defaultToSelectAll && allSelected) {
+      updateFilter(filter.key, null);
+      return;
+    }
+
+    updateFilter(filter.key, values.length > 0 ? values : null);
+  };
+
+  const getSelectedValues = (filter: FilterOption): string[] => {
+    const filterKey = filter.key.startsWith("filter[")
+      ? filter.key
+      : `filter[${filter.key}]`;
+    const paramValue = searchParams.get(filterKey);
+
+    // If defaultToSelectAll is true and no filter param exists,
+    // treat it as "all selected" by returning all values
+    if (!paramValue && filter.defaultToSelectAll) {
+      return filter.values;
+    }
+
+    return paramValue ? paramValue.split(",") : [];
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4">
-        <CustomButton
-          ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
-          variant="flat"
-          color={showFilters ? "action" : "primary"}
-          size="md"
-          startContent={<CustomFilterIcon size={16} />}
-          onPress={() => setShowFilters(!showFilters)}
-          className="w-full max-w-fit"
-        >
-          <h3 className="text-small">
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </h3>
-        </CustomButton>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {sortedFilters().map((filter) => {
+        const selectedValues = getSelectedValues(filter);
 
-        {showClearButton && <ClearFiltersButton />}
-      </div>
-
-      <div
-        className={`transition-all duration-700 ease-in-out ${
-          showFilters
-            ? "w-full translate-x-0 overflow-visible opacity-100"
-            : "mt-[-16px] max-h-0 -translate-x-full overflow-hidden opacity-0"
-        }`}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          {sortedFilters.map((filter) => (
-            <CustomDropdownFilter
-              key={filter.key}
-              filter={{
-                ...filter,
-                labelCheckboxGroup: filter.labelCheckboxGroup,
-              }}
-              onFilterChange={pushDropdownFilter}
-            />
-          ))}
-        </div>
+        return (
+          <MultiSelect
+            key={filter.key}
+            values={selectedValues}
+            onValuesChange={(values) => pushDropdownFilter(filter, values)}
+          >
+            <MultiSelectTrigger size="default">
+              <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+            </MultiSelectTrigger>
+            <MultiSelectContent search={false}>
+              <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+              <MultiSelectSeparator />
+              {filter.values.map((value) => {
+                const entity = getEntityForValue(filter, value);
+                return (
+                  <MultiSelectItem
+                    key={value}
+                    value={value}
+                    badgeLabel={getBadgeLabel(entity, value)}
+                  >
+                    {entity ? renderEntityContent(entity) : value}
+                  </MultiSelectItem>
+                );
+              })}
+            </MultiSelectContent>
+          </MultiSelect>
+        );
+      })}
+      <div className="flex items-center justify-start gap-2">
+        <ActiveCheckIdFilter />
+        <ClearFiltersButton />
       </div>
     </div>
   );
