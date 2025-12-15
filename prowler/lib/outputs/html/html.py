@@ -1042,12 +1042,6 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>Accounts:</b> {accounts}
                             </li>"""
-            if provider.zones:
-                zones = ", ".join([z.name for z in provider.zones])
-                assessment_items += f"""
-                            <li class="list-group-item">
-                                <b>Zones:</b> {zones}
-                            </li>"""
 
             # Build credentials items (only non-None values)
             credentials_items = ""
