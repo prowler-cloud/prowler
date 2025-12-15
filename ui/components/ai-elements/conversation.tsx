@@ -1,11 +1,10 @@
 "use client";
 
 import { ArrowDownIcon } from "lucide-react";
-import type { ComponentProps } from "react";
-import { useCallback } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
@@ -37,7 +36,7 @@ export const ConversationContent = ({
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
   title?: string;
   description?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 };
 
 export const ConversationEmptyState = ({
@@ -77,13 +76,14 @@ export const ConversationScrollButton = ({
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
-  const handleScrollToBottom = useCallback(() => {
+  const handleScrollToBottom = () => {
     scrollToBottom();
-  }, [scrollToBottom]);
+  };
 
   return (
     !isAtBottom && (
       <Button
+        aria-label="Scroll to bottom"
         className={cn(
           "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full",
           className,

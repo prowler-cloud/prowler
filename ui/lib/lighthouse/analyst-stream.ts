@@ -3,36 +3,17 @@
  * Server-side only (used in API routes)
  */
 
-// Constants
-export const META_TOOLS = {
-  DESCRIBE: "describe_tool",
-  EXECUTE: "execute_tool",
-} as const;
+import {
+  CHAIN_OF_THOUGHT_ACTIONS,
+  type ChainOfThoughtAction,
+  LIGHTHOUSE_AGENT_TAG,
+  META_TOOLS,
+  STREAM_MESSAGE_ID,
+} from "@/lib/lighthouse/constants";
+import type { ChainOfThoughtData, StreamEvent } from "@/lib/lighthouse/types";
 
-export const LIGHTHOUSE_AGENT_TAG = "lighthouse-agent";
-
-export const STREAM_MESSAGE_ID = "msg-1";
-
-export const CHAIN_OF_THOUGHT_ACTIONS = {
-  PLANNING: "tool_planning",
-  START: "tool_start",
-  COMPLETE: "tool_complete",
-} as const;
-
-// Types
-export interface ChainOfThoughtData {
-  action: string;
-  metaTool: string;
-  tool: string | null;
-  toolCallId?: string;
-}
-
-export interface StreamEvent {
-  type: string;
-  id?: string;
-  delta?: string;
-  data?: ChainOfThoughtData;
-}
+// Re-export for convenience
+export { CHAIN_OF_THOUGHT_ACTIONS, STREAM_MESSAGE_ID };
 
 /**
  * Extracts the actual tool name from meta-tool input.
@@ -218,7 +199,7 @@ export function handleChatModelEndEvent(
  */
 export function handleToolEvent(
   controller: StreamController,
-  action: string,
+  action: ChainOfThoughtAction,
   name: string | undefined,
   toolInput: unknown,
 ): void {
