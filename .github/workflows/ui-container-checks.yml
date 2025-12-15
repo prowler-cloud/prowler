@@ -73,7 +73,7 @@ jobs:
             ui/README.md
 
       - name: Set up QEMU
-        if: && matrix.arch == 'arm64' && github.repository != 'prowler-cloud/prowler'
+        if: matrix.arch == 'arm64' && github.repository != 'prowler-cloud/prowler'
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
         with:
           platforms: arm64
