@@ -8,11 +8,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
 
+---
+
 ## [5.15.1] (Prowler UNRELEASED)
 
 ### Fixed
 - Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
 - Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
+
 ---
 
 ## [5.15.0] (Prowler v5.15.0)
