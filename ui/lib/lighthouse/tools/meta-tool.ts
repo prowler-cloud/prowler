@@ -126,11 +126,9 @@ export const executeTool = tool(
     }
 
     try {
-      // Use undefined for empty inputs, otherwise use the provided input
+      // Use empty object for empty inputs, otherwise use the provided input
       const input =
-        !toolInput || Object.keys(toolInput).length === 0
-          ? undefined
-          : toolInput;
+        !toolInput || Object.keys(toolInput).length === 0 ? {} : toolInput;
 
       addBreadcrumb({
         category: "meta-tool",
