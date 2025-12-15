@@ -11,6 +11,41 @@ from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
 
 logger = get_task_logger(__name__)
 
+# OpenAI model prefixes to exclude from Lighthouse model selection.
+# These models don't support text chat completions and tool calling.
+EXCLUDED_OPENAI_MODEL_PREFIXES = (
+    "dall-e",  # Image generation
+    "whisper",  # Audio transcription
+    "tts-",  # Text-to-speech (tts-1, tts-1-hd, etc.)
+    "sora",  # Text-to-video (sora-2, sora-2-pro, etc.)
+    "text-embedding",  # Embeddings
+    "embedding",  # Embeddings (alternative naming)
+    "text-moderation",  # Content moderation
+    "omni-moderation",  # Content moderation
+    "text-davinci",  # Legacy completion models
+    "text-curie",  # Legacy completion models
+    "text-babbage",  # Legacy completion models
+    "text-ada",  # Legacy completion models
+    "davinci",  # Legacy completion models
+    "curie",  # Legacy completion models
+    "babbage",  # Legacy completion models
+    "ada",  # Legacy completion models
+    "computer-use",  # Computer control agent
+    "gpt-image",  # Image generation
+    "gpt-audio",  # Audio models
+    "gpt-realtime",  # Realtime voice API
+)
+
+# OpenAI model substrings to exclude (patterns that can appear anywhere in model ID).
+# These patterns identify non-chat model variants.
+EXCLUDED_OPENAI_MODEL_SUBSTRINGS = (
+    "-audio-",  # Audio preview models (gpt-4o-audio-preview, etc.)
+    "-realtime-",  # Realtime preview models (gpt-4o-realtime-preview, etc.)
+    "-transcribe",  # Transcription models (gpt-4o-transcribe, etc.)
+    "-tts",  # TTS models (gpt-4o-mini-tts)
+    "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, etc.)
+)
+
 
 def _extract_error_message(e: Exception) -> str:
     """
@@ -298,39 +333,6 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
     Raises:
         Exception: If the API call fails.
     """
-    # Model prefixes to exclude (don't support text input, text output or tool calling)
-    EXCLUDED_MODEL_PREFIXES = (
-        "dall-e",  # Image generation
-        "whisper",  # Audio transcription
-        "tts-",  # Text-to-speech (tts-1, tts-1-hd, etc.)
-        "sora",  # Text-to-video (sora-2, sora-2-pro, etc.)
-        "text-embedding",  # Embeddings
-        "embedding",  # Embeddings (alternative naming)
-        "text-moderation",  # Content moderation
-        "omni-moderation",  # Content moderation
-        "text-davinci",  # Legacy completion models
-        "text-curie",  # Legacy completion models
-        "text-babbage",  # Legacy completion models
-        "text-ada",  # Legacy completion models
-        "davinci",  # Legacy completion models
-        "curie",  # Legacy completion models
-        "babbage",  # Legacy completion models
-        "ada",  # Legacy completion models
-        "computer-use",  # Computer control agent
-        "gpt-image",  # Image generation
-        "gpt-audio",  # Audio models
-        "gpt-realtime",  # Realtime voice API
-    )
-
-    # Substrings to exclude (patterns that can appear anywhere in model name)
-    EXCLUDED_MODEL_SUBSTRINGS = (
-        "-audio-",  # Audio preview models (gpt-4o-audio-preview, gpt-4o-mini-audio-preview)
-        "-realtime-",  # Realtime preview models (gpt-4o-realtime-preview, gpt-4o-mini-realtime-preview)
-        "-transcribe",  # Transcription models (gpt-4o-transcribe, gpt-4o-mini-transcribe, gpt-4o-transcribe-diarize)
-        "-tts",  # TTS models (gpt-4o-mini-tts)
-        "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, gpt-3.5-turbo-instruct-0914)
-    )
-
     client = openai.OpenAI(api_key=api_key)
     models = client.models.list()
 
@@ -340,11 +342,11 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
         model_id = model.id
 
         # Skip if model ID starts with excluded prefixes
-        if model_id.startswith(EXCLUDED_MODEL_PREFIXES):
+        if model_id.startswith(EXCLUDED_OPENAI_MODEL_PREFIXES):
             continue
 
         # Skip if model ID contains excluded substrings
-        if any(substring in model_id for substring in EXCLUDED_MODEL_SUBSTRINGS):
+        if any(substring in model_id for substring in EXCLUDED_OPENAI_MODEL_SUBSTRINGS):
             continue
 
         # Include model (supports chat completions + tool calling)
