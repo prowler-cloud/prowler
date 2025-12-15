@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Changed
 - Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
 
 ---
 
