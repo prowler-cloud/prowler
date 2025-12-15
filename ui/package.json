@@ -24,7 +24,6 @@
     "audit:fix": "pnpm audit fix"
   },
   "dependencies": {
-    "@ai-sdk/langchain": "1.0.109",
     "@ai-sdk/react": "2.0.111",
     "@aws-sdk/client-bedrock-runtime": "3.948.0",
     "@heroui/react": "2.8.4",
@@ -90,11 +89,12 @@
     "rss-parser": "3.13.0",
     "server-only": "0.0.1",
     "sharp": "0.33.5",
-    "streamdown": "1.3.0",
+    "streamdown": "1.6.10",
     "tailwind-merge": "3.3.1",
     "tailwindcss-animate": "1.0.7",
     "topojson-client": "3.1.0",
     "tw-animate-css": "1.4.0",
+    "use-stick-to-bottom": "1.1.1",
     "uuid": "11.1.0",
     "world-atlas": "2.0.2",
     "zod": "4.1.11",

@@ -2,7 +2,7 @@ import "server-only";
 
 import type { StructuredTool } from "@langchain/core/tools";
 import { tool } from "@langchain/core/tools";
-import * as Sentry from "@sentry/nextjs";
+import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse/mcp-client";
@@ -36,7 +36,7 @@ export const describeTool = tool(
     const allTools = getAllTools();
 
     if (allTools.length === 0) {
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         category: "meta-tool",
         message: "describe_tool called but no tools available",
         level: "warning",
@@ -53,7 +53,7 @@ export const describeTool = tool(
     const targetTool = allTools.find((t) => t.name === toolName);
 
     if (!targetTool) {
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         category: "meta-tool",
         message: `Tool not found: ${toolName}`,
         level: "info",
@@ -111,7 +111,7 @@ export const executeTool = tool(
     const targetTool = allTools.find((t) => t.name === toolName);
 
     if (!targetTool) {
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         category: "meta-tool",
         message: `execute_tool: Tool not found: ${toolName}`,
         level: "warning",
@@ -130,7 +130,7 @@ export const executeTool = tool(
       const input =
         !toolInput || Object.keys(toolInput).length === 0 ? {} : toolInput;
 
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         category: "meta-tool",
         message: `Executing tool: ${toolName}`,
         level: "info",
@@ -149,7 +149,7 @@ export const executeTool = tool(
       const errorMessage =
         error instanceof Error ? error.message : String(error);
 
-      Sentry.captureException(error, {
+      captureException(error, {
         tags: {
           component: "meta-tool",
           tool_name: toolName,
