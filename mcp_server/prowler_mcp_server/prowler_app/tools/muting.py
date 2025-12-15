@@ -430,7 +430,6 @@ Structure:
             f"/mute-rules/{rule_id}", json_data=update_body
         )
 
-        self.logger.info(f"API response: {api_response}")
         detailed_rule = DetailedMuteRule.from_api_response(api_response.get("data", {}))
         return detailed_rule.model_dump()
 

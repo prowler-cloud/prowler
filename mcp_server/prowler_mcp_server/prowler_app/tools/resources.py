@@ -209,7 +209,6 @@ class ResourcesTools(BaseTool):
         api_response = await self.api_client.get(
             f"/resources/{resource_id}", params=params
         )
-        self.logger.info(f"API response: {api_response}")
         detailed_resource = DetailedResource.from_api_response(
             api_response.get("data", {})
         )
