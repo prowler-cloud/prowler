@@ -13,6 +13,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.16.2] (Prowler v5.15.2)
+
+### Changed
+- Increased execution delay for the first scheduled scan tasks to 5 seconds[(#9558)](https://github.com/prowler-cloud/prowler/pull/9558)
+
+---
+
 ## [1.16.1] (Prowler v5.15.1)
 
 ### Fixed
