@@ -35,7 +35,9 @@ export const createApiKeyColumns = (
   },
   {
     id: "email",
-    header: "Email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
     cell: ({ row }) => <EmailCell apiKey={row.original} />,
     enableSorting: false,
   },
@@ -52,7 +54,9 @@ export const createApiKeyColumns = (
   },
   {
     accessorKey: "last_used_at",
-    header: "Last Used",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Last Used" />
+    ),
     cell: ({ row }) => <LastUsedCell apiKey={row.original} />,
     enableSorting: false,
   },
@@ -76,11 +80,12 @@ export const createApiKeyColumns = (
   },
   {
     id: "actions",
-    header: "",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
       return (
         <DataTableRowActions row={row} onEdit={onEdit} onRevoke={onRevoke} />
       );
     },
+    enableSorting: false,
   },
 ];

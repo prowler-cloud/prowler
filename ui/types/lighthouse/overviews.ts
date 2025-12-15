@@ -89,11 +89,13 @@ export const getFindingsByStatusSchema = z.object({
         .optional()
         .describe("Date in format YYYY-MM-DD"),
 
-      // Boolean filters
+      // Boolean filters (passed as strings in query params)
       "filter[muted_findings]": z
-        .boolean()
+        .string()
         .optional()
-        .describe("Default is empty string."),
+        .describe(
+          "Boolean as string ('true' or 'false'). Default is empty string.",
+        ),
 
       // Provider filters
       "filter[provider_id]": z.string().optional().describe("Provider ID"),
@@ -121,16 +123,6 @@ export const getFindingsByStatusSchema = z.object({
 // Get Findings By Severity
 
 export const getFindingsBySeveritySchema = z.object({
-  page: z
-    .number()
-    .int()
-    .describe("The page number to get. Optional. Default is 1."),
-  query: z
-    .string()
-    .describe("The query to search for. Optional. Default is empty string."),
-  sort: sortFieldsEnum.describe(
-    "The sort order to use. Optional. Default is empty string.",
-  ),
   filters: z
     .object({
       // Date filters
@@ -151,11 +143,13 @@ export const getFindingsBySeveritySchema = z.object({
         .optional()
         .describe("Date in format YYYY-MM-DD"),
 
-      // Boolean filters
+      // Boolean filters (passed as strings in query params)
       "filter[muted_findings]": z
-        .boolean()
+        .string()
         .optional()
-        .describe("Default is empty string."),
+        .describe(
+          "Boolean as string ('true' or 'false'). Default is empty string.",
+        ),
 
       // Provider filters
       "filter[provider_id]": z
