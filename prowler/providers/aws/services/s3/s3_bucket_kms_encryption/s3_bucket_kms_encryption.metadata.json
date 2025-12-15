@@ -1,28 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_kms_encryption",
-  "CheckTitle": "Check if S3 buckets have KMS encryption enabled.",
+  "CheckTitle": "S3 bucket has server-side encryption with AWS KMS",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have KMS encryption enabled.",
-  "Risk": "Amazon S3 KMS encryption provides a way to set the encryption behavior for an S3 bucket using a managed key. This will ensure data-at-rest is encrypted.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "Description": "**S3 buckets** use server-side encryption with **AWS KMS** keys, including dual-layer `aws:kms:dsse`. The evaluation identifies buckets whose default encryption is `aws:kms` or `aws:kms:dsse` rather than SSE-S3.",
+  "Risk": "Without **KMS-based encryption**, data relies only on SSE-S3, reducing **confidentiality** controls. Missing key policies and grants weakens **least privilege**, cross-account scoping, and the ability to disable or rotate keys. Lack of **KMS audit trails** obscures key usage, hindering detection of misuse and **defense in depth**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/securing-your-data-amazon-s3-encryption-hands-on-guide-naim-hossen-8g51c",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html",
+    "https://issackpaul95.medium.com/aws-hands-on-s3-security-s3-encryption-339dfd52f12a",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
+    "https://www.deploymastery.com/2023/06/22/introducing-s3-dsse-kms-dual-layer-server-side-encryption/",
+    "https://storage.googleapis.com/pulumi-kotlin-docs/aws-native/0.121.0.0/pulumi-aws-native-kotlin/com.pulumi.awsnative.s3.kotlin.inputs/-bucket-encryption-args/index.html",
+    "https://runebook.dev/en/aws/s3/EncryptionConfiguration",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws put-bucket-encryption --bucket <BUCKET_NAME> --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"aws:kms\",\"KMSMasterKeyID\":\"arn:aws:kms:<REGION>:<ACCOUNT_ID>:key/<KEY_ID>\"}}]}'",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform"
+      "CLI": "aws s3api put-bucket-encryption --bucket <BUCKET_NAME> --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"aws:kms\"}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable default SSE-KMS on the bucket\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketEncryption:\n        ServerSideEncryptionConfiguration:\n          - ServerSideEncryptionByDefault:\n              SSEAlgorithm: aws:kms  # Critical: sets default encryption to AWS KMS (SSE-KMS)\n```",
+      "Other": "1. In the AWS Console, go to S3 and open the target bucket\n2. Select the Properties tab\n3. Under Default encryption, click Edit\n4. Choose Server-side encryption with AWS KMS keys (SSE-KMS)\n5. Leave AWS managed key (aws/s3) selected (or choose your CMK if required)\n6. Click Save changes",
+      "Terraform": "```hcl\n# Enable default SSE-KMS on an existing S3 bucket\nresource \"aws_s3_bucket_server_side_encryption_configuration\" \"<example_resource_name>\" {\n  bucket = \"<example_bucket_name>\"\n\n  rule {\n    apply_server_side_encryption_by_default {\n      sse_algorithm = \"aws:kms\" # Critical: enforces SSE-KMS by default\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets have encryption at rest enabled using KMS.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html"
+      "Text": "Enable default **SSE-KMS** (or **DSSE-KMS** for highly sensitive data). Use a customer-managed key, enforce **least privilege** and separation of duties for key usage, and require KMS encryption via bucket policy (specify `aws:kms` and a designated key). Monitor key activity in **CloudTrail** and consider **S3 Bucket Keys** to control cost.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_kms_encryption"
     }
   },
   "Categories": [

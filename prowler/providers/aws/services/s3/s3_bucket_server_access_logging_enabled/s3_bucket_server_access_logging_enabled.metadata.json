@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_server_access_logging_enabled",
-  "CheckTitle": "Check if S3 buckets have server access logging enabled",
+  "CheckTitle": "S3 bucket has server access logging enabled",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have server access logging enabled",
-  "Risk": "Server access logs can assist you in security and access audits, help you learn about your customer base, and understand your Amazon S3 bill.",
+  "Description": "**S3 buckets** are evaluated for **server access logging** configured to record access requests and deliver logs to a designated destination bucket.",
+  "Risk": "Without access logs, object reads, writes, and deletions may go untracked, hindering detection of unauthorized access and data exfiltration. This degrades forensic visibility, delays incident response, and weakens evidence integrity, impacting confidentiality and integrity.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging",
+    "https://github.com/awslabs/aws-config-rules/blob/master/aws-config-conformance-packs/Operational-Best-Practices-for-Amazon-S3-with-Remediation.yaml",
+    "https://docs.amazonaws.cn/en_us/config/latest/developerguide/s3-bucket-logging-enabled.html",
+    "https://repost.aws/knowledge-center/config-s3-bucket-logging-enabled",
+    "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#terraform",
+    "https://runebook.dev/en/aws/s3/GetBucketLogging",
+    "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html",
+    "https://www.examtopics.com/discussions/amazon/view/150477-exam-aws-certified-sysops-administrator-associate-topic-1/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-bucket-logging --bucket <BUCKET_NAME> --bucket-logging-status <LOGGING_FILE_JSON>",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging",
-      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#terraform"
+      "CLI": "aws s3api put-bucket-logging --bucket <BUCKET_NAME> --bucket-logging-status '{\"LoggingEnabled\":{\"TargetBucket\":\"<LOG_BUCKET>\",\"TargetPrefix\":\"logs/\"}}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      LoggingConfiguration:\n        DestinationBucketName: <example_resource_id>  # CRITICAL: Enables server access logging by sending logs to this bucket\n```",
+      "Other": "1. Open the AWS Management Console and go to S3\n2. Select the bucket with the finding\n3. Go to the Properties tab\n4. In Server access logging, click Edit\n5. Toggle Enable, choose the target log bucket, and Save",
+      "Terraform": "```hcl\nresource \"aws_s3_bucket_logging\" \"<example_resource_name>\" {\n  bucket        = \"<example_bucket_name>\"\n  target_bucket = \"<example_log_bucket_name>\"  # CRITICAL: Enables server access logging by specifying the target bucket\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets have Logging enabled. CloudTrail data events can be used in place of S3 bucket logging. If that is the case, this finding can be considered a false positive.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
+      "Text": "Enable **server access logging** and send logs to a dedicated log bucket with least privilege, retention, and monitoring. Complement with **CloudTrail data events** for object-level visibility. Apply **defense in depth** by centralizing logs and protecting them from tampering.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_server_access_logging_enabled"
     }
   },
   "Categories": [
+    "logging",
     "forensics-ready"
   ],
   "DependsOn": [],

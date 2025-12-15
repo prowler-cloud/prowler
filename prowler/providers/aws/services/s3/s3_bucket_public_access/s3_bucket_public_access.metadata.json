@@ -1,28 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_public_access",
-  "CheckTitle": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
+  "CheckTitle": "S3 bucket is not publicly accessible to Everyone or Authenticated Users",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Ensure there are no S3 buckets open to Everyone or Any AWS user.",
-  "Risk": "Even if you enable all possible bucket ACL options available in the Amazon S3 console the ACL alone does not allow everyone to download objects from your bucket. Depending on which option you select any user could perform some actions.",
+  "Description": "**S3 buckets** are evaluated for **public access** via ACLs and bucket policies. The check identifies account or bucket `PublicAccessBlock` protections (`IgnorePublicAcls`, `RestrictPublicBuckets`) and flags buckets granting group access to `AllUsers` or `AuthenticatedUsers`, or with a public bucket policy.",
+  "Risk": "Publicly accessible buckets jeopardize **confidentiality** through unauthenticated reads, **integrity** through write or ACL changes, and **availability** via object deletion or overwrite. Attackers can mass-exfiltrate data, host malware, or pivot after discovering secrets stored in objects.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/public-s3-buckets-digital-postcards-norman-argueta-y3w4e",
+    "https://docs.aws.amazon.com/id_id/kitchensink/latest/testguide/access-control-block-public-access.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
+    "https://mahira-technology.medium.com/securing-your-aws-s3-buckets-enforcing-block-public-access-with-terragrunt-automation-and-4f4490f2703b",
+    "https://www.cy5.io/blog/aws-s3-bucket-security-audit/",
+    "https://docs.prowler.com/checks/aws/networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform",
+    "https://community.spiceworks.com/t/securing-your-amazon-s3-buckets/950925",
+    "https://mike.bailey.net.au/blog/2019/03/05/why-you-should-enable-s3-block-public-access/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-public-access-block --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <bucket_name>",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform"
+      "CLI": "aws s3api put-public-access-block --bucket <bucket_name> --public-access-block-configuration IgnorePublicAcls=true,RestrictPublicBuckets=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable minimal S3 Block Public Access on the bucket\nResources:\n  ExampleBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      PublicAccessBlockConfiguration:\n        IgnorePublicAcls: true        # Critical: ignores any public ACL grants (AllUsers/AuthenticatedUsers)\n        RestrictPublicBuckets: true   # Critical: restricts buckets with public policies to same-account/service principals\n```",
+      "Other": "1. In the AWS Console, go to S3 and open the bucket <example_resource_name>\n2. Select the Permissions tab\n3. Under Block public access (bucket settings), click Edit\n4. Check only:\n   - Ignore public ACLs (true)\n   - Restrict public buckets (true)\n5. Click Save changes and confirm",
+      "Terraform": "```hcl\n# Enable minimal S3 Block Public Access on the bucket\nresource \"aws_s3_bucket_public_access_block\" \"example\" {\n  bucket = \"<example_resource_name>\"\n\n  ignore_public_acls     = true  # Critical: ignores public ACLs\n  restrict_public_buckets = true # Critical: restricts buckets with public policies\n}\n```"
     },
     "Recommendation": {
-      "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account, the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      "Text": "Enforce defense in depth: enable **S3 Block Public Access** at org/account and bucket levels (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`). Apply **least privilege** with explicit principals; avoid ACLs via Object Ownership. Use private access patterns (e.g., CloudFront OAC or presigned URLs) and monitor with analyzers.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_public_access"
     }
   },
   "Categories": [

@@ -1,28 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_secure_transport_policy",
-  "CheckTitle": "Check if S3 buckets have secure transport policy.",
+  "CheckTitle": "S3 bucket policy denies requests over insecure transport",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have secure transport policy.",
-  "Risk": "If HTTPS is not enforced on the bucket policy, communication between clients and S3 buckets can use unencrypted HTTP. As a result, sensitive information could be transmitted in clear text over the network or internet.",
+  "Description": "**Amazon S3 buckets** are evaluated for a bucket policy that enforces **secure transport** by denying requests when `aws:SecureTransport` is `false`.\n\nBuckets without this explicit denial, or without a policy, are treated as allowing access over insecure transport.",
+  "Risk": "HTTP access exposes object data and auth details to **eavesdropping** and **man-in-the-middle** attacks. Captured **pre-signed URLs** can be replayed to exfiltrate data. Traffic can be intercepted or altered, undermining **confidentiality** and **integrity** of S3 content.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://medium.com/@leocherian/protect-s3-objects-with-s3-bucket-policy-5579a6b07b54",
+    "https://docs.prowler.com/checks/aws/s3-policies/s3_15-secure-data-transport#aws-console",
+    "https://stackoverflow.com/questions/21087474/force-ssl-on-amazon-s3",
+    "https://programming.am/advanced-s3-bucket-policy-management-for-large-enterprises-76da25c928e7",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/secure-transport.html",
+    "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/",
+    "https://repost.aws/knowledge-center/s3-bucket-policy-for-config-rule",
+    "https://kloudle.com/academy/how-to-enforce-ssl-tls-for-s3-requests-in-aws/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_15-secure-data-transport#aws-console",
-      "Terraform": ""
+      "CLI": "aws s3api put-bucket-policy --bucket <example_resource_name> --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":\"arn:aws:s3:::<example_resource_name>/*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Deny non-SSL (HTTP) requests to the S3 bucket\nResources:\n  BucketPolicy:\n    Type: AWS::S3::BucketPolicy\n    Properties:\n      Bucket: <example_resource_name>\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Deny\n            Principal: \"*\"\n            Action: s3:*\n            Resource: arn:aws:s3:::<example_resource_name>/*\n            Condition:\n              Bool:\n                aws:SecureTransport: \"false\"  # Critical: deny requests not using SSL/TLS\n```",
+      "Other": "1. In the AWS Console, go to S3 and open the bucket <example_resource_name>\n2. Select the Permissions tab and click Edit in Bucket policy\n3. Paste this policy, replacing the bucket name:\n   ```\n   {\n     \"Version\": \"2012-10-17\",\n     \"Statement\": [\n       {\n         \"Effect\": \"Deny\",\n         \"Principal\": \"*\",\n         \"Action\": \"s3:*\",\n         \"Resource\": \"arn:aws:s3:::<example_resource_name>/*\",\n         \"Condition\": { \"Bool\": { \"aws:SecureTransport\": \"false\" } }\n       }\n     ]\n   }\n   ```\n4. Click Save changes\n",
+      "Terraform": "```hcl\n# Deny non-SSL (HTTP) requests to the S3 bucket\nresource \"aws_s3_bucket_policy\" \"policy\" {\n  bucket = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Deny\"\n      Principal = \"*\"\n      Action    = \"s3:*\"\n      Resource  = \"arn:aws:s3:::<example_resource_name>/*\"\n      Condition = {\n        Bool = {\n          \"aws:SecureTransport\" = \"false\" # Critical: deny requests not using SSL/TLS\n        }\n      }\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets have encryption in transit enabled.",
-      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
+      "Text": "Enforce **HTTPS-only** access with a bucket policy that denies requests when `aws:SecureTransport=false`.\n\nPrefer **private access** (VPC endpoints or CloudFront with TLS), avoid S3 website endpoints, apply **least privilege**, use short-lived HTTPS **pre-signed URLs**, and monitor logs for insecure access attempts.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_secure_transport_policy"
     }
   },
   "Categories": [
