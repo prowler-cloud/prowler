@@ -1,31 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_object_versioning",
-  "CheckTitle": "Check if S3 buckets have object versioning enabled",
+  "CheckTitle": "S3 bucket has object versioning enabled",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Destruction"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have object versioning enabled",
-  "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
+  "Description": "**S3 buckets** are evaluated for **object versioning** being `Enabled`, which maintains multiple versions of the same object key for historical state retention",
+  "Risk": "Without **versioning**, deletions and overwrites remove the only copy, undermining **availability** and **integrity**.\n- Compromised identities or buggy apps can mass-delete/corrupt data\n- No historical versions means limited rollback and irrecoverable loss",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html",
+    "https://www.wiz.io/academy/cloud-security/amazon-s3-security-best-practices",
+    "https://github.com/predictr-io/aws-s3-create-bucket",
+    "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#aws-console",
+    "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#terraform"
+      "CLI": "aws s3api put-bucket-versioning --bucket <BUCKET_NAME> --versioning-configuration Status=Enabled",
+      "NativeIaC": "```yaml\n# CloudFormation: enable versioning on an S3 bucket\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      VersioningConfiguration:\n        Status: Enabled  # Critical: turns on object versioning to pass the check\n```",
+      "Other": "1. In the AWS Console, go to S3 > Buckets and select the target bucket\n2. Open the Properties tab\n3. Find Bucket Versioning and click Edit\n4. Select Enable and click Save changes",
+      "Terraform": "```hcl\n# Enable versioning on an existing S3 bucket\nresource \"aws_s3_bucket_versioning\" \"<example_resource_name>\" {\n  bucket = \"<example_resource_name>\"\n  versioning_configuration {\n    status = \"Enabled\"  # Critical: enables bucket versioning to remediate the finding\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frequently, and backup may not be enough to capture all the changes.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
+      "Text": "Enable **S3 versioning** for buckets holding important or shared data.\n- Enforce **least privilege** to limit delete/overwrite\n- Use **Object Lock** and/or **MFA Delete** for stronger protection\n- Apply **lifecycle rules** to manage noncurrent versions and costs\n- Layer with backups/replication for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/s3_bucket_object_versioning"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

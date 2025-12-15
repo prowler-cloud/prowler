@@ -1,28 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_lifecycle_enabled",
-  "CheckTitle": "Check if S3 buckets have a Lifecycle configuration enabled",
+  "CheckTitle": "S3 bucket has a lifecycle configuration enabled",
   "CheckType": [
-    "AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have Lifecycle configuration enabled.",
-  "Risk": "The risks of not having lifecycle management enabled for S3 buckets include higher storage costs, unmanaged data retention, and potential non-compliance with data policies.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+  "Description": "**Amazon S3 buckets** use **Lifecycle configurations** with at least one rule `Status: Enabled` to automate object `Transitions` and `Expiration` based on age, prefix, or tags",
+  "Risk": "Without lifecycle rules, objects persist indefinitely, driving costs and retaining sensitive data beyond policy. Unchecked log/version growth strains operations and recovery. Long-lived data increases exposure if the account is compromised and can break required deletion timelines, affecting confidentiality and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
+    "https://www.elastic.co/guide/en/security/8.19/aws-s3-bucket-expiration-lifecycle-configuration-added.html",
+    "https://stackoverflow.com/questions/66357302/s3-bucket-lifecycle-configuration-with-boto3-lambda-function-and-getting-malform",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html",
+    "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-001-s3-bucket-fundamentals-from-default-settings-to-practical-1hmd",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
+      "CLI": "aws s3api put-bucket-lifecycle-configuration --bucket <BUCKET_NAME> --lifecycle-configuration '{\"Rules\":[{\"Status\":\"Enabled\",\"Filter\":{\"Prefix\":\"\"},\"AbortIncompleteMultipartUpload\":{\"DaysAfterInitiation\":7}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable a minimal S3 Lifecycle configuration\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      LifecycleConfiguration:  # CRITICAL: Adds a Lifecycle configuration to the bucket\n        Rules:\n          - Status: Enabled     # CRITICAL: Rule must be Enabled to pass the check\n            Filter:\n              Prefix: \"\"        # Applies to all objects\n            AbortIncompleteMultipartUpload:\n              DaysAfterInitiation: 7  # Minimal action to satisfy schema\n```",
+      "Other": "1. In the AWS Console, go to S3 and open the target bucket\n2. Select the Management tab, then click Create lifecycle rule\n3. Enter a name and choose This rule applies to all objects in the bucket\n4. Under Lifecycle rule actions, select Clean up incomplete multipart uploads and set Days after initiation to 7\n5. Ensure Status is Enabled and click Create rule",
+      "Terraform": "```hcl\n# Minimal lifecycle configuration to mark the bucket as having an enabled rule\nresource \"aws_s3_bucket_lifecycle_configuration\" \"<example_resource_name>\" {\n  bucket = \"<example_resource_name>\"\n\n  rule {\n    status = \"Enabled\"  # CRITICAL: Enables lifecycle rule to pass the check\n    filter {}            # Applies to all objects\n\n    abort_incomplete_multipart_upload {\n      days_after_initiation = 7  # Minimal action to satisfy schema\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable lifecycle policies on your S3 buckets to automatically manage the transition and expiration of data.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html"
+      "Text": "Define **Lifecycle policies** by data classification: set `Expiration` to enforce retention, use `Transitions` to lower-cost classes, and enable `AbortIncompleteMultipartUpload`. For critical logs, keep versioning and, *if required*, **Object Lock**. Limit who can change lifecycle using least privilege and separation of duties.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_lifecycle_enabled"
     }
   },
   "Categories": [],

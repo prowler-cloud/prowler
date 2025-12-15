@@ -1,35 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_level_public_access_block",
-  "CheckTitle": "Check S3 Bucket Level Public Access Block.",
+  "CheckTitle": "S3 bucket has Block Public Access with IgnorePublicAcls and RestrictPublicBuckets enabled at bucket or account level",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check S3 Bucket Level Public Access Block.",
-  "Risk": "Public access policies may be applied to sensitive data buckets.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+  "Description": "**S3 buckets** are evaluated for **Block Public Access** settings, ensuring `ignore_public_acls` and `restrict_public_buckets` are enabled at the bucket or account scope.\n\n*Account-wide protections, when present, are treated as effective for the bucket.*",
+  "Risk": "Absent **S3 Block Public Access**, public ACLs or broad policies can grant Internet or cross-account access.\n- Data disclosure (confidentiality)\n- Object overwrite or uploads (integrity)\n- Deletion or outages from misuse (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/bucket-public-access-block.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
+    "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform",
+    "https://cloudquery-cuk3uk38m-cloudquery.vercel.app/blog/finding-enabled-s3-acls-and-disabled-s3-block-public-access",
+    "https://shisho.dev/dojo/providers/aws/Amazon_S3/aws-s3-bucket-public-access-block/",
+    "https://stackoverflow.com/questions/76972568/problems-creating-an-s3-bucket-with-terraform",
+    "https://practicaldev-herokuapp-com.global.ssl.fastly.net/aws-builders/how-to-implement-aws-ssb-controls-in-terraform-part-2-359k",
+    "https://medium.com/@kendine_muhendis/creating-an-s3-bucket-and-managing-secure-access-with-ip-restrictions-5f5b7f8a9b33"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform"
+      "CLI": "aws s3api put-public-access-block --bucket <BUCKET_NAME> --public-access-block-configuration IgnorePublicAcls=true,RestrictPublicBuckets=true",
+      "NativeIaC": "```yaml\n# CloudFormation - enable required S3 Block Public Access settings on a bucket\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      PublicAccessBlockConfiguration:\n        IgnorePublicAcls: true        # CRITICAL: Ignore public ACLs on the bucket/objects\n        RestrictPublicBuckets: true   # CRITICAL: Restrict buckets with public policies to same-account/AWS services\n```",
+      "Other": "1. In AWS Console, open S3 and select the target bucket\n2. Go to Permissions > Block public access (bucket settings)\n3. Enable only:\n   - Ignore public ACLs\n   - Restrict public buckets\n4. Click Save changes\n5. (Alternatively, to apply account-wide) S3 > Account settings > Block Public Access: enable the same two options and Save",
+      "Terraform": "```hcl\n# Enable required S3 Block Public Access settings on a bucket\nresource \"aws_s3_bucket_public_access_block\" \"<example_resource_name>\" {\n  bucket                   = \"<example_resource_id>\"\n  ignore_public_acls       = true  # CRITICAL: Ignore public ACLs\n  restrict_public_buckets  = true  # CRITICAL: Restrict public buckets\n}\n```"
     },
     "Recommendation": {
-      "Text": "You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      "Text": "Enable **Block Public Access** at account and bucket levels with `block_public_acls`, `ignore_public_acls`, `block_public_policy`, and `restrict_public_buckets` set to `true`. Apply **least privilege** and **defense in depth**. *If public access is required*, narrowly scope policies to fixed principals and conditions.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_level_public_access_block"
     }
   },
-  "Categories": [],
-  "Tags": {
-    "Tag1Key": "value",
-    "Tag2Key": "value"
-  },
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

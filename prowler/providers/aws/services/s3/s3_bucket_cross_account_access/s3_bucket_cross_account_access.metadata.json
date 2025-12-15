@@ -1,31 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_cross_account_access",
-  "CheckTitle": "Ensure that general-purpose bucket policies restrict access to other AWS accounts.",
+  "CheckTitle": "S3 bucket policy does not allow cross-account access",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
     "Effects/Data Exposure"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3Bucket",
-  "Description": "This check verifies that S3 bucket policies are configured in a way that limits access to the intended AWS accounts only, preventing unauthorized access by external or unintended accounts.",
-  "Risk": "Allowing other AWS accounts to perform sensitive actions (e.g., modifying bucket policies, ACLs, or encryption settings) on your S3 buckets can lead to data exposure, unauthorized access, or misconfigurations, increasing the risk of insider threats or attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+  "Description": "**S3 bucket policies** are analyzed for statements that grant **cross-account access**.\n\nAny policy that names principals outside the owning account (other account IDs or `Principal: \"*\"`) is treated as cross-account; absence of a policy implies no cross-account grants.",
+  "Risk": "Cross-account grants can let external principals read, write, or administer the bucket, impacting:\n- Confidentiality: unauthorized object access/exfiltration\n- Integrity: object tampering, policy or encryption changes\n- Availability: deletions, versioning changes, or lockouts causing data loss and downtime",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+    "https://www.linkedin.com/learning/aws-essential-training-for-administrators-30216085/configure-an-s3-bucket",
+    "https://aws.plainenglish.io/easy-aws-access-security-a-practical-guide-to-iam-683599087e56"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
-      "Terraform": ""
+      "CLI": "aws s3api delete-bucket-policy --bucket <example_resource_name>",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict bucket policy to this AWS account only\nResources:\n  <example_resource_name>BucketPolicy:\n    Type: AWS::S3::BucketPolicy\n    Properties:\n      Bucket: <example_resource_name>\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root  # Critical: limits access to the bucket owner's account, preventing cross-account access\n            Action: s3:*\n            Resource:\n              - !Sub arn:aws:s3:::<example_resource_name>\n              - !Sub arn:aws:s3:::<example_resource_name>/*\n```",
+      "Other": "1. In the AWS console, go to S3 > Buckets > select the bucket\n2. Open the Permissions tab > Bucket policy\n3. Click Delete bucket policy (or remove all statements) and Save\n4. If a policy is required, ensure all statements only use your account as Principal (arn:aws:iam::<YOUR_ACCOUNT_ID>:root); remove any other accounts or \"*\"",
+      "Terraform": "```hcl\n# Terraform: restrict bucket policy to this AWS account only\nresource \"aws_s3_bucket_policy\" \"<example_resource_name>\" {\n  bucket = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = \"arn:aws:iam::<example_resource_id>:root\" } # Critical: limits access to the bucket owner's account, preventing cross-account access\n      Action    = \"s3:*\"\n      Resource  = [\n        \"arn:aws:s3:::<example_resource_name>\",\n        \"arn:aws:s3:::<example_resource_name>/*\"\n      ]\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review and update your S3 bucket policies to remove permissions that grant external AWS accounts access to critical actions and implement least privilege principles to ensure sensitive operations are restricted to trusted accounts only",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      "Text": "Enforce **least privilege**: limit bucket policy `Principal` to your account or approved org IDs with fixed values; avoid wildcards.\n\nUse **role-based cross-account access** with scoped permissions when needed. Add **defense-in-depth** conditions (private networks, TLS), and periodically review for unintended external access.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_cross_account_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

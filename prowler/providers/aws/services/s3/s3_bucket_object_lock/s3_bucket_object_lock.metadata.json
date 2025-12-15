@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_object_lock",
-  "CheckTitle": "Check if S3 buckets have object lock enabled",
+  "CheckTitle": "S3 bucket has Object Lock enabled",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Destruction"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
-  "Severity": "low",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Check if S3 buckets have object lock enabled",
-  "Risk": "Store objects using a write-once-read-many (WORM) model to help you prevent objects from being deleted or overwritten for a fixed amount of time or indefinitely. That helps to prevent ransomware attacks.",
+  "Description": "**S3 buckets** have **Object Lock** enabled at the bucket level, applying WORM controls to object versions",
+  "Risk": "Without **Object Lock**, object versions can be deleted or overwritten, undermining data **integrity** and **availability**.\n\nThreats include ransomware erasing backups, insider or mistaken deletions, and tampering that defeats recovery. Inability to enforce retention or legal holds increases exposure to data loss and compliance gaps.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/de_de/cli/latest/reference/s3api/get-object-lock-configuration.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/s3api/get-object-lock-configuration.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/s3api/put-object-lock-configuration.html",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#terraform",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-overview.html",
+    "https://aws.amazon.com/about-aws/whats-new/2018/11/s3-object-lock/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/object-lock.html",
+    "https://docs.aws.amazon.com/de_de/cli/latest/reference/s3api/put-object-lock-configuration.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws s3 put-object-lock-configuration --bucket <BUCKET_NAME> --object-lock-configuration '{\"ObjectLockEnabled\":\"Enabled\",\"Rule\":{\"DefaultRetention\":{\"Mode\":\"GOVERNANCE\",\"Days\":1}}}'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/object-lock.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#terraform"
+      "CLI": "aws s3api put-object-lock-configuration --bucket <BUCKET_NAME> --object-lock-configuration '{\"ObjectLockEnabled\":\"Enabled\",\"Rule\":{\"DefaultRetention\":{\"Mode\":\"GOVERNANCE\",\"Days\":1}}}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      ObjectLockEnabled: true  # CRITICAL: Enables Object Lock on the bucket at creation\n      ObjectLockConfiguration:\n        ObjectLockEnabled: Enabled  # CRITICAL: Turns on Object Lock configuration\n        Rule:\n          DefaultRetention:\n            Mode: GOVERNANCE  # CRITICAL: Sets default retention mode\n            Days: 1           # CRITICAL: Minimal retention to enable default lock\n```",
+      "Other": "1. Open the AWS S3 console and select the target bucket\n2. Go to the Properties tab\n3. Find Object Lock and click Edit\n4. Enable Object Lock\n5. Set Default retention: Mode = Governance, Days = 1\n6. Click Save changes\n\nNote: If the bucket was not created with Object Lock, create a new bucket with Object Lock enabled and migrate objects.",
+      "Terraform": "```hcl\nresource \"aws_s3_bucket_object_lock_configuration\" \"<example_resource_name>\" {\n  bucket               = \"<example_resource_name>\"\n  object_lock_enabled  = \"Enabled\"  # CRITICAL: Enables Object Lock configuration on the bucket\n  rule {\n    default_retention {\n      mode = \"GOVERNANCE\"  # CRITICAL: Default retention mode\n      days = 1              # CRITICAL: Minimal retention period\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that your Amazon S3 buckets have Object Lock feature enabled in order to prevent the objects they store from being deleted.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-overview.html"
+      "Text": "Enable **Object Lock** for critical data and set appropriate default retention in `GOVERNANCE` or `COMPLIANCE` mode.\n\nApply **immutability** and **least privilege** by restricting permissions that bypass retention, and use legal holds when you need indefinite protection for investigations or regulatory requirements.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_object_lock"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
