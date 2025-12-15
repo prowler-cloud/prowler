@@ -457,7 +457,8 @@ class Check(ABC, CheckMetadata):
         # Verify names consistency
         check_id = self.CheckID
         class_name = self.__class__.__name__
-        file_name = file_path.split(sep="/")[-1]
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
 
         errors = []
         if check_id != class_name:
@@ -646,6 +647,29 @@ class Check_Report_OCI(Check_Report):
         self.resource_name = resource_name or getattr(resource, "name", "")
         self.compartment_id = compartment_id or getattr(resource, "compartment_id", "")
         self.region = region or getattr(resource, "region", "")
+
+
+@dataclass
+class CheckReportAlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
 
 
 @dataclass

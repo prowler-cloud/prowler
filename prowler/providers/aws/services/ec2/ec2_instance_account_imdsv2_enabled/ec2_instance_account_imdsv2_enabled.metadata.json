@@ -26,7 +26,8 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "ec2-imdsv1"
   ],
   "DependsOn": [],
   "RelatedTo": [],

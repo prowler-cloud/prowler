@@ -10,6 +10,12 @@ on:
   release:
     types:
       - 'published'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., 5.14.0)'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,7 +27,7 @@ concurrency:
 env:
   # Tags
   LATEST_TAG: latest
-  RELEASE_TAG: ${{ github.event.release.tag_name }}
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
   STABLE_TAG: stable
   WORKING_DIRECTORY: ./ui
 
@@ -44,9 +50,35 @@ jobs:
         id: set-short-sha
         run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-  container-build-push:
+  notify-release-started:
+    if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
     needs: setup
-    runs-on: ${{ matrix.runner }} 
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      message-ts: ${{ steps.slack-notification.outputs.ts }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Notify container push started
+        id: slack-notification
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: UI
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
+  container-build-push:
+    needs: [setup, notify-release-started]
+    if: always() && needs.setup.result == 'success' && (needs.notify-release-started.result == 'success' || needs.notify-release-started.result == 'skipped')
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -75,12 +107,13 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Build and push UI container for ${{ matrix.arch }}
-        if: github.event_name == 'push'
+        id: container-push
+        if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
-            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ needs.setup.outputs.short-sha }}
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short-sha }}
             NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
           push: true
           platforms: ${{ matrix.platform }}
@@ -89,53 +122,10 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
-      - name: Build and push UI container for ${{ matrix.arch }}
-        if: github.event_name == 'push' || github.event_name == 'release'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: ${{ env.WORKING_DIRECTORY }}
-          build-args: |
-            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ github.event_name == 'release' && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short_sha }}
-            NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
-          push: true
-          tags: |
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Notify container push started
-        if: github.event_name == 'release'
-        uses: ./.github/actions/slack-notification
-        env:
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
-          COMPONENT: UI
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
-          GITHUB_SERVER_URL: ${{ github.server_url }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-        with:
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
-
-      - name: Notify container push completed
-        if: github.event_name == 'release' && always()
-        uses: ./.github/actions/slack-notification
-        env:
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
-          COMPONENT: UI
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
-          GITHUB_SERVER_URL: ${{ github.server_url }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-        with:
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
-          step-outcome: ${{ steps.container-push.outcome }}
-
   # Create and push multi-architecture manifest
   create-manifest:
     needs: [setup, container-build-push]
-    if: github.event_name == 'push' || github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -158,7 +148,7 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-arm64
 
       - name: Create and push manifests for release event
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           docker buildx imagetools create \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }} \
@@ -177,6 +167,40 @@ jobs:
           regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-amd64" || true
           regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-arm64" || true
           echo "Cleanup completed"
+
+  notify-release-completed:
+    if: always() && needs.notify-release-started.result == 'success' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+    needs: [setup, notify-release-started, container-build-push, create-manifest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Determine overall outcome
+        id: outcome
+        run: |
+          if [[ "${{ needs.container-build-push.result }}" == "success" && "${{ needs.create-manifest.result }}" == "success" ]]; then
+            echo "outcome=success" >> $GITHUB_OUTPUT
+          else
+            echo "outcome=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify container push completed
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          MESSAGE_TS: ${{ needs.notify-release-started.outputs.message-ts }}
+          COMPONENT: UI
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
+          step-outcome: ${{ steps.outcome.outputs.outcome }}
+          update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
 
   trigger-deployment:
     if: github.event_name == 'push'

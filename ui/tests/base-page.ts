@@ -6,7 +6,7 @@ import { Page, Locator, expect } from "@playwright/test";
  */
 export abstract class BasePage {
   readonly page: Page;
-  
+
   // Common UI elements that appear on most pages
   readonly title: Locator;
   readonly loadingIndicator: Locator;
@@ -14,7 +14,7 @@ export abstract class BasePage {
 
   constructor(page: Page) {
     this.page = page;
-    
+
     // Common locators that most pages share
     this.title = page.locator("h1, h2, [role='heading']").first();
     this.loadingIndicator = page.getByRole("status", { name: "Loading" });
@@ -24,21 +24,14 @@ export abstract class BasePage {
   // Common navigation methods
   async goto(url: string): Promise<void> {
     await this.page.goto(url);
-    await this.waitForPageLoad();
-  }
-
-  async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
   }
 
   async refresh(): Promise<void> {
     await this.page.reload();
-    await this.waitForPageLoad();
   }
 
   async goBack(): Promise<void> {
     await this.page.goBack();
-    await this.waitForPageLoad();
   }
 
   // Common verification methods
@@ -119,14 +112,14 @@ export abstract class BasePage {
   async getFormErrors(): Promise<string[]> {
     const errorElements = await this.page.locator('[role="alert"], .error-message, [data-testid="error"]').all();
     const errors: string[] = [];
-    
+
     for (const element of errorElements) {
       const text = await element.textContent();
       if (text) {
         errors.push(text.trim());
       }
     }
-    
+
     return errors;
   }
 
@@ -137,23 +130,28 @@ export abstract class BasePage {
 
   // Common wait methods
   async waitForElement(element: Locator, timeout: number = 5000): Promise<void> {
+    
     await element.waitFor({ timeout });
   }
 
   async waitForElementToDisappear(element: Locator, timeout: number = 5000): Promise<void> {
+    
     await element.waitFor({ state: "hidden", timeout });
   }
 
   async waitForUrl(expectedUrl: string | RegExp, timeout: number = 5000): Promise<void> {
+    
     await this.page.waitForURL(expectedUrl, { timeout });
   }
 
   // Common screenshot methods
   async takeScreenshot(name: string): Promise<void> {
+    
     await this.page.screenshot({ path: `screenshots/${name}.png` });
   }
 
   async takeElementScreenshot(element: Locator, name: string): Promise<void> {
+    
     await element.screenshot({ path: `screenshots/${name}.png` });
   }
 }

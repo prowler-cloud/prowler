@@ -1,19 +1,23 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { useDisclosure } from "@heroui/use-disclosure";
-import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import {
+  Button,
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
-import { ICON_SIZE } from "./api-keys/constants";
 import { EnrichedApiKey } from "./api-keys/types";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { EditApiKeyNameModal } from "./edit-api-key-name-modal";
@@ -67,10 +71,10 @@ export const ApiKeysCardClient = ({
 
   return (
     <>
-      <Card className="dark:bg-prowler-blue-400">
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <div className="flex flex-col gap-1">
-            <h4 className="text-lg font-bold">API Keys</h4>
+      <Card variant="base" padding="none" className="p-4">
+        <CardHeader>
+          <div className="flex flex-col gap-2">
+            <CardTitle>API Keys</CardTitle>
             <p className="text-xs text-gray-500">
               Manage API keys for programmatic access.{" "}
               <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
@@ -78,17 +82,13 @@ export const ApiKeysCardClient = ({
               </CustomLink>
             </p>
           </div>
-          <CustomButton
-            ariaLabel="Create new API key"
-            color="action"
-            size="sm"
-            startContent={<Plus size={ICON_SIZE} />}
-            onPress={createModal.onOpen}
-          >
-            Create API Key
-          </CustomButton>
+          <CardAction>
+            <Button variant="default" size="sm" onClick={createModal.onOpen}>
+              Create API Key
+            </Button>
+          </CardAction>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {initialApiKeys.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12">
               <p className="text-sm">No API keys created yet.</p>
@@ -100,7 +100,7 @@ export const ApiKeysCardClient = ({
               metadata={metadata}
             />
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Modals */}
