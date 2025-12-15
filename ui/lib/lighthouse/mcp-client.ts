@@ -3,48 +3,39 @@ import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 
 import { getAuthContext } from "@/lib/lighthouse/auth-context";
 
-interface GlobalMCPClient {
-  mcpClient: MultiServerMCPClient | null;
-  mcpTools: StructuredTool[];
-  mcpAvailable: boolean;
-  initializationAttempted: boolean;
-  initializationPromise: Promise<void> | null;
-}
+/**
+ * MCP Client State
+ * Using a class-based singleton for better encapsulation and testability
+ */
+class MCPClientManager {
+  private client: MultiServerMCPClient | null = null;
+  private tools: StructuredTool[] = [];
+  private available = false;
+  private initializationAttempted = false;
+  private initializationPromise: Promise<void> | null = null;
 
-const globalForMCP = global as typeof global & {
-  mcp?: GlobalMCPClient;
-};
+  async initialize(): Promise<void> {
+    // Already initialized successfully
+    if (this.initializationAttempted && this.available) {
+      return;
+    }
 
-if (!globalForMCP.mcp) {
-  globalForMCP.mcp = {
-    mcpClient: null,
-    mcpTools: [],
-    mcpAvailable: false,
-    initializationAttempted: false,
-    initializationPromise: null,
-  };
-}
+    // Initialization in progress
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
 
-const mcpState = globalForMCP.mcp;
-
-export async function initializeMCPClient(): Promise<void> {
-  if (mcpState.initializationAttempted && mcpState.mcpAvailable) {
-    // Return if MCP Client already initialized
-    return;
+    this.initializationPromise = this.performInitialization();
+    return this.initializationPromise;
   }
 
-  if (mcpState.initializationPromise) {
-    // If initialization in progress, return promise
-    return mcpState.initializationPromise;
-  }
-
-  mcpState.initializationPromise = (async () => {
-    mcpState.initializationAttempted = true;
+  private async performInitialization(): Promise<void> {
+    this.initializationAttempted = true;
 
     try {
       const mcpServerUrl = process.env.PROWLER_MCP_SERVER_URL || "";
 
-      mcpState.mcpClient = new MultiServerMCPClient({
+      this.client = new MultiServerMCPClient({
         additionalToolNamePrefix: "",
         mcpServers: {
           prowler: {
@@ -52,72 +43,113 @@ export async function initializeMCPClient(): Promise<void> {
             url: mcpServerUrl,
           },
         },
-        beforeToolCall: ({
-          name,
-          args,
-        }: {
-          serverName: string;
-          name: string;
-          args?: unknown;
-        }) => {
-          // Only inject auth for Prowler App tool
-          if (!name.startsWith("prowler_app_")) {
-            return { args };
-          }
-
-          const accessToken = getAuthContext();
-          if (!accessToken) {
-            return { args };
-          }
-
-          return {
-            args,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          };
-        },
+        beforeToolCall: this.handleBeforeToolCall,
       });
 
-      mcpState.mcpTools = await mcpState.mcpClient.getTools();
-      mcpState.mcpAvailable = true;
+      this.tools = await this.client.getTools();
+      this.available = true;
     } catch (error) {
-      console.error("[MCP Client] Failed to initialize MCP client:", error);
-      mcpState.mcpAvailable = false;
-      mcpState.mcpClient = null;
-      mcpState.mcpTools = [];
+      console.error("[MCP Client] Failed to initialize:", error);
+      this.reset();
     } finally {
-      mcpState.initializationPromise = null;
+      this.initializationPromise = null;
     }
-  })();
+  }
 
-  return mcpState.initializationPromise;
+  /**
+   * Injects auth headers for Prowler App tools
+   */
+  private handleBeforeToolCall = ({
+    name,
+    args,
+  }: {
+    serverName: string;
+    name: string;
+    args?: unknown;
+  }) => {
+    // Only inject auth for Prowler App tools
+    if (!name.startsWith("prowler_app_")) {
+      return { args };
+    }
+
+    const accessToken = getAuthContext();
+    if (!accessToken) {
+      return { args };
+    }
+
+    return {
+      args,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    };
+  };
+
+  getTools(): StructuredTool[] {
+    return this.tools;
+  }
+
+  getToolsByPattern(pattern: RegExp): StructuredTool[] {
+    return this.tools.filter((tool) => pattern.test(tool.name));
+  }
+
+  getToolByName(name: string): StructuredTool | undefined {
+    return this.tools.find((tool) => tool.name === name);
+  }
+
+  getToolsByNames(names: string[]): StructuredTool[] {
+    return this.tools.filter((tool) => names.includes(tool.name));
+  }
+
+  isAvailable(): boolean {
+    return this.available;
+  }
+
+  reset(): void {
+    this.client = null;
+    this.tools = [];
+    this.available = false;
+    this.initializationAttempted = false;
+    this.initializationPromise = null;
+  }
+}
+
+// Singleton instance
+// Using a module-level variable instead of global for better HMR support
+let mcpClientManager: MCPClientManager | null = null;
+
+function getManager(): MCPClientManager {
+  if (!mcpClientManager) {
+    mcpClientManager = new MCPClientManager();
+  }
+  return mcpClientManager;
+}
+
+// Public API - maintains backwards compatibility
+export async function initializeMCPClient(): Promise<void> {
+  return getManager().initialize();
 }
 
 export function getMCPTools(): StructuredTool[] {
-  return mcpState.mcpTools;
+  return getManager().getTools();
 }
 
 export function getMCPToolsByPattern(namePattern: RegExp): StructuredTool[] {
-  return mcpState.mcpTools.filter((tool) => namePattern.test(tool.name));
+  return getManager().getToolsByPattern(namePattern);
 }
 
 export function getMCPToolByName(name: string): StructuredTool | undefined {
-  return mcpState.mcpTools.find((tool) => tool.name === name);
+  return getManager().getToolByName(name);
 }
 
 export function getMCPToolsByNames(names: string[]): StructuredTool[] {
-  return mcpState.mcpTools.filter((tool) => names.includes(tool.name));
+  return getManager().getToolsByNames(names);
 }
 
 export function isMCPAvailable(): boolean {
-  return mcpState.mcpAvailable;
+  return getManager().isAvailable();
 }
 
 export function resetMCPClient(): void {
-  mcpState.mcpClient = null;
-  mcpState.mcpTools = [];
-  mcpState.mcpAvailable = false;
-  mcpState.initializationAttempted = false;
-  mcpState.initializationPromise = null;
+  getManager().reset();
 }

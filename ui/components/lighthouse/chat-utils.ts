@@ -3,50 +3,26 @@
  * Client-side utilities for chat.tsx
  */
 
-// Types
-export interface MessagePart {
-  type: string;
-  text?: string;
-  data?: unknown;
-}
+import {
+  CHAIN_OF_THOUGHT_ACTIONS,
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+  META_TOOLS,
+} from "@/lib/lighthouse/constants";
+import type { ChainOfThoughtData, Message } from "@/lib/lighthouse/types";
 
-export interface Message {
-  id: string;
-  role: string;
-  parts: MessagePart[];
-}
+// Re-export constants for convenience
+export {
+  CHAIN_OF_THOUGHT_ACTIONS,
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+  META_TOOLS,
+};
 
-export interface ChainOfThoughtEvent {
-  action: string;
-  metaTool: string;
-  tool: string | null;
-  toolCallId?: string;
-}
-
-// Constants
-export const CHAIN_OF_THOUGHT_ACTIONS = {
-  PLANNING: "tool_planning",
-  START: "tool_start",
-  COMPLETE: "tool_complete",
-} as const;
-
-export const META_TOOLS = {
-  DESCRIBE: "describe_tool",
-  EXECUTE: "execute_tool",
-} as const;
-
-export const MESSAGE_STATUS = {
-  STREAMING: "streaming",
-  SUBMITTED: "submitted",
-  IDLE: "idle",
-} as const;
-
-export const MESSAGE_ROLES = {
-  USER: "user",
-  ASSISTANT: "assistant",
-} as const;
-
-export const ERROR_PREFIX = "[LIGHTHOUSE_ANALYST_ERROR]:";
+// Re-export types
+export type { ChainOfThoughtData as ChainOfThoughtEvent, Message };
 
 /**
  * Extracts text content from a message by filtering and joining text parts
@@ -69,10 +45,10 @@ export function extractMessageText(message: Message): string {
  */
 export function extractChainOfThoughtEvents(
   message: Message,
-): ChainOfThoughtEvent[] {
+): ChainOfThoughtData[] {
   return message.parts
     .filter((part) => part.type === "data-chain-of-thought")
-    .map((part) => part.data as ChainOfThoughtEvent);
+    .map((part) => part.data as ChainOfThoughtData);
 }
 
 /**
@@ -116,7 +92,7 @@ export function isMetaTool(metaTool: string): boolean {
  */
 export function getChainOfThoughtHeaderText(
   isStreaming: boolean,
-  events: ChainOfThoughtEvent[],
+  events: ChainOfThoughtData[],
 ): string {
   if (!isStreaming) {
     return "Thought process";

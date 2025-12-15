@@ -8,14 +8,18 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
-import { createContext, memo, useContext, useMemo } from "react";
+import { createContext, memo, useContext } from "react";
 
-import { Badge } from "@/components/shadcn/badge";
+import { Badge } from "@/components/shadcn/badge/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/shadcn/collapsible";
+import {
+  CHAIN_OF_THOUGHT_STATUS,
+  type ChainOfThoughtStatus,
+} from "@/lib/lighthouse/constants";
 import { cn } from "@/lib/utils";
 
 type ChainOfThoughtContextValue = {
@@ -58,10 +62,7 @@ export const ChainOfThought = memo(
       onChange: onOpenChange,
     });
 
-    const chainOfThoughtContext = useMemo(
-      () => ({ isOpen, setIsOpen }),
-      [isOpen, setIsOpen],
-    );
+    const chainOfThoughtContext = { isOpen, setIsOpen };
 
     return (
       <ChainOfThoughtContext.Provider value={chainOfThoughtContext}>
@@ -113,7 +114,7 @@ export type ChainOfThoughtStepProps = ComponentProps<"div"> & {
   icon?: LucideIcon;
   label: ReactNode;
   description?: ReactNode;
-  status?: "complete" | "active" | "pending";
+  status?: ChainOfThoughtStatus;
 };
 
 export const ChainOfThoughtStep = memo(
@@ -122,7 +123,7 @@ export const ChainOfThoughtStep = memo(
     icon: Icon = DotIcon,
     label,
     description,
-    status = "complete",
+    status = CHAIN_OF_THOUGHT_STATUS.COMPLETE,
     children,
     ...props
   }: ChainOfThoughtStepProps) => {
