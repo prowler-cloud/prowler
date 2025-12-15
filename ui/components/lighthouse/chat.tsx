@@ -69,6 +69,11 @@ interface SelectedModel {
   modelName: string;
 }
 
+interface ExtendedError extends Error {
+  status?: number;
+  body?: Record<string, unknown>;
+}
+
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
   {
     title: "Are there any exposed S3",
@@ -211,13 +216,19 @@ export const Chat = ({
       // There is no specific way to output the error message from langgraph supervisor
       // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
       // Detect error messages sent from backend using specific prefix and display the error
+      // Use includes() instead of startsWith() to catch errors that occur mid-stream (after text has been sent)
       const firstTextPart = message.parts.find((p) => p.type === "text");
       if (
         firstTextPart &&
         "text" in firstTextPart &&
-        firstTextPart.text.startsWith(ERROR_PREFIX)
+        firstTextPart.text.includes(ERROR_PREFIX)
       ) {
-        const errorText = firstTextPart.text.replace(ERROR_PREFIX, "").trim();
+        // Extract error text - handle both start-of-message and mid-stream errors
+        const fullText = firstTextPart.text;
+        const errorIndex = fullText.indexOf(ERROR_PREFIX);
+        const errorText = fullText
+          .substring(errorIndex + ERROR_PREFIX.length)
+          .trim();
         setErrorMessage(errorText);
         // Remove error message from chat history
         setMessages((prev) =>
@@ -226,7 +237,7 @@ export const Chat = ({
             return !(
               textPart &&
               "text" in textPart &&
-              textPart.text.startsWith(ERROR_PREFIX)
+              textPart.text.includes(ERROR_PREFIX)
             );
           }),
         );
@@ -382,18 +393,18 @@ export const Chat = ({
                   "An error occurred. Please retry your message."}
               </p>
               {/* Original error details for native errors */}
-              {error && (error as any).status && (
+              {error && (error as ExtendedError).status && (
                 <p className="text-text-neutral-tertiary mt-1 text-xs">
-                  Status: {(error as any).status}
+                  Status: {(error as ExtendedError).status}
                 </p>
               )}
-              {error && (error as any).body && (
+              {error && (error as ExtendedError).body && (
                 <details className="mt-2">
                   <summary className="text-text-neutral-tertiary hover:text-text-neutral-secondary cursor-pointer text-xs">
                     Show details
                   </summary>
                   <pre className="bg-bg-neutral-tertiary text-text-neutral-secondary mt-1 max-h-20 overflow-auto rounded p-2 text-xs">
-                    {JSON.stringify((error as any).body, null, 2)}
+                    {JSON.stringify((error as ExtendedError).body, null, 2)}
                   </pre>
                 </details>
               )}

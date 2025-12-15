@@ -9,6 +9,7 @@ import {
   createTextDeltaEvent,
   createTextEndEvent,
   createTextStartEvent,
+  ERROR_PREFIX,
   handleChatModelEndEvent,
   handleChatModelStreamEvent,
   handleToolEvent,
@@ -151,19 +152,20 @@ export async function POST(req: Request) {
               },
             });
 
-            // Emit error as text if stream has started
+            // Emit error as text with consistent prefix
+            // Use consistent ERROR_PREFIX for both scenarios so client can detect errors
             if (hasStarted) {
               controller.enqueue(
                 createTextDeltaEvent(
                   STREAM_MESSAGE_ID,
-                  `\n\n[Error: ${errorMessage}]`,
+                  `\n\n${ERROR_PREFIX} ${errorMessage}`,
                 ),
               );
             } else {
               controller.enqueue(
                 createTextDeltaEvent(
                   STREAM_MESSAGE_ID,
-                  `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
+                  `${ERROR_PREFIX} ${errorMessage}`,
                 ),
               );
             }

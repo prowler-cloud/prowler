@@ -6,6 +6,7 @@
 import {
   CHAIN_OF_THOUGHT_ACTIONS,
   type ChainOfThoughtAction,
+  ERROR_PREFIX,
   LIGHTHOUSE_AGENT_TAG,
   META_TOOLS,
   STREAM_MESSAGE_ID,
@@ -13,7 +14,7 @@ import {
 import type { ChainOfThoughtData, StreamEvent } from "@/lib/lighthouse/types";
 
 // Re-export for convenience
-export { CHAIN_OF_THOUGHT_ACTIONS, STREAM_MESSAGE_ID };
+export { CHAIN_OF_THOUGHT_ACTIONS, ERROR_PREFIX, STREAM_MESSAGE_ID };
 
 /**
  * Extracts the actual tool name from meta-tool input.
