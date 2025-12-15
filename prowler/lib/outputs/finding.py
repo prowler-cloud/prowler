@@ -443,7 +443,7 @@ class Finding(BaseModel):
         elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
         elif provider.type == "cloudflare":
-            finding.zone_name = resource.region
+            finding.zone_name = getattr(resource, "zone_name", resource.name)
             finding.account_id = getattr(finding, "account_id", "")
 
         finding.check_metadata = CheckMetadata(

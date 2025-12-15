@@ -38,7 +38,7 @@ def init_parser(self):
         nargs="+",
         default=None,
         metavar="ZONE",
-        help="Restrict the scan to one or more Cloudflare zones (name or ID).",
+        help="Filter scan to specific Cloudflare zones (name or ID).",
     )
 
 

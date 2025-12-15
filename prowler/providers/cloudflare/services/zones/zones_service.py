@@ -12,13 +12,102 @@ class Zones(CloudflareService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.zones_map: dict[str, "CloudflareZone"] = {
-            zone.id: zone for zone in self.zones
-        }
-        self.__threading_call__(self._enrich_zone)
-        self.zones = list(self.zones_map.values())
+        self.zones: dict[str, "CloudflareZone"] = {}
+        self._list_zones()
+        self._get_zones_settings()
+        self._get_zones_dnssec()
 
-    def _get_setting(self, zone_id: str, setting_id: str):
+    def _list_zones(self) -> None:
+        """List all Cloudflare zones with their basic information."""
+        logger.info("Zones - Listing zones...")
+        audited_accounts = self.provider.identity.audited_accounts
+        filter_zones = self.provider.filter_zones
+        seen_zone_ids: set[str] = set()
+
+        try:
+            for zone in self.client.zones.list():
+                zone_id = getattr(zone, "id", None)
+                # Prevent infinite loop - skip if we've seen this zone
+                if zone_id in seen_zone_ids:
+                    break
+                seen_zone_ids.add(zone_id)
+
+                zone_account = getattr(zone, "account", None)
+                account_id = getattr(zone_account, "id", None) if zone_account else None
+
+                # Filter by audited accounts
+                if audited_accounts and account_id not in audited_accounts:
+                    continue
+
+                zone_name = getattr(zone, "name", None)
+
+                # Apply zone filter if specified via --region
+                if (
+                    filter_zones
+                    and zone_id not in filter_zones
+                    and zone_name not in filter_zones
+                ):
+                    continue
+
+                zone_plan = getattr(zone, "plan", None)
+                self.zones[zone_id] = CloudflareZone(
+                    id=zone_id,
+                    name=zone_name,
+                    status=getattr(zone, "status", None),
+                    paused=getattr(zone, "paused", False),
+                    account=(
+                        CloudflareAccount(
+                            id=account_id,
+                            name=(
+                                getattr(zone_account, "name", "")
+                                if zone_account
+                                else ""
+                            ),
+                            type=(
+                                getattr(zone_account, "type", None)
+                                if zone_account
+                                else None
+                            ),
+                        )
+                        if zone_account
+                        else None
+                    ),
+                    plan=getattr(zone_plan, "name", None) if zone_plan else None,
+                )
+
+            if not self.zones:
+                logger.warning(
+                    "No Cloudflare zones discovered with current credentials."
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_zones_settings(self) -> None:
+        """Get settings for all zones."""
+        logger.info("Zones - Getting zone settings...")
+        for zone in self.zones.values():
+            try:
+                zone.settings = self._get_zone_settings(zone.id)
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zones_dnssec(self) -> None:
+        """Get DNSSEC status for all zones."""
+        logger.info("Zones - Getting DNSSEC status...")
+        for zone in self.zones.values():
+            try:
+                dnssec = self.client.dns.dnssec.get(zone_id=zone.id)
+                zone.dnssec_status = getattr(dnssec, "status", None)
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zone_setting(self, zone_id: str, setting_id: str):
         """Get a single zone setting by ID."""
         try:
             result = self.client.zones.settings.get(
@@ -28,10 +117,10 @@ class Zones(CloudflareService):
         except Exception:
             return None
 
-    def _fetch_zone_settings(self, zone_id: str) -> "CloudflareZoneSettings":
-        """Fetch all required zone settings."""
+    def _get_zone_settings(self, zone_id: str) -> "CloudflareZoneSettings":
+        """Get all settings for a zone."""
         settings = {
-            setting_id: self._get_setting(zone_id, setting_id)
+            setting_id: self._get_zone_setting(zone_id, setting_id)
             for setting_id in [
                 "always_use_https",
                 "min_tls_version",
@@ -53,35 +142,6 @@ class Zones(CloudflareService):
             ]
         }
 
-        # Parse HSTS settings from security_header
-        security_header = settings.get("security_header")
-        # Handle Cloudflare SDK object or dict
-        if hasattr(security_header, "strict_transport_security"):
-            sts = security_header.strict_transport_security
-            strict_transport_security_data = {
-                "enabled": getattr(sts, "enabled", False),
-                "max_age": getattr(sts, "max_age", 0),
-                "include_subdomains": getattr(sts, "include_subdomains", False),
-                "preload": getattr(sts, "preload", False),
-                "nosniff": getattr(sts, "nosniff", False),
-            }
-        elif isinstance(security_header, dict):
-            strict_transport_security_data = security_header.get(
-                "strict_transport_security", {}
-            )
-        else:
-            strict_transport_security_data = {}
-
-        strict_transport_security = StrictTransportSecurity(
-            enabled=strict_transport_security_data.get("enabled", False),
-            max_age=strict_transport_security_data.get("max_age", 0),
-            include_subdomains=strict_transport_security_data.get(
-                "include_subdomains", False
-            ),
-            preload=strict_transport_security_data.get("preload", False),
-            nosniff=strict_transport_security_data.get("nosniff", False),
-        )
-
         return CloudflareZoneSettings(
             always_use_https=settings.get("always_use_https"),
             min_tls_version=str(settings.get("min_tls_version") or ""),
@@ -89,7 +149,9 @@ class Zones(CloudflareService):
             tls_1_3=settings.get("tls_1_3"),
             automatic_https_rewrites=settings.get("automatic_https_rewrites"),
             universal_ssl=settings.get("universal_ssl"),
-            strict_transport_security=strict_transport_security,
+            strict_transport_security=self._get_strict_transport_security(
+                settings.get("security_header")
+            ),
             waf=settings.get("waf"),
             security_level=settings.get("security_level"),
             browser_check=settings.get("browser_check"),
@@ -102,18 +164,31 @@ class Zones(CloudflareService):
             always_online=settings.get("always_online"),
         )
 
-    def _enrich_zone(self, zone: "CloudflareZone") -> None:
-        """Enrich zone with settings and DNSSEC status."""
-        try:
-            zone.settings = self._fetch_zone_settings(zone.id)
+    def _get_strict_transport_security(
+        self, security_header
+    ) -> "StrictTransportSecurity":
+        """Parse HSTS settings from security_header."""
+        if hasattr(security_header, "strict_transport_security"):
+            sts = security_header.strict_transport_security
+            sts_data = {
+                "enabled": getattr(sts, "enabled", False),
+                "max_age": getattr(sts, "max_age", 0),
+                "include_subdomains": getattr(sts, "include_subdomains", False),
+                "preload": getattr(sts, "preload", False),
+                "nosniff": getattr(sts, "nosniff", False),
+            }
+        elif isinstance(security_header, dict):
+            sts_data = security_header.get("strict_transport_security", {})
+        else:
+            sts_data = {}
 
-            dnssec = self.client.dns.dnssec.get(zone_id=zone.id)
-            zone.dnssec_status = getattr(dnssec, "status", None)
-            self.zones_map[zone.id] = zone
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        return StrictTransportSecurity(
+            enabled=sts_data.get("enabled", False),
+            max_age=sts_data.get("max_age", 0),
+            include_subdomains=sts_data.get("include_subdomains", False),
+            preload=sts_data.get("preload", False),
+            nosniff=sts_data.get("nosniff", False),
+        )
 
 
 class StrictTransportSecurity(BaseModel):

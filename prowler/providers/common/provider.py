@@ -253,7 +253,7 @@ class Provider(ABC):
                         api_token=arguments.cloudflare_api_token,
                         api_key=arguments.cloudflare_api_key,
                         api_email=arguments.cloudflare_api_email,
-                        zones=arguments.region,
+                        filter_zones=arguments.region,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

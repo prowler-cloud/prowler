@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import os
-from typing import TYPE_CHECKING, Iterable
+from typing import Iterable
 
 from cloudflare import Cloudflare
 from colorama import Fore, Style
@@ -14,7 +12,6 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.cloudflare.exceptions.exceptions import (
-    CloudflareAPIError,
     CloudflareCredentialsError,
     CloudflareIdentityError,
     CloudflareSessionError,
@@ -28,14 +25,6 @@ from prowler.providers.cloudflare.models import (
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
-# TYPE_CHECKING import to maintain Prowler's provider structure where models live in service modules.
-# This breaks the following import cycle at runtime:
-#   cloudflare_provider.py -> zones_service.py -> service.py -> cloudflare_provider.py
-# Safe because: (1) `from __future__ import annotations` (PEP 563) defers annotation evaluation,
-# and (2) TYPE_CHECKING blocks only execute for type checkers, not at runtime.
-if TYPE_CHECKING:
-    from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
-
 
 class CloudflareProvider(Provider):
     """Cloudflare provider."""
@@ -46,7 +35,7 @@ class CloudflareProvider(Provider):
     _audit_config: dict
     _fixer_config: dict
     _mutelist: CloudflareMutelist
-    _zones: list[CloudflareZone]
+    _filter_zones: set[str] | None
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -54,7 +43,7 @@ class CloudflareProvider(Provider):
         api_token: str = None,
         api_key: str = None,
         api_email: str = None,
-        zones: Iterable[str] | None = None,
+        filter_zones: Iterable[str] | None = None,
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -90,8 +79,8 @@ class CloudflareProvider(Provider):
                 mutelist_path = get_default_mute_file_path(self.type)
             self._mutelist = CloudflareMutelist(mutelist_path=mutelist_path)
 
-        self._zones = self._discover_zones(zones)
-        self._identity.audited_zones = [zone.id for zone in self._zones]
+        # Store zone filter for filtering resources across services
+        self._filter_zones = set(filter_zones) if filter_zones else None
 
         Provider.set_global_provider(self)
 
@@ -120,8 +109,9 @@ class CloudflareProvider(Provider):
         return self._mutelist
 
     @property
-    def zones(self) -> list[CloudflareZone]:
-        return self._zones
+    def filter_zones(self) -> set[str] | None:
+        """Zone filter from --region argument to filter resources."""
+        return self._filter_zones
 
     @property
     def accounts(self) -> list[CloudflareAccount]:
@@ -252,79 +242,6 @@ class CloudflareProvider(Provider):
                 original_exception=error,
             )
 
-    def _discover_zones(
-        self, provided_zones: Iterable[str] | None = None
-    ) -> list[CloudflareZone]:
-        """Enumerate Cloudflare zones available to the authenticated identity."""
-        # Late import to avoid circular dependency
-        from prowler.providers.cloudflare.services.zones.zones_service import (
-            CloudflareZone,
-        )
-
-        zones: list[CloudflareZone] = []
-        filters = set(provided_zones) if provided_zones else set()
-        seen_zone_ids: set[str] = set()
-        try:
-            for zone in self._session.client.zones.list():
-                zone_id = getattr(zone, "id", None)
-                # Prevent infinite loop - skip if we've seen this zone
-                if zone_id in seen_zone_ids:
-                    break
-                seen_zone_ids.add(zone_id)
-
-                zone_account = getattr(zone, "account", None)
-                account_id = getattr(zone_account, "id", None) if zone_account else None
-                if (
-                    self._identity.audited_accounts
-                    and account_id not in self._identity.audited_accounts
-                ):
-                    continue
-                zone_name = getattr(zone, "name", None)
-                if filters and zone_id not in filters and zone_name not in filters:
-                    continue
-                zone_plan = getattr(zone, "plan", None)
-                zones.append(
-                    CloudflareZone(
-                        id=zone_id,
-                        name=zone_name,
-                        status=getattr(zone, "status", None),
-                        paused=getattr(zone, "paused", False),
-                        account=(
-                            CloudflareAccount(
-                                id=account_id,
-                                name=(
-                                    getattr(zone_account, "name", "")
-                                    if zone_account
-                                    else ""
-                                ),
-                                type=(
-                                    getattr(zone_account, "type", None)
-                                    if zone_account
-                                    else None
-                                ),
-                            )
-                            if zone_account
-                            else None
-                        ),
-                        plan=getattr(zone_plan, "name", None) if zone_plan else None,
-                    )
-                )
-
-            if not zones:
-                logger.warning(
-                    "No Cloudflare zones discovered with current credentials and filters."
-                )
-            return zones
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-            )
-            raise CloudflareAPIError(
-                file=os.path.basename(__file__),
-                original_exception=error,
-                message="Failed to enumerate Cloudflare zones.",
-            )
-
     def print_credentials(self) -> None:
         report_title = (
             f"{Style.BRIGHT}Using the Cloudflare credentials below:{Style.RESET_ALL}"
@@ -350,11 +267,6 @@ class CloudflareProvider(Provider):
         if self.accounts:
             accounts = ", ".join([account.id for account in self.accounts])
             report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
-
-        # Zones
-        if self._zones:
-            zones = ", ".join([zone.name for zone in self._zones])
-            report_lines.append(f"Zones: {Fore.YELLOW}{zones}{Style.RESET_ALL}")
 
         print_boxes(report_lines, report_title)
 

@@ -8,7 +8,7 @@ class zones_min_tls_version_secure(Check):
         findings = []
         required_version = float(CLOUDFLARE_DEFAULT_MIN_TLS)
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

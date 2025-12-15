@@ -731,8 +731,8 @@ class CheckReportGithub(Check_Report):
 class CheckReportCloudflare(Check_Report):
     """Contains the Cloudflare Check's finding information.
 
-    Zone acts as the regional context (similar to AWS regions).
-    All zone-related attributes are derived from the zone object.
+    Cloudflare is a global service - zones are resources, not regional contexts.
+    All zone-related attributes are derived from the zone object passed as resource.
     """
 
     resource_name: str
@@ -743,7 +743,6 @@ class CheckReportCloudflare(Check_Report):
         self,
         metadata: Dict,
         resource: Any,
-        zone: Any = None,
         resource_name: str = None,
         resource_id: str = None,
     ) -> None:
@@ -751,15 +750,14 @@ class CheckReportCloudflare(Check_Report):
 
         Args:
             metadata: Check metadata dictionary
-            resource: The resource being checked
-            zone: CloudflareZone object (regional context)
+            resource: The CloudflareZone resource being checked
             resource_name: Override for resource name
             resource_id: Override for resource ID
         """
         super().__init__(metadata, resource)
 
-        # Zone context - similar to AWS region
-        self._zone = zone or getattr(resource, "zone", None) or resource
+        # Zone is the resource being checked
+        self._zone = resource
 
         self.resource_name = resource_name or getattr(
             resource, "name", getattr(resource, "resource_name", "")
@@ -770,17 +768,17 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone(self) -> Any:
-        """The CloudflareZone object (regional context)."""
+        """The CloudflareZone object."""
         return self._zone
 
     @property
     def zone_id(self) -> str:
-        """Zone ID derived from zone context."""
+        """Zone ID."""
         return getattr(self._zone, "id", "")
 
     @property
     def zone_name(self) -> str:
-        """Zone name derived from zone context."""
+        """Zone name."""
         return getattr(self._zone, "name", "")
 
     @property
@@ -793,8 +791,8 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def region(self) -> str:
-        """Region alias for zone_name (for output compatibility)."""
-        return self.zone_name
+        """Cloudflare is a global service."""
+        return "global"
 
 
 @dataclass

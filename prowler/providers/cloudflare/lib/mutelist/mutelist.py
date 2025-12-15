@@ -10,12 +10,11 @@ class CloudflareMutelist(Mutelist):
         self,
         finding: CheckReportCloudflare,
         account_id: str,
-        zone_id: str | None = None,
     ) -> bool:
         return self.is_muted(
             account_id,
             finding.check_metadata.CheckID,
-            zone_id or getattr(finding, "zone_id", "*") or "*",
+            "global",  # Cloudflare is a global service
             finding.resource_id or finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
         )

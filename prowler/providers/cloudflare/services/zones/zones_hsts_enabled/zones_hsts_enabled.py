@@ -8,7 +8,7 @@ class zones_hsts_enabled(Check):
         # Recommended minimum max-age is 6 months (15768000 seconds)
         recommended_max_age = 15768000
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
