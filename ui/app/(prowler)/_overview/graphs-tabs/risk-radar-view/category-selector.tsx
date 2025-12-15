@@ -21,7 +21,7 @@ export function CategorySelector({
   onCategoryChange,
 }: CategorySelectorProps) {
   const handleValueChange = (value: string) => {
-    if (value === "") {
+    if (value === "" || value === "all") {
       onCategoryChange(null);
     } else {
       onCategoryChange(value);
@@ -29,15 +29,12 @@ export function CategorySelector({
   };
 
   return (
-    <Select
-      value={selectedCategory ?? ""}
-      onValueChange={handleValueChange}
-      allowDeselect
-    >
+    <Select value={selectedCategory ?? "all"} onValueChange={handleValueChange}>
       <SelectTrigger size="sm" className="w-[200px]">
         <SelectValue placeholder="All categories" />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="all">All categories</SelectItem>
         {categories.map((category) => (
           <SelectItem key={category.categoryId} value={category.categoryId}>
             {category.category}
