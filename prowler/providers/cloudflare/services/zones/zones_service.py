@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
