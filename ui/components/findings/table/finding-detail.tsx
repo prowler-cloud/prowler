@@ -72,6 +72,7 @@ export const FindingDetail = ({
           providerDetails.uid,
           resource.name,
           extractLineRangeFromUid(attributes.uid) || "",
+          resource.region,
         )
       : null;
 
@@ -264,7 +265,7 @@ export const FindingDetail = ({
           )}
 
           <InfoField label="Categories">
-            {attributes.check_metadata.categories?.join(", ") || "-"}
+            {attributes.check_metadata.categories?.join(", ") || "none"}
           </InfoField>
         </CardContent>
       </Card>
@@ -304,6 +305,15 @@ export const FindingDetail = ({
               {renderValue(resource.service)}
             </InfoField>
             <InfoField label="Region">{renderValue(resource.region)}</InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(resource.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(resource.details)}
+            </InfoField>
           </div>
 
           {resource.tags && Object.entries(resource.tags).length > 0 && (

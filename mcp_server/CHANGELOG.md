@@ -2,14 +2,36 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.1.1] (Prowler UNRELEASED)
+## [0.2.1] (UNRELEASED)
 
-### Fixed
-- Fix documentation MCP Server to return list of dictionaries [(#9205)](https://github.com/prowler-cloud/prowler/pull/9205)
+### Changed
 
-## [0.1.0] (Prowler 5.13.0)
+- Update API base URL environment variable to include complete path [(#9542)](https://github.com/prowler-cloud/prowler/pull/9300)
+
+## [0.2.0] (Prowler v5.15.0)
 
 ### Added
+
+- Remove all Prowler App MCP tools; and add new MCP Server tools for Prowler Findings and Compliance [(#9300)](https://github.com/prowler-cloud/prowler/pull/9300)
+- Add new MCP Server tools for Prowler Providers Management [(#9350)](https://github.com/prowler-cloud/prowler/pull/9350)
+- Add new MCP Server tools for Prowler Resources Management [(#9380)](https://github.com/prowler-cloud/prowler/pull/9380)
+- Add new MCP Server tools for Prowler Scans Management [(#9509)](https://github.com/prowler-cloud/prowler/pull/9509)
+- Add new MCP Server tools for Prowler Muting Management [(#9510)](https://github.com/prowler-cloud/prowler/pull/9510)
+
+---
+
+## [0.1.1] (Prowler v5.14.0)
+
+### Fixed
+
+- Fix documentation MCP Server to return list of dictionaries [(#9205)](https://github.com/prowler-cloud/prowler/pull/9205)
+
+---
+
+## [0.1.0] (Prowler v5.13.0)
+
+### Added
+
 - Initial release of Prowler MCP Server [(#8695)](https://github.com/prowler-cloud/prowler/pull/8695)
 - Set appropiate user-agent in requests [(#8724)](https://github.com/prowler-cloud/prowler/pull/8724)
 - Basic logger functionality [(#8740)](https://github.com/prowler-cloud/prowler/pull/8740)

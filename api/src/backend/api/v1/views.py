@@ -98,8 +98,11 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackSurfaceOverviewFilter,
+    CategoryOverviewFilter,
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
+    DailySeveritySummaryFilter,
     FindingFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
@@ -126,8 +129,10 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -152,6 +157,7 @@ from api.models import (
     SAMLDomainIndex,
     SAMLToken,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -172,6 +178,8 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackSurfaceOverviewSerializer,
+    CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
     ComplianceOverviewDetailThreatscoreSerializer,
@@ -180,6 +188,7 @@ from api.v1.serializers import (
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
@@ -204,6 +213,7 @@ from api.v1.serializers import (
     OverviewFindingSerializer,
     OverviewProviderCountSerializer,
     OverviewProviderSerializer,
+    OverviewRegionSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProcessorCreateSerializer,
@@ -349,7 +359,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.15.0"
+        spectacular_settings.VERSION = "1.17.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2137,7 +2147,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
                 },
             )
 
@@ -2752,12 +2762,15 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
         scan_based_filters = {}
+        category_scan_filters = {}  # Filters for ScanCategorySummary
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
         ):
-            queryset = queryset.filter(scan_id__in=scans.split(","))
-            scan_based_filters = {"id__in": scans.split(",")}
+            scan_ids_list = scans.split(",")
+            queryset = queryset.filter(scan_id__in=scan_ids_list)
+            scan_based_filters = {"id__in": scan_ids_list}
+            category_scan_filters = {"scan_id__in": scan_ids_list}
         else:
             exact = query_params.get("filter[inserted_at]")
             gte = query_params.get("filter[inserted_at__gte]")
@@ -2801,6 +2814,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 scan_based_filters = {
                     key.lstrip("scan_"): value for key, value in date_filters.items()
                 }
+                category_scan_filters = date_filters
 
         # ToRemove: Temporary fallback mechanism
         if not queryset.exists():
@@ -2847,10 +2861,31 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get categories from ScanCategorySummary using same scan filters
+        categories = list(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, **category_scan_filters
+            )
+            .values_list("category", flat=True)
+            .distinct()
+            .order_by("category")
+        )
+
+        # Fallback to finding aggregation if no ScanCategorySummary exists
+        if not categories:
+            categories_set = set()
+            for categories_list in filtered_queryset.values_list(
+                "categories", flat=True
+            ):
+                if categories_list:
+                    categories_set.update(categories_list)
+            categories = sorted(categories_set)
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2955,10 +2990,36 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get categories from ScanCategorySummary for latest scans
+        categories = list(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            .values_list("category", flat=True)
+            .distinct()
+            .order_by("category")
+        )
+
+        # Fallback to finding aggregation if no ScanCategorySummary exists
+        if not categories:
+            filtered_queryset = self.filter_queryset(self.get_queryset()).filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            categories_set = set()
+            for categories_list in filtered_queryset.values_list(
+                "categories", flat=True
+            ):
+                if categories_list:
+                    categories_set.update(categories_list)
+            categories = sorted(categories_set)
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)
@@ -3358,50 +3419,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews",
-        description=(
-            "Retrieve an overview of all compliance frameworks. "
-            "If scan_id is provided, returns compliance data for that specific scan. "
-            "If scan_id is omitted, returns compliance data aggregated from the latest completed scan of each provider."
-        ),
+        summary="List compliance overviews for a scan",
+        description="Retrieve an overview of all the compliance in a given scan.",
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=False,
+                required=True,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description=(
-                    "Optional scan ID. If provided, returns compliance for that scan. "
-                    "If omitted, returns compliance for the latest completed scan per provider."
-                ),
-            ),
-            OpenApiParameter(
-                name="filter[provider_id]",
-                required=False,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Filter by specific provider ID.",
-            ),
-            OpenApiParameter(
-                name="filter[provider_id__in]",
-                required=False,
-                type={"type": "array", "items": {"type": "string", "format": "uuid"}},
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider IDs (comma-separated).",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type]",
-                required=False,
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by provider type (e.g., aws, azure, gcp).",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type__in]",
-                required=False,
-                type={"type": "array", "items": {"type": "string"}},
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider types (comma-separated).",
+                description="Related scan ID.",
             ),
         ],
         responses={
@@ -3580,7 +3606,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     def _get_compliance_template(self, *, provider=None, scan_id=None):
         """Return the compliance template for the given provider or scan."""
         if provider is None and scan_id is not None:
-            scan = Scan.all_objects.select_related("provider").get(pk=scan_id)
+            try:
+                scan = Scan.all_objects.select_related("provider").get(pk=scan_id)
+            except Scan.DoesNotExist:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "Scan not found",
+                            "status": 404,
+                            "source": {"pointer": "filter[scan_id]"},
+                            "code": "not_found",
+                        }
+                    ]
+                )
             provider = scan.provider
 
         if not provider:
@@ -3722,93 +3760,47 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
-        tenant_id = self.request.tenant_id
 
-        if scan_id:
-            # Specific scan requested - use optimized summaries with region support
-            region_filter = request.query_params.get(
-                "filter[region]"
-            ) or request.query_params.get("filter[region__in]")
+        # Specific scan requested - use optimized summaries with region support
+        region_filter = request.query_params.get(
+            "filter[region]"
+        ) or request.query_params.get("filter[region__in]")
 
-            if region_filter:
-                # Fall back to detailed query with region filtering
-                return self._list_with_region_filter(scan_id, region_filter)
+        if region_filter:
+            # Fall back to detailed query with region filtering
+            return self._list_with_region_filter(scan_id, region_filter)
 
-            summaries = list(self._compliance_summaries_queryset(scan_id))
-            if not summaries:
-                # Trigger async backfill for next time
-                backfill_compliance_summaries_task.delay(
-                    tenant_id=self.request.tenant_id, scan_id=scan_id
-                )
-                # Use fallback aggregation for this request
-                return self._list_without_region_aggregation(scan_id)
+        summaries = list(self._compliance_summaries_queryset(scan_id))
+        if not summaries:
+            # Trigger async backfill for next time
+            backfill_compliance_summaries_task.delay(
+                tenant_id=self.request.tenant_id, scan_id=scan_id
+            )
+            # Use fallback aggregation for this request
+            return self._list_without_region_aggregation(scan_id)
 
-            # Get compliance template for provider to enrich with framework/version
-            compliance_template = self._get_compliance_template(scan_id=scan_id)
+        # Get compliance template for provider to enrich with framework/version
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
 
-            # Convert to response format with framework/version enrichment
-            response_data = []
-            for summary in summaries:
-                compliance_metadata = compliance_template.get(summary.compliance_id, {})
-                response_data.append(
-                    {
-                        "id": summary.compliance_id,
-                        "compliance_id": summary.compliance_id,
-                        "framework": compliance_metadata.get("framework", ""),
-                        "version": compliance_metadata.get("version", ""),
-                        "requirements_passed": summary.requirements_passed,
-                        "requirements_failed": summary.requirements_failed,
-                        "requirements_manual": summary.requirements_manual,
-                        "total_requirements": summary.total_requirements,
-                    }
-                )
-
-            serializer = self.get_serializer(response_data, many=True)
-            return Response(serializer.data)
-        else:
-            # No scan_id provided - use latest scans per provider
-            # First, check if provider filters are present
-            provider_id = request.query_params.get("filter[provider_id]")
-            provider_id__in = request.query_params.get("filter[provider_id__in]")
-            provider_type = request.query_params.get("filter[provider_type]")
-            provider_type__in = request.query_params.get("filter[provider_type__in]")
-
-            scan_filters = {"tenant_id": tenant_id, "state": StateChoices.COMPLETED}
-
-            # Apply provider ID filters
-            if provider_id:
-                scan_filters["provider_id"] = provider_id
-            elif provider_id__in:
-                # Convert comma-separated string to list
-                provider_ids = [pid.strip() for pid in provider_id__in.split(",")]
-                scan_filters["provider_id__in"] = provider_ids
-
-            # Apply provider type filters
-            if provider_type:
-                scan_filters["provider__provider"] = provider_type
-            elif provider_type__in:
-                # Convert comma-separated string to list
-                provider_types = [pt.strip() for pt in provider_type__in.split(",")]
-                scan_filters["provider__provider__in"] = provider_types
-
-            latest_scan_ids = (
-                Scan.all_objects.filter(**scan_filters)
-                .order_by("provider_id", "-inserted_at")
-                .distinct("provider_id")
-                .values_list("id", flat=True)
+        # Convert to response format with framework/version enrichment
+        response_data = []
+        for summary in summaries:
+            compliance_metadata = compliance_template.get(summary.compliance_id, {})
+            response_data.append(
+                {
+                    "id": summary.compliance_id,
+                    "compliance_id": summary.compliance_id,
+                    "framework": compliance_metadata.get("framework", ""),
+                    "version": compliance_metadata.get("version", ""),
+                    "requirements_passed": summary.requirements_passed,
+                    "requirements_failed": summary.requirements_failed,
+                    "requirements_manual": summary.requirements_manual,
+                    "total_requirements": summary.total_requirements,
+                }
             )
 
-            base_queryset = self.get_queryset()
-            queryset = self.filter_queryset(
-                base_queryset.filter(scan_id__in=latest_scan_ids)
-            )
-
-            # Aggregate compliance data across latest scans
-            compliance_template = self._get_compliance_template()
-            data = self._aggregate_compliance_overview(
-                queryset, template_metadata=compliance_template
-            )
-            return Response(data)
+        serializer = self.get_serializer(response_data, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
@@ -4064,6 +4056,43 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    regions=extend_schema(
+        summary="Get findings data by region",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by region. The response includes the total, passed, "
+            "failed, and muted findings for each region based on the latest completed scans per provider. "
+            "Standard overview filters (inserted_at, provider filters, region filters, etc.) are supported."
+        ),
+        filters=True,
+    ),
+    findings_severity_timeseries=extend_schema(
+        summary="Get findings severity data over time",
+        description=(
+            "Retrieve daily aggregated findings data grouped by severity levels over a date range. "
+            "Returns one data point per day with counts of failed findings by severity (critical, high, "
+            "medium, low, informational) and muted findings. Days without scans are filled forward with "
+            "the most recent known values. Use date_from (required) and date_to filters to specify the range."
+        ),
+        filters=True,
+    ),
+    attack_surface=extend_schema(
+        summary="Get attack surface overview",
+        description="Retrieve aggregated attack surface metrics from latest completed scans per provider.",
+        tags=["Overview"],
+        filters=True,
+        responses={200: AttackSurfaceOverviewSerializer(many=True)},
+    ),
+    categories=extend_schema(
+        summary="Get category overview",
+        description=(
+            "Retrieve aggregated category metrics from latest completed scans per provider. "
+            "Returns one row per category with total, failed, and new failed findings counts, "
+            "plus a severity breakdown showing failed findings per severity level. "
+        ),
+        tags=["Overview"],
+        filters=True,
+        responses={200: CategoryOverviewSerializer(many=True)},
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4081,7 +4110,16 @@ class OverviewViewSet(BaseRLSViewSet):
         if not role.unlimited_visibility:
             self.allowed_providers = providers
 
-        return ScanSummary.all_objects.filter(tenant_id=self.request.tenant_id)
+        tenant_id = self.request.tenant_id
+
+        # Return appropriate queryset per action
+        if self.action == "findings_severity_timeseries":
+            qs = DailySeveritySummary.objects.filter(tenant_id=tenant_id)
+            if hasattr(self, "allowed_providers"):
+                qs = qs.filter(provider_id__in=self.allowed_providers)
+            return qs
+
+        return ScanSummary.all_objects.filter(tenant_id=tenant_id)
 
     def get_serializer_class(self):
         if self.action == "providers":
@@ -4092,22 +4130,42 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "findings_severity_timeseries":
+            return FindingsSeverityOverTimeSerializer
         elif self.action == "services":
             return OverviewServiceSerializer
+        elif self.action == "regions":
+            return OverviewRegionSerializer
         elif self.action == "threatscore":
             return ThreatScoreSnapshotSerializer
+        elif self.action == "attack_surface":
+            return AttackSurfaceOverviewSerializer
+        elif self.action == "categories":
+            return CategoryOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action == "findings":
+        elif self.action in ["findings", "services", "regions"]:
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
-        elif self.action == "services":
-            return ScanSummaryFilter
+        elif self.action == "findings_severity_timeseries":
+            return DailySeveritySummaryFilter
+        elif self.action == "categories":
+            return CategoryOverviewFilter
+        elif self.action == "attack_surface":
+            return AttackSurfaceOverviewFilter
         return None
+
+    def filter_queryset(self, queryset):
+        # Skip OrderingFilter for findings_severity_timeseries (no inserted_at field)
+        if self.action == "findings_severity_timeseries":
+            return CustomDjangoFilterBackend().filter_queryset(
+                self.request, queryset, self
+            )
+        return super().filter_queryset(queryset)
 
     @extend_schema(exclude=True)
     def list(self, request, *args, **kwargs):
@@ -4116,6 +4174,109 @@ class OverviewViewSet(BaseRLSViewSet):
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
+
+    def _get_latest_scans_queryset(self):
+        """
+        Get filtered queryset for the latest completed scans per provider.
+
+        Returns:
+            Filtered ScanSummary queryset with latest scan IDs applied.
+        """
+        tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        return filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+
+    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
+        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
+        exclude_keys = exclude_keys or set()
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            if normalized_key not in exclude_keys:
+                normalized.setlist(normalized_key, values)
+        return normalized
+
+    def _ensure_allowed_providers(self):
+        """Populate allowed providers for RBAC-aware queries once per request."""
+        if getattr(self, "_providers_initialized", False):
+            return
+        self.get_queryset()
+        self._providers_initialized = True
+
+    def _get_provider_filter(self, provider_field="provider"):
+        self._ensure_allowed_providers()
+        if hasattr(self, "allowed_providers"):
+            return {f"{provider_field}__in": self.allowed_providers}
+        return {}
+
+    def _apply_provider_filter(self, queryset, provider_field="provider"):
+        provider_filter = self._get_provider_filter(provider_field)
+        if provider_filter:
+            return queryset.filter(**provider_filter)
+        return queryset
+
+    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
+        normalized_params = self._normalize_jsonapi_params(
+            self.request.query_params, exclude_keys=set(exclude_keys or [])
+        )
+        filterset = filterset_class(normalized_params, queryset=queryset)
+        return filterset.qs
+
+    def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
+        provider_filter = self._get_provider_filter()
+        queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+        )
+        if provider_filters:
+            queryset = queryset.filter(**provider_filters)
+        return (
+            queryset.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _extract_provider_filters_from_params(self):
+        """Extract provider filters from query params to apply on Scan queryset."""
+        params = self.request.query_params
+        filters = {}
+
+        provider_id = params.get("filter[provider_id]")
+        if provider_id:
+            filters["provider_id"] = provider_id
+
+        provider_id_in = params.get("filter[provider_id__in]")
+        if provider_id_in:
+            filters["provider_id__in"] = provider_id_in.split(",")
+
+        provider_type = params.get("filter[provider_type]")
+        if provider_type:
+            filters["provider__provider"] = provider_type
+
+        provider_type_in = params.get("filter[provider_type__in]")
+        if provider_type_in:
+            filters["provider__provider__in"] = provider_type_in.split(",")
+
+        return filters
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -4209,26 +4370,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -4255,31 +4397,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
-        tenant_id = self.request.tenant_id
-
-        # Load only required fields
-        queryset = self.get_queryset().only(
-            "tenant_id", "scan_id", "severity", "fail", "_pass", "muted"
-        )
-
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         # The filter will have added a status_count annotation if any status filter was used
         if "status_count" in filtered_queryset.query.annotations:
@@ -4304,26 +4422,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="services")
     def services(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         services_data = (
             filtered_queryset.values("service")
@@ -4338,13 +4437,133 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"], url_name="regions")
+    def regions(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        regions_data = (
+            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
+            .values("provider_type", "region")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("provider_type", "region")
+        )
+
+        serializer = self.get_serializer(regions_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="findings_severity/timeseries",
+        url_name="findings_severity_timeseries",
+    )
+    def findings_severity_timeseries(self, request):
+        """
+        Daily severity trends for charts. Uses DailySeveritySummary pre-aggregation.
+        Requires date_from filter.
+        """
+        # Get queryset with RBAC, provider, and date filters applied
+        # Date validation is handled by DailySeveritySummaryFilter
+        daily_qs = self.filter_queryset(self.get_queryset())
+
+        date_from = request._date_from
+        date_to = request._date_to
+
+        if not daily_qs.exists():
+            # No data matches filters - return zeros
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Fetch all data for fill-forward logic
+        daily_summaries = list(
+            daily_qs.order_by("provider_id", "-date").values(
+                "provider_id",
+                "scan_id",
+                "date",
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "informational",
+                "muted",
+            )
+        )
+
+        if not daily_summaries:
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Build provider_data: {provider_id: [(date, data), ...]} sorted by date desc
+        provider_data = defaultdict(list)
+        for summary in daily_summaries:
+            provider_data[summary["provider_id"]].append(summary)
+
+        # For each day, find the latest data per provider and sum values
+        result = []
+        current_date = date_from
+        while current_date <= date_to:
+            day_totals = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+            day_scan_ids = []
+
+            for provider_id, summaries in provider_data.items():
+                # Find the latest data for this provider <= current_date
+                for summary in summaries:  # Already sorted by date desc
+                    if summary["date"] <= current_date:
+                        day_totals["critical"] += summary["critical"] or 0
+                        day_totals["high"] += summary["high"] or 0
+                        day_totals["medium"] += summary["medium"] or 0
+                        day_totals["low"] += summary["low"] or 0
+                        day_totals["informational"] += summary["informational"] or 0
+                        day_totals["muted"] += summary["muted"] or 0
+                        day_scan_ids.append(summary["scan_id"])
+                        break  # Found the latest data for this provider
+
+            result.append(
+                {"date": current_date, "scan_ids": day_scan_ids, **day_totals}
+            )
+            current_date += timedelta(days=1)
+
+        serializer = self.get_serializer(result, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _generate_zero_result(self, date_from, date_to):
+        """Generate a list of zero-filled results for each date in range."""
+        result = []
+        current_date = date_from
+        zero_values = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+            "muted": 0,
+            "scan_ids": [],
+        }
+        while current_date <= date_to:
+            result.append({"date": current_date, **zero_values})
+            current_date += timedelta(days=1)
+        return result
+
     @extend_schema(
         summary="Get ThreatScore snapshots",
         description=(
             "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
             "Use snapshot_id to retrieve a specific historical snapshot."
         ),
-        tags=["Overviews"],
+        tags=["Overview"],
         parameters=[
             OpenApiParameter(
                 name="snapshot_id",
@@ -4390,11 +4609,9 @@ class OverviewViewSet(BaseRLSViewSet):
         snapshot_id = request.query_params.get("snapshot_id")
 
         # Base queryset with RLS
-        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
-
-        # Apply RBAC filtering
-        if hasattr(self, "allowed_providers"):
-            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
+        base_queryset = self._apply_provider_filter(
+            ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+        )
 
         # Case 1: Specific snapshot requested
         if snapshot_id:
@@ -4410,17 +4627,9 @@ class OverviewViewSet(BaseRLSViewSet):
         # Case 2: Latest snapshot per provider (default)
         # Apply filters manually: this @action is outside the standard list endpoint flow,
         # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
-        normalized_params = QueryDict(mutable=True)
-        for param_key, values in request.query_params.lists():
-            normalized_key = param_key
-            if param_key.startswith("filter[") and param_key.endswith("]"):
-                normalized_key = param_key[7:-1]
-            if normalized_key == "snapshot_id":
-                continue
-            normalized_params.setlist(normalized_key, values)
-
-        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
-        filtered_queryset = filterset.qs
+        filtered_queryset = self._apply_filterset(
+            base_queryset, ThreatScoreSnapshotFilter, exclude_keys={"snapshot_id"}
+        )
 
         # Get distinct provider IDs from filtered queryset
         # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
@@ -4663,6 +4872,117 @@ class OverviewViewSet(BaseRLSViewSet):
         aggregated_snapshot._aggregated = True
 
         return aggregated_snapshot
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="attack-surface",
+        url_path="attack-surfaces",
+    )
+    def attack_surface(self, request):
+        tenant_id = request.tenant_id
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
+
+        base_queryset = AttackSurfaceOverview.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        filtered_queryset = self._apply_filterset(
+            base_queryset, AttackSurfaceOverviewFilter
+        )
+
+        aggregation = filtered_queryset.values("attack_surface_type").annotate(
+            total_findings=Coalesce(Sum("total_findings"), 0),
+            failed_findings=Coalesce(Sum("failed_findings"), 0),
+            muted_failed_findings=Coalesce(Sum("muted_failed_findings"), 0),
+        )
+
+        results = {
+            attack_surface_type: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "muted_failed_findings": 0,
+            }
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for item in aggregation:
+            results[item["attack_surface_type"]] = {
+                "total_findings": item["total_findings"],
+                "failed_findings": item["failed_findings"],
+                "muted_failed_findings": item["muted_failed_findings"],
+            }
+
+        response_data = [
+            {"attack_surface_type": key, **value} for key, value in results.items()
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"], url_name="categories")
+    def categories(self, request):
+        tenant_id = request.tenant_id
+        provider_filters = self._extract_provider_filters_from_params()
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(
+            tenant_id, provider_filters
+        )
+
+        base_queryset = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        provider_filter_keys = {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+        }
+        filtered_queryset = self._apply_filterset(
+            base_queryset, CategoryOverviewFilter, exclude_keys=provider_filter_keys
+        )
+
+        aggregation = (
+            filtered_queryset.values("category", "severity")
+            .annotate(
+                total=Coalesce(Sum("total_findings"), 0),
+                failed=Coalesce(Sum("failed_findings"), 0),
+                new_failed=Coalesce(Sum("new_failed_findings"), 0),
+            )
+            .order_by("category", "severity")
+        )
+
+        category_data = defaultdict(
+            lambda: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "new_failed_findings": 0,
+                "severity": {
+                    "informational": 0,
+                    "low": 0,
+                    "medium": 0,
+                    "high": 0,
+                    "critical": 0,
+                },
+            }
+        )
+
+        for row in aggregation:
+            cat = row["category"]
+            sev = row["severity"]
+            category_data[cat]["total_findings"] += row["total"]
+            category_data[cat]["failed_findings"] += row["failed"]
+            category_data[cat]["new_failed_findings"] += row["new_failed"]
+            if sev in category_data[cat]["severity"]:
+                category_data[cat]["severity"][sev] = row["failed"]
+
+        response_data = [
+            {"category": cat, **data} for cat, data in sorted(category_data.items())
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["Schedule"])

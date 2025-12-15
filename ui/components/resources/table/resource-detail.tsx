@@ -21,8 +21,55 @@ import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import { FindingProps, ProviderType, ResourceProps } from "@/types";
 
+const SEVERITY_ORDER = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  informational: 4,
+} as const;
+
+type SeverityLevel = keyof typeof SEVERITY_ORDER;
+
+interface ResourceFinding {
+  type: "findings";
+  id: string;
+  attributes: {
+    status: "PASS" | "FAIL" | "MANUAL";
+    severity: SeverityLevel;
+    check_metadata?: {
+      checktitle?: string;
+    };
+  };
+}
+
+interface FindingReference {
+  id: string;
+}
+
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
+};
+
+const parseMetadata = (
+  metadata: Record<string, unknown> | string | null | undefined,
+): Record<string, unknown> | null => {
+  if (!metadata) return null;
+
+  if (typeof metadata === "string") {
+    try {
+      const parsed = JSON.parse(metadata);
+      return typeof parsed === "object" && parsed !== null ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof metadata === "object" && metadata !== null) {
+    return metadata as Record<string, unknown>;
+  }
+
+  return null;
 };
 
 const buildCustomBreadcrumbs = (
@@ -57,7 +104,7 @@ export const ResourceDetail = ({
   resourceId: string;
   initialResourceData: ResourceProps;
 }) => {
-  const [findingsData, setFindingsData] = useState<any[]>([]);
+  const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
@@ -86,9 +133,9 @@ export const ResourceDetail = ({
             const findingsDict = createDict("findings", resourceData);
             const findings =
               resourceData.data.relationships.findings.data?.map(
-                (finding: any) => findingsDict[finding.id],
+                (finding: FindingReference) => findingsDict[finding.id],
               ) || [];
-            setFindingsData(findings);
+            setFindingsData(findings as ResourceFinding[]);
           } else {
             setFindingsData([]);
           }
@@ -162,12 +209,31 @@ export const ResourceDetail = ({
   const resource = initialResourceData;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
-  const allFindings = findingsData;
+
+  // Filter only failed findings and sort by severity
+  const failedFindings = findingsData
+    .filter(
+      (finding: ResourceFinding) => finding?.attributes?.status === "FAIL",
+    )
+    .sort((a: ResourceFinding, b: ResourceFinding) => {
+      const severityA = (a?.attributes?.severity?.toLowerCase() ||
+        "informational") as SeverityLevel;
+      const severityB = (b?.attributes?.severity?.toLowerCase() ||
+        "informational") as SeverityLevel;
+      return (
+        (SEVERITY_ORDER[severityA] ?? 999) - (SEVERITY_ORDER[severityB] ?? 999)
+      );
+    });
 
   // Build Git URL for IaC resources
   const gitUrl =
     providerData.provider === "iac"
-      ? buildGitFileUrl(providerData.uid, attributes.name, "")
+      ? buildGitFileUrl(
+          providerData.uid,
+          attributes.name,
+          "",
+          attributes.region,
+        )
       : null;
 
   if (selectedFindingId) {
@@ -243,6 +309,14 @@ export const ResourceDetail = ({
             </InfoField>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(attributes.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(attributes.details)}
+            </InfoField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Created At">
               <DateWithTime inline dateTime={attributes.inserted_at} />
             </InfoField>
@@ -250,6 +324,29 @@ export const ResourceDetail = ({
               <DateWithTime inline dateTime={attributes.updated_at} />
             </InfoField>
           </div>
+
+          {(() => {
+            const parsedMetadata = parseMetadata(attributes.metadata);
+            return parsedMetadata &&
+              Object.entries(parsedMetadata).length > 0 ? (
+              <InfoField label="Metadata" variant="simple">
+                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
+                  <Snippet
+                    className="absolute top-2 right-2 z-10 bg-transparent"
+                    classNames={{
+                      base: "bg-transparent p-0 min-w-0",
+                      pre: "hidden",
+                    }}
+                  >
+                    {JSON.stringify(parsedMetadata, null, 2)}
+                  </Snippet>
+                  <pre className="minimal-scrollbar mr-10 max-h-[100px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                    {JSON.stringify(parsedMetadata, null, 2)}
+                  </pre>
+                </div>
+              </InfoField>
+            ) : null;
+          })()}
 
           {resourceTags && Object.entries(resourceTags).length > 0 ? (
             <div className="flex flex-col gap-4">
@@ -268,10 +365,10 @@ export const ResourceDetail = ({
         </CardContent>
       </Card>
 
-      {/* Finding associated with this resource section */}
+      {/* Failed findings associated with this resource section */}
       <Card variant="base" padding="lg">
         <CardHeader>
-          <CardTitle>Findings associated with this resource</CardTitle>
+          <CardTitle>Failed findings associated with this resource</CardTitle>
         </CardHeader>
         <CardContent>
           {findingsLoading ? (
@@ -281,12 +378,12 @@ export const ResourceDetail = ({
                 Loading findings...
               </p>
             </div>
-          ) : allFindings.length > 0 ? (
+          ) : failedFindings.length > 0 ? (
             <div className="flex flex-col gap-4">
               <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
-                Total findings: {allFindings.length}
+                Total failed findings: {failedFindings.length}
               </p>
-              {allFindings.map((finding: any, index: number) => {
+              {failedFindings.map((finding: ResourceFinding, index: number) => {
                 const { attributes: findingAttrs, id } = finding;
 
                 // Handle cases where finding might not have all attributes
@@ -333,7 +430,7 @@ export const ResourceDetail = ({
             </div>
           ) : (
             <p className="dark:text-prowler-theme-pale/80 text-gray-600">
-              No findings found for this resource.
+              No failed findings found for this resource.
             </p>
           )}
         </CardContent>
