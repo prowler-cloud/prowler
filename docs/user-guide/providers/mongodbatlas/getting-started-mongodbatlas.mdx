@@ -2,7 +2,9 @@
 title: 'Getting Started with MongoDB Atlas'
 ---
 
-Prowler supports MongoDB Atlas both from the CLI **(since v5.12.0)** and from Prowler App **(since v5.15.0)**. This guide walks you through the requirements, how to connect the provider in the UI, and how to run scans from the command line.
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+Prowler supports MongoDB Atlas both from the CLI and from Prowler Cloud. This guide walks you through the requirements, how to connect the provider in the UI, and how to run scans from the command line.
 
 ## Prerequisites
 
@@ -32,6 +34,8 @@ If **Require IP Access List for the Atlas Administration API** is enabled in you
 
 ## Prowler Cloud
 
+<VersionBadge version="5.15.0" />
+
 ### Step 1: Add the provider
 
 1. Navigate to **Cloud Providers** and click **Add Cloud Provider**.
@@ -57,6 +61,8 @@ If **Require IP Access List for the Atlas Administration API** is enabled in you
 ---
 
 ## Prowler CLI
+
+<VersionBadge version="5.12.0" />
 
 You can also run MongoDB Atlas assessments directly from the CLI. Both command-line flags and environment variables are supported.
 
