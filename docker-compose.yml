@@ -1,3 +1,9 @@
+# Production Docker Compose configuration
+# Uses pre-built images from Docker Hub (prowlercloud/*)
+#
+# For development with local builds and hot-reload, use docker-compose-dev.yml instead:
+#   docker compose -f docker-compose-dev.yml up
+#
 services:
   api:
     hostname: "prowler-api"
@@ -26,6 +32,9 @@ services:
         required: false
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
+    depends_on:
+      mcp-server:
+        condition: service_healthy
 
   postgres:
     image: postgres:16.3-alpine3.20
