@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_older_than_specific_days",
-  "CheckTitle": "Check EC2 Instances older than specific days.",
+  "CheckTitle": "EC2 instance is not older than the configured maximum age or is not running",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Patch Management"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Check EC2 Instances older than specific days.",
-  "Risk": "Having old instances within your AWS account could increase the risk of having vulnerable software.",
+  "Description": "**EC2 instances** are evaluated for age while in `running` state. Instances launched beyond the configurable limit (`max_ec2_instance_age_in_days`, default `180`) are flagged as older than the allowed lifetime. Stopped instances are ignored.",
+  "Risk": "Long-lived instances often run **unpatched OS and agents**, enabling:\n- Exploitation of known CVEs  loss of confidentiality\n- Privilege escalation and tampering  integrity compromise\n- Malware/crypto-mining and instability  reduced availability\n\nAged hosts also drift from baselines and impede response.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/systems-manager/latest/userguide/viewing-patch-compliance-results.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/ec2-instance-too-old.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ec2 stop-instances --instance-ids <example_resource_id>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/ec2-instance-too-old.html",
+      "Other": "1. Sign in to the AWS Management Console and open EC2\n2. Go to Instances and select the noncompliant instance\n3. Choose Instance state > Stop instance\n4. Confirm Stop\n5. Verify the instance state is Stopped (the check passes when the instance is not running)",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Check if software running in the instance is up to date and patched accordingly. Use AWS Systems Manager to patch instances and view patching compliance information.",
-      "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/viewing-patch-compliance-results.html"
+      "Text": "Adopt **short-lived, patched workloads**:\n- Rebuild regularly from hardened, updated images; rotate AMIs\n- Use centralized patch management and vulnerability scanning\n- Retire or modernize legacy hosts; tag for lifecycle\n- Apply **least privilege** and **defense in depth** to limit blast radius\n\nAdjust `max_ec2_instance_age_in_days` to match policy.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_older_than_specific_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

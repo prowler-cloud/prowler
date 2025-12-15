@@ -1,30 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_networkacl_unused",
-  "CheckTitle": "Unused Network Access Control Lists should be removed.",
-  "CheckType": [],
+  "CheckTitle": "Non-default network ACL is associated with a subnet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEc2NetworkAcl",
-  "Description": "Ensure that there are no unused network access control lists (network ACLs) in your virtual private cloud (VPC). The control fails if the network ACL isn't associated with a subnet. The control doesn't generate findings for an unused default network ACL.",
-  "Risk": "Unused network ACLs may represent a potential security risk if left in place without purpose, as they could be mistakenly associated with subnets later.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-network-acl-unused-check.html",
+  "Description": "**VPC network ACLs** that are **not associated with any subnet** are considered unused. The evaluation focuses on non-default ACLs and identifies those without a current subnet association; the default network ACL is excluded.",
+  "Risk": "Unused ACLs raise the risk of **misassociation**, unexpectedly changing subnet filtering. A permissive ACL could expose workloads (**confidentiality, integrity**), while an overly restrictive one could disrupt traffic (**availability**). Stale objects also hinder reviews and conceal drift.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#vpc-network-acl-delete",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-16",
+    "https://docs.aws.amazon.com/config/latest/developerguide/vpc-network-acl-unused-check.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 delete-network-acl --network-acl-id <nacl_id>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-16",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# Associate the unused non-default NACL to a subnet so it's in use\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SubnetNetworkAclAssociation\n    Properties:\n      SubnetId: <example_resource_id>        # Critical: makes the subnet use this NACL\n      NetworkAclId: <example_resource_id>    # Critical: the unused non-default NACL to associate\n```",
+      "Other": "1. In the AWS console, open VPC > Network ACLs\n2. Select the non-default NACL with Association: None\n3. Choose Actions > Delete ACL > Delete\n\nAlternative (if you want to keep it):\n1. Select the NACL > Actions > Edit subnet associations\n2. Check a subnet to associate > Save",
+      "Terraform": "```hcl\n# Associate the unused non-default NACL to a subnet so it's in use\nresource \"aws_network_acl_association\" \"<example_resource_name>\" {\n  subnet_id      = \"<example_resource_id>\"     # Critical: makes the subnet use this NACL\n  network_acl_id = \"<example_resource_id>\"     # Critical: the unused non-default NACL to associate\n}\n```"
     },
     "Recommendation": {
-      "Text": "For instructions on deleting an unused network ACL, see Deleting a network ACL in the Amazon VPC User Guide.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html#vpc-network-acl-delete"
+      "Text": "Remove **unused non-default ACLs** to minimize drift. Apply **least privilege** and **change control** to ACL creation and associations. If retention is necessary, tag owner and purpose, restrict who can associate ACLs, and review regularly as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_networkacl_unused"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

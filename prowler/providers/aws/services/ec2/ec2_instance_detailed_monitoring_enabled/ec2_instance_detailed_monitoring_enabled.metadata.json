@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_detailed_monitoring_enabled",
-  "CheckTitle": "Check if EC2 instances have detailed monitoring enabled.",
+  "CheckTitle": "EC2 instance has detailed monitoring enabled",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Check if EC2 instances have detailed monitoring enabled.",
-  "Risk": "Enabling detailed monitoring provides enhanced monitoring and granular insights into EC2 instance metrics. Not having detailed monitoring enabled may limit the ability to troubleshoot performance issues effectively.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html",
+  "Description": "**EC2 instances** are assessed for **CloudWatch detailed monitoring**, indicating whether 1-minute metrics collection is enabled.\n\nInstances lacking this setting provide only 5-minute metrics.",
+  "Risk": "Without 1-minute metrics, visibility drops, delaying detection of:\n- Sudden CPU/network/disk spikes affecting **availability**\n- **Malicious workloads** (crypto-mining, brute force)\n- **Data exfiltration** patterns\nSlower detection expands blast radius, raising incident impact and response cost.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances#terraform",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 monitor-instances --instance-ids <EC2_INSTANCE_ID>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: Enable detailed monitoring on an EC2 instance\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::Instance\n    Properties:\n      ImageId: \"<example_ami_id>\"\n      InstanceType: \"<example_instance_type>\"\n      Monitoring: true  # Critical: enables detailed (1-minute) CloudWatch monitoring\n```",
+      "Other": "1. Open the AWS Console and go to EC2 > Instances\n2. Select the instance\n3. Choose Actions > Monitor and troubleshoot > Manage detailed monitoring\n4. Check Enable detailed monitoring and click Save",
+      "Terraform": "```hcl\n# Enable detailed monitoring on an EC2 instance\nresource \"aws_instance\" \"<example_resource_name>\" {\n  ami           = \"<example_ami_id>\"\n  instance_type = \"<example_instance_type>\"\n  monitoring    = true  # Critical: enables detailed (1-minute) CloudWatch monitoring\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable detailed monitoring for EC2 instances to gain better insights into performance metrics.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance"
+      "Text": "Enable **detailed monitoring** to collect `1-minute` metrics on critical instances. Use **defense in depth**: baseline normal behavior, create alerts for anomalies, and correlate metrics with logs and traces. Review dashboards regularly. *If costs matter*, prioritize production, internet-facing, and autoscaling fleets.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_detailed_monitoring_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

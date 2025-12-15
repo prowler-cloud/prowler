@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_default_encryption",
-  "CheckTitle": "Check if EBS Default Encryption is activated.",
+  "CheckTitle": "EBS default encryption is enabled",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "ebs",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
-  "ResourceType": "Other",
-  "Description": "Check if EBS Default Encryption is activated.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Volume",
+  "Description": "**EBS** uses `encryption by default` at the account and region level, ensuring new volumes, snapshots, and AMI-backed volumes are automatically encrypted with a chosen **KMS key**",
+  "Risk": "Without `encryption by default`, data on new **EBS volumes** and **snapshots** may be stored in plaintext. A compromised account or mis-shared snapshot can expose disk contents, enabling data exfiltration, offline analysis, and loss of **confidentiality**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#aws-console",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#terraform",
+    "https://aws.amazon.com/premiumsupport/knowledge-center/ebs-automatic-encryption/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 enable-ebs-encryption-by-default",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#terraform"
+      "CLI": "aws ec2 enable-ebs-encryption-by-default --region <REGION>",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::EBSEncryptionByDefault\n    Properties:\n      Enabled: true  # Critical: turns on default EBS encryption in this region\n```",
+      "Other": "1. In the AWS console, switch to the affected Region\n2. Go to EC2 > Settings (or Account attributes) > EBS encryption\n3. Click Enable default encryption and Save",
+      "Terraform": "```hcl\nresource \"aws_ebs_encryption_by_default\" \"<example_resource_name>\" {\n  enabled = true  # Critical: enables default EBS encryption in this region\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
-      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/ebs-automatic-encryption/"
+      "Text": "Enable `EBS encryption by default` in every region and select a **customer-managed KMS key**. Apply **least privilege** to key use, rotate keys, and monitor access. Enforce encrypted volume creation with organizational guardrails and secure templates as **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_default_encryption"
     }
   },
   "Categories": [

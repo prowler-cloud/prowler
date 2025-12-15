@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_public_ip",
-  "CheckTitle": "Check for EC2 Instances with Public IP.",
+  "CheckTitle": "EC2 instance does not have a public IP address",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Check for EC2 Instances with Public IP.",
-  "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
+  "Description": "**EC2 instances** are assessed for the presence of a **public IPv4 address** and public DNS. A public IP indicates the instance is directly reachable from the Internet; no public IP implies access only through private networking paths such as load balancers, gateways, or proxies.",
+  "Risk": "Publicly addressed instances are Internet-scannable, enabling direct probing and brute-force of exposed services and management ports. This increases risks of unauthorized access, remote code execution, and data exfiltration (**confidentiality, integrity**), and allows direct DDoS targeting, degrading **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/public-policies/public_12#aws-console",
+    "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/",
+    "https://docs.prowler.com/checks/aws/public-policies/public_12#terraform"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_12#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_12#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_12#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: Launch EC2 without a public IP\nResources:\n  ExampleInstance:\n    Type: AWS::EC2::Instance\n    Properties:\n      ImageId: <ami_id>\n      InstanceType: <instance_type>\n      NetworkInterfaces:\n        - DeviceIndex: 0\n          SubnetId: <example_subnet_id>\n          AssociatePublicIpAddress: false  # CRITICAL: ensures the instance has no public IPv4 address\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Instances and select the instance with a public IPv4 address\n2. Check the Networking tab to see if an Elastic IP is attached\n3. If an Elastic IP is attached:\n   - Go to EC2 > Elastic IPs, select the address, choose Actions > Disassociate Elastic IP\n4. If the public IPv4 is auto-assigned (no Elastic IP shown):\n   - Create a new instance (or an AMI from the current one) and, during launch, in Network settings, set Auto-assign public IP to Disable\n   - Verify the new instance has no public IPv4, then migrate and terminate the old instance",
+      "Terraform": "```hcl\n# Terraform: Launch EC2 without a public IP\nresource \"aws_instance\" \"example\" {\n  ami           = \"<ami_id>\"\n  instance_type = \"<instance_type>\"\n  subnet_id     = \"<example_subnet_id>\"\n\n  associate_public_ip_address = false  # CRITICAL: ensures no public IPv4 is assigned\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use an ALB and apply WAF ACL.",
-      "Url": "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/"
+      "Text": "Avoid assigning public IPs unless strictly required. Place workloads in private subnets and expose only via **load balancers** with **WAF**; use **bastions** or **Session Manager** for administration. Enforce **least privilege** security groups, prefer **private endpoints**, and route egress via **NAT** for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_public_ip"
     }
   },
   "Categories": [

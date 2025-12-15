@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_from_launch_wizard",
-  "CheckTitle": "Security Groups created by EC2 Launch Wizard.",
+  "CheckTitle": "Security group not created using the EC2 Launch Wizard",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Security Groups created by EC2 Launch Wizard.",
-  "Risk": "Security Groups Created on the AWS Console using the EC2 wizard may allow port 22 from 0.0.0.0/0.",
+  "Description": "**EC2 security groups** whose names include `launch-wizard` are identified as created by the **EC2 Launch Wizard**, distinguishing auto-generated groups from curated, baseline-controlled groups.",
+  "Risk": "Wizard-generated groups often include **overly permissive rules** (e.g., `0.0.0.0/0` to admin ports), expanding exposure. Attackers can run **port scans** and **brute-force** to gain entry, then **lateral movement** and **data exfiltration**, impacting **confidentiality** and **integrity**; broad egress aids command-and-control.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/security-group-prefixed-with-launch-wizard.html",
+    "https://issackpaul95.medium.com/aws-hands-on-mastering-aws-security-groups-edit-rules-fix-timeouts-and-keep-your-ec2-safe-5d9a2d3c038a",
+    "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+    "https://gitlab.com/cloud64/aws-launch-wizard"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/security-group-prefixed-with-launch-wizard.html",
-      "Terraform": ""
+      "CLI": "aws ec2 delete-security-group --group-id <SECURITY_GROUP_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: create a security group not named by Launch Wizard\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: SG not created by Launch Wizard\n      VpcId: <example_resource_id>\n      GroupName: <example_resource_name>  # Critical: name does NOT contain \"launch-wizard\" to avoid FAIL\n```",
+      "Other": "1. In the AWS console, go to EC2 > Network & Security > Security Groups\n2. In the search box, filter by Name contains \"launch-wizard\"\n3. For each matching group, open the References tab and remove it from any ENIs/instances by replacing it with a different security group\n4. Select the launch-wizard security group and choose Actions > Delete security group > Delete\n5. Verify no security groups remain with names containing \"launch-wizard\"",
+      "Terraform": "```hcl\n# Create a security group not named by Launch Wizard\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"  # Critical: name does NOT contain \"launch-wizard\" to avoid FAIL\n  vpc_id = \"<example_resource_id>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Apply Zero Trust approach. Implement a process to scan and remediate security groups created by the EC2 Wizard. Recommended best practices is to use an authorized security group.",
-      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html"
+      "Text": "Replace or harden these groups. Apply **least privilege**: restrict inbound to required sources, avoid public admin ports, and minimize egress. Use approved baseline security groups, enforce change control with IaC and guardrails, prefer private administration (bastion or Session Manager), and remove unused rules.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_from_launch_wizard"
     }
   },
   "Categories": [],

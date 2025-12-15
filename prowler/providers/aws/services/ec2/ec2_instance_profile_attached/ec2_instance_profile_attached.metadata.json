@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_profile_attached",
-  "CheckTitle": "Ensure IAM instance roles are used for AWS resource access from instances",
+  "CheckTitle": "EC2 instance is associated with an IAM instance profile role",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure IAM instance roles are used for AWS resource access from instances.",
-  "Risk": "AWS access from within AWS instances can be done by either encoding AWS keys into AWS API calls or by assigning the instance to a role which has an appropriate permissions policy for the required access. AWS IAM roles reduce the risks associated with sharing and rotating credentials that can be used outside of AWS itself. If credentials are compromised, they can be used from outside of the AWS account.",
+  "Description": "**EC2 instances** are evaluated for association with an **IAM instance profile role** that delivers temporary credentials to workloads running on the instance",
+  "Risk": "Without an instance profile, apps often rely on long-term access keys on the host. Exposed keys can be used from anywhere to read data, alter resources, or disrupt services, impacting confidentiality, integrity, and availability. Keys may persist in AMIs, images, or logs, hindering rotation and amplifying blast radius.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html",
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/ec2/attach_iam_roles_ec2_instances"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/ec2/attach_iam_roles_ec2_instances",
-      "Terraform": ""
+      "CLI": "aws ec2 associate-iam-instance-profile --instance-id <INSTANCE_ID> --iam-instance-profile Name=<INSTANCE_PROFILE_NAME>",
+      "NativeIaC": "```yaml\n# CloudFormation: attach an IAM instance profile to the EC2 instance\nResources:\n  ExampleInstance:\n    Type: AWS::EC2::Instance\n    Properties:\n      ImageId: <AMI_ID>\n      InstanceType: <INSTANCE_TYPE>\n      IamInstanceProfile: <INSTANCE_PROFILE_NAME>  # Critical: associates an instance profile so the check passes\n```",
+      "Other": "1. Open the AWS Management Console and go to EC2\n2. Select Instances and choose the target instance\n3. Click Actions > Security > Modify IAM role\n4. Select the IAM role (instance profile) to attach\n5. Click Update IAM role",
+      "Terraform": "```hcl\n# Attach an IAM instance profile to the EC2 instance\nresource \"aws_instance\" \"example\" {\n  ami                  = \"<AMI_ID>\"\n  instance_type        = \"<INSTANCE_TYPE>\"\n  iam_instance_profile = \"<INSTANCE_PROFILE_NAME>\"  # Critical: associates an instance profile so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create an IAM instance role if necessary and attach it to the corresponding EC2 instance..",
-      "Url": "http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html"
+      "Text": "Attach an **IAM instance profile** to every instance and grant only permissions each workload requires (**least privilege**). Eliminate static keys on hosts; use **temporary credentials** with automatic rotation. Separate roles per application, enforce **separation of duties**, and limit who can assign roles (govern via `iam:PassRole`). Monitor role usage for anomalies.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_profile_attached"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

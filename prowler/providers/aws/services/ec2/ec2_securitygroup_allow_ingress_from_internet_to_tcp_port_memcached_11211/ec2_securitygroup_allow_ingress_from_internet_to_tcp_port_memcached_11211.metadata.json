@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211.",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to Memcached TCP port 11211",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "high",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Memcached port 11211.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** are evaluated for inbound rules that permit Internet-sourced access to `TCP 11211` (Memcached) from `0.0.0.0/0` or `::/0`.",
+  "Risk": "Exposed **Memcached** enables unauthenticated access, impacting CIA:\n- **Confidentiality**: read cached data (sessions, secrets)\n- **Integrity**: modify or poison entries\n- **Availability**: flush or overload cache, degrading apps\n\nOpen `11211` is widely scanned, enabling unauthorized access and lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict Memcached (11211) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict Memcached access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 11211\n          ToPort: 11211\n          CidrIp: 10.0.0.0/8  # FIX: Not 0.0.0.0/0; limits access so 11211 isn't open to the Internet\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the affected security group and open the Inbound rules tab\n3. Click Edit inbound rules\n4. Delete any rule allowing TCP 11211 from 0.0.0.0/0 or ::/0, or change its Source to a specific trusted CIDR\n5. Click Save rules",
+      "Terraform": "```hcl\n# Restrict Memcached (11211) from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 11211\n    to_port     = 11211\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # FIX: avoid 0.0.0.0/0 to prevent Internet exposure\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** and **segmentation**:\n- Restrict `TCP 11211` to trusted CIDRs or security groups\n- Keep Memcached on private subnets; avoid public IPs\n- Add **defense in depth** with NACLs/firewalls; disable unused protocols\n- Use private connectivity (VPN/peering) and monitor access",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211"
     }
   },
   "Categories": [

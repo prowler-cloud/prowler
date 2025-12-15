@@ -1,31 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21.",
-  "CheckAliases": [
-    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21"
-  ],
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "EC2 security groups are evaluated for Internet-exposed **FTP**: any inbound rule allowing `tcp` ports `20` or `21` from `0.0.0.0/0` or `::/0`.",
+  "Risk": "Exposed FTP weakens CIA:\n- Confidentiality: cleartext credentials/files enable interception and brute force.\n- Integrity: unauthorized uploads or tampering enable malware staging.\n- Availability: mass scans and login attempts can exhaust resources and disrupt services.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --ip-permissions '[{\"IpProtocol\":\"tcp\",\"FromPort\":20,\"ToPort\":20,\"IpRanges\":[{\"CidrIp\":\"0.0.0.0/0\"}],\"Ipv6Ranges\":[{\"CidrIpv6\":\"::/0\"}]},{\"IpProtocol\":\"tcp\",\"FromPort\":21,\"ToPort\":21,\"IpRanges\":[{\"CidrIp\":\"0.0.0.0/0\"}],\"Ipv6Ranges\":[{\"CidrIpv6\":\"::/0\"}]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict FTP (20,21) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict FTP from Internet\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 20\n          ToPort: 20\n          CidrIp: 10.0.0.0/8  # Critical: not 0.0.0.0/0; limits IPv4 to a private range\n        - IpProtocol: tcp\n          FromPort: 21\n          ToPort: 21\n          CidrIp: 10.0.0.0/8  # Critical: not 0.0.0.0/0; limits IPv4 to a private range\n```",
+      "Other": "1. Open the AWS Console and go to EC2 > Security Groups\n2. Select the security group attached to the affected resource\n3. In Inbound rules, find any rules for TCP ports 20 or 21 with Source 0.0.0.0/0 or ::/0\n4. Delete those rules (or edit them to a specific trusted CIDR only)\n5. Save rules",
+      "Terraform": "```hcl\n# Terraform: restrict FTP (20,21) from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 20\n    to_port     = 20\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: not 0.0.0.0/0; restricts IPv4\n  }\n\n  ingress {\n    from_port   = 21\n    to_port     = 21\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: not 0.0.0.0/0; restricts IPv4\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** and **defense in depth**:\n- Remove `0.0.0.0/0` and `::/0` to `20`/`21`; allow only trusted IPs or private access (VPN/peering).\n- Prefer **SFTP/FTPS** or HTTPS; disable anonymous FTP.\n- Segment transfer hosts, monitor access, and enforce rate limits and strong authentication.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21"
     }
   },
   "Categories": [
@@ -33,5 +35,8 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "CheckAliases": [
+    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21"
+  ]
 }

@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_mysql_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 3306 (MySQL).",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 3306 (MySQL)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 3306 (MySQL).",
-  "Risk": "MySQL is a popular open-source relational database management system that is widely used in web applications. Exposing MySQL to the internet can lead to unauthorized access and data exfiltration.",
+  "Description": "**EC2 instances** with security groups that expose **MySQL** on `TCP 3306` to the Internet (`0.0.0.0/0` or `::/0`) are identified, with context on public IP and subnet exposure.",
+  "Risk": "Publicly reachable **MySQL** enables Internet scanning, brute force, and credential stuffing, leading to unauthorized queries and data dumps (**confidentiality**). Attackers can alter or delete data (**integrity**), overload the service with query floods (**availability**), and pivot from the DB host into adjacent workloads.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 3306 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict MySQL (3306) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict MySQL access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 3306\n          ToPort: 3306\n          CidrIp: 10.0.0.0/8  # Critical: do NOT use 0.0.0.0/0; restrict 3306 to a private range\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the affected instance\n3. Click Inbound rules > Edit inbound rules\n4. Find the rule allowing TCP 3306 from 0.0.0.0/0 or ::/0 and delete it\n5. (If access is required) Add a rule for TCP 3306 from a specific private CIDR or trusted IP range only\n6. Save rules",
+      "Terraform": "```hcl\n# Restrict MySQL (3306) from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 3306\n    to_port     = 3306\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: do NOT use 0.0.0.0/0; restrict 3306 to a private CIDR\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 3306 (MySQL).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Restrict `TCP 3306` to trusted sources per **least privilege**:\n- Allow DB access only from specific application subnets or security groups\n- Place database hosts in private subnets without public IPs\n- Apply **defense in depth** with VPN/peering for admin access, TLS for connections, and host firewalls; optionally reinforce with NACLs",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_mysql_exposed_to_internet"
     }
   },
   "Categories": [

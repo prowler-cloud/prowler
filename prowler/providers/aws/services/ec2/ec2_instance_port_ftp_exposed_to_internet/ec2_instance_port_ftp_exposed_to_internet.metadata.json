@@ -1,28 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_ftp_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 20 or 21 (FTP)",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP ports 20 or 21 (FTP)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 20 or 21 (FTP).",
-  "Risk": "FTP is an insecure protocol and should not be used. If FTP is required, it should be used over a secure channel such as FTPS or SFTP.",
+  "Description": "**EC2 instances** with security groups permitting inbound **FTP** on `TCP 20-21` from any address (e.g., `0.0.0.0/0` or `::/0`) are identified.\n\nExposure is contextualized by the instance's public reachability (public IP and subnet).",
+  "Risk": "Exposed **FTP** invites Internet brute force and transmits in cleartext, enabling credential theft and packet sniffing (**confidentiality**).\n\nAttackers can upload/alter files (**integrity**) and abuse services for malware staging or DoS (**availability**). Publicly reachable hosts are rapidly probed by scanners.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.rapticore.com/docs/ensure-no-security-groups-allow-ingress-from-00000-to-ftp-port-20-21",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-ftp-access.html",
+    "https://repost.aws/questions/QUVWll2XoIRB6J5JqZipIwZQ/what-is-mean-fromport-is-0-and-toport-is-0-in-security-groups-ippermission-ippermissionegress",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --ip-permissions 'IpProtocol=tcp,FromPort=20,ToPort=21,IpRanges=[{CidrIp=0.0.0.0/0}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict FTP (ports 20-21) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict FTP access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 20\n          ToPort: 21\n          CidrIp: 10.0.0.0/8  # CRITICAL: restrict source; not 0.0.0.0/0. Fixes Internet exposure.\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the instance\n3. Open the Inbound rules tab and click Edit inbound rules\n4. Find any rule allowing TCP ports 20-21 from 0.0.0.0/0 or ::/0\n5. Delete the rule, or change Source to a trusted CIDR (e.g., your office IP)\n6. Click Save rules",
+      "Terraform": "```hcl\n# Security group with FTP restricted\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 20\n    to_port     = 21\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # CRITICAL: restrict source; not 0.0.0.0/0. Fixes Internet exposure.\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 20 or 21 (FTP).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Deny public ingress to **FTP** ports `20-21` following **least privilege**. Prefer **SFTP** or **FTPS**; if transfers are required, restrict to trusted sources and use private access (VPN or dedicated network). Apply **defense in depth** with tightened security groups and network ACLs, and monitor authentication and access.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_ftp_exposed_to_internet"
     }
   },
   "Categories": [

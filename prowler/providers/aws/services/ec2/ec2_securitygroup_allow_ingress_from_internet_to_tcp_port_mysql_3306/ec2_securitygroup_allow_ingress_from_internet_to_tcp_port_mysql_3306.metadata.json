@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroups",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MySQL port 3306.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** are assessed for **inbound exposure** of **MySQL** on `TCP 3306` from `0.0.0.0/0` or `::/0`.\n\nThe finding reflects whether this port is reachable from any IPv4 or IPv6 address.",
+  "Risk": "**Public MySQL** access lets anyone reach the service, enabling credential brute force and vulnerability exploitation. This threatens:\n- **Confidentiality**: data exfiltration\n- **Integrity**: unauthorized writes or schema changes\n- **Availability**: DoS from abuse or scans",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.plainenglish.io/ec2-mastery-the-tips-nobody-tells-you-but-everyone-needs-4181a919e2a2",
+    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict MySQL (3306) from Internet\nResources:\n  ExampleSecurityGroup:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Limit MySQL access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 3306\n          ToPort: 3306\n          CidrIp: 10.0.0.0/8  # Critical: not 0.0.0.0/0 or ::/0; limits MySQL to internal range\n```",
+      "Other": "1. In AWS Console, go to EC2 > Security Groups\n2. Select the security group in use by the instance\n3. In Inbound rules, click Edit inbound rules\n4. Remove any rule for TCP port 3306 with source 0.0.0.0/0 or ::/0\n5. Add a rule for TCP 3306 only from a trusted source (e.g., specific IP/CIDR or a security group)\n6. Click Save rules",
+      "Terraform": "```hcl\n# Restrict MySQL (3306) from Internet\nresource \"aws_security_group\" \"example_resource_name\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 3306\n    to_port     = 3306\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: not 0.0.0.0/0 or ::/0; restricts MySQL access\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege**: restrict `3306` to specific sources or peer security groups only. Keep databases in private subnets and use **VPN**, **bastion**, or application proxies for admin access. Enable **defense in depth** with TLS and strong auth. Never allow `0.0.0.0/0` or `::/0` ingress.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306"
     }
   },
   "Categories": [

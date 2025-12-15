@@ -1,33 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_account_imdsv2_enabled",
-  "CheckTitle": "Ensure Instance Metadata Service Version 2 (IMDSv2) is enforced for EC2 instances at the account level to protect against SSRF vulnerabilities.",
+  "CheckTitle": "IMDSv2 is required by default for EC2 instances at the account level",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsAccount",
-  "Description": "Ensure Instance Metadata Service Version 2 (IMDSv2) is enforced for EC2 instances at the account level to protect against SSRF vulnerabilities.",
-  "Risk": "EC2 instances that use IMDSv1 are vulnerable to SSRF attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "**EC2 account IMDS defaults** with `http_tokens`=`required` ensure new instances in the Region use **IMDSv2** by default and disable IMDSv1. *Existing instances keep their current setting.*",
+  "Risk": "Without a default of **IMDSv2**, new instances may enable **IMDSv1**, exposing metadata via simple HTTP. SSRF or proxy misconfigs can steal **temporary IAM credentials**, enabling data exfiltration (confidentiality), unauthorized API changes (integrity), and lateral movement that can disrupt services (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults",
+    "https://runebook.dev/en/aws/ec2/ModifyInstanceMetadataDefaults",
+    "https://www.rdocumentation.org/packages/paws.compute/versions/0.9.0/topics/ec2_modify_instance_metadata_defaults",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
+    "https://dev.to/aws-builders/understanding-aws-instance-metadata-service-a-closer-look-69h",
+    "https://www.cloudyali.io/blogs/understanding-instance-metadata-service-imds",
+    "https://github.com/aws-cloudformation/cloudformation-coverage-roadmap/issues/655"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 modify-instance-metadata-defaults --region <region> --http-tokens required --http-put-response-hop-limit 2",
+      "CLI": "aws ec2 modify-instance-metadata-defaults --region <region> --http-tokens required",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, open EC2 and select the target Region\n2. Go to EC2 Dashboard > Account attributes > Data protection and security\n3. Next to IMDS defaults, click Manage\n4. Set Metadata version to V2 only (token required)\n5. Click Update",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Instance Metadata Service Version 2 (IMDSv2) on the EC2 instances. Apply this configuration at the account level for each AWS Region to set the default instance metadata version.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults"
+      "Text": "Enforce **IMDSv2** at the account level in every Region by setting `http_tokens` to `required`. Add guardrails with **SCP/IAM conditions**. Standardize AMIs and launch templates to require tokens, validate workload compatibility, and apply **least privilege** to instance roles for defense in depth. *For containers*, prefer hop limit `2`.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_account_imdsv2_enabled"
     }
   },
   "Categories": [
-    "internet-exposed",
-    "ec2-imdsv1"
+    "secrets"
   ],
   "DependsOn": [],
   "RelatedTo": [],

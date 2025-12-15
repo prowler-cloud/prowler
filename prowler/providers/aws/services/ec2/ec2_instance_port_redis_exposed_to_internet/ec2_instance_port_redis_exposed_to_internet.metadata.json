@@ -1,28 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_redis_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 6379 (Redis).",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 6379 (Redis)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 6379 (Redis).",
-  "Risk": "Redis is an open-source, in-memory data structure store, used as a database, cache, and message broker. Redis is often used to store sensitive data, such as session tokens, user credentials, and other sensitive information. Allowing ingress from the internet to TCP port 6379 (Redis) can expose sensitive data to unauthorized users.",
+  "Description": "**EC2 instances** with security groups permitting Internet access to **Redis** on `TCP 6379` are identified.\n\nExposure is assessed using public IP assignment and subnet reachability to reflect how broadly the service can be contacted.",
+  "Risk": "Exposed **Redis** allows remote access to cached data and secrets, reducing **confidentiality**. Unauthorized commands (`SET`, `DEL`, `FLUSHALL`, config changes) can corrupt or erase data, harming **integrity**. Internet scanning and abuse can exhaust memory and disrupt service, degrading **availability** and enabling lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 6379 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict Redis (6379) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict Redis ingress\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 6379\n          ToPort: 6379\n          CidrIp: 10.0.0.0/8  # Critical: restrict source CIDR (not 0.0.0.0/0 or ::/0) to block Internet access\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the affected instance\n3. Open the Inbound rules tab and click Edit inbound rules\n4. Find any rule allowing TCP port 6379 from 0.0.0.0/0 or ::/0\n5. Delete the rule, or change the source to a specific trusted CIDR or security group\n6. Click Save rules",
+      "Terraform": "```hcl\n# Terraform: restrict Redis (6379) from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 6379\n    to_port     = 6379\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: not 0.0.0.0/0 or ::/0; restrict to trusted range\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 6379 (Redis).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** network access: restrict Redis to trusted sources or VPC-only, place instances in private subnets, and avoid public IPs.\n\nLayer controls with **NACLs** and host firewalls, enforce **authentication and TLS** on Redis, and use **VPN/bastion** or proxies to broker access.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_redis_exposed_to_internet"
     }
   },
   "Categories": [

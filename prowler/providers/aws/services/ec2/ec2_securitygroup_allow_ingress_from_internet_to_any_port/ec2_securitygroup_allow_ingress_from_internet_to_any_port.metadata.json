@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port.",
+  "CheckTitle": "Security group has no 0.0.0.0/0 or ::/0 ingress to any port, or is attached only to allowed interface types or instance owners",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port and not attached to a network interface with not allowed network interface types or instance owners. By default, the allowed network interface types are 'api_gateway_managed' and 'vpc_endpoint', and the allowed instance owners are 'amazon-elb', you can customize these values by setting the 'ec2_allowed_interface_types' and 'ec2_allowed_instance_owners' variables.",
-  "Risk": "The security group allows all traffic from the internet to any port. This could allow an attacker to access the instance.",
+  "Description": "**EC2 security groups** with **internet-sourced ingress** from `0.0.0.0/0` or `::/0` to any port, and their attachments, are evaluated. Groups linked to network interfaces or instance owners outside an approved list for public exposure are identified.",
+  "Risk": "Open ingress to any port on non-approved interfaces enables external scanning, brute force, and exploitation of unintended services. This threatens **confidentiality** (unauthorized access), **integrity** (tampering), and **availability** (DoS), and facilitates **lateral movement**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: security group without Internet-open ingress\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: \"SG without Internet ingress\"\n      VpcId: \"<example_resource_id>\"\n      SecurityGroupIngress: []  # Critical: no 0.0.0.0/0 or ::/0 inbound; denies all inbound\n```",
+      "Other": "1. In the AWS console, go to EC2 > Security Groups\n2. Select the affected security group\n3. Open Inbound rules > Edit inbound rules\n4. Delete any rule with Source 0.0.0.0/0 or ::/0\n5. Save rules",
+      "Terraform": "```hcl\n# Security group with no Internet-open ingress\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n  # Critical: no ingress blocks -> prevents 0.0.0.0/0 or ::/0 inbound\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege**: restrict ingress to required ports and trusted sources; avoid `0.0.0.0/0` and `::/0` except for managed public endpoints. Place workloads behind **load balancers**, **API gateways**, or **WAFs**; use **private networking**. Allow public rules only on approved interface types.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_any_port"
     }
   },
   "Categories": [
