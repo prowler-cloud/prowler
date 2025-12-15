@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "keystone_projects_enabled",
+  "CheckTitle": "Keystone project is enabled",
+  "CheckType": [],
+  "ServiceName": "keystone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackProject",
+  "Description": "Keystone projects must remain enabled so tenants and services tied to them can authenticate and isolate resources correctly.",
+  "Risk": "Disabled projects block assigned users and services from obtaining tokens, disrupting control plane authentication and dependent workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/keystone/latest/admin/cli-manage-projects.html",
+    "https://docs.openstack.org/api-ref/identity/v3/index.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack project set --enable <project_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review tenant lifecycle regularly and keep active Keystone projects enabled so legitimate users and services can authenticate.",
+      "Url": "https://docs.openstack.org/keystone/latest/admin/cli-manage-projects.html"
+    }
+  },
+  "Categories": [
+    "identity"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
