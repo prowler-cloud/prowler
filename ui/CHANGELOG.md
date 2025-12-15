@@ -2,6 +2,25 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.16.0] (Prowler Unreleased)
+
+### 🚀 Added
+
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.15.1] (Prowler Unreleased)
+
+### 🔐 Security
+
+- Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
+- Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
+
 ## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
@@ -36,7 +55,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Sort compliance cards by name from the compliance overview [(#9422)](https://github.com/prowler-cloud/prowler/pull/9422)
 - Risk severity chart must show only FAIL findings [(#9452)](https://github.com/prowler-cloud/prowler/pull/9452)
 
-### Security
+### 🔐 Security
 
 - Bump Next.js and React for CVE-2025-66478 [(#9447)](https://github.com/prowler-cloud/prowler/pull/9447)
 

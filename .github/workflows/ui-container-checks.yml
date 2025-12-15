@@ -43,7 +43,7 @@ jobs:
           ignore: DL3018
 
   ui-container-build-and-scan:
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.arch == 'arm64' && github.repository == 'prowler-cloud/prowler' && 'ubuntu-24.04-arm' || matrix.runner }}
     strategy:
       matrix:
         include:
@@ -51,7 +51,7 @@ jobs:
             runner: ubuntu-latest
             arch: amd64
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-latest
             arch: arm64
     timeout-minutes: 30
     permissions:
@@ -71,6 +71,12 @@ jobs:
           files_ignore: |
             ui/CHANGELOG.md
             ui/README.md
+
+      - name: Set up QEMU
+        if: steps.check-changes.outputs.any_changed == 'true' && matrix.arch == 'arm64' && github.repository != 'prowler-cloud/prowler'
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: arm64
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.17.0] (Prowler UNRELEASED)
+
+### Added
+- New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- Endpoints `GET /findings` and `GET /findings/latests` can now use the category filter [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+
+### Changed
+- Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
+
+---
+
+## [1.16.1] (Prowler v5.15.1)
+
+### Fixed
+- Race condition in scheduled scan creation by adding countdown to task [(#9516)](https://github.com/prowler-cloud/prowler/pull/9516)
+
 ## [1.16.0] (Prowler v5.15.0)
 
 ### Added
@@ -12,7 +29,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
 
 ### Changed
-
 - Error messages from Lighthouse celery tasks [(#9165)](https://github.com/prowler-cloud/prowler/pull/9165)
 - Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
 
