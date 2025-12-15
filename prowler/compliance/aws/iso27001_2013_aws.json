@@ -6,13 +6,13 @@
   "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
   "Requirements": [
     {
-      "Id": "A.10.1",
+      "Id": "A.10.1.A",
       "Description": "Setup Encryption at rest for RDS instances",
       "Name": "Cryptographic Controls",
       "Attributes": [
         {
           "Category": "A.10 Cryptography",
-          "Objetive_ID": "A.10.1",
+          "Objetive_ID": "A.10.1.A",
           "Objetive_Name": "Cryptographic Controls",
           "Check_Summary": "Setup Encryption at rest for RDS instances"
         }
@@ -22,13 +22,13 @@
       ]
     },
     {
-      "Id": "A.10.1",
+      "Id": "A.10.1.B",
       "Description": "Detect use of insecure ciphers on ELBs",
       "Name": "Cryptographic Controls",
       "Attributes": [
         {
           "Category": "A.10 Cryptography",
-          "Objetive_ID": "A.10.1",
+          "Objetive_ID": "A.10.1.B",
           "Objetive_Name": "Cryptographic Controls",
           "Check_Summary": "Detect use of insecure ciphers on ELBs"
         }
@@ -39,13 +39,13 @@
       ]
     },
     {
-      "Id": "A.10.1",
+      "Id": "A.10.1.C",
       "Description": "Detect Customer Master Keys (CMKs) scheduled for deletion",
       "Name": "Cryptographic Controls",
       "Attributes": [
         {
           "Category": "A.10 Cryptography",
-          "Objetive_ID": "A.10.1",
+          "Objetive_ID": "A.10.1.C",
           "Objetive_Name": "Cryptographic Controls",
           "Check_Summary": "Detect Customer Master Keys (CMKs) scheduled for deletion"
         }
@@ -55,13 +55,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.A",
       "Description": "Ensure a log metric filter and alarm exist for VPC changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.A",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for VPC changes"
         }
@@ -71,13 +71,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.B",
       "Description": "Ensure a log metric filter and alarm exist for route table changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.B",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for route table changes"
         }
@@ -87,13 +87,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.C",
       "Description": "Ensure a log metric filter and alarm exist for changes to network gateways",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.C",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for changes to network gateways"
         }
@@ -103,13 +103,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.D",
       "Description": "Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL)",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.D",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for changes to Network Access Control Lists (NACL)"
         }
@@ -119,13 +119,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.E",
       "Description": "Ensure a log metric filter and alarm exist for security group changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.E",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for security group changes"
         }
@@ -135,13 +135,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.F",
       "Description": "Ensure a log metric filter and alarm exist for AWS Config configuration changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.F",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for AWS Config configuration changes"
         }
@@ -151,13 +151,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.G",
       "Description": "Ensure a log metric filter and alarm exist for S3 bucket policy changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.G",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for S3 bucket policy changes"
         }
@@ -167,13 +167,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.H",
       "Description": "Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.H",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs"
         }
@@ -183,13 +183,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.I",
       "Description": "Ensure a log metric filter and alarm exist for AWS Management Console authentication failures",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.I",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for AWS Management Console authentication failures"
         }
@@ -199,13 +199,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.J",
       "Description": "Ensure a log metric filter and alarm exist for CloudTrail configuration changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.J",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for CloudTrail configuration changes"
         }
@@ -215,13 +215,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.K",
       "Description": "Ensure a log metric filter and alarm exist for IAM policy changes",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.K",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for IAM policy changes"
         }
@@ -231,13 +231,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.L",
       "Description": "Ensure a log metric filter and alarm exist for usage of root account",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.L",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for usage of root account"
         }
@@ -247,13 +247,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.M",
       "Description": "Ensure a log metric filter and alarm exist for Management Console sign-in without MFA",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.M",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for Management Console sign-in without MFA"
         }
@@ -263,13 +263,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.N",
       "Description": "Ensure a log metric filter and alarm exist for unauthorized API calls",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.N",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure a log metric filter and alarm exist for unauthorized API calls"
         }
@@ -279,13 +279,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.O",
       "Description": "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.O",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket"
         }
@@ -295,13 +295,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.P",
       "Description": "Ensure AWS Config is enabled in all regions",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.P",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure AWS Config is enabled in all regions"
         }
@@ -311,13 +311,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.Q",
       "Description": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.Q",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure CloudTrail trails are integrated with CloudWatch Logs"
         }
@@ -327,13 +327,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.R",
       "Description": "Ensure VPC flow logging is enabled in all VPCs",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.R",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure VPC flow logging is enabled in all VPCs"
         }
@@ -343,13 +343,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.S",
       "Description": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.S",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible"
         }
@@ -359,13 +359,13 @@
       ]
     },
     {
-      "Id": "A.12.4",
+      "Id": "A.12.4.T",
       "Description": "Ensure CloudTrail is enabled in all regions",
       "Name": "Logging and Monitoring",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.4",
+          "Objetive_ID": "A.12.4.T",
           "Objetive_Name": "Logging and Monitoring",
           "Check_Summary": "Ensure CloudTrail is enabled in all regions"
         }
@@ -375,13 +375,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.A",
       "Description": "Ensure the default security group of every VPC restricts all traffic",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.A",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure the default security group of every VPC restricts all traffic"
         }
@@ -391,13 +391,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.B",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.B",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
         }
@@ -407,13 +407,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.C",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.C",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22"
         }
@@ -423,13 +423,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.D",
       "Description": "Check for publicly shared AMIs",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.D",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Check for publicly shared AMIs"
         }
@@ -439,13 +439,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.E",
       "Description": "Ensure EBS snapshots are not publicly accessible",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.E",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure EBS snapshots are not publicly accessible"
         }
@@ -455,13 +455,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.F",
       "Description": "Ensure SNS topics do not allow global send or subscribe",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.F",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure SNS topics do not allow global send or subscribe"
         }
@@ -471,13 +471,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.G",
       "Description": "Ensure Redshift clusters do not have a public endpoint",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.G",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure Redshift clusters do not have a public endpoint"
         }
@@ -487,13 +487,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.H",
       "Description": "Ensure RDS snapshots are not publicly accessible",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.H",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure RDS snapshots are not publicly accessible"
         }
@@ -503,13 +503,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.I",
       "Description": "Ensure RDS instances are not accessible to the world.",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.I",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure RDS instances are not accessible to the world."
         }
@@ -519,13 +519,13 @@
       ]
     },
     {
-      "Id": "A.12.6",
+      "Id": "A.12.6.J",
       "Description": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible",
       "Name": "Technical Vulnerability Management",
       "Attributes": [
         {
           "Category": "A.12 Operations Security",
-          "Objetive_ID": "A.12.6",
+          "Objetive_ID": "A.12.6.J",
           "Objetive_Name": "Technical Vulnerability Management",
           "Check_Summary": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible"
         }
@@ -535,13 +535,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.A",
       "Description": "Ensure the default security group of every VPC restricts all traffic",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.A",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure the default security group of every VPC restricts all traffic"
         }
@@ -551,13 +551,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.B",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.B",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
         }
@@ -567,13 +567,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.C",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.C",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22"
         }
@@ -583,13 +583,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.D",
       "Description": "Ensure EBS snapshots are not publicly accessible",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.D",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure EBS snapshots are not publicly accessible"
         }
@@ -599,13 +599,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.E",
       "Description": "Ensure SNS topics do not allow global send or subscribe",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.E",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure SNS topics do not allow global send or subscribe"
         }
@@ -615,13 +615,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.F",
       "Description": "Ensure Redshift clusters do not have a public endpoint",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.F",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure Redshift clusters do not have a public endpoint"
         }
@@ -631,13 +631,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.G",
       "Description": "Ensure RDS snapshots are not publicly accessible",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.G",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure RDS snapshots are not publicly accessible"
         }
@@ -647,13 +647,13 @@
       ]
     },
     {
-      "Id": "A.13.1",
+      "Id": "A.13.1.H",
       "Description": "Ensure RDS instances are not accessible to the world.",
       "Name": "Network Security Management",
       "Attributes": [
         {
           "Category": "A.13 Communications Security",
-          "Objetive_ID": "A.13.1",
+          "Objetive_ID": "A.13.1.H",
           "Objetive_Name": "Network Security Management",
           "Check_Summary": "Ensure RDS instances are not accessible to the world."
         }
@@ -663,13 +663,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.A",
       "Description": "Ensure IAM password policy expires passwords within 90 days or less",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.A",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy expires passwords within 90 days or less"
         }
@@ -679,13 +679,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.B",
       "Description": "Ensure IAM password policy prevents password reuse",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.B",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy prevents password reuse"
         }
@@ -695,13 +695,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.C",
       "Description": "Ensure IAM password policy requires minimum length of 14 or greater",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.C",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy requires minimum length of 14 or greater"
         }
@@ -711,13 +711,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.D",
       "Description": "Ensure IAM password policy require at least one number",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.D",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy require at least one number"
         }
@@ -727,13 +727,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.E",
       "Description": "Ensure IAM password policy require at least one symbol",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.E",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy require at least one symbol"
         }
@@ -743,13 +743,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.F",
       "Description": "Ensure IAM password policy require at least one lowercase letter",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.F",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy require at least one lowercase letter"
         }
@@ -759,13 +759,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.G",
       "Description": "Ensure IAM password policy requires at least one uppercase letter",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.G",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM password policy requires at least one uppercase letter"
         }
@@ -775,13 +775,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.H",
       "Description": "Avoid the use of the 'root' account",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.H",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Avoid the use of the 'root' account"
         }
@@ -791,13 +791,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.I",
       "Description": "Ensure IAM policies are attached only to groups or roles",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.I",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure IAM policies are attached only to groups or roles"
         }
@@ -807,13 +807,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.J",
       "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.J",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access"
         }
@@ -823,13 +823,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.K",
       "Description": "Ensure MFA is enabled for the 'root' account",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.K",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure MFA is enabled for the 'root' account"
         }
@@ -839,13 +839,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.L",
       "Description": "Ensure access keys are rotated every 90 days or less",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.L",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure access keys are rotated every 90 days or less"
         }
@@ -855,13 +855,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.M",
       "Description": "Ensure credentials unused for 90 days or greater are disabled",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.M",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure credentials unused for 90 days or greater are disabled"
         }
@@ -872,13 +872,13 @@
       ]
     },
     {
-      "Id": "A.9.2",
+      "Id": "A.9.2.N",
       "Description": "Ensure no root account access key exists",
       "Name": "User Access Management",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.2",
+          "Objetive_ID": "A.9.2.N",
           "Objetive_Name": "User Access Management",
           "Check_Summary": "Ensure no root account access key exists"
         }
@@ -888,13 +888,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.A",
       "Description": "Ensure IAM password policy expires passwords within 90 days or less",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.A",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy expires passwords within 90 days or less"
         }
@@ -904,13 +904,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.B",
       "Description": "Ensure IAM password policy prevents password reuse",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.B",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy prevents password reuse"
         }
@@ -920,13 +920,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.C",
       "Description": "Ensure IAM password policy requires minimum length of 14 or greater",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.C",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy requires minimum length of 14 or greater"
         }
@@ -936,13 +936,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.D",
       "Description": "Ensure IAM password policy require at least one number",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.D",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy require at least one number"
         }
@@ -952,13 +952,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.E",
       "Description": "Ensure IAM password policy require at least one symbol",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.E",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy require at least one symbol"
         }
@@ -968,13 +968,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.F",
       "Description": "Ensure IAM password policy require at least one lowercase letter",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.F",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy require at least one lowercase letter"
         }
@@ -984,13 +984,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.G",
       "Description": "Ensure IAM password policy requires at least one uppercase letter",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.G",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure IAM password policy requires at least one uppercase letter"
         }
@@ -1000,13 +1000,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.H",
       "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.H",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access"
         }
@@ -1016,13 +1016,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.I",
       "Description": "Ensure access keys are rotated every 90 days or less",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.I",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure access keys are rotated every 90 days or less"
         }
@@ -1032,13 +1032,13 @@
       ]
     },
     {
-      "Id": "A.9.3",
+      "Id": "A.9.3.J",
       "Description": "Ensure credentials unused for 90 days or greater are disabled",
       "Name": "User Responsibilities",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.3",
+          "Objetive_ID": "A.9.3.J",
           "Objetive_Name": "User Responsibilities",
           "Check_Summary": "Ensure credentials unused for 90 days or greater are disabled"
         }
@@ -1049,13 +1049,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.A",
       "Description": "Ensure IAM password policy expires passwords within 90 days or less",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.A",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy expires passwords within 90 days or less"
         }
@@ -1065,13 +1065,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.B",
       "Description": "Ensure IAM password policy prevents password reuse",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.B",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy prevents password reuse"
         }
@@ -1081,13 +1081,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.C",
       "Description": "Ensure IAM password policy requires minimum length of 14 or greater",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.C",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy requires minimum length of 14 or greater"
         }
@@ -1097,13 +1097,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.D",
       "Description": "Ensure IAM password policy require at least one number",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.D",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy require at least one number"
         }
@@ -1113,13 +1113,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.E",
       "Description": "Ensure IAM password policy require at least one symbol",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.E",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy require at least one symbol"
         }
@@ -1129,13 +1129,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.F",
       "Description": "Ensure IAM password policy require at least one lowercase letter",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.F",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy require at least one lowercase letter"
         }
@@ -1145,13 +1145,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.G",
       "Description": "Ensure IAM password policy requires at least one uppercase letter",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.G",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM password policy requires at least one uppercase letter"
         }
@@ -1161,13 +1161,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.H",
       "Description": "Avoid the use of the 'root' account",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.H",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Avoid the use of the 'root' account"
         }
@@ -1177,13 +1177,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.I",
       "Description": "Ensure IAM policies are attached only to groups or roles",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.I",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure IAM policies are attached only to groups or roles"
         }
@@ -1193,13 +1193,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.J",
       "Description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.J",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure multi-factor authentication (MFA) is enabled for all IAM users that have console access"
         }
@@ -1209,13 +1209,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.K",
       "Description": "Ensure MFA is enabled for the 'root' account",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.K",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure MFA is enabled for the 'root' account"
         }
@@ -1225,13 +1225,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.L",
       "Description": "Ensure access keys are rotated every 90 days or less",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.L",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure access keys are rotated every 90 days or less"
         }
@@ -1241,13 +1241,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.M",
       "Description": "Ensure credentials unused for 90 days or greater are disabled",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.M",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure credentials unused for 90 days or greater are disabled"
         }
@@ -1258,13 +1258,13 @@
       ]
     },
     {
-      "Id": "A.9.4",
+      "Id": "A.9.4.N",
       "Description": "Ensure no root account access key exists",
       "Name": "System and Application Access Control",
       "Attributes": [
         {
           "Category": "A.9 Access Control",
-          "Objetive_ID": "A.9.4",
+          "Objetive_ID": "A.9.4.N",
           "Objetive_Name": "System and Application Access Control",
           "Check_Summary": "Ensure no root account access key exists"
         }
