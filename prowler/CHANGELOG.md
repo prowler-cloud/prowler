@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
 - Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 - Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
+- Update AWS MemoryDB service metadata to new format [(#9266)](https://github.com/prowler-cloud/prowler/pull/9266)
 
 ---
 
