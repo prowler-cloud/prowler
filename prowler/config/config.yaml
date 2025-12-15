@@ -595,3 +595,22 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+
+  # cloudflare.zones_min_tls_version_secure
+  # Minimum TLS version considered secure
+  min_tls_version: "1.2"
+
+  # cloudflare.zones_ssl_strict
+  # Recommended SSL modes for zones
+  recommended_ssl_modes:
+    [
+      "full",
+    ]
+
+  # cloudflare.zones_security_level (future check)
+  # Recommended security levels for zones
+  recommended_security_levels:
+    [
+      "high",
+      "under_attack",
+    ]

@@ -1,12 +1,12 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.config import CLOUDFLARE_DEFAULT_MIN_TLS
 from prowler.providers.cloudflare.services.zones.zones_client import zones_client
 
 
 class zones_min_tls_version_secure(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
-        required_version = float(CLOUDFLARE_DEFAULT_MIN_TLS)
+        min_tls_version = zones_client.audit_config.get("min_tls_version", "1.2")
+        required_version = float(min_tls_version)
 
         for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
@@ -23,6 +23,6 @@ class zones_min_tls_version_secure(Check):
                 report.status_extended = f"Minimum TLS version for zone {zone.name} is set to {current_version}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Minimum TLS version for zone {zone.name} is {current_version}, below the recommended {CLOUDFLARE_DEFAULT_MIN_TLS}."
+                report.status_extended = f"Minimum TLS version for zone {zone.name} is {current_version}, below the recommended {min_tls_version}."
             findings.append(report)
         return findings
