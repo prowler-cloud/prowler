@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ## [5.15.1] (Prowler UNRELEASED)
 
