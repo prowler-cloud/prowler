@@ -8,7 +8,7 @@ import {
   getTenantConfig,
   updateTenantConfig,
 } from "@/actions/lighthouse/lighthouse";
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 import {
@@ -155,7 +155,7 @@ export const SelectModel = ({
           <h2 className="mb-2 text-xl font-semibold">
             {isEditMode ? "Update Default Model" : "Select Default Model"}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-text-neutral-secondary text-sm">
             {isEditMode
               ? "Update the default model to use with this provider."
               : "Choose the default model to use with this provider."}
@@ -164,7 +164,7 @@ export const SelectModel = ({
         <button
           onClick={() => fetchModels(true)}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="text-text-neutral-secondary hover:bg-bg-neutral-tertiary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50"
           aria-label="Refresh models"
         >
           <Icon
@@ -176,8 +176,8 @@ export const SelectModel = ({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="border-border-error-primary bg-bg-fail-secondary rounded-lg border p-4">
+          <p className="text-text-error text-sm">{error}</p>
         </div>
       )}
 
@@ -185,14 +185,14 @@ export const SelectModel = ({
         <div className="relative">
           <Icon
             icon="heroicons:magnifying-glass"
-            className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
+            className="text-text-neutral-tertiary pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2"
           />
           <input
             type="text"
             placeholder="Search models..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-11 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="border-border-neutral-primary bg-bg-neutral-primary focus:border-button-primary focus:ring-button-primary w-full rounded-lg border py-2.5 pr-4 pl-11 text-sm focus:ring-1 focus:outline-none"
           />
         </div>
       )}
@@ -201,32 +201,32 @@ export const SelectModel = ({
         <div className="flex items-center justify-center py-12">
           <Icon
             icon="heroicons:arrow-path"
-            className="h-8 w-8 animate-spin text-gray-400"
+            className="text-text-neutral-tertiary h-8 w-8 animate-spin"
           />
         </div>
       ) : models.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-lg border p-8 text-center">
+          <p className="text-text-neutral-secondary text-sm">
             No models available. Click refresh to fetch models.
           </p>
         </div>
       ) : filteredModels.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-lg border p-8 text-center">
+          <p className="text-text-neutral-secondary text-sm">
             No models found matching &quot;{searchQuery}&quot;
           </p>
         </div>
       ) : (
-        <div className="max-h-[calc(100vh-380px)] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="border-border-neutral-secondary minimal-scrollbar max-h-[calc(100vh-380px)] overflow-y-auto rounded-lg border">
           {filteredModels.map((model) => (
             <label
               key={model.id}
               htmlFor={`model-${provider}-${model.id}`}
               aria-label={model.name}
-              className={`block cursor-pointer border-b border-gray-200 px-6 py-4 transition-colors last:border-b-0 dark:border-gray-700 ${
+              className={`border-border-neutral-primary block cursor-pointer border-b px-6 py-4 transition-colors last:border-b-0 ${
                 selectedModel === model.id
-                  ? "bg-blue-50 dark:bg-blue-900/20"
-                  : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                  ? "bg-bg-neutral-secondary"
+                  : "hover:bg-bg-neutral-tertiary"
               }`}
             >
               <div className="flex items-center gap-4">
@@ -241,7 +241,7 @@ export const SelectModel = ({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{model.name}</span>
                   {isRecommended(model.id) && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    <span className="bg-bg-data-info text-text-success-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
                       <Icon icon="heroicons:star-solid" className="h-3 w-3" />
                       Recommended
                     </span>
@@ -255,17 +255,13 @@ export const SelectModel = ({
 
       <div className="flex flex-col gap-4">
         <div className="flex justify-end">
-          <CustomButton
-            ariaLabel="Select Model"
-            variant="solid"
-            color="action"
-            size="md"
-            isDisabled={!selectedModel || isSaving}
-            isLoading={isSaving}
-            onPress={handleSelect}
+          <Button
+            aria-label="Select Model"
+            disabled={!selectedModel || isSaving}
+            onClick={handleSelect}
           >
             {isSaving ? "Saving..." : "Select"}
-          </CustomButton>
+          </Button>
         </div>
       </div>
     </div>

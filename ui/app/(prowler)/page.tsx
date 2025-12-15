@@ -1,41 +1,32 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
-import { getLatestFindings } from "@/actions/findings/findings";
-import {
-  getFindingsBySeverity,
-  getFindingsByStatus,
-  getProvidersOverview,
-} from "@/actions/overview/overview";
-import { FilterControls } from "@/components/filters";
-import { LighthouseBanner } from "@/components/lighthouse";
-import {
-  FindingsBySeverityChart,
-  FindingsByStatusChart,
-  LinkToFindings,
-  ProvidersOverview,
-  SkeletonFindingsBySeverityChart,
-  SkeletonFindingsByStatusChart,
-  SkeletonProvidersOverview,
-} from "@/components/overview";
-import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
-import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table/skeleton-table-new-findings";
+import { getProviders } from "@/actions/providers";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
-import { createDict } from "@/lib/helper";
-import { FindingProps, SearchParamsProps } from "@/types";
+import { SearchParamsProps } from "@/types";
 
-const FILTER_PREFIX = "filter[";
-
-// Extract only query params that start with "filter[" for API calls
-function pickFilterParams(
-  params: SearchParamsProps | undefined | null,
-): Record<string, string | string[] | undefined> {
-  if (!params) return {};
-  return Object.fromEntries(
-    Object.entries(params).filter(([key]) => key.startsWith(FILTER_PREFIX)),
-  );
-}
+import { AccountsSelector } from "./_overview/_components/accounts-selector";
+import { ProviderTypeSelector } from "./_overview/_components/provider-type-selector";
+import {
+  AttackSurfaceSkeleton,
+  AttackSurfaceSSR,
+} from "./_overview/attack-surface";
+import { CheckFindingsSSR } from "./_overview/check-findings";
+import { GraphsTabsWrapper } from "./_overview/graphs-tabs/graphs-tabs-wrapper";
+import { RiskPipelineViewSkeleton } from "./_overview/graphs-tabs/risk-pipeline-view";
+import {
+  RiskSeverityChartSkeleton,
+  RiskSeverityChartSSR,
+} from "./_overview/risk-severity";
+import {
+  FindingSeverityOverTimeSkeleton,
+  FindingSeverityOverTimeSSR,
+} from "./_overview/severity-over-time/finding-severity-over-time.ssr";
+import { StatusChartSkeleton } from "./_overview/status-chart";
+import { ThreatScoreSkeleton, ThreatScoreSSR } from "./_overview/threat-score";
+import {
+  ServiceWatchlistSSR,
+  WatchlistCardSkeleton,
+} from "./_overview/watchlist";
 
 export default async function Home({
   searchParams,
@@ -43,174 +34,49 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
+  const providersData = await getProviders({ page: 1, pageSize: 200 });
+
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
-      <FilterControls providers mutedFindings showClearButton={false} />
+      <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <ProviderTypeSelector providers={providersData?.data ?? []} />
+        <AccountsSelector providers={providersData?.data ?? []} />
+      </div>
 
-      <div className="grid grid-cols-12 gap-12 lg:gap-6">
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonProvidersOverview />}>
-            <SSRProvidersOverview />
-          </Suspense>
-        </div>
+      <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
+        <Suspense fallback={<ThreatScoreSkeleton />}>
+          <ThreatScoreSSR searchParams={resolvedSearchParams} />
+        </Suspense>
 
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-            <SSRFindingsBySeverity searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<StatusChartSkeleton />}>
+          <CheckFindingsSSR searchParams={resolvedSearchParams} />
+        </Suspense>
 
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-            <SSRFindingsByStatus searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<RiskSeverityChartSkeleton />}>
+          <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
 
-        <div className="col-span-12">
-          <Spacer y={16} />
-          <Suspense
-            key={searchParamsKey}
-            fallback={<SkeletonTableNewFindings />}
-          >
-            <SSRDataNewFindingsTable searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
+      <div className="mt-6">
+        <Suspense fallback={<AttackSurfaceSkeleton />}>
+          <AttackSurfaceSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-6 xl:flex-row">
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+        <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
+          <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6">
+        <Suspense fallback={<RiskPipelineViewSkeleton />}>
+          <GraphsTabsWrapper searchParams={resolvedSearchParams} />
+        </Suspense>
       </div>
     </ContentLayout>
   );
 }
-
-const SSRProvidersOverview = async () => {
-  const providersOverview = await getProvidersOverview({});
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Providers Overview</h3>
-      <ProvidersOverview providersOverview={providersOverview} />
-    </>
-  );
-};
-
-const SSRFindingsByStatus = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
-  const filters = pickFilterParams(searchParams);
-
-  const findingsByStatus = await getFindingsByStatus({ filters });
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Status</h3>
-      <FindingsByStatusChart findingsByStatus={findingsByStatus} />
-    </>
-  );
-};
-
-const SSRFindingsBySeverity = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
-  const defaultFilters = {
-    "filter[status]": "FAIL",
-  } as const;
-
-  const filters = pickFilterParams(searchParams);
-
-  const combinedFilters = { ...defaultFilters, ...filters };
-
-  const findingsBySeverity = await getFindingsBySeverity({
-    filters: combinedFilters,
-  });
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">
-        Failed Findings by Severity
-      </h3>
-      <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
-    </>
-  );
-};
-
-const SSRDataNewFindingsTable = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
-  const page = 1;
-  const sort = "severity,-inserted_at";
-
-  const defaultFilters = {
-    "filter[status]": "FAIL",
-    "filter[delta]": "new",
-  };
-
-  const filters = pickFilterParams(searchParams);
-
-  const combinedFilters = { ...defaultFilters, ...filters };
-
-  const findingsData = await getLatestFindings({
-    query: undefined,
-    page,
-    sort,
-    filters: combinedFilters,
-  });
-
-  // Create dictionaries for resources, scans, and providers
-  const resourceDict = createDict("resources", findingsData);
-  const scanDict = createDict("scans", findingsData);
-  const providerDict = createDict("providers", findingsData);
-
-  // Expand each finding with its corresponding resource, scan, and provider
-  const expandedFindings = findingsData?.data
-    ? findingsData.data.map((finding: FindingProps) => {
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
-
-        return {
-          ...finding,
-          relationships: { scan, resource, provider },
-        };
-      })
-    : [];
-
-  // Create the new object while maintaining the original structure
-  const expandedResponse = {
-    ...findingsData,
-    data: expandedFindings,
-  };
-
-  return (
-    <>
-      <div className="relative flex w-full">
-        <div className="flex w-full items-center gap-2">
-          <h3 className="text-sm font-bold uppercase">
-            Latest new failing findings
-          </h3>
-          <p className="text-xs text-gray-500">
-            Showing the latest 10 new failing findings by severity.
-          </p>
-        </div>
-        <div className="absolute -top-6 right-0">
-          <LinkToFindings />
-        </div>
-      </div>
-      <Spacer y={4} />
-
-      <LighthouseBanner />
-
-      <DataTable
-        key={`dashboard-${Date.now()}`}
-        columns={ColumnNewFindingsToDate}
-        data={expandedResponse?.data || []}
-        // metadata={findingsData?.meta}
-      />
-    </>
-  );
-};

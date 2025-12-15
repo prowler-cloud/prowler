@@ -19,9 +19,7 @@
         "groups": [
           {
             "group": "Welcome",
-            "pages": [
-              "introduction"
-            ]
+            "pages": ["introduction"]
           },
           {
             "group": "Prowler Cloud",
@@ -51,9 +49,7 @@
           },
           {
             "group": "Prowler Lighthouse AI",
-            "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
-            ]
+            "pages": ["getting-started/products/prowler-lighthouse-ai"]
           },
           {
             "group": "Prowler MCP Server",
@@ -109,7 +105,13 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -147,9 +149,7 @@
               "user-guide/cli/tutorials/quick-inventory",
               {
                 "group": "Tutorials",
-                "pages": [
-                  "user-guide/cli/tutorials/parallel-execution"
-                ]
+                "pages": ["user-guide/cli/tutorials/parallel-execution"]
               }
             ]
           },
@@ -193,6 +193,13 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",
@@ -230,9 +237,7 @@
               },
               {
                 "group": "LLM",
-                "pages": [
-                  "user-guide/providers/llm/getting-started-llm"
-                ]
+                "pages": ["user-guide/providers/llm/getting-started-llm"]
               },
               {
                 "group": "Oracle Cloud Infrastructure",
@@ -245,9 +250,7 @@
           },
           {
             "group": "Compliance",
-            "pages": [
-              "user-guide/compliance/tutorials/threatscore"
-            ]
+            "pages": ["user-guide/compliance/tutorials/threatscore"]
           }
         ]
       },
@@ -264,7 +267,8 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse"
+              "developer-guide/lighthouse",
+              "developer-guide/mcp-server"
             ]
           },
           {
@@ -300,21 +304,15 @@
       },
       {
         "tab": "Security",
-        "pages": [
-          "security"
-        ]
+        "pages": ["security"]
       },
       {
         "tab": "Contact Us",
-        "pages": [
-          "contact"
-        ]
+        "pages": ["contact"]
       },
       {
         "tab": "Troubleshooting",
-        "pages": [
-          "troubleshooting"
-        ]
+        "pages": ["troubleshooting"]
       },
       {
         "tab": "About Us",

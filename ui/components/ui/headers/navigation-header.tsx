@@ -1,8 +1,8 @@
 import { Divider } from "@heroui/divider";
 import { Icon } from "@iconify/react";
-import React from "react";
+import Link from "next/link";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button } from "@/components/shadcn";
 
 interface NavigationHeaderProps {
   title: string;
@@ -10,24 +10,25 @@ interface NavigationHeaderProps {
   href?: string;
 }
 
-export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
+export const NavigationHeader = ({
   title,
   icon,
   href,
-}) => {
+}: NavigationHeaderProps) => {
   return (
     <>
       <header className="flex items-center gap-3 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-        <CustomButton
-          asLink={href || ""}
+        <Button
           className="border-gray-200 bg-transparent p-0"
-          ariaLabel="Navigation button"
-          variant="bordered"
-          isIconOnly
-          radius="lg"
+          aria-label="Navigation button"
+          variant="outline"
+          size="icon"
+          asChild
         >
-          <Icon icon={icon} className="text-gray-600 dark:text-gray-400" />
-        </CustomButton>
+          <Link href={href || ""}>
+            <Icon icon={icon} className="text-gray-600 dark:text-gray-400" />
+          </Link>
+        </Button>
         <Divider orientation="vertical" className="h-6" />
         <h1 className="text-default-700 text-xl font-light">{title}</h1>
       </header>
