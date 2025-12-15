@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_networkacl_allow_ingress_tcp_port_22",
-  "CheckTitle": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to SSH port 22",
+  "CheckTitle": "Network ACL does not allow ingress from the Internet to TCP port 22 (SSH)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "networkacl",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2NetworkAcl",
-  "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to SSH port 22",
-  "Risk": "Even having a perimeter firewall, having network acls open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
+  "Description": "**VPC network ACLs** are evaluated for inbound rules that permit `0.0.0.0/0` to access **SSH** on `TCP 22` at the subnet boundary.",
+  "Risk": "An ACL allowing Internet-wide SSH erodes **defense in depth**. Systems reachable on `TCP 22` face **brute-force**, credential stuffing, reconnaissance, and SSH exploit attempts.\n\nChanges to routes or security groups can create direct exposure, enabling unauthorized access and **lateral movement**, undermining **confidentiality** and **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/es/questions/QUzp5Ugq45SGiDpQyxqrsQOg/acm-alb-ec2-onamae-com-registrar-access-to-subdomain-always-connection-timed-out",
+    "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-nacl-does-not-allow-ingress-from-00000-to-port-22#terraform",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-nacl-does-not-allow-ingress-from-00000-to-port-22#cloudformation",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-nacl-does-not-allow-ingress-from-00000-to-port-22#terraform"
+      "CLI": "aws ec2 replace-network-acl-entry --network-acl-id <NETWORK_ACL_ID> --ingress --rule-number <RULE_NUMBER> --protocol 6 --rule-action deny --cidr-block 0.0.0.0/0 --port-range From=22,To=22",
+      "NativeIaC": "```yaml\n# CloudFormation: Deny SSH (22) from Internet on the NACL\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::NetworkAclEntry\n    Properties:\n      NetworkAclId: <example_resource_id>\n      RuleNumber: 1\n      Protocol: 6\n      RuleAction: deny   # Critical: blocks the traffic instead of allowing it\n      Egress: false\n      CidrBlock: 0.0.0.0/0  # Critical: matches Internet sources\n      PortRange:\n        From: 22           # Critical: SSH port\n        To: 22\n```",
+      "Other": "1. In AWS Console, go to VPC > Network ACLs\n2. Select <example_resource_name> and open the Inbound rules tab\n3. Delete any rule that ALLOWS TCP port 22 from 0.0.0.0/0 or ::/0\n4. Save changes\n5. If you cannot delete it, edit the rule and set Action to Deny for TCP port 22 with source 0.0.0.0/0 (and ::/0 if present), then save",
+      "Terraform": "```hcl\n# Deny SSH (22) from Internet on the NACL\nresource \"aws_network_acl_rule\" \"<example_resource_name>\" {\n  network_acl_id = \"<example_resource_id>\"\n  rule_number    = 1\n  egress         = false\n  protocol       = \"tcp\"\n  rule_action    = \"deny\"          # Critical: blocks SSH ingress\n  cidr_block     = \"0.0.0.0/0\"     # Critical: Internet sources\n  from_port      = 22               # Critical: SSH port\n  to_port        = 22\n}\n```"
     },
     "Recommendation": {
-      "Text": "Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive network acls. Recommended best practices is to narrow the definition for the minimum ports required.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+      "Text": "Apply **least privilege** at the subnet layer:\n- Do not allow `0.0.0.0/0` to `TCP 22`\n- Restrict SSH to trusted sources, or avoid direct SSH via **Session Manager** or a bastion behind **VPN**\n\nPair tight **security groups** with periodic rule reviews and change control to maintain **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_networkacl_allow_ingress_tcp_port_22"
     }
   },
   "Categories": [

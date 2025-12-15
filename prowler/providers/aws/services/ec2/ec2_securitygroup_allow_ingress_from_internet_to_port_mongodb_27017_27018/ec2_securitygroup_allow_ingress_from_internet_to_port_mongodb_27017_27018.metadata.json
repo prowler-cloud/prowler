@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 or 27018",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Description": "**EC2 security groups** exposing MongoDB ports `27017` or `27018` to Internet sources (`0.0.0.0/0`, `::/0`) are identified.\n\nThe assessment reviews ingress rules on in-use groups for `TCP` access to these ports.",
+  "Risk": "Public access to MongoDB enables:\n- Data theft via unauthenticated or brute-forced logins (**confidentiality**)\n- Unauthorized inserts/updates (**integrity**)\n- Wipe, lockout, or ransomware of databases (**availability**)\n\nAttackers can enumerate data and pivot from compromised instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict MongoDB ports from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict MongoDB ports\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 27017\n          ToPort: 27018\n          CidrIp: <ALLOWED_CIDR>  # CRITICAL: restrict IPv4; do not use 0.0.0.0/0\n        - IpProtocol: tcp\n          FromPort: 27017\n          ToPort: 27018\n          CidrIpv6: <ALLOWED_IPV6_CIDR>  # CRITICAL: restrict IPv6; do not use ::/0\n```",
+      "Other": "1. Open AWS Console > EC2 > Security Groups\n2. Select the target security group and choose Edit inbound rules\n3. Remove any rule for TCP ports 27017 or 27018 with Source 0.0.0.0/0 or ::/0, or change the Source to a specific trusted CIDR or security group\n4. Save rules",
+      "Terraform": "```hcl\n# Restrict MongoDB ports from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  # CRITICAL: restrict IPv4; do not use 0.0.0.0/0\n  ingress {\n    from_port   = 27017\n    to_port     = 27018\n    protocol    = \"tcp\"\n    cidr_blocks = [\"<ALLOWED_CIDR>\"]\n  }\n\n  # CRITICAL: restrict IPv6; do not use ::/0\n  ingress {\n    from_port        = 27017\n    to_port          = 27018\n    protocol         = \"tcp\"\n    ipv6_cidr_blocks = [\"<ALLOWED_IPV6_CIDR>\"]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enforce **least privilege**: do not expose `27017-27018` to the Internet. Allow only required sources (app tiers, trusted CIDRs) and prefer private paths.\n\nUse security group references, VPN or peering, enable **TLS** and strong auth, and add **defense in depth** with network segmentation and monitoring.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

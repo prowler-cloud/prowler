@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_default_restrict_traffic",
-  "CheckTitle": "Ensure the default security group of every VPC restricts all traffic.",
+  "CheckTitle": "VPC default security group has no inbound or outbound rules",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure the default security group of every VPC restricts all traffic.",
-  "Risk": "Even having a perimeter firewall, having security groups open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
+  "Description": "**Default VPC security group** should have **no inbound or outbound rules**. This evaluates whether the group allows any traffic-ingress, egress, or self-referencing-instead of remaining empty.",
+  "Risk": "Permissive rules in the **default security group** mean instances that inherit it can communicate widely. This enables **lateral movement**, **port scanning**, and **data exfiltration**; unrestricted egress aids **C2**. Confidentiality and integrity are reduced, and the blast radius of a compromise grows.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://subhaspatil-c.medium.com/aws-config-rules-deployment-from-a-centralised-delegated-admin-aws-account-98df7ee8d472",
+    "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_4#terraform",
+    "https://github.com/mlevit/aws-auto-remediate",
+    "https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html",
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_4#aws-console",
+    "https://sagebionetworks.jira.com/wiki/spaces/PLFM/pages/2661580804/SecurityHub+locking+down+default+VPC+security+group?atl_f=content-tree"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_4#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_4#terraform"
+      "Other": "1. Open the AWS Console and go to VPC > Security > Security groups\n2. Select the security group named \"default\" for the affected VPC\n3. In Inbound rules, click Edit inbound rules, delete all rules, and Save\n4. In Outbound rules, click Edit outbound rules, delete all rules, and Save\n5. Repeat for each VPC that has this finding",
+      "Terraform": "```hcl\nresource \"aws_default_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_vpc_id>\"\n\n  ingress = []  # Critical: removes all inbound rules from the default SG\n  egress  = []  # Critical: removes all outbound rules from the default SG\n}\n```"
     },
     "Recommendation": {
-      "Text": "Apply Zero Trust approach. Implement a process to scan and remediate unrestricted or overly permissive security groups. Recommended best practices is to narrow the definition for the minimum ports required.",
-      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html"
+      "Text": "Enforce **least privilege**: keep the default group empty by removing all ingress and egress rules. Use dedicated security groups per workload with explicit sources, destinations, and ports. Regularly review for broad CIDRs like `0.0.0.0/0` and apply **defense in depth** via automation and policy guardrails.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_default_restrict_traffic"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

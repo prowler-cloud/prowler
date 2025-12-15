@@ -1,32 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_public_snapshot",
-  "CheckTitle": "Ensure there are no EBS Snapshots set as Public.",
+  "CheckTitle": "EBS snapshot is not public",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "snapshot",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
-  "Description": "Ensure there are no EBS Snapshots set as Public.",
-  "Risk": "When you share a snapshot, you are giving others access to all of the data on the snapshot. Share snapshots only with people with whom you want to share all of your snapshot data.",
+  "Description": "Amazon EBS snapshots with **public sharing** permissions (accessible by all AWS accounts) are identified, as opposed to snapshots shared privately with specific accounts.",
+  "Risk": "Public snapshots expose full volume contents, harming **confidentiality**. Any account can create a volume from the snapshot to read files, secrets, or database data, enabling **data exfiltration**, broad reconnaissance, and facilitating **lateral movement**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html",
+    "https://docs.prowler.com/checks/aws/public-policies/public_7"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 modify-snapshot-attribute --region <REGION> --snapshot-id <EC2_SNAPSHOT_ID> --attribute createVolumePermission --operation remove --user-ids all",
+      "CLI": "aws ec2 modify-snapshot-attribute --snapshot-id <EC2_SNAPSHOT_ID> --attribute createVolumePermission --operation-type remove --group-names all",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_7",
+      "Other": "1. Open the AWS Management Console and go to EC2\n2. In the left menu, select Snapshots\n3. Select the snapshot <EC2_SNAPSHOT_ID>\n4. Click Actions > Modify permissions\n5. Choose Private (remove Public/all if present)\n6. Click Save changes",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure the snapshot should be shared.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html"
+      "Text": "Keep snapshots **private** and share only with specific accounts under **least privilege**. Enable `Block public access for Amazon EBS snapshots` regionally. Prefer **CMEK encryption** and avoid sharing keys broadly. Regularly review sharing permissions and monitor snapshot usage.",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_public_snapshot"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

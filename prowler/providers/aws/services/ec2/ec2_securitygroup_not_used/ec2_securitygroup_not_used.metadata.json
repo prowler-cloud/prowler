@@ -1,31 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_not_used",
-  "CheckTitle": "Ensure there are no Security Groups not being used.",
+  "CheckTitle": "Non-default EC2 security group is in use",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure there are no Security Groups not being used.",
-  "Risk": "Having clear definition and scope for Security Groups creates a better administration environment.",
+  "Description": "EC2 security groups, except `default`, are assessed for **unused** status: zero attached network interfaces, no AWS Lambda associations, and no references from other security groups.",
+  "Risk": "Orphaned security groups may later be attached with **overly permissive rules** without review, enabling unintended inbound or lateral access that compromises **confidentiality** and **integrity**. They also create **configuration drift**, increasing the chance of misapplied access controls.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.youtube.com/watch?v=VZ-Yr2TjBJU",
+    "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-find-security-group-resources/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ec2 delete-security-group --group-id <SECURITY_GROUP_ID>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the non-default security group that shows Used by = 0 (no network interfaces or resources)\n3. Click Actions > Delete security group > Delete",
+      "Terraform": "```hcl\n# Destroy the unused non-default security group\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  count = 0 # Critical: setting count=0 removes/destroys this unused SG\n}\n```"
     },
     "Recommendation": {
-      "Text": "List all the security groups and then use the cli to check if they are attached to an instance.",
-      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-find-security-group-resources/"
+      "Text": "Apply **least privilege** and strong lifecycle management: delete or quarantine **unused security groups**, enforce ownership tags and retention policies, review regularly, and manage changes via IaC with approvals. Restrict who can attach groups and use guardrails to prevent reuse of stale or permissive groups.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_not_used"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

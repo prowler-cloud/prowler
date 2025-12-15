@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_managed_by_ssm",
-  "CheckTitle": "Check if EC2 instances are managed by Systems Manager.",
+  "CheckTitle": "EC2 instance is managed by AWS Systems Manager or not running",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Patch Management"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Check if EC2 instances are managed by Systems Manager.",
-  "Risk": "AWS Config provides AWS Managed Rules, which are predefined, customizable rules that AWS Config uses to evaluate whether your AWS resource configurations comply with common best practices.",
+  "Description": "**EC2 instances** are assessed for enrollment as **Systems Manager managed nodes**. Running instances lacking Systems Manager registration are marked as unmanaged; instances in `stopped`, `terminated`, or `pending` states are noted separately.",
+  "Risk": "Unmanaged instances lack centralized patching, inventory, and secure remote access. This increases exposure to brute force on SSH/RDP, delayed patching, and poor visibility. Exploits can enable lateral movement and persistence, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SSM/ssm-managed-instances.html",
+    "https://docs.aws.amazon.com/systems-manager/latest/userguide/managed_instances.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SSM/ssm-managed-instances.html",
-      "Terraform": ""
+      "CLI": "aws ec2 stop-instances --instance-ids <INSTANCE_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: make the instance SSM-managed by attaching the required IAM role\nResources:\n  <example_resource_name>Role:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              Service: ec2.amazonaws.com\n            Action: sts:AssumeRole\n      ManagedPolicyArns:\n        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore  # CRITICAL: grants SSM permissions required for management\n\n  <example_resource_name>InstanceProfile:\n    Type: AWS::IAM::InstanceProfile\n    Properties:\n      Roles:\n        - !Ref <example_resource_name>Role\n\n  <example_resource_name>Instance:\n    Type: AWS::EC2::Instance\n    Properties:\n      ImageId: ami-<example_resource_id>\n      InstanceType: t3.micro\n      IamInstanceProfile: !Ref <example_resource_name>InstanceProfile  # CRITICAL: attaches the SSM-enabled role to the instance\n```",
+      "Other": "1. In IAM console: Create role > AWS service > EC2 > Next; attach policy \"AmazonSSMManagedInstanceCore\"; Create role\n2. In EC2 console: Instances > select the instance > Actions > Security > Modify IAM role > choose the role created above > Update IAM role\n3. Wait a few minutes; in Systems Manager console: Managed nodes, verify the instance shows as Online\n4. If the instance OS does not include SSM Agent by default, install the SSM Agent for that OS, then verify again",
+      "Terraform": "```hcl\n# Terraform: make the instance SSM-managed by attaching the required IAM role\nresource \"aws_iam_role\" \"<example_resource_name>\" {\n  name               = \"<example_resource_name>\"\n  assume_role_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect = \"Allow\"\n      Principal = { Service = \"ec2.amazonaws.com\" }\n      Action   = \"sts:AssumeRole\"\n    }]\n  })\n}\n\nresource \"aws_iam_role_policy_attachment\" \"<example_resource_name>_ssm\" {\n  role       = aws_iam_role.<example_resource_name>.name\n  policy_arn = \"arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore\"  # CRITICAL: grants SSM permissions required for management\n}\n\nresource \"aws_iam_instance_profile\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  role = aws_iam_role.<example_resource_name>.name\n}\n\nresource \"aws_instance\" \"<example_resource_name>\" {\n  ami                  = \"ami-<example_resource_id>\"\n  instance_type        = \"t3.micro\"\n  iam_instance_profile = aws_iam_instance_profile.<example_resource_name>.name  # CRITICAL: attaches the SSM-enabled role to the instance\n}\n```"
     },
     "Recommendation": {
-      "Text": "Verify and apply Systems Manager Prerequisites.",
-      "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/managed_instances.html"
+      "Text": "Enroll all instances as **Systems Manager managed nodes**. Prefer **Session Manager** over SSH/RDP, restrict inbound admin ports, and use **least privilege** roles. Ensure connectivity to SSM endpoints (or private endpoints), automate patching and inventory, and monitor activity for defense-in-depth.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_managed_by_ssm"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "node-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

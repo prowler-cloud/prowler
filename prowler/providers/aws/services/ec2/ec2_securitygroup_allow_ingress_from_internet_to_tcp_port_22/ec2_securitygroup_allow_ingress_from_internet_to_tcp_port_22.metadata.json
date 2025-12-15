@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to SSH port 22.",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to TCP port 22 (SSH)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access/Unauthorized Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to SSH port 22.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** are assessed for **inbound SSH exposure** by locating ingress rules that allow `TCP 22` from the Internet (`0.0.0.0/0` or `::/0`).\n\nOnly groups in use are considered; sets already flagged for all-port exposure are not repeated.",
+  "Risk": "Exposed **SSH** invites Internet-scale **brute force** and **credential stuffing**. A successful login grants **remote shell**, enabling data theft (confidentiality), code or config tampering (integrity), and cryptomining or service disruption (availability), plus **lateral movement** within the environment.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#terraform",
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 revoke-security-group-ingress --group-id <GROUP_ID> --protocol tcp --port 22 --cidr",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#terraform"
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 22 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict SSH from the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict SSH\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 22\n          ToPort: 22\n          CidrIp: 10.0.0.0/8  # Critical: allows SSH only from a private range, not 0.0.0.0/0\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the affected security group\n3. Open the Inbound rules tab\n4. Delete any rule for port 22 (SSH) with source 0.0.0.0/0 or ::/0\n5. Click Save rules",
+      "Terraform": "```hcl\n# Terraform: restrict SSH from the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]  # Critical: do not use 0.0.0.0/0 or ::/0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** to SSH:\n- Disallow `0.0.0.0/0` and `::/0`; allow only trusted IPs or VPN ranges\n- Prefer **private access** via bastion hosts or AWS Systems Manager Session Manager\n- Enforce **key-based auth**, disable passwords, rotate keys\n- Add **network segmentation** and monitoring for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
     }
   },
   "Categories": [

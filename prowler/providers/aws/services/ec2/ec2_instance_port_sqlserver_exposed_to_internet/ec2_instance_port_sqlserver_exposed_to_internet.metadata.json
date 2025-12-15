@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_sqlserver_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP ports 1433 or 1434 (SQL Server)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
-  "Risk": "SQL Server is a database management system that is used to store and retrieve data. If an EC2 instance allows ingress from the internet to TCP port 1433 or 1434, it may be vulnerable to unauthorized access and data exfiltration.",
+  "Description": "**EC2 instances** with security groups permitting any source to `TCP 1433` or `1434` (SQL Server) are identified, considering the instance's public reachability based on IP and subnet exposure.",
+  "Risk": "Internet-reachable SQL services enable:\n- Brute-force and credential-stuffing of DB logins\n- Exploitation of SQL Server flaws for remote code execution\n- Unauthorized queries and data exfiltration\nThis threatens **confidentiality** and **integrity**, and facilitates **lateral movement** from the database host.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/inspector/v1/userguide/inspector_network-reachability.html",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --ip-permissions '[{\"IpProtocol\":\"tcp\",\"FromPort\":1433,\"ToPort\":1434,\"IpRanges\":[{\"CidrIp\":\"0.0.0.0/0\"}],\"Ipv6Ranges\":[{\"CidrIpv6\":\"::/0\"}]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict SQL Server ports to non-Internet sources\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict SQL ports\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 1433\n          ToPort: 1434\n          CidrIp: 10.0.0.0/8  # FIX: do not use 0.0.0.0/0; limits access to internal range to close Internet exposure\n```",
+      "Other": "1. In the AWS Console, go to VPC > Security Groups\n2. Select the security group attached to the affected EC2 instance\n3. In the Inbound rules tab, click Edit inbound rules\n4. Delete any rule allowing TCP 1433 or 1434 from 0.0.0.0/0 or ::/0\n5. If access is required, add a rule for TCP 1433-1434 with a specific trusted source (e.g., your office IP or another security group)\n6. Click Save rules",
+      "Terraform": "```hcl\n# Restrict SQL Server ports to non-Internet sources\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 1433\n    to_port     = 1434\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]  # FIX: do not use 0.0.0.0/0; restricts access to prevent Internet exposure\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 1433 or 1434 (SQL Server).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Enforce **least privilege** and **defense in depth**:\n- Remove `0.0.0.0/0` and `::/0` to `1433-1434`\n- Allow only trusted IPs or app tiers via security group references\n- Keep databases in private subnets without public IPs; access via VPN or bastion\n- Require TLS and strong authentication; monitor access.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_sqlserver_exposed_to_internet"
     }
   },
   "Categories": [

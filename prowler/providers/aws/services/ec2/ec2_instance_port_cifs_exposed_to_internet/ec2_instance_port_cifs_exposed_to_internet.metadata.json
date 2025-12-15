@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_cifs_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 139 or 445 (CIFS).",
+  "CheckTitle": "EC2 instance does not allow Internet ingress to TCP ports 139 or 445 (CIFS)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 139 or 445 (CIFS).",
-  "Risk": "CIFS is a file sharing protocol that is used to access files and printers on remote systems. It is not recommended to expose CIFS to the internet.",
+  "Description": "EC2 instances with security groups permitting **inbound** TCP `139` or `445` (**CIFS/SMB**) from `0.0.0.0/0` are identified.\n\nExposure level reflects whether the instance has a **public IP** and the subnet's Internet reachability.",
+  "Risk": "Publicly reachable **SMB** allows unauthorized access and **remote code execution**, enabling credential theft, NTLM relay, and share enumeration. Attackers can exfiltrate files, tamper or delete data, and spread **ransomware**, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Security group without CIFS open to the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: SG without CIFS open to Internet\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 139\n          ToPort: 139\n          CidrIp: 10.0.0.0/8  # CRITICAL: restrict CIFS (139) to a non-Internet CIDR to avoid 0.0.0.0/0\n        - IpProtocol: tcp\n          FromPort: 445\n          ToPort: 445\n          CidrIp: 10.0.0.0/8  # CRITICAL: restrict CIFS (445) to a non-Internet CIDR to avoid 0.0.0.0/0\n```",
+      "Other": "1. In AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the affected instance\n3. Edit Inbound rules\n4. Delete any rule allowing TCP port 139 or 445 from 0.0.0.0/0 or ::/0, or change the source to a specific trusted CIDR\n5. Save rules",
+      "Terraform": "```hcl\n# Security group without CIFS open to the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 139\n    to_port     = 139\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # CRITICAL: restrict CIFS (139); do not use 0.0.0.0/0\n  }\n\n  ingress {\n    from_port   = 445\n    to_port     = 445\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # CRITICAL: restrict CIFS (445); do not use 0.0.0.0/0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 139 or 445 (CIFS).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Restrict **CIFS/SMB** to trusted internal sources using **least privilege**; do not allow `0.0.0.0/0`.\n\nAdopt **defense in depth**: place hosts in private subnets, require **VPN** or controlled jump paths, and enforce **segmentation**. Disable SMB if unnecessary or use alternatives (e.g., SFTP). Require strong auth and SMB signing.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_cifs_exposed_to_internet"
     }
   },
   "Categories": [

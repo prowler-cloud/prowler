@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_volume_encryption",
-  "CheckTitle": "Ensure there are no EBS Volumes unencrypted.",
+  "CheckTitle": "EBS volume is encrypted",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "volume",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "Ensure there are no EBS Volumes unencrypted.",
-  "Risk": "Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.",
+  "Description": "**Amazon EBS volumes** are assessed for **encryption at rest** using **AWS KMS**.\n\nThe finding identifies volumes whose `encrypted` state is disabled, meaning data is stored unencrypted on block storage.",
+  "Risk": "Unencrypted volumes or snapshots can be copied, shared, or recovered and reveal raw data, undermining **confidentiality**.\n\nAdversaries with host or account access can read disks offline, harvest secrets, or alter system images, affecting **integrity** and enabling **lateral movement**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.acquia.com/acquia-cloud-platform/security-and-compliance",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Encrypted EBS volume\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::Volume\n    Properties:\n      AvailabilityZone: <example_az>\n      Size: 1\n      Encrypted: true  # CRITICAL: enables EBS encryption so the volume is created encrypted\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Volumes and select the unencrypted volume\n2. Choose Actions > Create snapshot and wait for it to complete\n3. Open the snapshot, click Actions > Create volume, select the same Availability Zone, and check Encrypted, then create\n4. Stop the instance using the old volume\n5. Detach the old (unencrypted) volume\n6. Attach the new encrypted volume to the instance using the same device name\n7. Start the instance\n8. Verify the new volume shows Encrypted = Yes",
+      "Terraform": "```hcl\n# Encrypted EBS volume\nresource \"aws_ebs_volume\" \"<example_resource_name>\" {\n  availability_zone = \"<example_az>\"\n  size              = 1\n  encrypted         = true  # CRITICAL: ensures the volume is created encrypted\n}\n```"
     },
     "Recommendation": {
-      "Text": "Encrypt all EBS volumes and Enable Encryption by default You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example, Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+      "Text": "Encrypt all EBS volumes and enable `encryption by default` for new volumes and snapshot copies.\n\nApply **least privilege** to KMS keys, restrict snapshot sharing, and enforce **defense in depth** with policies and templates that prevent creation of unencrypted storage.",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_volume_encryption"
     }
   },
   "Categories": [

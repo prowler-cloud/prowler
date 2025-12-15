@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_with_many_ingress_egress_rules",
-  "CheckTitle": "Find security groups with more than 50 ingress or egress rules.",
+  "CheckTitle": "Security group has 50 or fewer inbound rules and 50 or fewer outbound rules",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "high",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Find security groups with more than 50 ingress or egress rules.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** are evaluated for excessive rule counts, flagging groups where `ingress` or `egress` entries exceed the configured threshold (default `50`). This targets groups with unusually large rule sets that complicate access control.",
+  "Risk": "**Rule sprawl** weakens **least privilege**: large rule sets can hide overly permissive entries, exposing services to the Internet or unintended peers. This enables unauthorized access, data exfiltration, and lateral movement, impacting **confidentiality** and **integrity**, and can threaten **availability** via abuse of exposed services.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Security group with limited number of rules\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: \"<example_resource_name>\"\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 443\n          ToPort: 443\n          CidrIp: 10.0.0.0/8  # Critical: keep total inbound rules  50; this example defines only 1 rule to ensure compliance\n```",
+      "Other": "1. In the AWS console, go to EC2 > Security Groups\n2. Select the security group that FAILED\n3. In Inbound rules, click Edit inbound rules\n4. Delete rules until the inbound rule count is 50 or fewer, then Save\n5. In Outbound rules, click Edit outbound rules\n6. Delete rules until the outbound rule count is 50 or fewer, then Save",
+      "Terraform": "```hcl\n# Terraform: Security group with limited number of rules\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {                      # Critical: keep total ingress/egress rules  50; single rule ensures PASS\n    from_port   = 443\n    to_port     = 443\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** and **segmentation**:\n- Limit rules to required ports, protocols, and sources\n- Split workloads into dedicated security groups per role\n- Prefer SG-to-SG references over broad CIDRs\n- Regularly review, deduplicate, and remove stale rules\n- Layer controls (NACLs, private endpoints) for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_with_many_ingress_egress_rules"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

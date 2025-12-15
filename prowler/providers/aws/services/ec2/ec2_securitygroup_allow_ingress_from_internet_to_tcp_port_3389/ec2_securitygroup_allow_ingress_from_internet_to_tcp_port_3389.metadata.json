@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389.",
+  "CheckTitle": "Security group does not allow ingress from the Internet to TCP port 3389 (RDP)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to port 3389.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** restrict **inbound RDP** on `TCP 3389` to trusted sources, avoiding Internet-wide (`0.0.0.0/0`, `::/0`) exposure.",
+  "Risk": "**Internet-exposed RDP** enables brute force and credential stuffing and increases the chance of **remote code execution** via RDP flaws.\n\nAdversaries can gain interactive access, exfiltrate data (**confidentiality**), tamper with systems (**integrity**), and trigger ransomware or service disruption (**availability**).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_2",
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_2#terraform",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 revoke-security-group-ingress --group-id <GROUP_ID> --protocol tcp --port 3389 --cidr",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_2",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#terraform"
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 3389 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict RDP (3389) from the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict RDP\n      VpcId: vpc-<example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 3389\n          ToPort: 3389\n          CidrIp: 10.0.0.0/8  # FIX: not 0.0.0.0/0; limits RDP to internal range, closing Internet access\n```",
+      "Other": "1. In AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the instance\n3. In the Inbound rules tab, click Edit inbound rules\n4. Find any rule with Type RDP (TCP 3389) and Source 0.0.0.0/0 or ::/0\n5. Delete the rule or change Source to a specific trusted CIDR (e.g., your office IP)\n6. Click Save rules",
+      "Terraform": "```hcl\n# Restrict RDP (3389) from the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # FIX: not 0.0.0.0/0; restricts RDP to internal range\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege**: disallow `0.0.0.0/0` and `::/0` to `3389`; permit only specific IPs or private networks.\n\nPrefer **Session Manager**, VPN, or a hardened bastion with MFA and just-in-time access. Use private subnets and add **defense in depth** with network controls and monitoring.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
     }
   },
   "Categories": [

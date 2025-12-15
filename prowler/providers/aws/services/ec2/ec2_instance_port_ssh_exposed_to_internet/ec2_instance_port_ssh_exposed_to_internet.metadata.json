@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_ssh_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 22 (SSH)",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 22 (SSH)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access/External Remote Services"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 22 (SSH).",
-  "Risk": "SSH is a common target for brute force attacks. If an EC2 instance allows ingress from the internet to TCP port 22, it is at risk of being compromised.",
+  "Description": "**EC2 instances** with **SSH (TCP 22)** exposed to the Internet via security group inbound rules allowing `0.0.0.0/0` or `::/0`.\n\nExposure is qualified using the instance's public IP status and subnet reachability.",
+  "Risk": "**Internet-exposed SSH** invites **brute force** and **credential stuffing**. A successful sign-in grants **remote shell**, enabling data exfiltration, tampering of workloads, and **lateral movement** within the VPC, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --ip-permissions '[{\"IpProtocol\":\"tcp\",\"FromPort\":22,\"ToPort\":22,\"IpRanges\":[{\"CidrIp\":\"0.0.0.0/0\"}]},{\"IpProtocol\":\"tcp\",\"FromPort\":22,\"ToPort\":22,\"Ipv6Ranges\":[{\"CidrIpv6\":\"::/0\"}]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: Restrict SSH so it's not open to the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict SSH\n      VpcId: \"<example_resource_id>\"\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 22\n          ToPort: 22\n          CidrIp: 10.0.0.0/8  # Critical: restrict SSH to a specific CIDR, not 0.0.0.0/0\n```",
+      "Other": "1. Open the Amazon EC2 console and go to Security Groups\n2. Select the security group attached to the instance\n3. Click Inbound rules > Edit inbound rules\n4. Delete any rule allowing SSH (port 22) from 0.0.0.0/0 or ::/0\n5. Save rules",
+      "Terraform": "```hcl\n# Terraform: Restrict SSH so it's not open to the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: restrict SSH to a specific CIDR, not 0.0.0.0/0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 22.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** on SSH:\n- Restrict ingress to trusted IPs; avoid `0.0.0.0/0` and `::/0`\n- Prefer **Session Manager** or a hardened **bastion** behind VPN\n- Use **key-based auth**; disable passwords\n- Add **defense in depth** with network controls and monitor access logs",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_ssh_exposed_to_internet"
     }
   },
   "Categories": [

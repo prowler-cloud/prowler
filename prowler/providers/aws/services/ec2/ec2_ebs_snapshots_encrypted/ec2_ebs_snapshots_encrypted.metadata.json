@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_snapshots_encrypted",
-  "CheckTitle": "Check if EBS snapshots are encrypted.",
+  "CheckTitle": "EBS snapshot is encrypted",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "snapshot",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
-  "ResourceType": "Other",
-  "Description": "Check if EBS snapshots are encrypted.",
-  "Risk": "Data encryption at rest prevents data visibility in the event of its unauthorized access or theft.",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Volume",
+  "Description": "**Amazon EBS snapshots** are evaluated for **encryption at rest** with AWS KMS. The finding identifies snapshots where encryption is not enabled.",
+  "Risk": "Unencrypted snapshots expose complete disk images to anyone with snapshot access or if mis-shared. Attackers can exfiltrate data, harvest credentials, and clone volumes for offline analysis, compromising **confidentiality** and enabling **lateral movement**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#aws-console",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default",
+    "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 --region <REGION> enable-ebs-encryption-by-default",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#terraform"
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, go to EC2 > Snapshots and select the unencrypted snapshot\n2. Click Actions > Copy snapshot\n3. Check Encrypt this snapshot (leave the default KMS key unless a specific key is required)\n4. Click Copy snapshot and wait for the new encrypted snapshot to be available\n5. Select the original unencrypted snapshot > Actions > Delete snapshot > Delete",
+      "Terraform": "```hcl\nresource \"aws_ebs_snapshot_copy\" \"<example_resource_name>\" {\n  source_snapshot_id = \"<UNENCRYPTED_SNAPSHOT_ID>\"\n  source_region      = \"<SOURCE_REGION>\"\n  encrypted          = true  # Critical: creates an encrypted copy of the snapshot to remediate the finding\n}\n```"
     },
     "Recommendation": {
-      "Text": "Encrypt all EBS Snapshot and Enable Encryption by default. You can configure your AWS account to enforce the encryption of the new EBS volumes and snapshot copies that you create. For example, Amazon EBS encrypts the EBS volumes created when you launch an instance and the snapshots that you copy from an unencrypted snapshot.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default"
+      "Text": "Encrypt all **EBS snapshots** and enable `encryption by default` to prevent unencrypted creations and copies. Use **customer-managed KMS keys** for control and rotation, restrict snapshot sharing, and enforce **least privilege** on snapshot and key permissions as **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_snapshots_encrypted"
     }
   },
   "Categories": [

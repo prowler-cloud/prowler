@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to high risk ports.",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to high-risk TCP ports",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access/Unauthorized Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to ports 25(SMTP), 110(POP3), 135(RCP), 143(IMAP), 445(CIFS), 3000(Go, Node.js, and Ruby web developemnt frameworks), 4333(ahsp), 5000(Python web development frameworks), 5500(fcp-addr-srvr1), 8080(proxy), 8088(legacy HTTP port).",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "**EC2 security groups** are assessed for inbound rules that allow Internet sources (`0.0.0.0/0` or `::/0`) to **high-risk TCP ports**: `25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088`.\n\nFindings highlight groups exposing any of these ports to the public network.",
+  "Risk": "Public exposure of these ports enables:\n- **RCE** via SMB/RPC and weak admin consoles (`445`, `135`, `3000`, `5000`, `8080`)\n- **Credential theft/data leakage** via mail protocols (`25`, `110`, `143`)\n- **Spam relay** on `25`\nImpacts: **confidentiality**, **integrity**, and **availability** through exploitation and mass scanning.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict high-risk TCP port from Internet\nResources:\n  ExampleSecurityGroup:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict high-risk TCP port\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 8080\n          ToPort: 8080\n          CidrIp: 10.0.0.0/8  # CRITICAL: do not use 0.0.0.0/0 or ::/0; restrict source to non-Internet to pass the check\n```",
+      "Other": "1. In the AWS console, go to EC2 > Network & Security > Security Groups\n2. Select the security group in the finding and click Inbound rules > Edit inbound rules\n3. For each high-risk TCP port (25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088) with Source 0.0.0.0/0 or ::/0, delete the rule or change Source to a specific trusted CIDR (for example, your VPC CIDR)\n4. Save rules",
+      "Terraform": "```hcl\n# Terraform: restrict high-risk TCP port from Internet\nresource \"aws_security_group\" \"example\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 8080\n    to_port     = 8080\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # CRITICAL: do not use 0.0.0.0/0 or ::/0; restrict source to non-Internet to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Restrict these ports using **least privilege**:\n- Deny Internet ingress; allow only trusted CIDRs or private connectivity\n- Place services behind **VPN**, **bastion**, or **proxies/WAF**; prefer **private endpoints**\n- Disable unnecessary services; require auth and TLS on exposed apps\nApply **defense in depth** with security groups and network ACLs.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports"
     }
   },
   "Categories": [

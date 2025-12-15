@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_oracle_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP ports 1521, 2483, or 2484 (Oracle)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
-  "Risk": "Oracle database servers are a high value target for attackers. Allowing internet access to these ports could lead to unauthorized access to the database.",
+  "Description": "**EC2 instances** with security groups allowing inbound `TCP` from any address to Oracle listener ports `1521`, `2483`, or `2484`",
+  "Risk": "Exposed Oracle listener ports enable SID enumeration, credential brute force, and TNS abuse. A successful intrusion can grant database access, causing data exfiltration (C), unauthorized changes (I), and outages via exploits or DoS (A). Internet scanning quickly finds these endpoints, enlarging the attack surface.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 1521 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: Restrict Oracle port from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict Oracle port access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 1521\n          ToPort: 1521\n          CidrIp: 10.0.0.0/16  # FIX: do not use 0.0.0.0/0 or ::/0; limits access to a trusted CIDR to block Internet\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the instance\n3. Open the Inbound rules tab and click Edit inbound rules\n4. For TCP ports 1521, 2483, and 2484, delete any rule with Source 0.0.0.0/0 or ::/0\n5. If access is required, change the Source to a specific trusted CIDR only\n6. Click Save rules",
+      "Terraform": "```hcl\n# Security group with Oracle port restricted from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 1521\n    to_port     = 1521\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/16\"] # FIX: restrict source; do not use 0.0.0.0/0 or ::/0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group to remove the rule that allows ingress from the internet to TCP port 1521, 2483 or 2484.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Restrict Oracle ports to trusted sources; remove `0.0.0.0/0` and `::/0`. Place databases in private subnets without public IPs. Use VPN/Direct Connect or bastions for access. Enable TLS on `2484`, strong auth, and apply **least privilege** rules with **defense in depth** using NACLs and monitoring.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_oracle_exposed_to_internet"
     }
   },
   "Categories": [

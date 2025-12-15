@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_postgresql_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 5432 (PostgreSQL)",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 5432 (PostgreSQL)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 5432 (PostgreSQL).",
-  "Risk": "PostgreSQL is a popular open-source relational database management system. Exposing the PostgreSQL port to the internet can lead to unauthorized access to the database, data exfiltration, and other security risks.",
+  "Description": "EC2 instances with security group rules allowing inbound **PostgreSQL** on `TCP 5432` from the Internet (`0.0.0.0/0` or `::/0`) are identified, considering the instance's public reachability via IP and subnet.",
+  "Risk": "Exposed `TCP 5432` enables unauthenticated Internet probes and **brute-force** attempts against PostgreSQL, risking database **confidentiality**, **integrity**, and **availability**. Attackers could dump data, alter schemas, create backdoor accounts, pivot within the VPC, or exploit unpatched flaws at scale.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 5432 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict PostgreSQL (5432) from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict PostgreSQL\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 5432\n          ToPort: 5432\n          CidrIp: 10.0.0.0/8  # CRITICAL: not 0.0.0.0/0; limits access to internal range\n```",
+      "Other": "1. In AWS Console, go to EC2 > Security Groups\n2. Select the group attached to the instance\n3. In Inbound rules, find any rule for PostgreSQL (TCP 5432) with source 0.0.0.0/0 or ::/0\n4. Delete the rule or change the source to a specific trusted CIDR only\n5. Save rules",
+      "Terraform": "```hcl\n# Restrict PostgreSQL (5432) from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 5432\n    to_port     = 5432\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]  # CRITICAL: not 0.0.0.0/0; prevents Internet exposure\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 5432 (PostgreSQL).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Restrict PostgreSQL to trusted sources only:\n- Remove `0.0.0.0/0` and `::/0` rules\n- Apply **least privilege** security groups (allow from app tier or VPN)\n- Place instances in private subnets without public IPs\n- Enforce **TLS** and strong auth; disable unused listeners\n- Layer with NACLs and monitoring for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_postgresql_exposed_to_internet"
     }
   },
   "Categories": [

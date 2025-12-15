@@ -1,28 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_telnet_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 23 (Telnet).",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 23 (Telnet)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 23 (Telnet).",
-  "Risk": "Telnet is an insecure protocol that transmits data in plain text. Exposure of Telnet services to the internet can lead to unauthorized access to the EC2 instance.",
+  "Description": "EC2 instances with security groups allowing inbound **Telnet** on `TCP 23` from the Internet are identified, including open IPv4/IPv6 sources like `0.0.0.0/0` and `::/0`.\n\nExposure is evaluated considering public IP assignment and subnet reachability.",
+  "Risk": "Exposed **Telnet** weakens **confidentiality** and **integrity**: credentials and commands are plaintext, enabling interception and session hijacking. Attackers can brute-force to gain shell, run remote commands, exfiltrate data, and pivot laterally, also threatening **availability** through misuse or takeover.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 23 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict Telnet (port 23) from the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict Telnet access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 23\n          ToPort: 23\n          CidrIp: 10.0.0.0/8  # Critical: do NOT use 0.0.0.0/0; restrict Telnet to trusted CIDR to remediate exposure\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the security group attached to the affected instance\n3. Open the Inbound rules tab and find any rule allowing TCP port 23 from 0.0.0.0/0 or ::/0\n4. Delete the rule, or edit it to a specific trusted CIDR only\n5. Click Save rules",
+      "Terraform": "```hcl\n# Restrict Telnet (port 23) from the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 23\n    to_port     = 23\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: do NOT use 0.0.0.0/0; restrict Telnet to trusted CIDR to fix the finding\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 23.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Eliminate Telnet: disable the service and block `TCP 23`.\n\nApply **least privilege** network access-restrict admin connectivity via **SSH** through bastion or **VPN**, keep management paths private, and segregate hosts. Use **defense in depth** with monitoring and strong authentication for any legacy needs.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_telnet_exposed_to_internet"
     }
   },
   "Categories": [

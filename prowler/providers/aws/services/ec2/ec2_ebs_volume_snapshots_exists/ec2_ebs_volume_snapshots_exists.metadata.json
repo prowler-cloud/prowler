@@ -1,31 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_volume_snapshots_exists",
-  "CheckTitle": "Check if EBS snapshots exists.",
+  "CheckTitle": "EBS volume has at least one snapshot",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Destruction"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "volume",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "Check if EBS snapshots exists.",
-  "Risk": "Ensure that your EBS volumes (available or in-use) have recent snapshots (taken weekly) available for point-in-time recovery for a better, more reliable data backup strategy.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html",
+  "Description": "**Amazon EBS volumes** are evaluated for the existence of at least one associated **snapshot**, identifying volumes without any point-in-time backup available.",
+  "Risk": "Missing **EBS snapshots** removes point-in-time recovery. Accidental deletion, corruption, or ransomware can cause **irrecoverable data loss** and prolonged **service outages**, degrading data **integrity** and **availability** and complicating recovery and forensics.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://n2ws.com/blog/how-to-guides/automate-amazon-ec2-instance-backup",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
+    "https://readmedium.com/how-we-automated-ebs-snapshot-and-ami-management-using-amazon-data-lifecycle-manager-dlm-8bd3bbb58c9d",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-snapshot.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 --region <REGION> create-snapshot --volume-id <VOLUME-ID>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html",
-      "Terraform": ""
+      "CLI": "aws ec2 create-snapshot --region <REGION> --volume-id <VOLUME_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: create a snapshot of an existing EBS volume\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::Snapshot\n    Properties:\n      VolumeId: <example_resource_id>  # Critical: creates a snapshot for this volume to pass the check\n```",
+      "Other": "1. In the AWS Console, go to EC2\n2. Click Volumes, select the target EBS volume\n3. Choose Actions > Create snapshot\n4. Click Create snapshot to confirm",
+      "Terraform": "```hcl\n# Create a snapshot for an existing EBS volume\nresource \"aws_ebs_snapshot\" \"<example_resource_name>\" {\n  volume_id = \"<example_resource_id>\" # Critical: creating this snapshot makes the volume pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Creating point-in-time EBS snapshots periodically will allow you to handle efficiently your data recovery process in the event of a failure, to save your data before shutting down an EC2 instance, to back up data for geographical expansion and to maintain your disaster recovery stack up to date.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html"
+      "Text": "Establish automated, policy-based **EBS snapshot** coverage for all volumes aligned to business `RPO/RTO`.\n- Schedule regular snapshots with retention controls\n- Encrypt snapshots and enforce **least privilege** access\n- Replicate to another Region/account for DR\n- Periodically test restores and document procedures",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_volume_snapshots_exists"
     }
   },
   "Categories": [
+    "resilience",
     "forensics-ready"
   ],
   "DependsOn": [],

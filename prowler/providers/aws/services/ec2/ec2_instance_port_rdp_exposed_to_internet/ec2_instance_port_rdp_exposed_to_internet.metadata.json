@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_instance_port_rdp_exposed_to_internet",
-  "CheckTitle": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP)",
+  "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 3389 (RDP)",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access/External Remote Services"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsEc2Instance",
-  "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 3389 (RDP).",
-  "Risk": "RDP is a proprietary protocol developed by Microsoft for connecting to Windows systems. Exposing RDP to the internet can allow attackers to brute force the login credentials and gain unauthorized access to the EC2 instance.",
+  "Description": "EC2 instances whose security groups allow Internet-wide inbound **RDP** on `TCP 3389` (`0.0.0.0/0` or `::/0`). The instance's public IP and subnet routing are considered to determine external reachability.",
+  "Risk": "Internet-exposed **RDP** allows:\n- **Brute force** and credential reuse on Windows logons\n- Exploitation of RDP flaws for remote code execution\n- **Lateral movement** and data exfiltration\nThis threatens **confidentiality**, **integrity**, and **availability** through data theft, tampering, account lockouts, or ransomware.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
+    "https://AdmiNotes.ru/fail2ban-dlya-rdp-za-nat-nadyozhnaya-zashhita-terminalnogo-servera/",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 3389 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict RDP so it's not open to the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: Restrict RDP access\n      VpcId: <example_resource_id>\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 3389\n          ToPort: 3389\n          CidrIp: <TRUSTED_CIDR>  # CRITICAL: limit RDP to a specific CIDR to avoid 0.0.0.0/0 (::/0)\n```",
+      "Other": "1. In AWS Console, go to EC2 > Security Groups\n2. Open each security group attached to the affected instance\n3. In Inbound rules, find any rule allowing TCP 3389 from 0.0.0.0/0 or ::/0\n4. Delete the rule, or edit Source to a specific trusted IP/CIDR only\n5. Click Save rules",
+      "Terraform": "```hcl\n# Restrict RDP so it's not open to the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"<TRUSTED_CIDR>\"]  # CRITICAL: restrict RDP to a specific CIDR; not 0.0.0.0/0 or ::/0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the security group associated with the EC2 instance to remove the rule that allows ingress from the internet to TCP port 3389 (RDP).",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Remove Internet-wide RDP. Apply **least privilege**:\n- Restrict `TCP 3389` to trusted IPs\n- Prefer private access via **VPN** or a hardened **bastion**; consider **Session Manager**\n- Use **just-in-time** access and short-lived rules\n- Enforce strong auth (e.g., NLA) and monitor logs\nAdopt **defense in depth** with layered network controls.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_port_rdp_exposed_to_internet"
     }
   },
   "Categories": [

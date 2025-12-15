@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to TCP ports 20 and 21",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "Description": "**EC2 security groups** are evaluated for rules that expose **FTP control/data ports** to the Internet. The check inspects ingress allowing `TCP 21` or `TCP 20` from `0.0.0.0/0` or `::/0`.",
+  "Risk": "Public FTP exposure enables:\n- Brute-force logins on `TCP 21`\n- Credential theft via **unencrypted FTP**\nCompromise can allow malicious uploads over the data channel (`TCP 20`), **data exfiltration**, and **lateral movement**, impacting confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://serverfault.com/questions/793159/unable-to-setup-ftp-access-to-amazon-ec2-windows-server-2008-r2-instance",
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict FTP ports from Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      VpcId: <example_resource_id>\n      GroupDescription: Restrict FTP ports 20 and 21\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 20\n          ToPort: 20\n          CidrIp: 10.0.0.0/8  # CRITICAL: not 0.0.0.0/0 or ::/0; restricts port 20 to trusted CIDR\n        - IpProtocol: tcp\n          FromPort: 21\n          ToPort: 21\n          CidrIp: 10.0.0.0/8  # CRITICAL: not 0.0.0.0/0 or ::/0; restricts port 21 to trusted CIDR\n```",
+      "Other": "1. In the AWS console, go to EC2 > Security Groups\n2. Select the affected security group and choose Edit inbound rules\n3. Delete any rule allowing TCP ports 20 or 21 from 0.0.0.0/0 or ::/0\n4. If FTP is required, add rules for ports 20 and 21 only from specific trusted CIDR(s)\n5. Click Save rules",
+      "Terraform": "```hcl\n# Restrict FTP ports from Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 20\n    to_port     = 20\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]  # CRITICAL: not 0.0.0.0/0 or ::/0; restricts port 20\n  }\n\n  ingress {\n    from_port   = 21\n    to_port     = 21\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"]  # CRITICAL: not 0.0.0.0/0 or ::/0; restricts port 21\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege**:\n- Block Internet ingress to `TCP 20` and `TCP 21`; allow only trusted sources or access via VPN/bastion\n- Prefer **SFTP/FTPS** and disable plain FTP\n- Use **private networking** and segmentation\n- Add **defense in depth** with network ACLs and monitoring; remove unused rules",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

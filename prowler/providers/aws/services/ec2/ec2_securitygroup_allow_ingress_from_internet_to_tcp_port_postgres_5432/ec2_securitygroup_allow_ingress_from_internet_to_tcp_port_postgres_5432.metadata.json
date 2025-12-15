@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Postgres port 5432.",
+  "CheckTitle": "Security group does not allow ingress from 0.0.0.0/0 or ::/0 to Postgres TCP port 5432",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "securitygroup",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to Postgres port 5432.",
-  "Risk": "If Security groups are not properly configured the attack surface is increased.",
+  "Description": "EC2 security groups are evaluated for inbound rules that expose **Postgres** on `TCP 5432` to the Internet. Rules permitting `0.0.0.0/0` or `::/0` to this port, or policies that open all ports publicly, are identified.",
+  "Risk": "Exposing `5432` to the Internet enables credential stuffing and Postgres exploits, risking data disclosure (**confidentiality**), unauthorized changes (**integrity**), and service disruption via brute force or DoS (**availability**).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <SECURITY_GROUP_ID> --protocol tcp --port 5432 --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict Postgres (5432) from the Internet\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: \"<example_resource_name>\"\n      VpcId: \"<example_resource_id>\"\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 5432\n          ToPort: 5432\n          CidrIp: 10.0.0.0/8  # Critical: not 0.0.0.0/0 or ::/0; limits access so 5432 is not open to the Internet\n```",
+      "Other": "1. In the AWS Console, go to VPC > Security Groups\n2. Select the affected security group\n3. Open the Inbound rules tab and click Edit inbound rules\n4. Locate any rule for PostgreSQL (port 5432) with Source 0.0.0.0/0 or ::/0\n5. Delete the rule or change Source to a specific CIDR or security group\n6. Click Save rules",
+      "Terraform": "```hcl\n# Security group with Postgres (5432) not exposed to the Internet\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 5432\n    to_port     = 5432\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: avoid 0.0.0.0/0 or ::/0 to prevent Internet exposure\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",
-      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+      "Text": "Apply **least privilege** on security groups: remove `0.0.0.0/0` and `::/0` for `5432`, allow only trusted CIDRs or private peers. Prefer **private access** (VPC-only) via VPN, bastion, or proxy. Add **defense in depth** with SG references and network ACLs, and enforce TLS and strong authentication.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432"
     }
   },
   "Categories": [
