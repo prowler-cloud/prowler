@@ -520,8 +520,8 @@ class ManagedInstanceGroup(BaseModel):
     name: str
     id: str
     region: str
-    zone: Optional[str]  
-    zones: list  
+    zone: Optional[str]
+    zones: list
     is_regional: bool
     target_size: int
     project_id: str
