@@ -716,14 +716,19 @@ class Resource(RowLevelSecurityProtectedModel):
             self.clear_tags()
             return
 
-        # Add new relationships with the tenant_id field
+        # Add new relationships with the tenant_id field; avoid touching the
+        # Resource row unless a mapping is actually created to prevent noisy
+        # updates during scans.
+        mapping_created = False
         for tag in tags:
-            ResourceTagMapping.objects.update_or_create(
+            _, created = ResourceTagMapping.objects.update_or_create(
                 tag=tag, resource=self, tenant_id=self.tenant_id
             )
+            mapping_created = mapping_created or created
 
-        # Save the instance
-        self.save()
+        if mapping_created:
+            # Only bump updated_at when the tag set truly changed
+            self.save(update_fields=["updated_at"])
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resources"
