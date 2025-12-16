@@ -25,6 +25,7 @@ from api.db_utils import (
 from api.models import (
     AttackSurfaceOverview,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -42,6 +43,7 @@ from api.models import (
     ResourceTag,
     Role,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -156,6 +158,9 @@ class CommonFindingFilters(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    category = CharFilter(method="filter_category")
+    category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
+
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
@@ -186,6 +191,9 @@ class CommonFindingFilters(FilterSet):
 
     def filter_resource_type(self, queryset, name, value):
         return queryset.filter(resource_types__contains=[value])
+
+    def filter_category(self, queryset, name, value):
+        return queryset.filter(categories__contains=[value])
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()
@@ -761,7 +769,7 @@ class RoleFilter(FilterSet):
 
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    scan_id = UUIDFilter(field_name="scan_id")
+    scan_id = UUIDFilter(field_name="scan_id", required=True)
     region = CharFilter(field_name="region")
 
     class Meta:
@@ -793,6 +801,68 @@ class ScanSummaryFilter(FilterSet):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
+
+
+class DailySeveritySummaryFilter(FilterSet):
+    """Filter for findings_severity/timeseries endpoint."""
+
+    MAX_DATE_RANGE_DAYS = 365
+
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    date_from = DateFilter(method="filter_noop")
+    date_to = DateFilter(method="filter_noop")
+
+    class Meta:
+        model = DailySeveritySummary
+        fields = ["provider_id"]
+
+    def filter_noop(self, queryset, name, value):
+        return queryset
+
+    def filter_queryset(self, queryset):
+        if not self.data.get("date_from"):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        today = date.today()
+        date_from = self.form.cleaned_data.get("date_from")
+        date_to = min(self.form.cleaned_data.get("date_to") or today, today)
+
+        if (date_to - date_from).days > self.MAX_DATE_RANGE_DAYS:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"Date range cannot exceed {self.MAX_DATE_RANGE_DAYS} days.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        # View access
+        self.request._date_from = date_from
+        self.request._date_to = date_to
+
+        # Apply date filter (only lte for fill-forward logic)
+        queryset = queryset.filter(date__lte=date_to)
+
+        return super().filter_queryset(queryset)
 
 
 class ScanSummarySeverityFilter(ScanSummaryFilter):
@@ -1032,4 +1102,23 @@ class AttackSurfaceOverviewFilter(FilterSet):
 
     class Meta:
         model = AttackSurfaceOverview
+        fields = {}
+
+
+class CategoryOverviewFilter(FilterSet):
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    category = CharFilter(field_name="category", lookup_expr="exact")
+    category__in = CharInFilter(field_name="category", lookup_expr="in")
+
+    class Meta:
+        model = ScanCategorySummary
         fields = {}
