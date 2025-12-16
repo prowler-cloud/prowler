@@ -3,7 +3,30 @@ from dataclasses import dataclass, field
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
+# =============================================================================
+# Performance & Memory Optimization Settings
+# =============================================================================
+# These settings control memory usage and performance for large reports.
+# Adjust these values if workers are running out of memory.
+
+# Chart settings - lower DPI = less memory, 150 is good quality for PDF
+CHART_DPI_DEFAULT = 150
+
+# LongTable threshold - use LongTable for tables with more rows than this
+# LongTable handles page breaks better and has optimized memory for large tables
+LONG_TABLE_THRESHOLD = 50
+
+# Skip alternating row colors for tables larger than this (reduces memory)
+ALTERNATE_ROWS_MAX_SIZE = 200
+
+# Database query batch size for findings (matches Django settings)
+# Larger = fewer queries but more memory per batch
+FINDINGS_BATCH_SIZE = 2000
+
+
+# =============================================================================
 # Base colors
+# =============================================================================
 COLOR_PROWLER_DARK_GREEN = colors.Color(0.1, 0.5, 0.2)
 COLOR_BLUE = colors.Color(0.2, 0.4, 0.6)
 COLOR_LIGHT_BLUE = colors.Color(0.3, 0.5, 0.7)

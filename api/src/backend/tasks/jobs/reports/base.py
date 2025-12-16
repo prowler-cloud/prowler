@@ -1,3 +1,4 @@
+import gc
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -326,35 +327,47 @@ class BaseComplianceReportGenerator(ABC):
             # 2. Create PDF document
             doc = self._create_document(output_path, data)
 
-            # 3. Build report elements
+            # 3. Build report elements incrementally to manage memory
+            # We collect garbage after heavy sections to prevent OOM on large reports
             elements = []
 
-            # Cover page
+            # Cover page (lightweight)
             elements.extend(self.create_cover_page(data))
             elements.append(PageBreak())
 
             # Executive summary (framework-specific)
             elements.extend(self.create_executive_summary(data))
 
-            # Charts section (framework-specific)
+            # Charts section (framework-specific) - heavy on memory due to matplotlib
             elements.extend(self.create_charts_section(data))
             elements.append(PageBreak())
+            gc.collect()  # Free matplotlib resources
 
             # Requirements index (framework-specific)
             elements.extend(self.create_requirements_index(data))
             elements.append(PageBreak())
 
-            # Detailed findings
+            # Detailed findings - heaviest section, loads findings on-demand
+            logger.info("Building detailed findings section...")
             elements.extend(self.create_detailed_findings(data, **kwargs))
+            gc.collect()  # Free findings data after processing
 
             # 4. Build the PDF
+            logger.info("Building PDF document with %d elements...", len(elements))
             self._build_pdf(doc, elements, data)
+
+            # Final cleanup
+            del elements
+            gc.collect()
 
             logger.info("Successfully generated report at %s", output_path)
 
         except Exception as e:
+            import traceback
+
             tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
             logger.error("Error generating report, line %s -- %s", tb_lineno, e)
+            logger.error("Full traceback:\n%s", traceback.format_exc())
             raise
 
     # =========================================================================

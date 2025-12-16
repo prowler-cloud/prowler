@@ -1,17 +1,27 @@
+import gc
 import io
 import math
 from typing import Callable
 
-import matplotlib.pyplot as plt
+import matplotlib
 
-from .config import (
+# Use non-interactive Agg backend for memory efficiency in server environments
+# This MUST be set before importing pyplot
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+from .config import (  # noqa: E402
     CHART_COLOR_BLUE,
     CHART_COLOR_GREEN_1,
     CHART_COLOR_GREEN_2,
     CHART_COLOR_ORANGE,
     CHART_COLOR_RED,
     CHART_COLOR_YELLOW,
+    CHART_DPI_DEFAULT,
 )
+
+# Use centralized DPI setting from config
+DEFAULT_CHART_DPI = CHART_DPI_DEFAULT
 
 
 def get_chart_color_for_percentage(percentage: float) -> str:
@@ -42,8 +52,8 @@ def create_vertical_bar_chart(
     title: str | None = None,
     color_func: Callable[[float], str] | None = None,
     colors: list[str] | None = None,
-    figsize: tuple[int, int] = (12, 8),
-    dpi: int = 300,
+    figsize: tuple[int, int] = (10, 6),
+    dpi: int = DEFAULT_CHART_DPI,
     y_limit: tuple[float, float] = (0, 100),
     show_labels: bool = True,
     rotation: int = 45,
@@ -106,10 +116,11 @@ def create_vertical_bar_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
+        fig.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
         buffer.seek(0)
     finally:
         plt.close(fig)
+        gc.collect()  # Force garbage collection after heavy matplotlib operation
 
     return buffer
 
@@ -122,7 +133,7 @@ def create_horizontal_bar_chart(
     color_func: Callable[[float], str] | None = None,
     colors: list[str] | None = None,
     figsize: tuple[int, int] | None = None,
-    dpi: int = 300,
+    dpi: int = DEFAULT_CHART_DPI,
     x_limit: tuple[float, float] = (0, 100),
     show_labels: bool = True,
     label_fontsize: int = 16,
@@ -150,7 +161,7 @@ def create_horizontal_bar_chart(
 
     # Auto-calculate figure size based on number of items
     if figsize is None:
-        figsize = (12, max(8, len(labels) * 0.4))
+        figsize = (10, max(6, int(len(labels) * 0.4)))
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -190,11 +201,11 @@ def create_horizontal_bar_chart(
 
     buffer = io.BytesIO()
     try:
-        fig.canvas.draw()
         fig.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
-        buffer.seek(0, io.SEEK_END)
+        buffer.seek(0)
     finally:
         plt.close(fig)
+        gc.collect()  # Force garbage collection after heavy matplotlib operation
 
     return buffer
 
@@ -204,8 +215,8 @@ def create_radar_chart(
     values: list[float],
     color: str = CHART_COLOR_BLUE,
     fill_alpha: float = 0.25,
-    figsize: tuple[int, int] = (10, 10),
-    dpi: int = 300,
+    figsize: tuple[int, int] = (8, 8),
+    dpi: int = DEFAULT_CHART_DPI,
     y_limit: tuple[float, float] = (0, 100),
     y_ticks: list[int] | None = None,
     label_fontsize: int = 14,
@@ -258,11 +269,11 @@ def create_radar_chart(
 
     buffer = io.BytesIO()
     try:
-        fig.canvas.draw()
         fig.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
-        buffer.seek(0, io.SEEK_END)
+        buffer.seek(0)
     finally:
         plt.close(fig)
+        gc.collect()  # Force garbage collection after heavy matplotlib operation
 
     return buffer
 
@@ -271,8 +282,8 @@ def create_pie_chart(
     labels: list[str],
     values: list[float],
     colors: list[str] | None = None,
-    figsize: tuple[int, int] = (8, 8),
-    dpi: int = 300,
+    figsize: tuple[int, int] = (6, 6),
+    dpi: int = DEFAULT_CHART_DPI,
     autopct: str = "%1.1f%%",
     startangle: int = 90,
     title: str | None = None,
@@ -313,10 +324,11 @@ def create_pie_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
+        fig.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
         buffer.seek(0)
     finally:
         plt.close(fig)
+        gc.collect()  # Force garbage collection after heavy matplotlib operation
 
     return buffer
 
@@ -328,8 +340,8 @@ def create_stacked_bar_chart(
     xlabel: str = "",
     ylabel: str = "Count",
     title: str | None = None,
-    figsize: tuple[int, int] = (12, 8),
-    dpi: int = 300,
+    figsize: tuple[int, int] = (10, 6),
+    dpi: int = DEFAULT_CHART_DPI,
     rotation: int = 45,
     show_legend: bool = True,
 ) -> io.BytesIO:
@@ -383,9 +395,10 @@ def create_stacked_bar_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
+        fig.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
         buffer.seek(0)
     finally:
         plt.close(fig)
+        gc.collect()  # Force garbage collection after heavy matplotlib operation
 
     return buffer

@@ -4,9 +4,10 @@ from typing import Any, Callable
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import LongTable, Paragraph, Spacer, Table, TableStyle
 
 from .config import (
+    ALTERNATE_ROWS_MAX_SIZE,
     COLOR_BLUE,
     COLOR_BORDER_GRAY,
     COLOR_DARK_GRAY,
@@ -17,6 +18,7 @@ from .config import (
     COLOR_MEDIUM_RISK,
     COLOR_SAFE,
     COLOR_WHITE,
+    LONG_TABLE_THRESHOLD,
     PADDING_LARGE,
     PADDING_MEDIUM,
     PADDING_SMALL,
@@ -390,9 +392,13 @@ def create_data_table(
     header_color: colors.Color = COLOR_BLUE,
     alternate_rows: bool = True,
     normal_style: ParagraphStyle | None = None,
-) -> Table:
+) -> Table | LongTable:
     """
     Create a data table with configurable columns.
+
+    Uses LongTable for large datasets (>50 rows) for better memory efficiency
+    and page splitting. LongTable repeats headers on each page and has
+    optimized memory handling for large tables.
 
     Args:
         data (list[dict[str, Any]]): List of data dictionaries.
@@ -402,7 +408,7 @@ def create_data_table(
         normal_style (ParagraphStyle | None): ParagraphStyle for cell values.
 
     Returns:
-        Table: A styled Table with data.
+        Table or LongTable: A styled table with data.
     """
     # Build header row
     header_row = [col.header for col in columns]
@@ -423,7 +429,14 @@ def create_data_table(
         table_data.append(row)
 
     col_widths = [col.width for col in columns]
-    table = Table(table_data, colWidths=col_widths)
+
+    # Use LongTable for large datasets - it handles page breaks better
+    # and has optimized memory handling for tables with many rows
+    use_long_table = len(data) > LONG_TABLE_THRESHOLD
+    if use_long_table:
+        table = LongTable(table_data, colWidths=col_widths, repeatRows=1)
+    else:
+        table = Table(table_data, colWidths=col_widths)
 
     styles = [
         ("BACKGROUND", (0, 0), (-1, 0), header_color),
@@ -443,8 +456,12 @@ def create_data_table(
     for idx, col in enumerate(columns):
         styles.append(("ALIGN", (idx, 0), (idx, -1), col.align))
 
-    # Alternate row backgrounds
-    if alternate_rows and len(table_data) > 1:
+    # Alternate row backgrounds - skip for very large tables as it adds memory overhead
+    if (
+        alternate_rows
+        and len(table_data) > 1
+        and len(table_data) <= ALTERNATE_ROWS_MAX_SIZE
+    ):
         for i in range(1, len(table_data)):
             if i % 2 == 0:
                 styles.append(

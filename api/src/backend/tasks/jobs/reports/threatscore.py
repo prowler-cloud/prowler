@@ -213,8 +213,17 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
                 if req.total_findings == 0:
                     continue
 
-                risk_level = getattr(m, "LevelOfRisk", 0)
-                weight = getattr(m, "Weight", 0)
+                risk_level_raw = getattr(m, "LevelOfRisk", 0)
+                weight_raw = getattr(m, "Weight", 0)
+                # Ensure numeric types for calculations (compliance data may have str)
+                try:
+                    risk_level = int(risk_level_raw) if risk_level_raw else 0
+                except (ValueError, TypeError):
+                    risk_level = 0
+                try:
+                    weight = int(weight_raw) if weight_raw else 0
+                except (ValueError, TypeError):
+                    weight = 0
 
                 # ThreatScore formula components
                 rate_i = req.passed_findings / req.total_findings
@@ -281,8 +290,17 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
             if meta:
                 m = meta[0]
-                risk_level = getattr(m, "LevelOfRisk", 0)
-                weight = getattr(m, "Weight", 0)
+                risk_level_raw = getattr(m, "LevelOfRisk", 0)
+                weight_raw = getattr(m, "Weight", 0)
+                # Ensure numeric types for calculations (compliance data may have str)
+                try:
+                    risk_level = int(risk_level_raw) if risk_level_raw else 0
+                except (ValueError, TypeError):
+                    risk_level = 0
+                try:
+                    weight = int(weight_raw) if weight_raw else 0
+                except (ValueError, TypeError):
+                    weight = 0
 
                 rate_i = req.passed_findings / req.total_findings
                 rfac_i = 1 + 0.25 * risk_level
@@ -320,8 +338,17 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
             if meta:
                 m = meta[0]
-                risk_level = getattr(m, "LevelOfRisk", 0)
-                weight = getattr(m, "Weight", 0)
+                risk_level_raw = getattr(m, "LevelOfRisk", 0)
+                weight_raw = getattr(m, "Weight", 0)
+                # Ensure numeric types for calculations (compliance data may have str)
+                try:
+                    risk_level = int(risk_level_raw) if risk_level_raw else 0
+                except (ValueError, TypeError):
+                    risk_level = 0
+                try:
+                    weight = int(weight_raw) if weight_raw else 0
+                except (ValueError, TypeError):
+                    weight = 0
 
                 if risk_level >= min_risk_level:
                     critical.append(
