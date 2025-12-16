@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws servicecatalog create-portfolio-share --portfolio-id <portfolio-id> --organization-ids <org-id>",
       "NativeIaC": "```yaml\n# CloudFormation: Share Service Catalog portfolio only within the AWS Organization\nResources:\n  <example_resource_name>:\n    Type: AWS::ServiceCatalog::PortfolioShare\n    Properties:\n      PortfolioId: <example_resource_id>\n      OrganizationNode:               # CRITICAL: share within AWS Organizations\n        Type: ORGANIZATION            # Shares the portfolio with the entire org\n        Value: <example_resource_id>  # e.g., o-xxxxxxxxxx\n```",
       "Other": "1. In the AWS Console, go to Service Catalog > Portfolios and open the target portfolio\n2. Open the Shares/Sharing tab\n3. Remove every share of Type \"Account\" (stop sharing with each account)\n4. Click Share, choose \"AWS Organizations\", set Type to \"Organization\", enter your Org ID (o-xxxxxxxxxx), and share\n5. Verify no remaining shares of Type \"Account\" exist",
       "Terraform": "```hcl\n# Share Service Catalog portfolio only within the AWS Organization\nresource \"aws_servicecatalog_portfolio_share\" \"<example_resource_name>\" {\n  portfolio_id = \"<example_resource_id>\"\n\n  organization_node {           # CRITICAL: share within AWS Organizations\n    type  = \"ORGANIZATION\"     # Shares the portfolio with the entire org\n    value = \"<example_resource_id>\"  # e.g., o-xxxxxxxxxx\n  }\n}\n```"
