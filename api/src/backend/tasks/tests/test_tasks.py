@@ -4,6 +4,10 @@ from unittest.mock import MagicMock, patch
 import openai
 import pytest
 from botocore.exceptions import ClientError
+from tasks.jobs.lighthouse_providers import (
+    _create_bedrock_client,
+    _extract_bedrock_credentials,
+)
 from tasks.tasks import (
     _perform_scan_complete_tasks,
     check_integrations_task,
@@ -19,6 +23,198 @@ from api.models import (
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
 )
+
+
+@pytest.mark.django_db
+class TestExtractBedrockCredentials:
+    """Unit tests for _extract_bedrock_credentials helper function."""
+
+    def test_extract_access_key_credentials(self, tenants_fixture):
+        """Test extraction of access key + secret key credentials."""
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        provider_cfg.save()
+
+        result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is not None
+        assert result["access_key_id"] == "AKIAIOSFODNN7EXAMPLE"
+        assert result["secret_access_key"] == "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        assert result["region"] == "us-east-1"
+        assert "api_key" not in result
+
+    def test_extract_api_key_credentials(self, tenants_fixture):
+        """Test extraction of API key (bearer token) credentials."""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {
+            "api_key": valid_api_key,
+            "region": "us-west-2",
+        }
+        provider_cfg.save()
+
+        result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is not None
+        assert result["api_key"] == valid_api_key
+        assert result["region"] == "us-west-2"
+        assert "access_key_id" not in result
+        assert "secret_access_key" not in result
+
+    def test_api_key_takes_precedence_over_access_keys(self, tenants_fixture):
+        """Test that API key is preferred when both auth methods are present."""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("B" * 110)
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {
+            "api_key": valid_api_key,
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "eu-west-1",
+        }
+        provider_cfg.save()
+
+        result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is not None
+        assert result["api_key"] == valid_api_key
+        assert result["region"] == "eu-west-1"
+        assert "access_key_id" not in result
+
+    def test_missing_region_returns_none(self, tenants_fixture):
+        """Test that missing region returns None."""
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {
+            "api_key": "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110),
+        }
+        provider_cfg.save()
+
+        result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is None
+
+    def test_empty_credentials_returns_none(self, tenants_fixture):
+        """Test that empty credentials dict returns None (region only is not enough)."""
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        # Only region, no auth credentials - should return None
+        provider_cfg.credentials_decoded = {
+            "region": "us-east-1",
+        }
+        provider_cfg.save()
+
+        result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is None
+
+    def test_non_dict_credentials_returns_none(self, tenants_fixture):
+        """Test that non-dict credentials returns None."""
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+            is_active=True,
+        )
+        # Store valid credentials first to pass model validation
+        provider_cfg.credentials_decoded = {
+            "api_key": "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110),
+            "region": "us-east-1",
+        }
+        provider_cfg.save()
+
+        # Mock the credentials_decoded property to return a non-dict value
+        # This simulates corrupted/invalid stored data
+        with patch.object(
+            type(provider_cfg),
+            "credentials_decoded",
+            new_callable=lambda: property(lambda self: "invalid"),
+        ):
+            result = _extract_bedrock_credentials(provider_cfg)
+
+        assert result is None
+
+
+class TestCreateBedrockClient:
+    """Unit tests for _create_bedrock_client helper function."""
+
+    @patch("tasks.jobs.lighthouse_providers.boto3.client")
+    def test_create_client_with_access_keys(self, mock_boto_client):
+        """Test creating client with access key authentication."""
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+
+        creds = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+
+        result = _create_bedrock_client(creds)
+
+        assert result == mock_client
+        mock_boto_client.assert_called_once_with(
+            service_name="bedrock",
+            region_name="us-east-1",
+            aws_access_key_id="AKIAIOSFODNN7EXAMPLE",
+            aws_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        )
+
+    @patch("tasks.jobs.lighthouse_providers.Config")
+    @patch("tasks.jobs.lighthouse_providers.boto3.client")
+    def test_create_client_with_api_key(self, mock_boto_client, mock_config):
+        """Test creating client with API key authentication."""
+        mock_client = MagicMock()
+        mock_events = MagicMock()
+        mock_client.meta.events = mock_events
+        mock_boto_client.return_value = mock_client
+        mock_config_instance = MagicMock()
+        mock_config.return_value = mock_config_instance
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+
+        creds = {
+            "api_key": valid_api_key,
+            "region": "us-west-2",
+        }
+
+        result = _create_bedrock_client(creds)
+
+        assert result == mock_client
+        mock_boto_client.assert_called_once_with(
+            service_name="bedrock",
+            region_name="us-west-2",
+            config=mock_config_instance,
+        )
+        mock_events.register.assert_called_once()
+        call_args = mock_events.register.call_args
+        assert call_args[0][0] == "before-send.*.*"
+
+        # Verify handler injects bearer token
+        handler_fn = call_args[0][1]
+        mock_request = MagicMock()
+        mock_request.headers = {}
+        handler_fn(mock_request)
+        assert mock_request.headers["Authorization"] == f"Bearer {valid_api_key}"
 
 
 # TODO Move this to outputs/reports jobs
@@ -529,6 +725,7 @@ class TestGenerateOutputs:
 
 
 class TestScanCompleteTasks:
+    @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
@@ -541,12 +738,18 @@ class TestScanCompleteTasks:
         mock_outputs_task,
         mock_scan_summary_task,
         mock_compliance_requirements_task,
+        mock_attack_surface_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
 
         # Verify compliance requirements task is called
         mock_compliance_requirements_task.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+        )
+
+        # Verify attack surface task is called
+        mock_attack_surface_task.assert_called_once_with(
             kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
         )
 
@@ -1145,6 +1348,16 @@ class TestCheckLighthouseProviderConnectionTask:
                 None,
                 {"connected": True, "error": None},
             ),
+            # Bedrock API key authentication
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "api_key": "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110),
+                    "region": "us-east-1",
+                },
+                None,
+                {"connected": True, "error": None},
+            ),
         ],
     )
     def test_check_connection_success_all_providers(
@@ -1210,6 +1423,24 @@ class TestCheckLighthouseProviderConnectionTask:
                 None,
                 ClientError(
                     {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                    "list_foundation_models",
+                ),
+            ),
+            # Bedrock API key authentication failure
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "api_key": "ABSKQmVkcm9ja0FQSUtleS" + ("X" * 110),
+                    "region": "us-east-1",
+                },
+                None,
+                ClientError(
+                    {
+                        "Error": {
+                            "Code": "UnrecognizedClientException",
+                            "Message": "Invalid API key",
+                        }
+                    },
                     "list_foundation_models",
                 ),
             ),
@@ -1335,6 +1566,17 @@ class TestRefreshLighthouseProviderModelsTask:
                 },
                 None,
                 {"openai.gpt-oss-120b-1:0": "gpt-oss-120b"},
+                1,
+            ),
+            # Bedrock API key authentication
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "api_key": "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110),
+                    "region": "us-east-1",
+                },
+                None,
+                {"anthropic.claude-v3": "Claude 3"},
                 1,
             ),
         ],

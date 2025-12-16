@@ -155,7 +155,6 @@ export const SignUpForm = ({
             type="email"
             label="Email"
             placeholder="Enter your email"
-            showFormMessage
           />
           <CustomInput control={form.control} name="password" password />
           <PasswordRequirementsMessage password={passwordValue || ""} />

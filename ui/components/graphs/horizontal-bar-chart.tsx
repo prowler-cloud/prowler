@@ -3,6 +3,8 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { SEVERITY_ORDER } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
 import { BarDataPoint } from "./types";
@@ -11,14 +13,12 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
-  labelWidth?: string;
   onBarClick?: (dataPoint: BarDataPoint, index: number) => void;
 }
 
 export function HorizontalBarChart({
   data,
   title,
-  labelWidth = "w-20",
   onBarClick,
 }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -64,8 +64,10 @@ export function HorizontalBarChart({
           return (
             <div
               key={item.name}
-              className="flex items-center gap-10"
-              style={{ cursor: isClickable ? "pointer" : "default" }}
+              className={cn(
+                "flex items-center gap-6",
+                isClickable && "cursor-pointer",
+              )}
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
@@ -89,7 +91,7 @@ export function HorizontalBarChart({
               }}
             >
               {/* Label */}
-              <div className={`w-20 md:${labelWidth} shrink-0`}>
+              <div className="w-20 shrink-0">
                 <span
                   className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
@@ -130,7 +132,9 @@ export function HorizontalBarChart({
                         <p className="text-text-neutral-primary text-xs leading-5 font-medium">
                           {item.value.toLocaleString()}{" "}
                           {item.name === "Informational" ? "Info" : item.name}{" "}
-                          Risk
+                          {item.name === "Fail" || item.name === "Pass"
+                            ? "Findings"
+                            : "Risk"}
                         </p>
                       </div>
 
