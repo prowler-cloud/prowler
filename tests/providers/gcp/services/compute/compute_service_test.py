@@ -242,7 +242,9 @@ class TestComputeService:
             )
             assert zonal_mig is not None
             assert zonal_mig.id.__class__.__name__ == "str"
-            assert zonal_mig.region == "zone1"  # zone1 has no hyphen so region is "zone1"
+            assert (
+                zonal_mig.region == "zone1"
+            )  # zone1 has no hyphen so region is "zone1"
             assert zonal_mig.zone == "zone1"
             assert len(zonal_mig.zones) == 1
             assert "zone1" in zonal_mig.zones
