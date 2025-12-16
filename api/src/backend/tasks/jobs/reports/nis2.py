@@ -1,10 +1,3 @@
-"""
-NIS2 Directive PDF report generator.
-
-This module provides the NIS2ReportGenerator class for generating
-NIS2 Directive (EU) 2022/2555 compliance PDF reports.
-"""
-
 import os
 from collections import defaultdict
 
@@ -28,6 +21,28 @@ from .config import (
     NIS2_SECTION_TITLES,
     NIS2_SECTIONS,
 )
+
+
+def _extract_section_number(section_string: str) -> str:
+    """Extract the section number from a full NIS2 section title.
+
+    NIS2 section strings are formatted like:
+    "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS..."
+
+    This function extracts just the leading number.
+
+    Args:
+        section_string: Full section title string.
+
+    Returns:
+        Section number as string (e.g., "1", "2", "11").
+    """
+    if not section_string:
+        return "Other"
+    parts = section_string.split()
+    if parts and parts[0].isdigit():
+        return parts[0]
+    return "Other"
 
 
 class NIS2ReportGenerator(BaseComplianceReportGenerator):
@@ -245,23 +260,25 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
         elements.append(Paragraph("Requirements Index", self.styles["h1"]))
         elements.append(Spacer(1, 0.1 * inch))
 
-        # Organize by section and subsection
+        # Organize by section number and subsection
         sections = {}
         for req in data.requirements:
             req_attrs = data.attributes_by_requirement_id.get(req.id, {})
             meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
             if meta:
                 m = meta[0]
-                section = getattr(m, "Section", "Other")
+                full_section = getattr(m, "Section", "Other")
+                # Extract section number from full title (e.g., "1 POLICY..." -> "1")
+                section_num = _extract_section_number(full_section)
                 subsection = getattr(m, "SubSection", "")
                 description = getattr(m, "Description", req.description)
 
-                if section not in sections:
-                    sections[section] = {}
-                if subsection not in sections[section]:
-                    sections[section][subsection] = []
+                if section_num not in sections:
+                    sections[section_num] = {}
+                if subsection not in sections[section_num]:
+                    sections[section_num][subsection] = []
 
-                sections[section][subsection].append(
+                sections[section_num][subsection].append(
                     {
                         "id": req.id,
                         "description": description,
@@ -279,7 +296,13 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
 
             for subsection_name, reqs in sections[section].items():
                 if subsection_name:
-                    elements.append(Paragraph(subsection_name, self.styles["h3"]))
+                    # Truncate long subsection names for display
+                    display_subsection = (
+                        subsection_name[:80] + "..."
+                        if len(subsection_name) > 80
+                        else subsection_name
+                    )
+                    elements.append(Paragraph(display_subsection, self.styles["h3"]))
 
                 for req in reqs:
                     status_indicator = (
@@ -324,10 +347,12 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
             meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
             if meta:
                 m = meta[0]
-                section = getattr(m, "Section", "Other")
-                section_scores[section]["total"] += 1
+                full_section = getattr(m, "Section", "Other")
+                # Extract section number from full title (e.g., "1 POLICY..." -> "1")
+                section_num = _extract_section_number(full_section)
+                section_scores[section_num]["total"] += 1
                 if req.status == StatusChoices.PASS:
-                    section_scores[section]["passed"] += 1
+                    section_scores[section_num]["passed"] += 1
 
         # Build labels and values in NIS2 section order
         labels = []
@@ -364,9 +389,20 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
             meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
             if meta:
                 m = meta[0]
-                section = getattr(m, "Section", "")
+                full_section = getattr(m, "Section", "")
                 subsection = getattr(m, "SubSection", "")
-                key = f"{section}.{subsection}" if subsection else section
+                # Use section number + subsection for grouping
+                section_num = _extract_section_number(full_section)
+                # Create a shorter key using section number
+                if subsection:
+                    # Extract subsection number if present (e.g., "1.1 Policy..." -> "1.1")
+                    subsection_parts = subsection.split()
+                    if subsection_parts:
+                        key = subsection_parts[0]  # Just the number like "1.1"
+                    else:
+                        key = f"{section_num}"
+                else:
+                    key = section_num
 
                 if req.status == StatusChoices.PASS:
                     subsection_scores[key]["passed"] += 1
@@ -375,8 +411,10 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
                 else:
                     subsection_scores[key]["manual"] += 1
 
-        table_data = [["SubSection", "Passed", "Failed", "Manual", "Compliance"]]
-        for key, scores in sorted(subsection_scores.items()):
+        table_data = [["Section", "Passed", "Failed", "Manual", "Compliance"]]
+        for key, scores in sorted(
+            subsection_scores.items(), key=lambda x: self._sort_section_key(x[0])
+        ):
             total = scores["passed"] + scores["failed"]
             pct = (scores["passed"] / total * 100) if total > 0 else 100
             table_data.append(
@@ -391,7 +429,7 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
 
         table = Table(
             table_data,
-            colWidths=[2.5 * inch, 1 * inch, 1 * inch, 1 * inch, 1.5 * inch],
+            colWidths=[1.2 * inch, 0.9 * inch, 0.9 * inch, 0.9 * inch, 1.2 * inch],
         )
         table.setStyle(
             TableStyle(
@@ -401,7 +439,6 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
                     ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
                     ("FONTSIZE", (0, 0), (-1, 0), 10),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("ALIGN", (0, 1), (0, -1), "LEFT"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("FONTSIZE", (0, 1), (-1, -1), 9),
                     ("GRID", (0, 0), (-1, -1), 0.5, COLOR_GRID_GRAY),
@@ -420,3 +457,14 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
         )
 
         return table
+
+    def _sort_section_key(self, key: str) -> tuple:
+        """Sort section keys numerically (e.g., 1, 1.1, 1.2, 2, 11)."""
+        parts = key.split(".")
+        result = []
+        for part in parts:
+            try:
+                result.append(int(part))
+            except ValueError:
+                result.append(float("inf"))
+        return tuple(result)

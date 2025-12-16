@@ -1,14 +1,8 @@
-"""
-ENS RD2022 PDF report generator.
-
-This module provides the ENSReportGenerator class for generating
-ENS (Esquema Nacional de Seguridad) compliance PDF reports.
-"""
-
 import os
 from collections import defaultdict
 
 from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, TableStyle
 
@@ -20,18 +14,21 @@ from .components import get_color_for_compliance
 from .config import (
     COLOR_BG_BLUE,
     COLOR_BLUE,
+    COLOR_BORDER_GRAY,
     COLOR_ENS_ALTO,
     COLOR_ENS_AUTO,
     COLOR_ENS_BAJO,
     COLOR_ENS_MANUAL,
     COLOR_ENS_MEDIO,
     COLOR_ENS_OPCIONAL,
+    COLOR_ENS_TIPO,
     COLOR_GRAY,
     COLOR_GRID_GRAY,
     COLOR_HIGH_RISK,
     COLOR_SAFE,
     COLOR_WHITE,
     DIMENSION_KEYS,
+    DIMENSION_MAPPING,
     DIMENSION_NAMES,
     ENS_NIVEL_ORDER,
     ENS_TIPO_ORDER,
@@ -264,7 +261,7 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         elements.append(Spacer(1, 0.3 * inch))
 
         # Compliance by Nivel
-        elements.append(self._create_nivel_table(data))
+        elements.extend(self._create_nivel_table(data))
 
         return elements
 
@@ -280,18 +277,23 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         """
         elements = []
 
-        # Marco/Category chart
+        # Critical failed requirements section (nivel alto) - new page
+        elements.append(PageBreak())
+        elements.extend(self._create_critical_failed_section(data))
+
+        # Marco y Categorías chart - new page
+        elements.append(PageBreak())
         elements.append(
             Paragraph("Análisis por Marcos y Categorías", self.styles["h1"])
         )
         elements.append(Spacer(1, 0.2 * inch))
 
-        chart_buffer = self._create_marco_category_chart(data)
-        chart_image = Image(chart_buffer, width=7 * inch, height=5 * inch)
-        elements.append(chart_image)
-        elements.append(PageBreak())
+        marco_cat_chart = self._create_marco_category_chart(data)
+        marco_cat_image = Image(marco_cat_chart, width=7 * inch, height=5.5 * inch)
+        elements.append(marco_cat_image)
 
-        # Security dimensions radar chart
+        # Security dimensions radar chart - new page
+        elements.append(PageBreak())
         elements.append(
             Paragraph("Análisis por Dimensiones de Seguridad", self.styles["h1"])
         )
@@ -303,11 +305,7 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         elements.append(PageBreak())
 
         # Type distribution
-        elements.append(self._create_tipo_section(data))
-        elements.append(PageBreak())
-
-        # Execution mode distribution
-        elements.append(self._create_execution_mode_section(data))
+        elements.extend(self._create_tipo_section(data))
 
         return elements
 
@@ -514,8 +512,9 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         return elements
 
     def _create_marco_category_chart(self, data: ComplianceData):
-        """Create Marco/Category compliance chart."""
-        marco_scores = defaultdict(lambda: {"passed": 0, "total": 0})
+        """Create Marco - Categoría combined compliance chart."""
+        # Group by marco + categoria combination
+        marco_cat_scores = defaultdict(lambda: {"passed": 0, "total": 0})
 
         for req in data.requirements:
             if req.status == StatusChoices.MANUAL:
@@ -525,23 +524,26 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
             if meta:
                 m = meta[0]
-                marco = getattr(m, "Marco", "Otros")
-                marco_scores[marco]["total"] += 1
+                marco = getattr(m, "Marco", "otros")
+                categoria = getattr(m, "Categoria", "sin categoría")
+                # Combined key: "marco - categoría"
+                key = f"{marco} - {categoria}"
+                marco_cat_scores[key]["total"] += 1
                 if req.status == StatusChoices.PASS:
-                    marco_scores[marco]["passed"] += 1
+                    marco_cat_scores[key]["passed"] += 1
 
         labels = []
         values = []
-        for marco, scores in sorted(marco_scores.items()):
+        for key, scores in sorted(marco_cat_scores.items()):
             if scores["total"] > 0:
                 pct = (scores["passed"] / scores["total"]) * 100
-                labels.append(marco)
+                labels.append(key)
                 values.append(pct)
 
         return create_horizontal_bar_chart(
             labels=labels,
             values=values,
-            xlabel="Cumplimiento (%)",
+            xlabel="Porcentaje de Cumplimiento (%)",
         )
 
     def _create_dimensions_radar_chart(self, data: ComplianceData):
@@ -644,76 +646,358 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         elements.append(table)
         return elements
 
-    def _create_execution_mode_section(self, data: ComplianceData) -> list:
-        """Create execution mode distribution section."""
+    def _create_critical_failed_section(self, data: ComplianceData) -> list:
+        """Create section for critical failed requirements (nivel alto)."""
         elements = []
+
         elements.append(
-            Paragraph("Distribución por Modo de Ejecución", self.styles["h1"])
+            Paragraph("Requisitos Críticos No Cumplidos", self.styles["h1"])
         )
         elements.append(Spacer(1, 0.2 * inch))
 
-        mode_data = defaultdict(lambda: {"passed": 0, "total": 0})
+        # Get failed requirements with nivel alto
+        critical_failed = []
         for req in data.requirements:
+            if req.status != StatusChoices.FAIL:
+                continue
+
             req_attrs = data.attributes_by_requirement_id.get(req.id, {})
             meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
             if meta:
                 m = meta[0]
-                mode = getattr(m, "ModoEjecucion", "").lower()
-                mode_data[mode]["total"] += 1
-                if req.status == StatusChoices.PASS:
-                    mode_data[mode]["passed"] += 1
+                nivel = getattr(m, "Nivel", "").lower()
+                if nivel == "alto":
+                    critical_failed.append(
+                        {
+                            "id": req.id,
+                            "descripcion": getattr(
+                                m, "DescripcionControl", req.description
+                            ),
+                            "marco": getattr(m, "Marco", ""),
+                            "categoria": getattr(m, "Categoria", ""),
+                            "tipo": getattr(m, "Tipo", ""),
+                        }
+                    )
 
-        table_data = [["Modo", "Cumplidos", "Total", "Porcentaje"]]
-        mode_colors = {"automatico": COLOR_ENS_AUTO, "manual": COLOR_ENS_MANUAL}
-
-        for mode in ["automatico", "manual"]:
-            if mode in mode_data:
-                d = mode_data[mode]
-                pct = (d["passed"] / d["total"] * 100) if d["total"] > 0 else 0
-                table_data.append(
-                    [
-                        mode.capitalize(),
-                        str(d["passed"]),
-                        str(d["total"]),
-                        f"{pct:.1f}%",
-                    ]
+        if not critical_failed:
+            elements.append(
+                Paragraph(
+                    "✅ No hay requisitos críticos (nivel ALTO) que hayan fallado.",
+                    self.styles["normal"],
                 )
+            )
+            return elements
+
+        elements.append(
+            Paragraph(
+                f"Se encontraron <b>{len(critical_failed)} requisitos de nivel ALTO</b> "
+                "que no cumplen y requieren atención inmediata:",
+                self.styles["normal"],
+            )
+        )
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Create table - use a cell style without leftIndent for proper alignment
+        cell_style = ParagraphStyle(
+            "CellStyle",
+            parent=self.styles["normal"],
+            leftIndent=0,
+            spaceBefore=0,
+            spaceAfter=0,
+        )
+        table_data: list = [["ID Requisito", "Marco", "Categoría", "Tipo"]]
+        for req in critical_failed:
+            table_data.append(
+                [
+                    req["id"],
+                    req["marco"],
+                    Paragraph(req["categoria"], cell_style),
+                    req["tipo"].capitalize() if req["tipo"] else "",
+                ]
+            )
 
         table = Table(
-            table_data, colWidths=[2 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch]
+            table_data,
+            colWidths=[2 * inch, 1.5 * inch, 1.8 * inch, 1.2 * inch],
         )
         table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), COLOR_BLUE),
+                    ("BACKGROUND", (0, 0), (-1, 0), COLOR_ENS_ALTO),
                     ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
                     ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 10),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("GRID", (0, 0), (-1, -1), 1, COLOR_GRID_GRAY),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 6),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("FONTSIZE", (0, 1), (-1, -1), 9),
+                    ("GRID", (0, 0), (-1, -1), 0.5, COLOR_GRID_GRAY),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [COLOR_WHITE, colors.Color(1.0, 0.95, 0.95)],
+                    ),
                 ]
             )
         )
+        elements.append(table)
 
-        # Color mode column
-        for idx, mode in enumerate(["automatico", "manual"]):
-            if mode in mode_data:
-                row_idx = idx + 1
-                if row_idx < len(table_data):
-                    color = mode_colors.get(mode, COLOR_GRAY)
-                    table.setStyle(
-                        TableStyle(
+        return elements
+
+    def create_detailed_findings(self, data: ComplianceData, **kwargs) -> list:
+        """
+        Create detailed findings section with ENS-specific format.
+
+        Shows each failed requirement with:
+        - Requirement ID as title
+        - Status, Nivel, Tipo, ModoEjecucion badges
+        - Dimensiones badges
+        - Info table with Descripción, Marco, Categoría, etc.
+
+        Args:
+            data: Aggregated compliance data.
+            **kwargs: Additional options.
+
+        Returns:
+            List of ReportLab elements.
+        """
+        elements = []
+
+        elements.append(Paragraph("Detalle de Requisitos", self.styles["h1"]))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Get failed requirements (non-manual)
+        failed_requirements = [
+            r for r in data.requirements if r.status == StatusChoices.FAIL
+        ]
+
+        if not failed_requirements:
+            elements.append(
+                Paragraph(
+                    "No hay requisitos fallidos para mostrar.",
+                    self.styles["normal"],
+                )
+            )
+            return elements
+
+        elements.append(
+            Paragraph(
+                f"Se muestran {len(failed_requirements)} requisitos que requieren "
+                "atención:",
+                self.styles["normal"],
+            )
+        )
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Nivel colors mapping
+        nivel_colors = {
+            "alto": COLOR_ENS_ALTO,
+            "medio": COLOR_ENS_MEDIO,
+            "bajo": COLOR_ENS_BAJO,
+            "opcional": COLOR_ENS_OPCIONAL,
+        }
+
+        for req in failed_requirements:
+            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
+            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
+
+            if not meta:
+                continue
+
+            m = meta[0]
+            nivel = getattr(m, "Nivel", "").lower()
+            tipo = getattr(m, "Tipo", "")
+            modo = getattr(m, "ModoEjecucion", "")
+            dimensiones = getattr(m, "Dimensiones", [])
+            descripcion = getattr(m, "DescripcionControl", req.description)
+            marco = getattr(m, "Marco", "")
+            categoria = getattr(m, "Categoria", "")
+            id_grupo = getattr(m, "IdGrupoControl", "")
+
+            # Requirement ID title
+            req_title = Table([[req.id]], colWidths=[6.5 * inch])
+            req_title.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, 0), COLOR_BG_BLUE),
+                        ("TEXTCOLOR", (0, 0), (0, 0), COLOR_BLUE),
+                        ("FONTNAME", (0, 0), (0, 0), "FiraCode"),
+                        ("FONTSIZE", (0, 0), (0, 0), 14),
+                        ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                        ("BOX", (0, 0), (-1, -1), 2, COLOR_BLUE),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                        ("TOPPADDING", (0, 0), (-1, -1), 10),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ]
+                )
+            )
+            elements.append(req_title)
+            elements.append(Spacer(1, 0.15 * inch))
+
+            # Status and Nivel badges row
+            status_color = COLOR_HIGH_RISK  # FAIL
+            nivel_color = nivel_colors.get(nivel, COLOR_GRAY)
+
+            badges_row1 = [
+                ["State:", "FAIL", "", f"Nivel: {nivel.upper()}"],
+            ]
+            badges_table1 = Table(
+                badges_row1,
+                colWidths=[0.7 * inch, 0.8 * inch, 1.5 * inch, 1.5 * inch],
+            )
+            badges_table1.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                        ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                        ("BACKGROUND", (1, 0), (1, 0), status_color),
+                        ("TEXTCOLOR", (1, 0), (1, 0), COLOR_WHITE),
+                        ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
+                        ("BACKGROUND", (3, 0), (3, 0), nivel_color),
+                        ("TEXTCOLOR", (3, 0), (3, 0), COLOR_WHITE),
+                        ("FONTNAME", (3, 0), (3, 0), "FiraCode"),
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 11),
+                        ("GRID", (0, 0), (1, 0), 0.5, colors.black),
+                        ("GRID", (3, 0), (3, 0), 0.5, colors.black),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                        ("TOPPADDING", (0, 0), (-1, -1), 8),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ]
+                )
+            )
+            elements.append(badges_table1)
+            elements.append(Spacer(1, 0.1 * inch))
+
+            # Tipo and Modo badges row
+            tipo_display = f"☰ {tipo.capitalize()}" if tipo else "N/A"
+            modo_display = f"☰ {modo.capitalize()}" if modo else "N/A"
+            modo_color = (
+                COLOR_ENS_AUTO if modo.lower() == "automatico" else COLOR_ENS_MANUAL
+            )
+
+            badges_row2 = [[tipo_display, "", modo_display]]
+            badges_table2 = Table(
+                badges_row2, colWidths=[2.2 * inch, 0.5 * inch, 2.2 * inch]
+            )
+            badges_table2.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, 0), COLOR_ENS_TIPO),
+                        ("TEXTCOLOR", (0, 0), (0, 0), COLOR_WHITE),
+                        ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                        ("BACKGROUND", (2, 0), (2, 0), modo_color),
+                        ("TEXTCOLOR", (2, 0), (2, 0), COLOR_WHITE),
+                        ("FONTNAME", (2, 0), (2, 0), "PlusJakartaSans"),
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 11),
+                        ("GRID", (0, 0), (0, 0), 0.5, colors.black),
+                        ("GRID", (2, 0), (2, 0), 0.5, colors.black),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                        ("TOPPADDING", (0, 0), (-1, -1), 8),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ]
+                )
+            )
+            elements.append(badges_table2)
+            elements.append(Spacer(1, 0.1 * inch))
+
+            # Dimensiones badges
+            if dimensiones:
+                if isinstance(dimensiones, str):
+                    dim_list = [d.strip().lower() for d in dimensiones.split(",")]
+                else:
+                    dim_list = [
+                        d.lower() if isinstance(d, str) else str(d) for d in dimensiones
+                    ]
+
+                dim_badges = []
+                for dim in dim_list:
+                    if dim in DIMENSION_MAPPING:
+                        abbrev, dim_color = DIMENSION_MAPPING[dim]
+                        dim_badges.append((abbrev, dim_color))
+
+                if dim_badges:
+                    dim_label = [["Dimensiones:"] + [b[0] for b in dim_badges]]
+                    dim_widths = [1.2 * inch] + [0.4 * inch] * len(dim_badges)
+                    dim_table = Table(dim_label, colWidths=dim_widths)
+
+                    dim_styles = [
+                        ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 11),
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ]
+                    for idx, (_, dim_color) in enumerate(dim_badges):
+                        col_idx = idx + 1
+                        dim_styles.extend(
                             [
-                                ("BACKGROUND", (0, row_idx), (0, row_idx), color),
-                                ("TEXTCOLOR", (0, row_idx), (0, row_idx), COLOR_WHITE),
+                                (
+                                    "BACKGROUND",
+                                    (col_idx, 0),
+                                    (col_idx, 0),
+                                    dim_color,
+                                ),
+                                ("TEXTCOLOR", (col_idx, 0), (col_idx, 0), COLOR_WHITE),
+                                ("FONTNAME", (col_idx, 0), (col_idx, 0), "FiraCode"),
+                                ("GRID", (col_idx, 0), (col_idx, 0), 0.5, colors.black),
                             ]
                         )
-                    )
 
-        elements.append(table)
+                    dim_table.setStyle(TableStyle(dim_styles))
+                    elements.append(dim_table)
+                    elements.append(Spacer(1, 0.15 * inch))
+
+            # Info table - use Paragraph for text wrapping
+            info_data = [
+                [
+                    "Descripción:",
+                    Paragraph(descripcion, self.styles["normal_center"]),
+                ],
+                ["Marco:", marco],
+                [
+                    "Categoría:",
+                    Paragraph(categoria, self.styles["normal_center"]),
+                ],
+                ["ID Grupo Control:", id_grupo],
+            ]
+            info_table = Table(info_data, colWidths=[2 * inch, 4.5 * inch])
+            info_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, -1), COLOR_BLUE),
+                        ("TEXTCOLOR", (0, 0), (0, -1), COLOR_WHITE),
+                        ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                        ("FONTSIZE", (0, 0), (0, -1), 10),
+                        ("BACKGROUND", (1, 0), (1, -1), COLOR_BG_BLUE),
+                        ("TEXTCOLOR", (1, 0), (1, -1), COLOR_GRAY),
+                        ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
+                        ("FONTSIZE", (1, 0), (1, -1), 10),
+                        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                        ("ALIGN", (1, 0), (1, -1), "LEFT"),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("GRID", (0, 0), (-1, -1), 1, COLOR_BORDER_GRAY),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ]
+                )
+            )
+            elements.append(info_table)
+            elements.append(Spacer(1, 0.3 * inch))
+
         return elements

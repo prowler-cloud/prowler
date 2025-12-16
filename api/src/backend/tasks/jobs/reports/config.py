@@ -1,10 +1,3 @@
-"""
-Framework configuration and color constants for PDF compliance reports.
-
-This module provides centralized configuration for all compliance framework
-PDF report generators, including colors, sections, and framework-specific settings.
-"""
-
 from dataclasses import dataclass, field
 
 from reportlab.lib import colors
@@ -262,9 +255,9 @@ def get_framework_config(compliance_id: str) -> FrameworkConfig | None:
 
     if "threatscore" in compliance_lower:
         return FRAMEWORK_REGISTRY["prowler_threatscore"]
-    elif "ens" in compliance_lower:
+    if "ens" in compliance_lower:
         return FRAMEWORK_REGISTRY["ens"]
-    elif "nis2" in compliance_lower:
+    if "nis2" in compliance_lower:
         return FRAMEWORK_REGISTRY["nis2"]
 
     return None

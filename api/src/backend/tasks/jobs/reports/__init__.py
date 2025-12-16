@@ -1,37 +1,3 @@
-"""
-Compliance PDF Report Generation Framework.
-
-This package provides a modular, extensible framework for generating
-PDF compliance reports. It uses the Strategy Pattern with Template Method
-to allow easy addition of new compliance frameworks.
-
-Example usage for creating a new framework report:
-
-    from tasks.jobs.reports import (
-        BaseComplianceReportGenerator,
-        ComplianceData,
-        FrameworkConfig,
-        create_horizontal_bar_chart,
-        create_status_badge,
-    )
-
-    class CISReportGenerator(BaseComplianceReportGenerator):
-        def create_executive_summary(self, data: ComplianceData) -> list:
-            # CIS-specific implementation
-            ...
-
-        def create_charts_section(self, data: ComplianceData) -> list:
-            chart = create_horizontal_bar_chart(...)
-            ...
-
-        def create_requirements_index(self, data: ComplianceData) -> list:
-            ...
-
-    # Register in config.py and use:
-    generator = CISReportGenerator(FRAMEWORK_REGISTRY["cis"])
-    generator.generate(tenant_id, scan_id, compliance_id, output_path, provider_id)
-"""
-
 # Base classes and data structures
 from .base import (
     BaseComplianceReportGenerator,
@@ -51,7 +17,9 @@ from .charts import (
 )
 
 # Reusable components
-from .components import (  # Color helpers; Badge components; Risk component; Table components; Section components
+# Reusable components: Color helpers, Badge components, Risk component,
+# Table components, Section components
+from .components import (
     ColumnConfig,
     create_badge,
     create_data_table,
@@ -68,8 +36,9 @@ from .components import (  # Color helpers; Badge components; Risk component; Ta
     get_status_color,
 )
 
-# Framework configuration
-from .config import (  # Main configuration; Color constants; ENS colors; NIS2 colors; Chart colors; ENS constants; Section constants; Layout constants
+# Framework configuration: Main configuration, Color constants, ENS colors,
+# NIS2 colors, Chart colors, ENS constants, Section constants, Layout constants
+from .config import (
     CHART_COLOR_BLUE,
     CHART_COLOR_GREEN_1,
     CHART_COLOR_GREEN_2,

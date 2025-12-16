@@ -1,12 +1,3 @@
-"""
-Base class for compliance report generators.
-
-This module provides the abstract base class that all compliance framework
-report generators should inherit from. It implements the Template Method
-pattern to ensure consistent report structure while allowing framework-specific
-customization.
-"""
-
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -316,7 +307,9 @@ class BaseComplianceReportGenerator(ABC):
             findings_cache: Optional pre-loaded findings cache
             **kwargs: Additional framework-specific arguments
         """
-        logger.info(f"Generating {self.config.display_name} report for scan {scan_id}")
+        logger.info(
+            "Generating %s report for scan %s", self.config.display_name, scan_id
+        )
 
         try:
             # 1. Load compliance data
@@ -357,11 +350,11 @@ class BaseComplianceReportGenerator(ABC):
             # 4. Build the PDF
             self._build_pdf(doc, elements, data)
 
-            logger.info(f"Successfully generated report at {output_path}")
+            logger.info("Successfully generated report at %s", output_path)
 
         except Exception as e:
             tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
-            logger.error(f"Error generating report, line {tb_lineno} -- {e}")
+            logger.error("Error generating report, line %s -- %s", tb_lineno, e)
             raise
 
     # =========================================================================
@@ -435,7 +428,7 @@ class BaseComplianceReportGenerator(ABC):
 
         # Prowler logo
         logo_path = os.path.join(
-            os.path.dirname(__file__), "../assets/img/prowler_logo.png"
+            os.path.dirname(__file__), "../../assets/img/prowler_logo.png"
         )
         if os.path.exists(logo_path):
             logo = Image(logo_path, width=5 * inch, height=1 * inch)
@@ -507,7 +500,7 @@ class BaseComplianceReportGenerator(ABC):
 
         # Load findings on-demand only for the checks that will be displayed
         # Uses the shared findings cache to avoid duplicate queries across reports
-        logger.info(f"Loading findings on-demand for {len(requirements)} requirements")
+        logger.info("Loading findings on-demand for %d requirements", len(requirements))
         findings_by_check_id = _load_findings_for_requirement_checks(
             data.tenant_id,
             data.scan_id,
@@ -625,12 +618,12 @@ class BaseComplianceReportGenerator(ABC):
 
         # Aggregate requirement statistics
         if requirement_statistics is None:
-            logger.info(f"Aggregating requirement statistics for scan {scan_id}")
+            logger.info("Aggregating requirement statistics for scan %s", scan_id)
             requirement_statistics = _aggregate_requirement_statistics_from_database(
                 tenant_id, scan_id
             )
         else:
-            logger.info(f"Reusing pre-aggregated statistics for scan {scan_id}")
+            logger.info("Reusing pre-aggregated statistics for scan %s", scan_id)
 
         # Calculate requirements data
         attributes_by_requirement_id, requirements_list = (

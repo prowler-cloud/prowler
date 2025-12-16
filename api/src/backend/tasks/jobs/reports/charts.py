@@ -1,11 +1,5 @@
-"""
-Generic chart creation functions for PDF compliance reports.
-
-This module provides reusable matplotlib chart generators that return
-BytesIO buffers containing PNG images ready for PDF embedding.
-"""
-
 import io
+import math
 from typing import Callable
 
 import matplotlib.pyplot as plt
@@ -31,11 +25,11 @@ def get_chart_color_for_percentage(percentage: float) -> str:
     """
     if percentage >= 80:
         return CHART_COLOR_GREEN_1
-    elif percentage >= 60:
+    if percentage >= 60:
         return CHART_COLOR_GREEN_2
-    elif percentage >= 40:
+    if percentage >= 40:
         return CHART_COLOR_YELLOW
-    elif percentage >= 20:
+    if percentage >= 20:
         return CHART_COLOR_ORANGE
     return CHART_COLOR_RED
 
@@ -95,10 +89,10 @@ def create_vertical_bar_chart(
 
     # Add value labels on bars
     if show_labels:
-        for bar, value in zip(bars, values):
-            height = bar.get_height()
+        for bar_item, value in zip(bars, values):
+            height = bar_item.get_height()
             ax.text(
-                bar.get_x() + bar.get_width() / 2.0,
+                bar_item.get_x() + bar_item.get_width() / 2.0,
                 height + 1,
                 f"{value:.1f}%",
                 ha="center",
@@ -179,11 +173,11 @@ def create_horizontal_bar_chart(
 
     # Add value labels
     if show_labels:
-        for bar, value in zip(bars, values):
-            width = bar.get_width()
+        for bar_item, value in zip(bars, values):
+            width = bar_item.get_width()
             ax.text(
                 width + 1,
-                bar.get_y() + bar.get_height() / 2.0,
+                bar_item.get_y() + bar_item.get_height() / 2.0,
                 f"{value:.1f}%",
                 ha="left",
                 va="center",
@@ -234,8 +228,6 @@ def create_radar_chart(
     Returns:
         BytesIO buffer containing the PNG image
     """
-    import math
-
     num_vars = len(labels)
     angles = [n / float(num_vars) * 2 * math.pi for n in range(num_vars)]
 
@@ -243,7 +235,7 @@ def create_radar_chart(
     values_closed = list(values) + [values[0]]
     angles_closed = angles + [angles[0]]
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(projection="polar"))
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
 
     ax.plot(angles_closed, values_closed, "o-", linewidth=2, color=color)
     ax.fill(angles_closed, values_closed, alpha=fill_alpha, color=color)
@@ -302,7 +294,7 @@ def create_pie_chart(
     """
     fig, ax = plt.subplots(figsize=figsize)
 
-    wedges, texts, autotexts = ax.pie(
+    _, _, autotexts = ax.pie(
         values,
         labels=labels,
         colors=colors,

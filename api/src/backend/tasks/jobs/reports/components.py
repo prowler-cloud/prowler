@@ -1,11 +1,3 @@
-"""
-Reusable PDF components for compliance reports.
-
-This module provides generic, configurable PDF components that can be used
-across different compliance framework reports. Components are designed to
-be flexible while maintaining a consistent visual style.
-"""
-
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -44,9 +36,9 @@ def get_color_for_risk_level(risk_level: int) -> colors.Color:
     """
     if risk_level >= 4:
         return COLOR_HIGH_RISK
-    elif risk_level >= 3:
+    if risk_level >= 3:
         return COLOR_MEDIUM_RISK
-    elif risk_level >= 2:
+    if risk_level >= 2:
         return COLOR_LOW_RISK
     return COLOR_SAFE
 
@@ -63,7 +55,7 @@ def get_color_for_weight(weight: int) -> colors.Color:
     """
     if weight > 100:
         return COLOR_HIGH_RISK
-    elif weight > 50:
+    if weight > 50:
         return COLOR_LOW_RISK
     return COLOR_SAFE
 
@@ -80,7 +72,7 @@ def get_color_for_compliance(percentage: float) -> colors.Color:
     """
     if percentage >= 80:
         return COLOR_SAFE
-    elif percentage >= 60:
+    if percentage >= 60:
         return COLOR_LOW_RISK
     return COLOR_HIGH_RISK
 
@@ -98,7 +90,7 @@ def get_status_color(status: str) -> colors.Color:
     status_upper = status.upper()
     if status_upper == "PASS":
         return COLOR_SAFE
-    elif status_upper == "FAIL":
+    if status_upper == "FAIL":
         return COLOR_HIGH_RISK
     return COLOR_DARK_GRAY
 

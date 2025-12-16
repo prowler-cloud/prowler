@@ -1,10 +1,3 @@
-"""
-Compliance PDF Report Generation.
-
-This module provides functions for generating PDF compliance reports
-using the modular report generation framework.
-"""
-
 from pathlib import Path
 from shutil import rmtree
 
@@ -192,8 +185,13 @@ def generate_compliance_reports(
         Dictionary with results for each report type.
     """
     logger.info(
-        f"Generating compliance reports for scan {scan_id} with provider {provider_id}"
-        f" (ThreatScore: {generate_threatscore}, ENS: {generate_ens}, NIS2: {generate_nis2})"
+        "Generating compliance reports for scan %s with provider %s"
+        " (ThreatScore: %s, ENS: %s, NIS2: %s)",
+        scan_id,
+        provider_id,
+        generate_threatscore,
+        generate_ens,
+        generate_nis2,
     )
 
     results = {}
@@ -201,7 +199,7 @@ def generate_compliance_reports(
     # Validate that the scan has findings and get provider info
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if not ScanSummary.objects.filter(scan_id=scan_id).exists():
-            logger.info(f"No findings found for scan {scan_id}")
+            logger.info("No findings found for scan %s", scan_id)
             if generate_threatscore:
                 results["threatscore"] = {"upload": False, "path": ""}
             if generate_ens:
@@ -222,17 +220,17 @@ def generate_compliance_reports(
         "m365",
         "kubernetes",
     ]:
-        logger.info(f"Provider {provider_type} not supported for ThreatScore report")
+        logger.info("Provider %s not supported for ThreatScore report", provider_type)
         results["threatscore"] = {"upload": False, "path": ""}
         generate_threatscore = False
 
     if generate_ens and provider_type not in ["aws", "azure", "gcp"]:
-        logger.info(f"Provider {provider_type} not supported for ENS report")
+        logger.info("Provider %s not supported for ENS report", provider_type)
         results["ens"] = {"upload": False, "path": ""}
         generate_ens = False
 
     if generate_nis2 and provider_type not in ["aws", "azure", "gcp"]:
-        logger.info(f"Provider {provider_type} not supported for NIS2 report")
+        logger.info("Provider %s not supported for NIS2 report", provider_type)
         results["nis2"] = {"upload": False, "path": ""}
         generate_nis2 = False
 
@@ -241,7 +239,7 @@ def generate_compliance_reports(
 
     # Aggregate requirement statistics once
     logger.info(
-        f"Aggregating requirement statistics once for all reports (scan {scan_id})"
+        "Aggregating requirement statistics once for all reports (scan %s)", scan_id
     )
     requirement_statistics = _aggregate_requirement_statistics_from_database(
         tenant_id, scan_id
@@ -277,7 +275,7 @@ def generate_compliance_reports(
         )
         out_dir = str(Path(threatscore_path).parent.parent)
     except Exception as e:
-        logger.error(f"Error generating output directory: {e}")
+        logger.error("Error generating output directory: %s", e)
         error_dict = {"error": str(e), "upload": False, "path": ""}
         if generate_threatscore:
             results["threatscore"] = error_dict.copy()
@@ -292,7 +290,8 @@ def generate_compliance_reports(
         compliance_id_threatscore = f"prowler_threatscore_{provider_type}"
         pdf_path_threatscore = f"{threatscore_path}_threatscore_report.pdf"
         logger.info(
-            f"Generating ThreatScore report with compliance {compliance_id_threatscore}"
+            "Generating ThreatScore report with compliance %s",
+            compliance_id_threatscore,
         )
 
         try:
@@ -310,7 +309,7 @@ def generate_compliance_reports(
             )
 
             # Compute and store ThreatScore metrics snapshot
-            logger.info(f"Computing ThreatScore metrics for scan {scan_id}")
+            logger.info("Computing ThreatScore metrics for scan %s", scan_id)
             try:
                 metrics = compute_threatscore_metrics(
                     tenant_id=tenant_id,
@@ -361,10 +360,13 @@ def generate_compliance_reports(
                         else ""
                     )
                     logger.info(
-                        f"ThreatScore snapshot created with ID {snapshot.id} (score: {snapshot.overall_score}%{delta_msg})"
+                        "ThreatScore snapshot created with ID %s (score: %s%%%s)",
+                        snapshot.id,
+                        snapshot.overall_score,
+                        delta_msg,
                     )
             except Exception as e:
-                logger.error(f"Error creating ThreatScore snapshot: {e}")
+                logger.error("Error creating ThreatScore snapshot: %s", e)
 
             upload_uri_threatscore = _upload_to_s3(
                 tenant_id,
@@ -378,20 +380,20 @@ def generate_compliance_reports(
                     "upload": True,
                     "path": upload_uri_threatscore,
                 }
-                logger.info(f"ThreatScore report uploaded to {upload_uri_threatscore}")
+                logger.info("ThreatScore report uploaded to %s", upload_uri_threatscore)
             else:
                 results["threatscore"] = {"upload": False, "path": out_dir}
-                logger.warning(f"ThreatScore report saved locally at {out_dir}")
+                logger.warning("ThreatScore report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error(f"Error generating ThreatScore report: {e}")
+            logger.error("Error generating ThreatScore report: %s", e)
             results["threatscore"] = {"upload": False, "path": "", "error": str(e)}
 
     # Generate ENS report
     if generate_ens:
         compliance_id_ens = f"ens_rd2022_{provider_type}"
         pdf_path_ens = f"{ens_path}_ens_report.pdf"
-        logger.info(f"Generating ENS report with compliance {compliance_id_ens}")
+        logger.info("Generating ENS report with compliance %s", compliance_id_ens)
 
         try:
             generate_ens_report(
@@ -412,20 +414,20 @@ def generate_compliance_reports(
 
             if upload_uri_ens:
                 results["ens"] = {"upload": True, "path": upload_uri_ens}
-                logger.info(f"ENS report uploaded to {upload_uri_ens}")
+                logger.info("ENS report uploaded to %s", upload_uri_ens)
             else:
                 results["ens"] = {"upload": False, "path": out_dir}
-                logger.warning(f"ENS report saved locally at {out_dir}")
+                logger.warning("ENS report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error(f"Error generating ENS report: {e}")
+            logger.error("Error generating ENS report: %s", e)
             results["ens"] = {"upload": False, "path": "", "error": str(e)}
 
     # Generate NIS2 report
     if generate_nis2:
         compliance_id_nis2 = f"nis2_{provider_type}"
         pdf_path_nis2 = f"{nis2_path}_nis2_report.pdf"
-        logger.info(f"Generating NIS2 report with compliance {compliance_id_nis2}")
+        logger.info("Generating NIS2 report with compliance %s", compliance_id_nis2)
 
         try:
             generate_nis2_report(
@@ -447,13 +449,13 @@ def generate_compliance_reports(
 
             if upload_uri_nis2:
                 results["nis2"] = {"upload": True, "path": upload_uri_nis2}
-                logger.info(f"NIS2 report uploaded to {upload_uri_nis2}")
+                logger.info("NIS2 report uploaded to %s", upload_uri_nis2)
             else:
                 results["nis2"] = {"upload": False, "path": out_dir}
-                logger.warning(f"NIS2 report saved locally at {out_dir}")
+                logger.warning("NIS2 report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error(f"Error generating NIS2 report: {e}")
+            logger.error("Error generating NIS2 report: %s", e)
             results["nis2"] = {"upload": False, "path": "", "error": str(e)}
 
     # Clean up temporary files if all reports were uploaded successfully
@@ -466,11 +468,11 @@ def generate_compliance_reports(
     if all_uploaded:
         try:
             rmtree(Path(out_dir), ignore_errors=True)
-            logger.info(f"Cleaned up temporary files at {out_dir}")
+            logger.info("Cleaned up temporary files at %s", out_dir)
         except Exception as e:
-            logger.error(f"Error deleting output files: {e}")
+            logger.error("Error deleting output files: %s", e)
 
-    logger.info(f"Compliance reports generation completed. Results: {results}")
+    logger.info("Compliance reports generation completed. Results: %s", results)
     return results
 
 

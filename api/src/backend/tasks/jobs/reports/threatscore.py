@@ -1,18 +1,11 @@
-"""
-ThreatScore PDF report generator.
-
-This module provides the ThreatScoreReportGenerator class for generating
-Prowler ThreatScore compliance PDF reports.
-"""
-
 from reportlab.lib import colors
 from reportlab.lib.units import inch
-from reportlab.platypus import Image, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, TableStyle
 
 from api.models import StatusChoices
 
 from .base import BaseComplianceReportGenerator, ComplianceData
-from .charts import create_horizontal_bar_chart, get_chart_color_for_percentage
+from .charts import create_vertical_bar_chart, get_chart_color_for_percentage
 from .components import get_color_for_compliance, get_color_for_weight
 from .config import COLOR_HIGH_RISK, COLOR_WHITE
 
@@ -98,6 +91,8 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
         elements = []
         min_risk_level = getattr(self, "_min_risk_level", 4)
 
+        # Start on a new page
+        elements.append(PageBreak())
         elements.append(
             Paragraph("Top Requirements by Level of Risk", self.styles["h1"])
         )
@@ -188,7 +183,13 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
     def _create_section_score_chart(self, data: ComplianceData):
         """
-        Create the section compliance score chart.
+        Create the section compliance score chart using weighted ThreatScore formula.
+
+        The section score uses the same weighted formula as the overall ThreatScore:
+        Score = Σ(rate_i * total_findings_i * weight_i * rfac_i) / Σ(total_findings_i * weight_i * rfac_i)
+        Where rfac_i = 1 + 0.25 * risk_level
+
+        Sections without findings are shown with 100% score.
 
         Args:
             data: Aggregated compliance data.
@@ -196,8 +197,9 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
         Returns:
             BytesIO buffer containing the chart image.
         """
-        # Calculate section scores
-        section_scores = {}
+        # First, collect ALL sections from requirements (including those without findings)
+        all_sections = set()
+        sections_data = {}
 
         for req in data.requirements:
             req_attrs = data.attributes_by_requirement_id.get(req.id, {})
@@ -205,29 +207,54 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
             if meta:
                 m = meta[0]
                 section = getattr(m, "Section", "Other")
+                all_sections.add(section)
 
-                if section not in section_scores:
-                    section_scores[section] = {"passed": 0, "total": 0}
+                # Only calculate scores for requirements with findings
+                if req.total_findings == 0:
+                    continue
 
-                section_scores[section]["passed"] += req.passed_findings
-                section_scores[section]["total"] += req.total_findings
+                risk_level = getattr(m, "LevelOfRisk", 0)
+                weight = getattr(m, "Weight", 0)
 
-        # Calculate percentages
+                # ThreatScore formula components
+                rate_i = req.passed_findings / req.total_findings
+                rfac_i = 1 + 0.25 * risk_level
+
+                if section not in sections_data:
+                    sections_data[section] = {
+                        "numerator": 0,
+                        "denominator": 0,
+                    }
+
+                sections_data[section]["numerator"] += (
+                    rate_i * req.total_findings * weight * rfac_i
+                )
+                sections_data[section]["denominator"] += (
+                    req.total_findings * weight * rfac_i
+                )
+
+        # Calculate percentages for all sections
         labels = []
         values = []
-        for section, scores in section_scores.items():
-            if scores["total"] > 0:
-                pct = (scores["passed"] / scores["total"]) * 100
+        for section in sorted(all_sections):
+            if section in sections_data and sections_data[section]["denominator"] > 0:
+                pct = (
+                    sections_data[section]["numerator"]
+                    / sections_data[section]["denominator"]
+                ) * 100
             else:
-                pct = 100
+                # Sections without findings get 100%
+                pct = 100.0
             labels.append(section)
             values.append(pct)
 
-        return create_horizontal_bar_chart(
+        return create_vertical_bar_chart(
             labels=labels,
             values=values,
-            xlabel="Compliance Score (%)",
+            ylabel="Compliance Score (%)",
+            xlabel="",
             color_func=get_chart_color_for_percentage,
+            rotation=0,
         )
 
     def _calculate_threatscore(self, data: ComplianceData) -> float:
@@ -265,10 +292,9 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
         if not has_findings:
             return 100.0
-        elif denominator > 0:
+        if denominator > 0:
             return (numerator / denominator) * 100
-        else:
-            return 0.0
+        return 0.0
 
     def _get_critical_failed_requirements(
         self, data: ComplianceData, min_risk_level: int
