@@ -8,7 +8,7 @@
   "ServiceName": "trustedadvisor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "Other",
   "Description": "**AWS Trusted Advisor** check statuses are assessed to identify items in `warning` or `error`. The finding reflects the state reported by Trusted Advisor across categories such as **Security**, **Fault Tolerance**, **Service Limits**, and **Cost**, indicating where configurations or quotas require attention.",
   "Risk": "Unaddressed **warnings/errors** can leave misconfigurations that impact CIA:\n- **Confidentiality**: public access or weak auth exposes data\n- **Integrity**: overly permissive settings allow unwanted changes\n- **Availability**: limit exhaustion or poor resilience triggers outages\nThey can also increase unnecessary cost.",
@@ -29,9 +29,7 @@
       "Url": "https://hub.prowler.com/check/trustedadvisor_errors_and_warnings"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
