@@ -6,14 +6,13 @@ across all cloud providers.
 
 from typing import Any
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.compliance import (
     ComplianceFrameworksListResponse,
     ComplianceRequirementAttributesListResponse,
     ComplianceRequirementsListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class ComplianceTools(BaseTool):
