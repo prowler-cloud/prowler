@@ -27,6 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
 - Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
+- Store GCP Cloud Storage bucket regions as lowercase [(#9567)](https://github.com/prowler-cloud/prowler/pull/9567)
 
 ---
 
