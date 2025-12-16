@@ -57,6 +57,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_sink_calls(client)
     mock_api_services_calls(client)
     mock_api_access_policies_calls(client)
+    mock_api_instance_group_managers_calls(client)
 
     return client
 
@@ -1184,3 +1185,59 @@ def mock_api_access_policies_calls(client: MagicMock):
 
     client.accessPolicies().servicePerimeters().list = mock_list_service_perimeters
     client.accessPolicies().servicePerimeters().list_next.return_value = None
+
+
+def mock_api_instance_group_managers_calls(client: MagicMock):
+    """Mock API calls for Managed Instance Groups (both regional and zonal)."""
+    regional_mig1_id = str(uuid4())
+    regional_mig2_id = str(uuid4())
+    zonal_mig1_id = str(uuid4())
+
+    # Mock regional instance group managers
+    client.regionInstanceGroupManagers().list().execute.return_value = {
+        "items": [
+            {
+                "name": "regional-mig-1",
+                "id": regional_mig1_id,
+                "targetSize": 3,
+                "distributionPolicy": {
+                    "zones": [
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-b"
+                        },
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-c"
+                        },
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-d"
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "regional-mig-single-zone",
+                "id": regional_mig2_id,
+                "targetSize": 1,
+                "distributionPolicy": {
+                    "zones": [
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-b"
+                        }
+                    ]
+                },
+            },
+        ]
+    }
+    client.regionInstanceGroupManagers().list_next.return_value = None
+
+    # Mock zonal instance group managers
+    client.instanceGroupManagers().list().execute.return_value = {
+        "items": [
+            {
+                "name": "zonal-mig-1",
+                "id": zonal_mig1_id,
+                "targetSize": 2,
+            },
+        ]
+    }
+    client.instanceGroupManagers().list_next.return_value = None

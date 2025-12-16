@@ -507,6 +507,9 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # gcp.compute_instance_group_multiple_zones
+  # Minimum number of zones a MIG should span for high availability
+  mig_min_zones: 2
   # GCP Service Account and user-managed keys unused configuration
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused
