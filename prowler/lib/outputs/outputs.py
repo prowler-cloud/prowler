@@ -30,6 +30,8 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.check_metadata.CheckID
     if finding.check_metadata.Provider == "oraclecloud":
         details = finding.region
+    if finding.check_metadata.Provider == "alibabacloud":
+        details = finding.region
     if finding.check_metadata.Provider == "cloudflare":
         details = finding.zone_name
 

@@ -8,23 +8,28 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
-  "Description": "Verifies that Challenge Passage (challenge TTL) is configured to an appropriate value (recommended: 1 hour) to balance security with user experience for verified visitors.",
-  "Risk": "Challenge Passage set too short causes excessive challenges degrading user experience. Set too long, it may allow attackers extended access after passing initial challenge, reducing security effectiveness.",
-  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/challenge-passage/",
+  "Description": "**Cloudflare zones** are assessed for **Challenge Passage** (challenge TTL) configuration by checking if it is set to an appropriate value (recommended: 1 hour) to balance **security** with **user experience** for verified visitors.",
+  "Risk": "Improperly configured **Challenge Passage** can impact security or user experience.\n- **Confidentiality**: TTL set too long may allow attackers extended access after passing initial challenge\n- **Integrity**: security controls become less effective with overly permissive TTL settings\n- **Availability**: TTL set too short causes excessive challenges degrading user experience",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/challenge-passage/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    challenge_ttl = 3600\n  }\n}"
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > Settings\n3. Scroll to Challenge Passage\n4. Set the value to an appropriate duration (recommended: 1 hour / 3600 seconds)\n5. Adjust based on your specific threat model and user experience requirements",
+      "Terraform": "```hcl\n# Configure Challenge Passage with recommended 1-hour security window\nresource \"cloudflare_zone_settings_override\" \"challenge_passage\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    challenge_ttl = 3600 # 1 hour: balances security with user experience\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure Challenge Passage to balance security and usability. A 1-hour window is generally recommended, but adjust based on your threat model and user experience requirements.",
-      "Url": "https://hub.prowler.com/checks/zones_challenge_passage_configured"
+      "Text": "Configure **Challenge Passage** to balance security and usability.\n- A 1-hour window is generally recommended for most use cases\n- Adjust based on your threat model and user experience requirements\n- Shorter TTLs increase security but may frustrate legitimate users\n- Longer TTLs improve UX but give attackers more time after passing challenges",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_challenge_passage_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Challenge Passage determines how long a visitor who passes a challenge can access the site without being challenged again."
+  "Notes": "Challenge Passage determines how long a visitor who passes a challenge can access the site without being challenged again. The default value is 30 minutes."
 }

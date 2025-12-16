@@ -62,6 +62,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Tenancy OCID",
         placeholder: "e.g. ocid1.tenancy.oc1..aaaaaaa...",
       };
+    case "mongodbatlas":
+      return {
+        label: "Organization ID",
+        placeholder: "e.g. 5f43a8c4e1234567890abcde",
+      };
     default:
       return {
         label: "Provider UID",

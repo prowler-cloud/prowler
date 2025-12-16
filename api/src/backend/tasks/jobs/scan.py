@@ -12,7 +12,7 @@ from celery.utils.log import get_task_logger
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
@@ -26,8 +26,10 @@ from api.db_utils import (
 )
 from api.exceptions import ProviderConnectionError
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     MuteRule,
     Processor,
@@ -43,6 +45,7 @@ from api.models import (
 from api.models import StatusChoices as FindingStatus
 from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from prowler.lib.check.models import CheckMetadata
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
 
@@ -73,6 +76,44 @@ COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
 FINDINGS_MICRO_BATCH_SIZE = env.int("DJANGO_FINDINGS_MICRO_BATCH_SIZE", default=3000)
 # Controls how many rows each ORM bulk_create/bulk_update call sends to Postgres
 SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=500)
+
+
+ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
+    "internet-exposed": None,  # Compatible with all providers
+    "secrets": None,  # Compatible with all providers
+    "privilege-escalation": ["aws", "kubernetes"],
+    "ec2-imdsv1": ["aws"],
+}
+
+_ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
+
+
+def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
+    global _ATTACK_SURFACE_MAPPING_CACHE
+
+    if provider_type in _ATTACK_SURFACE_MAPPING_CACHE:
+        return _ATTACK_SURFACE_MAPPING_CACHE[provider_type]
+
+    attack_surface_check_mappings = {
+        "internet-exposed": None,
+        "secrets": None,
+        "privilege-escalation": {
+            "iam_policy_allows_privilege_escalation",
+            "iam_inline_policy_allows_privilege_escalation",
+        },
+        "ec2-imdsv1": {
+            "ec2_instance_imdsv2_enabled"
+        },  # AWS only - IMDSv1 enabled findings
+    }
+    for category_name, check_ids in attack_surface_check_mappings.items():
+        if check_ids is None:
+            sdk_check_ids = CheckMetadata.list(
+                provider=provider_type, category=category_name
+            )
+            attack_surface_check_mappings[category_name] = sdk_check_ids
+
+    _ATTACK_SURFACE_MAPPING_CACHE[provider_type] = attack_surface_check_mappings
+    return attack_surface_check_mappings
 
 
 def _create_finding_delta(
@@ -330,7 +371,7 @@ def _create_compliance_summaries(
     if summary_objects:
         with rls_transaction(tenant_id):
             ComplianceOverviewSummary.objects.bulk_create(
-                summary_objects, batch_size=500
+                summary_objects, batch_size=500, ignore_conflicts=True
             )
 
 
@@ -979,11 +1020,14 @@ def _aggregate_findings_by_region(
     findings_count_by_compliance = {}
 
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Fetch findings with resources in a single efficient query
-        # Use select_related for finding fields and prefetch_related for many-to-many resources
+        # Fetch only PASS/FAIL findings (optimized query reduces data transfer)
+        # Other statuses are not needed for check_status or ThreatScore calculation
         findings = (
             Finding.all_objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id, muted=False
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                muted=False,
+                status__in=["PASS", "FAIL"],
             )
             .only("id", "check_id", "status", "compliance")
             .prefetch_related(
@@ -1001,6 +1045,8 @@ def _aggregate_findings_by_region(
         )
 
         for finding in findings:
+            status = finding.status
+
             for resource in finding.small_resources:
                 region = resource.region
 
@@ -1008,7 +1054,7 @@ def _aggregate_findings_by_region(
                 current_status = check_status_by_region.setdefault(region, {})
                 # Priority: FAIL > any other status
                 if current_status.get(finding.check_id) != "FAIL":
-                    current_status[finding.check_id] = finding.status
+                    current_status[finding.check_id] = status
 
                 # Aggregate ThreatScore compliance counts
                 if modeled_threatscore_compliance_id in (finding.compliance or {}):
@@ -1023,7 +1069,7 @@ def _aggregate_findings_by_region(
                             requirement_id, {"total": 0, "pass": 0}
                         )
                         requirement_stats["total"] += 1
-                        if finding.status == "PASS":
+                        if status == "PASS":
                             requirement_stats["pass"] += 1
 
     return check_status_by_region, findings_count_by_compliance
@@ -1191,3 +1237,184 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
     except Exception as e:
         logger.error(f"Error creating compliance requirements for scan {scan_id}: {e}")
         raise e
+
+
+def aggregate_attack_surface(tenant_id: str, scan_id: str):
+    """
+    Aggregate findings into attack surface overview records.
+
+    Creates one AttackSurfaceOverview record per attack surface type
+    for the given scan, based on check_id mappings.
+
+    Args:
+        tenant_id: Tenant that owns the scan.
+        scan_id: Scan UUID whose findings should be aggregated.
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan_instance = Scan.all_objects.select_related("provider").get(pk=scan_id)
+        provider_type = scan_instance.provider.provider
+
+    provider_attack_surface_mapping = _get_attack_surface_mapping_from_provider(
+        provider_type=provider_type
+    )
+
+    # Filter out attack surfaces that are not compatible or have no resolved check IDs
+    supported_mappings: dict[str, list[str]] = {}
+    for attack_surface_type, check_ids in provider_attack_surface_mapping.items():
+        compatible_providers = ATTACK_SURFACE_PROVIDER_COMPATIBILITY.get(
+            attack_surface_type
+        )
+        if (
+            compatible_providers is not None
+            and provider_type not in compatible_providers
+        ):
+            logger.info(
+                f"Skipping {attack_surface_type} - not supported for {provider_type}"
+            )
+            continue
+
+        if not check_ids:
+            logger.info(
+                f"Skipping {attack_surface_type} - no check IDs resolved for {provider_type}"
+            )
+            continue
+
+        supported_mappings[attack_surface_type] = list(check_ids)
+
+    if not supported_mappings:
+        logger.info(
+            f"No attack surface mappings available for scan {scan_id} and provider {provider_type}"
+        )
+        logger.info(f"No attack surface overview records created for scan {scan_id}")
+        return
+
+    # Map every check_id to its attack surface, so we can aggregate with a single query
+    check_id_to_surface: dict[str, str] = {}
+    for attack_surface_type, check_ids in supported_mappings.items():
+        for check_id in check_ids:
+            check_id_to_surface[check_id] = attack_surface_type
+
+    aggregated_counts = {
+        attack_surface_type: {"total": 0, "failed": 0, "muted": 0}
+        for attack_surface_type in supported_mappings.keys()
+    }
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        finding_stats = (
+            Finding.all_objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                check_id__in=list(check_id_to_surface.keys()),
+            )
+            .values("check_id")
+            .annotate(
+                total=Count("id"),
+                failed=Count("id", filter=Q(status="FAIL", muted=False)),
+                muted=Count("id", filter=Q(status="FAIL", muted=True)),
+            )
+        )
+
+        for stats in finding_stats:
+            attack_surface_type = check_id_to_surface.get(stats["check_id"])
+            if not attack_surface_type:
+                continue
+
+            aggregated_counts[attack_surface_type]["total"] += stats["total"] or 0
+            aggregated_counts[attack_surface_type]["failed"] += stats["failed"] or 0
+            aggregated_counts[attack_surface_type]["muted"] += stats["muted"] or 0
+
+    overview_objects = []
+    for attack_surface_type, counts in aggregated_counts.items():
+        total = counts["total"]
+        if not total:
+            continue
+
+        overview_objects.append(
+            AttackSurfaceOverview(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                attack_surface_type=attack_surface_type,
+                total_findings=total,
+                failed_findings=counts["failed"],
+                muted_failed_findings=counts["muted"],
+            )
+        )
+
+    # Bulk create overview records
+    if overview_objects:
+        with rls_transaction(tenant_id):
+            AttackSurfaceOverview.objects.bulk_create(overview_objects, batch_size=500)
+            logger.info(
+                f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
+            )
+    else:
+        logger.info(f"No attack surface overview records created for scan {scan_id}")
+
+
+def aggregate_daily_severity(tenant_id: str, scan_id: str):
+    """Aggregate scan severity counts into DailySeveritySummary (one record per provider/day)."""
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state=StateChoices.COMPLETED,
+        ).first()
+
+        if not scan:
+            logger.warning(f"Scan {scan_id} not found or not completed")
+            return {"status": "scan is not completed"}
+
+        provider_id = scan.provider_id
+        scan_date = scan.completed_at.date()
+
+        severity_totals = (
+            ScanSummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+            )
+            .values("severity")
+            .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
+        )
+
+        severity_data = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+            "muted": 0,
+        }
+
+        for row in severity_totals:
+            severity = row["severity"]
+            if severity in severity_data:
+                severity_data[severity] = row["total_fail"] or 0
+            severity_data["muted"] += row["total_muted"] or 0
+
+    with rls_transaction(tenant_id):
+        summary, created = DailySeveritySummary.objects.update_or_create(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            date=scan_date,
+            defaults={
+                "scan_id": scan_id,
+                "critical": severity_data["critical"],
+                "high": severity_data["high"],
+                "medium": severity_data["medium"],
+                "low": severity_data["low"],
+                "informational": severity_data["informational"],
+                "muted": severity_data["muted"],
+            },
+        )
+
+    action = "created" if created else "updated"
+    logger.info(
+        f"Daily severity summary {action} for provider {provider_id} on {scan_date}"
+    )
+
+    return {
+        "status": action,
+        "provider_id": str(provider_id),
+        "date": str(scan_date),
+        "severity_data": severity_data,
+    }

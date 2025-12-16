@@ -1,6 +1,7 @@
 import io
 import os
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 from shutil import rmtree
 
@@ -772,7 +773,9 @@ def _create_section_score_chart(
     return buffer
 
 
-def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
+def _add_pdf_footer(
+    canvas_obj: canvas.Canvas, doc: SimpleDocTemplate, compliance_name: str
+) -> None:
     """
     Add footer with page number and branding to each page of the PDF.
 
@@ -782,7 +785,9 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     """
     canvas_obj.saveState()
     width, height = doc.pagesize
-    page_num_text = f"Página {doc.page}"
+    page_num_text = (
+        f"{'Página' if 'ens' in compliance_name.lower() else 'Page'} {doc.page}"
+    )
     canvas_obj.setFont("PlusJakartaSans", 9)
     canvas_obj.setFillColorRGB(0.4, 0.4, 0.4)
     canvas_obj.drawString(30, 20, page_num_text)
@@ -1595,7 +1600,11 @@ def generate_threatscore_report(
             elements.append(PageBreak())
 
         # Build the PDF
-        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        doc.build(
+            elements,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
+        )
     except Exception as e:
         tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
         logger.info(f"Error building the document, line {tb_lineno} -- {e}")
@@ -2229,12 +2238,20 @@ def generate_ens_report(
             [
                 "CUMPLE",
                 str(passed_requirements),
-                f"{(passed_requirements / total_requirements * 100):.1f}%",
+                (
+                    f"{(passed_requirements / total_requirements * 100):.1f}%"
+                    if total_requirements > 0
+                    else "0.0%"
+                ),
             ],
             [
                 "NO CUMPLE",
                 str(failed_requirements),
-                f"{(failed_requirements / total_requirements * 100):.1f}%",
+                (
+                    f"{(failed_requirements / total_requirements * 100):.1f}%"
+                    if total_requirements > 0
+                    else "0.0%"
+                ),
             ],
             ["TOTAL", str(total_requirements), "100%"],
         ]
@@ -2818,7 +2835,11 @@ def generate_ens_report(
 
         # Build the PDF
         logger.info("Building PDF...")
-        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        doc.build(
+            elements,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
+        )
     except Exception as e:
         tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
         logger.error(f"Error building ENS report, line {tb_lineno} -- {e}")
@@ -3365,7 +3386,11 @@ def generate_nis2_report(
 
         # Build the PDF
         logger.info("Building NIS2 PDF...")
-        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        doc.build(
+            elements,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
+        )
         logger.info(f"NIS2 report successfully generated at {output_path}")
 
     except Exception as e:

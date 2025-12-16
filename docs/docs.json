@@ -52,7 +52,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
+              "getting-started/products/prowler-lighthouse-ai"
             ]
           },
           {
@@ -109,7 +109,13 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -193,6 +199,13 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",
@@ -226,6 +239,13 @@
                 "pages": [
                   "user-guide/providers/mongodbatlas/getting-started-mongodbatlas",
                   "user-guide/providers/mongodbatlas/authentication"
+                ]
+              },
+              {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
                 ]
               },
               {
