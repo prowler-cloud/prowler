@@ -12,8 +12,7 @@
   "Risk": "Without **Email Obfuscation**, email addresses displayed on your website can be harvested by bots.\n- **Confidentiality**: harvested emails become targets for spam and phishing campaigns\n- **Integrity**: employees may fall victim to targeted social engineering attacks\n- **Availability**: increased spam volume can overwhelm email systems",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/",
-    "https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zone_settings_override"
+    "https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/"
   ],
   "Remediation": {
     "Code": {
