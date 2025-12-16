@@ -10,7 +10,8 @@ PROVIDER="claude"
 FILE_PATTERNS="*.ts,*.tsx,*.js,*.jsx,*.py"
 
 # File patterns to exclude from review (comma-separated globs)
-EXCLUDE_PATTERNS="*.test.ts,*.test.tsx,*.spec.ts,*.spec.tsx,*.d.ts,*_test.py,test_*.py,conftest.py"
+# Excludes: test files, type definitions, and api/ folder (no AGENTS.md yet)
+EXCLUDE_PATTERNS="*.test.ts,*.test.tsx,*.spec.ts,*.spec.tsx,*.d.ts,*_test.py,test_*.py,conftest.py,api/*"
 
 # File containing your coding standards (relative to repo root)
 RULES_FILE="AGENTS-CODE-REVIEW.md"
