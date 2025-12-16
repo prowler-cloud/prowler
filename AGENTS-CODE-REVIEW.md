@@ -62,6 +62,16 @@ For detailed rules, refer to each component's AGENTS.md:
 - Used in 1 place → keep local in feature directory
 - Used in 2+ places → move to `components/shared/`, `lib/`, `types/`, or `hooks/`
 
+### Components
+
+- Use components from `components/shadcn/` when possible
+- Implement DRY, KISS principles (reusable components, avoid repetition)
+
+### Responsive Design
+
+- Layout must work for all responsive breakpoints (mobile, tablet, desktop)
+- Use Tailwind responsive prefixes: `sm:`, `md:`, `lg:`, `xl:`
+
 ### Accessibility
 
 - All images must have `alt` text
