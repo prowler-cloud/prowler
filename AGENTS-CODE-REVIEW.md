@@ -1,144 +1,80 @@
-# Prowler Code Review Rules
+# Code Review Rules
 
-**AI-powered code review rules for the Prowler monorepo.**
+## References
 
-## Component-Specific Guidelines
-
-For detailed rules, refer to each component's AGENTS.md:
-
-- **UI (TypeScript/React)**: `ui/AGENTS.md`
-- **SDK (Python)**: `prowler/AGENTS.md`
-- **MCP Server (Python)**: `mcp_server/AGENTS.md`
-- **General Guidelines**: `AGENTS.md`
+- UI details: `ui/AGENTS.md`
+- SDK details: `prowler/AGENTS.md`
+- MCP details: `mcp_server/AGENTS.md`
 
 ---
 
-## Critical Rules - All Components
+## ALL FILES
 
-### General
+REJECT if:
 
-- **NO hardcoded secrets**: Use environment variables or secure credential management
-- **NO `any` types**: Always use proper typing (TypeScript) or type hints (Python)
-- **Conventional commits**: Follow `<type>[scope]: <description>` format
-- **DRY principle**: No code duplication - extract to shared utilities
-- **Error handling**: Never let errors crash silently; log and handle gracefully
-
----
-
-## TypeScript/React Rules (ui/)
-
-### Imports
-
-- ✅ `import { useState, useEffect } from "react"`
-- ❌ `import React` or `import * as React`
-
-### Types
-
-- ✅ `const STATUS = { ACTIVE: "active" } as const; type Status = typeof STATUS[keyof typeof STATUS]`
-- ❌ `type Status = "active" | "inactive"` (union types)
-
-### Styling
-
-- ✅ `className="bg-slate-800 text-white"` (Tailwind classes)
-- ✅ `className={cn(baseStyles, isActive && "opacity-100")}` (conditional with cn())
-- ❌ `var()` in className strings
-- ❌ Hex colors like `#fff` (use Tailwind semantic classes)
-- Exception: `var()` is allowed for chart/graph components that require CSS color strings
-
-### React 19 Patterns
-
-- ❌ `useMemo`, `useCallback` - React Compiler handles optimization
-- ✅ Server components by default, `"use client"` only when needed
-- ✅ `"use server"` for server actions
-
-### Zod v4
-
-- ✅ `z.email()` not `z.string().email()`
-- ✅ `z.uuid()` not `z.string().uuid()`
-- ✅ `z.string().min(1)` not `z.string().nonempty()`
-
-### File Organization
-
-- Used in 1 place → keep local in feature directory
-- Used in 2+ places → move to `components/shared/`, `lib/`, `types/`, or `hooks/`
-
-### Components
-
-- Use components from `components/shadcn/` when possible
-- Implement DRY, KISS principles (reusable components, avoid repetition)
-
-### Responsive Design
-
-- Layout must work for all responsive breakpoints (mobile, tablet, desktop)
-- Use Tailwind responsive prefixes: `sm:`, `md:`, `lg:`, `xl:`
-
-### Accessibility
-
-- All images must have `alt` text
-- Interactive elements need `aria` labels
-- Use semantic HTML elements
+- Hardcoded secrets/credentials
+- `any` type (TypeScript) or missing type hints (Python)
+- Code duplication (violates DRY)
+- Silent error handling (no logging)
 
 ---
 
-## Python Rules (prowler/, mcp_server/)
+## TypeScript/React (ui/)
 
-### Style
+REJECT if:
 
-- **PEP 8 compliance**: Enforced by black and flake8
-- **Type hints**: Required for all public functions
-- **Docstrings**: Required for all classes and public methods
-- **Import order**: standard library → third party → local (use isort)
+- `import React` or `import * as React` → use `import { useState }`
+- Union types `type X = "a" | "b"` → use `const X = {...} as const`
+- `var()` or hex colors in className → use Tailwind classes
+- `useMemo` or `useCallback` without justification (React 19 Compiler)
+- `z.string().email()` → use `z.email()` (Zod v4)
+- `z.string().nonempty()` → use `z.string().min(1)` (Zod v4)
+- Missing `"use client"` in client components
+- Missing `"use server"` in server actions
+- Images without `alt` attribute
+- Interactive elements without `aria` labels
+- Non-semantic HTML when semantic exists
 
-### Type Hints
+PREFER:
 
-```python
-# ✅ Correct
-def process(data: dict) -> list[str] | None:
-    pass
+- `components/shadcn/` over custom components
+- `cn()` for conditional/merged classes
+- Local files if used 1 place, `components/shared/` if 2+
+- Responsive classes: `sm:`, `md:`, `lg:`, `xl:`
 
-# ❌ Incorrect - missing type hints
-def process(data):
-    pass
-```
+EXCEPTION:
 
-### Error Handling
+- `var()` allowed in chart/graph component props (not className)
 
-```python
-# ✅ Correct - specific exception handling with logging
-from prowler.lib.logger import logger
+---
 
-try:
-    result = api_call()
-except SpecificException as e:
-    logger.error(f"API error: {e}")
-    # Graceful handling
-except Exception as e:
-    logger.error(f"Unexpected error: {e}")
-    # Never let checks crash the entire scan
-```
+## Python (prowler/, mcp_server/)
 
-### Prowler SDK Checks
+REJECT if:
 
-All security checks must:
+- Missing type hints on public functions
+- Missing docstrings on classes/public methods
+- Bare `except:` without specific exception
+- `print()` instead of `logger`
 
-1. Inherit from `Check` base class
-2. Implement `execute()` method returning `list[CheckReport]`
-3. Set `report.status` to `"PASS"` or `"FAIL"`
-4. Provide descriptive `status_extended` message
-5. Have corresponding `.metadata.json` file
+REQUIRE for SDK checks:
 
-### MCP Server Tools
+- Inherit from `Check`
+- `execute()` returns `list[CheckReport]`
+- `report.status` = `"PASS"` | `"FAIL"`
+- `.metadata.json` file exists
 
-- Extend `BaseTool` for Prowler App tools (auto-registration)
-- Use `@mcp.tool()` decorator for Hub/Docs tools
-- Use `MinimalSerializerMixin` for LLM-optimized responses
-- Implement `from_api_response()` for API transformations
+REQUIRE for MCP tools:
+
+- Extend `BaseTool` (auto-registration)
+- `MinimalSerializerMixin` for responses
+- `from_api_response()` for API transforms
 
 ---
 
 ## Response Format
 
-**Your response MUST start with exactly one of:**
+FIRST LINE must be exactly:
 
 ```
 STATUS: PASSED
@@ -150,11 +86,4 @@ or
 STATUS: FAILED
 ```
 
-**If FAILED**, list each violation with:
-
-- File path
-- Line number (if applicable)
-- Rule violated
-- Brief explanation
-
-**If PASSED**, confirm all files comply with the coding standards.
+If FAILED, list: `file:line - rule - issue`
