@@ -12,8 +12,7 @@
   "Risk": "Without **DNSSEC**, DNS responses can be spoofed or modified by attackers.\n- **Confidentiality**: users can be redirected to malicious sites that harvest credentials\n- **Integrity**: DNS hijacking enables man-in-the-middle attacks and content modification\n- **Availability**: cache poisoning can cause denial of service by directing traffic to non-existent servers",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developers.cloudflare.com/dns/dnssec/",
-    "https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zone_dnssec"
+    "https://developers.cloudflare.com/dns/dnssec/"
   ],
   "Remediation": {
     "Code": {

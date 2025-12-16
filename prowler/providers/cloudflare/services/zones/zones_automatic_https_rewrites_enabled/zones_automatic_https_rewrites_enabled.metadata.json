@@ -12,8 +12,7 @@
   "Risk": "Without **Automatic HTTPS Rewrites**, pages may contain mixed content where HTTP resources load over HTTPS pages.\n- **Confidentiality**: insecure resources can be intercepted and modified by attackers\n- **Integrity**: browsers block or warn about mixed content, indicating potential tampering\n- **User Experience**: security warnings degrade trust and some browsers block mixed content entirely",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/",
-    "https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zone_settings_override"
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/"
   ],
   "Remediation": {
     "Code": {
