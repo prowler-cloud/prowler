@@ -2,10 +2,9 @@ from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.zones.zones_client import zones_client
 
 
-class zones_security_level(Check):
+class zones_security_under_attack_disabled(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
-        acceptable_levels = ["medium", "high", "under_attack"]
 
         for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
@@ -13,15 +12,16 @@ class zones_security_level(Check):
                 resource=zone,
             )
             security_level = (zone.settings.security_level or "").lower()
-            if security_level in acceptable_levels:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Security level is set to '{security_level}' for zone {zone.name}."
-                )
-            else:
+
+            if security_level == "under_attack":
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Security level is set to '{security_level}' for zone {zone.name}."
+                    f"Zone {zone.name} has Under Attack Mode enabled."
+                )
+            else:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Zone {zone.name} does not have Under Attack Mode enabled."
                 )
             findings.append(report)
         return findings
