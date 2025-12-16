@@ -250,9 +250,6 @@ class Provider(ABC):
                     )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
-                        api_token=arguments.cloudflare_api_token,
-                        api_key=arguments.cloudflare_api_key,
-                        api_email=arguments.cloudflare_api_email,
                         filter_zones=arguments.region,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,

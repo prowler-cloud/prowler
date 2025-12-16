@@ -40,42 +40,22 @@ prowler cloudflare
 
 That's it! Prowler will automatically discover all zones in your account and run security checks against them.
 
-## Authentication Methods
+## Authentication
 
-### Using Environment Variables (Recommended)
+Prowler reads Cloudflare credentials from environment variables. Set your credentials before running Prowler:
 
-Set your credentials as environment variables before running Prowler:
-
-**API Token:**
+**API Token (Recommended):**
 ```bash
 export CLOUDFLARE_API_TOKEN="your-api-token-here"
 prowler cloudflare
 ```
 
-**API Key + Email:**
+**API Key + Email (Legacy):**
 ```bash
 export CLOUDFLARE_API_KEY="your-api-key-here"
 export CLOUDFLARE_API_EMAIL="your-email@example.com"
 prowler cloudflare
 ```
-
-### Using Command-Line Arguments
-
-Pass credentials directly to Prowler:
-
-**API Token:**
-```bash
-prowler cloudflare --cloudflare-api-token "your-api-token-here"
-```
-
-**API Key + Email:**
-```bash
-prowler cloudflare --cloudflare-api-key "your-api-key-here" --cloudflare-api-email "your-email@example.com"
-```
-
-<Note>
-Command-line arguments take priority over environment variables.
-</Note>
 
 ## Filtering Zones
 

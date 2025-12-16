@@ -51,7 +51,7 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            provider = CloudflareProvider(api_token=API_TOKEN)
+            provider = CloudflareProvider()
 
             assert provider._type == "cloudflare"
             assert provider.session.api_token == API_TOKEN
@@ -87,7 +87,7 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            provider = CloudflareProvider(api_key=API_KEY, api_email=API_EMAIL)
+            provider = CloudflareProvider()
 
             assert provider._type == "cloudflare"
             assert provider.session.api_key == API_KEY
@@ -120,7 +120,7 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            provider = CloudflareProvider(api_token=API_TOKEN)
+            provider = CloudflareProvider()
             connection = provider.test_connection()
 
             assert isinstance(connection, Connection)
@@ -151,7 +151,7 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            provider = CloudflareProvider(api_token=API_TOKEN)
+            provider = CloudflareProvider()
             connection = provider.test_connection()
 
             assert isinstance(connection, Connection)
@@ -197,9 +197,7 @@ class TestCloudflareProvider:
             ),
         ):
             filter_zones = ["zone1", "zone2"]
-            provider = CloudflareProvider(
-                api_token=API_TOKEN, filter_zones=filter_zones
-            )
+            provider = CloudflareProvider(filter_zones=filter_zones)
 
             assert provider.filter_zones == set(filter_zones)
 
@@ -230,7 +228,7 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            provider = CloudflareProvider(api_token=API_TOKEN)
+            provider = CloudflareProvider()
 
             assert provider.type == "cloudflare"
             assert provider.session is not None
