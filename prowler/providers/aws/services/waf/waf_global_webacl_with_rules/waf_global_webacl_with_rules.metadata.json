@@ -32,9 +32,7 @@
       "Url": "https://hub.prowler.com/check/waf_global_webacl_with_rules"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

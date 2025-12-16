@@ -16,11 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/waf/latest/developerguide/classic-web-acl-rules-editing.html",
-    "https://gyro.dev/providers/aws/waf---global/waf-rule.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.19.5/reference/services/waf-regional.html",
-    "https://docs.ansible.com/ansible/2.9_ja/modules/aws_waf_rule_module.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-2",
-    "http://man.hubwiz.com/docset/Boto3.docset/Contents/Resources/Documents/reference/services/waf-regional.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/waf-regional-rule-not-empty.html"
   ],
   "Remediation": {
@@ -35,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/waf_regional_rule_with_conditions"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

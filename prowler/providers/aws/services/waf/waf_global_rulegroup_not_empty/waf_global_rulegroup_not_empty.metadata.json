@@ -31,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/waf_global_rulegroup_not_empty"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

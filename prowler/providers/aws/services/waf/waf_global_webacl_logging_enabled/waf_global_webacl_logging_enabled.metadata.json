@@ -16,10 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/waf/latest/developerguide/classic-logging.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/waf-classic-logging-enabled.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-1",
-    "https://docs.aws.amazon.com/waf/latest/developerguide/classic-using-service-linked-roles.html",
-    "https://docs.aws.amazon.com/waf/latest/developerguide/classic-waf-incident-response.html",
     "https://docs.aws.amazon.com/cli/latest/reference/waf/put-logging-configuration.html"
   ],
   "Remediation": {

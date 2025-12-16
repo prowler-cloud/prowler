@@ -15,12 +15,9 @@
   "Risk": "An empty rule group contributes no filtering in a web ACL, letting requests bypass inspection within that group. This erodes **defense in depth** and can enable injection, brute-force, or bot traffic to reach applications, threatening **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/waf/latest/developerguide/classic-rule-group-editing.html",
     "https://docs.aws.amazon.com/cli/latest/reference/waf-regional/update-rule-group.html",
-    "https://docs.aws.amazon.com/waf/latest/APIReference/API_wafRegional_CreateRuleGroup.html",
     "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-groups.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-3",
-    "https://docs.aws.amazon.com/waf/latest/APIReference/API_wafRegional_UpdateRuleGroup.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-3"
   ],
   "Remediation": {
     "Code": {
@@ -34,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/waf_regional_rulegroup_not_empty"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
