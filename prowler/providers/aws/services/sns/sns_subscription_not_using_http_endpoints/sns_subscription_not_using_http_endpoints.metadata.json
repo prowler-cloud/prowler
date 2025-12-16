@@ -15,7 +15,6 @@
   "Risk": "Using **HTTP** leaves SNS deliveries unencrypted, compromising **confidentiality** via eavesdropping. MITM attackers can modify payloads or headers, damaging **integrity**, inject malicious content into downstream systems, or capture subscription data for spoofing and unauthorized actions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/localstack/localstack/issues/3314",
     "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-sns-subscription.html",
     "https://docs.aws.amazon.com/sns/latest/dg/sns-security-best-practices.html#enforce-encryption-data-in-transit"
   ],

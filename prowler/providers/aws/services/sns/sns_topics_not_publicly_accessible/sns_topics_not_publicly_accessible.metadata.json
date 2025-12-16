@@ -11,16 +11,14 @@
   "ServiceName": "sns",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsSnsTopic",
   "Description": "**SNS topic policies** are analyzed for **public principals** (e.g., `*`). Topics that grant access without restrictive conditions such as `aws:SourceArn`, `aws:SourceAccount`, `aws:PrincipalOrgID`, or `sns:Endpoint` scoping are treated as publicly accessible.",
   "Risk": "**Public SNS topics** allow anyone or unknown accounts to:\n- **Subscribe** and siphon messages (confidentiality)\n- **Publish** spoofed payloads that alter workflows (integrity)\n- **Flood** messages causing outages and costs (availability)\nThey also enable cross-account abuse and bypass expected trust boundaries.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-subscribe.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-sns-topic-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+    "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html"
   ],
   "Remediation": {
     "Code": {

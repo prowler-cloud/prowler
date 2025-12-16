@@ -13,13 +13,12 @@
   "ServiceName": "sns",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "AwsSnsTopic",
   "Description": "**Amazon SNS topics** are assessed for **server-side encryption** with **AWS KMS**. Topics lacking a configured KMS key (e.g., missing `kms_master_key_id`) are identified as unencrypted at rest.",
   "Risk": "Without KMS-backed SSE, SNS stores message bodies unencrypted at rest, undermining **confidentiality**.\n\nPrivileged insiders or compromised service components could access plaintext during persistence windows, causing data exposure. You also lose KMS controls such as key policies, rotation, and detailed audit trails.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/general_15#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
     "https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-encryption.html"
   ],
