@@ -14,7 +14,10 @@ import pytest
 from reportlab.lib.units import inch
 from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; Base
     CHART_COLOR_GREEN_1,
+    CHART_COLOR_GREEN_2,
+    CHART_COLOR_ORANGE,
     CHART_COLOR_RED,
+    CHART_COLOR_YELLOW,
     COLOR_BLUE,
     COLOR_HIGH_RISK,
     COLOR_SAFE,
@@ -26,6 +29,7 @@ from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; B
     RequirementData,
     create_badge,
     create_data_table,
+    create_findings_table,
     create_horizontal_bar_chart,
     create_info_table,
     create_multi_badge_row,
@@ -33,6 +37,8 @@ from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; B
     create_pie_chart,
     create_radar_chart,
     create_risk_component,
+    create_section_header,
+    create_stacked_bar_chart,
     create_status_badge,
     create_summary_table,
     create_vertical_bar_chart,
@@ -152,6 +158,11 @@ class TestColorHelpers:
         assert get_color_for_risk_level(5) == COLOR_HIGH_RISK
         assert get_color_for_risk_level(4) == COLOR_HIGH_RISK
 
+    def test_get_color_for_risk_level_very_high(self):
+        """Test very high risk level (>5) still returns high risk color."""
+        assert get_color_for_risk_level(10) == COLOR_HIGH_RISK
+        assert get_color_for_risk_level(100) == COLOR_HIGH_RISK
+
     def test_get_color_for_risk_level_medium(self):
         """Test medium risk level returns orange."""
         from tasks.jobs.reports import COLOR_MEDIUM_RISK
@@ -168,6 +179,10 @@ class TestColorHelpers:
         """Test safe risk level returns green."""
         assert get_color_for_risk_level(1) == COLOR_SAFE
         assert get_color_for_risk_level(0) == COLOR_SAFE
+
+    def test_get_color_for_risk_level_negative(self):
+        """Test negative risk level returns safe color."""
+        assert get_color_for_risk_level(-1) == COLOR_SAFE
 
     def test_get_color_for_weight_high(self):
         """Test high weight returns red."""
@@ -235,10 +250,28 @@ class TestChartColorHelpers:
         assert get_chart_color_for_percentage(79) == CHART_COLOR_GREEN_2
         assert get_chart_color_for_percentage(60) == CHART_COLOR_GREEN_2
 
+    def test_chart_color_for_medium_percentage(self):
+        """Test medium percentage returns yellow."""
+        assert get_chart_color_for_percentage(59) == CHART_COLOR_YELLOW
+        assert get_chart_color_for_percentage(40) == CHART_COLOR_YELLOW
+
+    def test_chart_color_for_medium_low_percentage(self):
+        """Test medium-low percentage returns orange."""
+        assert get_chart_color_for_percentage(39) == CHART_COLOR_ORANGE
+        assert get_chart_color_for_percentage(20) == CHART_COLOR_ORANGE
+
     def test_chart_color_for_low_percentage(self):
         """Test low percentage returns red."""
         assert get_chart_color_for_percentage(19) == CHART_COLOR_RED
         assert get_chart_color_for_percentage(0) == CHART_COLOR_RED
+
+    def test_chart_color_boundary_values(self):
+        """Test chart color at exact boundary values."""
+        # Exact boundaries
+        assert get_chart_color_for_percentage(80) == CHART_COLOR_GREEN_1
+        assert get_chart_color_for_percentage(60) == CHART_COLOR_GREEN_2
+        assert get_chart_color_for_percentage(40) == CHART_COLOR_YELLOW
+        assert get_chart_color_for_percentage(20) == CHART_COLOR_ORANGE
 
 
 # =============================================================================
@@ -366,6 +399,93 @@ class TestTableComponents:
         )
         assert isinstance(table, Table)
 
+    def test_create_summary_table_with_custom_widths(self):
+        """Test summary table with custom widths."""
+        from reportlab.platypus import Table
+
+        table = create_summary_table(
+            label="ThreatScore:",
+            value="92.5%",
+            value_color=COLOR_SAFE,
+            label_width=3 * inch,
+            value_width=2.5 * inch,
+        )
+        assert isinstance(table, Table)
+
+
+class TestFindingsTable:
+    """Tests for findings table component."""
+
+    def test_create_findings_table_with_dicts(self):
+        """Test findings table creation with dict data."""
+        from reportlab.platypus import Table
+
+        findings = [
+            {
+                "title": "Finding 1",
+                "resource_name": "resource-1",
+                "severity": "HIGH",
+                "status": "FAIL",
+                "region": "us-east-1",
+            },
+            {
+                "title": "Finding 2",
+                "resource_name": "resource-2",
+                "severity": "LOW",
+                "status": "PASS",
+                "region": "eu-west-1",
+            },
+        ]
+        table = create_findings_table(findings)
+        assert isinstance(table, Table)
+
+    def test_create_findings_table_with_custom_columns(self):
+        """Test findings table with custom column configuration."""
+        findings = [{"name": "Test", "value": "100"}]
+        columns = [
+            ColumnConfig("Name", 2 * inch, "name"),
+            ColumnConfig("Value", 1 * inch, "value"),
+        ]
+        table = create_findings_table(findings, columns=columns)
+        assert table is not None
+
+    def test_create_findings_table_empty(self):
+        """Test findings table with empty list."""
+        table = create_findings_table([])
+        assert table is not None
+
+
+class TestSectionHeader:
+    """Tests for section header component."""
+
+    def test_create_section_header_with_spacer(self):
+        """Test section header with spacer."""
+        from reportlab.platypus import Paragraph, Spacer
+
+        styles = create_pdf_styles()
+        elements = create_section_header("Test Header", styles["h1"])
+
+        assert len(elements) == 2
+        assert isinstance(elements[0], Paragraph)
+        assert isinstance(elements[1], Spacer)
+
+    def test_create_section_header_without_spacer(self):
+        """Test section header without spacer."""
+        from reportlab.platypus import Paragraph
+
+        styles = create_pdf_styles()
+        elements = create_section_header("Test Header", styles["h1"], add_spacer=False)
+
+        assert len(elements) == 1
+        assert isinstance(elements[0], Paragraph)
+
+    def test_create_section_header_custom_spacer_height(self):
+        """Test section header with custom spacer height."""
+        styles = create_pdf_styles()
+        elements = create_section_header("Test Header", styles["h2"], spacer_height=0.5)
+
+        assert len(elements) == 2
+
 
 # =============================================================================
 # Chart Tests
@@ -443,6 +563,104 @@ class TestChartCreation:
         assert isinstance(buffer, io.BytesIO)
         assert buffer.getvalue()
 
+    def test_create_pie_chart_with_options(self):
+        """Test pie chart with custom options."""
+        buffer = create_pie_chart(
+            labels=["Pass", "Fail", "Manual"],
+            values=[60, 30, 10],
+            colors=["#4CAF50", "#F44336", "#9E9E9E"],
+            title="Status Distribution",
+            autopct="%1.0f%%",
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_stacked_bar_chart(self):
+        """Test stacked bar chart creation."""
+        buffer = create_stacked_bar_chart(
+            labels=["Section 1", "Section 2", "Section 3"],
+            data_series={
+                "Pass": [8, 6, 4],
+                "Fail": [2, 4, 6],
+            },
+        )
+        assert isinstance(buffer, io.BytesIO)
+        assert buffer.getvalue()
+
+    def test_create_stacked_bar_chart_with_options(self):
+        """Test stacked bar chart with custom options."""
+        buffer = create_stacked_bar_chart(
+            labels=["A", "B"],
+            data_series={
+                "Pass": [10, 5],
+                "Fail": [2, 3],
+                "Manual": [1, 2],
+            },
+            colors={
+                "Pass": "#4CAF50",
+                "Fail": "#F44336",
+                "Manual": "#9E9E9E",
+            },
+            xlabel="Categories",
+            ylabel="Requirements",
+            title="Requirements by Status",
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_stacked_bar_chart_without_legend(self):
+        """Test stacked bar chart without legend."""
+        buffer = create_stacked_bar_chart(
+            labels=["X", "Y"],
+            data_series={"A": [1, 2]},
+            show_legend=False,
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_vertical_bar_chart_without_labels(self):
+        """Test vertical bar chart without value labels."""
+        buffer = create_vertical_bar_chart(
+            labels=["A", "B"],
+            values=[50, 75],
+            show_labels=False,
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_vertical_bar_chart_with_explicit_colors(self):
+        """Test vertical bar chart with explicit color list."""
+        buffer = create_vertical_bar_chart(
+            labels=["Pass", "Fail"],
+            values=[80, 20],
+            colors=["#4CAF50", "#F44336"],
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_horizontal_bar_chart_auto_figsize(self):
+        """Test horizontal bar chart auto-calculates figure size for many items."""
+        labels = [f"Item {i}" for i in range(20)]
+        values = [50 + i * 2 for i in range(20)]
+        buffer = create_horizontal_bar_chart(
+            labels=labels,
+            values=values,
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_horizontal_bar_chart_with_explicit_colors(self):
+        """Test horizontal bar chart with explicit colors."""
+        buffer = create_horizontal_bar_chart(
+            labels=["A", "B", "C"],
+            values=[80, 60, 40],
+            colors=["#4CAF50", "#FFEB3B", "#F44336"],
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_create_radar_chart_with_custom_ticks(self):
+        """Test radar chart with custom y-axis ticks."""
+        buffer = create_radar_chart(
+            labels=["A", "B", "C", "D"],
+            values=[25, 50, 75, 100],
+            y_ticks=[0, 25, 50, 75, 100],
+        )
+        assert isinstance(buffer, io.BytesIO)
+
 
 # =============================================================================
 # Data Class Tests
@@ -465,6 +683,30 @@ class TestDataClasses:
         assert req.status == "PASS"
         assert req.passed_findings == 10
 
+    def test_requirement_data_with_failed_findings(self):
+        """Test RequirementData with failed findings."""
+        req = RequirementData(
+            id="REQ-002",
+            description="Failed requirement",
+            status="FAIL",
+            passed_findings=3,
+            failed_findings=7,
+            total_findings=10,
+        )
+        assert req.failed_findings == 7
+        assert req.total_findings == 10
+
+    def test_requirement_data_defaults(self):
+        """Test RequirementData default values."""
+        req = RequirementData(
+            id="REQ-003",
+            description="Minimal requirement",
+            status="MANUAL",
+        )
+        assert req.passed_findings == 0
+        assert req.failed_findings == 0
+        assert req.total_findings == 0
+
     def test_compliance_data_creation(self):
         """Test ComplianceData creation."""
         data = ComplianceData(
@@ -480,6 +722,44 @@ class TestDataClasses:
         assert data.tenant_id == "tenant-123"
         assert data.framework == "Test"
         assert data.requirements == []
+
+    def test_compliance_data_with_requirements(self):
+        """Test ComplianceData with requirements list."""
+        reqs = [
+            RequirementData(id="R1", description="Req 1", status="PASS"),
+            RequirementData(id="R2", description="Req 2", status="FAIL"),
+        ]
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="s1",
+            provider_id="p1",
+            compliance_id="c1",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            requirements=reqs,
+        )
+        assert len(data.requirements) == 2
+        assert data.requirements[0].id == "R1"
+
+    def test_compliance_data_with_attributes(self):
+        """Test ComplianceData with attributes dictionary."""
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="s1",
+            provider_id="p1",
+            compliance_id="c1",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            attributes_by_requirement_id={
+                "R1": {"attributes": {"key": "value"}},
+            },
+        )
+        assert "R1" in data.attributes_by_requirement_id
+        assert data.attributes_by_requirement_id["R1"]["attributes"]["key"] == "value"
 
 
 # =============================================================================
@@ -696,3 +976,212 @@ class TestExampleReportGenerator:
 
         elements = generator.create_requirements_index(data)
         assert len(elements) == 2  # Header + 1 requirement
+
+
+# =============================================================================
+# Edge Case Tests
+# =============================================================================
+
+
+class TestChartEdgeCases:
+    """Tests for chart edge cases."""
+
+    def test_vertical_bar_chart_empty_data(self):
+        """Test vertical bar chart with empty data."""
+        buffer = create_vertical_bar_chart(labels=[], values=[])
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_vertical_bar_chart_single_item(self):
+        """Test vertical bar chart with single item."""
+        buffer = create_vertical_bar_chart(labels=["Single"], values=[75.0])
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_horizontal_bar_chart_empty_data(self):
+        """Test horizontal bar chart with empty data."""
+        buffer = create_horizontal_bar_chart(labels=[], values=[])
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_horizontal_bar_chart_single_item(self):
+        """Test horizontal bar chart with single item."""
+        buffer = create_horizontal_bar_chart(labels=["Single"], values=[50.0])
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_radar_chart_minimum_points(self):
+        """Test radar chart with minimum number of points (3)."""
+        buffer = create_radar_chart(
+            labels=["A", "B", "C"],
+            values=[30.0, 60.0, 90.0],
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_pie_chart_single_slice(self):
+        """Test pie chart with single slice."""
+        buffer = create_pie_chart(labels=["Only"], values=[100.0])
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_pie_chart_many_slices(self):
+        """Test pie chart with many slices."""
+        labels = [f"Item {i}" for i in range(10)]
+        values = [10.0] * 10
+        buffer = create_pie_chart(labels=labels, values=values)
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_stacked_bar_chart_single_series(self):
+        """Test stacked bar chart with single series."""
+        buffer = create_stacked_bar_chart(
+            labels=["A", "B"],
+            data_series={"Only": [10.0, 20.0]},
+        )
+        assert isinstance(buffer, io.BytesIO)
+
+    def test_stacked_bar_chart_empty_data(self):
+        """Test stacked bar chart with empty data."""
+        buffer = create_stacked_bar_chart(labels=[], data_series={})
+        assert isinstance(buffer, io.BytesIO)
+
+
+class TestComponentEdgeCases:
+    """Tests for component edge cases."""
+
+    def test_create_badge_empty_text(self):
+        """Test badge with empty text."""
+        badge = create_badge("", COLOR_BLUE)
+        assert badge is not None
+
+    def test_create_badge_long_text(self):
+        """Test badge with very long text."""
+        long_text = "A" * 100
+        badge = create_badge(long_text, COLOR_BLUE, width=5 * inch)
+        assert badge is not None
+
+    def test_create_status_badge_unknown_status(self):
+        """Test status badge with unknown status."""
+        badge = create_status_badge("UNKNOWN")
+        assert badge is not None
+
+    def test_create_multi_badge_row_single_badge(self):
+        """Test multi-badge row with single badge."""
+        badges = [("A", COLOR_BLUE)]
+        table = create_multi_badge_row(badges)
+        assert table is not None
+
+    def test_create_multi_badge_row_many_badges(self):
+        """Test multi-badge row with many badges."""
+        badges = [(chr(65 + i), COLOR_BLUE) for i in range(10)]  # A-J
+        table = create_multi_badge_row(badges)
+        assert table is not None
+
+    def test_create_info_table_empty(self):
+        """Test info table with empty rows."""
+        from reportlab.platypus import Table
+
+        table = create_info_table([])
+        assert isinstance(table, Table)
+
+    def test_create_info_table_long_values(self):
+        """Test info table with very long values wraps properly."""
+        rows = [
+            ("Key:", "A" * 200),  # Very long value
+        ]
+        styles = create_pdf_styles()
+        table = create_info_table(rows, normal_style=styles["normal"])
+        assert table is not None
+
+    def test_create_data_table_empty(self):
+        """Test data table with empty data."""
+        columns = [
+            ColumnConfig("Name", 2 * inch, "name"),
+        ]
+        table = create_data_table([], columns)
+        assert table is not None
+
+    def test_create_data_table_large_dataset(self):
+        """Test data table with large dataset uses LongTable."""
+        # Create more than 50 rows to trigger LongTable
+        data = [{"name": f"Item {i}"} for i in range(60)]
+        columns = [ColumnConfig("Name", 2 * inch, "name")]
+        table = create_data_table(data, columns)
+        # Should be a LongTable for large datasets
+        from reportlab.platypus import LongTable
+
+        assert isinstance(table, LongTable)
+
+    def test_create_risk_component_zero_values(self):
+        """Test risk component with zero values."""
+        component = create_risk_component(risk_level=0, weight=0, score=0)
+        assert component is not None
+
+    def test_create_risk_component_max_values(self):
+        """Test risk component with maximum values."""
+        component = create_risk_component(risk_level=5, weight=200, score=1000)
+        assert component is not None
+
+
+class TestColorEdgeCases:
+    """Tests for color function edge cases."""
+
+    def test_get_color_for_compliance_boundary_80(self):
+        """Test compliance color at exactly 80%."""
+        assert get_color_for_compliance(80) == COLOR_SAFE
+
+    def test_get_color_for_compliance_boundary_60(self):
+        """Test compliance color at exactly 60%."""
+        from tasks.jobs.reports import COLOR_LOW_RISK
+
+        assert get_color_for_compliance(60) == COLOR_LOW_RISK
+
+    def test_get_color_for_compliance_over_100(self):
+        """Test compliance color for values over 100."""
+        assert get_color_for_compliance(150) == COLOR_SAFE
+
+    def test_get_color_for_weight_boundary_100(self):
+        """Test weight color at exactly 100."""
+        from tasks.jobs.reports import COLOR_LOW_RISK
+
+        assert get_color_for_weight(100) == COLOR_LOW_RISK
+
+    def test_get_color_for_weight_boundary_50(self):
+        """Test weight color at exactly 50."""
+        assert get_color_for_weight(50) == COLOR_SAFE
+
+    def test_get_status_color_case_insensitive(self):
+        """Test that status color is case insensitive."""
+        assert get_status_color("PASS") == get_status_color("pass")
+        assert get_status_color("FAIL") == get_status_color("Fail")
+        assert get_status_color("MANUAL") == get_status_color("manual")
+
+
+class TestFrameworkConfigEdgeCases:
+    """Tests for FrameworkConfig edge cases."""
+
+    def test_framework_config_empty_sections(self):
+        """Test FrameworkConfig with empty sections list."""
+        config = FrameworkConfig(
+            name="test",
+            display_name="Test",
+            sections=[],
+        )
+        assert config.sections == []
+
+    def test_framework_config_empty_attribute_fields(self):
+        """Test FrameworkConfig with empty attribute fields."""
+        config = FrameworkConfig(
+            name="test",
+            display_name="Test",
+            attribute_fields=[],
+        )
+        assert config.attribute_fields == []
+
+    def test_get_framework_config_case_variations(self):
+        """Test get_framework_config with different case variations."""
+        # Test case insensitivity
+        assert get_framework_config("PROWLER_THREATSCORE_AWS") is not None
+        assert get_framework_config("ENS_RD2022_AWS") is not None
+        assert get_framework_config("NIS2_AWS") is not None
+
+    def test_get_framework_config_partial_match(self):
+        """Test that partial matches work correctly."""
+        # Should match based on substring
+        assert get_framework_config("my_custom_threatscore_compliance") is not None
+        assert get_framework_config("ens_something_else") is not None
+        assert get_framework_config("nis2_gcp") is not None

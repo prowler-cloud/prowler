@@ -335,6 +335,12 @@ def create_info_table(
     if value_bg_color is None:
         value_bg_color = COLOR_BG_BLUE
 
+    # Handle empty rows case - Table requires at least one row
+    if not rows:
+        table = Table([["", ""]], colWidths=[label_width, value_width])
+        table.setStyle(TableStyle([("FONTSIZE", (0, 0), (-1, -1), 0)]))
+        return table
+
     # Process rows - wrap long values in Paragraph if style provided
     table_data = []
     for label, value in rows:
