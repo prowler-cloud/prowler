@@ -1301,6 +1301,7 @@ class FindingSerializer(RLSSerializer):
             "severity",
             "check_id",
             "check_metadata",
+            "categories",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1356,6 +1357,7 @@ class FindingMetadataSerializer(BaseSerializerV1):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
+    categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -2204,6 +2206,22 @@ class OverviewSeveritySerializer(BaseSerializerV1):
         resource_name = "findings-severity-overview"
 
 
+class FindingsSeverityOverTimeSerializer(BaseSerializerV1):
+    """Serializer for daily findings severity trend data."""
+
+    id = serializers.DateField(source="date")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+    scan_ids = serializers.ListField(child=serializers.UUIDField())
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-over-time"
+
+
 class OverviewServiceSerializer(BaseSerializerV1):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()
@@ -2226,12 +2244,24 @@ class AttackSurfaceOverviewSerializer(BaseSerializerV1):
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     muted_failed_findings = serializers.IntegerField()
-    check_ids = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True, default=list, read_only=True
-    )
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class CategoryOverviewSerializer(BaseSerializerV1):
+    """Serializer for category overview aggregations."""
+
+    id = serializers.CharField(source="category")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "category-overviews"
 
 
 class OverviewRegionSerializer(serializers.Serializer):

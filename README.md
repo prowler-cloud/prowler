@@ -6,7 +6,7 @@
   <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
-<b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
+<b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
 </p>
 
 <p align="center">
@@ -23,6 +23,7 @@
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
     <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
@@ -35,28 +36,32 @@
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="/docs/img/prowler-cli-quick.gif" width="100%" height="100%">
+  <img align="center" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
 </p>
 
 # Description
 
-**Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes.
+**Prowler** is the world’s most widely used _open-source cloud security platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
-- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
-- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
+- **Prowler ThreatScore:** Weighted risk prioritization scoring that helps you focus on the most critical security findings first
+- **Industry Standards:** CIS, NIST 800, NIST CSF, CISA, and MITRE ATT&CK
+- **Regulatory Compliance and Governance:** RBI, FedRAMP, PCI-DSS, and NIS2
 - **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
-- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
-- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
-- **National Security Standards:** ENS (Spanish National Security Scheme)
+- **Frameworks for Organizational Governance and Quality Control:** SOC2, GXP, and ISO 27001
+- **Cloud-Specific Frameworks:** AWS Foundational Technical Review (FTR), AWS Well-Architected Framework, and BSI C5
+- **National Security Standards:** ENS (Spanish National Security Scheme) and KISA ISMS-P (Korean)
 - **Custom Security Frameworks:** Tailored to your needs
 
-## Prowler App
+## Prowler App / Prowler Cloud
 
-Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
+Prowler App / [Prowler Cloud](https://cloud.prowler.com/) is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler App](docs/images/products/overview.png)
+![Risk Pipeline](docs/images/products/risk-pipeline.png)
+![Threat Map](docs/images/products/threat-map.png)
+
 
 >For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
@@ -82,16 +87,16 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 576 | 82 | 39 | 10 | Official | UI, API, CLI |
-| GCP | 79 | 13 | 13 | 3 | Official | UI, API, CLI |
-| Azure | 162 | 19 | 13 | 4 | Official | UI, API, CLI |
-| Kubernetes | 83 | 7 | 5 | 7 | Official | UI, API, CLI |
-| GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
+| AWS | 584 | 85 | 40 | 17 | Official | UI, API, CLI |
+| GCP | 89 | 17 | 14 | 5 | Official | UI, API, CLI |
+| Azure | 169 | 22 | 15 | 8 | Official | UI, API, CLI |
+| Kubernetes | 84 | 7 | 6 | 9 | Official | UI, API, CLI |
+| GitHub | 20 | 2 | 1 | 2 | Official | UI, API, CLI |
 | M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
-| OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 61 | 9 | 1 | 9 | Official | CLI |
+| OCI | 52 | 15 | 1 | 12 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 10 | 1 | 9 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 4 | 0 | 3 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
@@ -154,7 +159,7 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 * `git` installed.
 * `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
-* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
 **Commands to run the API**
@@ -210,9 +215,9 @@ python -m celery -A config.celery beat -l info --scheduler django_celery_beat.sc
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/ui
-npm install
-npm run build
-npm start
+pnpm install
+pnpm run build
+pnpm start
 ```
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.

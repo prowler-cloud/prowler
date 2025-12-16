@@ -3,7 +3,7 @@ import io
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -38,6 +38,7 @@ from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -4266,6 +4267,74 @@ class TestFindingViewSet:
         assert attributes["regions"] == latest_scan_finding.resource_regions
         assert attributes["resource_types"] == latest_scan_finding.resource_types
 
+    def test_findings_metadata_categories(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d")},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "security"}
+
+    def test_findings_metadata_latest_categories(
+        self, authenticated_client, latest_scan_finding_with_categories
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "iam"}
+
+    def test_findings_filter_by_category(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "gen-ai",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert set(response.json()["data"][0]["attributes"]["categories"]) == {
+            "gen-ai",
+            "security",
+        }
+
+    def test_findings_filter_by_category_in(
+        self, authenticated_client, findings_with_multiple_categories
+    ):
+        finding1, _ = findings_with_multiple_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category__in]": "gen-ai,iam",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_category_no_match(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "nonexistent",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
 
 @pytest.mark.django_db
 class TestJWTFields:
@@ -6984,6 +7053,270 @@ class TestOverviewViewSet:
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
 
+    def test_overview_findings_severity_timeseries_requires_date_from(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries")
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "date_from" in response.json()["errors"][0]["source"]["pointer"]
+
+    def test_overview_findings_severity_timeseries_invalid_date_format(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"),
+            {"filter[date_from]": "invalid-date"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Enter a valid date." in response.json()["errors"][0]["detail"]
+
+    def test_overview_findings_severity_timeseries_empty_data(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"),
+            {
+                "filter[date_from]": "2024-01-01",
+                "filter[date_to]": "2024-01-03",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should return 3 days with fill-forward (all zeros since no data)
+        assert len(data) == 3
+        for item in data:
+            assert item["attributes"]["critical"] == 0
+            assert item["attributes"]["high"] == 0
+            assert item["attributes"]["medium"] == 0
+            assert item["attributes"]["low"] == 0
+            assert item["attributes"]["informational"] == 0
+            assert item["attributes"]["muted"] == 0
+            assert item["attributes"]["scan_ids"] == []
+
+    def test_overview_findings_severity_timeseries_with_data(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        # Create scan for day 1
+        scan1 = Scan.objects.create(
+            name="severity-over-time-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Create scan for day 3
+        scan3 = Scan.objects.create(
+            name="severity-over-time-scan-3",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Create DailySeveritySummary for day 1
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            date=date(2024, 1, 1),
+            critical=10,
+            high=20,
+            medium=30,
+            low=40,
+            informational=50,
+            muted=5,
+        )
+
+        # Create DailySeveritySummary for day 3
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan3,
+            date=date(2024, 1, 3),
+            critical=15,
+            high=25,
+            medium=35,
+            low=45,
+            informational=55,
+            muted=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"),
+            {
+                "filter[date_from]": "2024-01-01",
+                "filter[date_to]": "2024-01-03",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+
+        # Day 1 - actual data (id is the date)
+        assert data[0]["id"] == "2024-01-01"
+        assert data[0]["attributes"]["critical"] == 10
+        assert data[0]["attributes"]["high"] == 20
+        assert data[0]["attributes"]["scan_ids"] == [str(scan1.id)]
+
+        # Day 2 - fill forward from day 1 (no data for this day)
+        assert data[1]["id"] == "2024-01-02"
+        assert data[1]["attributes"]["critical"] == 10
+        assert data[1]["attributes"]["high"] == 20
+        assert data[1]["attributes"]["scan_ids"] == [str(scan1.id)]
+
+        # Day 3 - actual data
+        assert data[2]["id"] == "2024-01-03"
+        assert data[2]["attributes"]["critical"] == 15
+        assert data[2]["attributes"]["high"] == 25
+        assert data[2]["attributes"]["scan_ids"] == [str(scan3.id)]
+
+    def test_overview_findings_severity_timeseries_aggregates_providers(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        # Same day, different providers
+        scan1 = Scan.objects.create(
+            name="severity-over-time-scan-p1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
+        )
+        scan2 = Scan.objects.create(
+            name="severity-over-time-scan-p2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Create DailySeveritySummary for provider1
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            date=date(2024, 2, 1),
+            critical=10,
+            high=20,
+            medium=30,
+            low=40,
+            informational=50,
+            muted=5,
+        )
+
+        # Create DailySeveritySummary for provider2
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider2,
+            scan=scan2,
+            date=date(2024, 2, 1),
+            critical=5,
+            high=10,
+            medium=15,
+            low=20,
+            informational=25,
+            muted=3,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"),
+            {
+                "filter[date_from]": "2024-02-01",
+                "filter[date_to]": "2024-02-01",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        # Should aggregate both providers
+        assert data[0]["attributes"]["critical"] == 15  # 10 + 5
+        assert data[0]["attributes"]["high"] == 30  # 20 + 10
+        assert data[0]["attributes"]["medium"] == 45  # 30 + 15
+        assert data[0]["attributes"]["low"] == 60  # 40 + 20
+        assert data[0]["attributes"]["informational"] == 75  # 50 + 25
+        assert data[0]["attributes"]["muted"] == 8  # 5 + 3
+        # scan_ids should contain both scans (order may vary)
+        assert set(data[0]["attributes"]["scan_ids"]) == {str(scan1.id), str(scan2.id)}
+
+    def test_overview_findings_severity_timeseries_provider_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-over-time-filter-scan-p1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=timezone.utc),
+        )
+        scan2 = Scan.objects.create(
+            name="severity-over-time-filter-scan-p2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Provider 1 - critical=100
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            date=date(2024, 3, 1),
+            critical=100,
+            high=0,
+            medium=0,
+            low=0,
+            informational=0,
+            muted=0,
+        )
+
+        # Provider 2 - critical=50
+        DailySeveritySummary.objects.create(
+            tenant=tenant,
+            provider=provider2,
+            scan=scan2,
+            date=date(2024, 3, 1),
+            critical=50,
+            high=0,
+            medium=0,
+            low=0,
+            informational=0,
+            muted=0,
+        )
+
+        # Filter by provider1 only
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"),
+            {
+                "filter[date_from]": "2024-03-01",
+                "filter[date_to]": "2024-03-01",
+                "filter[provider_id]": str(provider1.id),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["critical"] == 100  # Only provider1
+        assert data[0]["attributes"]["scan_ids"] == [str(scan1.id)]
+
     def test_overview_attack_surface_no_data(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-attack-surface"))
         assert response.status_code == status.HTTP_200_OK
@@ -6993,7 +7326,6 @@ class TestOverviewViewSet:
             assert item["attributes"]["total_findings"] == 0
             assert item["attributes"]["failed_findings"] == 0
             assert item["attributes"]["muted_failed_findings"] == 0
-            assert item["attributes"]["check_ids"] == []
 
     def test_overview_attack_surface_with_data(
         self,
@@ -7004,13 +7336,6 @@ class TestOverviewViewSet:
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
-
-        mapping = {
-            "internet-exposed": {"aws-check-1", "aws-check-2"},
-            "secrets": {"aws-secret-check"},
-            "privilege-escalation": {"aws-priv-check"},
-            "ec2-imdsv1": {"aws-imdsv1-check"},
-        }
 
         scan = Scan.objects.create(
             name="attack-surface-scan",
@@ -7037,11 +7362,7 @@ class TestOverviewViewSet:
             muted_failed=2,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(reverse("overview-attack-surface"))
+        response = authenticated_client.get(reverse("overview-attack-surface"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 4
@@ -7049,19 +7370,10 @@ class TestOverviewViewSet:
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 20
         assert results_by_type["internet-exposed"]["failed_findings"] == 10
-        assert set(results_by_type["internet-exposed"]["check_ids"]) == {
-            "aws-check-1",
-            "aws-check-2",
-        }
         assert results_by_type["secrets"]["total_findings"] == 15
         assert results_by_type["secrets"]["failed_findings"] == 8
-        assert set(results_by_type["secrets"]["check_ids"]) == {"aws-secret-check"}
         assert results_by_type["privilege-escalation"]["total_findings"] == 0
-        assert set(results_by_type["privilege-escalation"]["check_ids"]) == {
-            "aws-priv-check"
-        }
         assert results_by_type["ec2-imdsv1"]["total_findings"] == 0
-        assert set(results_by_type["ec2-imdsv1"]["check_ids"]) == {"aws-imdsv1-check"}
 
     def test_overview_attack_surface_provider_filter(
         self,
@@ -7088,13 +7400,6 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
-        mapping = {
-            "internet-exposed": {"shared-check", "shared-check"},
-            "secrets": set(),
-            "privilege-escalation": {"priv-check"},
-            "ec2-imdsv1": {"imdsv1-check"},
-        }
-
         create_attack_surface_overview(
             tenant,
             scan1,
@@ -7112,20 +7417,15 @@ class TestOverviewViewSet:
             muted_failed=3,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(
-                reverse("overview-attack-surface"),
-                {"filter[provider_id]": str(provider1.id)},
-            )
+        response = authenticated_client.get(
+            reverse("overview-attack-surface"),
+            {"filter[provider_id]": str(provider1.id)},
+        )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 10
         assert results_by_type["internet-exposed"]["failed_findings"] == 5
-        assert results_by_type["internet-exposed"]["check_ids"] == ["shared-check"]
 
     def test_overview_services_region_filter(
         self, authenticated_client, scan_summaries_fixture
@@ -7367,6 +7667,219 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["attributes"]["overall_score"] == "80.00"
+
+    def test_overview_categories_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_overview_categories_aggregates_by_category_with_severity(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="categories-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "iam",
+            "high",
+            total_findings=20,
+            failed_findings=10,
+            new_failed_findings=5,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "iam",
+            "medium",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "encryption",
+            "critical",
+            total_findings=5,
+            failed_findings=2,
+            new_failed_findings=1,
+        )
+
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+        results_by_category = {item["id"]: item["attributes"] for item in data}
+
+        assert results_by_category["iam"]["total_findings"] == 35
+        assert results_by_category["iam"]["failed_findings"] == 18
+        assert results_by_category["iam"]["new_failed_findings"] == 8
+        assert results_by_category["iam"]["severity"]["high"] == 10
+        assert results_by_category["iam"]["severity"]["medium"] == 8
+        assert results_by_category["iam"]["severity"]["critical"] == 0
+
+        assert results_by_category["encryption"]["total_findings"] == 5
+        assert results_by_category["encryption"]["failed_findings"] == 2
+        assert results_by_category["encryption"]["severity"]["critical"] == 2
+
+    @pytest.mark.parametrize(
+        "filter_key,filter_value_fn,expected_total,expected_failed",
+        [
+            ("filter[provider_id]", lambda p1, _: str(p1.id), 10, 5),
+            ("filter[provider_type]", lambda *_: "aws", 10, 5),
+            ("filter[provider_type__in]", lambda *_: "aws,gcp", 30, 20),
+        ],
+    )
+    def test_overview_categories_filters(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+        filter_key,
+        filter_value_fn,
+        expected_total,
+        expected_failed,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, _, gcp_provider, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="categories-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="categories-scan-2",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant, scan1, "iam", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_category_summary(
+            tenant, scan2, "iam", "high", total_findings=20, failed_findings=15
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-categories"),
+            {filter_key: filter_value_fn(provider1, gcp_provider)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["total_findings"] == expected_total
+        assert data[0]["attributes"]["failed_findings"] == expected_failed
+
+    def test_overview_categories_category_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="category-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant, scan, "iam", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_category_summary(
+            tenant, scan, "encryption", "medium", total_findings=20, failed_findings=8
+        )
+        create_scan_category_summary(
+            tenant, scan, "logging", "low", total_findings=15, failed_findings=3
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-categories"),
+            {"filter[category__in]": "iam,encryption"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        category_ids = {item["id"] for item in data}
+        assert category_ids == {"iam", "encryption"}
+
+    def test_overview_categories_aggregates_multiple_providers(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="multi-provider-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="multi-provider-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant,
+            scan1,
+            "iam",
+            "high",
+            total_findings=10,
+            failed_findings=5,
+            new_failed_findings=2,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan2,
+            "iam",
+            "high",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+        )
+
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "iam"
+        assert data[0]["attributes"]["total_findings"] == 25
+        assert data[0]["attributes"]["failed_findings"] == 13
+        assert data[0]["attributes"]["new_failed_findings"] == 5
 
 
 @pytest.mark.django_db
