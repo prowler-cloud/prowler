@@ -65,7 +65,7 @@ export const PasswordRequirementsMessage = ({
         {allRequirementsMet ? (
           <div className="flex items-center gap-2">
             <CheckCircle
-              className="text-text-success h-4 w-4 shrink-0"
+              className="text-text-success-primary h-4 w-4 shrink-0"
               aria-hidden="true"
             />
             <p className="text-text-neutral-primary text-xs leading-tight font-medium">
@@ -76,7 +76,7 @@ export const PasswordRequirementsMessage = ({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <AlertCircle
-                className="text-text-error h-4 w-4 shrink-0"
+                className="text-text-error-primary h-4 w-4 shrink-0"
                 aria-hidden="true"
               />
               <p className="text-text-neutral-primary text-xs leading-tight font-medium">
@@ -95,12 +95,12 @@ export const PasswordRequirementsMessage = ({
                   <div className="flex items-center gap-2">
                     <div
                       className={`h-2 w-2 shrink-0 rounded-full ${
-                        req.isMet ? "bg-text-success" : "bg-text-error"
+                        req.isMet ? "bg-bg-pass" : "bg-bg-fail"
                       }`}
                       aria-hidden="true"
                     />
                     <span
-                      className="text-text-success-primary"
+                      className="text-text-neutral-secondary"
                       aria-label={`${req.label} ${req.isMet ? "satisfied" : "required"}`}
                     >
                       {req.label}
