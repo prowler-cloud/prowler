@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Inspector v2 service metadata to new format [(#9260)](https://github.com/prowler-cloud/prowler/pull/9260)
 - Update AWS Service Catalog service metadata to new format [(#9410)](https://github.com/prowler-cloud/prowler/pull/9410)
 - Update AWS SNS service metadata to new format [(#9428)](https://github.com/prowler-cloud/prowler/pull/9428)
+- Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
 
 ---
 
