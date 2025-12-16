@@ -8,7 +8,7 @@ class zones_challenge_passage_configured(Check):
         # Recommended challenge TTL is 1 hour (3600 seconds)
         recommended_ttl = 3600
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
