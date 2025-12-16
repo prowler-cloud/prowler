@@ -1103,11 +1103,15 @@ def generate_threatscore_report(
         elements.append(Spacer(1, 0.5 * inch))
 
         # Add compliance information table
+        provider_alias = provider_obj.alias or "N/A"
         info_data = [
             ["Framework:", compliance_framework],
             ["ID:", compliance_id],
             ["Name:", Paragraph(compliance_name, normal_center)],
             ["Version:", compliance_version],
+            ["Provider:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
         ]
@@ -2059,12 +2063,15 @@ def generate_ens_report(
         elements.append(Spacer(1, 0.5 * inch))
 
         # Add compliance information table
+        provider_alias = provider_obj.alias or "N/A"
         info_data = [
             ["Framework:", compliance_framework],
             ["ID:", compliance_id],
             ["Nombre:", Paragraph(compliance_name, normal_center)],
             ["Versión:", compliance_version],
             ["Proveedor:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Descripción:", Paragraph(compliance_description, normal_center)],
         ]
@@ -2072,12 +2079,12 @@ def generate_ens_report(
         info_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (0, 6), colors.Color(0.2, 0.4, 0.6)),
-                    ("TEXTCOLOR", (0, 0), (0, 6), colors.white),
-                    ("FONTNAME", (0, 0), (0, 6), "FiraCode"),
-                    ("BACKGROUND", (1, 0), (1, 6), colors.Color(0.95, 0.97, 1.0)),
-                    ("TEXTCOLOR", (1, 0), (1, 6), colors.Color(0.2, 0.2, 0.2)),
-                    ("FONTNAME", (1, 0), (1, 6), "PlusJakartaSans"),
+                    ("BACKGROUND", (0, 0), (0, -1), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+                    ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                    ("BACKGROUND", (1, 0), (1, -1), colors.Color(0.95, 0.97, 1.0)),
+                    ("TEXTCOLOR", (1, 0), (1, -1), colors.Color(0.2, 0.2, 0.2)),
+                    ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -2997,11 +3004,14 @@ def generate_nis2_report(
         elements.append(Spacer(1, 0.3 * inch))
 
         # Compliance metadata table
+        provider_alias = provider_obj.alias or "N/A"
         metadata_data = [
             ["Framework:", compliance_framework],
             ["Name:", Paragraph(compliance_name, normal_center)],
             ["Version:", compliance_version or "N/A"],
             ["Provider:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
         ]
