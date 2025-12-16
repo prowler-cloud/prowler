@@ -13,9 +13,9 @@ interface TableLinkProps {
 export const TableLink = ({ href, label, isDisabled }: TableLinkProps) => {
   if (isDisabled) {
     return (
-      <Button variant="link" size="sm" disabled className="text-xs">
+      <span className="text-text-neutral-tertiary inline-flex h-9 cursor-not-allowed items-center justify-center px-3 text-xs font-medium opacity-60">
         {label}
-      </Button>
+      </span>
     );
   }
 

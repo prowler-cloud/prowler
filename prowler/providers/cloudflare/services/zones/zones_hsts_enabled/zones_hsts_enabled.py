@@ -8,23 +8,27 @@ class zones_hsts_enabled(Check):
         # Recommended minimum max-age is 6 months (15768000 seconds)
         recommended_max_age = 15768000
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
             )
-            if zone.settings.hsts_enabled:
-                if zone.settings.hsts_max_age >= recommended_max_age:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"HSTS is enabled for zone {zone.name} with max-age of "
-                        f"{zone.settings.hsts_max_age} seconds."
-                    )
-                else:
+            hsts = zone.settings.strict_transport_security
+            if hsts.enabled:
+                if not hsts.include_subdomains:
+                    report.status = "FAIL"
+                    report.status_extended = f"HSTS is enabled for zone {zone.name} but does not include subdomains."
+                elif hsts.max_age < recommended_max_age:
                     report.status = "FAIL"
                     report.status_extended = (
                         f"HSTS is enabled for zone {zone.name} but max-age is "
-                        f"{zone.settings.hsts_max_age} seconds (recommended: {recommended_max_age})."
+                        f"{hsts.max_age} seconds (recommended: 6 months)."
+                    )
+                else:
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"HSTS is enabled for zone {zone.name} with max-age of "
+                        f"{hsts.max_age} seconds and includes subdomains."
                     )
             else:
                 report.status = "FAIL"

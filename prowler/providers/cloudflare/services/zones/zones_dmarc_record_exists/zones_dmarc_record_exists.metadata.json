@@ -8,19 +8,22 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
-  "Description": "Verifies that a DMARC (Domain-based Message Authentication, Reporting, and Conformance) TXT record exists to define email authentication policy and enable reporting on spoofing attempts.",
-  "Risk": "Without DMARC, there is no policy enforcement for SPF and DKIM failures, allowing attackers to spoof emails from your domain for phishing campaigns while you receive no visibility into abuse attempts.",
-  "RelatedUrl": "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/",
+  "Description": "**Cloudflare zones** are assessed for **DMARC (Domain-based Message Authentication, Reporting, and Conformance)** records by checking if a TXT record exists at `_dmarc` subdomain to define **email authentication policy** and enable reporting on spoofing attempts.",
+  "Risk": "Without **DMARC**, there is no policy enforcement for SPF and DKIM failures.\n- **Confidentiality**: attackers can spoof emails for phishing campaigns to steal credentials\n- **Integrity**: no visibility into email authentication failures or abuse attempts\n- **Reputation**: domain reputation damage from spoofed emails sent in your name",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "resource \"cloudflare_record\" \"dmarc\" {\n  zone_id = var.zone_id\n  name    = \"_dmarc\"\n  type    = \"TXT\"\n  value   = \"v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com\"\n}"
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Click Add record\n4. Select TXT as the record type\n5. Enter _dmarc for the Name field\n6. Enter your DMARC policy (e.g., v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com)\n7. Click Save",
+      "Terraform": "```hcl\n# Create DMARC record for email authentication policy\nresource \"cloudflare_record\" \"dmarc\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"_dmarc\"\n  type    = \"TXT\"\n  content = \"v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com\" # Critical: defines email authentication policy\n  ttl     = 3600\n}\n```"
     },
     "Recommendation": {
-      "Text": "Implement DMARC as part of a complete email authentication strategy with SPF and DKIM. Start with a monitoring policy (p=none) to gather data, then progressively enforce stricter policies (quarantine, reject).",
-      "Url": "https://hub.prowler.com/checks/zones_dmarc_record_exists"
+      "Text": "Implement **DMARC** as part of a complete email authentication strategy with SPF and DKIM.\n- Start with `p=none` (monitoring) to gather data without affecting delivery\n- Progress to `p=quarantine` to send suspicious emails to spam\n- Finally use `p=reject` for strict enforcement\n- Configure `rua` to receive aggregate reports on authentication results",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_dmarc_record_exists"
     }
   },
   "Categories": [
@@ -28,5 +31,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "DMARC records are TXT records at _dmarc subdomain starting with 'v=DMARC1'."
+  "Notes": "DMARC records are TXT records at _dmarc subdomain starting with 'v=DMARC1'. Implement SPF and DKIM before enforcing strict DMARC policies."
 }

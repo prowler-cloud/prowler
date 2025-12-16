@@ -34,6 +34,10 @@ class CloudflareBaseException(ProwlerException):
             "message": "Cloudflare API call failed",
             "remediation": "Inspect the API response details and permissions for the failing request.",
         },
+        (9007, "CloudflareCredentialsConflictError"): {
+            "message": "Conflicting Cloudflare credentials provided",
+            "remediation": "Use either API Token or API Key + Email, not both. Unset CLOUDFLARE_API_TOKEN or unset both CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -110,4 +114,13 @@ class CloudflareAPIError(CloudflareBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class CloudflareCredentialsConflictError(CloudflareBaseException):
+    """Exception for conflicting Cloudflare credentials."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9007, file=file, original_exception=original_exception, message=message
         )
