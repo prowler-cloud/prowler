@@ -7,6 +7,34 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 from prowler.providers.cloudflare.models import CloudflareAccount
 
 
+class CloudflareFirewallRule(BaseModel):
+    """Represents a firewall rule from custom rulesets."""
+
+    id: str
+    name: str = ""
+    description: Optional[str] = None
+    action: Optional[str] = None
+    enabled: bool = True
+    expression: Optional[str] = None
+    phase: Optional[str] = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class CloudflareWAFRuleset(BaseModel):
+    """Represents a WAF ruleset (managed rules) for a zone."""
+
+    id: str
+    name: str
+    kind: Optional[str] = None
+    phase: Optional[str] = None
+    enabled: bool = True
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class Zones(CloudflareService):
     """Retrieve Cloudflare zones with security-relevant settings."""
 
@@ -16,6 +44,8 @@ class Zones(CloudflareService):
         self._list_zones()
         self._get_zones_settings()
         self._get_zones_dnssec()
+        self._get_zones_firewall_rules()
+        self._get_zones_waf_rulesets()
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -106,6 +136,109 @@ class Zones(CloudflareService):
                 logger.error(
                     f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+
+    def _get_zones_firewall_rules(self) -> None:
+        """Get firewall rules for all zones."""
+        logger.info("Zones - Getting firewall rules...")
+        for zone in self.zones.values():
+            try:
+                self._get_zone_firewall_rules(zone)
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zone_firewall_rules(self, zone: "CloudflareZone") -> None:
+        """List firewall rules from custom rulesets for a zone."""
+        seen_ruleset_ids: set[str] = set()
+        try:
+            for ruleset in self.client.rulesets.list(zone_id=zone.id):
+                ruleset_id = getattr(ruleset, "id", "")
+                if ruleset_id in seen_ruleset_ids:
+                    break
+                seen_ruleset_ids.add(ruleset_id)
+
+                ruleset_phase = getattr(ruleset, "phase", "")
+                if ruleset_phase in [
+                    "http_request_firewall_custom",
+                    "http_ratelimit",
+                    "http_request_firewall_managed",
+                ]:
+                    try:
+                        ruleset_detail = self.client.rulesets.get(
+                            ruleset_id=ruleset_id, zone_id=zone.id
+                        )
+                        rules = getattr(ruleset_detail, "rules", []) or []
+                        seen_rule_ids: set[str] = set()
+                        for rule in rules:
+                            rule_id = getattr(rule, "id", "")
+                            if rule_id in seen_rule_ids:
+                                break
+                            seen_rule_ids.add(rule_id)
+                            try:
+                                zone.firewall_rules.append(
+                                    CloudflareFirewallRule(
+                                        id=rule_id,
+                                        name=getattr(rule, "description", "")
+                                        or rule_id,
+                                        description=getattr(rule, "description", None),
+                                        action=getattr(rule, "action", None),
+                                        enabled=getattr(rule, "enabled", True),
+                                        expression=getattr(rule, "expression", None),
+                                        phase=ruleset_phase,
+                                    )
+                                )
+                            except Exception as error:
+                                logger.error(
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_zones_waf_rulesets(self) -> None:
+        """Get WAF rulesets for all zones."""
+        logger.info("Zones - Getting WAF rulesets...")
+        for zone in self.zones.values():
+            try:
+                self._get_zone_waf_rulesets(zone)
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zone_waf_rulesets(self, zone: "CloudflareZone") -> None:
+        """List WAF rulesets for a zone using the rulesets API."""
+        seen_ids: set[str] = set()
+        try:
+            for ruleset in self.client.rulesets.list(zone_id=zone.id):
+                ruleset_id = getattr(ruleset, "id", "")
+                if ruleset_id in seen_ids:
+                    break
+                seen_ids.add(ruleset_id)
+                try:
+                    zone.waf_rulesets.append(
+                        CloudflareWAFRuleset(
+                            id=ruleset_id,
+                            name=getattr(ruleset, "name", ""),
+                            kind=getattr(ruleset, "kind", None),
+                            phase=getattr(ruleset, "phase", None),
+                            enabled=True,
+                        )
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _get_zone_setting(self, zone_id: str, setting_id: str):
         """Get a single zone setting by ID."""
@@ -241,3 +374,5 @@ class CloudflareZone(BaseModel):
     plan: Optional[str] = None
     settings: CloudflareZoneSettings = Field(default_factory=CloudflareZoneSettings)
     dnssec_status: Optional[str] = None
+    firewall_rules: list[CloudflareFirewallRule] = Field(default_factory=list)
+    waf_rulesets: list[CloudflareWAFRuleset] = Field(default_factory=list)
