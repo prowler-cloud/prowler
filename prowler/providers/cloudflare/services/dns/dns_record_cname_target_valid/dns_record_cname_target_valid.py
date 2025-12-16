@@ -16,7 +16,6 @@ class dns_record_cname_target_valid(Check):
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=record,
-                zone=record.zone,
             )
 
             target = record.content

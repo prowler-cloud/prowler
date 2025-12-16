@@ -16,7 +16,6 @@ class dns_record_proxied(Check):
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=record,
-                zone=record.zone,
             )
 
             if record.proxied:

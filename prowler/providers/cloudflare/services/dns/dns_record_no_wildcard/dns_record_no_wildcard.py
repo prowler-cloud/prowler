@@ -14,7 +14,6 @@ class dns_record_no_wildcard(Check):
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=record,
-                zone=record.zone,
             )
 
             # Check if record name starts with wildcard

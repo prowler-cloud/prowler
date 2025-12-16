@@ -16,7 +16,6 @@ class dns_record_no_internal_ip(Check):
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=record,
-                zone=record.zone,
             )
 
             is_internal = self._is_internal_ip(record.content)
