@@ -1,0 +1,35 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_record_cname_target_valid",
+  "CheckTitle": "CNAME records point to valid targets without subdomain takeover risk",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "DNSRecord",
+  "Description": "**Cloudflare DNS CNAME records** are assessed for **dangling CNAME** vulnerabilities by checking if the target domain resolves to a valid address, preventing **subdomain takeover** attacks.",
+  "Risk": "Dangling **CNAME records** pointing to non-existent targets create subdomain takeover vulnerabilities.\n- **Confidentiality**: attackers can host malicious content on your subdomain to phish users\n- **Integrity**: attackers can impersonate your organization and damage brand reputation\n- **Availability**: legitimate services may be disrupted or redirected",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Identify CNAME records with dangling targets\n4. Either update the CNAME to point to a valid target or delete the record\n5. If the target service was decommissioned, remove the DNS record",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove or update **dangling CNAME records** to prevent subdomain takeover.\n- Regularly audit DNS records when decommissioning services\n- Remove CNAME records pointing to deprovisioned cloud resources\n- Monitor for unauthorized changes to DNS records\n- Consider using DNS monitoring tools to detect dangling records",
+      "Url": "https://hub.prowler.com/checks/cloudflare/dns_record_cname_target_valid"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Subdomain takeover occurs when a CNAME points to a service (like cloud hosting) that has been deprovisioned, allowing attackers to claim that service and control the subdomain."
+}

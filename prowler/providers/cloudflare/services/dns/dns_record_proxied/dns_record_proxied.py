@@ -4,7 +4,7 @@ from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 PROXYABLE_TYPES = {"A", "AAAA", "CNAME"}
 
 
-class dns_records_proxied(Check):
+class dns_record_proxied(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 
