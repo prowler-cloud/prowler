@@ -8,19 +8,22 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
-  "Description": "Verifies that HSTS is configured with the includeSubDomains directive to enforce HTTPS across all subdomains, preventing SSL stripping attacks on any subdomain.",
-  "Risk": "Without includeSubDomains, subdomains remain vulnerable to SSL stripping attacks even when the main domain has HSTS enabled, allowing attackers to intercept traffic on subdomain services.",
-  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/",
+  "Description": "**Cloudflare zones** are assessed for **HSTS includeSubDomains** directive by checking if it is configured to enforce HTTPS across all subdomains, preventing **SSL stripping attacks** on any subdomain.",
+  "Risk": "Without **includeSubDomains**, subdomains remain vulnerable even when the main domain has HSTS enabled.\n- **Confidentiality**: attackers can intercept traffic on unprotected subdomains\n- **Integrity**: SSL stripping attacks can downgrade subdomain connections to HTTP\n- **Trust**: inconsistent security policy across the domain hierarchy",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    security_header {\n      enabled = true\n      include_subdomains = true\n      max_age = 31536000\n    }\n  }\n}"
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to HTTP Strict Transport Security (HSTS)\n4. Click Configure or Edit\n5. Enable Include subdomains\n6. Acknowledge the warning and click Save",
+      "Terraform": "```hcl\n# Enable HSTS with includeSubDomains directive\nresource \"cloudflare_zone_settings_override\" \"hsts_subdomains\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    security_header {\n      enabled            = true\n      include_subdomains = true  # Critical: extends HSTS protection to all subdomains\n      max_age            = 31536000\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable includeSubDomains after verifying all subdomains support HTTPS. This ensures consistent security policy across the entire domain hierarchy following the principle of complete mediation.",
-      "Url": "https://hub.prowler.com/checks/zones_hsts_include_subdomains"
+      "Text": "Enable **includeSubDomains** after verifying all subdomains support HTTPS.\n- Ensures consistent security policy across the entire domain hierarchy\n- Prevents SSL stripping attacks on any subdomain\n- Required for HSTS preload list submission\n- Test all subdomains thoroughly before enabling to avoid accessibility issues",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_hsts_include_subdomains"
     }
   },
   "Categories": [
@@ -28,5 +31,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Ensure all subdomains are accessible via HTTPS before enabling includeSubDomains to avoid accessibility issues."
+  "Notes": "Ensure all subdomains are accessible via HTTPS before enabling includeSubDomains to avoid accessibility issues. This is a prerequisite for HSTS preloading."
 }
