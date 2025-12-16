@@ -389,14 +389,8 @@ class ComplianceTools(BaseTool):
                 finding_ids = failed_req_findings.get(req.id, [])
                 if finding_ids:
                     report_lines.append(f"**Failed Finding IDs** ({len(finding_ids)}):")
-                    # Limit to first 10 finding IDs to keep report manageable
-                    displayed_ids = finding_ids[:10]
-                    for fid in displayed_ids:
+                    for fid in finding_ids:
                         report_lines.append(f"  - `{fid}`")
-                    if len(finding_ids) > 10:
-                        report_lines.append(
-                            f"  - *...and {len(finding_ids) - 10} more*"
-                        )
                 else:
                     report_lines.append("**Failed Finding IDs**: None found")
                 report_lines.append("")
