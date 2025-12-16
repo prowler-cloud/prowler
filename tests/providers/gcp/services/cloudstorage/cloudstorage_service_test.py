@@ -35,7 +35,7 @@ class TestCloudStorageService:
             assert len(cloudstorage_client.buckets) == 2
             assert cloudstorage_client.buckets[0].name == "bucket1"
             assert cloudstorage_client.buckets[0].id.__class__.__name__ == "str"
-            assert cloudstorage_client.buckets[0].region == "US"
+            assert cloudstorage_client.buckets[0].region == "us"
             assert cloudstorage_client.buckets[0].uniform_bucket_level_access
             assert cloudstorage_client.buckets[0].public
 
@@ -53,7 +53,7 @@ class TestCloudStorageService:
 
             assert cloudstorage_client.buckets[1].name == "bucket2"
             assert cloudstorage_client.buckets[1].id.__class__.__name__ == "str"
-            assert cloudstorage_client.buckets[1].region == "EU"
+            assert cloudstorage_client.buckets[1].region == "eu"
             assert not cloudstorage_client.buckets[1].uniform_bucket_level_access
             assert not cloudstorage_client.buckets[1].public
             assert cloudstorage_client.buckets[1].retention_policy is None
