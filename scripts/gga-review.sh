@@ -19,7 +19,8 @@ fi
 if ! command -v gga &> /dev/null; then
     echo -e "${BLUE}📦 Installing Gentleman Guardian Angel (gga)...${NC}"
     if command -v brew &> /dev/null; then
-        brew install gentleman-programming/tap/gga
+        brew tap gentleman-programming/tap 2>/dev/null || true
+        brew install gga
     else
         # Fallback: install from source for Linux/CI environments
         GGA_TMP_DIR=$(mktemp -d)
