@@ -17,6 +17,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@aws-sdk/client-bedrock-runtime",
+    "from": "3.943.0",
+    "to": "3.943.0",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@heroui/react",
     "from": "2.8.4",
     "to": "2.8.4",
@@ -33,6 +41,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@internationalized/date",
+    "from": "3.10.0",
+    "to": "3.10.0",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@langchain/aws",
     "from": "0.1.15",
     "to": "0.1.15",
@@ -42,10 +58,10 @@
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "0.3.78",
+    "from": "0.3.78",
+    "to": "0.3.77",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -75,9 +91,9 @@
     "section": "dependencies",
     "name": "@next/third-parties",
     "from": "15.3.5",
-    "to": "15.3.5",
+    "to": "15.5.9",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-12T09:11:40.062Z"
   },
   {
     "section": "dependencies",
@@ -86,6 +102,22 @@
     "to": "1.1.14",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-avatar",
+    "from": "1.1.11",
+    "to": "1.1.11",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-collapsible",
+    "from": "1.1.12",
+    "to": "1.1.12",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -129,6 +161,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-scroll-area",
+    "from": "1.2.10",
+    "to": "1.2.10",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-select",
     "from": "2.2.5",
     "to": "2.2.5",
@@ -153,11 +193,35 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-tabs",
+    "from": "1.1.13",
+    "to": "1.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-toast",
     "from": "1.2.14",
     "to": "1.2.14",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-tooltip",
+    "from": "1.2.8",
+    "to": "1.2.8",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@react-aria/i18n",
+    "from": "3.12.13",
+    "to": "3.12.13",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
   },
   {
     "section": "dependencies",
@@ -177,11 +241,35 @@
   },
   {
     "section": "dependencies",
+    "name": "@react-stately/utils",
+    "from": "3.10.8",
+    "to": "3.10.8",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@react-types/datepicker",
+    "from": "3.13.2",
+    "to": "3.13.2",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@react-types/shared",
+    "from": "3.26.0",
+    "to": "3.26.0",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@sentry/nextjs",
     "from": "10.11.0",
-    "to": "10.11.0",
+    "to": "10.27.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T15:52:15.849Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",
@@ -299,9 +387,9 @@
     "section": "dependencies",
     "name": "js-yaml",
     "from": "4.1.0",
-    "to": "4.1.0",
+    "to": "4.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",
@@ -329,19 +417,27 @@
   },
   {
     "section": "dependencies",
-    "name": "next",
-    "from": "15.5.3",
-    "to": "15.5.7",
+    "name": "nanoid",
+    "from": "5.1.6",
+    "to": "5.1.6",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "next",
+    "from": "15.5.7",
+    "to": "15.5.9",
+    "strategy": "installed",
+    "generatedAt": "2025-12-12T09:11:40.062Z"
   },
   {
     "section": "dependencies",
     "name": "next-auth",
     "from": "5.0.0-beta.29",
-    "to": "5.0.0-beta.29",
+    "to": "5.0.0-beta.30",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-01T10:01:42.332Z"
   },
   {
     "section": "dependencies",
@@ -362,18 +458,18 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-12T12:19:31.784Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-12T12:19:31.784Z"
   },
   {
     "section": "dependencies",
@@ -618,10 +714,10 @@
   {
     "section": "devDependencies",
     "name": "eslint-config-next",
-    "from": "15.5.3",
-    "to": "15.5.7",
+    "from": "15.5.7",
+    "to": "15.5.9",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-12T09:11:40.062Z"
   },
   {
     "section": "devDependencies",

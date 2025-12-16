@@ -33,7 +33,7 @@ class BaseTool(ABC):
 
             async def search_security_findings(self, severity: list[str] = Field(...)):
                 # Implementation with access to self.api_client
-                response = await self.api_client.get("/api/v1/findings")
+                response = await self.api_client.get("/findings")
                 return response
     """
 

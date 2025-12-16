@@ -11,7 +11,10 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
-from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.backfill import (
+    backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+)
 
 from api.db_utils import rls_transaction
 from api.models import (
@@ -36,6 +39,7 @@ from api.models import (
     SAMLConfiguration,
     SAMLDomainIndex,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -1272,6 +1276,113 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
 
 
 @pytest.fixture(scope="function")
+def findings_with_categories(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_categories_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_check",
+        check_metadata={"CheckId": "genai_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
+def findings_with_multiple_categories(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource1, resource2 = resources_fixture[:2]
+
+    finding1 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_cat_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_check",
+        check_metadata={"CheckId": "genai_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding1.add_resources([resource1])
+
+    finding2 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_cat_2",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status 2",
+        impact=Severity.high,
+        impact_extended="test impact 2",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL},
+        check_id="iam_check",
+        check_metadata={"CheckId": "iam_check"},
+        categories=["iam", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding2.add_resources([resource2])
+
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding1, finding2
+
+
+@pytest.fixture(scope="function")
+def latest_scan_finding_with_categories(
+    authenticated_client, providers_fixture, resources_fixture
+):
+    provider = providers_fixture[0]
+    tenant_id = str(providers_fixture[0].tenant_id)
+    resource = resources_fixture[0]
+    scan = Scan.objects.create(
+        name="latest completed scan with categories",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid="latest_finding_with_categories",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_iam_check",
+        check_metadata={"CheckId": "genai_iam_check"},
+        categories=["gen-ai", "iam"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    backfill_scan_category_summaries(tenant_id, str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
 def latest_scan_resource(authenticated_client, providers_fixture):
     provider = providers_fixture[0]
     tenant_id = str(providers_fixture[0].tenant_id)
@@ -1480,6 +1591,30 @@ def create_attack_surface_overview():
             total_findings=total,
             failed_findings=failed,
             muted_failed_findings=muted_failed,
+        )
+
+    return _create
+
+
+@pytest.fixture
+def create_scan_category_summary():
+    def _create(
+        tenant,
+        scan,
+        category,
+        severity,
+        total_findings=10,
+        failed_findings=5,
+        new_failed_findings=2,
+    ):
+        return ScanCategorySummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            category=category,
+            severity=severity,
+            total_findings=total_findings,
+            failed_findings=failed_findings,
+            new_failed_findings=new_failed_findings,
         )
 
     return _create
