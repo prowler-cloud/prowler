@@ -7,7 +7,7 @@ class zones_security_level(Check):
         findings = []
         acceptable_levels = ["medium", "high", "under_attack"]
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

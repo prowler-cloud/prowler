@@ -7,7 +7,7 @@ class zones_dmarc_record_exists(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
@@ -17,8 +17,9 @@ class zones_dmarc_record_exists(Check):
             dmarc_records = [
                 record
                 for record in dns_client.records
-                if record.zone.id == zone.id
+                if record.zone_id == zone.id
                 and record.type == "TXT"
+                and record.name
                 and record.name.startswith("_dmarc")
                 and "v=DMARC1" in record.content.upper()
             ]
