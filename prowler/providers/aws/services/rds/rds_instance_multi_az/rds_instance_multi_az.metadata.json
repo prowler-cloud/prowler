@@ -1,30 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_multi_az",
-  "CheckTitle": "Check if RDS instances have multi-AZ enabled.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance has Multi-AZ enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances have multi-AZ enabled.",
-  "Risk": "In case of failure, with a single-AZ deployment configuration, should an availability zone specific database failure occur, Amazon RDS can not automatically fail over to the standby availability zone.",
-  "RelatedUrl": "https://aws.amazon.com/rds/features/multi-az/",
+  "Description": "Amazon RDS instances are evaluated for **Multi-AZ** configuration, either enabled on the instance or inherited from the associated DB cluster.",
+  "Risk": "Without **Multi-AZ**, an Availability Zone or instance failure can cause extended downtime and rely on restores, risking loss of recent writes. This degrades **availability** and may affect **integrity**, interrupting applications and breaching SLAs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
+    "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform",
+    "https://aws.amazon.com/rds/features/multi-az/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --multi-az true",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_73#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform"
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --multi-az --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable Multi-AZ on an existing RDS DB instance\nResources:\n  RDSInstance:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      MultiAZ: true  # Critical: enables Multi-AZ to pass the check\n```",
+      "Other": "1. Open the AWS Management Console and go to RDS > Databases\n2. Select the affected DB instance and click Modify\n3. Under Availability & durability, set Multi-AZ deployment to Enabled (create a standby)\n4. Check Apply immediately\n5. Click Continue, then Modify DB instance\n6. Wait until status is Available and Multi-AZ shows Yes",
+      "Terraform": "```hcl\n# Enable Multi-AZ on an RDS DB instance\nresource \"aws_db_instance\" \"example\" {\n  multi_az = true  # Critical: enables Multi-AZ to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable multi-AZ deployment for production databases.",
-      "Url": "https://aws.amazon.com/rds/features/multi-az/"
+      "Text": "Apply fault-tolerance and redundancy principles: enable **Multi-AZ** for production RDS workloads. Choose one standby or two readable standbys based on RTO/RPO and performance needs. Regularly test failover, monitor configuration drift, and allow exceptions only with documented, risk-based approval.",
+      "Url": "https://hub.prowler.com/check/rds_instance_multi_az"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

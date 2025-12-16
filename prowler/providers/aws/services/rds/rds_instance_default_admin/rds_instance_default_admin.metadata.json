@@ -1,29 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_default_admin",
-  "CheckTitle": "Ensure that your Amazon RDS instances are not using the default master username.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance does not use the default master username (admin or postgres)",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Credential Access"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Ensure that your Amazon RDS instances are not using the default master username.",
-  "Risk": "Since admin is the Amazon's example for the RDS database master username and postgres is the default PostgreSQL master username. Many AWS customers will use this username for their RDS database instances in production. Malicious users can use this information to their advantage and frequently try to use default master username during brute-force attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-25",
+  "Description": "Amazon RDS databases are evaluated for use of a **custom administrator username**. The finding identifies instances or clusters where the admin user matches common defaults like `admin` or `postgres` (checked at the instance or cluster level).",
+  "Risk": "Using a predictable admin name enables **password spraying**, **credential stuffing**, and username **enumeration**. A successful login can expose data (**confidentiality**), allow tampering (**integrity**), and disrupt service (**availability**). Defaults also attract automated scans targeting known usernames.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-25",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#"
+      "NativeIaC": "```yaml\n# CloudFormation: Create an RDS instance with a non-default master username\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      Engine: mysql\n      DBInstanceClass: db.t3.micro\n      AllocatedStorage: 20\n      MasterUsername: <non_default_username>  # Critical: use a custom admin username (not \"admin\" or \"postgres\")\n      MasterUserPassword: <example_password>\n```",
+      "Other": "1. In the AWS Console, go to RDS > Databases and click Create database\n2. Choose your engine and select Standard create\n3. In Settings, set Master username to a value that is not \"admin\" or \"postgres\"\n4. Complete creation and note the new endpoint\n5. Migrate data from the old instance to the new one (e.g., dump/restore or replication)\n6. Update applications to use the new endpoint, then delete the old instance\n7. If the instance is part of an Aurora cluster, create a new cluster with a non-default master username and migrate to it",
+      "Terraform": "```hcl\n# Terraform: Create an RDS instance with a non-default master username\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  engine            = \"mysql\"\n  instance_class    = \"db.t3.micro\"\n  allocated_storage = 20\n  username          = \"<non_default_username>\" # Critical: custom admin username (not \"admin\" or \"postgres\")\n  password          = \"<example_password>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "To change the master username configured for your Amazon RDS database instances you must re-create them and migrate the existing data.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-25"
+      "Text": "Adopt a **unique, non-default admin username** for each database and avoid enabling default accounts.\n- Enforce **least privilege** with separate admin and app users\n- Use strong, rotated secrets in a manager and prefer **IAM DB authentication**\n- Restrict network exposure and audit authentication activity",
+      "Url": "https://hub.prowler.com/check/rds_instance_default_admin"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_deletion_protection",
-  "CheckTitle": "Check if RDS instances have deletion protection enabled.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance has deletion protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Destruction"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances have deletion protection enabled.",
-  "Risk": "You can only delete instances that do not have deletion protection enabled.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",
+  "Description": "**Amazon RDS** DB instances are assessed for **deletion protection**. If an instance belongs to an Aurora cluster, the setting is evaluated at the cluster level; otherwise, it is evaluated on the instance itself.",
+  "Risk": "Without **deletion protection**, a user or pipeline can delete a database in one action, causing immediate loss of availability and possible data loss if backups are stale or missing. This heightens exposure to insider misuse, compromised credentials, or faulty automation, increasing recovery time and cost.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://library.tf/modules/geekcell/rds-aurora-cluster/aws/latest",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/",
+    "https://www.linkedin.com/posts/bello-afeez_aws-rds-database-activity-7375178147828404224-OBZJ",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/instance-deletion-protection.html",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --deletion-protection --apply-immediately",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/instance-deletion-protection.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: enable deletion protection\nResources:\n  <example_db_instance_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      DeletionProtection: true  # Critical: enables deletion protection for standalone instances\n\n  <example_db_cluster_name>:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      DeletionProtection: true  # Critical: enables deletion protection at cluster level (required for Aurora members)\n```",
+      "Other": "1. In the AWS console, go to RDS > Databases\n2. For a standalone DB instance: select the instance > Modify > enable Deletion protection > Continue > Apply immediately > Modify DB instance\n3. For an Aurora/clustered instance: switch to the cluster (Writer) > Modify > enable Deletion protection > Continue > Apply immediately > Modify cluster",
+      "Terraform": "```hcl\n# Enable deletion protection on a standalone RDS instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  deletion_protection = true  # Critical: prevents instance deletion\n}\n\n# Enable deletion protection on an RDS/Aurora cluster\nresource \"aws_rds_cluster\" \"<example_resource_name>\" {\n  deletion_protection = true  # Critical: prevents cluster deletion (required for instances in this cluster)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable deletion protection using the AWS Management Console for production DB instances.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html"
+      "Text": "Enable `deletion protection` on production RDS instances and Aurora clusters. Enforce **least privilege** for delete/modify actions and require change control to disable protection. Use **defense in depth** with reliable backups and tested restores to limit impact if a deletion occurs.",
+      "Url": "https://hub.prowler.com/check/rds_instance_deletion_protection"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

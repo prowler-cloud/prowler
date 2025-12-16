@@ -1,26 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_certificate_expiration",
-  "CheckTitle": "Ensure that the SSL/TLS certificates configured for your Amazon RDS are not expired.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance SSL/TLS certificate has more than 3 months of validity remaining",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
-  "Severity": "high",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "To maintain Amazon RDS database security and avoid interruption of the applications that are using RDS and/or Aurora databases, rotate the required SSL/TLS certificates and update the deprecated Certificate Authority (CA) certificates at the Amazon RDS instance level.",
-  "Risk": "Interruption of application if the certificate expires.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html",
+  "Description": "Amazon RDS and Aurora DB instances are evaluated for **server certificate validity** windows, including default and **customer-managed certificates**. Certificates **expired** or **approaching expiration** (e.g., `<1 month`, `<3 months`, `3-6 months`, `>6 months`) are identified using the certificate `valid_till` date.",
+  "Risk": "Without timely rotation:\n- TLS failures block DB connections, impacting **availability**\n- Bypassed or weak validation enables **MITM**, risking **confidentiality** and **integrity**\n- Emergency changes increase **operational risk** and error rates",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rotate-rds-certificates.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --region us-east-1 --db-instance-identifier cc-project5-mysql-database --ca-certificate-identifier \"rds-ca-2019\" --apply-immediately",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rotate-rds-certificates.html",
-      "Terraform": ""
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <example_resource_id> --ca-certificate-identifier rds-ca-rsa2048-g1 --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: update RDS instance CA to a current certificate\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      CACertificateIdentifier: rds-ca-rsa2048-g1  # CRITICAL: rotates to a valid CA to restore >3 months certificate validity\n```",
+      "Other": "1. In the AWS Console, go to RDS > Databases and select the DB instance\n2. Click Modify\n3. In Connectivity (or Certificate authority), select rds-ca-rsa2048-g1\n4. Check Apply immediately\n5. Click Continue (if shown) and then Modify DB instance",
+      "Terraform": "```hcl\n# Set a current CA on the RDS instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  identifier          = \"<example_resource_id>\"\n  ca_cert_identifier  = \"rds-ca-rsa2048-g1\"  # CRITICAL: rotates to a valid CA to ensure certificate validity >3 months\n}\n```"
     },
     "Recommendation": {
-      "Text": "To maintain Amazon RDS database security and avoid interruption of the applications that are using RDS and/or Aurora databases, rotate the required SSL/TLS certificates and update the deprecated Certificate Authority (CA) certificates at the Amazon RDS instance level.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html"
+      "Text": "Establish a **certificate lifecycle** for RDS:\n- Rotate server/CA certs well before expiry; avoid pinned or outdated CAs\n- Keep client trust stores current and enforce TLS with validation\n- Monitor expiry and automate alerts/rotation\n- For custom certs, apply **least privilege**, **separation of duties**, and periodic key rotation; test changes",
+      "Url": "https://hub.prowler.com/check/rds_instance_certificate_expiration"
     }
   },
   "Categories": [

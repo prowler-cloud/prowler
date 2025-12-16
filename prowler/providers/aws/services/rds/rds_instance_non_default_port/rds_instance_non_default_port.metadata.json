@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_non_default_port",
-  "CheckTitle": "Check if RDS instances are using non-default ports.",
+  "CheckTitle": "RDS instance uses a non-default port for its engine",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Discovery"
   ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Checks if an instance uses a port other than the default port of the database engine. The control fails if the RDS instance uses the default port.",
-  "Risk": "Using a default database port exposes the instance to potential security vulnerabilities, as attackers are more likely to target known, commonly-used ports. This may result in unauthorized access to the database or increased susceptibility to automated attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html",
+  "Description": "**RDS DB instances** are evaluated for use of a port that differs from the engine's default. Matching an engine with its default port-`3306` (MySQL/MariaDB/Aurora MySQL), `5432` (PostgreSQL/Aurora), `1521` (Oracle), `1433` (SQL Server), `50000` (Db2)-indicates the instance uses the default listener.",
+  "Risk": "Using a **default DB port** increases exposure to broad scans and eases **service fingerprinting**. With weak network controls, attackers can run **credential brute force**, target known **engine exploits**, or trigger **DoS** on the predictable port, threatening confidentiality and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-default-port.html",
+    "https://fig.io/manual/aws/rds/modify-db-instance",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/rds/modify-db-instance.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <db-instance-id> --port <non-default-port>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23",
-      "Terraform": ""
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db-instance-id> --db-port-number <non-default-port>",
+      "NativeIaC": "```yaml\n# CloudFormation: set a non-default port on an RDS instance\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      Port: <non-default_port>  # Critical: use a non-default DB engine port to pass the check\n```",
+      "Other": "1. In the AWS Console, go to Amazon RDS > Databases\n2. Select the DB instance and click Modify\n3. Set \"Database port\" to a non-default value for the engine (e.g., not 3306, 5432, 1521, 1433, or 50000)\n4. Click Continue, then Modify DB instance",
+      "Terraform": "```hcl\n# Terraform: set a non-default port on an RDS instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  port = <non-default-port>  # Critical: use a non-default DB engine port to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Modify the RDS instance to use a non-default port, and ensure that the security group permits access to the new port.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+      "Text": "Use a **non-default DB port** and enforce **defense in depth**:\n- Apply **least-privilege** network rules\n- Keep databases in **private subnets**; avoid public exposure\n- Require strong authentication and audit logging\n\n*Update client connection strings and security rules when the port changes.*",
+      "Url": "https://hub.prowler.com/check/rds_instance_non_default_port"
     }
   },
   "Categories": [],

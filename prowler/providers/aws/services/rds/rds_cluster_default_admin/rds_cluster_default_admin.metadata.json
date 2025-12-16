@@ -1,29 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "rds_cluster_default_admin",
-  "CheckTitle": "Ensure that your Amazon RDS clusters are not using the default master username.",
-  "CheckType": [],
+  "CheckTitle": "RDS cluster master username is not admin or postgres",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Ensure that your Amazon RDS clusters are not using the default master username.",
-  "Risk": "Since admin is the Amazon's example for the RDS database master username and postgres is the default PostgreSQL master username. Many AWS customers will use this username for their RDS database instances in production. Malicious users can use this information to their advantage and frequently try to use default master username during brute-force attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-24",
+  "Description": "Amazon RDS DB clusters are evaluated for use of a **custom administrator username**, flagging clusters that use defaults such as `admin` or `postgres`.",
+  "Risk": "Using a well-known admin username simplifies **credential stuffing** and **brute-force** attempts. Attackers can focus on password guessing, increasing chances of compromise. A successful login enables data theft (**confidentiality**), unauthorized changes (**integrity**), and destructive operations or outages (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-24"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#"
+      "NativeIaC": "```yaml\n# Create an RDS DB cluster with a custom admin username\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      Engine: aurora-mysql\n      MasterUsername: <custom_admin_username>  # CRITICAL: use a non-default username (not \"admin\" or \"postgres\")\n      MasterUserPassword: <example_password>\n```",
+      "Other": "1. In the AWS console, go to RDS > Databases > Create database\n2. Choose Amazon Aurora and the same engine family as your current cluster\n3. Under Settings, set Master username to a custom value that is not \"admin\" or \"postgres\" (CRITICAL)\n4. Create the new cluster, migrate your workload to it, update application connections, then delete the old cluster",
+      "Terraform": "```hcl\n# Create an RDS DB cluster with a custom admin username\nresource \"aws_rds_cluster\" \"<example_resource_name>\" {\n  cluster_identifier = \"<example_resource_id>\"\n  engine             = \"aurora-mysql\"\n  master_username    = \"<custom_admin_username>\" # CRITICAL: non-default username (not admin/postgres)\n  master_password    = \"<example_password>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "To change the master username configured for your Amazon RDS database clusters you must re-create them and migrate the existing data.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-24"
+      "Text": "Create databases with a **unique, non-default admin username** that doesn't reveal environment or org. Apply **least privilege** by using separate, non-admin accounts for applications. Prefer **IAM database authentication** and manage secrets centrally with rotation. Restrict admin access and monitor login attempts.",
+      "Url": "https://hub.prowler.com/check/rds_cluster_default_admin"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

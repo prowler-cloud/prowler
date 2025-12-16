@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_transport_encrypted",
-  "CheckTitle": "Check if RDS instances enforce SSL/TLS encryption for client connections (Microsoft SQL Server, PostgreSQL, MySQL, MariaDB, Aurora PostgreSQL, and Aurora MySQL).",
-  "CheckType": [],
+  "CheckTitle": "RDS instance or cluster enforces SSL/TLS encryption for client connections",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "For SQL Server, PostgreSQL, and Aurora PostgreSQL databases, if the `rds.force_ssl` parameter value is set to 0, SSL/TLS connections are not enforced. For MySQL, Aurora MySQL, and MariaDB databases, if the `require_secure_transport` parameter value is set to OFF, SSL/TLS connections are not enforced. Enforcing SSL/TLS ensures that all client connections to RDS instances are encrypted, protecting sensitive information in transit.",
-  "Risk": "If not enabled, sensitive information in transit is not protected.",
-  "RelatedUrl": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
+  "Description": "Amazon RDS instances and clusters enforce **SSL/TLS** for client connections via parameter groups. The check looks for `rds.force_ssl=1` (PostgreSQL, SQL Server) or `require_secure_transport` enabled (MySQL-family) and identifies databases where encryption enforcement isn't active.",
+  "Risk": "Without enforced **TLS**, clients can connect or downgrade to plaintext, exposing credentials and queries to interception. Adversaries can perform **MITM**, steal secrets, and tamper traffic, undermining **confidentiality** and **integrity** and enabling reuse of captured database credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/questions/QUt6289ijmRrSkjAeUoSPQZg/mysql-in-rds-not-enforcing-ssl-even-when-require-secure-transport-parameter-is-set-to-true",
+    "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/",
+    "https://stackoverflow.com/questions/75500850/sslmode-verify-full-on-rds-db-instanse",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html",
+    "https://medium.com/soluto-nashville/best-security-practices-for-amazon-rds-with-sequelize-600a8b497804",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/transport-encryption.html",
+    "https://guides.spectralops.io/docs/d9_aws_cry_69"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-parameter-group --region <REGION_NAME> --db-parameter-group-name <PARAMETER_GROUP_NAME> --parameters ParameterName='rds.force_ssl',ParameterValue='1',ApplyMethod='pending-reboot'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/transport-encryption.html",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: set required parameter to enforce SSL/TLS\nResources:\n  ExampleDBParameterGroupPostgres:\n    Type: AWS::RDS::DBParameterGroup\n    Properties:\n      Family: <DB_PARAMETER_FAMILY>\n      Description: Enforce SSL/TLS\n      Parameters:\n        rds.force_ssl: \"1\"  # Critical: requires SSL/TLS for PostgreSQL/SQL Server instances\n\n  ExampleDBParameterGroupMySQL:\n    Type: AWS::RDS::DBParameterGroup\n    Properties:\n      Family: <DB_PARAMETER_FAMILY>\n      Description: Enforce SSL/TLS\n      Parameters:\n        require_secure_transport: \"1\"  # Critical: requires SSL/TLS for MySQL/MariaDB instances\n\n  ExampleDBClusterParameterGroupAuroraPostgres:\n    Type: AWS::RDS::DBClusterParameterGroup\n    Properties:\n      Family: <DB_CLUSTER_PARAMETER_FAMILY>\n      Description: Enforce SSL/TLS\n      Parameters:\n        rds.force_ssl: \"1\"  # Critical: requires SSL/TLS for Aurora PostgreSQL clusters\n\n  ExampleDBClusterParameterGroupAuroraMySQL:\n    Type: AWS::RDS::DBClusterParameterGroup\n    Properties:\n      Family: <DB_CLUSTER_PARAMETER_FAMILY>\n      Description: Enforce SSL/TLS\n      Parameters:\n        require_secure_transport: ON  # Critical: requires SSL/TLS for Aurora MySQL clusters\n```",
+      "Other": "1. In the AWS Console, go to RDS > Parameter groups\n2. For DB instances:\n   - Edit the DB parameter group attached to the instance (or create one and attach it)\n   - Set rds.force_ssl = 1 for PostgreSQL/SQL Server, or require_secure_transport = 1 for MySQL/MariaDB\n   - Save. If the parameter is static, reboot the instance\n3. For Aurora clusters:\n   - Edit the DB cluster parameter group attached to the cluster (or create one and attach it)\n   - Set rds.force_ssl = 1 for Aurora PostgreSQL, or require_secure_transport = ON for Aurora MySQL\n   - Save. Reboot instances if changes are pending-reboot\n4. Verify the parameter group is associated to the target instance/cluster and status shows the new value applied",
+      "Terraform": "```hcl\n# DB instances\nresource \"aws_db_parameter_group\" \"example_pg\" {\n  name   = \"<example_resource_name>\"\n  family = \"<DB_PARAMETER_FAMILY>\"\n\n  parameter {\n    name  = \"rds.force_ssl\"\n    value = \"1\"  # Critical: requires SSL/TLS for PostgreSQL/SQL Server instances\n  }\n}\n\nresource \"aws_db_parameter_group\" \"example_mysql\" {\n  name   = \"<example_resource_name>\"\n  family = \"<DB_PARAMETER_FAMILY>\"\n\n  parameter {\n    name  = \"require_secure_transport\"\n    value = \"1\"  # Critical: requires SSL/TLS for MySQL/MariaDB instances\n  }\n}\n\n# Aurora clusters\nresource \"aws_rds_cluster_parameter_group\" \"example_aurora_pg\" {\n  name   = \"<example_resource_name>\"\n  family = \"<DB_CLUSTER_PARAMETER_FAMILY>\"\n\n  parameter {\n    name  = \"rds.force_ssl\"\n    value = \"1\"  # Critical: requires SSL/TLS for Aurora PostgreSQL clusters\n  }\n}\n\nresource \"aws_rds_cluster_parameter_group\" \"example_aurora_mysql\" {\n  name   = \"<example_resource_name>\"\n  family = \"<DB_CLUSTER_PARAMETER_FAMILY>\"\n\n  parameter {\n    name  = \"require_secure_transport\"\n    value = \"ON\"  # Critical: requires SSL/TLS for Aurora MySQL clusters\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that instances provisioned with Amazon RDS enforce SSL/TLS for client connections to meet security and compliance requirements.",
-      "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/rds-connect-ssl-connection/"
+      "Text": "Enforce transport encryption at the database layer:\n- Enable `rds.force_ssl=1` or `require_secure_transport` in parameter groups\n- Configure clients to require certificate validation and prevent fallback\n- Use current TLS versions and trusted CAs\n- Prefer private network access as **defense in depth**",
+      "Url": "https://hub.prowler.com/check/rds_instance_transport_encrypted"
     }
   },
   "Categories": [

@@ -1,29 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_backup_enabled",
-  "CheckTitle": "Check if RDS instances have backup enabled.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance has backup retention period greater than 0 days",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Destruction"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances have backup enabled.",
-  "Risk": "If backup is not enabled, data is vulnerable. Human error or bad actors could erase or modify data.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html",
+  "Description": "**Amazon RDS DB instances** are evaluated for **automated backups** by confirming the backup retention period is greater than `0` days, indicating point-in-time recovery is configured.",
+  "Risk": "Without automated backups, you lose **point-in-time recovery**, impacting **availability** and **integrity**.\n\nAccidental deletes, destructive queries, or compromised accounts can cause unrecoverable data loss and prolonged outages, preventing reliable rollback during incidents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-instances-have-backup-policy#terraform",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-automated-backups-enabled.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --backup-retention-period 7 --apply-immediately",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-automated-backups-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-instances-have-backup-policy#terraform"
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --backup-retention-period 1 --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable automated backups on an RDS instance\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      DBInstanceClass: db.t3.micro\n      Engine: mysql\n      AllocatedStorage: 20\n      MasterUsername: admin\n      MasterUserPassword: <example_password>\n      BackupRetentionPeriod: 1  # CRITICAL: Enables automated backups (>0 days)\n```",
+      "Other": "1. Open the AWS Management Console and go to RDS > Databases\n2. Select the target DB instance and click Modify\n3. In Backup section, set Backup retention period to 1 day (or more)\n4. Check Apply immediately\n5. Click Continue (if shown) and then Modify DB instance",
+      "Terraform": "```hcl\n# Terraform: enable automated backups on an RDS instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  allocated_storage      = 20\n  engine                 = \"mysql\"\n  instance_class         = \"db.t3.micro\"\n  username               = \"admin\"\n  password               = \"<example_password>\"\n  backup_retention_period = 1  # CRITICAL: Enables automated backups (>0 days)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html"
+      "Text": "Enable **automated backups** with retention > `0` aligned to RPO/RTO. Regularly test restores to validate **PITR**.\n\nApply **least privilege** to backup access, encrypt snapshots, and replicate critical backups to separate locations for **defense in depth** and resilient recovery.",
+      "Url": "https://hub.prowler.com/check/rds_instance_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

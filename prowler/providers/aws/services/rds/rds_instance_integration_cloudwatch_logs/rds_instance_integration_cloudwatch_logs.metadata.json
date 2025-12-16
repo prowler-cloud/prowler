@@ -1,26 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "rds_instance_integration_cloudwatch_logs",
-  "CheckTitle": "Check if RDS instances is integrated with CloudWatch Logs.",
-  "CheckType": [],
+  "CheckTitle": "RDS instance exports logs to CloudWatch Logs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Check if RDS instances is integrated with CloudWatch Logs.",
-  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html",
+  "Description": "**Amazon RDS instances** are configured to **publish database logs** to **CloudWatch Logs** (e.g., `error`, `general`, `slowquery`, `audit`).\n\nThe evaluation identifies instances that have log exports enabled to a CloudWatch log group.",
+  "Risk": "Without centralized RDS logs, database activity lacks visibility, hindering detection and response. Credential misuse, SQL injection, data exfiltration, and privilege abuse may go unnoticed, risking **confidentiality** and **integrity**. Unseen errors and slow queries can lead to outages, impacting **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://awsvideocatalog.com/database/rds/how-do-i-enable-audit-logging-for-amazon-rds-mariadb-or-mysql-and-publish-the-logs-to-cloudwatch-efS-NaTf_Fc/",
+    "https://mohitepramod.wordpress.com/2021/12/26/amazon-rds-database-monitoring-with-amazon-cloudwatch-logs-aws-lambda-and-amazon-sns-to-send-logs-over-email/",
+    "https://dev.to/aws-builders/how-to-scan-thru-amazon-rds-for-sqlserver-error-logs-using-metric-filters-18ld",
+    "https://docs.prowler.com/checks/aws/iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/log-exports.html",
+    "https://medium.com/@tarunsraina483/real-time-slow-query-alerts-across-aws-rds-to-slack-39dd231d361c",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html",
+    "https://docs.aws.amazon.com/en_us/AmazonRDS/latest/UserGuide/USER_LogAccess.MariaDB.PublishtoCloudWatchLogs.html",
+    "https://repost.aws/knowledge-center/rds-aurora-mysql-logs-cloudwatch"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --cloudwatch-logs-export-configuration {'EnableLogTypes':['audit',error','general','slowquery']} --apply-immediately",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/log-exports.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled#terraform"
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"<log_type>\"]}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      DBInstanceIdentifier: <example_resource_id>\n      # Critical: enabling at least one log type exports it to CloudWatch Logs and makes the check PASS\n      EnableCloudwatchLogsExports:\n        - <log_type>\n```",
+      "Other": "1. Open AWS Console > RDS > Databases\n2. Select your DB instance and choose Modify\n3. In Log exports, select at least one supported log type (e.g., error/general/slowquery/audit/postgresql/alert)\n4. Choose Continue, then Modify DB instance",
+      "Terraform": "```hcl\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  identifier = \"<example_resource_id>\"\n  # Critical: export at least one supported log type to CloudWatch Logs to pass the check\n  enabled_cloudwatch_logs_exports = [\"<log_type>\"]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use CloudWatch Logs to perform real-time analysis of the log data. Create alarms and view metrics.",
-      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html"
+      "Text": "Enable export of relevant RDS logs to **CloudWatch Logs** (`error`, `general`, `slowquery`, `audit`) and standardize across engines. Enforce **least privilege** on log access, set retention, and define metrics/alarms for critical patterns. Integrate with a SIEM. Apply **separation of duties** and **defense in depth** to protect log integrity and monitoring.",
+      "Url": "https://hub.prowler.com/check/rds_instance_integration_cloudwatch_logs"
     }
   },
   "Categories": [

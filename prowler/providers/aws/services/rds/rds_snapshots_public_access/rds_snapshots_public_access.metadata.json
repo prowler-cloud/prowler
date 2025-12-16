@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "rds_snapshots_public_access",
-  "CheckTitle": "Check if RDS Snapshots and Cluster Snapshots are public.",
-  "CheckType": [],
+  "CheckTitle": "RDS snapshot is not publicly shared",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "TTPs/Collection"
+  ],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:snapshot",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbSnapshot",
-  "Description": "Check if RDS Snapshots and Cluster Snapshots are public.",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors. t is recommended that your RDS snapshots should not be public in order to prevent potential leak or misuse of sensitive data or any other kind of security threat. If your RDS snapshot is public, then the data which is backed up in that snapshot is accessible to all other AWS accounts.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html",
+  "Description": "**RDS DB snapshots** and **DB cluster snapshots** with **public visibility** (shared with `all` AWS accounts) are detected.\n\nSnapshots limited to specific accounts or kept private are identified as restricted.",
+  "Risk": "Public RDS snapshots expose full database copies to all AWS accounts, risking:\n- Loss of confidentiality via data exfiltration (PII, secrets)\n- Offline cracking of hashes and schema reconnaissance\n- Credential harvesting from dumps enabling lateral movement\nThis directly compromises confidentiality and fuels targeted attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/public-snapshots.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127056-ensure-rds-snapshots-and-cluster-snapshots-are-not-public",
+    "https://fig.io/manual/aws/rds/describe-db-cluster-snapshot-attributes"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws rds modify-db-snapshot-attribute --db-snapshot-identifier <snapshot_id> --attribute-name restore --values-to-remove all",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/public-snapshots.html",
+      "Other": "1. Open the Amazon RDS console and go to Snapshots\n2. Select the public snapshot (DB snapshot or DB cluster snapshot)\n3. Click Actions > Share snapshot\n4. Set visibility to Private (remove \"All\" from permissions) and click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use AWS Config to identify any snapshot that is public.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html"
+      "Text": "Keep **RDS snapshots** and **cluster snapshots** private. Share only with explicit AWS account IDs using **least privilege** and time-bound access.\n\nEnforce guardrails to block `public` visibility, require approvals for sharing, and audit snapshot permissions. Use encryption with strict key policies to control who can restore data.",
+      "Url": "https://hub.prowler.com/check/rds_snapshots_public_access"
     }
   },
   "Categories": [
