@@ -1,0 +1,112 @@
+---
+title: 'Alibaba Cloud Authentication in Prowler'
+---
+
+Prowler requires Alibaba Cloud credentials to perform security checks. Authentication is supported via multiple methods, prioritized as follows:
+
+1. **Credentials URI**
+2. **OIDC Role Authentication**
+3. **ECS RAM Role**
+4. **RAM Role Assumption**
+5. **STS Temporary Credentials**
+6. **Permanent Access Keys**
+7. **Default Credential Chain**
+
+## Authentication Methods
+
+### Credentials URI (Recommended for Centralized Services)
+
+If `--credentials-uri` is provided (or `ALIBABA_CLOUD_CREDENTIALS_URI` environment variable), Prowler will retrieve credentials from the specified external URI endpoint. The URI must return credentials in the standard JSON format.
+
+```bash
+export ALIBABA_CLOUD_CREDENTIALS_URI="http://localhost:8080/credentials"
+prowler alibabacloud
+```
+
+### OIDC Role Authentication (Recommended for ACK/Kubernetes)
+
+If OIDC environment variables are set, Prowler will use OIDC authentication to assume the specified role. This is the most secure method for containerized applications running in ACK (Alibaba Container Service for Kubernetes) with RRSA enabled.
+
+Required environment variables:
+- `ALIBABA_CLOUD_ROLE_ARN`
+- `ALIBABA_CLOUD_OIDC_PROVIDER_ARN`
+- `ALIBABA_CLOUD_OIDC_TOKEN_FILE`
+
+```bash
+export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/YourRole"
+export ALIBABA_CLOUD_OIDC_PROVIDER_ARN="acs:ram::123456789012:oidc-provider/ack-rrsa-provider"
+export ALIBABA_CLOUD_OIDC_TOKEN_FILE="/var/run/secrets/tokens/oidc-token"
+prowler alibabacloud
+```
+
+### ECS RAM Role (Recommended for ECS Instances)
+
+When running on an ECS instance with an attached RAM role, Prowler can obtain credentials from the ECS instance metadata service.
+
+```bash
+# Using CLI argument
+prowler alibabacloud --ecs-ram-role RoleName
+
+# Or using environment variable
+export ALIBABA_CLOUD_ECS_METADATA="RoleName"
+prowler alibabacloud
+```
+
+### RAM Role Assumption (Recommended for Cross-Account)
+
+For cross-account access, use RAM role assumption. You must provide the initial credentials (access keys) and the target role ARN.
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"
+prowler alibabacloud
+```
+
+### STS Temporary Credentials
+
+If you already have temporary STS credentials, you can provide them via environment variables.
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-sts-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-sts-access-key-secret"
+export ALIBABA_CLOUD_SECURITY_TOKEN="your-sts-security-token"
+prowler alibabacloud
+```
+
+### Permanent Access Keys
+
+You can use standard permanent access keys via environment variables.
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+prowler alibabacloud
+```
+
+## Required Permissions
+
+The credentials used by Prowler should have the minimum required permissions to audit the resources. At a minimum, the following permissions are recommended:
+
+- `ram:GetUser`
+- `ram:ListUsers`
+- `ram:GetPasswordPolicy`
+- `ram:GetAccountSummary`
+- `ram:ListVirtualMFADevices`
+- `ram:ListGroups`
+- `ram:ListPolicies`
+- `ram:ListAccessKeys`
+- `ram:GetLoginProfile`
+- `ram:ListPoliciesForUser`
+- `ram:ListGroupsForUser`
+- `actiontrail:DescribeTrails`
+- `oss:GetBucketLogging`
+- `oss:GetBucketAcl`
+- `rds:DescribeDBInstances`
+- `rds:DescribeDBInstanceAttribute`
+- `ecs:DescribeInstances`
+- `vpc:DescribeVpcs`
+- `sls:ListProject`
+- `sls:ListAlerts`
+- `sls:ListLogStores`
+- `sls:GetLogStore`

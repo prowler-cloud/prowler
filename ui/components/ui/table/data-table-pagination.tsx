@@ -10,16 +10,15 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { getPaginationInfo } from "@/lib";
-import { MetaDataProps } from "@/types";
-
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../select/Select";
+} from "@/components/shadcn/select/select";
+import { getPaginationInfo } from "@/lib";
+import { MetaDataProps } from "@/types";
 
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
@@ -114,7 +113,7 @@ export function DataTablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-18">
+              <SelectTrigger className="h-8 w-[6rem]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
