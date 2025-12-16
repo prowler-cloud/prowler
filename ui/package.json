@@ -118,6 +118,7 @@
     "@typescript-eslint/parser": "7.18.0",
     "autoprefixer": "10.4.19",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
+    "dotenv-expand": "12.0.3",
     "eslint": "8.57.1",
     "eslint-config-next": "15.5.9",
     "eslint-config-prettier": "10.1.5",

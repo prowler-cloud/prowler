@@ -737,6 +737,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "dotenv-expand",
+    "from": "12.0.3",
+    "to": "12.0.3",
+    "strategy": "installed",
+    "generatedAt": "2025-12-16T11:35:31.011Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "eslint",
     "from": "8.57.1",
     "to": "8.57.1",
