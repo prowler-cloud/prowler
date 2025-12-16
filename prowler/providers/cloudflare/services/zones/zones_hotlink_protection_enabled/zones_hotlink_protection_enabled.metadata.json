@@ -8,19 +8,22 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
-  "Description": "Verifies that Hotlink Protection (Scrape Shield) is enabled to prevent other websites from directly linking to images and media, consuming bandwidth without authorization.",
-  "Risk": "Without Hotlink Protection, external websites can embed your images and media directly, consuming your bandwidth, increasing costs, and potentially using your content without attribution or permission.",
-  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/scrape-shield/hotlink-protection/",
+  "Description": "**Cloudflare zones** are assessed for **Hotlink Protection** (Scrape Shield) configuration by checking if it is enabled to prevent other websites from directly linking to **images and media**, consuming bandwidth without authorization.",
+  "Risk": "Without **Hotlink Protection**, external websites can embed your media directly.\n- **Confidentiality**: content may be used without proper attribution or permission\n- **Integrity**: unauthorized use of media may misrepresent your brand\n- **Availability**: bandwidth theft increases costs and may degrade performance",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/scrape-shield/hotlink-protection/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    hotlink_protection = \"on\"\n  }\n}"
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Scrape Shield (or Security > Settings in newer UI)\n3. Scroll to Hotlink Protection\n4. Toggle the setting to On\n5. Review allowed referrers if legitimate integrations require access",
+      "Terraform": "```hcl\n# Enable Hotlink Protection to prevent bandwidth theft\nresource \"cloudflare_zone_settings_override\" \"hotlink_protection\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    hotlink_protection = \"on\" # Blocks unauthorized embedding of your media resources\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Hotlink Protection to prevent unauthorized embedding of your media resources. Review allowed referrers if legitimate integrations require access to your hosted content.",
-      "Url": "https://hub.prowler.com/checks/zones_hotlink_protection_enabled"
+      "Text": "Enable **Hotlink Protection** to prevent unauthorized embedding of your media.\n- Blocks requests to images when HTTP referer does not match your domain\n- Reduces bandwidth costs from unauthorized embedding\n- Review allowed referrers for legitimate integrations\n- Part of the Scrape Shield feature set for comprehensive protection",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_hotlink_protection_enabled"
     }
   },
   "Categories": [
@@ -28,5 +31,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Hotlink Protection blocks requests to images when the HTTP referer does not match your domain."
+  "Notes": "Hotlink Protection blocks requests to images when the HTTP referer does not match your domain. May need configuration for legitimate third-party embedding use cases."
 }

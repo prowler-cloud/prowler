@@ -8,19 +8,22 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
-  "Description": "Verifies that Server Side Excludes (Scrape Shield) is enabled to automatically hide content wrapped in SSE tags from visitors identified as suspicious bots or crawlers.",
-  "Risk": "Without Server Side Excludes, sensitive content marked for exclusion remains visible to malicious bots and crawlers that may scrape, index, or misuse the information.",
-  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/scrape-shield/server-side-excludes/",
+  "Description": "**Cloudflare zones** are assessed for **Server Side Excludes** (Scrape Shield) configuration by checking if it is enabled to automatically hide content wrapped in SSE tags from visitors identified as **suspicious bots or crawlers**.",
+  "Risk": "Without **Server Side Excludes**, sensitive content remains visible to malicious bots.\n- **Confidentiality**: sensitive information marked for exclusion can be scraped by bots\n- **Integrity**: content may be indexed or misused by unauthorized crawlers\n- **Availability**: scraped data may be used to plan further attacks",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/scrape-shield/server-side-excludes/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    server_side_exclude = \"on\"\n  }\n}"
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Scrape Shield (or Security > Settings in newer UI)\n3. Scroll to Server Side Excludes\n4. Toggle the setting to On\n5. Wrap sensitive content in SSE HTML comments in your page source",
+      "Terraform": "```hcl\n# Enable Server Side Excludes to hide sensitive content from bots\nresource \"cloudflare_zone_settings_override\" \"server_side_excludes\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    server_side_exclude = \"on\" # Hides SSE-wrapped content from suspicious visitors\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Server Side Excludes and wrap sensitive content in SSE HTML comments. This provides selective content protection while maintaining full functionality for legitimate visitors.",
-      "Url": "https://hub.prowler.com/checks/zones_server_side_excludes_enabled"
+      "Text": "Enable **Server Side Excludes** and wrap sensitive content in SSE HTML comments.\n- Provides selective content protection while maintaining functionality for legitimate visitors\n- Use HTML comments to mark content for exclusion from suspicious visitors\n- Part of the Scrape Shield feature set for comprehensive protection\n- Combine with other anti-scraping measures for defense in depth",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_server_side_excludes_enabled"
     }
   },
   "Categories": [
@@ -28,5 +31,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Server Side Excludes requires wrapping sensitive content with special HTML comments to mark content for exclusion."
+  "Notes": "Server Side Excludes requires wrapping sensitive content with special HTML comments to mark content for exclusion. The syntax is: <!--sse-->sensitive content<!--/sse-->"
 }
