@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "inspector2_active_findings_exist",
   "CheckTitle": "Inspector2 is enabled with no active findings",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ],
   "CheckType": [
     "Software and Configuration Checks/Vulnerabilities/CVE",
     "Software and Configuration Checks/Patch Management",
@@ -33,13 +36,8 @@
       "Url": "https://hub.prowler.com/check/inspector2_active_findings_exist"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckAliases": [
-    "inspector2_findings_exist"
-  ]
+  "Notes": ""
 }

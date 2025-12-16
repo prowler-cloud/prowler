@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "inspector2_is_enabled",
   "CheckTitle": "Inspector2 is enabled for Amazon EC2 instances, ECR container images, Lambda functions, and Lambda code",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ],
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
@@ -9,7 +12,7 @@
   "ServiceName": "inspector2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "Other",
   "Description": "**Amazon Inspector 2** activation and coverage across regions, verifying that scanning is active for **EC2**, **ECR**, **Lambda functions**, and **Lambda code** where applicable.\n\nIt flags missing account activation or gaps in any scan type.",
   "Risk": "Absent or partial coverage leaves **unpatched vulnerabilities**, risky **code dependencies**, and **unintended network exposure** undetected.\n\nAttackers can exploit known CVEs for **remote code execution**, **lateral movement**, and **data exfiltration**, degrading **confidentiality**, **integrity**, and **availability**.",
@@ -31,14 +34,8 @@
       "Url": "https://hub.prowler.com/check/inspector2_is_enabled"
     }
   },
-  "Categories": [
-    "vulnerabilities",
-    "container-security"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckAliases": [
-    "inspector2_findings_exist"
-  ]
+  "Notes": ""
 }
