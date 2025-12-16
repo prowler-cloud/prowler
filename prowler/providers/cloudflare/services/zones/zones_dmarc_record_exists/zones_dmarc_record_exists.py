@@ -21,7 +21,7 @@ class zones_dmarc_record_exists(Check):
                 and record.type == "TXT"
                 and record.name
                 and record.name.startswith("_dmarc")
-                and "v=DMARC1" in record.content.upper()
+                and "V=DMARC1" in record.content.upper()
             ]
 
             if dmarc_records:
