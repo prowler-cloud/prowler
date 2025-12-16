@@ -1,16 +1,3 @@
-"""
-Tests for the NIS2 Directive report generator.
-
-This module provides comprehensive tests for the NIS2ReportGenerator class,
-covering:
-- Cover page generation with logos
-- Executive summary with compliance metrics
-- Section compliance charts
-- SubSection breakdown tables
-- Section number extraction
-- Requirements index generation
-"""
-
 import io
 from unittest.mock import Mock, patch
 

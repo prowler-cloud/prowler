@@ -1,16 +1,3 @@
-"""
-Tests for the ThreatScore report generator.
-
-This module provides comprehensive tests for the ThreatScoreReportGenerator class,
-covering:
-- ThreatScore calculation with various input scenarios
-- Type conversion safety (str to int for LevelOfRisk and Weight)
-- Section score chart generation
-- Critical failed requirements identification
-- Requirements index generation
-- Edge cases and boundary conditions
-"""
-
 import io
 from unittest.mock import Mock
 

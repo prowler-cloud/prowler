@@ -1,13 +1,3 @@
-"""
-Tests for the compliance report generation.
-
-This module tests the PDF report generation framework including:
-- Helper functions and color utilities
-- Chart generation
-- Report generation functions
-- Database aggregation utilities
-"""
-
 import uuid
 from unittest.mock import Mock, patch
 

@@ -1,18 +1,3 @@
-"""
-Tests for the ENS RD2022 report generator.
-
-This module provides comprehensive tests for the ENSReportGenerator class,
-covering:
-- Cover page generation with logos and legend
-- Executive summary with compliance metrics
-- Marco/Categoría analysis charts
-- Security dimensions radar chart
-- Nivel (criticality level) compliance tables
-- Tipo (requirement type) distribution
-- Critical failed requirements (nivel alto)
-- Requirements index generation
-"""
-
 import io
 from unittest.mock import Mock, patch
 

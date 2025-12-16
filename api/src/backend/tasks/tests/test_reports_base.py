@@ -1,13 +1,3 @@
-"""
-Tests for the reports base architecture.
-
-This module tests the new PDF report generation framework including:
-- Configuration and registry
-- Reusable components
-- Chart generation
-- Base class functionality
-"""
-
 import io
 
 import pytest
