@@ -7,7 +7,7 @@ class zones_spf_record_exists(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
@@ -17,7 +17,7 @@ class zones_spf_record_exists(Check):
             spf_records = [
                 record
                 for record in dns_client.records
-                if record.zone.id == zone.id
+                if record.zone_id == zone.id
                 and record.type == "TXT"
                 and record.content.startswith("v=spf1")
             ]

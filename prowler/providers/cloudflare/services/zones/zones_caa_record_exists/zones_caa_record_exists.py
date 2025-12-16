@@ -7,7 +7,7 @@ class zones_caa_record_exists(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 
-        for zone in zones_client.zones:
+        for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
@@ -17,7 +17,7 @@ class zones_caa_record_exists(Check):
             caa_records = [
                 record
                 for record in dns_client.records
-                if record.zone.id == zone.id and record.type == "CAA"
+                if record.zone_id == zone.id and record.type == "CAA"
             ]
 
             if caa_records:
