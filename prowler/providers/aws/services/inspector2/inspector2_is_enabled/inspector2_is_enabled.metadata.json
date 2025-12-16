@@ -1,31 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "inspector2_is_enabled",
-  "CheckTitle": "Check if Inspector2 is enabled for Amazon EC2 instances, ECR container images and Lambda functions.",
+  "CheckTitle": "Inspector2 is enabled for Amazon EC2 instances, ECR container images, Lambda functions, and Lambda code",
   "CheckAliases": [
     "inspector2_findings_exist"
   ],
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "inspector2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsAccount",
-  "Description": "Ensure that the new version of Amazon Inspector is enabled in order to help you improve the security and compliance of your AWS cloud environment. Amazon Inspector 2 is a vulnerability management solution that continually scans scans your Amazon EC2 instances, ECR container images, and Lambda functions to identify software vulnerabilities and instances of unintended network exposure.",
-  "Risk": "Without using AWS Inspector, you may not be aware of all the security vulnerabilities in your AWS resources, which could lead to unauthorized access, data breaches, or other security incidents.",
-  "RelatedUrl": "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+  "ResourceType": "Other",
+  "Description": "**Amazon Inspector 2** activation and coverage across regions, verifying that scanning is active for **EC2**, **ECR**, **Lambda functions**, and **Lambda code** where applicable.\n\nIt flags missing account activation or gaps in any scan type.",
+  "Risk": "Absent or partial coverage leaves **unpatched vulnerabilities**, risky **code dependencies**, and **unintended network exposure** undetected.\n\nAttackers can exploit known CVEs for **remote code execution**, **lateral movement**, and **data exfiltration**, degrading **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector2/enable-amazon-inspector2.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws inspector2 enable --resource-types 'EC2' 'ECR' 'LAMBDA' 'LAMBDA_CODE'",
+      "CLI": "aws inspector2 enable --resource-types EC2 ECR LAMBDA LAMBDA_CODE",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector2/enable-amazon-inspector2.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the AWS Console and open Amazon Inspector (v2)\n2. If not yet activated: click Get started > Activate Amazon Inspector\n3. If already activated: go to Settings > Scans and ensure EC2, ECR, Lambda functions, and Lambda code are all enabled, then Save",
+      "Terraform": "```hcl\nresource \"aws_inspector2_enabler\" \"<example_resource_name>\" {\n  resource_types = [\"EC2\", \"ECR\", \"LAMBDA\", \"LAMBDA_CODE\"] # Enables Inspector2 scans for all required resource types\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Amazon Inspector 2 for your AWS account.",
-      "Url": "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html"
+      "Text": "Enable **Amazon Inspector 2** across all regions and activate scans for **EC2**, **ECR**, **Lambda**, and **Lambda code**.\n\nApply **defense in depth**: auto-enable coverage for new workloads, integrate findings with patching and CI/CD gates, enforce remediation SLAs, and grant only **least privilege** to process and act on findings.",
+      "Url": "https://hub.prowler.com/check/inspector2_is_enabled"
     }
   },
   "Categories": [],
