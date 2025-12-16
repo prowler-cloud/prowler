@@ -123,6 +123,7 @@ class MCPClientManager {
             prowler: {
               transport: "http",
               url: mcpServerUrl,
+              defaultToolTimeout: 180000, // 3 minutes
             },
           },
           beforeToolCall: this.handleBeforeToolCall,
