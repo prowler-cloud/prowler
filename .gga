@@ -1,0 +1,19 @@
+# Gentleman Guardian Angel (gga) Configuration
+# https://github.com/Gentleman-Programming/gentleman-guardian-angel
+
+# AI Provider (required)
+# Options: claude, gemini, codex, ollama:<model>
+PROVIDER="claude"
+
+# File patterns to include in review (comma-separated globs)
+# Review both TypeScript (UI) and Python (SDK, API, MCP) files
+FILE_PATTERNS="*.ts,*.tsx,*.js,*.jsx,*.py"
+
+# File patterns to exclude from review (comma-separated globs)
+EXCLUDE_PATTERNS="*.test.ts,*.test.tsx,*.spec.ts,*.spec.tsx,*.d.ts,*_test.py,test_*.py,conftest.py"
+
+# File containing your coding standards (relative to repo root)
+RULES_FILE="AGENTS-CODE-REVIEW.md"
+
+# Strict mode: fail if AI response is ambiguous (recommended)
+STRICT_MODE="true"
