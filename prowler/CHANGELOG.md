@@ -19,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SNS service metadata to new format [(#9428)](https://github.com/prowler-cloud/prowler/pull/9428)
 - Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
 - Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
+- Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
 
 ---
 
@@ -59,8 +60,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
 - Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
-- Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
-
 
 ### Fixed
 - Fix duplicate requirement IDs in ISO 27001:2013 AWS compliance framework by adding unique letter suffixes

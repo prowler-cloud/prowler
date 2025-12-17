@@ -18,9 +18,6 @@
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-11",
     "https://docs.aws.amazon.com/cli/latest/reference/wafv2/put-logging-configuration.html",
-    "https://docs.aws.amazon.com/waf/latest/APIReference/API_LoggingConfiguration.html",
-    "https://docs.aws.amazon.com/cli/latest/reference/waf/put-logging-configuration.html",
-    "https://docs.aws.amazon.com/waf/latest/APIReference/API_PutLoggingConfiguration.html",
     "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
   ],
   "Remediation": {

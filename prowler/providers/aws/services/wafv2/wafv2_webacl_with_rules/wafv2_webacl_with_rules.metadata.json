@@ -16,12 +16,8 @@
   "Risk": "Without rules, traffic is governed only by the web ACL `DefaultAction`, often allowing requests without inspection. This increases risks to **confidentiality** (data exfiltration via injection), **integrity** (XSS/parameter tampering), and **availability** (layer-7 DDoS, bot abuse).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://gyro.dev/providers/aws/waf-v2/wafv2-web-acl.html",
-    "https://docs.aws.amazon.com/waf/latest/APIReference/API_Rule.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-wafv2-webacl.html",
     "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-editing.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-10",
-    "https://medium.com/@comp87/deep-dive-into-the-aws-web-application-firewall-waf-14148ea0d3d",
     "https://support.icompaas.com/support/solutions/articles/62000233642-ensure-aws-wafv2-webacl-has-at-least-one-rule-or-rule-group"
   ],
   "Remediation": {
@@ -37,8 +33,7 @@
     }
   },
   "Categories": [
-    "internet-exposed",
-    "threat-detection"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
