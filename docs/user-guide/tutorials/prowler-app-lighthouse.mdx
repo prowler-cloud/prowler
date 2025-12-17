@@ -4,28 +4,37 @@ title: 'How It Works'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.8.0" />
+<VersionBadge version="5.16.0" />
 
 Prowler Lighthouse AI integrates Large Language Models (LLMs) with Prowler security findings data.
 
-Here's what's happening behind the scenes:
+Behind the scenes, Lighthouse AI works as follows:
 
-- The system uses a multi-agent architecture built with [LanggraphJS](https://github.com/langchain-ai/langgraphjs) for LLM logic and [Vercel AI SDK UI](https://sdk.vercel.ai/docs/ai-sdk-ui/overview) for frontend chatbot.
-- It uses a ["supervisor" architecture](https://langchain-ai.lang.chat/langgraphjs/tutorials/multi_agent/agent_supervisor/) that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
-- The system connects to the configured LLM provider to understand user's query, fetches the right data, and responds to the query.
+- Lighthouse AI runs as a [Langchain agent](https://docs.langchain.com/oss/javascript/langchain/agents) in NextJS
+- The agent connects to the configured LLM provider to understand the prompt and decide what data is needed
+- The agent accesses Prowler data through [Prowler MCP](https://docs.prowler.com/getting-started/products/prowler-mcp), which exposes tools from multiple sources, including:
+  - Prowler Hub
+  - Prowler Docs
+  - Prowler App
+- Instead of calling every tool directly, the agent uses two meta-tools:
+  - `describe_tool` to retrieve a tool schema and parameter requirements.
+  - `execute_tool` to run the selected tool with the required input.
+- Based on the user's query and the data necessary to answer it, Lighthouse agent will invoke necessary Prowler MCP tools using `discover_tool` and `execute_tool`
+
 <Note>
 Lighthouse AI supports multiple LLM providers including OpenAI, Amazon Bedrock, and OpenAI-compatible services. For configuration details, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
 </Note>
-- The supervisor agent is the main contact point. It is what users interact with directly from the chat interface. It coordinates with other agents to answer users' questions comprehensively.
 
-<img src="/images/prowler-app/lighthouse-architecture.png" alt="Lighthouse AI Architecture" />
+<img className="block dark:hidden" src="/images/prowler-app/lighthouse-architecture-light.png" alt="Prowler Lighthouse Architecture" />
+<img className="hidden dark:block" src="/images/prowler-app/lighthouse-architecture-dark.png" alt="Prowler Lighthouse Architecture" />
+
 
 <Note>
-All agents can only read relevant security data. They cannot modify your data or access sensitive information like configured secrets or tenant details.
+Lighthouse AI can only read relevant security data. It cannot modify data or access sensitive information such as configured secrets or tenant details.
 
 </Note>
 
-## Set up
+## Set Up
 
 Getting started with Prowler Lighthouse AI is easy:
 
@@ -43,11 +52,11 @@ For detailed configuration instructions for each provider, see [Using Multiple L
 
 ### Adding Business Context
 
-The optional business context field lets you provide additional information to help Lighthouse AI understand your environment and priorities, including:
+The optional business context field lets teams provide additional information to help Lighthouse AI understand environment priorities, including:
 
-- Your organization's cloud security goals
+- Organization cloud security goals
 - Information about account owners or responsible teams
-- Compliance requirements for your organization
+- Compliance requirements
 - Current security initiatives or focus areas
 
 Better context leads to more relevant responses and prioritization that aligns with your needs.
