@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
 import {
-  ColumnFindings,
+  getColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { Accordion } from "@/components/ui/accordion/Accordion";
@@ -159,8 +159,10 @@ export const ClientAccordionContent = ({
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
-            // Remove the updated_at column as compliance is for the last scan
-            columns={ColumnFindings.filter((_, index) => index !== 7)}
+            // Remove select (index 0) and updated_at (index 6) columns for compliance view
+            columns={getColumnFindings({}, 0).filter(
+              (_: unknown, index: number) => index !== 0 && index !== 6,
+            )}
             data={expandedFindings || []}
             metadata={findings?.meta}
             disableScroll={true}
