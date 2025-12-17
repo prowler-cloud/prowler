@@ -14,6 +14,7 @@ Full access to Prowler Cloud platform and self-managed Prowler App for:
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
 - **Resource Inventory**: Search and view detailed information about your audited resources
 - **Muting Management**: Create and manage muting rules to suppress non-critical findings
+- **Compliance Reporting**: View compliance status across frameworks and drill into requirement-level details
 
 ### Prowler Hub
 

@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 22 tools | Yes |
+| Prowler Cloud/App | 24 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -79,6 +79,13 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 - **`prowler_app_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
 - **`prowler_app_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
 - **`prowler_app_delete_mute_rule`** - Delete a mute rule from the system
+
+### Compliance Management
+
+Tools for viewing compliance status and framework details across all cloud providers.
+
+- **`prowler_app_get_compliance_overview`** - Get high-level compliance status across all frameworks for a specific scan or provider, including pass/fail statistics per framework
+- **`prowler_app_get_compliance_framework_state_details`** - Get detailed requirement-level breakdown for a specific compliance framework, including failed requirements and associated finding IDs
 
 ## Prowler Hub Tools
 

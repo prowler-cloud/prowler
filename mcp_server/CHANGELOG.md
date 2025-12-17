@@ -4,6 +4,10 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 ## [0.3.0] (UNRELEASED)
 
+### Added
+
+- Add new MCP Server tools for Prowler Compliance Framework Management [(#9568)](https://github.com/prowler-cloud/prowler/pull/9568)
+
 ### Changed
 
 - Update API base URL environment variable to include complete path [(#9542)](https://github.com/prowler-cloud/prowler/pull/9542)
