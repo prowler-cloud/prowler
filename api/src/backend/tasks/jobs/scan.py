@@ -1070,7 +1070,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
 
 
 def _aggregate_findings_by_region(
-    tenant_id: str, scan_id: str, modeled_threatscore_compliance_id: str
+    tenant_id: str, scan_id: str, modeled_THREATSCORE_compliance_id: str
 ) -> tuple[dict, dict]:
     """
     Aggregate findings by region using optimized ORM queries.
@@ -1080,7 +1080,7 @@ def _aggregate_findings_by_region(
     Args:
         tenant_id: Tenant UUID
         scan_id: Scan UUID
-        modeled_threatscore_compliance_id: ID for ThreatScore compliance framework
+        modeled_THREATSCORE_compliance_id: ID for THREATSCORE compliance framework
 
     Returns:
         tuple: (check_status_by_region, findings_count_by_compliance)
@@ -1092,7 +1092,7 @@ def _aggregate_findings_by_region(
 
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Fetch only PASS/FAIL findings (optimized query reduces data transfer)
-        # Other statuses are not needed for check_status or ThreatScore calculation
+        # Other statuses are not needed for check_status or THREATSCORE calculation
         findings = (
             Finding.all_objects.filter(
                 tenant_id=tenant_id,
@@ -1112,7 +1112,7 @@ def _aggregate_findings_by_region(
 
         # Process findings in a single pass (more efficient than original nested loops)
         normalized_id = re.sub(
-            r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
+            r"[^a-z0-9]", "", modeled_THREATSCORE_compliance_id.lower()
         )
 
         for finding in findings:
@@ -1127,14 +1127,14 @@ def _aggregate_findings_by_region(
                 if current_status.get(finding.check_id) != "FAIL":
                     current_status[finding.check_id] = status
 
-                # Aggregate ThreatScore compliance counts
-                if modeled_threatscore_compliance_id in (finding.compliance or {}):
+                # Aggregate THREATSCORE compliance counts
+                if modeled_THREATSCORE_compliance_id in (finding.compliance or {}):
                     compliance_key = findings_count_by_compliance.setdefault(
                         region, {}
                     ).setdefault(normalized_id, {})
 
                     for requirement_id in finding.compliance[
-                        modeled_threatscore_compliance_id
+                        modeled_THREATSCORE_compliance_id
                     ]:
                         requirement_stats = compliance_key.setdefault(
                             requirement_id, {"total": 0, "pass": 0}
@@ -1172,7 +1172,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
             provider_instance.provider
         ]
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         requirement_lookup: dict[str, list[tuple[str, str]]] = {}
         for compliance_id, compliance in compliance_template.items():
@@ -1193,7 +1193,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             # Aggregate findings by region using SQL for optimal performance
             check_status_by_region, findings_count_by_compliance = (
                 _aggregate_findings_by_region(
-                    tenant_id, scan_id, modeled_threatscore_compliance_id
+                    tenant_id, scan_id, modeled_THREATSCORE_compliance_id
                 )
             )
 

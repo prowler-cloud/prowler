@@ -1,22 +1,22 @@
 import { AttributesData, RequirementsData } from "@/types/compliance";
 
-export interface ThreatScoreResult {
+export interface THREATSCOREResult {
   score: number;
 }
 
 /**
- * Calculates the ThreatScore for a given provider's compliance data.
- * This function replicates the calculation logic from the server-side getThreatScore
+ * Calculates the THREATSCORE for a given provider's compliance data.
+ * This function replicates the calculation logic from the server-side getTHREATSCORE
  * but operates on already-fetched attribute and requirement data.
  *
  * @param attributesData - Compliance attributes containing metadata like Weight and LevelOfRisk
  * @param requirementsData - Compliance requirements containing passed and total findings
- * @returns The calculated ThreatScore or null if calculation fails
+ * @returns The calculated THREATSCORE or null if calculation fails
  */
 export function calculateThreatScore(
   attributesData: AttributesData | undefined,
   requirementsData: RequirementsData | undefined,
-): ThreatScoreResult | null {
+): THREATSCOREResult | null {
   if (!attributesData?.data || !requirementsData?.data) {
     return null;
   }
@@ -27,7 +27,7 @@ export function calculateThreatScore(
     requirementsMap.set(req.id, req);
   }
 
-  // Calculate ThreatScore using the same formula as the server-side version
+  // Calculate THREATSCORE using the same formula as the server-side version
   let numerator = 0;
   let denominator = 0;
   let hasFindings = false;

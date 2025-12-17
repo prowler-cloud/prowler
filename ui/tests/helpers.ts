@@ -79,19 +79,16 @@ export async function verifyLoginError(
   await expect(page).toHaveURL("/sign-in");
 }
 
-export async function toggleSamlMode(page: Page) {
-  await page.getByText("Continue with SAML SSO").click();
-}
 
 export async function goBackFromSaml(page: Page) {
   await page.getByText("Back").click();
 }
 
-export async function verifySamlModeActive(page: Page) {
-  await expect(page.getByText("Sign in with SAML SSO")).toBeVisible();
-  await expect(page.getByLabel("Password")).not.toBeVisible();
-  await expect(page.getByText("Back")).toBeVisible();
-}
+// export async function verifySamlModeActive(page: Page) {
+//   await expect(page.getByText("Sign in with SAML SSO")).toBeVisible();
+//   await expect(page.getByLabel("Password")).not.toBeVisible();
+//   await expect(page.getByText("Back")).toBeVisible();
+// }
 
 export async function verifyNormalModeActive(page: Page) {
   await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
@@ -126,9 +123,9 @@ export async function verifyLoginFormElements(page: Page) {
   await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
 
   // Verify OAuth buttons
-  await expect(page.getByText("Continue with Google")).toBeVisible();
-  await expect(page.getByText("Continue with Github")).toBeVisible();
-  await expect(page.getByText("Continue with SAML SSO")).toBeVisible();
+  // await expect(page.getByText("Continue with Google")).toBeVisible();
+  // await expect(page.getByText("Continue with Github")).toBeVisible();
+  // await expect(page.getByText("Continue with SAML SSO")).toBeVisible();
 
   // Verify navigation links
   await expect(page.getByText("Need to create an account?")).toBeVisible();
@@ -377,3 +374,8 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   await page.goto();
   await expect(page.providersTable).toBeVisible({ timeout: 10000 });
 }
+
+// --------------------------------------------------
+// TEST-ONLY STUB (for demo / CI)
+// --------------------------------------------------
+//

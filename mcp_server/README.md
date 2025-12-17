@@ -188,7 +188,7 @@ For developers looking to extend the MCP server with new tools or features:
 
 - **[Prowler Hub](https://hub.prowler.com)**: Browse security checks and compliance frameworks
 - **[Prowler Cloud](https://cloud.prowler.com)**: Managed Prowler platform
-- **[Lighthouse AI](https://docs.prowler.com/getting-started/products/prowler-lighthouse-ai)**: AI security analyst
+- **[Cignify AI](https://docs.prowler.com/getting-started/products/prowler-lighthouse-ai)**: AI security analyst
 
 ## License
 

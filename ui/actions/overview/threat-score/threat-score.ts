@@ -3,14 +3,14 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-export const getThreatScore = async ({
+export const getTHREATSCORE = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/threatscore`);
+  const url = new URL(`${apiBaseUrl}/overviews/THREATSCORE`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {

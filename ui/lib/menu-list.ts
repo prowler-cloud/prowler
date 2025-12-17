@@ -3,7 +3,6 @@ import {
   Cog,
   Group,
   Mail,
-  MessageCircleQuestion,
   Puzzle,
   Settings,
   ShieldCheck,
@@ -19,13 +18,7 @@ import {
 import type { MouseEvent } from "react";
 
 import { ProwlerShort } from "@/components/icons";
-import {
-  APIdocIcon,
-  DocIcon,
-  GithubIcon,
-  LighthouseIcon,
-  SupportIcon,
-} from "@/components/icons/Icons";
+import { LighthouseIcon } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
 
 interface MenuListOptions {
@@ -69,7 +62,7 @@ export const getMenuList = ({
       menus: [
         {
           href: "/lighthouse",
-          label: "Lighthouse AI",
+          label: "Cignify AI",
           icon: LighthouseIcon,
           active: pathname === "/lighthouse",
         },
@@ -119,9 +112,7 @@ export const getMenuList = ({
 
                 requestMutelistModalOpen?.();
 
-                if (pathname !== "/providers") {
-                  return;
-                }
+                if (pathname !== "/providers") return;
 
                 event.preventDefault();
                 event.stopPropagation();
@@ -132,7 +123,7 @@ export const getMenuList = ({
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/config", label: "Cignify AI", icon: Cog },
           ],
           defaultOpen: true,
         },
@@ -153,55 +144,17 @@ export const getMenuList = ({
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "",
-          label: "Support & Help",
-          icon: SupportIcon,
-          submenus: [
-            {
-              href: "https://docs.prowler.com/",
-              target: "_blank",
-              label: "Documentation",
-              icon: DocIcon,
-            },
-            {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
-              target: "_blank",
-              label: "API reference",
-              icon: APIdocIcon,
-            },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
-          ],
-          defaultOpen: false,
-        },
-      ],
-    },
+
+    // ✅ Renamed Hub
     {
       groupLabel: "",
       menus: [
         {
           href: "https://hub.prowler.com/",
-          label: "Prowler Hub",
+          label: "Cignify Hub",
           icon: ProwlerShort,
           target: "_blank",
-          tooltip: "Looking for all available checks? learn more.",
+          tooltip: "Looking for all available checks? Learn more.",
         },
       ],
     },

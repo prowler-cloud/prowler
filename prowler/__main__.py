@@ -83,20 +83,20 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
-    ProwlerThreatScoreAWS,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_aws import (
+    ProwlerTHREATSCOREAWS,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azure import (
-    ProwlerThreatScoreAzure,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_azure import (
+    ProwlerTHREATSCOREAzure,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
-    ProwlerThreatScoreGCP,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_gcp import (
+    ProwlerTHREATSCOREGCP,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
-    ProwlerThreatScoreKubernetes,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_kubernetes import (
+    ProwlerTHREATSCOREKubernetes,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
-    ProwlerThreatScoreM365,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_m365 import (
+    ProwlerTHREATSCOREM365,
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
@@ -575,18 +575,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(kisa_ismsp)
                 kisa_ismsp.batch_write_data_to_file()
-            elif compliance_name == "prowler_threatscore_aws":
+            elif compliance_name == "prowler_THREATSCORE_aws":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                prowler_threatscore = ProwlerThreatScoreAWS(
+                prowler_THREATSCORE = ProwlerTHREATSCOREAWS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(prowler_threatscore)
-                prowler_threatscore.batch_write_data_to_file()
+                generated_outputs["compliance"].append(prowler_THREATSCORE)
+                prowler_THREATSCORE.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -680,18 +680,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(iso27001)
                 iso27001.batch_write_data_to_file()
-            elif compliance_name == "prowler_threatscore_azure":
+            elif compliance_name == "prowler_THREATSCORE_azure":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                prowler_threatscore = ProwlerThreatScoreAzure(
+                prowler_THREATSCORE = ProwlerTHREATSCOREAzure(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(prowler_threatscore)
-                prowler_threatscore.batch_write_data_to_file()
+                generated_outputs["compliance"].append(prowler_THREATSCORE)
+                prowler_THREATSCORE.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -783,18 +783,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(iso27001)
                 iso27001.batch_write_data_to_file()
-            elif compliance_name == "prowler_threatscore_gcp":
+            elif compliance_name == "prowler_THREATSCORE_gcp":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                prowler_threatscore = ProwlerThreatScoreGCP(
+                prowler_THREATSCORE = ProwlerTHREATSCOREGCP(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(prowler_threatscore)
-                prowler_threatscore.batch_write_data_to_file()
+                generated_outputs["compliance"].append(prowler_THREATSCORE)
+                prowler_THREATSCORE.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -860,19 +860,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(iso27001)
                 iso27001.batch_write_data_to_file()
-            elif compliance_name == "prowler_threatscore_kubernetes":
-                # Generate Prowler ThreatScore Finding Object
+            elif compliance_name == "prowler_THREATSCORE_kubernetes":
+                # Generate Prowler THREATSCORE Finding Object
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                prowler_threatscore = ProwlerThreatScoreKubernetes(
+                prowler_THREATSCORE = ProwlerTHREATSCOREKubernetes(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(prowler_threatscore)
-                prowler_threatscore.batch_write_data_to_file()
+                generated_outputs["compliance"].append(prowler_THREATSCORE)
+                prowler_THREATSCORE.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -901,18 +901,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
-            elif compliance_name == "prowler_threatscore_m365":
+            elif compliance_name == "prowler_THREATSCORE_m365":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                prowler_threatscore = ProwlerThreatScoreM365(
+                prowler_THREATSCORE = ProwlerTHREATSCOREM365(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
-                generated_outputs["compliance"].append(prowler_threatscore)
-                prowler_threatscore.batch_write_data_to_file()
+                generated_outputs["compliance"].append(prowler_THREATSCORE)
+                prowler_THREATSCORE.batch_write_data_to_file()
             elif compliance_name.startswith("iso27001_"):
                 # Generate ISO27001 Finding Object
                 filename = (

@@ -36,7 +36,7 @@ const COMPLIANCE_LOGOS = {
   rbi: RBILogo,
   soc2: SOC2Logo,
   kisa: KISALogo,
-  prowlerthreatscore: PROWLERTHREATLogo,
+  prowlerTHREATSCORE: PROWLERTHREATLogo,
   nis2: NIS2Logo,
   c5: C5Logo,
   ccc: CCCLogo,

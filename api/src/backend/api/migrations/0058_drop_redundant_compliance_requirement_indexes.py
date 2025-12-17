@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0057_threatscoresnapshot"),
+        ("api", "0057_THREATSCOREsnapshot"),
     ]
 
     operations = [

@@ -90,7 +90,7 @@ test.describe("New user invitation", () => {
         password: password,
       });
       await signInPage.verifySuccessfulLogin();
-      
+
       // Navigate to the user profile page
       const userProfilePage = new UserProfilePage(await inviteContext.newPage());
       await userProfilePage.goto();

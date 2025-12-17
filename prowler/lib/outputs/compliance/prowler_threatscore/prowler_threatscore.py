@@ -5,7 +5,7 @@ from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import Compliance
 
 
-def get_prowler_threatscore_table(
+def get_prowler_THREATSCORE_table(
     findings: list,
     bulk_checks_metadata: dict,
     compliance_framework: str,
@@ -34,7 +34,7 @@ def get_prowler_threatscore_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if compliance.Framework == "ProwlerThreatScore":
+            if compliance.Framework == "ProwlerTHREATSCORE":
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         pillar = attribute.Section

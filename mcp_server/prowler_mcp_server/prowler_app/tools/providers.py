@@ -6,13 +6,12 @@ including searching, connecting, and deleting providers.
 
 from typing import Any
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.providers import (
     ProviderConnectionStatus,
     ProvidersListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class ProvidersTools(BaseTool):

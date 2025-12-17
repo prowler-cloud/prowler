@@ -391,14 +391,14 @@ def get_aws_html_header(args: list) -> str:
 
         .float-left {{ float: left !important; max-width: 100%; }}
     </style>
-    <title>Prowler - The Handy Cloud Security Tool</title>
+    <title>Cignify - The Handy Cloud Security Tool</title>
     </head>
     <body>
     <div class="container-fluid">
         <div class="row mt-3">
         <div class="col-md-4">
             <a href="https://github.com/prowler-cloud/prowler/"><img class="float-left card-img-left mt-4 mr-4 ml-4"
-                        src=https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png
+                        src="/lopo.png"
                         alt="prowler-logo"
                         style="width: 15rem; height:auto;"/></a>
             <div class="card">

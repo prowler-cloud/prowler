@@ -47,7 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
-    ThreatScoreSnapshot,
+    THREATSCORESnapshot,
     User,
     UserRoleRelationship,
 )
@@ -2086,11 +2086,11 @@ class ComplianceOverviewDetailSerializer(BaseSerializerV1):
         resource_name = "compliance-requirements-details"
 
 
-class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
+class ComplianceOverviewDetailTHREATSCORESerializer(ComplianceOverviewDetailSerializer):
     """
-    Serializer for detailed compliance requirement information for Threatscore.
+    Serializer for detailed compliance requirement information for THREATSCORE.
 
-    Includes additional fields specific to the Threatscore framework.
+    Includes additional fields specific to the THREATSCORE framework.
     """
 
     passed_findings = serializers.IntegerField()
@@ -3736,19 +3736,19 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
         return value
 
 
-# ThreatScore Snapshots
+# THREATSCORE Snapshots
 
 
-class ThreatScoreSnapshotSerializer(RLSSerializer):
+class THREATSCORESnapshotSerializer(RLSSerializer):
     """
-    Serializer for ThreatScore snapshots.
-    Read-only serializer for retrieving historical ThreatScore metrics.
+    Serializer for THREATSCORE snapshots.
+    Read-only serializer for retrieving historical THREATSCORE metrics.
     """
 
     id = serializers.SerializerMethodField()
 
     class Meta:
-        model = ThreatScoreSnapshot
+        model = THREATSCORESnapshot
         fields = [
             "id",
             "inserted_at",

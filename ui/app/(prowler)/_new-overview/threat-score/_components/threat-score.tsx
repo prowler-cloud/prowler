@@ -41,7 +41,7 @@ const THREAT_LEVEL_CONFIG = {
 
 type ThreatLevelKey = keyof typeof THREAT_LEVEL_CONFIG;
 
-interface ThreatScoreProps {
+interface THREATSCOREProps {
   score?: number | null;
   scoreDelta?: number | null;
   sectionScores?: SectionScores;
@@ -92,12 +92,12 @@ function extractTopGaps(
   return sorted.slice(0, limit).map((req) => req.title);
 }
 
-export function ThreatScore({
+export function THREATSCORE({
   score,
   scoreDelta,
   sectionScores,
   criticalRequirements,
-}: ThreatScoreProps) {
+}: THREATSCOREProps) {
   const hasData = score !== null && score !== undefined;
   const displayScore = hasData ? score : 0;
 
@@ -116,7 +116,7 @@ export function ThreatScore({
       className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
     >
       <CardHeader>
-        <CardTitle>Prowler ThreatScore</CardTitle>
+        <CardTitle>Cignify THREATSCORE</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col justify-between space-y-4">
@@ -165,7 +165,7 @@ export function ThreatScore({
                       className="mt-0.5 min-h-4 min-w-4 shrink-0"
                     />
                     <p>
-                      Prowler ThreatScore has{" "}
+                      Prowler THREATSCORE has{" "}
                       {scoreDelta > 0 ? "improved" : "decreased"} by{" "}
                       {Math.abs(scoreDelta)}%
                     </p>
@@ -194,7 +194,7 @@ export function ThreatScore({
             className="items-center justify-center"
           >
             <p className="text-text-neutral-secondary text-sm">
-              Prowler ThreatScore Data Unavailable
+              Prowler THREATSCORE Data Unavailable
             </p>
           </Card>
         )}

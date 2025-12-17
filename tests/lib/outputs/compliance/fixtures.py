@@ -13,7 +13,7 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
-    Prowler_ThreatScore_Requirement_Attribute,
+    Prowler_THREATSCORE_Requirement_Attribute,
 )
 
 CIS_1_4_AWS = Compliance(
@@ -848,17 +848,17 @@ KISA_ISMSP_AWS = Compliance(
 )
 
 PROWLER_THREATSCORE_AWS = Compliance(
-    Framework="ProwlerThreatScore",
-    Name="Prowler ThreatScore Compliance Framework for AWS",
+    Framework="ProwlerTHREATSCORE",
+    Name="Prowler THREATSCORE Compliance Framework for AWS",
     Version="1.0",
     Provider="AWS",
-    Description="Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Description="Prowler THREATSCORE Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
     Requirements=[
         Compliance_Requirement(
             Id="1.1.1",
             Description="Ensure MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="MFA enabled for 'root'",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -876,7 +876,7 @@ PROWLER_THREATSCORE_AWS = Compliance(
             Id="1.1.2",
             Description="Ensure hardware MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="CloudTrail logging enabled",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -892,17 +892,17 @@ PROWLER_THREATSCORE_AWS = Compliance(
 )
 
 PROWLER_THREATSCORE_AZURE = Compliance(
-    Framework="ProwlerThreatScore",
-    Name="Prowler ThreatScore Compliance Framework for Azure",
+    Framework="ProwlerTHREATSCORE",
+    Name="Cignify THREATSCORE Compliance Framework for Azure",
     Version="1.0",
     Provider="Azure",
-    Description="Prowler ThreatScore Compliance Framework for Azure ensures that the Azure account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Description="Cignify THREATSCORE Compliance Framework for Azure ensures that the Azure account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
     Requirements=[
         Compliance_Requirement(
             Id="1.1.1",
             Description="Ensure MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="MFA enabled for 'root'",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -920,7 +920,7 @@ PROWLER_THREATSCORE_AZURE = Compliance(
             Id="1.1.2",
             Description="Ensure hardware MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="CloudTrail logging enabled",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -936,17 +936,17 @@ PROWLER_THREATSCORE_AZURE = Compliance(
 )
 
 PROWLER_THREATSCORE_GCP = Compliance(
-    Framework="ProwlerThreatScore",
-    Name="Prowler ThreatScore Compliance Framework for GCP",
+    Framework="ProwlerTHREATSCORE",
+    Name="Prowler THREATSCORE Compliance Framework for GCP",
     Version="1.0",
     Provider="GCP",
-    Description="Prowler ThreatScore Compliance Framework for GCP ensures that the GCP account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Description="Prowler THREATSCORE Compliance Framework for GCP ensures that the GCP account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
     Requirements=[
         Compliance_Requirement(
             Id="1.1.1",
             Description="Ensure MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="MFA enabled for 'root'",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -964,7 +964,7 @@ PROWLER_THREATSCORE_GCP = Compliance(
             Id="1.1.2",
             Description="Ensure hardware MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="CloudTrail logging enabled",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -980,17 +980,17 @@ PROWLER_THREATSCORE_GCP = Compliance(
 )
 
 PROWLER_THREATSCORE_M365 = Compliance(
-    Framework="ProwlerThreatScore",
-    Name="Prowler ThreatScore Compliance Framework for Microsoft 365",
+    Framework="ProwlerTHREATSCORE",
+    Name="Prowler THREATSCORE Compliance Framework for Microsoft 365",
     Version="1.0",
     Provider="M365",
-    Description="Prowler ThreatScore Compliance Framework for M365 ensures that the M365 account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Description="Prowler THREATSCORE Compliance Framework for M365 ensures that the M365 account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
     Requirements=[
         Compliance_Requirement(
             Id="1.1.1",
             Description="Ensure MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="MFA enabled for 'root'",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",
@@ -1008,7 +1008,7 @@ PROWLER_THREATSCORE_M365 = Compliance(
             Id="1.1.2",
             Description="Ensure hardware MFA is enabled for the 'root' user account",
             Attributes=[
-                Prowler_ThreatScore_Requirement_Attribute(
+                Prowler_THREATSCORE_Requirement_Attribute(
                     Title="CloudTrail logging enabled",
                     Section="1. IAM",
                     SubSection="1.1 Authentication",

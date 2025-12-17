@@ -92,7 +92,7 @@ export function adaptComplianceOverviewsResponse(
 
 /**
  * Sorts compliances for watchlist display:
- * - Excludes ProwlerThreatScore
+ * - Excludes ProwlerTHREATSCORE
  * - Sorted by score ascending (worst/lowest scores first)
  * - Limited to specified count
  *
@@ -105,7 +105,7 @@ export function sortCompliancesForWatchlist(
   limit: number = 9,
 ): EnrichedComplianceOverview[] {
   return [...data]
-    .filter((item) => item.framework !== "ProwlerThreatScore")
+    .filter((item) => item.framework !== "ProwlerTHREATSCORE")
     .sort((a, b) => a.score - b.score)
     .slice(0, limit);
 }

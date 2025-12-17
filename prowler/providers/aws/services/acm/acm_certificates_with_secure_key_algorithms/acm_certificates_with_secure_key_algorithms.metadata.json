@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://noise.getoto.net/2022/11/08/how-to-evaluate-and-use-ecdsa-certificates-in-aws-certificate-manager/",
-	"https://docs.aws.amazon.com/acm/latest/userguide/data-protection.html"
+    "https://docs.aws.amazon.com/acm/latest/userguide/data-protection.html"
   ],
   "Remediation": {
     "Code": {

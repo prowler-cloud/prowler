@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🚀 Prowler UI - Pre-Commit Hook"
+echo "🚀 Cignify UI - Pre-Commit Hook"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -139,7 +139,7 @@ fi
 echo -e "${BLUE}🏥 Running healthcheck...${NC}"
 echo ""
 
-cd ui || cd .
+cd "$GIT_ROOT/ui"
 if pnpm run healthcheck; then
   echo ""
   echo -e "${GREEN}✅ Healthcheck passed${NC}"

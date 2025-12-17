@@ -2401,10 +2401,10 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
         resource_name = "lighthouse-models"
 
 
-class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
+class THREATSCORESnapshot(RowLevelSecurityProtectedModel):
     """
-    Stores historical ThreatScore metrics for a given scan.
-    Snapshots are created automatically after each ThreatScore report generation.
+    Stores historical THREATSCORE metrics for a given scan.
+    Snapshots are created automatically after each THREATSCORE report generation.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -2413,29 +2413,29 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
     scan = models.ForeignKey(
         Scan,
         on_delete=models.CASCADE,
-        related_name="threatscore_snapshots",
-        related_query_name="threatscore_snapshot",
+        related_name="THREATSCORE_snapshots",
+        related_query_name="THREATSCORE_snapshot",
     )
 
     provider = models.ForeignKey(
         Provider,
         on_delete=models.CASCADE,
-        related_name="threatscore_snapshots",
-        related_query_name="threatscore_snapshot",
+        related_name="THREATSCORE_snapshots",
+        related_query_name="THREATSCORE_snapshot",
     )
 
     compliance_id = models.CharField(
         max_length=100,
         blank=False,
         null=False,
-        help_text="Compliance framework ID (e.g., 'prowler_threatscore_aws')",
+        help_text="Compliance framework ID (e.g., 'prowler_THREATSCORE_aws')",
     )
 
-    # Overall ThreatScore metrics
+    # Overall THREATSCORE metrics
     overall_score = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        help_text="Overall ThreatScore percentage (0-100)",
+        help_text="Overall THREATSCORE percentage (0-100)",
     )
 
     # Score improvement/degradation compared to previous snapshot
@@ -2452,7 +2452,7 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
     section_scores = models.JSONField(
         default=dict,
         blank=True,
-        help_text="ThreatScore breakdown by section",
+        help_text="THREATSCORE breakdown by section",
     )
 
     # Critical requirements metadata stored as JSON
@@ -2500,10 +2500,10 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
     )
 
     def __str__(self):
-        return f"ThreatScore {self.overall_score}% for scan {self.scan_id} ({self.inserted_at})"
+        return f"THREATSCORE {self.overall_score}% for scan {self.scan_id} ({self.inserted_at})"
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "threatscore_snapshots"
+        db_table = "THREATSCORE_snapshots"
 
         constraints = [
             RowLevelSecurityConstraint(
@@ -2516,20 +2516,20 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
         indexes = [
             models.Index(
                 fields=["tenant_id", "scan_id"],
-                name="threatscore_snap_t_scan_idx",
+                name="THREATSCORE_snap_t_scan_idx",
             ),
             models.Index(
                 fields=["tenant_id", "provider_id"],
-                name="threatscore_snap_t_prov_idx",
+                name="THREATSCORE_snap_t_prov_idx",
             ),
             models.Index(
                 fields=["tenant_id", "inserted_at"],
-                name="threatscore_snap_t_time_idx",
+                name="THREATSCORE_snap_t_time_idx",
             ),
         ]
 
     class JSONAPIMeta:
-        resource_name = "threatscore-snapshots"
+        resource_name = "THREATSCORE-snapshots"
 
 
 class AttackSurfaceOverview(RowLevelSecurityProtectedModel):

@@ -49,7 +49,7 @@ export const ThreatScoreBadge = ({
   };
 
   const handleCardClick = () => {
-    const title = "ProwlerThreatScore";
+    const title = "CignifyThreatScore";
     const version = "1.0";
     const formattedTitleForUrl = encodeURIComponent(title);
     const path = `/compliance/${formattedTitleForUrl}`;

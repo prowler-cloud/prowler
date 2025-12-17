@@ -1,5 +1,5 @@
 """
-Compliance Mapper CLI - Interactive tool for mapping compliance frameworks with Prowler Hub checks
+Compliance Mapper CLI - Interactive tool for mapping compliance frameworks with Cignify Hub checks
 """
 
 import argparse
@@ -77,7 +77,7 @@ class ComplianceMapper:
         ║                    🛡️  COMPLIANCE MAPPER CLI                   ║
         ║                                                               ║
         ║     Intelligent mapping of compliance frameworks              ║
-        ║           with Prowler Hub security checks                    ║
+        ║           with Cignify Hub security checks                    ║
         ╚═══════════════════════════════════════════════════════════════╝
         """
         self.console.print(banner, style="bold blue")
@@ -234,7 +234,7 @@ class ComplianceMapper:
         return requirement.get(field_path, "")
 
     def load_prowler_checks(self) -> bool:
-        """Load all checks from Prowler Hub API"""
+        """Load all checks from Cignify Hub API"""
         provider = self.compliance_data["Provider"].lower()
 
         with Progress(
@@ -243,7 +243,7 @@ class ComplianceMapper:
             console=self.console,
         ) as progress:
             task = progress.add_task(
-                f"🔄 Loading ALL {provider.upper()} checks from Prowler Hub...",
+                f"🔄 Loading ALL {provider.upper()} checks from Cignify Hub...",
                 total=None,
             )
 
@@ -277,7 +277,7 @@ class ComplianceMapper:
                             f"Provider: {provider.upper()}\n"
                             f"Services covered: {len(set(check.service for check in self.prowler_checks.values()))}\n"
                             f"Severity levels: {', '.join(set(check.severity for check in self.prowler_checks.values()))}",
-                            title="✅ Prowler Hub Connection Successful",
+                            title="✅ Cignify Hub Connection Successful",
                             style="green",
                         )
                         self.console.print(panel)
@@ -291,7 +291,7 @@ class ComplianceMapper:
             except Exception as e:
                 progress.update(task, completed=True)
                 self.console.print(
-                    f"\n❌ Failed to connect to Prowler Hub: {e}", style="bold red"
+                    f"\n❌ Failed to connect to Cignify Hub: {e}", style="bold red"
                 )
                 return False
 

@@ -6,17 +6,17 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.8.0" />
 
-Prowler Lighthouse AI is a Cloud Security Analyst chatbot that helps you understand, prioritize, and remediate security findings in your cloud environments. It's designed to provide security expertise for teams without dedicated resources, acting as your 24/7 virtual cloud security analyst.
+Prowler Cignify AI is a Cloud Security Analyst chatbot that helps you understand, prioritize, and remediate security findings in your cloud environments. It's designed to provide security expertise for teams without dedicated resources, acting as your 24/7 virtual cloud security analyst.
 
 <img src="/images/prowler-app/lighthouse-intro.png" alt="Prowler Lighthouse" />
 
-<Card title="Set Up Lighthouse AI" icon="rocket" href="/user-guide/tutorials/prowler-app-lighthouse#set-up">
-  Learn how to configure Lighthouse AI with your preferred LLM provider
+<Card title="Set Up Cignify AI" icon="rocket" href="/user-guide/tutorials/prowler-app-lighthouse#set-up">
+  Learn how to configure Cignify AI with your preferred LLM provider
 </Card>
 
 ## Capabilities
 
-Prowler Lighthouse AI is designed to be your AI security team member, with capabilities including:
+Prowler Cignify AI is designed to be your AI security team member, with capabilities including:
 
 ### Natural Language Querying
 
@@ -40,7 +40,7 @@ Get tailored step-by-step instructions for fixing security issues:
 
 ### Enhanced Context and Analysis
 
-Lighthouse AI can provide additional context to help you understand the findings:
+Cignify AI can provide additional context to help you understand the findings:
 
 - Explain security concepts related to findings in simple terms
 - Provide risk assessments based on your environment and context
@@ -52,20 +52,20 @@ Lighthouse AI can provide additional context to help you understand the findings
 
 ## Important Notes
 
-Prowler Lighthouse AI is powerful, but there are limitations:
+Prowler Cignify AI is powerful, but there are limitations:
 
 - **Continuous improvement**: Please report any issues, as the feature may make mistakes or encounter errors, despite extensive testing.
-- **Access limitations**: Lighthouse AI can only access data the logged-in user can view. If you can't see certain information, Lighthouse AI can't see it either.
-- **NextJS session dependence**: If your Prowler application session expires or logs out, Lighthouse AI will error out. Refresh and log back in to continue.
+- **Access limitations**: Cignify AI can only access data the logged-in user can view. If you can't see certain information, Cignify AI can't see it either.
+- **NextJS session dependence**: If your Prowler application session expires or logs out, Cignify AI will error out. Refresh and log back in to continue.
 - **Response quality**: The response quality depends on the selected LLM provider and model. Choose models with strong tool-calling capabilities for best results. We recommend `gpt-5` model from OpenAI.
 
 ### Getting Help
 
-If you encounter issues with Prowler Lighthouse AI or have suggestions for improvements, please [reach out through our Slack channel](https://goto.prowler.com/slack).
+If you encounter issues with Prowler Cignify AI or have suggestions for improvements, please [reach out through our Slack channel](https://goto.prowler.com/slack).
 
 ### What Data Is Shared to LLM Providers?
 
-The following API endpoints are accessible to Prowler Lighthouse AI. Data from the following API endpoints could be shared with LLM provider depending on the scope of user's query:
+The following API endpoints are accessible to Prowler Cignify AI. Data from the following API endpoints could be shared with LLM provider depending on the scope of user's query:
 
 #### Accessible API Endpoints
 
@@ -109,7 +109,7 @@ The following API endpoints are accessible to Prowler Lighthouse AI. Data from t
 
 #### Excluded API Endpoints
 
-Not all Prowler API endpoints are integrated with Lighthouse AI. They are intentionally excluded for the following reasons:
+Not all Prowler API endpoints are integrated with Cignify AI. They are intentionally excluded for the following reasons:
 
 - OpenAI/other LLM providers shouldn't have access to sensitive data (like fetching provider secrets and other sensitive config)
 - Users queries don't need responses from those API endpoints (ex: tasks, tenant details, downloading zip file, etc.)
@@ -143,7 +143,7 @@ Not all Prowler API endpoints are integrated with Lighthouse AI. They are intent
 - List all tasks - `/api/v1/tasks`
 - Retrieve data from a specific task - `/api/v1/tasks/{id}`
 
-**Lighthouse AI Configuration:**
+**Cignify AI Configuration:**
 
 - List LLM providers - `/api/v1/lighthouse/providers`
 - Retrieve LLM provider - `/api/v1/lighthouse/providers/{id}`
@@ -159,7 +159,7 @@ Agents only have access to hit GET endpoints. They don't have access to other HT
 
 **1. Which LLM providers are supported?**
 
-Lighthouse AI supports three providers:
+Cignify AI supports three providers:
 
 - **OpenAI** - GPT models (GPT-5, GPT-4o, etc.)
 - **Amazon Bedrock** - Claude, Llama, Titan, and other models via AWS
@@ -173,8 +173,8 @@ Context windows are limited. While demo data fits inside the context window, que
 
 **3. Is my security data shared with LLM providers?**
 
-Minimal data is shared to generate useful responses. Agents can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to our NextJS server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc) may be shared with the configured LLM provider based on query requirements.
+Minimal data is shared to generate useful responses. Agents can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Cignify AI are only accessible to our NextJS server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc) may be shared with the configured LLM provider based on query requirements.
 
-**4. Can the Lighthouse AI change my cloud environment?**
+**4. Can the Cignify AI change my cloud environment?**
 
 No. The agent doesn't have the tools to make the changes, even if the configured cloud provider API keys contain permissions to modify resources.

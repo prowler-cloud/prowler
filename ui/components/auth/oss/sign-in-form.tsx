@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
+// import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -184,7 +184,7 @@ export const SignInForm = ({
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
         )}
-        <Button
+        {/* <Button
           variant="outline"
           className="w-full gap-2"
           onClick={() => {
@@ -199,7 +199,7 @@ export const SignInForm = ({
             />
           )}
           {isSamlMode ? "Back" : "Continue with SAML SSO"}
-        </Button>
+        </Button> */}
       </div>
 
       <AuthFooterLink

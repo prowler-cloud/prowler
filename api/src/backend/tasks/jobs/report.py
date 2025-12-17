@@ -26,8 +26,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
-from tasks.jobs.threatscore import compute_threatscore_metrics
-from tasks.jobs.threatscore_utils import (
+from tasks.jobs.THREATSCORE import compute_THREATSCORE_metrics
+from tasks.jobs.THREATSCORE_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
     _load_findings_for_requirement_checks,
@@ -35,7 +35,7 @@ from tasks.jobs.threatscore_utils import (
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Provider, ScanSummary, StatusChoices, ThreatScoreSnapshot
+from api.models import Provider, ScanSummary, StatusChoices, THREATSCORESnapshot
 from api.utils import initialize_prowler_provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
@@ -142,7 +142,7 @@ ENS_NIVEL_ORDER = ["alto", "medio", "bajo", "opcional"]
 # ENS tipo order
 ENS_TIPO_ORDER = ["requisito", "refuerzo", "recomendacion", "medida"]
 
-# ThreatScore expected sections
+# THREATSCORE expected sections
 THREATSCORE_SECTIONS = [
     "1. IAM",
     "2. Attack Surface",
@@ -657,7 +657,7 @@ def _create_section_score_chart(
     requirements_list: list[dict], attributes_by_requirement_id: dict
 ) -> io.BytesIO:
     """
-    Create a bar chart showing compliance score by section using ThreatScore formula.
+    Create a bar chart showing compliance score by section using THREATSCORE formula.
 
     Args:
         requirements_list (list[dict]): List of requirement dictionaries with status and findings data.
@@ -707,7 +707,7 @@ def _create_section_score_chart(
             risk_level = _safe_getattr(m, "LevelOfRisk", 0)
             weight = _safe_getattr(m, "Weight", 0)
 
-            # Calculate using ThreatScore formula from UI
+            # Calculate using THREATSCORE formula from UI
             rate_i = passed_findings / total_findings
             rfac_i = 1 + 0.25 * risk_level
 
@@ -983,7 +983,7 @@ def _create_dimensions_radar_chart(
     return buffer
 
 
-def generate_threatscore_report(
+def generate_THREATSCORE_report(
     tenant_id: str,
     scan_id: str,
     compliance_id: str,
@@ -996,20 +996,20 @@ def generate_threatscore_report(
     findings_cache: dict[str, list[FindingOutput]] | None = None,
 ) -> None:
     """
-    Generate a PDF compliance report based on Prowler ThreatScore framework.
+    Generate a PDF compliance report based on Prowler THREATSCORE framework.
 
     This function creates a comprehensive PDF report containing:
     - Compliance overview and metadata
     - Section-by-section compliance scores with charts
-    - Overall ThreatScore calculation
+    - Overall THREATSCORE calculation
     - Critical failed requirements
     - Detailed findings for each requirement
 
     Args:
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): ID of the scan executed by Prowler.
-        compliance_id (str): ID of the compliance framework (e.g., "prowler_threatscore_aws").
-        output_path (str): Output PDF file path (e.g., "/tmp/threatscore_report.pdf").
+        compliance_id (str): ID of the compliance framework (e.g., "prowler_THREATSCORE_aws").
+        output_path (str): Output PDF file path (e.g., "/tmp/THREATSCORE_report.pdf").
         provider_id (str): Provider ID for the scan.
         only_failed (bool): If True, only requirements with status "FAIL" will be included
             in the detailed requirements section. Defaults to True.
@@ -1078,7 +1078,7 @@ def generate_threatscore_report(
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
-            title=f"Prowler ThreatScore Report - {compliance_framework}",
+            title=f"Prowler THREATSCORE Report - {compliance_framework}",
             author="Prowler",
             subject=f"Compliance Report for {compliance_framework}",
             creator="Prowler Engineering Team",
@@ -1099,7 +1099,7 @@ def generate_threatscore_report(
         elements.append(logo)
 
         elements.append(Spacer(1, 0.5 * inch))
-        elements.append(Paragraph("Prowler ThreatScore Report", title_style))
+        elements.append(Paragraph("Prowler THREATSCORE Report", title_style))
         elements.append(Spacer(1, 0.5 * inch))
 
         # Add compliance information table
@@ -1127,7 +1127,7 @@ def generate_threatscore_report(
         chart_image = Image(chart_buffer, width=7 * inch, height=5.5 * inch)
         elements.append(chart_image)
 
-        # Calculate overall ThreatScore using the same formula as the UI
+        # Calculate overall THREATSCORE using the same formula as the UI
         numerator = 0
         denominator = 0
         has_findings = False
@@ -1155,14 +1155,14 @@ def generate_threatscore_report(
                 risk_level = getattr(m, "LevelOfRisk", 0)
                 weight = getattr(m, "Weight", 0)
 
-                # Calculate using ThreatScore formula from UI
+                # Calculate using THREATSCORE formula from UI
                 rate_i = passed_findings / total_findings
                 rfac_i = 1 + 0.25 * risk_level
 
                 numerator += rate_i * total_findings * weight * rfac_i
                 denominator += total_findings * weight * rfac_i
 
-        # Calculate ThreatScore (percentualScore)
+        # Calculate THREATSCORE (percentualScore)
         # If no findings exist, consider it 100% (PASS)
         if not has_findings:
             overall_compliance = 100
@@ -1174,7 +1174,7 @@ def generate_threatscore_report(
         elements.append(Spacer(1, 0.3 * inch))
 
         summary_data = [
-            ["ThreatScore:", f"{overall_compliance:.2f}%"],
+            ["THREATSCORE:", f"{overall_compliance:.2f}%"],
         ]
 
         compliance_color = _get_color_for_compliance(overall_compliance)
@@ -3403,17 +3403,17 @@ def generate_compliance_reports(
     tenant_id: str,
     scan_id: str,
     provider_id: str,
-    generate_threatscore: bool = True,
+    generate_THREATSCORE: bool = True,
     generate_ens: bool = True,
     generate_nis2: bool = True,
-    only_failed_threatscore: bool = True,
-    min_risk_level_threatscore: int = 4,
+    only_failed_THREATSCORE: bool = True,
+    min_risk_level_THREATSCORE: int = 4,
     include_manual_ens: bool = True,
     include_manual_nis2: bool = False,
     only_failed_nis2: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
-    Generate multiple compliance reports (ThreatScore, ENS, and/or NIS2) with shared database queries.
+    Generate multiple compliance reports (THREATSCORE, ENS, and/or NIS2) with shared database queries.
 
     This function optimizes the generation of multiple reports by:
     - Fetching the provider object once
@@ -3426,18 +3426,18 @@ def generate_compliance_reports(
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to generate reports for.
         provider_id (str): The ID of the provider used in the scan.
-        generate_threatscore (bool): Whether to generate ThreatScore report. Defaults to True.
+        generate_THREATSCORE (bool): Whether to generate THREATSCORE report. Defaults to True.
         generate_ens (bool): Whether to generate ENS report. Defaults to True.
         generate_nis2 (bool): Whether to generate NIS2 report. Defaults to True.
-        only_failed_threatscore (bool): For ThreatScore, only include failed requirements. Defaults to True.
-        min_risk_level_threatscore (int): Minimum risk level for ThreatScore critical requirements. Defaults to 4.
+        only_failed_THREATSCORE (bool): For THREATSCORE, only include failed requirements. Defaults to True.
+        min_risk_level_THREATSCORE (int): Minimum risk level for THREATSCORE critical requirements. Defaults to 4.
         include_manual_ens (bool): For ENS, include manual requirements. Defaults to True.
         only_failed_nis2 (bool): For NIS2, only include failed requirements. Defaults to True.
 
     Returns:
         dict[str, dict[str, bool | str]]: Dictionary with results for each report:
             {
-                'threatscore': {'upload': bool, 'path': str, 'error': str (optional)},
+                'THREATSCORE': {'upload': bool, 'path': str, 'error': str (optional)},
                 'ens': {'upload': bool, 'path': str, 'error': str (optional)},
                 'nis2': {'upload': bool, 'path': str, 'error': str (optional)}
             }
@@ -3447,16 +3447,16 @@ def generate_compliance_reports(
         ...     tenant_id="tenant-123",
         ...     scan_id="scan-456",
         ...     provider_id="provider-789",
-        ...     generate_threatscore=True,
+        ...     generate_THREATSCORE=True,
         ...     generate_ens=True,
         ...     generate_nis2=True
         ... )
-        >>> print(results['threatscore']['upload'])
+        >>> print(results['THREATSCORE']['upload'])
         True
     """
     logger.info(
         f"Generating compliance reports for scan {scan_id} with provider {provider_id}"
-        f" (ThreatScore: {generate_threatscore}, ENS: {generate_ens}, NIS2: {generate_nis2})"
+        f" (THREATSCORE: {generate_THREATSCORE}, ENS: {generate_ens}, NIS2: {generate_nis2})"
     )
 
     results = {}
@@ -3465,8 +3465,8 @@ def generate_compliance_reports(
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if not ScanSummary.objects.filter(scan_id=scan_id).exists():
             logger.info(f"No findings found for scan {scan_id}")
-            if generate_threatscore:
-                results["threatscore"] = {"upload": False, "path": ""}
+            if generate_THREATSCORE:
+                results["THREATSCORE"] = {"upload": False, "path": ""}
             if generate_ens:
                 results["ens"] = {"upload": False, "path": ""}
             if generate_nis2:
@@ -3479,7 +3479,7 @@ def generate_compliance_reports(
         provider_type = provider_obj.provider
 
     # Check provider compatibility
-    if generate_threatscore and provider_type not in [
+    if generate_THREATSCORE and provider_type not in [
         "aws",
         "azure",
         "gcp",
@@ -3487,10 +3487,10 @@ def generate_compliance_reports(
         "kubernetes",
     ]:
         logger.info(
-            f"Provider {provider_id} ({provider_type}) is not supported for ThreatScore report"
+            f"Provider {provider_id} ({provider_type}) is not supported for THREATSCORE report"
         )
-        results["threatscore"] = {"upload": False, "path": ""}
-        generate_threatscore = False
+        results["THREATSCORE"] = {"upload": False, "path": ""}
+        generate_THREATSCORE = False
 
     if generate_ens and provider_type not in ["aws", "azure", "gcp"]:
         logger.info(
@@ -3507,7 +3507,7 @@ def generate_compliance_reports(
         generate_nis2 = False
 
     # If no reports to generate, return early
-    if not generate_threatscore and not generate_ens and not generate_nis2:
+    if not generate_THREATSCORE and not generate_ens and not generate_nis2:
         return results
 
     # Aggregate requirement statistics once (major optimization)
@@ -3525,12 +3525,12 @@ def generate_compliance_reports(
     # Generate output directories for each compliance framework
     try:
         logger.info("Generating output directories")
-        threatscore_path = _generate_compliance_output_directory(
+        THREATSCORE_path = _generate_compliance_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY,
             provider_uid,
             tenant_id,
             scan_id,
-            compliance_framework="threatscore",
+            compliance_framework="THREATSCORE",
         )
         ens_path = _generate_compliance_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY,
@@ -3546,60 +3546,60 @@ def generate_compliance_reports(
             scan_id,
             compliance_framework="nis2",
         )
-        # Extract base scan directory for cleanup (parent of threatscore directory)
-        out_dir = str(Path(threatscore_path).parent.parent)
+        # Extract base scan directory for cleanup (parent of THREATSCORE directory)
+        out_dir = str(Path(THREATSCORE_path).parent.parent)
     except Exception as e:
         logger.error(f"Error generating output directory: {e}")
         error_dict = {"error": str(e), "upload": False, "path": ""}
-        if generate_threatscore:
-            results["threatscore"] = error_dict.copy()
+        if generate_THREATSCORE:
+            results["THREATSCORE"] = error_dict.copy()
         if generate_ens:
             results["ens"] = error_dict.copy()
         if generate_nis2:
             results["nis2"] = error_dict.copy()
         return results
 
-    # Generate ThreatScore report
-    if generate_threatscore:
-        compliance_id_threatscore = f"prowler_threatscore_{provider_type}"
-        pdf_path_threatscore = f"{threatscore_path}_threatscore_report.pdf"
+    # Generate THREATSCORE report
+    if generate_THREATSCORE:
+        compliance_id_THREATSCORE = f"prowler_THREATSCORE_{provider_type}"
+        pdf_path_THREATSCORE = f"{THREATSCORE_path}_THREATSCORE_report.pdf"
         logger.info(
-            f"Generating ThreatScore report with compliance {compliance_id_threatscore}"
+            f"Generating THREATSCORE report with compliance {compliance_id_THREATSCORE}"
         )
 
         try:
-            generate_threatscore_report(
+            generate_THREATSCORE_report(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
-                compliance_id=compliance_id_threatscore,
-                output_path=pdf_path_threatscore,
+                compliance_id=compliance_id_THREATSCORE,
+                output_path=pdf_path_THREATSCORE,
                 provider_id=provider_id,
-                only_failed=only_failed_threatscore,
-                min_risk_level=min_risk_level_threatscore,
+                only_failed=only_failed_THREATSCORE,
+                min_risk_level=min_risk_level_THREATSCORE,
                 provider_obj=provider_obj,  # Reuse provider object
                 requirement_statistics=requirement_statistics,  # Reuse statistics
                 findings_cache=findings_cache,  # Share findings cache
             )
 
-            # Compute and store ThreatScore metrics snapshot
-            logger.info(f"Computing ThreatScore metrics for scan {scan_id}")
+            # Compute and store THREATSCORE metrics snapshot
+            logger.info(f"Computing THREATSCORE metrics for scan {scan_id}")
             try:
-                metrics = compute_threatscore_metrics(
+                metrics = compute_THREATSCORE_metrics(
                     tenant_id=tenant_id,
                     scan_id=scan_id,
                     provider_id=provider_id,
-                    compliance_id=compliance_id_threatscore,
-                    min_risk_level=min_risk_level_threatscore,
+                    compliance_id=compliance_id_THREATSCORE,
+                    min_risk_level=min_risk_level_THREATSCORE,
                 )
 
                 # Create snapshot in database
                 with rls_transaction(tenant_id):
                     # Get previous snapshot for the same provider to calculate delta
                     previous_snapshot = (
-                        ThreatScoreSnapshot.objects.filter(
+                        THREATSCORESnapshot.objects.filter(
                             tenant_id=tenant_id,
                             provider_id=provider_id,
-                            compliance_id=compliance_id_threatscore,
+                            compliance_id=compliance_id_THREATSCORE,
                         )
                         .order_by("-inserted_at")
                         .first()
@@ -3612,11 +3612,11 @@ def generate_compliance_reports(
                             previous_snapshot.overall_score
                         )
 
-                    snapshot = ThreatScoreSnapshot.objects.create(
+                    snapshot = THREATSCORESnapshot.objects.create(
                         tenant_id=tenant_id,
                         scan_id=scan_id,
                         provider_id=provider_id,
-                        compliance_id=compliance_id_threatscore,
+                        compliance_id=compliance_id_THREATSCORE,
                         overall_score=metrics["overall_score"],
                         score_delta=score_delta,
                         section_scores=metrics["section_scores"],
@@ -3636,33 +3636,33 @@ def generate_compliance_reports(
                         else ""
                     )
                     logger.info(
-                        f"ThreatScore snapshot created with ID {snapshot.id} "
+                        f"THREATSCORE snapshot created with ID {snapshot.id} "
                         f"(score: {snapshot.overall_score}%{delta_msg})"
                     )
             except Exception as e:
                 # Log error but don't fail the job if snapshot creation fails
-                logger.error(f"Error creating ThreatScore snapshot: {e}")
+                logger.error(f"Error creating THREATSCORE snapshot: {e}")
 
-            upload_uri_threatscore = _upload_to_s3(
+            upload_uri_THREATSCORE = _upload_to_s3(
                 tenant_id,
                 scan_id,
-                pdf_path_threatscore,
-                f"threatscore/{Path(pdf_path_threatscore).name}",
+                pdf_path_THREATSCORE,
+                f"THREATSCORE/{Path(pdf_path_THREATSCORE).name}",
             )
 
-            if upload_uri_threatscore:
-                results["threatscore"] = {
+            if upload_uri_THREATSCORE:
+                results["THREATSCORE"] = {
                     "upload": True,
-                    "path": upload_uri_threatscore,
+                    "path": upload_uri_THREATSCORE,
                 }
-                logger.info(f"ThreatScore report uploaded to {upload_uri_threatscore}")
+                logger.info(f"THREATSCORE report uploaded to {upload_uri_THREATSCORE}")
             else:
-                results["threatscore"] = {"upload": False, "path": out_dir}
-                logger.warning(f"ThreatScore report saved locally at {out_dir}")
+                results["THREATSCORE"] = {"upload": False, "path": out_dir}
+                logger.warning(f"THREATSCORE report saved locally at {out_dir}")
 
         except Exception as e:
-            logger.error(f"Error generating ThreatScore report: {e}")
-            results["threatscore"] = {"upload": False, "path": "", "error": str(e)}
+            logger.error(f"Error generating THREATSCORE report: {e}")
+            results["THREATSCORE"] = {"upload": False, "path": "", "error": str(e)}
 
     # Generate ENS report
     if generate_ens:
@@ -3761,12 +3761,12 @@ def generate_compliance_reports_job(
     tenant_id: str,
     scan_id: str,
     provider_id: str,
-    generate_threatscore: bool = True,
+    generate_THREATSCORE: bool = True,
     generate_ens: bool = True,
     generate_nis2: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
-    Job function to generate ThreatScore, ENS, and/or NIS2 compliance reports with optimized database queries.
+    Job function to generate THREATSCORE, ENS, and/or NIS2 compliance reports with optimized database queries.
 
     This function efficiently generates compliance reports by:
     - Fetching the provider object once (shared across all reports)
@@ -3780,14 +3780,14 @@ def generate_compliance_reports_job(
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to generate reports for.
         provider_id (str): The ID of the provider used in the scan.
-        generate_threatscore (bool): Whether to generate ThreatScore report. Defaults to True.
+        generate_THREATSCORE (bool): Whether to generate THREATSCORE report. Defaults to True.
         generate_ens (bool): Whether to generate ENS report. Defaults to True.
         generate_nis2 (bool): Whether to generate NIS2 report. Defaults to True.
 
     Returns:
         dict[str, dict[str, bool | str]]: Dictionary with results for each report:
             {
-                'threatscore': {'upload': bool, 'path': str, 'error': str (optional)},
+                'THREATSCORE': {'upload': bool, 'path': str, 'error': str (optional)},
                 'ens': {'upload': bool, 'path': str, 'error': str (optional)},
                 'nis2': {'upload': bool, 'path': str, 'error': str (optional)}
             }
@@ -3798,8 +3798,8 @@ def generate_compliance_reports_job(
         ...     scan_id="scan-456",
         ...     provider_id="provider-789"
         ... )
-        >>> if results['threatscore']['upload']:
-        ...     print(f"ThreatScore uploaded to {results['threatscore']['path']}")
+        >>> if results['THREATSCORE']['upload']:
+        ...     print(f"THREATSCORE uploaded to {results['THREATSCORE']['path']}")
         >>> if results['ens']['upload']:
         ...     print(f"ENS uploaded to {results['ens']['path']}")
         >>> if results['nis2']['upload']:
@@ -3807,7 +3807,7 @@ def generate_compliance_reports_job(
     """
     logger.info(
         f"Starting optimized compliance reports job for scan {scan_id} "
-        f"(ThreatScore: {generate_threatscore}, ENS: {generate_ens}, NIS2: {generate_nis2})"
+        f"(THREATSCORE: {generate_THREATSCORE}, ENS: {generate_ens}, NIS2: {generate_nis2})"
     )
 
     try:
@@ -3815,11 +3815,11 @@ def generate_compliance_reports_job(
             tenant_id=tenant_id,
             scan_id=scan_id,
             provider_id=provider_id,
-            generate_threatscore=generate_threatscore,
+            generate_THREATSCORE=generate_THREATSCORE,
             generate_ens=generate_ens,
             generate_nis2=generate_nis2,
-            only_failed_threatscore=True,
-            min_risk_level_threatscore=4,
+            only_failed_THREATSCORE=True,
+            min_risk_level_THREATSCORE=4,
             include_manual_ens=True,
             include_manual_nis2=False,
             only_failed_nis2=True,
@@ -3831,8 +3831,8 @@ def generate_compliance_reports_job(
         logger.error(f"Error in optimized compliance reports job: {e}")
         error_result = {"upload": False, "path": "", "error": str(e)}
         results = {}
-        if generate_threatscore:
-            results["threatscore"] = error_result.copy()
+        if generate_THREATSCORE:
+            results["THREATSCORE"] = error_result.copy()
         if generate_ens:
             results["ens"] = error_result.copy()
         if generate_nis2:

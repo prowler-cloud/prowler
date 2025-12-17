@@ -8,14 +8,13 @@ This module provides tools for managing finding muting in Prowler, including:
 import json
 from typing import Any
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.muting import (
     DetailedMuteRule,
     MutelistResponse,
     MuteRulesListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class MutingTools(BaseTool):

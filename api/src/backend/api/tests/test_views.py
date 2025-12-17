@@ -62,7 +62,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
-    ThreatScoreSnapshot,
+    THREATSCORESnapshot,
     User,
     UserRoleRelationship,
 )
@@ -3048,7 +3048,7 @@ class TestScanViewSet:
     @patch("api.v1.views.ScanViewSet._get_task_status")
     @patch("api.v1.views.get_s3_client")
     @patch("api.v1.views.env.str")
-    def test_threatscore_s3_wildcard(
+    def test_THREATSCORE_s3_wildcard(
         self,
         mock_env_str,
         mock_get_s3_client,
@@ -3057,7 +3057,7 @@ class TestScanViewSet:
         scans_fixture,
     ):
         """
-        When the threatscore endpoint is called with an S3 output_location,
+        When the THREATSCORE endpoint is called with an S3 output_location,
         the view should list objects in S3 using wildcard pattern matching,
         retrieve the matching PDF file, and return it with HTTP 200 and proper headers.
         """
@@ -3070,8 +3070,8 @@ class TestScanViewSet:
 
         pdf_key = os.path.join(
             os.path.dirname(zip_key),
-            "threatscore",
-            "prowler-output-123_threatscore_report.pdf",
+            "THREATSCORE",
+            "prowler-output-123_THREATSCORE_report.pdf",
         )
 
         mock_s3_client = Mock()
@@ -3082,13 +3082,13 @@ class TestScanViewSet:
         mock_get_s3_client.return_value = mock_s3_client
         mock_get_task_status.return_value = None
 
-        url = reverse("scan-threatscore", kwargs={"pk": scan.id})
+        url = reverse("scan-THREATSCORE", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert response["Content-Type"] == "application/pdf"
         assert response["Content-Disposition"].endswith(
-            '"prowler-output-123_threatscore_report.pdf"'
+            '"prowler-output-123_THREATSCORE_report.pdf"'
         )
         assert response.content == b"pdf-bytes"
         mock_s3_client.list_objects_v2.assert_called_once()
@@ -6437,7 +6437,7 @@ class TestOverviewViewSet:
             completed_at=scan_started + timedelta(minutes=30),
         )
 
-    def _create_threatscore_snapshot(
+    def _create_THREATSCORE_snapshot(
         self,
         tenant,
         scan,
@@ -6456,7 +6456,7 @@ class TestOverviewViewSet:
         passed_findings,
         failed_findings,
     ):
-        return ThreatScoreSnapshot.objects.create(
+        return THREATSCORESnapshot.objects.create(
             tenant=tenant,
             scan=scan,
             provider=provider,
@@ -6474,7 +6474,7 @@ class TestOverviewViewSet:
             failed_findings=failed_findings,
         )
 
-    def test_overview_threatscore_returns_weighted_aggregate_snapshot(
+    def test_overview_THREATSCORE_returns_weighted_aggregate_snapshot(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -6483,11 +6483,11 @@ class TestOverviewViewSet:
         scan1 = self._create_scan(tenant, provider1, "agg-scan-one")
         scan2 = self._create_scan(tenant, provider2, "agg-scan-two")
 
-        snapshot1 = self._create_threatscore_snapshot(
+        snapshot1 = self._create_THREATSCORE_snapshot(
             tenant,
             scan1,
             provider1,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="80.00",
             score_delta="5.00",
             section_scores={"1. IAM": "70.00", "2. Attack Surface": "60.00"},
@@ -6524,11 +6524,11 @@ class TestOverviewViewSet:
             failed_findings=30,
         )
 
-        snapshot2 = self._create_threatscore_snapshot(
+        snapshot2 = self._create_THREATSCORE_snapshot(
             tenant,
             scan2,
             provider2,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="20.00",
             score_delta="-2.00",
             section_scores={
@@ -6571,15 +6571,15 @@ class TestOverviewViewSet:
 
         older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
         newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
-        ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
+        THREATSCORESnapshot.objects.filter(id=snapshot1.id).update(
             inserted_at=older_inserted
         )
-        ThreatScoreSnapshot.objects.filter(id=snapshot2.id).update(
+        THREATSCORESnapshot.objects.filter(id=snapshot2.id).update(
             inserted_at=newer_inserted
         )
         snapshot2.refresh_from_db()
 
-        response = authenticated_client.get(reverse("overview-threatscore"))
+        response = authenticated_client.get(reverse("overview-THREATSCORE"))
 
         assert response.status_code == status.HTTP_200_OK
         body = response.json()
@@ -6647,7 +6647,7 @@ class TestOverviewViewSet:
         ]
         assert attrs["critical_requirements"] == expected_critical
 
-    def test_overview_threatscore_weight_fallback_to_requirements(
+    def test_overview_THREATSCORE_weight_fallback_to_requirements(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -6656,11 +6656,11 @@ class TestOverviewViewSet:
         scan1 = self._create_scan(tenant, provider1, "fallback-scan-1")
         scan2 = self._create_scan(tenant, provider2, "fallback-scan-2")
 
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             scan1,
             provider1,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="90.00",
             score_delta="4.00",
             section_scores={"1. IAM": "90.00"},
@@ -6673,11 +6673,11 @@ class TestOverviewViewSet:
             passed_findings=0,
             failed_findings=0,
         )
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             scan2,
             provider2,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="50.00",
             score_delta="1.00",
             section_scores={"1. IAM": "40.00"},
@@ -6691,7 +6691,7 @@ class TestOverviewViewSet:
             failed_findings=6,
         )
 
-        response = authenticated_client.get(reverse("overview-threatscore"))
+        response = authenticated_client.get(reverse("overview-THREATSCORE"))
         assert response.status_code == status.HTTP_200_OK
         aggregate = response.json()["data"][0]["attributes"]
 
@@ -6702,18 +6702,18 @@ class TestOverviewViewSet:
         assert aggregate["manual_requirements"] == 2
         assert aggregate["section_scores"] == {"1. IAM": "62.22"}
 
-    def test_overview_threatscore_filter_by_scan_id_returns_snapshot(
+    def test_overview_THREATSCORE_filter_by_scan_id_returns_snapshot(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
         provider1, *_ = providers_fixture
         scan = self._create_scan(tenant, provider1, "filter-scan")
 
-        snapshot = self._create_threatscore_snapshot(
+        snapshot = self._create_THREATSCORE_snapshot(
             tenant,
             scan,
             provider1,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="75.00",
             score_delta="3.00",
             section_scores={"1. IAM": "70.00"},
@@ -6728,7 +6728,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-threatscore"), {"filter[scan_id]": str(scan.id)}
+            reverse("overview-THREATSCORE"), {"filter[scan_id]": str(scan.id)}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -6737,18 +6737,18 @@ class TestOverviewViewSet:
         assert body["data"][0]["id"] == str(snapshot.id)
         assert body["data"][0]["attributes"]["overall_score"] == "75.00"
 
-    def test_overview_threatscore_snapshot_id_returns_specific_snapshot(
+    def test_overview_THREATSCORE_snapshot_id_returns_specific_snapshot(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
         provider1, *_ = providers_fixture
         scan = self._create_scan(tenant, provider1, "snapshot-id-scan")
 
-        snapshot = self._create_threatscore_snapshot(
+        snapshot = self._create_THREATSCORE_snapshot(
             tenant,
             scan,
             provider1,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="88.50",
             score_delta=None,
             section_scores={"1. IAM": "80.00"},
@@ -6763,7 +6763,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-threatscore"), {"snapshot_id": str(snapshot.id)}
+            reverse("overview-THREATSCORE"), {"snapshot_id": str(snapshot.id)}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -6771,7 +6771,7 @@ class TestOverviewViewSet:
         assert data["data"]["id"] == str(snapshot.id)
         assert data["data"]["attributes"]["score_delta"] is None
 
-    def test_overview_threatscore_provider_filter_returns_unaggregated_snapshot(
+    def test_overview_THREATSCORE_provider_filter_returns_unaggregated_snapshot(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -6780,11 +6780,11 @@ class TestOverviewViewSet:
         scan1 = self._create_scan(tenant, provider1, "provider-filter-scan-1")
         scan2 = self._create_scan(tenant, provider2, "provider-filter-scan-2")
 
-        snapshot1 = self._create_threatscore_snapshot(
+        snapshot1 = self._create_THREATSCORE_snapshot(
             tenant,
             scan1,
             provider1,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="55.55",
             score_delta="1.10",
             section_scores={"1. IAM": "50.00"},
@@ -6797,11 +6797,11 @@ class TestOverviewViewSet:
             passed_findings=7,
             failed_findings=5,
         )
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             scan2,
             provider2,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="44.44",
             score_delta="0.80",
             section_scores={"1. IAM": "40.00"},
@@ -6816,7 +6816,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-threatscore"),
+            reverse("overview-THREATSCORE"),
             {"filter[provider_id__in]": str(provider1.id)},
         )
 
@@ -7563,18 +7563,18 @@ class TestOverviewViewSet:
             assert attrs["high"] == 10
             assert attrs["medium"] == 8
 
-    def test_overview_threatscore_compliance_id_filter(
+    def test_overview_THREATSCORE_compliance_id_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         scan = self._create_scan(tenant, provider, "compliance-filter-scan")
 
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             scan,
             provider,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="75.00",
             score_delta="2.00",
             section_scores={"1. IAM": "70.00"},
@@ -7587,7 +7587,7 @@ class TestOverviewViewSet:
             passed_findings=20,
             failed_findings=10,
         )
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             scan,
             provider,
@@ -7606,29 +7606,29 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-threatscore"),
-            {"filter[compliance_id]": "prowler_threatscore_aws"},
+            reverse("overview-THREATSCORE"),
+            {"filter[compliance_id]": "prowler_THREATSCORE_aws"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["attributes"]["overall_score"] == "75.00"
-        assert data[0]["attributes"]["compliance_id"] == "prowler_threatscore_aws"
+        assert data[0]["attributes"]["compliance_id"] == "prowler_THREATSCORE_aws"
 
-    def test_overview_threatscore_provider_type_filter(
+    def test_overview_THREATSCORE_provider_type_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
         aws_provider, _, gcp_provider, *_ = providers_fixture
 
-        aws_scan = self._create_scan(tenant, aws_provider, "aws-threatscore-scan")
-        gcp_scan = self._create_scan(tenant, gcp_provider, "gcp-threatscore-scan")
+        aws_scan = self._create_scan(tenant, aws_provider, "aws-THREATSCORE-scan")
+        gcp_scan = self._create_scan(tenant, gcp_provider, "gcp-THREATSCORE-scan")
 
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             aws_scan,
             aws_provider,
-            compliance_id="prowler_threatscore_aws",
+            compliance_id="prowler_THREATSCORE_aws",
             overall_score="80.00",
             score_delta="3.00",
             section_scores={"1. IAM": "75.00"},
@@ -7641,11 +7641,11 @@ class TestOverviewViewSet:
             passed_findings=30,
             failed_findings=10,
         )
-        self._create_threatscore_snapshot(
+        self._create_THREATSCORE_snapshot(
             tenant,
             gcp_scan,
             gcp_provider,
-            compliance_id="prowler_threatscore_gcp",
+            compliance_id="prowler_THREATSCORE_gcp",
             overall_score="70.00",
             score_delta="2.00",
             section_scores={"1. IAM": "65.00"},
@@ -7660,7 +7660,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-threatscore"),
+            reverse("overview-THREATSCORE"),
             {"filter[provider_type]": "aws"},
         )
         assert response.status_code == status.HTTP_200_OK

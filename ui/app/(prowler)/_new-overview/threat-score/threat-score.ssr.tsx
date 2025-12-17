@@ -1,20 +1,20 @@
-import { getThreatScore } from "@/actions/overview";
+import { getTHREATSCORE } from "@/actions/overview";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
-import { ThreatScore } from "./_components/threat-score";
+import { THREATSCORE } from "./_components/threat-score";
 
 export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
-  const threatScoreData = await getThreatScore({ filters });
+  const THREATSCOREData = await getTHREATSCORE({ filters });
 
   // If no data, pass undefined score and let component handle empty state
-  if (!threatScoreData?.data || threatScoreData.data.length === 0) {
-    return <ThreatScore />;
+  if (!THREATSCOREData?.data || THREATSCOREData.data.length === 0) {
+    return <THREATSCORE />;
   }
 
   // Get the first snapshot (aggregated or single provider)
-  const snapshot = threatScoreData.data[0];
+  const snapshot = THREATSCOREData.data[0];
   const attributes = snapshot.attributes;
 
   // Parse score from decimal string to number
@@ -24,7 +24,7 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
     : null;
 
   return (
-    <ThreatScore
+    <THREATSCORE
       score={score}
       scoreDelta={scoreDelta}
       sectionScores={attributes.section_scores}

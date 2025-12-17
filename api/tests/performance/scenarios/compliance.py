@@ -10,10 +10,10 @@ GLOBAL = {
     "available_scans_info": {},
 }
 SUPPORTED_COMPLIANCE_IDS = {
-    "aws": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
-    "gcp": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
-    "azure": ["ens_rd2022", "cis_2.0", "prowler_threatscore", "soc2"],
-    "m365": ["cis_4.0", "iso27001_2022", "prowler_threatscore"],
+    "aws": ["ens_rd2022", "cis_2.0", "prowler_THREATSCORE", "soc2"],
+    "gcp": ["ens_rd2022", "cis_2.0", "prowler_THREATSCORE", "soc2"],
+    "azure": ["ens_rd2022", "cis_2.0", "prowler_THREATSCORE", "soc2"],
+    "m365": ["cis_4.0", "iso27001_2022", "prowler_THREATSCORE"],
 }
 
 

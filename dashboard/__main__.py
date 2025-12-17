@@ -21,7 +21,7 @@ print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )
 cli.show_server_banner = lambda *x: click.echo(
-    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler Open Source{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
+    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Cignify SaaS{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Cignify Open Source{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
 )
 
 # Initialize the app - incorporate css
@@ -30,13 +30,13 @@ dashboard = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     use_pages=True,
     suppress_callback_exceptions=True,
-    title="Prowler Dashboard",
+    title="Cignify Dashboard",
 )
 
 # Logo
 prowler_logo = html.Img(
-    src="https://cdn.prod.website-files.com/68c4ec3f9fb7b154fbcb6e36/68ffb46d40ed7faa37a592a5_prowler-logo.png",
-    alt="Prowler Logo",
+    src="/assets/logoicon.png",
+    alt="Cignify logo",
 )
 
 menu_icons = {
@@ -119,7 +119,7 @@ def generate_help_menu():
 dashboard.layout = html.Div(
     [
         dcc.Location(id="url", refresh=False),
-        html.Link(rel="icon", href="assets/favicon.ico"),
+        html.Link(rel="icon", href="assets/favicon.png"),
         # Placeholder for dynamic navigation bar
         html.Div(
             [
@@ -161,8 +161,8 @@ def update_nav_bar(pathname):
                         [
                             html.Span(
                                 [
-                                    html.Img(src="assets/favicon.ico", className="w-5"),
-                                    "Subscribe to Prowler Cloud",
+                                    html.Img(src="assets/favicon.png", className="w-5"),
+                                    "Subscribe to Cignify Cloud",
                                 ],
                                 className="flex items-center gap-x-3 text-white",
                             ),

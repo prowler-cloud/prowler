@@ -756,7 +756,7 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+    Optimized task to generate THREATSCORE, ENS, and NIS2 reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
     - Provider object fetched once (instead of three times)
@@ -775,7 +775,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         tenant_id=tenant_id,
         scan_id=scan_id,
         provider_id=provider_id,
-        generate_threatscore=True,
+        generate_THREATSCORE=True,
         generate_ens=True,
         generate_nis2=True,
     )

@@ -3,7 +3,7 @@ import { BasePage } from "../base-page";
 
 
 export class InvitationsPage extends BasePage {
-  
+
   // Page heading
   readonly pageHeadingSendInvitation: Locator;
   readonly pageHeadingInvitations: Locator;
@@ -45,7 +45,7 @@ export class InvitationsPage extends BasePage {
 
   async goto(): Promise<void> {
     // Navigate to the invitations page
-    
+
     await super.goto("/invitations");
   }
 
@@ -108,7 +108,7 @@ export class InvitationsPage extends BasePage {
 
     // Get the share url text content
     const text = await this.shareUrl.textContent();
-    
+
     if (!text) {
       throw new Error("Share url not found");
     }

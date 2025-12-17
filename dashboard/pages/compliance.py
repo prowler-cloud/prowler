@@ -411,8 +411,8 @@ def display_data(
                 subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
             )
 
-            if "threatscore" in analytics_input:
-                data = get_threatscore_mean_by_pillar(data)
+            if "THREATSCORE" in analytics_input:
+                data = get_THREATSCORE_mean_by_pillar(data)
 
             table = compliance_module.get_table(data)
         except ModuleNotFoundError:
@@ -449,9 +449,9 @@ def display_data(
         if "pci" in analytics_input:
             pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
             current_filter = "req_id"
-        elif "threatscore" in analytics_input:
-            pie_2 = get_table_prowler_threatscore(df)
-            current_filter = "threatscore"
+        elif "THREATSCORE" in analytics_input:
+            pie_2 = get_table_prowler_THREATSCORE(df)
+            current_filter = "THREATSCORE"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
@@ -510,7 +510,7 @@ def display_data(
         pie_2, f"Top 5 failed {current_filter} by requirements"
     )
 
-    if "threatscore" in analytics_input:
+    if "THREATSCORE" in analytics_input:
         security_level_graph = get_graph(
             pie_2,
             "Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
@@ -649,7 +649,7 @@ def get_table(current_compliance, table):
     ]
 
 
-def get_threatscore_mean_by_pillar(df):
+def get_THREATSCORE_mean_by_pillar(df):
     score_per_pillar = {}
     max_score_per_pillar = {}
 
@@ -702,7 +702,7 @@ def get_threatscore_mean_by_pillar(df):
     return df
 
 
-def get_table_prowler_threatscore(df):
+def get_table_prowler_THREATSCORE(df):
     score_per_pillar = {}
     max_score_per_pillar = {}
     pillars = {}

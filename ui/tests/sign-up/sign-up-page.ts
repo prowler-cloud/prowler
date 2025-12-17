@@ -141,5 +141,3 @@ export class SignUpPage extends BasePage {
     await expect(this.page).toHaveURL("/email-verification");
   }
 }
-
-

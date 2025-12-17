@@ -102,7 +102,7 @@ export const mapComplianceData = (
       category.fail = 0;
       category.manual = 0;
 
-      // Calculate ThreatScore using the new formula
+      // Calculate THREATSCORE using the new formula
       let numerator = 0;
       let denominator = 0;
       let hasFindings = false;
@@ -115,7 +115,7 @@ export const mapComplianceData = (
         control.requirements.forEach((requirement) => {
           updateCounters(control, requirement.status);
 
-          // Extract values for ThreatScore calculation
+          // Extract values for THREATSCORE calculation
           const pass_i = (requirement.passedFindings as number) || 0;
           const total_i = (requirement.totalFindings as number) || 0;
 
@@ -141,7 +141,7 @@ export const mapComplianceData = (
         category.manual += control.manual;
       });
 
-      // Calculate ThreatScore (percentualScore) for this section
+      // Calculate THREATSCORE (percentualScore) for this section
       // If no findings exist, consider it 100% (PASS)
       const percentualScore = !hasFindings
         ? 100

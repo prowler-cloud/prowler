@@ -80,7 +80,7 @@ export function BreadcrumbNavigation({
           .join(" ");
       }
       if (segment === "lighthouse") {
-        displayName = "Lighthouse AI";
+        displayName = "Cignify AI";
       }
 
       const segmentIcon = !isLast ? pathIconMapping[currentPath] : undefined;

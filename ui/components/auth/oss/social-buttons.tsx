@@ -1,12 +1,12 @@
 import { Tooltip } from "@heroui/tooltip";
-import { Icon } from "@iconify/react";
 
-import { Button } from "@/components/shadcn";
+// import { Icon } from "@iconify/react";
+// import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
 export const SocialButtons = ({
-  googleAuthUrl,
-  githubAuthUrl,
+  // googleAuthUrl,
+  // githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
 }: {
@@ -30,7 +30,7 @@ export const SocialButtons = ({
       isDisabled={isGoogleOAuthEnabled}
       className="w-96"
     >
-      <span>
+      {/* <span>
         <Button
           variant="outline"
           className="w-full"
@@ -49,7 +49,7 @@ export const SocialButtons = ({
             Continue with Google
           </a>
         </Button>
-      </span>
+      </span> */}
     </Tooltip>
     <Tooltip
       content={
@@ -65,7 +65,7 @@ export const SocialButtons = ({
       isDisabled={isGithubOAuthEnabled}
       className="w-96"
     >
-      <span>
+      {/* <span>
         <Button
           variant="outline"
           className="w-full"
@@ -77,7 +77,7 @@ export const SocialButtons = ({
             Continue with Github
           </a>
         </Button>
-      </span>
+      </span> */}
     </Tooltip>
   </>
 );

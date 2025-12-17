@@ -50,7 +50,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
-    ThreatScoreSnapshot,
+    THREATSCORESnapshot,
     User,
 )
 from api.rls import Tenant
@@ -1053,9 +1053,9 @@ class MuteRuleFilter(FilterSet):
         }
 
 
-class ThreatScoreSnapshotFilter(FilterSet):
+class THREATSCORESnapshotFilter(FilterSet):
     """
-    Filter for ThreatScore snapshots.
+    Filter for THREATSCORE snapshots.
     Allows filtering by scan, provider, compliance_id, and date ranges.
     """
 
@@ -1076,7 +1076,7 @@ class ThreatScoreSnapshotFilter(FilterSet):
     compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
 
     class Meta:
-        model = ThreatScoreSnapshot
+        model = THREATSCORESnapshot
         fields = {
             "scan": ["exact", "in"],
             "provider": ["exact", "in"],

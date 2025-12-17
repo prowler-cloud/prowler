@@ -24,7 +24,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
 - New endpoint `GET /api/v1/overviews/findings_severity/timeseries` to retrieve daily aggregated findings by severity level [(#9363)](https://github.com/prowler-cloud/prowler/pull/9363)
-- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
+- Cignify AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
 - Exception handler for provider deletions during scans [(#9414)](https://github.com/prowler-cloud/prowler/pull/9414)
 - Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
 
@@ -47,7 +47,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fix typo in PDF reporting [(#9345)](https://github.com/prowler-cloud/prowler/pull/9345)
 - Fix IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
-- Match logic for ThreatScore when counting findings [(#9348)](https://github.com/prowler-cloud/prowler/pull/9348)
+- Match logic for THREATSCORE when counting findings [(#9348)](https://github.com/prowler-cloud/prowler/pull/9348)
 
 ---
 
@@ -62,13 +62,13 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for Oracle Cloud Infrastructure (OCI) provider [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
 - Support muting findings based on simple rules with custom reason [(#9051)](https://github.com/prowler-cloud/prowler/pull/9051)
 - Support C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
-- Support for Amazon Bedrock and OpenAI compatible providers in Lighthouse AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
+- Support for Amazon Bedrock and OpenAI compatible providers in Cignify AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
 - Support PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - Support PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
-- Tenant-wide ThreatScore overview aggregation and snapshot persistence with backfill support [(#9148)](https://github.com/prowler-cloud/prowler/pull/9148)
+- Tenant-wide THREATSCORE overview aggregation and snapshot persistence with backfill support [(#9148)](https://github.com/prowler-cloud/prowler/pull/9148)
 - Added `metadata`, `details`, and `partition` attributes to `/resources` endpoint & `details`, and `partition` to `/findings` endpoint [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
 - Support for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
-- Support Prowler ThreatScore for the K8S provider [(#9235)](https://github.com/prowler-cloud/prowler/pull/9235)
+- Support Prowler THREATSCORE for the K8S provider [(#9235)](https://github.com/prowler-cloud/prowler/pull/9235)
 - Enhanced compliance overview endpoint with provider filtering and latest scan aggregation [(#9244)](https://github.com/prowler-cloud/prowler/pull/9244)
 - New endpoint `GET /api/v1/overview/regions` to retrieve aggregated findings data by region [(#9273)](https://github.com/prowler-cloud/prowler/pull/9273)
 
@@ -82,7 +82,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Removed compliance generation for providers without compliance frameworks [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
 - Refresh output report timestamps for each scan [(#9272)](https://github.com/prowler-cloud/prowler/pull/9272)
 - Severity overview endpoint now ignores muted findings as expected [(#9283)](https://github.com/prowler-cloud/prowler/pull/9283)
-- Fixed discrepancy between ThreatScore PDF report values and database calculations [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
+- Fixed discrepancy between THREATSCORE PDF report values and database calculations [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
 ### Security
 - Django updated to the latest 5.1 security release, 5.1.14, due to problems with potential [SQL injection](https://github.com/prowler-cloud/prowler/security/dependabot/113) and [denial-of-service vulnerability](https://github.com/prowler-cloud/prowler/security/dependabot/114) [(#9176)](https://github.com/prowler-cloud/prowler/pull/9176)
@@ -107,8 +107,8 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for M365 Certificate authentication [(#8538)](https://github.com/prowler-cloud/prowler/pull/8538)
 - API Key support [(#8805)](https://github.com/prowler-cloud/prowler/pull/8805)
 - SAML role mapping protection for single-admin tenants to prevent accidental lockout [(#8882)](https://github.com/prowler-cloud/prowler/pull/8882)
-- Support for `passed_findings` and `total_findings` fields in compliance requirement overview for accurate Prowler ThreatScore calculation [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
-- PDF reporting for Prowler ThreatScore [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
+- Support for `passed_findings` and `total_findings` fields in compliance requirement overview for accurate Prowler THREATSCORE calculation [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- PDF reporting for Prowler THREATSCORE [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
 - Database read replica support [(#8869)](https://github.com/prowler-cloud/prowler/pull/8869)
 - Support Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 - Add `provider_id__in` filter support to findings and findings severity overview endpoints [(#8951)](https://github.com/prowler-cloud/prowler/pull/8951)
@@ -129,7 +129,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.13.1] (Prowler v5.12.2)
+## [1.13.1] (Prowler )
 
 ### Changed
 - Renamed compliance overview task queue to `compliance` [(#8755)](https://github.com/prowler-cloud/prowler/pull/8755)
@@ -296,7 +296,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Improvements to `/overviews` endpoints [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690)
 - Queue to perform backfill background tasks [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690)
 - New endpoints to retrieve latest findings and metadata [(#7743)](https://github.com/prowler-cloud/prowler/pull/7743)
-- Export support for Prowler ThreatScore in M365 [(7783)](https://github.com/prowler-cloud/prowler/pull/7783)
+- Export support for Prowler THREATSCORE in M365 [(7783)](https://github.com/prowler-cloud/prowler/pull/7783)
 
 ---
 

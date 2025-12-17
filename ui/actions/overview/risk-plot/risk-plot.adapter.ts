@@ -27,7 +27,7 @@ export function adaptToRiskPlotData(
   const providersWithoutData: RiskPlotDataResponse["providersWithoutData"] = [];
 
   for (const providerData of providersRiskData) {
-    // Skip providers without ThreatScore data (no completed scans)
+    // Skip providers without THREATSCORE data (no completed scans)
     if (providerData.overallScore === null) {
       providersWithoutData.push({
         id: providerData.providerId,

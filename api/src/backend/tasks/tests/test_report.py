@@ -46,9 +46,9 @@ from tasks.jobs.report import (
     _safe_getattr,
     generate_compliance_reports_job,
     generate_nis2_report,
-    generate_threatscore_report,
+    generate_THREATSCORE_report,
 )
-from tasks.jobs.threatscore_utils import (
+from tasks.jobs.THREATSCORE_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
 )
@@ -281,7 +281,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
+            "tasks.jobs.THREATSCORE_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_requested"
@@ -335,7 +335,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
+            "tasks.jobs.THREATSCORE_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_group"
@@ -369,7 +369,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
+            "tasks.jobs.THREATSCORE_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_transform"
@@ -406,7 +406,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
+            "tasks.jobs.THREATSCORE_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_batch"
@@ -589,13 +589,13 @@ class TestCalculateRequirementsData:
 
 
 @pytest.mark.django_db
-class TestGenerateThreatscoreReportFunction:
+class TestGenerateTHREATSCOREReportFunction:
     def setup_method(self):
         self.scan_id = str(uuid.uuid4())
         self.provider_id = str(uuid.uuid4())
         self.tenant_id = str(uuid.uuid4())
-        self.compliance_id = "prowler_threatscore_aws"
-        self.output_path = "/tmp/test_threatscore_report.pdf"
+        self.compliance_id = "prowler_THREATSCORE_aws"
+        self.output_path = "/tmp/test_THREATSCORE_report.pdf"
 
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
@@ -613,7 +613,7 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.plt.subplots")
     @patch("tasks.jobs.report.plt.savefig")
     @patch("tasks.jobs.report.io.BytesIO")
-    def test_generate_threatscore_report_success(
+    def test_generate_THREATSCORE_report_success(
         self,
         mock_bytesio,
         mock_savefig,
@@ -632,7 +632,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_provider_get,
         mock_initialize_provider,
     ):
-        """Test the updated generate_threatscore_report using new memory-efficient architecture."""
+        """Test the updated generate_THREATSCORE_report using new memory-efficient architecture."""
         mock_provider = MagicMock()
         mock_provider.provider = "aws"
         mock_provider_get.return_value = mock_provider
@@ -642,7 +642,7 @@ class TestGenerateThreatscoreReportFunction:
 
         # Mock compliance object with requirements
         mock_compliance_obj = MagicMock()
-        mock_compliance_obj.Framework = "ProwlerThreatScore"
+        mock_compliance_obj.Framework = "ProwlerTHREATSCORE"
         mock_compliance_obj.Version = "1.0"
         mock_compliance_obj.Description = "Test Description"
 
@@ -686,7 +686,7 @@ class TestGenerateThreatscoreReportFunction:
             {
                 "id": "req_1",
                 "attributes": {
-                    "framework": "ProwlerThreatScore",
+                    "framework": "ProwlerTHREATSCORE",
                     "version": "1.0",
                     "status": StatusChoices.FAIL,
                     "description": "Test requirement",
@@ -729,7 +729,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_table_style.return_value = MagicMock()
 
         # Execute the function
-        generate_threatscore_report(
+        generate_THREATSCORE_report(
             tenant_id=self.tenant_id,
             scan_id=self.scan_id,
             compliance_id=self.compliance_id,
@@ -760,8 +760,8 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.Compliance.get_bulk")
-    @patch("tasks.jobs.threatscore_utils.Finding.all_objects.filter")
-    def test_generate_threatscore_report_exception_handling(
+    @patch("tasks.jobs.THREATSCORE_utils.Finding.all_objects.filter")
+    def test_generate_THREATSCORE_report_exception_handling(
         self,
         mock_finding_filter,
         mock_compliance_get_bulk,
@@ -771,7 +771,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_provider_get.side_effect = Exception("Provider not found")
 
         with pytest.raises(Exception, match="Provider not found"):
-            generate_threatscore_report(
+            generate_THREATSCORE_report(
                 tenant_id=self.tenant_id,
                 scan_id=self.scan_id,
                 compliance_id=self.compliance_id,
@@ -1265,7 +1265,7 @@ class TestGenerateComplianceReportsOptimized:
                 provider_id=self.provider_id,
             )
 
-            assert result["threatscore"] == {"upload": False, "path": ""}
+            assert result["THREATSCORE"] == {"upload": False, "path": ""}
             assert result["ens"] == {"upload": False, "path": ""}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
 
@@ -1273,7 +1273,7 @@ class TestGenerateComplianceReportsOptimized:
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_nis2_report")
     @patch("tasks.jobs.report.generate_ens_report")
-    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report.generate_THREATSCORE_report")
     @patch("tasks.jobs.report._generate_compliance_output_directory")
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report.Provider")
@@ -1284,7 +1284,7 @@ class TestGenerateComplianceReportsOptimized:
         mock_provider,
         mock_aggregate_stats,
         mock_gen_dir,
-        mock_gen_threatscore,
+        mock_gen_THREATSCORE,
         mock_gen_ens,
         mock_gen_nis2,
         mock_upload,
@@ -1301,12 +1301,12 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {"check-1": {"passed": 10, "total": 15}}
         # Mock returns different paths for different compliance_framework calls
         mock_gen_dir.side_effect = [
-            "/tmp/reports/threatscore/output",  # First call with compliance_framework="threatscore"
+            "/tmp/reports/THREATSCORE/output",  # First call with compliance_framework="THREATSCORE"
             "/tmp/reports/ens/output",  # Second call with compliance_framework="ens"
             "/tmp/reports/nis2/output",  # Third call with compliance_framework="nis2"
         ]
         mock_upload.side_effect = [
-            "s3://bucket/threatscore.pdf",
+            "s3://bucket/THREATSCORE.pdf",
             "s3://bucket/ens.pdf",
             "s3://bucket/nis2.pdf",
         ]
@@ -1315,7 +1315,7 @@ class TestGenerateComplianceReportsOptimized:
             tenant_id=self.tenant_id,
             scan_id=self.scan_id,
             provider_id=self.provider_id,
-            generate_threatscore=True,
+            generate_THREATSCORE=True,
             generate_ens=True,
         )
 
@@ -1326,14 +1326,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.assert_called_once_with(self.tenant_id, self.scan_id)
 
         # Verify both report generation functions were called with shared data
-        assert mock_gen_threatscore.call_count == 1
+        assert mock_gen_THREATSCORE.call_count == 1
         assert mock_gen_ens.call_count == 1
         assert mock_gen_nis2.call_count == 1
 
         # Verify provider_obj and requirement_statistics were passed to both
-        threatscore_call_kwargs = mock_gen_threatscore.call_args[1]
-        assert threatscore_call_kwargs["provider_obj"] == mock_provider_obj
-        assert threatscore_call_kwargs["requirement_statistics"] == {
+        THREATSCORE_call_kwargs = mock_gen_THREATSCORE.call_args[1]
+        assert THREATSCORE_call_kwargs["provider_obj"] == mock_provider_obj
+        assert THREATSCORE_call_kwargs["requirement_statistics"] == {
             "check-1": {"passed": 10, "total": 15}
         }
 
@@ -1350,8 +1350,8 @@ class TestGenerateComplianceReportsOptimized:
         }
 
         # Verify both reports were uploaded successfully
-        assert result["threatscore"]["upload"] is True
-        assert result["threatscore"]["path"] == "s3://bucket/threatscore.pdf"
+        assert result["THREATSCORE"]["upload"] is True
+        assert result["THREATSCORE"]["path"] == "s3://bucket/THREATSCORE.pdf"
         assert result["ens"]["upload"] is True
         assert result["ens"]["path"] == "s3://bucket/ens.pdf"
         assert result["nis2"]["upload"] is True
@@ -1381,7 +1381,7 @@ class TestGenerateComplianceReportsOptimized:
             provider_id=self.provider_id,
         )
 
-        # ENS should be skipped, only ThreatScore key should have error/status
+        # ENS should be skipped, only THREATSCORE key should have error/status
         assert "ens" in result
         assert result["ens"]["upload"] is False
 
@@ -1408,10 +1408,10 @@ class TestGenerateComplianceReportsOptimized:
         }
 
         with (
-            patch("tasks.jobs.threatscore_utils.Finding") as mock_finding_class,
-            patch("tasks.jobs.threatscore_utils.FindingOutput") as mock_finding_output,
-            patch("tasks.jobs.threatscore_utils.rls_transaction"),
-            patch("tasks.jobs.threatscore_utils.batched") as mock_batched,
+            patch("tasks.jobs.THREATSCORE_utils.Finding") as mock_finding_class,
+            patch("tasks.jobs.THREATSCORE_utils.FindingOutput") as mock_finding_output,
+            patch("tasks.jobs.THREATSCORE_utils.rls_transaction"),
+            patch("tasks.jobs.THREATSCORE_utils.batched") as mock_batched,
         ):
             # Setup mocks
             mock_finding_class.all_objects.filter.return_value.order_by.return_value.iterator.return_value = [

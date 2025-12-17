@@ -7,7 +7,7 @@
     "light": "#10B981",
     "dark": "#10B981"
   },
-  "favicon": "/favicon.ico",
+  "favicon": "/favicon.png",
   "logo": {
     "dark": "/images/prowler-logo-white.png",
     "light": "/images/prowler-logo-black.png"
@@ -19,7 +19,9 @@
         "groups": [
           {
             "group": "Welcome",
-            "pages": ["introduction"]
+            "pages": [
+              "introduction"
+            ]
           },
           {
             "group": "Prowler Cloud",
@@ -48,8 +50,10 @@
             ]
           },
           {
-            "group": "Prowler Lighthouse AI",
-            "pages": ["getting-started/products/prowler-lighthouse-ai"]
+            "group": "Prowler Cignify AI",
+            "pages": [
+              "getting-started/products/prowler-lighthouse-ai"
+            ]
           },
           {
             "group": "Prowler MCP Server",
@@ -106,7 +110,7 @@
                 ]
               },
               {
-                "group": "Lighthouse AI",
+                "group": "Cignify AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
@@ -149,7 +153,9 @@
               "user-guide/cli/tutorials/quick-inventory",
               {
                 "group": "Tutorials",
-                "pages": ["user-guide/cli/tutorials/parallel-execution"]
+                "pages": [
+                  "user-guide/cli/tutorials/parallel-execution"
+                ]
               }
             ]
           },
@@ -237,7 +243,9 @@
               },
               {
                 "group": "LLM",
-                "pages": ["user-guide/providers/llm/getting-started-llm"]
+                "pages": [
+                  "user-guide/providers/llm/getting-started-llm"
+                ]
               },
               {
                 "group": "Oracle Cloud Infrastructure",
@@ -250,7 +258,9 @@
           },
           {
             "group": "Compliance",
-            "pages": ["user-guide/compliance/tutorials/threatscore"]
+            "pages": [
+              "user-guide/compliance/tutorials/THREATSCORE"
+            ]
           }
         ]
       },
@@ -304,19 +314,25 @@
       },
       {
         "tab": "Security",
-        "pages": ["security"]
+        "pages": [
+          "security"
+        ]
       },
       {
         "tab": "Contact Us",
-        "pages": ["contact"]
+        "pages": [
+          "contact"
+        ]
       },
       {
         "tab": "Troubleshooting",
-        "pages": ["troubleshooting"]
+        "pages": [
+          "troubleshooting"
+        ]
       },
       {
         "tab": "About Us",
-        "icon": "/favicon.ico",
+        "icon": "/favicon.png",
         "href": "https://prowler.com/about#team"
       },
       {

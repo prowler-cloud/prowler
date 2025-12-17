@@ -161,7 +161,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     getDetailsComponent: (requirement: Requirement) =>
       createElement(MITRECustomDetails, { requirement }),
   },
-  ProwlerThreatScore: {
+  ProwlerTHREATSCORE: {
     mapComplianceData: mapThetaComplianceData,
     toAccordionItems: toThetaAccordionItems,
     getTopFailedSections,

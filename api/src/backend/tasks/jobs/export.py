@@ -50,20 +50,20 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
-    ProwlerThreatScoreAWS,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_aws import (
+    ProwlerTHREATSCOREAWS,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azure import (
-    ProwlerThreatScoreAzure,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_azure import (
+    ProwlerTHREATSCOREAzure,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
-    ProwlerThreatScoreGCP,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_gcp import (
+    ProwlerTHREATSCOREGCP,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
-    ProwlerThreatScoreKubernetes,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_kubernetes import (
+    ProwlerTHREATSCOREKubernetes,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
-    ProwlerThreatScoreM365,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE_m365 import (
+    ProwlerTHREATSCOREM365,
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
@@ -83,7 +83,7 @@ COMPLIANCE_CLASS_MAP = {
         ),
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
-        (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
+        (lambda name: name == "prowler_THREATSCORE_aws", ProwlerTHREATSCOREAWS),
         (lambda name: name == "ccc_aws", CCC_AWS),
         (lambda name: name.startswith("c5_"), AWSC5),
     ],
@@ -93,7 +93,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ens_"), AzureENS),
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
         (lambda name: name == "ccc_azure", CCC_Azure),
-        (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
+        (lambda name: name == "prowler_THREATSCORE_azure", ProwlerTHREATSCOREAzure),
         (lambda name: name == "c5_azure", AzureC5),
     ],
     "gcp": [
@@ -101,7 +101,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name == "mitre_attack_gcp", GCPMitreAttack),
         (lambda name: name.startswith("ens_"), GCPENS),
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
-        (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
+        (lambda name: name == "prowler_THREATSCORE_gcp", ProwlerTHREATSCOREGCP),
         (lambda name: name == "ccc_gcp", CCC_GCP),
         (lambda name: name == "c5_gcp", GCPC5),
     ],
@@ -109,13 +109,13 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("cis_"), KubernetesCIS),
         (lambda name: name.startswith("iso27001_"), KubernetesISO27001),
         (
-            lambda name: name == "prowler_threatscore_kubernetes",
-            ProwlerThreatScoreKubernetes,
+            lambda name: name == "prowler_THREATSCORE_kubernetes",
+            ProwlerTHREATSCOREKubernetes,
         ),
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
-        (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
+        (lambda name: name == "prowler_THREATSCORE_m365", ProwlerTHREATSCOREM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
     ],
     "github": [
@@ -259,7 +259,7 @@ def _build_output_path(
         tenant_id (str): The unique identifier for the tenant.
         scan_id (str): The unique identifier for the scan.
         subdirectory (str, optional): Optional subdirectory to include in the path
-                                     (e.g., "compliance", "threatscore", "ens").
+                                     (e.g., "compliance", "THREATSCORE", "ens").
 
     Returns:
         str: The constructed path with directory created.
@@ -267,8 +267,8 @@ def _build_output_path(
     Example:
         >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678")
         '/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456'
-        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
-        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
+        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678", "THREATSCORE")
+        '/tmp/tenant-1234/scan-5678/THREATSCORE/prowler-output-aws-20230215123456'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -308,7 +308,7 @@ def _generate_compliance_output_directory(
     Generate a file system path for a compliance framework output directory.
 
     This function constructs the output directory path specifically for a compliance
-    framework (e.g., "threatscore", "ens") by combining a base temporary output directory,
+    framework (e.g., "THREATSCORE", "ens") by combining a base temporary output directory,
     the tenant ID, the scan ID, the compliance framework name, and details about the
     prowler provider along with a timestamp.
 
@@ -318,14 +318,14 @@ def _generate_compliance_output_directory(
                                Typically, this is a string indicating the provider (e.g., "aws").
         tenant_id (str): The unique identifier for the tenant.
         scan_id (str): The unique identifier for the scan.
-        compliance_framework (str): The compliance framework name (e.g., "threatscore", "ens").
+        compliance_framework (str): The compliance framework name (e.g., "THREATSCORE", "ens").
 
     Returns:
         str: The path for the compliance framework output directory.
 
     Example:
-        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
-        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "THREATSCORE")
+        '/tmp/tenant-1234/scan-5678/THREATSCORE/prowler-output-aws-20230215123456'
         >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
         '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
         >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "nis2")

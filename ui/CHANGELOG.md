@@ -39,7 +39,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
 - Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
 - MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
-- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
+- Cignify AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
 
 ### 🐞 Fixed
 
@@ -66,7 +66,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
-- Multi LLM support to Lighthouse AI [(#8925)](https://github.com/prowler-cloud/prowler/pull/8925)
+- Multi LLM support to Cignify AI [(#8925)](https://github.com/prowler-cloud/prowler/pull/8925)
 - Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
 - PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
@@ -102,7 +102,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
-- PDF reporting for Prowler ThreatScore [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
+- PDF reporting for Prowler THREATSCORE [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
 - Support C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 - API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
@@ -125,7 +125,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - SAML configuration errors are now properly caught and displayed [(#8880)](https://github.com/prowler-cloud/prowler/pull/8880)
-- ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- THREATSCORE for each pillar in Prowler THREATSCORE specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 - Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
 - MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
 - Mutelist menu item now doesn't blink [(#8932)](https://github.com/prowler-cloud/prowler/pull/8932)
@@ -137,12 +137,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Disable "See Findings" button until scan completes [(#8762)](https://github.com/prowler-cloud/prowler/pull/8762)
-- Scrolling during Lighthouse AI response streaming [(#8669)](https://github.com/prowler-cloud/prowler/pull/8669)
+- Scrolling during Cignify AI response streaming [(#8669)](https://github.com/prowler-cloud/prowler/pull/8669)
 - Lighthouse textbox to send messages on Enter [(#8747)](https://github.com/prowler-cloud/prowler/pull/8747)
 
 ---
 
-## [1.12.2] (Prowler v5.12.2)
+## [1.12.2] (Prowler )
 
 ### 🐞 Fixed
 
@@ -299,7 +299,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Compliance detail view: CIS [(#7913)](https://github.com/prowler-cloud/prowler/pull/7913)
 - Compliance detail view: AWS Well-Architected Framework [(#7925)](https://github.com/prowler-cloud/prowler/pull/7925)
 - Compliance detail view: KISA [(#7965)](https://github.com/prowler-cloud/prowler/pull/7965)
-- Compliance detail view: ProwlerThreatScore [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
+- Compliance detail view: ProwlerTHREATSCORE [(#7979)](https://github.com/prowler-cloud/prowler/pull/7979)
 - Compliance detail view: Generic (rest of the compliances) [(#7990)](https://github.com/prowler-cloud/prowler/pull/7990)
 - Compliance detail view: MITRE ATTACK [(#8002)](https://github.com/prowler-cloud/prowler/pull/8002)
 - Improve `Scan ID` filter by adding more context and enhancing the UI/UX [(#8046)](https://github.com/prowler-cloud/prowler/pull/8046)

@@ -51,5 +51,3 @@
 - The table may take a short time to reflect the new scan; assertions look for a row containing the alias.
 - Provider cleanup performed before each test to ensure clean state
 - Tests should run serially to avoid state conflicts.
-
-

@@ -125,7 +125,7 @@ from api.filters import (
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
-    ThreatScoreSnapshotFilter,
+    THREATSCORESnapshotFilter,
     UserFilter,
 )
 from api.models import (
@@ -163,7 +163,7 @@ from api.models import (
     StateChoices,
     Task,
     TenantAPIKey,
-    ThreatScoreSnapshot,
+    THREATSCORESnapshot,
     User,
     UserRoleRelationship,
 )
@@ -182,7 +182,7 @@ from api.v1.serializers import (
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
-    ComplianceOverviewDetailThreatscoreSerializer,
+    ComplianceOverviewDetailTHREATSCORESerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -248,7 +248,7 @@ from api.v1.serializers import (
     TenantApiKeySerializer,
     TenantApiKeyUpdateSerializer,
     TenantSerializer,
-    ThreatScoreSnapshotSerializer,
+    THREATSCORESnapshotSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
     TokenSocialLoginSerializer,
@@ -436,8 +436,8 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse AI",
-                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
+                "name": "Cignify AI",
+                "description": "Endpoints for managing Cignify AI configurations, including creation, retrieval, "
                 "updating, and deletion of configurations such as OpenAI keys, models, and business "
                 "context.",
             },
@@ -1652,14 +1652,14 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         },
         request=None,
     ),
-    threatscore=extend_schema(
+    THREATSCORE=extend_schema(
         tags=["Scan"],
-        summary="Retrieve threatscore report",
-        description="Download a specific threatscore report (e.g., 'prowler_threatscore_aws') as a PDF file.",
+        summary="Retrieve THREATSCORE report",
+        description="Download a specific THREATSCORE report (e.g., 'prowler_THREATSCORE_aws') as a PDF file.",
         request=None,
         responses={
             200: OpenApiResponse(
-                description="PDF file containing the threatscore report"
+                description="PDF file containing the THREATSCORE report"
             ),
             202: OpenApiResponse(description="The task is in progress"),
             401: OpenApiResponse(
@@ -1667,7 +1667,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
             403: OpenApiResponse(description="There is a problem with credentials"),
             404: OpenApiResponse(
-                description="The scan has no threatscore reports, or the threatscore report generation task has not started yet"
+                description="The scan has no THREATSCORE reports, or the THREATSCORE report generation task has not started yet"
             ),
         },
     ),
@@ -1765,7 +1765,7 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
-        elif self.action == "threatscore":
+        elif self.action == "THREATSCORE":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         elif self.action == "ens":
@@ -2019,9 +2019,9 @@ class ScanViewSet(BaseRLSViewSet):
     @action(
         detail=True,
         methods=["get"],
-        url_name="threatscore",
+        url_name="THREATSCORE",
     )
-    def threatscore(self, request, pk=None):
+    def THREATSCORE(self, request, pk=None):
         scan = self.get_object()
         running_resp = self._get_task_status(scan)
         if running_resp:
@@ -2031,7 +2031,7 @@ class ScanViewSet(BaseRLSViewSet):
         if not scan.output_location:
             return Response(
                 {
-                    "detail": "The scan has no reports, or the threatscore report generation task has not started yet."
+                    "detail": "The scan has no reports, or the THREATSCORE report generation task has not started yet."
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
@@ -2041,13 +2041,13 @@ class ScanViewSet(BaseRLSViewSet):
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             prefix = os.path.join(
                 os.path.dirname(key_prefix),
-                "threatscore",
-                "*_threatscore_report.pdf",
+                "THREATSCORE",
+                "*_THREATSCORE_report.pdf",
             )
             loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
         else:
             base = os.path.dirname(scan.output_location)
-            pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
+            pattern = os.path.join(base, "THREATSCORE", "*_THREATSCORE_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
         if isinstance(loader, Response):
@@ -3917,11 +3917,11 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 }
             )
 
-        # Use different serializer for threatscore framework
-        if "threatscore" not in compliance_id:
+        # Use different serializer for THREATSCORE framework
+        if "THREATSCORE" not in compliance_id:
             serializer = self.get_serializer(requirements_summary, many=True)
         else:
-            serializer = ComplianceOverviewDetailThreatscoreSerializer(
+            serializer = ComplianceOverviewDetailTHREATSCORESerializer(
                 requirements_summary, many=True
             )
 
@@ -4136,8 +4136,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewServiceSerializer
         elif self.action == "regions":
             return OverviewRegionSerializer
-        elif self.action == "threatscore":
-            return ThreatScoreSnapshotSerializer
+        elif self.action == "THREATSCORE":
+            return THREATSCORESnapshotSerializer
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewSerializer
         elif self.action == "categories":
@@ -4558,9 +4558,9 @@ class OverviewViewSet(BaseRLSViewSet):
         return result
 
     @extend_schema(
-        summary="Get ThreatScore snapshots",
+        summary="Get THREATSCORE snapshots",
         description=(
-            "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
+            "Retrieve THREATSCORE metrics. By default, returns the latest snapshot for each provider. "
             "Use snapshot_id to retrieve a specific historical snapshot."
         ),
         tags=["Overview"],
@@ -4597,10 +4597,10 @@ class OverviewViewSet(BaseRLSViewSet):
             ),
         ],
     )
-    @action(detail=False, methods=["get"], url_name="threatscore")
-    def threatscore(self, request):
+    @action(detail=False, methods=["get"], url_name="THREATSCORE")
+    def THREATSCORE(self, request):
         """
-        Get ThreatScore snapshots.
+        Get THREATSCORE snapshots.
 
         Default behavior: Returns the latest snapshot for each provider.
         With snapshot_id: Returns the specific snapshot requested.
@@ -4610,25 +4610,25 @@ class OverviewViewSet(BaseRLSViewSet):
 
         # Base queryset with RLS
         base_queryset = self._apply_provider_filter(
-            ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+            THREATSCORESnapshot.objects.filter(tenant_id=tenant_id)
         )
 
         # Case 1: Specific snapshot requested
         if snapshot_id:
             try:
                 snapshot = base_queryset.get(id=snapshot_id)
-                serializer = ThreatScoreSnapshotSerializer(
+                serializer = THREATSCORESnapshotSerializer(
                     snapshot, context={"request": request}
                 )
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            except ThreatScoreSnapshot.DoesNotExist:
-                raise NotFound(detail="ThreatScore snapshot not found")
+            except THREATSCORESnapshot.DoesNotExist:
+                raise NotFound(detail="THREATSCORE snapshot not found")
 
         # Case 2: Latest snapshot per provider (default)
         # Apply filters manually: this @action is outside the standard list endpoint flow,
         # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
         filtered_queryset = self._apply_filterset(
-            base_queryset, ThreatScoreSnapshotFilter, exclude_keys={"snapshot_id"}
+            base_queryset, THREATSCORESnapshotFilter, exclude_keys={"snapshot_id"}
         )
 
         # Get distinct provider IDs from filtered queryset
@@ -4650,7 +4650,7 @@ class OverviewViewSet(BaseRLSViewSet):
         ]
 
         if len(latest_snapshots) <= 1:
-            serializer = ThreatScoreSnapshotSerializer(
+            serializer = THREATSCORESnapshotSerializer(
                 latest_snapshots, many=True, context={"request": request}
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -4658,24 +4658,24 @@ class OverviewViewSet(BaseRLSViewSet):
         snapshot_ids = [
             snapshot.id for snapshot in latest_snapshots if snapshot and snapshot.id
         ]
-        aggregated_snapshot = self._build_threatscore_overview_snapshot(
+        aggregated_snapshot = self._build_THREATSCORE_overview_snapshot(
             snapshot_ids, tenant_id
         )
-        serializer = ThreatScoreSnapshotSerializer(
+        serializer = THREATSCORESnapshotSerializer(
             [aggregated_snapshot], many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def _build_threatscore_overview_snapshot(self, snapshot_ids, tenant_id):
+    def _build_THREATSCORE_overview_snapshot(self, snapshot_ids, tenant_id):
         """
         Aggregate the latest snapshots into a single overview snapshot for the tenant.
         """
         if not snapshot_ids:
             raise ValueError(
-                "Snapshot id list cannot be empty when aggregating threatscore overview"
+                "Snapshot id list cannot be empty when aggregating THREATSCORE overview"
             )
 
-        base_queryset = ThreatScoreSnapshot.objects.filter(
+        base_queryset = THREATSCORESnapshot.objects.filter(
             tenant_id=tenant_id, id__in=snapshot_ids
         )
 
@@ -4847,11 +4847,11 @@ class OverviewViewSet(BaseRLSViewSet):
             reverse=True,
         )
 
-        aggregated_snapshot = ThreatScoreSnapshot(
+        aggregated_snapshot = THREATSCORESnapshot(
             tenant_id=tenant_id,
             scan=None,
             provider=None,
-            compliance_id="prowler_threatscore_overview",
+            compliance_id="prowler_THREATSCORE_overview",
             overall_score=overall_score,
             score_delta=score_delta,
             section_scores=aggregated_section_scores,
@@ -5213,33 +5213,33 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="List all Lighthouse AI configurations",
-        description="Retrieve a list of all Lighthouse AI configurations.",
+        tags=["Cignify AI"],
+        summary="List all Cignify AI configurations",
+        description="Retrieve a list of all Cignify AI configurations.",
         deprecated=True,
     ),
     create=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Create a new Lighthouse AI configuration",
-        description="Create a new Lighthouse AI configuration with the specified details.",
+        tags=["Cignify AI"],
+        summary="Create a new Cignify AI configuration",
+        description="Create a new Cignify AI configuration with the specified details.",
         deprecated=True,
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Partially update a Lighthouse AI configuration",
-        description="Update certain fields of an existing Lighthouse AI configuration.",
+        tags=["Cignify AI"],
+        summary="Partially update a Cignify AI configuration",
+        description="Update certain fields of an existing Cignify AI configuration.",
         deprecated=True,
     ),
     destroy=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Delete a Lighthouse AI configuration",
-        description="Remove a Lighthouse AI configuration by its ID.",
+        tags=["Cignify AI"],
+        summary="Delete a Cignify AI configuration",
+        description="Remove a Cignify AI configuration by its ID.",
         deprecated=True,
     ),
     connection=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
+        description="Verify the connection to the OpenAI API for a specific Cignify AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
         deprecated=True,
@@ -5295,28 +5295,28 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="List all LLM provider configurations",
         description="Retrieve all LLM provider configurations for the current tenant",
     ),
     retrieve=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Retrieve LLM provider configuration",
         description="Get details for a specific provider configuration in the current tenant.",
     ),
     create=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Create LLM provider configuration",
         description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type "
         "is allowed per tenant.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Update LLM provider configuration",
         description="Partially update a provider configuration (e.g., base_url, is_active).",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Delete LLM provider configuration",
         description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared "
         "during deletion.",
@@ -5375,7 +5375,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Check LLM provider connection",
         description="Validate provider credentials asynchronously and toggle is_active.",
         request=None,
@@ -5403,7 +5403,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
         )
 
     @extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Refresh LLM models catalog",
         description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.",
         request=None,
@@ -5438,19 +5438,19 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Get Lighthouse AI Tenant config",
-        description="Retrieve current tenant-level Lighthouse AI settings. Returns a single configuration object.",
+        tags=["Cignify AI"],
+        summary="Get Cignify AI Tenant config",
+        description="Retrieve current tenant-level Cignify AI settings. Returns a single configuration object.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Update Lighthouse AI Tenant config",
+        tags=["Cignify AI"],
+        summary="Update Cignify AI Tenant config",
         description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers. Auto-creates configuration if it doesn't exist.",
     ),
 )
 class LighthouseTenantConfigViewSet(BaseRLSViewSet):
     """
-    Singleton endpoint for tenant-level Lighthouse AI configuration.
+    Singleton endpoint for tenant-level Cignify AI configuration.
 
     This viewset implements a true singleton pattern:
     - GET returns the single configuration object (or 404 if not found)
@@ -5516,12 +5516,12 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="List all LLM models",
         description="List available LLM models per configured provider for the current tenant.",
     ),
     retrieve=extend_schema(
-        tags=["Lighthouse AI"],
+        tags=["Cignify AI"],
         summary="Retrieve LLM model details",
         description="Get details for a specific LLM model.",
     ),

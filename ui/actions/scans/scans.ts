@@ -284,7 +284,7 @@ export const getComplianceCsv = async (
 };
 
 /**
- * Generic function to get a compliance PDF report (ThreatScore, ENS, etc.)
+ * Generic function to get a compliance PDF report (THREATSCORE, ENS, etc.)
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @returns Promise with the PDF data or error

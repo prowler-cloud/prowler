@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic.v1 import BaseModel
 
 
-class ProwlerThreatScoreAWSModel(BaseModel):
+class ProwlerTHREATSCOREAWSModel(BaseModel):
     """
-    ProwlerThreatScoreAWSModel generates a finding's output in AWS Prowler ThreatScore Compliance format.
+    ProwlerTHREATSCOREAWSModel generates a finding's output in AWS Prowler THREATSCORE Compliance format.
     """
 
     Provider: str
@@ -32,9 +32,9 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     Name: str
 
 
-class ProwlerThreatScoreAzureModel(BaseModel):
+class ProwlerTHREATSCOREAzureModel(BaseModel):
     """
-    ProwlerThreatScoreAzureModel generates a finding's output in Azure Prowler ThreatScore Compliance format.
+    ProwlerTHREATSCOREAzureModel generates a finding's output in Azure Prowler THREATSCORE Compliance format.
     """
 
     Provider: str
@@ -61,9 +61,9 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     Name: str
 
 
-class ProwlerThreatScoreGCPModel(BaseModel):
+class ProwlerTHREATSCOREGCPModel(BaseModel):
     """
-    ProwlerThreatScoreGCPModel generates a finding's output in GCP Prowler ThreatScore Compliance format.
+    ProwlerTHREATSCOREGCPModel generates a finding's output in GCP Prowler THREATSCORE Compliance format.
     """
 
     Provider: str
@@ -90,9 +90,9 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     Name: str
 
 
-class ProwlerThreatScoreM365Model(BaseModel):
+class ProwlerTHREATSCOREM365Model(BaseModel):
     """
-    ProwlerThreatScoreM365Model generates a finding's output in M365 Prowler ThreatScore Compliance format.
+    ProwlerTHREATSCOREM365Model generates a finding's output in M365 Prowler THREATSCORE Compliance format.
     """
 
     Provider: str
@@ -119,9 +119,9 @@ class ProwlerThreatScoreM365Model(BaseModel):
     Name: str
 
 
-class ProwlerThreatScoreKubernetesModel(BaseModel):
+class ProwlerTHREATSCOREKubernetesModel(BaseModel):
     """
-    ProwlerThreatScoreKubernetesModel generates a finding's output in Kubernetes Prowler ThreatScore Compliance format.
+    ProwlerTHREATSCOREKubernetesModel generates a finding's output in Kubernetes Prowler THREATSCORE Compliance format.
     """
 
     Provider: str

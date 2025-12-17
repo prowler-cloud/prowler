@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { ProwlerExtended } from "@/components/icons";
+import { ProwlerShort } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
 interface AuthLayoutProps {
@@ -22,8 +22,10 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
         ></div>
 
         {/* Prowler Logo */}
-        <div className="relative z-10 mb-8 flex w-full max-w-[300px]">
-          <ProwlerExtended width={300} className="h-auto w-full" />
+        <div className="relative z-10 mb-8 flex flex-col items-center gap-4">
+          <div className="flex justify-center">
+            <ProwlerShort size={150} />
+          </div>
         </div>
 
         {/* Auth Form Container */}

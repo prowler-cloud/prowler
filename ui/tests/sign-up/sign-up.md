@@ -39,5 +39,3 @@
 ### Notes:
 - Test data uses a random base36 suffix to avoid collisions with email.
 - The test requires the `E2E_NEW_USER_PASSWORD` environment variable to be set before running.
-
-

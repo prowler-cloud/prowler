@@ -2569,7 +2569,7 @@ def get_section_containers_3_levels(data, section_1, section_2, section_3):
     return html.Div(section_containers, className="compliance-data-layout")
 
 
-def get_section_containers_threatscore(data, section_1, section_2, section_3):
+def get_section_containers_THREATSCORE(data, section_1, section_2, section_3):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     findings_counts_marco = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)

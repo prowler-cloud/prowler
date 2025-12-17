@@ -1,14 +1,14 @@
 "use server";
 
 import { getFindingsBySeverity } from "@/actions/overview/findings";
-import { getThreatScore } from "@/actions/overview/threat-score";
+import { getTHREATSCORE } from "@/actions/overview/threat-score";
 import { ProviderProps } from "@/types/providers";
 
 import { ProviderRiskData } from "./types/risk-plot.types";
 
 /**
  * Fetches risk data for a single provider.
- * Combines ThreatScore and Severity data in parallel.
+ * Combines THREATSCORE and Severity data in parallel.
  */
 export async function getProviderRiskData(
   provider: ProviderProps,
@@ -17,9 +17,9 @@ export async function getProviderRiskData(
   const providerType = provider.attributes.provider;
   const providerName = provider.attributes.alias || provider.attributes.uid;
 
-  // Fetch ThreatScore and Severity in parallel
-  const [threatScoreResponse, severityResponse] = await Promise.all([
-    getThreatScore({
+  // Fetch THREATSCORE and Severity in parallel
+  const [THREATSCOREResponse, severityResponse] = await Promise.all([
+    getTHREATSCORE({
       filters: {
         provider_id: providerId,
         include: "provider",
@@ -33,13 +33,13 @@ export async function getProviderRiskData(
     }),
   ]);
 
-  // Extract ThreatScore data
+  // Extract THREATSCORE data
   // When filtering by single provider, API returns array with one item (not aggregated)
-  const threatScoreData = threatScoreResponse?.data?.[0]?.attributes;
-  const overallScore = threatScoreData?.overall_score
-    ? parseFloat(threatScoreData.overall_score)
+  const THREATSCOREData = THREATSCOREResponse?.data?.[0]?.attributes;
+  const overallScore = THREATSCOREData?.overall_score
+    ? parseFloat(THREATSCOREData.overall_score)
     : null;
-  const failedFindings = threatScoreData?.failed_findings ?? 0;
+  const failedFindings = THREATSCOREData?.failed_findings ?? 0;
 
   // Extract Severity data
   const severityData = severityResponse?.data?.attributes ?? null;

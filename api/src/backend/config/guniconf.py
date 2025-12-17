@@ -2,22 +2,21 @@ import logging
 import multiprocessing
 import os
 
+import django  # noqa: E402
+
 from config.env import env
+from config.custom_logging import BackendLogger  # noqa: E402
+from config.django.production import DEBUG, LOGGING as DJANGO_LOGGERS  # noqa: E402
 
 # Ensure the environment variable for Django settings is set
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
 
-# Import Django and set it up before accessing settings
-import django  # noqa: E402
-
+# Initialize Django
 django.setup()
-from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E402
-from config.custom_logging import BackendLogger  # noqa: E402
 
+# Server configuration
 BIND_ADDRESS = env("DJANGO_BIND_ADDRESS", default="127.0.0.1")
 PORT = env("DJANGO_PORT", default=8000)
-
-# Server settings
 bind = f"{BIND_ADDRESS}:{PORT}"
 
 workers = env.int("DJANGO_WORKERS", default=multiprocessing.cpu_count() * 2 + 1)

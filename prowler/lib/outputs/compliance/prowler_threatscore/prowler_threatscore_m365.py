@@ -1,22 +1,22 @@
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.prowler_threatscore.models import (
-    ProwlerThreatScoreM365Model,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.models import (
+    ProwlerTHREATSCOREM365Model,
 )
 from prowler.lib.outputs.finding import Finding
 
 
-class ProwlerThreatScoreM365(ComplianceOutput):
+class ProwlerTHREATSCOREM365(ComplianceOutput):
     """
-    This class represents the M365 Prowler ThreatScore compliance output.
+    This class represents the M365 Prowler THREATSCORE compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into M365 Prowler ThreatScore compliance format.
+        - transform: Transforms findings into M365 Prowler THREATSCORE compliance format.
     """
 
     def transform(
@@ -26,7 +26,7 @@ class ProwlerThreatScoreM365(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into M365 Prowler ThreatScore compliance format.
+        Transforms a list of findings into M365 Prowler THREATSCORE compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -42,7 +42,7 @@ class ProwlerThreatScoreM365(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ProwlerThreatScoreM365Model(
+                        compliance_row = ProwlerTHREATSCOREM365Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             TenantId=finding.account_uid,
@@ -71,7 +71,7 @@ class ProwlerThreatScoreM365(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ProwlerThreatScoreM365Model(
+                    compliance_row = ProwlerTHREATSCOREM365Model(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         TenantId="",

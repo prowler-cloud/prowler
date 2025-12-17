@@ -340,7 +340,7 @@ export const Chat = ({
             <CardHeader>
               <CardTitle>LLM Provider Configuration Required</CardTitle>
               <CardDescription>
-                Please configure an LLM provider to use Lighthouse AI.
+                Please configure an LLM provider to use Cignify AI.
               </CardDescription>
             </CardHeader>
             <CardContent>

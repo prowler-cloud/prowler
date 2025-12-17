@@ -10,7 +10,7 @@
  * Add new report types here as they become available
  */
 export const COMPLIANCE_REPORT_TYPES = {
-  THREATSCORE: "threatscore",
+  THREATSCORE: "THREATSCORE",
   ENS: "ens",
   NIS2: "nis2",
   // Future report types can be added here:
@@ -31,7 +31,7 @@ export const COMPLIANCE_REPORT_DISPLAY_NAMES: Record<
   ComplianceReportType,
   string
 > = {
-  [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "ThreatScore",
+  [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "THREATSCORE",
   [COMPLIANCE_REPORT_TYPES.ENS]: "ENS RD2022",
   [COMPLIANCE_REPORT_TYPES.NIS2]: "NIS2",
   // Add display names for future report types here
@@ -44,7 +44,7 @@ export const COMPLIANCE_REPORT_BUTTON_LABELS: Record<
   ComplianceReportType,
   string
 > = {
-  [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "PDF ThreatScore Report",
+  [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "PDF THREATSCORE Report",
   [COMPLIANCE_REPORT_TYPES.ENS]: "PDF ENS Report",
   [COMPLIANCE_REPORT_TYPES.NIS2]: "PDF NIS2 Report",
   // Add button labels for future report types here
@@ -55,7 +55,7 @@ export const COMPLIANCE_REPORT_BUTTON_LABELS: Record<
  * This mapping determines which frameworks support PDF reporting
  */
 const FRAMEWORK_TO_REPORT_TYPE: Record<string, ComplianceReportType> = {
-  ProwlerThreatScore: COMPLIANCE_REPORT_TYPES.THREATSCORE,
+  ProwlerTHREATSCORE: COMPLIANCE_REPORT_TYPES.THREATSCORE,
   ENS: COMPLIANCE_REPORT_TYPES.ENS,
   NIS2: COMPLIANCE_REPORT_TYPES.NIS2,
   // Add new framework mappings here as PDF support is added:

@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="ThreatScoreSnapshot",
+            name="THREATSCORESnapshot",
             fields=[
                 (
                     "id",
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 (
                     "compliance_id",
                     models.CharField(
-                        help_text="Compliance framework ID (e.g., 'prowler_threatscore_aws')",
+                        help_text="Compliance framework ID (e.g., 'prowler_THREATSCORE_aws')",
                         max_length=100,
                     ),
                 ),
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                     "overall_score",
                     models.DecimalField(
                         decimal_places=2,
-                        help_text="Overall ThreatScore percentage (0-100)",
+                        help_text="Overall THREATSCORE percentage (0-100)",
                         max_digits=5,
                     ),
                 ),
@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
                     models.JSONField(
                         blank=True,
                         default=dict,
-                        help_text="ThreatScore breakdown by section",
+                        help_text="THREATSCORE breakdown by section",
                     ),
                 ),
                 (
@@ -115,8 +115,8 @@ class Migration(migrations.Migration):
                     "provider",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="threatscore_snapshots",
-                        related_query_name="threatscore_snapshot",
+                        related_name="THREATSCORE_snapshots",
+                        related_query_name="THREATSCORE_snapshot",
                         to="api.provider",
                     ),
                 ),
@@ -124,8 +124,8 @@ class Migration(migrations.Migration):
                     "scan",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="threatscore_snapshots",
-                        related_query_name="threatscore_snapshot",
+                        related_name="THREATSCORE_snapshots",
+                        related_query_name="THREATSCORE_snapshot",
                         to="api.scan",
                     ),
                 ),
@@ -137,33 +137,33 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": "threatscore_snapshots",
+                "db_table": "THREATSCORE_snapshots",
                 "abstract": False,
             },
         ),
         migrations.AddIndex(
-            model_name="threatscoresnapshot",
+            model_name="THREATSCOREsnapshot",
             index=models.Index(
-                fields=["tenant_id", "scan_id"], name="threatscore_snap_t_scan_idx"
+                fields=["tenant_id", "scan_id"], name="THREATSCORE_snap_t_scan_idx"
             ),
         ),
         migrations.AddIndex(
-            model_name="threatscoresnapshot",
+            model_name="THREATSCOREsnapshot",
             index=models.Index(
-                fields=["tenant_id", "provider_id"], name="threatscore_snap_t_prov_idx"
+                fields=["tenant_id", "provider_id"], name="THREATSCORE_snap_t_prov_idx"
             ),
         ),
         migrations.AddIndex(
-            model_name="threatscoresnapshot",
+            model_name="THREATSCOREsnapshot",
             index=models.Index(
-                fields=["tenant_id", "inserted_at"], name="threatscore_snap_t_time_idx"
+                fields=["tenant_id", "inserted_at"], name="THREATSCORE_snap_t_time_idx"
             ),
         ),
         migrations.AddConstraint(
-            model_name="threatscoresnapshot",
+            model_name="THREATSCOREsnapshot",
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
-                name="rls_on_threatscoresnapshot",
+                name="rls_on_THREATSCOREsnapshot",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),

@@ -34,7 +34,7 @@ import type { BarDataPoint } from "@/components/graphs/types";
 import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
-// ThreatScore colors (0-100 scale, higher = better)
+// THREATSCORE colors (0-100 scale, higher = better)
 const THREAT_COLORS = {
   DANGER: "var(--bg-fail-primary)", // 0-30
   WARNING: "var(--bg-warning-primary)", // 31-60
@@ -42,9 +42,9 @@ const THREAT_COLORS = {
 } as const;
 
 /**
- * Get color based on ThreatScore (0-100 scale, higher = better)
+ * Get color based on THREATSCORE (0-100 scale, higher = better)
  */
-function getThreatScoreColor(score: number): string {
+function getTHREATSCOREColor(score: number): string {
   if (score > 60) return THREAT_COLORS.SUCCESS;
   if (score > 30) return THREAT_COLORS.WARNING;
   return THREAT_COLORS.DANGER;
@@ -91,7 +91,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (!active || !payload?.length) return null;
 
   const { name, x, y } = payload[0].payload;
-  const scoreColor = getThreatScoreColor(x);
+  const scoreColor = getTHREATSCOREColor(x);
 
   return (
     <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
@@ -100,7 +100,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
       </p>
       <p className="text-text-neutral-secondary text-sm font-medium">
         <span style={{ color: scoreColor, fontWeight: "bold" }}>{x}%</span>{" "}
-        Prowler ThreatScore
+        Cignify THREATSCORE
       </p>
       <div className="mt-2">
         <AlertPill value={y} />
@@ -268,7 +268,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                 Risk Plot
               </h3>
               <p className="text-text-neutral-tertiary mt-1 text-xs">
-                Prowler ThreatScore is severity-weighted, not quantity-based.
+                Prowler THREATSCORE is severity-weighted, not quantity-based.
                 Higher severity findings have greater impact on the score.
               </p>
             </div>
@@ -287,9 +287,9 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   <XAxis
                     type="number"
                     dataKey="x"
-                    name="Prowler ThreatScore"
+                    name="Cignify THREATSCORE"
                     label={{
-                      value: "Prowler ThreatScore",
+                      value: "Cignify THREATSCORE",
                       position: "bottom",
                       offset: 10,
                       fill: "var(--color-text-neutral-secondary)",
@@ -367,7 +367,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   {selectedPoint.name}
                 </h4>
                 <p className="text-text-neutral-tertiary text-xs">
-                  Prowler ThreatScore: {selectedPoint.x}% | Fail Findings:{" "}
+                  Prowler THREATSCORE: {selectedPoint.x}% | Fail Findings:{" "}
                   {selectedPoint.y}
                 </p>
               </div>

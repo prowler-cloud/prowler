@@ -2,15 +2,15 @@ import csv
 import json
 import sys
 
-# Convert a CSV file following the ThreatScore CSV format into a Prowler Compliance JSON file
+# Convert a CSV file following the THREATSCORE CSV format into a Prowler Compliance JSON file
 # CSV fields:
 # Id, Title, Description, Section, SubSection, AttributeDescription, AdditionalInformation, LevelOfRisk, Checks
 
 # get the CSV filename to convert from
 file_name = sys.argv[1]
 
-# read the CSV file rows and use the column fields to form the Prowler compliance JSON file 'prowler_threatscore_aws.json'
-output = {"Framework": "ProwlerThreatScore", "Version": "1.0", "Requirements": []}
+# read the CSV file rows and use the column fields to form the Prowler compliance JSON file 'prowler_THREATSCORE_aws.json'
+output = {"Framework": "ProwlerTHREATSCORE", "Version": "1.0", "Requirements": []}
 with open(file_name, newline="", encoding="utf-8") as f:
     reader = csv.reader(f, delimiter=",")
     for row in reader:
@@ -31,6 +31,6 @@ with open(file_name, newline="", encoding="utf-8") as f:
             }
         )
 
-# Write the output Prowler compliance JSON file 'prowler_threatscore_aws.json' locally
-with open("prowler_threatscore_azure.json", "w", encoding="utf-8") as outfile:
+# Write the output Prowler compliance JSON file 'prowler_THREATSCORE_aws.json' locally
+with open("prowler_THREATSCORE_azure.json", "w", encoding="utf-8") as outfile:
     json.dump(output, outfile, indent=4, ensure_ascii=False)

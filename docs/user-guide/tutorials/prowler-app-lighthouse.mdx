@@ -6,7 +6,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.8.0" />
 
-Prowler Lighthouse AI integrates Large Language Models (LLMs) with Prowler security findings data.
+Prowler Cignify AI integrates Large Language Models (LLMs) with Prowler security findings data.
 
 Here's what's happening behind the scenes:
 
@@ -14,11 +14,11 @@ Here's what's happening behind the scenes:
 - It uses a ["supervisor" architecture](https://langchain-ai.lang.chat/langgraphjs/tutorials/multi_agent/agent_supervisor/) that interacts with different agents for specialized tasks. For example, `findings_agent` can analyze detected security findings, while `overview_agent` provides a summary of connected cloud accounts.
 - The system connects to the configured LLM provider to understand user's query, fetches the right data, and responds to the query.
 <Note>
-Lighthouse AI supports multiple LLM providers including OpenAI, Amazon Bedrock, and OpenAI-compatible services. For configuration details, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
+Cignify AI supports multiple LLM providers including OpenAI, Amazon Bedrock, and OpenAI-compatible services. For configuration details, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
 </Note>
 - The supervisor agent is the main contact point. It is what users interact with directly from the chat interface. It coordinates with other agents to answer users' questions comprehensively.
 
-<img src="/images/prowler-app/lighthouse-architecture.png" alt="Lighthouse AI Architecture" />
+<img src="/images/prowler-app/lighthouse-architecture.png" alt="Cignify AI Architecture" />
 
 <Note>
 All agents can only read relevant security data. They cannot modify your data or access sensitive information like configured secrets or tenant details.
@@ -27,9 +27,9 @@ All agents can only read relevant security data. They cannot modify your data or
 
 ## Set up
 
-Getting started with Prowler Lighthouse AI is easy:
+Getting started with Prowler Cignify AI is easy:
 
-1. Navigate to **Configuration** → **Lighthouse AI**
+1. Navigate to **Configuration** → **Cignify AI**
 2. Click **Connect** under the desired provider (OpenAI, Amazon Bedrock, or OpenAI Compatible)
 3. Enter the required credentials
 4. Select a default model
@@ -39,11 +39,11 @@ Getting started with Prowler Lighthouse AI is easy:
 For detailed configuration instructions for each provider, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
 </Note>
 
-<img src="/images/prowler-app/lighthouse-configuration.png" alt="Lighthouse AI Configuration" />
+<img src="/images/prowler-app/lighthouse-configuration.png" alt="Cignify AI Configuration" />
 
 ### Adding Business Context
 
-The optional business context field lets you provide additional information to help Lighthouse AI understand your environment and priorities, including:
+The optional business context field lets you provide additional information to help Cignify AI understand your environment and priorities, including:
 
 - Your organization's cloud security goals
 - Information about account owners or responsible teams

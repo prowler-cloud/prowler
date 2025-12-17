@@ -3352,13 +3352,13 @@ class TestAggregateFindingsByRegion:
         """Test function returns correct data structure."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         # Mock findings with resources
         mock_finding1 = MagicMock()
         mock_finding1.check_id = "check1"
         mock_finding1.status = "FAIL"
-        mock_finding1.compliance = {modeled_threatscore_compliance_id: ["req1", "req2"]}
+        mock_finding1.compliance = {modeled_THREATSCORE_compliance_id: ["req1", "req2"]}
 
         mock_resource1 = MagicMock()
         mock_resource1.region = "us-east-1"
@@ -3376,7 +3376,7 @@ class TestAggregateFindingsByRegion:
 
         check_status_by_region, findings_count_by_compliance = (
             _aggregate_findings_by_region(
-                tenant_id, scan_id, modeled_threatscore_compliance_id
+                tenant_id, scan_id, modeled_THREATSCORE_compliance_id
             )
         )
 
@@ -3397,7 +3397,7 @@ class TestAggregateFindingsByRegion:
         """Test that FAIL status takes priority over other statuses."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         # First finding with PASS status
         mock_finding1 = MagicMock()
@@ -3428,7 +3428,7 @@ class TestAggregateFindingsByRegion:
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, _ = _aggregate_findings_by_region(
-            tenant_id, scan_id, modeled_threatscore_compliance_id
+            tenant_id, scan_id, modeled_THREATSCORE_compliance_id
         )
 
         # FAIL should override PASS
@@ -3442,7 +3442,7 @@ class TestAggregateFindingsByRegion:
         """Test that muted findings are filtered out (muted=False in query)."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         mock_queryset = MagicMock()
         mock_queryset.only.return_value = mock_queryset
@@ -3455,7 +3455,7 @@ class TestAggregateFindingsByRegion:
         mock_findings_filter.return_value = mock_queryset
 
         _aggregate_findings_by_region(
-            tenant_id, scan_id, modeled_threatscore_compliance_id
+            tenant_id, scan_id, modeled_THREATSCORE_compliance_id
         )
 
         # Verify filter was called with muted=False
@@ -3471,16 +3471,16 @@ class TestAggregateFindingsByRegion:
     def test_aggregate_findings_by_region_processes_compliance_counts(
         self, mock_rls_transaction, mock_findings_filter
     ):
-        """Test that ThreatScore compliance counts are processed correctly."""
+        """Test that THREATSCORE compliance counts are processed correctly."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         # Finding with PASS status
         mock_finding1 = MagicMock()
         mock_finding1.check_id = "check1"
         mock_finding1.status = "PASS"
-        mock_finding1.compliance = {modeled_threatscore_compliance_id: ["req1"]}
+        mock_finding1.compliance = {modeled_THREATSCORE_compliance_id: ["req1"]}
         mock_resource1 = MagicMock()
         mock_resource1.region = "us-east-1"
         mock_finding1.small_resources = [mock_resource1]
@@ -3489,7 +3489,7 @@ class TestAggregateFindingsByRegion:
         mock_finding2 = MagicMock()
         mock_finding2.check_id = "check2"
         mock_finding2.status = "FAIL"
-        mock_finding2.compliance = {modeled_threatscore_compliance_id: ["req1"]}
+        mock_finding2.compliance = {modeled_THREATSCORE_compliance_id: ["req1"]}
         mock_resource2 = MagicMock()
         mock_resource2.region = "us-east-1"
         mock_finding2.small_resources = [mock_resource2]
@@ -3505,12 +3505,12 @@ class TestAggregateFindingsByRegion:
         mock_findings_filter.return_value = mock_queryset
 
         _, findings_count_by_compliance = _aggregate_findings_by_region(
-            tenant_id, scan_id, modeled_threatscore_compliance_id
+            tenant_id, scan_id, modeled_THREATSCORE_compliance_id
         )
 
         # Verify compliance counts
         normalized_id = re.sub(
-            r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
+            r"[^a-z0-9]", "", modeled_THREATSCORE_compliance_id.lower()
         )
         assert "us-east-1" in findings_count_by_compliance
         assert normalized_id in findings_count_by_compliance["us-east-1"]
@@ -3528,7 +3528,7 @@ class TestAggregateFindingsByRegion:
         """Test aggregation across multiple regions."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         # Finding in us-east-1
         mock_finding1 = MagicMock()
@@ -3559,7 +3559,7 @@ class TestAggregateFindingsByRegion:
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, _ = _aggregate_findings_by_region(
-            tenant_id, scan_id, modeled_threatscore_compliance_id
+            tenant_id, scan_id, modeled_THREATSCORE_compliance_id
         )
 
         # Verify both regions are present with correct statuses
@@ -3576,7 +3576,7 @@ class TestAggregateFindingsByRegion:
         """Test with no findings - should return empty dicts."""
         tenant_id = str(uuid.uuid4())
         scan_id = str(uuid.uuid4())
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        modeled_THREATSCORE_compliance_id = "ProwlerTHREATSCORE-1.0"
 
         mock_queryset = MagicMock()
         mock_queryset.only.return_value = mock_queryset
@@ -3590,7 +3590,7 @@ class TestAggregateFindingsByRegion:
 
         check_status_by_region, findings_count_by_compliance = (
             _aggregate_findings_by_region(
-                tenant_id, scan_id, modeled_threatscore_compliance_id
+                tenant_id, scan_id, modeled_THREATSCORE_compliance_id
             )
         )
 

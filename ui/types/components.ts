@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { FC, MouseEvent, SVGProps } from "react";
 
+import { IconImgProps } from "@/components/icons/prowler/ProwlerIcons";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -12,7 +13,12 @@ export type IconProps = {
   style?: React.CSSProperties;
 };
 
-export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
+// export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
+
+export type IconComponent =
+  | LucideIcon
+  | React.FC<IconSvgProps>
+  | FC<IconImgProps>;
 
 export type SubmenuProps = {
   href: string;

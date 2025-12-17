@@ -1753,7 +1753,9 @@ class TestJiraIntegration:
             }
             findings.append(finding)
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = findings
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = (
+            findings
+        )
 
         # Call the function
         result = send_findings_to_jira(
@@ -1827,7 +1829,9 @@ class TestJiraIntegration:
             },
         }
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = (
+            finding
+        )
 
         # Call the function
         result = send_findings_to_jira(
@@ -1890,7 +1894,9 @@ class TestJiraIntegration:
         finding.scan.provider.provider = "kubernetes"
         finding.check_metadata = {}  # Empty metadata
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = (
+            finding
+        )
 
         # Call the function
         result = send_findings_to_jira(

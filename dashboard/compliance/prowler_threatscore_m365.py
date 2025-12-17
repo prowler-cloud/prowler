@@ -1,6 +1,6 @@
 import warnings
 
-from dashboard.common_methods import get_section_containers_threatscore
+from dashboard.common_methods import get_section_containers_THREATSCORE
 
 warnings.filterwarnings("ignore")
 
@@ -20,7 +20,7 @@ def get_table(data):
         ]
     ].copy()
 
-    return get_section_containers_threatscore(
+    return get_section_containers_THREATSCORE(
         aux,
         "REQUIREMENTS_ATTRIBUTES_SECTION",
         "REQUIREMENTS_ATTRIBUTES_SUBSECTION",

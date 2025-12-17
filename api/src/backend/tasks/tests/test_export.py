@@ -181,14 +181,14 @@ class TestOutputs:
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
         assert "/compliance/" in compliance
 
-        # Test _generate_compliance_output_directory with "threatscore"
-        threatscore = _generate_compliance_output_directory(
-            base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
+        # Test _generate_compliance_output_directory with "THREATSCORE"
+        THREATSCORE = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="THREATSCORE"
         )
 
-        assert os.path.isdir(os.path.dirname(threatscore))
-        assert threatscore.endswith(f"{provider}-{expected_timestamp}")
-        assert "/threatscore/" in threatscore
+        assert os.path.isdir(os.path.dirname(THREATSCORE))
+        assert THREATSCORE.endswith(f"{provider}-{expected_timestamp}")
+        assert "/THREATSCORE/" in THREATSCORE
 
         # Test _generate_compliance_output_directory with "ens"
         ens = _generate_compliance_output_directory(
@@ -232,14 +232,14 @@ class TestOutputs:
         assert compliance.endswith(f"aws-test-check-{expected_timestamp}")
 
         # Test provider name sanitization with _generate_compliance_output_directory
-        threatscore = _generate_compliance_output_directory(
-            base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
+        THREATSCORE = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="THREATSCORE"
         )
         ens = _generate_compliance_output_directory(
             base_dir, provider, tenant_id, scan_id, compliance_framework="ens"
         )
 
-        assert os.path.isdir(os.path.dirname(threatscore))
+        assert os.path.isdir(os.path.dirname(THREATSCORE))
         assert os.path.isdir(os.path.dirname(ens))
-        assert threatscore.endswith(f"aws-test-check-{expected_timestamp}")
+        assert THREATSCORE.endswith(f"aws-test-check-{expected_timestamp}")
         assert ens.endswith(f"aws-test-check-{expected_timestamp}")

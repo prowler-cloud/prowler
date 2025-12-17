@@ -1,15 +1,15 @@
 "use client";
 
-import { CheckIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 
-import { Card, CardContent, CardHeader } from "../../shadcn";
+// import { CustomLink } from "@/components/ui/custom/custom-link";
+import { Card, CardContent } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
@@ -62,7 +62,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
       </CustomAlertModal>
 
       <Card variant="base" padding="lg">
-        <CardHeader>
+        {/* <CardHeader>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h4 className="text-lg font-bold">SAML SSO Integration</h4>
@@ -81,7 +81,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
               )}
             </p>
           </div>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="text-sm">

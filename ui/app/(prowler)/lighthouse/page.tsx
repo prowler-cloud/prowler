@@ -26,7 +26,7 @@ export default async function AIChatbot() {
   }
 
   return (
-    <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
+    <ContentLayout title="Cignify AI" icon={<LighthouseIcon />}>
       <Chat
         hasConfig={hasConfig}
         providers={providersConfig.providers}

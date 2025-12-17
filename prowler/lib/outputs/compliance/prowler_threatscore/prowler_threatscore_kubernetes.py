@@ -1,22 +1,22 @@
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.prowler_threatscore.models import (
-    ProwlerThreatScoreKubernetesModel,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.models import (
+    ProwlerTHREATSCOREKubernetesModel,
 )
 from prowler.lib.outputs.finding import Finding
 
 
-class ProwlerThreatScoreKubernetes(ComplianceOutput):
+class ProwlerTHREATSCOREKubernetes(ComplianceOutput):
     """
-    This class represents the Kubernetes Prowler ThreatScore compliance output.
+    This class represents the Kubernetes Prowler THREATSCORE compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Kubernetes Prowler ThreatScore compliance format.
+        - transform: Transforms findings into Kubernetes Prowler THREATSCORE compliance format.
     """
 
     def transform(
@@ -26,7 +26,7 @@ class ProwlerThreatScoreKubernetes(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Kubernetes Prowler ThreatScore compliance format.
+        Transforms a list of findings into Kubernetes Prowler THREATSCORE compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -42,7 +42,7 @@ class ProwlerThreatScoreKubernetes(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ProwlerThreatScoreKubernetesModel(
+                        compliance_row = ProwlerTHREATSCOREKubernetesModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             Context=finding.account_name,
@@ -71,7 +71,7 @@ class ProwlerThreatScoreKubernetes(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ProwlerThreatScoreKubernetesModel(
+                    compliance_row = ProwlerTHREATSCOREKubernetesModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         Context="",

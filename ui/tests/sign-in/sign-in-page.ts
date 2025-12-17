@@ -14,28 +14,28 @@ export interface SocialAuthConfig {
 
 export class SignInPage extends BasePage {
   readonly homePage: HomePage;
-  
+
   // Form elements
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
   readonly form: Locator;
-  
+
   // Social authentication buttons
-  readonly googleButton: Locator;
-  readonly githubButton: Locator;
-  readonly samlButton: Locator;
-  
+  // readonly googleButton: Locator;
+  // readonly githubButton: Locator;
+  // readonly samlButton: Locator;
+
   // Navigation elements
   readonly signUpLink: Locator;
   readonly backButton: Locator;
-  
+
   // UI elements
   readonly logo: Locator;
-  
+
   // Error messages
   readonly errorMessages: Locator;
-  
+
   // SAML specific elements
   readonly samlModeTitle: Locator;
   readonly samlEmailInput: Locator;
@@ -43,28 +43,28 @@ export class SignInPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.homePage = new HomePage(page);
-    
+
     // Form elements
     this.emailInput = page.getByRole("textbox", { name: "Email" });
     this.passwordInput = page.getByRole("textbox", { name: "Password" });
     this.loginButton = page.getByRole("button", { name: "Log in" });
     this.form = page.locator("form");
-    
+
     // Social authentication buttons
-    this.googleButton = page.getByRole("button", { name: "Continue with Google" });
-    this.githubButton = page.getByRole("button", { name: "Continue with Github" });
-    this.samlButton = page.getByRole("button", { name: "Continue with SAML SSO" });
-    
+    // this.googleButton = page.getByRole("button", { name: "Continue with Google" });
+    // this.githubButton = page.getByRole("button", { name: "Continue with Github" });
+    // this.samlButton = page.getByRole("button", { name: "Continue with SAML SSO" });
+
     // Navigation elements
     this.signUpLink = page.getByRole("link", { name: "Sign up" });
     this.backButton = page.getByRole("button", { name: "Back" });
-    
+
     // UI elements
     this.logo = page.locator('svg[width="300"]');
-    
+
     // Error messages
     this.errorMessages = page.locator('[role="alert"], .error-message, [data-testid="error"]');
-    
+
     // SAML specific elements
     this.samlModeTitle = page.getByRole("heading", { name: "Sign in with SAML SSO" });
     this.samlEmailInput = page.getByRole("textbox", { name: "Email" });
@@ -98,23 +98,20 @@ export class SignInPage extends BasePage {
     await this.submitForm();
   }
 
-  // Social authentication methods
-  async clickGoogleAuth(): Promise<void> {
-    await this.googleButton.click();
-  }
+  // // Social authentication methods
+  // async clickGoogleAuth(): Promise<void> {
+  //   await this.googleButton.click();
+  // }
 
-  async clickGithubAuth(): Promise<void> {
-    await this.githubButton.click();
-  }
+  // async clickGithubAuth(): Promise<void> {
+  //   await this.githubButton.click();
+  // }
 
-  async clickSamlAuth(): Promise<void> {
-    await this.samlButton.click();
-  }
+  // async clickSamlAuth(): Promise<void> {
+  //   await this.samlButton.click();
+  // }
 
-  // SAML SSO methods
-  async toggleSamlMode(): Promise<void> {
-    await this.clickSamlAuth();
-  }
+
 
   async goBackFromSaml(): Promise<void> {
     await this.backButton.click();
@@ -146,15 +143,15 @@ export class SignInPage extends BasePage {
     await expect(this.loginButton).toBeVisible();
   }
 
-  async verifySocialButtons(config: SocialAuthConfig): Promise<void> {
-    if (config.googleEnabled) {
-      await expect(this.googleButton).toBeVisible();
-    }
-    if (config.githubEnabled) {
-      await expect(this.githubButton).toBeVisible();
-    }
-    await expect(this.samlButton).toBeVisible();
-  }
+  // async verifySocialButtons(config: SocialAuthConfig): Promise<void> {
+  //   if (config.googleEnabled) {
+  //     await expect(this.googleButton).toBeVisible();
+  //   }
+  //   if (config.githubEnabled) {
+  //     await expect(this.githubButton).toBeVisible();
+  //   }
+  //   await expect(this.samlButton).toBeVisible();
+  // }
 
   async verifyNavigationLinks(): Promise<void> {
     await expect(this.page.getByRole('link', { name: /Need to create an account\?/i })).toBeVisible();
@@ -190,7 +187,7 @@ export class SignInPage extends BasePage {
     // Check for common validation messages
     const emailError = this.page.getByRole("alert", { name: "Please enter a valid email address." });
     const passwordError = this.page.getByRole("alert", { name: "Password is required." });
-    
+
     // At least one validation error should be visible
     await expect(emailError.or(passwordError)).toBeVisible();
   }
@@ -245,7 +242,7 @@ export class SignInPage extends BasePage {
     // Fill email first and check for validation
     await this.fillEmail(credentials.email);
     await this.page.keyboard.press("Tab"); // Trigger validation
-    
+
     // Fill password
     await this.fillPassword(credentials.password);
   }

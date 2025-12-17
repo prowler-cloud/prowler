@@ -59,9 +59,9 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.png (favicon file)
      * - *.png, *.jpg, *.jpeg, *.svg, *.ico (image files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|ico|css|js)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.png|.*\\.(?:png|jpg|jpeg|svg|ico|css|js)$).*)",
   ],
 };

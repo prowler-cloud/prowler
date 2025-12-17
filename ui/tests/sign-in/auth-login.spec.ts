@@ -9,10 +9,6 @@ import {
   verifyLoginError,
   verifyLoginFormElements,
   verifyDashboardRoute,
-  toggleSamlMode,
-  verifySamlModeActive,
-  goBackFromSaml,
-  verifyNormalModeActive,
   logout,
   verifyLogoutSuccess,
   waitForPageLoad,
@@ -78,14 +74,6 @@ test.describe("Login Flow", () => {
     await expect(page).toHaveURL(URLS.LOGIN);
   });
 
-  test("should toggle SAML SSO mode", async ({ page }) => {
-    // Toggle to SAML mode
-    await toggleSamlMode(page);
-    await verifySamlModeActive(page);
-    // Toggle back to normal mode
-    await goBackFromSaml(page);
-    await verifyNormalModeActive(page);
-  });
 
   test("should show loading state during form submission", async ({ page }) => {
     // Fill valid credentials
@@ -103,8 +91,7 @@ test.describe("Login Flow", () => {
   test("should handle SAML authentication flow", async ({ page }) => {
     // Enter email for SAML
     const samlEmail = "user@saml-domain.com";
-    // Toggle to SAML mode
-    await toggleSamlMode(page);
+
     // Fill email (password should be hidden)
     await page.getByLabel("Email").fill(samlEmail);
     // Submit should trigger SAML redirect (we can't test the actual SAML flow in E2E)

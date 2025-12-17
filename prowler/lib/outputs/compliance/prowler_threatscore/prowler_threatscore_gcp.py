@@ -1,22 +1,22 @@
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.prowler_threatscore.models import (
-    ProwlerThreatScoreGCPModel,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.models import (
+    ProwlerTHREATSCOREGCPModel,
 )
 from prowler.lib.outputs.finding import Finding
 
 
-class ProwlerThreatScoreGCP(ComplianceOutput):
+class ProwlerTHREATSCOREGCP(ComplianceOutput):
     """
-    This class represents the GCP Prowler ThreatScore compliance output.
+    This class represents the GCP Prowler THREATSCORE compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into GCP Prowler ThreatScore compliance format.
+        - transform: Transforms findings into GCP Prowler THREATSCORE compliance format.
     """
 
     def transform(
@@ -26,7 +26,7 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into GCP Prowler ThreatScore compliance format.
+        Transforms a list of findings into GCP Prowler THREATSCORE compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -42,7 +42,7 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = ProwlerThreatScoreGCPModel(
+                        compliance_row = ProwlerTHREATSCOREGCPModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
@@ -71,7 +71,7 @@ class ProwlerThreatScoreGCP(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = ProwlerThreatScoreGCPModel(
+                    compliance_row = ProwlerTHREATSCOREGCPModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         ProjectId="",

@@ -3496,8 +3496,8 @@ paths:
   /api/v1/lighthouse-configurations:
     get:
       operationId: lighthouse_configurations_list
-      description: Retrieve a list of all Lighthouse AI configurations.
-      summary: List all Lighthouse AI configurations
+      description: Retrieve a list of all Cignify AI configurations.
+      summary: List all Cignify AI configurations
       parameters:
       - in: query
         name: fields[lighthouse-configurations]
@@ -3556,7 +3556,7 @@ paths:
             - -is_active
         explode: false
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       deprecated: true
@@ -3569,10 +3569,10 @@ paths:
           description: ''
     post:
       operationId: lighthouse_configurations_create
-      description: Create a new Lighthouse AI configuration with the specified details.
-      summary: Create a new Lighthouse AI configuration
+      description: Create a new Cignify AI configuration with the specified details.
+      summary: Create a new Cignify AI configuration
       tags:
-      - Lighthouse AI
+      - Cignify AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3598,8 +3598,8 @@ paths:
   /api/v1/lighthouse-configurations/{id}:
     patch:
       operationId: lighthouse_configurations_partial_update
-      description: Update certain fields of an existing Lighthouse AI configuration.
-      summary: Partially update a Lighthouse AI configuration
+      description: Update certain fields of an existing Cignify AI configuration.
+      summary: Partially update a Cignify AI configuration
       parameters:
       - in: path
         name: id
@@ -3607,7 +3607,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3632,8 +3632,8 @@ paths:
           description: ''
     delete:
       operationId: lighthouse_configurations_destroy
-      description: Remove a Lighthouse AI configuration by its ID.
-      summary: Delete a Lighthouse AI configuration
+      description: Remove a Cignify AI configuration by its ID.
+      summary: Delete a Cignify AI configuration
       parameters:
       - in: path
         name: id
@@ -3641,7 +3641,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       deprecated: true
@@ -3661,7 +3661,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       deprecated: true
@@ -3690,9 +3690,9 @@ paths:
   /api/v1/lighthouse/configuration:
     get:
       operationId: lighthouse_configuration_list
-      description: Retrieve current tenant-level Lighthouse AI settings. Returns a
+      description: Retrieve current tenant-level Cignify AI settings. Returns a
         single configuration object.
-      summary: Get Lighthouse AI Tenant config
+      summary: Get Cignify AI Tenant config
       parameters:
       - in: query
         name: fields[lighthouse-configurations]
@@ -3753,7 +3753,7 @@ paths:
             - -url
         explode: false
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -3768,9 +3768,9 @@ paths:
       description: Update tenant-level settings. Validates that the default provider
         is configured and active and that default model IDs exist for the chosen providers.
         Auto-creates configuration if it doesn't exist.
-      summary: Update Lighthouse AI Tenant config
+      summary: Update Cignify AI Tenant config
       tags:
-      - Lighthouse AI
+      - Cignify AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3912,7 +3912,7 @@ paths:
             - -url
         explode: false
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -3953,7 +3953,7 @@ paths:
         description: A UUID string identifying this lighthouse provider models.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -4069,7 +4069,7 @@ paths:
             - -url
         explode: false
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -4085,7 +4085,7 @@ paths:
         configuration per provider type is allowed per tenant.
       summary: Create LLM provider configuration
       tags:
-      - Lighthouse AI
+      - Cignify AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -4139,7 +4139,7 @@ paths:
         description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -4162,7 +4162,7 @@ paths:
         description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -4198,7 +4198,7 @@ paths:
         description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -4218,7 +4218,7 @@ paths:
         description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -4258,7 +4258,7 @@ paths:
         description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
-      - Lighthouse AI
+      - Cignify AI
       security:
       - JWT or API Key: []
       responses:
@@ -5810,15 +5810,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewServiceResponse'
           description: ''
-  /api/v1/overviews/threatscore:
+  /api/v1/overviews/THREATSCORE:
     get:
-      operationId: overviews_threatscore_retrieve
-      description: Retrieve ThreatScore metrics. By default, returns the latest snapshot
+      operationId: overviews_THREATSCORE_retrieve
+      description: Retrieve THREATSCORE metrics. By default, returns the latest snapshot
         for each provider. Use snapshot_id to retrieve a specific historical snapshot.
-      summary: Get ThreatScore snapshots
+      summary: Get THREATSCORE snapshots
       parameters:
       - in: query
-        name: fields[threatscore-snapshots]
+        name: fields[THREATSCORE-snapshots]
         schema:
           type: array
           items:
@@ -5892,7 +5892,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ThreatScoreSnapshotResponse'
+                $ref: '#/components/schemas/THREATSCORESnapshotResponse'
           description: ''
   /api/v1/processors:
     get:
@@ -9576,12 +9576,12 @@ paths:
         '404':
           description: The scan has no reports, or the report generation task has
             not started yet
-  /api/v1/scans/{id}/threatscore:
+  /api/v1/scans/{id}/THREATSCORE:
     get:
-      operationId: scans_threatscore_retrieve
-      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+      operationId: scans_THREATSCORE_retrieve
+      description: Download a specific THREATSCORE report (e.g., 'prowler_THREATSCORE_aws')
         as a PDF file.
-      summary: Retrieve threatscore report
+      summary: Retrieve THREATSCORE report
       parameters:
       - in: query
         name: fields[scans]
@@ -9632,7 +9632,7 @@ paths:
       - JWT or API Key: []
       responses:
         '200':
-          description: PDF file containing the threatscore report
+          description: PDF file containing the THREATSCORE report
         '202':
           description: The task is in progress
         '401':
@@ -9640,7 +9640,7 @@ paths:
         '403':
           description: There is a problem with credentials
         '404':
-          description: The scan has no threatscore reports, or the threatscore report
+          description: The scan has no THREATSCORE reports, or the THREATSCORE report
             generation task has not started yet
   /api/v1/schedules/daily:
     post:
@@ -19764,7 +19764,7 @@ components:
           $ref: '#/components/schemas/Tenant'
       required:
       - data
-    ThreatScoreSnapshot:
+    THREATSCORESnapshot:
       type: object
       required:
       - type
@@ -19777,7 +19777,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - threatscore-snapshots
+          - THREATSCORE-snapshots
         id: {}
         attributes:
           type: object
@@ -19792,13 +19792,13 @@ components:
             compliance_id:
               type: string
               readOnly: true
-              description: Compliance framework ID (e.g., 'prowler_threatscore_aws')
+              description: Compliance framework ID (e.g., 'prowler_THREATSCORE_aws')
             overall_score:
               type: string
               format: decimal
               pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
               readOnly: true
-              description: Overall ThreatScore percentage (0-100)
+              description: Overall THREATSCORE percentage (0-100)
             score_delta:
               type: string
               format: decimal
@@ -19809,7 +19809,7 @@ components:
                 improvement)
             section_scores:
               readOnly: true
-              description: ThreatScore breakdown by section
+              description: THREATSCORE breakdown by section
             critical_requirements:
               readOnly: true
               description: List of critical failed requirements (risk >= 4)
@@ -19894,11 +19894,11 @@ components:
               description: The identifier of the related object.
               title: Resource Identifier
               readOnly: true
-    ThreatScoreSnapshotResponse:
+    THREATSCORESnapshotResponse:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/ThreatScoreSnapshot'
+          $ref: '#/components/schemas/THREATSCORESnapshot'
       required:
       - data
     Token:
@@ -20428,8 +20428,8 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
-- name: Lighthouse AI
-  description: Endpoints for managing Lighthouse AI configurations, including creation,
+- name: Cignify AI
+  description: Endpoints for managing Cignify AI configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
 - name: SAML

@@ -12,8 +12,8 @@ from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp import get_kisa_ismsp_
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
 )
-from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore import (
-    get_prowler_threatscore_table,
+from prowler.lib.outputs.compliance.prowler_THREATSCORE.prowler_THREATSCORE import (
+    get_prowler_THREATSCORE_table,
 )
 
 
@@ -76,8 +76,8 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "threatscore_" in compliance_framework:
-            get_prowler_threatscore_table(
+        elif "THREATSCORE_" in compliance_framework:
+            get_prowler_THREATSCORE_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,

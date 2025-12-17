@@ -235,7 +235,7 @@ export const SignUpForm = ({
 
       <AuthFooterLink
         text="Already have an account?"
-        linkText="Log in"
+        linkText="Log in Now"
         href="/sign-in"
       />
     </AuthLayout>

@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

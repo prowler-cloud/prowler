@@ -1,5 +1,5 @@
 from celery.utils.log import get_task_logger
-from tasks.jobs.threatscore_utils import (
+from tasks.jobs.THREATSCORE_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
 )
@@ -12,7 +12,7 @@ from prowler.lib.check.compliance_models import Compliance
 logger = get_task_logger(__name__)
 
 
-def compute_threatscore_metrics(
+def compute_THREATSCORE_metrics(
     tenant_id: str,
     scan_id: str,
     provider_id: str,
@@ -20,10 +20,10 @@ def compute_threatscore_metrics(
     min_risk_level: int = 4,
 ) -> dict:
     """
-    Compute ThreatScore metrics for a given scan.
+    Compute THREATSCORE metrics for a given scan.
 
-    This function calculates all the metrics needed for a ThreatScore snapshot:
-    - Overall ThreatScore percentage
+    This function calculates all the metrics needed for a THREATSCORE snapshot:
+    - Overall THREATSCORE percentage
     - Section-by-section scores
     - Critical failed requirements (risk >= min_risk_level)
     - Summary statistics (requirements and findings counts)
@@ -32,12 +32,12 @@ def compute_threatscore_metrics(
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to analyze.
         provider_id (str): The ID of the provider used in the scan.
-        compliance_id (str): Compliance framework ID (e.g., "prowler_threatscore_aws").
+        compliance_id (str): Compliance framework ID (e.g., "prowler_THREATSCORE_aws").
         min_risk_level (int): Minimum risk level for critical requirements. Defaults to 4.
 
     Returns:
         dict: A dictionary containing:
-            - overall_score (float): Overall ThreatScore percentage (0-100)
+            - overall_score (float): Overall THREATSCORE percentage (0-100)
             - section_scores (dict): Section name -> score percentage mapping
             - critical_requirements (list): List of critical failed requirement dicts
             - total_requirements (int): Total number of requirements
@@ -49,13 +49,13 @@ def compute_threatscore_metrics(
             - failed_findings (int): Failed findings count
 
     Example:
-        >>> metrics = compute_threatscore_metrics(
+        >>> metrics = compute_THREATSCORE_metrics(
         ...     tenant_id="tenant-123",
         ...     scan_id="scan-456",
         ...     provider_id="provider-789",
-        ...     compliance_id="prowler_threatscore_aws"
+        ...     compliance_id="prowler_THREATSCORE_aws"
         ... )
-        >>> print(f"Overall ThreatScore: {metrics['overall_score']:.2f}%")
+        >>> print(f"Overall THREATSCORE: {metrics['overall_score']:.2f}%")
     """
     # Get provider and compliance information
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -135,7 +135,7 @@ def compute_threatscore_metrics(
         weight = getattr(m, "Weight", 0)
         section = getattr(m, "Section", "Unknown")
 
-        # Calculate ThreatScore components using formula from UI
+        # Calculate THREATSCORE components using formula from UI
         rate_i = req_passed_findings / req_total_findings
         rfac_i = 1 + 0.25 * risk_level
 
@@ -173,7 +173,7 @@ def compute_threatscore_metrics(
                 }
             )
 
-    # Calculate overall ThreatScore
+    # Calculate overall THREATSCORE
     if not overall_has_findings:
         overall_score = 100.0
     elif overall_denominator > 0:
@@ -195,7 +195,7 @@ def compute_threatscore_metrics(
     )
 
     logger.info(
-        f"ThreatScore computed: {overall_score:.2f}% "
+        f"THREATSCORE computed: {overall_score:.2f}% "
         f"({passed_requirements}/{total_requirements} requirements passed, "
         f"{len(critical_requirements_list)} critical failures)"
     )

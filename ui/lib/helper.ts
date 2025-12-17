@@ -226,7 +226,7 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Generic function to download a compliance PDF report (ThreatScore, ENS, etc.)
+ * Generic function to download a compliance PDF report (THREATSCORE, ENS, etc.)
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function

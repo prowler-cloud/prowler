@@ -1462,7 +1462,7 @@ def filter_data(
         html.Div(
             html.A(
                 [
-                    html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
+                    html.Img(src="assets/favicon.png", className="w-5 mr-3"),
                     html.Span("Subscribe to Prowler Cloud"),
                 ],
                 href="https://prowler.pro/",

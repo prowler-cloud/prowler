@@ -5,8 +5,6 @@ This module provides tools for managing and monitoring Prowler security scans.
 
 from typing import Any, Literal
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.scans import (
     DetailedScan,
     ScanCreationResult,
@@ -14,6 +12,7 @@ from prowler_mcp_server.prowler_app.models.scans import (
     ScheduleCreationResult,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class ScansTools(BaseTool):

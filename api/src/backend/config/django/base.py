@@ -127,7 +127,7 @@ SPECTACULAR_SETTINGS = {
     "POSTPROCESSING_HOOKS": [
         "api.schema_hooks.attach_task_202_examples",
     ],
-    "TITLE": "API Reference - Prowler",
+    "TITLE": "API Reference - Cignify",
 }
 
 WSGI_APPLICATION = "config.wsgi.application"

@@ -45,7 +45,7 @@
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
-- **Prowler ThreatScore:** Weighted risk prioritization scoring that helps you focus on the most critical security findings first
+- **Prowler THREATSCORE:** Weighted risk prioritization scoring that helps you focus on the most critical security findings first
 - **Industry Standards:** CIS, NIST 800, NIST CSF, CISA, and MITRE ATT&CK
 - **Regulatory Compliance and Governance:** RBI, FedRAMP, PCI-DSS, and NIS2
 - **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC

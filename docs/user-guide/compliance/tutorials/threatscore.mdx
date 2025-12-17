@@ -1,5 +1,5 @@
 ---
-title: "Prowler ThreatScore Documentation"
+title: "Prowler THREATSCORE Documentation"
 ---
 
 
@@ -7,7 +7,7 @@ title: "Prowler ThreatScore Documentation"
 
 ## Introduction
 
-The **Prowler ThreatScore** is a comprehensive compliance scoring system that provides a unified metric for assessing your organization's security posture across compliance frameworks. It aggregates findings from individual security checks into a single, normalized score ranging from 0 to 100.
+The **Prowler THREATSCORE** is a comprehensive compliance scoring system that provides a unified metric for assessing your organization's security posture across compliance frameworks. It aggregates findings from individual security checks into a single, normalized score ranging from 0 to 100.
 
 ### Purpose
 - **Unified View**: Get a single metric representing overall compliance health
@@ -15,9 +15,9 @@ The **Prowler ThreatScore** is a comprehensive compliance scoring system that pr
 - **Progress Tracking**: Monitor improvements in compliance posture over time
 - **Executive Reporting**: Provide clear, quantifiable security metrics to stakeholders
 
-## How ThreatScore Works
+## How THREATSCORE Works
 
-The ThreatScore calculation considers four critical factors for each compliance requirement:
+The THREATSCORE calculation considers four critical factors for each compliance requirement:
 
 ### 1. Pass Rate (`rate_i`)
 The percentage of security checks that passed for a specific requirement:
@@ -36,7 +36,7 @@ A severity rating (1-5) indicating the potential impact of non-compliance with t
 
 ## Score Interpretation Guidelines
 
-| ThreatScore | Interpretation | Recommended Actions |
+| THREATSCORE | Interpretation | Recommended Actions |
 |------------------|----------------|-------------------|
 | 90-100% | Excellent | Maintain current controls, focus on continuous improvement |
 | 80-89% | Good | Address remaining gaps, prepare for compliance audits |
@@ -46,10 +46,10 @@ A severity rating (1-5) indicating the potential impact of non-compliance with t
 
 ## Mathematical Formula
 
-The ThreatScore uses a weighted average formula that accounts for all four factors:
+The THREATSCORE uses a weighted average formula that accounts for all four factors:
 
 ```
-ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weight_i × risk_i)) × 100
+THREATSCORE = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weight_i × risk_i)) × 100
 ```
 
 ### Formula Properties
@@ -62,7 +62,7 @@ ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weigh
 
 ### Weight Values (1-1000)
 
-The weight parameter allows customization of ThreatScore calculation based on organizational priorities and regulatory requirements.
+The weight parameter allows customization of THREATSCORE calculation based on organizational priorities and regulatory requirements.
 
 #### Weight Assignment Guidelines
 
@@ -105,7 +105,7 @@ Prowler organizes security requirements into a hierarchical structure of pillars
 
 ### Security Pillars Overview
 
-The ThreatScore calculation considers requirements organized within the following security pillars:
+The THREATSCORE calculation considers requirements organized within the following security pillars:
 
 #### 1. IAM (Identity and Access Management)
 
@@ -146,7 +146,7 @@ The ThreatScore calculation considers requirements organized within the followin
 - **4.1 In-Transit**: Encrypting data during transmission
 - **4.2 At-Rest**: Encrypting stored data
 
-### Pillar Hierarchy and ThreatScore Impact
+### Pillar Hierarchy and THREATSCORE Impact
 
 #### Hierarchy Structure
 ```
@@ -200,14 +200,14 @@ Different pillars typically receive different weight and risk assignments based 
 #### High-Impact Pillars (1. IAM, 4. Encryption)
 
 - **Characteristics**: Direct impact on data protection and access control
-- **ThreatScore Impact**: Failures in these pillars significantly lower overall score
+- **THREATSCORE Impact**: Failures in these pillars significantly lower overall score
 - **Weight Strategy**: Assign maximum weights (800-1000) to critical requirements
 - **Risk Strategy**: Most requirements rated 4-5 due to severe consequences
 
 #### Variable-Impact Pillar (2. Attack Surface)
 
 - **Characteristics**: Impact varies significantly across subpillars (Network, Storage, Application)
-- **ThreatScore Impact**: Depends on specific subpillar and business context
+- **THREATSCORE Impact**: Depends on specific subpillar and business context
 - **Weight Strategy**:
     - 2.1 Network subpillar: 500-800 (perimeter defense importance)
     - 2.2 Storage subpillar: 600-900 (data exposure risk)
@@ -217,7 +217,7 @@ Different pillars typically receive different weight and risk assignments based 
 #### Monitoring Pillar (3. Logging and Monitoring)
 
 - **Characteristics**: Essential for compliance and incident response
-- **ThreatScore Impact**: Moderate influence, critical for audit requirements
+- **THREATSCORE Impact**: Moderate influence, critical for audit requirements
 - **Weight Strategy**: Consistent weights (600-800) across logging, retention, and monitoring subpillars
 - **Risk Strategy**: Moderate risk levels (3-4) with emphasis on compliance impact
 
@@ -238,7 +238,7 @@ Different pillars typically receive different weight and risk assignments based 
 - Comprehensive data protection requires both encryption types
 - Consider data flow patterns when assigning relative weights
 
-### Pillar Coverage in ThreatScore
+### Pillar Coverage in THREATSCORE
 
 #### Complete Coverage Benefits
 
@@ -282,12 +282,12 @@ Denominator = (700 × 500 × 4) + (400 × 800 × 3)
             = 1,400,000 + 960,000
             = 2,360,000
 
-ThreatScore = (1,120,400 / 2,360,000) × 100 = 47.5%
+THREATSCORE = (1,120,400 / 2,360,000) × 100 = 47.5%
 ```
 
 ### Example 2: Enterprise Scenario with Pillar Structure
 
-This example demonstrates how pillar organization affects ThreatScore calculation:
+This example demonstrates how pillar organization affects THREATSCORE calculation:
 
 | Pillar | Subpillar | Requirement | Pass | Fail | Total | Weight | Risk | Pass Rate |
 |--------|-----------|-------------|------|------|-------|--------|------|-----------|
@@ -327,11 +327,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 
 4. **Sum denominator:** 2,375,000 + 1,280,000 + 840,000 + 540,000 + 600,000 = **5,635,000**
 
-5. **Final ThreatScore calculation:**
+5. **Final THREATSCORE calculation:**
 
     ```
-    ThreatScore = (Numerator / Denominator) × 100
-    ThreatScore = (4,578,560 / 5,635,000) × 100 = 81.2%
+    THREATSCORE = (Numerator / Denominator) × 100
+    THREATSCORE = (4,578,560 / 5,635,000) × 100 = 81.2%
     ```
 
 **Pillar-Level Analysis:**
@@ -369,7 +369,7 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 - **3. Logging and Monitoring Average**: ~87% (weighted by findings across Logging and Monitoring subpillars)
 - **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
 
-**Overall ThreatScore**: ~85.3%
+**Overall THREATSCORE**: ~85.3%
 
 This comprehensive example demonstrates how:
 
@@ -386,21 +386,21 @@ Using the scenario, let's see how parameter changes affect the score:
 
 Change Encryption risk from 5 to 3:
 
-- **New ThreatScore: 77.8%** (decrease of 3.4 points)
+- **New THREATSCORE: 77.8%** (decrease of 3.4 points)
 - **Impact**: Lower risk weighting reduces the influence of high-performing critical controls
 
 #### Scenario B: Improve Access Controls Pass Rate
 
 Change Access Controls from 70% to 90% pass rate:
 
-- **New ThreatScore: 85.1%** (increase of 3.9 points)
+- **New THREATSCORE: 85.1%** (increase of 3.9 points)
 - **Impact**: Improving performance on high-weight requirements has significant score impact
 
 #### Scenario C: Add New Low-Weight Requirement
 
 Add "Documentation Completeness" (50 PASS, 10 FAIL, weight=100, risk=1):
 
-- **New ThreatScore: 81.3%** (minimal change of 0.1 points)
+- **New THREATSCORE: 81.3%** (minimal change of 0.1 points)
 - **Impact**: Low-weight requirements have minimal impact on overall score
 
 ## Implementation Details
@@ -417,19 +417,19 @@ When a requirement has `total_i = 0` (no findings):
 #### Perfect Score Scenario
 When all requirements have 100% pass rate:
 
-- **Result**: ThreatScore = 100%
+- **Result**: THREATSCORE = 100%
 - **Interpretation**: All implemented security checks are passing
 
 #### Zero Pass Rate Scenario
 When all requirements have 0% pass rate:
 
-- **Result**: ThreatScore = 0%
+- **Result**: THREATSCORE = 0%
 - **Interpretation**: Critical security failures across all requirements
 
 #### Single Requirement Framework
 For frameworks with only one requirement:
 
-- **Formula simplification**: ThreatScore = pass_rate × 100
+- **Formula simplification**: THREATSCORE = pass_rate × 100
 - **Impact**: Weight and risk values become irrelevant for score calculation
 
 ### Performance Considerations
@@ -472,12 +472,12 @@ rate_i = pass_i / total_i (when total_i > 0)
 ### Monitoring and Trending
 
 1. **Establish Baseline**
-    - Record initial ThreatScore after implementing measurement
+    - Record initial THREATSCORE after implementing measurement
     - Set realistic improvement targets based on organizational capacity
     - Track score changes over time to identify trends
 
 2. **Regular Reporting**
-    - Generate monthly ThreatScore reports for stakeholders
+    - Generate monthly THREATSCORE reports for stakeholders
     - Highlight significant score changes and their causes
     - Include requirement-level breakdowns for detailed analysis
 

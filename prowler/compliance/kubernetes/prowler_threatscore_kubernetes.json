@@ -1,9 +1,9 @@
 {
-  "Framework": "ProwlerThreatScore",
-  "Name": "Prowler ThreatScore Compliance Framework for Kubernetes",
+  "Framework": "ProwlerTHREATSCORE",
+  "Name": "Prowler THREATSCORE Compliance Framework for Kubernetes",
   "Version": "1.0",
   "Provider": "Kubernetes",
-  "Description": "Prowler ThreatScore Compliance Framework for Kubernetes ensures that Kubernetes clusters are compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Logging and Monitoring, and Encryption. This framework provides a comprehensive security assessment for Kubernetes environments focusing on workload security, RBAC configurations, container isolation, audit logging, and encryption controls that are directly controllable by users in both managed and self-managed Kubernetes deployments.",
+  "Description": "Prowler THREATSCORE Compliance Framework for Kubernetes ensures that Kubernetes clusters are compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Logging and Monitoring, and Encryption. This framework provides a comprehensive security assessment for Kubernetes environments focusing on workload security, RBAC configurations, container isolation, audit logging, and encryption controls that are directly controllable by users in both managed and self-managed Kubernetes deployments.",
   "Requirements": [
     {
       "Id": "1.1.1",
