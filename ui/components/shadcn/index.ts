@@ -1,6 +1,7 @@
 export * from "./badge/badge";
 export * from "./button/button";
 export * from "./card/card";
+export * from "./checkbox/checkbox";
 export * from "./card/resource-stats-card/resource-stats-card";
 export * from "./card/resource-stats-card/resource-stats-card-content";
 export * from "./card/resource-stats-card/resource-stats-card-header";

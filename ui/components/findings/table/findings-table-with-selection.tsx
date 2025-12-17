@@ -1,0 +1,96 @@
+"use client";
+
+import { Row, RowSelectionState } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { DataTable } from "@/components/ui/table";
+import { FindingProps, MetaDataProps } from "@/types";
+
+import { FloatingMuteButton } from "../floating-mute-button";
+import { getColumnFindings } from "./column-findings";
+import { FindingsSelectionContext } from "./findings-selection-context";
+
+interface FindingsTableWithSelectionProps {
+  data: FindingProps[];
+  metadata?: MetaDataProps;
+}
+
+export function FindingsTableWithSelection({
+  data,
+  metadata,
+}: FindingsTableWithSelectionProps) {
+  const router = useRouter();
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Reset selection when page changes
+  useEffect(() => {
+    setRowSelection({});
+  }, [metadata?.pagination?.page]);
+
+  // Get selected finding IDs and data (only non-muted findings can be selected)
+  const selectedFindingIds = Object.keys(rowSelection)
+    .filter((key) => rowSelection[key])
+    .map((idx) => data[parseInt(idx)]?.id)
+    .filter(Boolean);
+
+  const selectedFindings = Object.keys(rowSelection)
+    .filter((key) => rowSelection[key])
+    .map((idx) => data[parseInt(idx)])
+    .filter(Boolean);
+
+  // Count of selectable rows (non-muted findings only)
+  const selectableRowCount = data.filter((f) => !f.attributes.muted).length;
+
+  // Function to determine if a row can be selected (muted findings cannot be selected)
+  const getRowCanSelect = (row: Row<FindingProps>): boolean => {
+    return !row.original.attributes.muted;
+  };
+
+  const clearSelection = () => {
+    setRowSelection({});
+  };
+
+  const isSelected = (id: string) => {
+    return selectedFindingIds.includes(id);
+  };
+
+  // Handle mute completion: clear selection and refresh data
+  const handleMuteComplete = () => {
+    clearSelection();
+    router.refresh();
+  };
+
+  // Generate columns with access to rowSelection state and selectable row count
+  const columns = getColumnFindings(rowSelection, selectableRowCount);
+
+  return (
+    <FindingsSelectionContext.Provider
+      value={{
+        selectedFindingIds,
+        selectedFindings,
+        clearSelection,
+        isSelected,
+      }}
+    >
+      <DataTable
+        columns={columns}
+        data={data}
+        metadata={metadata}
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowCanSelect={getRowCanSelect}
+      />
+
+      {selectedFindingIds.length > 0 && (
+        <FloatingMuteButton
+          selectedCount={selectedFindingIds.length}
+          selectedFindingIds={selectedFindingIds}
+          selectedFindings={selectedFindings}
+          onComplete={handleMuteComplete}
+        />
+      )}
+    </FindingsSelectionContext.Provider>
+  );
+}
