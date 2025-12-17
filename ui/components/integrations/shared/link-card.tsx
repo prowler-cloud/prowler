@@ -34,11 +34,8 @@ export const LinkCard = ({
       <CardHeader>
         <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-prowler-stone-900/10 dark:bg-prowler-stone-100/10 flex h-10 w-10 items-center justify-center rounded-lg">
-              <Icon
-                size={24}
-                className="text-prowler-stone-900 dark:text-prowler-stone-100"
-              />
+            <div className="dark:bg-prowler-blue-800 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+              <Icon size={24} className="text-gray-700 dark:text-gray-200" />
             </div>
             <div className="flex flex-col gap-1">
               <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
