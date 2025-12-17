@@ -84,12 +84,13 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 
 Access Prowler's security check catalog and compliance frameworks. **No authentication required.**
 
-### Check Discovery
+Tools follow a **two-tier pattern**: lightweight listing for browsing + detailed retrieval for complete information.
 
-- **`prowler_hub_get_checks`** - List security checks with advanced filtering options
-- **`prowler_hub_get_check_filters`** - Return available filter values for checks (providers, services, severities, categories, compliances)
-- **`prowler_hub_search_checks`** - Full-text search across check metadata
-- **`prowler_hub_get_check_raw_metadata`** - Fetch raw check metadata in JSON format
+### Check Discovery and Details
+
+- **`prowler_hub_list_checks`** - List security checks with lightweight data (id, title, severity, provider) and advanced filtering options
+- **`prowler_hub_semantic_search_checks`** - Full-text search across check metadata with lightweight results
+- **`prowler_hub_get_check_details`** - Get comprehensive details for a specific check including risk, remediation guidance, and compliance mappings
 
 ### Check Code
 
@@ -98,20 +99,21 @@ Access Prowler's security check catalog and compliance frameworks. **No authenti
 
 ### Compliance Frameworks
 
-- **`prowler_hub_get_compliance_frameworks`** - List and filter compliance frameworks
-- **`prowler_hub_search_compliance_frameworks`** - Full-text search across compliance frameworks
+- **`prowler_hub_list_compliances`** - List compliance frameworks with lightweight data (id, name, provider) and filtering options
+- **`prowler_hub_semantic_search_compliances`** - Full-text search across compliance frameworks with lightweight results
+- **`prowler_hub_get_compliance_details`** - Get comprehensive compliance details including requirements and mapped checks
 
-### Provider Information
+### Providers Information
 
-- **`prowler_hub_list_providers`** - List Prowler official providers and their services
-- **`prowler_hub_get_artifacts_count`** - Get total count of checks and frameworks in Prowler Hub
+- **`prowler_hub_list_providers`** - List Prowler official providers
+- **`prowler_hub_get_provider_services`** - Get available services for a specific provider
 
 ## Prowler Documentation Tools
 
 Search and access official Prowler documentation. **No authentication required.**
 
-- **`prowler_docs_search`** - Search the official Prowler documentation using full-text search
-- **`prowler_docs_get_document`** - Retrieve the full markdown content of a specific documentation file
+- **`prowler_docs_search`** - Search the official Prowler documentation using full-text search with the `term` parameter
+- **`prowler_docs_get_document`** - Retrieve the full markdown content of a specific documentation file using the path from search results
 
 ## Usage Tips
 
