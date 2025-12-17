@@ -71,7 +71,7 @@ interface ResourceItemProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     check_metadata: CheckMetadataProps;
-    raw_result: Record<string, any>;
+    raw_result: Record<string, unknown>;
     inserted_at: string;
     updated_at: string;
     first_seen_at: string;
@@ -113,7 +113,7 @@ interface CheckMetadataProps {
   relatedto: string[];
   categories: string[];
   checktitle: string;
-  compliance: any;
+  compliance: unknown;
   relatedurl: string;
   description: string;
   remediation: {
