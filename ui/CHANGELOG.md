@@ -13,6 +13,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Replace custom Claude pre-commit validation with Gentleman Guardian Angel (gga) for provider-agnostic, monorepo-aware AI code reviews [(#9571)](https://github.com/prowler-cloud/prowler/pull/9571)
+
 ### 🐞 Fixed
 
 ---

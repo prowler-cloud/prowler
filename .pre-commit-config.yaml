@@ -82,7 +82,6 @@ repos:
         args: ["--directory=./"]
         pass_filenames: false
 
-
   - repo: https://github.com/hadolint/hadolint
     rev: v2.13.0-beta
     hooks:
@@ -129,9 +128,20 @@ repos:
 
       - id: ui-checks
         name: UI - Husky Pre-commit
-        description: "Run UI pre-commit checks (Claude Code validation + healthcheck)"
+        description: "Run UI pre-commit checks (healthcheck + build)"
         entry: bash -c 'cd ui && .husky/pre-commit'
         language: system
         files: '^ui/.*\.(ts|tsx|js|jsx|json|css)$'
         pass_filenames: false
+        verbose: true
+
+      - id: gga
+        name: Gentleman Guardian Angel (AI Code Review)
+        description: "AI-powered code review - runs last after all formatters/linters"
+        entry: ./scripts/gga-review.sh
+        language: system
+        files: '\.(ts|tsx|js|jsx|py)$'
+        exclude: '(\.test\.|\.spec\.|_test\.py|test_.*\.py|conftest\.py|\.d\.ts)'
+        pass_filenames: false
+        stages: ["pre-commit"]
         verbose: true
