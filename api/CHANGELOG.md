@@ -7,10 +7,16 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - Endpoints `GET /findings` and `GET /findings/latests` can now use the category filter [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- Account id, alias and provider name to PDF reporting table [(#9574)](https://github.com/prowler-cloud/prowler/pull/9574)
 
 ### Changed
 - Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
+- Increased execution delay for the first scheduled scan tasks to 5 seconds[(#9558)](https://github.com/prowler-cloud/prowler/pull/9558)
+
+### Fixed
+- Made `scan_id` a required filter in the compliance overview endpoint [(#9560)](https://github.com/prowler-cloud/prowler/pull/9560)
+- Reduced unnecessary UPDATE resources operations by only saving when tag mappings change, lowering write load during scans [(#9569)](https://github.com/prowler-cloud/prowler/pull/9569)
 
 ---
 

@@ -10,7 +10,8 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 ### Changed
 
-- Update API base URL environment variable to include complete path [(#9542)](https://github.com/prowler-cloud/prowler/pull/9300)
+- Update API base URL environment variable to include complete path [(#9542)](https://github.com/prowler-cloud/prowler/pull/9542)
+- Standardize Prowler Hub and Docs tools format for AI optimization [(#9578)](https://github.com/prowler-cloud/prowler/pull/9578)
 
 ## [0.2.0] (Prowler v5.15.0)
 

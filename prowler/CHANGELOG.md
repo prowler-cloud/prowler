@@ -10,15 +10,32 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
+
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
+- Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
+- Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
+- Update AWS MemoryDB service metadata to new format [(#9266)](https://github.com/prowler-cloud/prowler/pull/9266)
+- Update AWS Inspector v2 service metadata to new format [(#9260)](https://github.com/prowler-cloud/prowler/pull/9260)
+- Update AWS Service Catalog service metadata to new format [(#9410)](https://github.com/prowler-cloud/prowler/pull/9410)
+- Update AWS SNS service metadata to new format [(#9428)](https://github.com/prowler-cloud/prowler/pull/9428)
+- Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
+- Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
 
 ---
 
-## [5.15.1] (Prowler UNRELEASED)
+## [5.15.2] (Prowler UNRELEASED)
+
+### Fixed
+- Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
+- Store GCP Cloud Storage bucket regions as lowercase [(#9567)](https://github.com/prowler-cloud/prowler/pull/9567)
+
+---
+
+## [5.15.1] (Prowler v5.15.1)
 
 ### Fixed
 - Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
-- Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
 
 ---
 

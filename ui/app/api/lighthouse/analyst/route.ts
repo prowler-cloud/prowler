@@ -1,9 +1,21 @@
-import { toUIMessageStream } from "@ai-sdk/langchain";
 import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
+import { auth } from "@/auth.config";
 import { getErrorMessage } from "@/lib/helper";
+import {
+  CHAIN_OF_THOUGHT_ACTIONS,
+  createTextDeltaEvent,
+  createTextEndEvent,
+  createTextStartEvent,
+  ERROR_PREFIX,
+  handleChatModelEndEvent,
+  handleChatModelStreamEvent,
+  handleToolEvent,
+  STREAM_MESSAGE_ID,
+} from "@/lib/lighthouse/analyst-stream";
+import { authContextStorage } from "@/lib/lighthouse/auth-context";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
 import {
@@ -28,116 +40,144 @@ export async function POST(req: Request) {
       return Response.json({ error: "No messages provided" }, { status: 400 });
     }
 
-    // Create a new array for processed messages
-    const processedMessages = [...messages];
-
-    // Get AI configuration to access business context
-    const tenantConfigResult = await getTenantConfig();
-    const businessContext =
-      tenantConfigResult?.data?.attributes?.business_context;
-
-    // Get current user data
-    const currentData = await getCurrentDataSection();
-
-    // Add context messages at the beginning
-    const contextMessages: UIMessage[] = [];
-
-    // Add business context if available
-    if (businessContext) {
-      contextMessages.push({
-        id: "business-context",
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: `Business Context Information:\n${businessContext}`,
-          },
-        ],
-      });
+    const session = await auth();
+    if (!session?.accessToken) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Add current data if available
-    if (currentData) {
-      contextMessages.push({
-        id: "current-data",
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: currentData,
-          },
-        ],
-      });
-    }
+    const accessToken = session.accessToken;
 
-    // Insert all context messages at the beginning
-    processedMessages.unshift(...contextMessages);
+    return await authContextStorage.run(accessToken, async () => {
+      // Get AI configuration to access business context
+      const tenantConfigResult = await getTenantConfig();
+      const businessContext =
+        tenantConfigResult?.data?.attributes?.business_context;
 
-    // Prepare runtime config with client-provided model
-    const runtimeConfig: RuntimeConfig = {
-      model,
-      provider,
-    };
+      // Get current user data
+      const currentData = await getCurrentDataSection();
 
-    const app = await initLighthouseWorkflow(runtimeConfig);
+      // Pass context to workflow instead of injecting as assistant messages
+      const runtimeConfig: RuntimeConfig = {
+        model,
+        provider,
+        businessContext,
+        currentData,
+      };
 
-    const agentStream = app.streamEvents(
-      {
-        messages: processedMessages
-          .filter(
-            (message: UIMessage) =>
-              message.role === "user" || message.role === "assistant",
-          )
-          .map(convertVercelMessageToLangChainMessage),
-      },
-      {
-        streamMode: ["values", "messages", "custom"],
-        version: "v2",
-      },
-    );
+      const app = await initLighthouseWorkflow(runtimeConfig);
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const streamEvent of agentStream) {
-            const { event, data, tags } = streamEvent;
-            if (event === "on_chat_model_stream") {
-              if (data.chunk.content && !!tags && tags.includes("supervisor")) {
-                // Pass the raw LangChain stream event - toUIMessageStream will handle conversion
-                controller.enqueue(streamEvent);
+      // Use streamEvents to get token-by-token streaming + tool events
+      const agentStream = app.streamEvents(
+        {
+          messages: messages
+            .filter(
+              (message: UIMessage) =>
+                message.role === "user" || message.role === "assistant",
+            )
+            .map(convertVercelMessageToLangChainMessage),
+        },
+        {
+          version: "v2",
+        },
+      );
+
+      // Custom stream transformer that handles both text and tool events
+      const stream = new ReadableStream({
+        async start(controller) {
+          let hasStarted = false;
+
+          try {
+            // Emit text-start at the beginning
+            controller.enqueue(createTextStartEvent(STREAM_MESSAGE_ID));
+
+            for await (const streamEvent of agentStream) {
+              const { event, data, tags, name } = streamEvent;
+
+              // Stream model tokens (smooth text streaming)
+              if (event === "on_chat_model_stream") {
+                const wasHandled = handleChatModelStreamEvent(
+                  controller,
+                  data,
+                  tags,
+                );
+                if (wasHandled) {
+                  hasStarted = true;
+                }
+              }
+              // Model finished - check for tool calls
+              else if (event === "on_chat_model_end") {
+                handleChatModelEndEvent(controller, data);
+              }
+              // Tool execution started
+              else if (event === "on_tool_start") {
+                handleToolEvent(
+                  controller,
+                  CHAIN_OF_THOUGHT_ACTIONS.START,
+                  name,
+                  data?.input,
+                );
+              }
+              // Tool execution completed
+              else if (event === "on_tool_end") {
+                handleToolEvent(
+                  controller,
+                  CHAIN_OF_THOUGHT_ACTIONS.COMPLETE,
+                  name,
+                  data?.input,
+                );
               }
             }
-          }
-          controller.close();
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
 
-          // Capture stream processing errors
-          Sentry.captureException(error, {
-            tags: {
-              api_route: "lighthouse_analyst",
-              error_type: SentryErrorType.STREAM_PROCESSING,
-              error_source: SentryErrorSource.API_ROUTE,
-            },
-            level: "error",
-            contexts: {
-              lighthouse: {
-                event_type: "stream_error",
-                message_count: processedMessages.length,
+            // Emit text-end at the end
+            controller.enqueue(createTextEndEvent(STREAM_MESSAGE_ID));
+
+            controller.close();
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+
+            // Capture stream processing errors
+            Sentry.captureException(error, {
+              tags: {
+                api_route: "lighthouse_analyst",
+                error_type: SentryErrorType.STREAM_PROCESSING,
+                error_source: SentryErrorSource.API_ROUTE,
               },
-            },
-          });
+              level: "error",
+              contexts: {
+                lighthouse: {
+                  event_type: "stream_error",
+                  message_count: messages.length,
+                },
+              },
+            });
 
-          controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
-          controller.close();
-        }
-      },
-    });
+            // Emit error as text with consistent prefix
+            // Use consistent ERROR_PREFIX for both scenarios so client can detect errors
+            if (hasStarted) {
+              controller.enqueue(
+                createTextDeltaEvent(
+                  STREAM_MESSAGE_ID,
+                  `\n\n${ERROR_PREFIX} ${errorMessage}`,
+                ),
+              );
+            } else {
+              controller.enqueue(
+                createTextDeltaEvent(
+                  STREAM_MESSAGE_ID,
+                  `${ERROR_PREFIX} ${errorMessage}`,
+                ),
+              );
+            }
 
-    // Convert LangChain stream to UI message stream and return as SSE response
-    return createUIMessageStreamResponse({
-      stream: toUIMessageStream(stream),
+            controller.enqueue(createTextEndEvent(STREAM_MESSAGE_ID));
+
+            controller.close();
+          }
+        },
+      });
+
+      return createUIMessageStreamResponse({ stream });
     });
   } catch (error) {
     console.error("Error in POST request:", error);
@@ -160,9 +200,6 @@ export async function POST(req: Request) {
       },
     });
 
-    return Response.json(
-      { error: await getErrorMessage(error) },
-      { status: 500 },
-    );
+    return Response.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

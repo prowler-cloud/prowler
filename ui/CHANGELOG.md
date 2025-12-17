@@ -6,7 +6,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- SSO and API Key link cards to Integrations page for better discoverability [(#9570)](https://github.com/prowler-cloud/prowler/pull/9570)
+- Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
 - More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+- Integrated Prowler MCP server with Lighthouse AI for dynamic tool execution [(#9255)](https://github.com/prowler-cloud/prowler/pull/9255)
 
 ### 🔄 Changed
 
@@ -20,6 +23,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Bump Next.js to version 15.5.9 [(#9522)](https://github.com/prowler-cloud/prowler/pull/9522), [(#9513)](https://github.com/prowler-cloud/prowler/pull/9513)
 - Bump React to version 19.2.2 [(#9534)](https://github.com/prowler-cloud/prowler/pull/9534)
+
+---
 
 ## [1.15.0] (Prowler v5.15.0)
 
