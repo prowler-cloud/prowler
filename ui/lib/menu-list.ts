@@ -16,7 +16,6 @@ import {
   VolumeX,
   Warehouse,
 } from "lucide-react";
-import type { MouseEvent } from "react";
 
 import { ProwlerShort } from "@/components/icons";
 import {
@@ -30,17 +29,9 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
-  hasProviders?: boolean;
-  openMutelistModal?: () => void;
-  requestMutelistModalOpen?: () => void;
 }
 
-export const getMenuList = ({
-  pathname,
-  hasProviders,
-  openMutelistModal,
-  requestMutelistModalOpen,
-}: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
   return [
     {
       groupLabel: "",
@@ -105,28 +96,10 @@ export const getMenuList = ({
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
             {
-              href: "/providers",
+              href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
-              disabled: hasProviders === false,
-              active: false,
-              onClick: (event: MouseEvent<HTMLAnchorElement>) => {
-                if (hasProviders === false) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  return;
-                }
-
-                requestMutelistModalOpen?.();
-
-                if (pathname !== "/providers") {
-                  return;
-                }
-
-                event.preventDefault();
-                event.stopPropagation();
-                openMutelistModal?.();
-              },
+              active: pathname === "/mutelist",
             },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
