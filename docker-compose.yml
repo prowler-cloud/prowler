@@ -18,6 +18,12 @@ services:
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "prod"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/api/v1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
 
   ui:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
@@ -92,6 +98,23 @@ services:
     entrypoint:
       - "../docker-entrypoint.sh"
       - "beat"
+
+  worker-init:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: "no"
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./compose/create_admin_user.py:/home/prowler/backend/create_admin_user.py:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Creating admin user..."
+        poetry run python create_admin_user.py
 
 volumes:
   output:
