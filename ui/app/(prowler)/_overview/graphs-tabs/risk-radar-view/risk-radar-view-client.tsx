@@ -9,6 +9,8 @@ import type { BarDataPoint, RadarDataPoint } from "@/components/graphs/types";
 import { Card } from "@/components/shadcn/card/card";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
+import { CategorySelector } from "./category-selector";
+
 interface RiskRadarViewClientProps {
   data: RadarDataPoint[];
 }
@@ -22,6 +24,15 @@ export function RiskRadarViewClient({ data }: RiskRadarViewClientProps) {
 
   const handleSelectPoint = (point: RadarDataPoint | null) => {
     setSelectedPoint(point);
+  };
+
+  const handleCategoryChange = (categoryId: string | null) => {
+    if (categoryId === null) {
+      setSelectedPoint(null);
+    } else {
+      const point = data.find((d) => d.categoryId === categoryId);
+      setSelectedPoint(point ?? null);
+    }
   };
 
   const handleBarClick = (dataPoint: BarDataPoint) => {
@@ -59,6 +70,11 @@ export function RiskRadarViewClient({ data }: RiskRadarViewClientProps) {
               <h3 className="text-neutral-primary text-lg font-semibold">
                 Risk Radar
               </h3>
+              <CategorySelector
+                categories={data}
+                selectedCategory={selectedPoint?.categoryId ?? null}
+                onCategoryChange={handleCategoryChange}
+              />
             </div>
 
             <div className="relative min-h-[400px] w-full flex-1">

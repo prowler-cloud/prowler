@@ -44,11 +44,6 @@ export const DEFAULT_FILTER_BADGES: FilterBadgeConfig[] = [
     formatMultiple: (count) => `${count} Check IDs filtered`,
   },
   {
-    filterKey: "category__in",
-    label: "Category",
-    formatMultiple: (count) => `${count} Categories filtered`,
-  },
-  {
     filterKey: "scan__in",
     label: "Scan",
     formatValue: (id) => `${id.slice(0, 8)}...`,
