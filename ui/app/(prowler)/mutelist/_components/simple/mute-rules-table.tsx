@@ -1,0 +1,72 @@
+import { Info } from "lucide-react";
+
+import { getMuteRules } from "@/actions/mute-rules";
+import { Card, Skeleton } from "@/components/shadcn";
+import { DataTable } from "@/components/ui/table";
+
+import { muteRulesColumns } from "./mute-rules-columns";
+
+export async function MuteRulesTable() {
+  const muteRulesData = await getMuteRules({
+    pageSize: 50,
+    sort: "-inserted_at",
+  });
+
+  const muteRules = muteRulesData?.data || [];
+
+  if (muteRules.length === 0) {
+    return (
+      <Card variant="base" className="p-8">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-full bg-slate-100 p-4 dark:bg-slate-800">
+            <Info className="size-8 text-slate-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+              No mute rules yet
+            </h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Mute rules are created when you mute findings from the Findings
+              page. Select findings and click &quot;Mute&quot; to create your
+              first rule.
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  return <DataTable columns={muteRulesColumns} data={muteRules} />;
+}
+
+export function MuteRulesTableSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800">
+        <div className="border-b border-slate-200 p-4 dark:border-slate-800">
+          <div className="flex gap-8">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-8 border-b border-slate-200 p-4 last:border-0 dark:border-slate-800"
+          >
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-5 w-10" />
+            <Skeleton className="size-8 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
