@@ -22,7 +22,7 @@ Access to Prowler's comprehensive security knowledge base:
 - **Check Implementation**: View the Python code that powers each security check
 - **Automated Fixers**: Access remediation scripts for common security issues
 - **Compliance Frameworks**: Explore mappings to **over 70 compliance standards and frameworks**
-- **Provider Services**: View available services and checks for each cloud provider
+- **Provider Services**: View available services and checks for all supported Prowler providers
 
 ### Prowler Documentation
 
