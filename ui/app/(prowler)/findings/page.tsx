@@ -11,11 +11,10 @@ import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  ColumnFindings,
+  FindingsTableWithSelection,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   createScanDetailsMapping,
@@ -166,9 +165,7 @@ const SSRDataTable = async ({
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={Date.now()}
-        columns={ColumnFindings}
+      <FindingsTableWithSelection
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}
       />
