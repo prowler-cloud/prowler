@@ -2,10 +2,9 @@ import { Info } from "lucide-react";
 
 import { getMuteRules } from "@/actions/mute-rules";
 import { Card, Skeleton } from "@/components/shadcn";
-import { DataTable } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types/components";
 
-import { muteRulesColumns } from "./mute-rules-columns";
+import { MuteRulesTableClient } from "./mute-rules-table-client";
 
 interface MuteRulesTableProps {
   searchParams: SearchParamsProps;
@@ -65,9 +64,8 @@ export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
           <li>Toggle rules on/off to enable or disable muting.</li>
         </ul>
       </div>
-      <DataTable
-        columns={muteRulesColumns}
-        data={muteRules}
+      <MuteRulesTableClient
+        muteRules={muteRules}
         metadata={
           muteRulesData?.meta
             ? { ...muteRulesData.meta, version: "" }

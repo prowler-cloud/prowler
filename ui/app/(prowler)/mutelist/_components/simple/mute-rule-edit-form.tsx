@@ -1,7 +1,7 @@
 "use client";
 
 import { Input, Textarea } from "@heroui/input";
-import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
+import { useActionState, useEffect } from "react";
 
 import { updateMuteRule } from "@/actions/mute-rules";
 import { useToast } from "@/components/ui";
@@ -10,13 +10,13 @@ import { MuteRuleActionState, MuteRuleData } from "@/types/mute-rules";
 
 interface MuteRuleEditFormProps {
   muteRule: MuteRuleData;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  onCancel?: () => void;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 export function MuteRuleEditForm({
   muteRule,
-  setIsOpen,
+  onSuccess,
   onCancel,
 }: MuteRuleEditFormProps) {
   const { toast } = useToast();
@@ -32,7 +32,7 @@ export function MuteRuleEditForm({
         title: "Success",
         description: state.success,
       });
-      setIsOpen(false);
+      onSuccess();
     } else if (state?.errors?.general) {
       toast({
         variant: "destructive",
@@ -40,7 +40,7 @@ export function MuteRuleEditForm({
         description: state.errors.general,
       });
     }
-  }, [state, toast, setIsOpen]);
+  }, [state, toast, onSuccess]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -84,7 +84,6 @@ export function MuteRuleEditForm({
       </div>
 
       <FormButtons
-        setIsOpen={setIsOpen}
         onCancel={onCancel}
         submitText="Update"
         isDisabled={isPending}

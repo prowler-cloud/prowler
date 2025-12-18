@@ -9,7 +9,10 @@ import { MuteRuleData } from "@/types/mute-rules";
 import { MuteRuleEnabledToggle } from "./mute-rule-enabled-toggle";
 import { MuteRuleRowActions } from "./mute-rule-row-actions";
 
-export const muteRulesColumns: ColumnDef<MuteRuleData>[] = [
+export const createMuteRulesColumns = (
+  onEdit: (muteRule: MuteRuleData) => void,
+  onDelete: (muteRule: MuteRuleData) => void,
+): ColumnDef<MuteRuleData>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -94,7 +97,13 @@ export const muteRulesColumns: ColumnDef<MuteRuleData>[] = [
       </div>
     ),
     cell: ({ row }) => {
-      return <MuteRuleRowActions muteRule={row.original} />;
+      return (
+        <MuteRuleRowActions
+          muteRule={row.original}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      );
     },
     enableSorting: false,
   },

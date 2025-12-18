@@ -35,8 +35,9 @@ export function MuteFindingsModal({
         title: "Success",
         description: state.success,
       });
-      onOpenChange(false);
+      // Call onComplete BEFORE closing the modal to ensure router.refresh() executes
       onComplete?.();
+      onOpenChange(false);
     } else if (state?.errors?.general) {
       toast({
         variant: "destructive",
