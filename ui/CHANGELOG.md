@@ -15,15 +15,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Lighthouse AI markdown rendering with strict markdownlint compliance and nested list styling [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
 - Lighthouse AI default model updated from gpt-4o to gpt-5.2 [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+- Lighthouse AI destructive MCP tools blocked from LLM access (delete, trigger scan, etc.) [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
 
 ### 🐞 Fixed
 
 - Lighthouse AI angle-bracket placeholders now render correctly in chat messages [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
 - Lighthouse AI recommended model badge contrast improved [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
-
-### 🔐 Security
-
-- Lighthouse AI destructive MCP tools blocked from LLM access (delete, trigger scan, etc.) [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
 
 ---
 
