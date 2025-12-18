@@ -108,7 +108,7 @@ Provider ${index + 1}:
 - Last Checked: ${provider.last_checked_at}
 ${
   provider.scan_id
-    ? `- Latest Scan ID: ${provider.scan_id}
+    ? `- Latest Scan ID: ${provider.scan_id} (informational only - findings tools automatically use latest data)
 - Scan Duration: ${provider.scan_duration || "Unknown"}
 - Resource Count: ${provider.resource_count || "Unknown"}`
     : "- No completed scans found"

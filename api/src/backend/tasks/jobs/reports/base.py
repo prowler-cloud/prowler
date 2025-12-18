@@ -503,8 +503,15 @@ class BaseComplianceReportGenerator(ABC):
             ("ID:", data.compliance_id),
             ("Name:", data.name),
             ("Version:", data.version),
-            ("Scan ID:", data.scan_id),
         ]
+
+        # Add provider info if available
+        if data.provider_obj:
+            info_rows.append(("Provider:", data.provider_obj.provider.upper()))
+            info_rows.append(("Account ID:", data.provider_obj.uid or "N/A"))
+            info_rows.append(("Alias:", data.provider_obj.alias or "N/A"))
+
+        info_rows.append(("Scan ID:", data.scan_id))
 
         if data.description:
             info_rows.append(("Description:", data.description))

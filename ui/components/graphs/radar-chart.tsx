@@ -98,6 +98,7 @@ const CustomDot = ({
 }: CustomDotProps) => {
   const currentCategory = payload.name || payload.category;
   const isSelected = selectedPoint?.category === currentCategory;
+  const isFaded = selectedPoint !== null && !isSelected;
 
   const handleClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -127,13 +128,14 @@ const CustomDot = ({
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fillOpacity={1}
       style={{
         fill: isSelected
           ? "var(--bg-button-primary)"
           : "var(--bg-radar-button)",
+        fillOpacity: isFaded ? 0.3 : 1,
         cursor: onSelectPoint ? "pointer" : "default",
         pointerEvents: "all",
+        transition: "fill-opacity 200ms ease-in-out",
       }}
       onClick={onSelectPoint ? handleClick : undefined}
     />

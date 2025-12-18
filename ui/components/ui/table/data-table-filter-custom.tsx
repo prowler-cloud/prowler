@@ -151,13 +151,16 @@ export const DataTableFilterCustom = ({
               <MultiSelectSeparator />
               {filter.values.map((value) => {
                 const entity = getEntityForValue(filter, value);
+                const displayLabel = filter.labelFormatter
+                  ? filter.labelFormatter(value)
+                  : value;
                 return (
                   <MultiSelectItem
                     key={value}
                     value={value}
-                    badgeLabel={getBadgeLabel(entity, value)}
+                    badgeLabel={getBadgeLabel(entity, displayLabel)}
                   >
-                    {entity ? renderEntityContent(entity) : value}
+                    {entity ? renderEntityContent(entity) : displayLabel}
                   </MultiSelectItem>
                 );
               })}

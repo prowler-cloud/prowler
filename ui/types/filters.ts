@@ -11,6 +11,7 @@ export interface FilterOption {
   labelCheckboxGroup: string;
   values: string[];
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
+  labelFormatter?: (value: string) => string;
   index?: number;
   showSelectAll?: boolean;
   defaultToSelectAll?: boolean;

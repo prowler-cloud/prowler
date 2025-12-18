@@ -2,14 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.16.0] (Prowler UNRELEASED)
+## [5.16.0] (Prowler v5.16.0)
 
 ### Added
 
-- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
+
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
 - Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 - Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
@@ -17,14 +18,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Inspector v2 service metadata to new format [(#9260)](https://github.com/prowler-cloud/prowler/pull/9260)
 - Update AWS Service Catalog service metadata to new format [(#9410)](https://github.com/prowler-cloud/prowler/pull/9410)
 - Update AWS SNS service metadata to new format [(#9428)](https://github.com/prowler-cloud/prowler/pull/9428)
-
----
-
-## [5.15.2] (Prowler UNRELEASED)
+- Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
+- Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
+- Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
 
 ### Fixed
 - Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- Fix incorrect `bedrock-agent` regional availability, now using official AWS docs instead of copying from `bedrock`
 - Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
+- Store GCP Cloud Storage bucket regions as lowercase [(#9567)](https://github.com/prowler-cloud/prowler/pull/9567)
 
 ---
 
