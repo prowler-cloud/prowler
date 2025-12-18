@@ -2,15 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.15.2] (Prowler UNRELEASED)
-
-### Fixed
-- Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
-- Fix incorrect `bedrock-agent` regional availability, now using official AWS docs instead of copying from `bedrock`
-- Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
-
----
-
 ## [5.15.1] (Prowler v5.15.1)
 
 ### Fixed
