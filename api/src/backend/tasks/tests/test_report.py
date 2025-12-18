@@ -322,7 +322,7 @@ class TestLoadFindingsForChecks:
 class TestGenerateThreatscoreReportFunction:
     """Test suite for generate_threatscore_report function."""
 
-    @patch("api.utils.initialize_prowler_provider")
+    @patch("tasks.jobs.reports.base.initialize_prowler_provider")
     def test_generate_threatscore_report_exception_handling(
         self,
         mock_initialize_provider,
