@@ -201,31 +201,26 @@ export const updateMuteRule = async (
   }
 
   // Validate optional fields if provided
-  if (
-    name !== null &&
-    name !== undefined &&
-    name.length > 0 &&
-    name.length < 3
-  ) {
-    return {
-      errors: {
-        name: "Name must be at least 3 characters",
-      },
-    };
-  }
+  const validateOptionalField = (
+    value: string | null,
+    fieldName: string,
+    minLength = 3,
+  ): MuteRuleActionState | null => {
+    if (value && value.length > 0 && value.length < minLength) {
+      return {
+        errors: {
+          [fieldName]: `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} must be at least ${minLength} characters`,
+        },
+      };
+    }
+    return null;
+  };
 
-  if (
-    reason !== null &&
-    reason !== undefined &&
-    reason.length > 0 &&
-    reason.length < 3
-  ) {
-    return {
-      errors: {
-        reason: "Reason must be at least 3 characters",
-      },
-    };
-  }
+  const nameError = validateOptionalField(name, "name");
+  if (nameError) return nameError;
+
+  const reasonError = validateOptionalField(reason, "reason");
+  if (reasonError) return reasonError;
 
   try {
     const url = new URL(`${apiBaseUrl}/mute-rules/${id}`);
