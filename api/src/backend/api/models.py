@@ -2595,3 +2595,97 @@ class AttackSurfaceOverview(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class ProviderComplianceScore(RowLevelSecurityProtectedModel):
+    """
+    Compliance requirement status from latest completed scan per provider.
+
+    Used for efficient compliance watchlist queries with FAIL-dominant aggregation
+    across multiple providers. Updated via atomic upsert after each scan completion.
+
+    Query pattern: filter providers → GROUP BY (compliance_id, requirement_id)
+    with bool_or(FAIL) → aggregate to compliance_id level.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    compliance_id = models.TextField()
+    requirement_id = models.TextField()
+    requirement_status = StatusEnumField(choices=StatusChoices)
+
+    scan_completed_at = models.DateTimeField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "provider_compliance_scores"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "compliance_id", "requirement_id"),
+                name="unique_provider_compliance_req",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "compliance_id"],
+                name="pcs_tenant_prov_comp_idx",
+            ),
+        ]
+
+
+class TenantComplianceSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance counts per tenant with FAIL-dominant logic applied.
+
+    One row per (tenant, compliance_id). Used for fast watchlist queries when
+    no provider filter is applied. Recalculated after each scan by aggregating
+    across all providers with FAIL-dominant logic at requirement level.
+
+    ~70 rows per tenant (one per compliance framework).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    compliance_id = models.TextField()
+
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "tenant_compliance_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "compliance_id"),
+                name="unique_tenant_compliance_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
