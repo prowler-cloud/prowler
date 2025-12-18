@@ -2,6 +2,7 @@ import io
 
 import pytest
 from reportlab.lib.units import inch
+from reportlab.platypus import Image, LongTable, Paragraph, Spacer, Table
 from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; Base
     CHART_COLOR_GREEN_1,
     CHART_COLOR_GREEN_2,
@@ -9,7 +10,10 @@ from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; B
     CHART_COLOR_RED,
     CHART_COLOR_YELLOW,
     COLOR_BLUE,
+    COLOR_DARK_GRAY,
     COLOR_HIGH_RISK,
+    COLOR_LOW_RISK,
+    COLOR_MEDIUM_RISK,
     COLOR_SAFE,
     FRAMEWORK_REGISTRY,
     BaseComplianceReportGenerator,
@@ -155,14 +159,10 @@ class TestColorHelpers:
 
     def test_get_color_for_risk_level_medium(self):
         """Test medium risk level returns orange."""
-        from tasks.jobs.reports import COLOR_MEDIUM_RISK
-
         assert get_color_for_risk_level(3) == COLOR_MEDIUM_RISK
 
     def test_get_color_for_risk_level_low(self):
         """Test low risk level returns yellow."""
-        from tasks.jobs.reports import COLOR_LOW_RISK
-
         assert get_color_for_risk_level(2) == COLOR_LOW_RISK
 
     def test_get_color_for_risk_level_safe(self):
@@ -181,8 +181,6 @@ class TestColorHelpers:
 
     def test_get_color_for_weight_medium(self):
         """Test medium weight returns yellow."""
-        from tasks.jobs.reports import COLOR_LOW_RISK
-
         assert get_color_for_weight(100) == COLOR_LOW_RISK
         assert get_color_for_weight(51) == COLOR_LOW_RISK
 
@@ -198,8 +196,6 @@ class TestColorHelpers:
 
     def test_get_color_for_compliance_medium(self):
         """Test medium compliance returns yellow."""
-        from tasks.jobs.reports import COLOR_LOW_RISK
-
         assert get_color_for_compliance(79) == COLOR_LOW_RISK
         assert get_color_for_compliance(60) == COLOR_LOW_RISK
 
@@ -220,8 +216,6 @@ class TestColorHelpers:
 
     def test_get_status_color_manual(self):
         """Test MANUAL status returns gray."""
-        from tasks.jobs.reports import COLOR_DARK_GRAY
-
         assert get_status_color("MANUAL") == COLOR_DARK_GRAY
 
 
@@ -235,8 +229,6 @@ class TestChartColorHelpers:
 
     def test_chart_color_for_medium_high_percentage(self):
         """Test medium-high percentage returns light green."""
-        from tasks.jobs.reports import CHART_COLOR_GREEN_2
-
         assert get_chart_color_for_percentage(79) == CHART_COLOR_GREEN_2
         assert get_chart_color_for_percentage(60) == CHART_COLOR_GREEN_2
 
@@ -274,8 +266,6 @@ class TestBadgeComponents:
 
     def test_create_badge_returns_table(self):
         """Test create_badge returns a Table object."""
-        from reportlab.platypus import Table
-
         badge = create_badge("Test", COLOR_BLUE)
         assert isinstance(badge, Table)
 
@@ -286,8 +276,6 @@ class TestBadgeComponents:
 
     def test_create_status_badge_pass(self):
         """Test status badge for PASS."""
-        from reportlab.platypus import Table
-
         badge = create_status_badge("PASS")
         assert isinstance(badge, Table)
 
@@ -298,8 +286,6 @@ class TestBadgeComponents:
 
     def test_create_multi_badge_row_with_badges(self):
         """Test multi-badge row with data."""
-        from reportlab.platypus import Table
-
         badges = [
             ("A", COLOR_BLUE),
             ("B", COLOR_SAFE),
@@ -318,8 +304,6 @@ class TestRiskComponent:
 
     def test_create_risk_component_returns_table(self):
         """Test risk component returns a Table."""
-        from reportlab.platypus import Table
-
         component = create_risk_component(risk_level=4, weight=100, score=50)
         assert isinstance(component, Table)
 
@@ -339,8 +323,6 @@ class TestTableComponents:
 
     def test_create_info_table(self):
         """Test info table creation."""
-        from reportlab.platypus import Table
-
         rows = [
             ("Label 1:", "Value 1"),
             ("Label 2:", "Value 2"),
@@ -356,8 +338,6 @@ class TestTableComponents:
 
     def test_create_data_table(self):
         """Test data table creation."""
-        from reportlab.platypus import Table
-
         data = [
             {"name": "Item 1", "value": "100"},
             {"name": "Item 2", "value": "200"},
@@ -380,8 +360,6 @@ class TestTableComponents:
 
     def test_create_summary_table(self):
         """Test summary table creation."""
-        from reportlab.platypus import Table
-
         table = create_summary_table(
             label="Score:",
             value="85%",
@@ -391,8 +369,6 @@ class TestTableComponents:
 
     def test_create_summary_table_with_custom_widths(self):
         """Test summary table with custom widths."""
-        from reportlab.platypus import Table
-
         table = create_summary_table(
             label="ThreatScore:",
             value="92.5%",
@@ -408,8 +384,6 @@ class TestFindingsTable:
 
     def test_create_findings_table_with_dicts(self):
         """Test findings table creation with dict data."""
-        from reportlab.platypus import Table
-
         findings = [
             {
                 "title": "Finding 1",
@@ -450,8 +424,6 @@ class TestSectionHeader:
 
     def test_create_section_header_with_spacer(self):
         """Test section header with spacer."""
-        from reportlab.platypus import Paragraph, Spacer
-
         styles = create_pdf_styles()
         elements = create_section_header("Test Header", styles["h1"])
 
@@ -461,8 +433,6 @@ class TestSectionHeader:
 
     def test_create_section_header_without_spacer(self):
         """Test section header without spacer."""
-        from reportlab.platypus import Paragraph
-
         styles = create_pdf_styles()
         elements = create_section_header("Test Header", styles["h1"], add_spacer=False)
 
@@ -864,8 +834,6 @@ class TestExampleReportGenerator:
             """Example concrete implementation for testing."""
 
             def create_executive_summary(self, data):
-                from reportlab.platypus import Paragraph
-
                 return [
                     Paragraph("Executive Summary", self.styles["h1"]),
                     Paragraph(
@@ -875,8 +843,6 @@ class TestExampleReportGenerator:
                 ]
 
             def create_charts_section(self, data):
-                from reportlab.platypus import Image
-
                 chart_buffer = create_vertical_bar_chart(
                     labels=["Pass", "Fail"],
                     values=[80, 20],
@@ -884,8 +850,6 @@ class TestExampleReportGenerator:
                 return [Image(chart_buffer, width=6 * inch, height=4 * inch)]
 
             def create_requirements_index(self, data):
-                from reportlab.platypus import Paragraph
-
                 elements = [Paragraph("Requirements Index", self.styles["h1"])]
                 for req in data.requirements:
                     elements.append(
@@ -1063,8 +1027,6 @@ class TestComponentEdgeCases:
 
     def test_create_info_table_empty(self):
         """Test info table with empty rows."""
-        from reportlab.platypus import Table
-
         table = create_info_table([])
         assert isinstance(table, Table)
 
@@ -1092,8 +1054,6 @@ class TestComponentEdgeCases:
         columns = [ColumnConfig("Name", 2 * inch, "name")]
         table = create_data_table(data, columns)
         # Should be a LongTable for large datasets
-        from reportlab.platypus import LongTable
-
         assert isinstance(table, LongTable)
 
     def test_create_risk_component_zero_values(self):
@@ -1116,8 +1076,6 @@ class TestColorEdgeCases:
 
     def test_get_color_for_compliance_boundary_60(self):
         """Test compliance color at exactly 60%."""
-        from tasks.jobs.reports import COLOR_LOW_RISK
-
         assert get_color_for_compliance(60) == COLOR_LOW_RISK
 
     def test_get_color_for_compliance_over_100(self):
@@ -1126,8 +1084,6 @@ class TestColorEdgeCases:
 
     def test_get_color_for_weight_boundary_100(self):
         """Test weight color at exactly 100."""
-        from tasks.jobs.reports import COLOR_LOW_RISK
-
         assert get_color_for_weight(100) == COLOR_LOW_RISK
 
     def test_get_color_for_weight_boundary_50(self):

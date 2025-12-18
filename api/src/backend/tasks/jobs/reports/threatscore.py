@@ -4,7 +4,11 @@ from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, Table
 
 from api.models import StatusChoices
 
-from .base import BaseComplianceReportGenerator, ComplianceData
+from .base import (
+    BaseComplianceReportGenerator,
+    ComplianceData,
+    get_requirement_metadata,
+)
 from .charts import create_vertical_bar_chart, get_chart_color_for_percentage
 from .components import get_color_for_compliance, get_color_for_weight
 from .config import COLOR_HIGH_RISK, COLOR_WHITE
@@ -145,10 +149,9 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
         # Organize requirements by section and subsection
         sections = {}
-        for req_id, req_attrs in data.attributes_by_requirement_id.items():
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+        for req_id in data.attributes_by_requirement_id:
+            m = get_requirement_metadata(req_id, data.attributes_by_requirement_id)
+            if m:
                 section = getattr(m, "Section", "N/A")
                 subsection = getattr(m, "SubSection", "N/A")
                 title = getattr(m, "Title", "N/A")
@@ -202,10 +205,8 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
         sections_data = {}
 
         for req in data.requirements:
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 section = getattr(m, "Section", "Other")
                 all_sections.add(section)
 
@@ -285,11 +286,9 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
                 continue
 
             has_findings = True
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
 
-            if meta:
-                m = meta[0]
+            if m:
                 risk_level_raw = getattr(m, "LevelOfRisk", 0)
                 weight_raw = getattr(m, "Weight", 0)
                 # Ensure numeric types for calculations (compliance data may have str)
@@ -333,11 +332,9 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
             if req.status != StatusChoices.FAIL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
 
-            if meta:
-                m = meta[0]
+            if m:
                 risk_level_raw = getattr(m, "LevelOfRisk", 0)
                 weight_raw = getattr(m, "Weight", 0)
                 # Ensure numeric types for calculations (compliance data may have str)

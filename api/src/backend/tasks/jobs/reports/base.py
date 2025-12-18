@@ -13,13 +13,25 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
+    _load_findings_for_requirement_checks,
+)
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Provider, StatusChoices
+from api.utils import initialize_prowler_provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
+from .components import (
+    ColumnConfig,
+    create_data_table,
+    create_info_table,
+    create_status_badge,
+)
 from .config import (
     COLOR_BG_BLUE,
     COLOR_BG_LIGHT_BLUE,
@@ -37,13 +49,17 @@ from .config import (
 logger = get_task_logger(__name__)
 
 # Register fonts (done once at module load)
-_FONTS_REGISTERED = False
+_fonts_registered: bool = False
 
 
 def _register_fonts() -> None:
-    """Register custom fonts for PDF generation."""
-    global _FONTS_REGISTERED
-    if _FONTS_REGISTERED:
+    """Register custom fonts for PDF generation.
+
+    Uses a module-level flag to ensure fonts are only registered once,
+    avoiding duplicate registration errors from reportlab.
+    """
+    global _fonts_registered
+    if _fonts_registered:
         return
 
     fonts_dir = os.path.join(os.path.dirname(__file__), "../../assets/fonts")
@@ -62,7 +78,7 @@ def _register_fonts() -> None:
         )
     )
 
-    _FONTS_REGISTERED = True
+    _fonts_registered = True
 
 
 # =============================================================================
@@ -131,6 +147,35 @@ class ComplianceData:
     findings_by_check_id: dict[str, list[FindingOutput]] = field(default_factory=dict)
     provider_obj: Provider | None = None
     prowler_provider: Any = None
+
+
+def get_requirement_metadata(
+    requirement_id: str,
+    attributes_by_requirement_id: dict[str, dict],
+) -> Any | None:
+    """Get the first requirement metadata object from attributes.
+
+    This helper function extracts the requirement metadata (req_attributes)
+    from the attributes dictionary. It's a common pattern used across all
+    report generators.
+
+    Args:
+        requirement_id: The requirement ID to look up.
+        attributes_by_requirement_id: Mapping of requirement IDs to their attributes.
+
+    Returns:
+        The first requirement attribute object, or None if not found.
+
+    Example:
+        >>> meta = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+        >>> if meta:
+        ...     section = getattr(meta, "Section", "Unknown")
+    """
+    req_attrs = attributes_by_requirement_id.get(requirement_id, {})
+    meta_list = req_attrs.get("attributes", {}).get("req_attributes", [])
+    if meta_list:
+        return meta_list[0]
+    return None
 
 
 # =============================================================================
@@ -435,8 +480,6 @@ class BaseComplianceReportGenerator(ABC):
         Returns:
             List of ReportLab elements
         """
-        from .components import create_info_table
-
         elements = []
 
         # Prowler logo
@@ -493,17 +536,24 @@ class BaseComplianceReportGenerator(ABC):
         Returns:
             List of ReportLab elements
         """
-        from tasks.jobs.threatscore_utils import _load_findings_for_requirement_checks
-
-        from .components import create_status_badge
-
         elements = []
         only_failed = kwargs.get("only_failed", True)
+        include_manual = kwargs.get("include_manual", False)
 
         # Filter requirements if needed
         requirements = data.requirements
         if only_failed:
-            requirements = [r for r in requirements if r.status == StatusChoices.FAIL]
+            # Include FAIL requirements, and optionally MANUAL if include_manual is True
+            if include_manual:
+                requirements = [
+                    r
+                    for r in requirements
+                    if r.status in (StatusChoices.FAIL, StatusChoices.MANUAL)
+                ]
+            else:
+                requirements = [
+                    r for r in requirements if r.status == StatusChoices.FAIL
+                ]
 
         # Collect all check IDs for requirements that will be displayed
         # This allows us to load only the findings we actually need (memory optimization)
@@ -602,13 +652,6 @@ class BaseComplianceReportGenerator(ABC):
         Returns:
             Aggregated ComplianceData object
         """
-        from tasks.jobs.threatscore_utils import (
-            _aggregate_requirement_statistics_from_database,
-            _calculate_requirements_data_from_statistics,
-        )
-
-        from api.utils import initialize_prowler_provider
-
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             # Load provider
             if provider_obj is None:
@@ -672,7 +715,7 @@ class BaseComplianceReportGenerator(ABC):
             description=description,
             requirements=requirements,
             attributes_by_requirement_id=attributes_by_requirement_id,
-            findings_by_check_id=findings_cache or {},
+            findings_by_check_id=findings_cache if findings_cache is not None else {},
             provider_obj=provider_obj,
             prowler_provider=prowler_provider,
         )
@@ -744,7 +787,6 @@ class BaseComplianceReportGenerator(ABC):
         Returns:
             ReportLab Table element
         """
-        from .components import ColumnConfig, create_data_table
 
         def get_finding_title(f):
             metadata = getattr(f, "metadata", None)

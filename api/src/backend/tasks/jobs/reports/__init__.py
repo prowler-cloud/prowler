@@ -4,6 +4,7 @@ from .base import (
     ComplianceData,
     RequirementData,
     create_pdf_styles,
+    get_requirement_metadata,
 )
 
 # Chart functions
@@ -99,6 +100,7 @@ __all__ = [
     "ComplianceData",
     "RequirementData",
     "create_pdf_styles",
+    "get_requirement_metadata",
     # Framework-specific generators
     "ThreatScoreReportGenerator",
     "ENSReportGenerator",

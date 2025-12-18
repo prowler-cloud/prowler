@@ -6,7 +6,11 @@ from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, Table
 
 from api.models import StatusChoices
 
-from .base import BaseComplianceReportGenerator, ComplianceData
+from .base import (
+    BaseComplianceReportGenerator,
+    ComplianceData,
+    get_requirement_metadata,
+)
 from .charts import create_horizontal_bar_chart, get_chart_color_for_percentage
 from .config import (
     COLOR_BORDER_GRAY,
@@ -263,10 +267,8 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
         # Organize by section number and subsection
         sections = {}
         for req in data.requirements:
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 full_section = getattr(m, "Section", "Other")
                 # Extract section number from full title (e.g., "1 POLICY..." -> "1")
                 section_num = _extract_section_number(full_section)
@@ -343,10 +345,8 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 full_section = getattr(m, "Section", "Other")
                 # Extract section number from full title (e.g., "1 POLICY..." -> "1")
                 section_num = _extract_section_number(full_section)
@@ -385,10 +385,8 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
         subsection_scores = defaultdict(lambda: {"passed": 0, "failed": 0, "manual": 0})
 
         for req in data.requirements:
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 full_section = getattr(m, "Section", "")
                 subsection = getattr(m, "SubSection", "")
                 # Use section number + subsection for grouping

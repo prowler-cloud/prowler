@@ -8,7 +8,11 @@ from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, Table
 
 from api.models import StatusChoices
 
-from .base import BaseComplianceReportGenerator, ComplianceData
+from .base import (
+    BaseComplianceReportGenerator,
+    ComplianceData,
+    get_requirement_metadata,
+)
 from .charts import create_horizontal_bar_chart, create_radar_chart
 from .components import get_color_for_compliance
 from .config import (
@@ -330,10 +334,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 marco = getattr(m, "Marco", "Otros")
                 categoria = getattr(m, "Categoria", "Sin categoría")
                 descripcion = getattr(m, "DescripcionControl", req.description)
@@ -442,10 +444,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 nivel = getattr(m, "Nivel", "").lower()
                 nivel_data[nivel]["total"] += 1
                 if req.status == StatusChoices.PASS:
@@ -520,10 +520,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 marco = getattr(m, "Marco", "otros")
                 categoria = getattr(m, "Categoria", "sin categoría")
                 # Combined key: "marco - categoría"
@@ -554,10 +552,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 dimensiones = getattr(m, "Dimensiones", [])
                 if isinstance(dimensiones, str):
                     dimensiones = [d.strip().lower() for d in dimensiones.split(",")]
@@ -600,10 +596,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status == StatusChoices.MANUAL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 tipo = getattr(m, "Tipo", "").lower()
                 tipo_data[tipo]["total"] += 1
                 if req.status == StatusChoices.PASS:
@@ -661,10 +655,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             if req.status != StatusChoices.FAIL:
                 continue
 
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
-            if meta:
-                m = meta[0]
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
+            if m:
                 nivel = getattr(m, "Nivel", "").lower()
                 if nivel == "alto":
                     critical_failed.append(
@@ -766,14 +758,22 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             List of ReportLab elements.
         """
         elements = []
+        include_manual = kwargs.get("include_manual", True)
 
         elements.append(Paragraph("Detalle de Requisitos", self.styles["h1"]))
         elements.append(Spacer(1, 0.2 * inch))
 
-        # Get failed requirements (non-manual)
-        failed_requirements = [
-            r for r in data.requirements if r.status == StatusChoices.FAIL
-        ]
+        # Get failed requirements, and optionally manual requirements
+        if include_manual:
+            failed_requirements = [
+                r
+                for r in data.requirements
+                if r.status in (StatusChoices.FAIL, StatusChoices.MANUAL)
+            ]
+        else:
+            failed_requirements = [
+                r for r in data.requirements if r.status == StatusChoices.FAIL
+            ]
 
         if not failed_requirements:
             elements.append(
@@ -802,13 +802,11 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         }
 
         for req in failed_requirements:
-            req_attrs = data.attributes_by_requirement_id.get(req.id, {})
-            meta = req_attrs.get("attributes", {}).get("req_attributes", [{}])
+            m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
 
-            if not meta:
+            if not m:
                 continue
 
-            m = meta[0]
             nivel = getattr(m, "Nivel", "").lower()
             tipo = getattr(m, "Tipo", "")
             modo = getattr(m, "ModoEjecucion", "")

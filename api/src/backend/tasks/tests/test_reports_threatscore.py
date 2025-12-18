@@ -10,16 +10,7 @@ from tasks.jobs.reports import (
     ThreatScoreReportGenerator,
 )
 
-
-# Use string status values directly to avoid Django DB initialization
-# These match api.models.StatusChoices values
-class StatusChoices:
-    """Mock StatusChoices to avoid Django DB initialization."""
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    MANUAL = "MANUAL"
-
+from api.models import StatusChoices
 
 # =============================================================================
 # Fixtures
