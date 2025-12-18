@@ -37,6 +37,7 @@ from api.models import (
     PermissionChoices,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderSecret,
     Resource,
@@ -90,6 +91,54 @@ class CharInFilter(BaseInFilter, CharFilter):
 
 class ChoiceInFilter(BaseInFilter, ChoiceFilter):
     pass
+
+
+class BaseProviderFilter(FilterSet):
+    """
+    Abstract base filter for models with direct FK to Provider.
+
+    Provides standard provider_id and provider_type filters.
+    Subclasses must define Meta.model.
+    """
+
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        abstract = True
+        fields = {}
+
+
+class BaseScanProviderFilter(FilterSet):
+    """
+    Abstract base filter for models with FK to Scan (and Scan has FK to Provider).
+
+    Provides standard provider_id and provider_type filters via scan relationship.
+    Subclasses must define Meta.model.
+    """
+
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        abstract = True
+        fields = {}
 
 
 class CommonFindingFilters(FilterSet):
@@ -1086,39 +1135,25 @@ class ThreatScoreSnapshotFilter(FilterSet):
         }
 
 
-class AttackSurfaceOverviewFilter(FilterSet):
+class AttackSurfaceOverviewFilter(BaseScanProviderFilter):
     """Filter for attack surface overview aggregations by provider."""
 
-    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
-    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
-    provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
-    )
-    provider_type__in = ChoiceInFilter(
-        field_name="scan__provider__provider",
-        choices=Provider.ProviderChoices.choices,
-        lookup_expr="in",
-    )
-
-    class Meta:
+    class Meta(BaseScanProviderFilter.Meta):
         model = AttackSurfaceOverview
-        fields = {}
 
 
-class CategoryOverviewFilter(FilterSet):
-    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
-    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
-    provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
-    )
-    provider_type__in = ChoiceInFilter(
-        field_name="scan__provider__provider",
-        choices=Provider.ProviderChoices.choices,
-        lookup_expr="in",
-    )
+class CategoryOverviewFilter(BaseScanProviderFilter):
+    """Filter for category overview aggregations by provider."""
+
     category = CharFilter(field_name="category", lookup_expr="exact")
     category__in = CharInFilter(field_name="category", lookup_expr="in")
 
-    class Meta:
+    class Meta(BaseScanProviderFilter.Meta):
         model = ScanCategorySummary
-        fields = {}
+
+
+class ComplianceWatchlistFilter(BaseProviderFilter):
+    """Filter for compliance watchlist overview by provider."""
+
+    class Meta(BaseProviderFilter.Meta):
+        model = ProviderComplianceScore

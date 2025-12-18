@@ -2264,6 +2264,20 @@ class CategoryOverviewSerializer(BaseSerializerV1):
         resource_name = "category-overviews"
 
 
+class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):
+    """Serializer for compliance watchlist overview with FAIL-dominant aggregation."""
+
+    id = serializers.CharField(source="compliance_id")
+    compliance_id = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-watchlist-overviews"
+
+
 class OverviewRegionSerializer(serializers.Serializer):
     id = serializers.SerializerMethodField()
     provider_type = serializers.CharField()
