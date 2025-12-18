@@ -1,29 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "iam_group_administrator_access_policy",
-  "CheckTitle": "Ensure No IAM Groups Have Administrator Access Policy",
-  "CheckType": [],
+  "CheckTitle": "IAM group does not have AdministratorAccess policy attached",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamGroup",
-  "Description": "This check ensures that no IAM groups in your AWS account have the 'AdministratorAccess' policy attached. IAM users with this policy have unrestricted access to all AWS services and resources, which poses a significant security risk if misused.",
-  "Risk": "IAM groups with administrator-level permissions can perform any action on any resource in your AWS environment. If these permissions are granted to users unnecessarily or to individuals without sufficient knowledge, it can lead to security vulnerabilities, data leaks, data loss, or unexpected charges.",
-  "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage.html",
+  "Description": "**IAM groups** are assessed for the AWS-managed `AdministratorAccess` policy attachment.\n\nThe finding reports any group that has this policy among its attached permissions.",
+  "Risk": "Group-wide `AdministratorAccess` gives all members unrestricted control. A stolen or misused account can:\n- Read/exfiltrate sensitive data (C)\n- Modify or delete resources and configs (I/A)\n- Disable logging and weaken defenses, enabling persistence and lateral movement",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/group-with-privileged-access.html",
+    "https://gist.github.com/apolloclark/b3f60c1f68aa972d324b",
+    "https://docs.kertos.io/en/article/ensure-no-iam-aws-managed-policies-grant-full-administrative-access",
+    "https://docs.datadoghq.com/security/default_rules/def-000-wnq/",
+    "https://support.icompaas.com/support/solutions/articles/62000233798-ensure-no-iam-groups-have-administrator-access-policy",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws iam detach-group-policy --group-name <groupname> --policy-arn arn:aws:iam::aws:policy/AdministratorAccess",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/group-with-privileged-access.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: IAM group without AdministratorAccess attached\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::Group\n    Properties:\n      GroupName: <example_resource_name>\n      ManagedPolicyArns: []  # Critical: empty list ensures AdministratorAccess is NOT attached to the group\n```",
+      "Other": "1. In the AWS Console, go to IAM > User groups\n2. Select the target group (<groupname>)\n3. Open the Permissions tab > Attached policies\n4. Select the policy AdministratorAccess and click Detach\n5. Confirm to remove the policy",
+      "Terraform": "```hcl\n# IAM group with no AdministratorAccess attachment\nresource \"aws_iam_group\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  # Critical: do NOT create any aws_iam_group_policy_attachment with\n  # policy_arn = \"arn:aws:iam::aws:policy/AdministratorAccess\" for this group\n}\n```"
     },
     "Recommendation": {
-      "Text": "Replace the 'AdministratorAccess' policy with more specific permissions that follow the Principle of Least Privilege. Consider implementing IAM roles such as 'IAM Master' and 'IAM Manager' to manage permissions more securely.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Remove `AdministratorAccess` from groups. Apply **least privilege** with task-scoped, customer-managed policies and **separation of duties**. Use roles for admin tasks with MFA, time-bound elevation, and auditing. Regularly review group membership and permissions; prefer **defense-in-depth** guardrails.",
+      "Url": "https://hub.prowler.com/check/iam_group_administrator_access_policy"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

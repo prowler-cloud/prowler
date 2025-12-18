@@ -1,31 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "iam_user_accesskey_unused",
-  "CheckTitle": "Ensure unused User Access Keys are disabled",
+  "CheckTitle": "IAM user does not have unused access keys older than 45 days",
   "CheckType": [
-    "Software and Configuration Checks"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
-  "Description": "Ensure unused User Access Keys are disabled",
-  "Risk": "To increase the security of your AWS account, remove IAM user credentials (that is, passwords and access keys) that are not needed. For example, when users leave your organization or no longer need AWS access.",
+  "Description": "**IAM users** are evaluated for **active access keys** whose `last-used` timestamp exceeds `max_unused_access_keys_days` (default `45`). Users without access keys, or whose keys were used within this window, are reported separately.",
+  "Risk": "Active yet unused keys expand the attack surface. If leaked, adversaries gain API access for data exfiltration, unauthorized changes, and resource abuse, harming **confidentiality**, **integrity**, and **availability**. Stale credentials also enable persistence and unexpected cost spikes.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/mastering-aws-iam-fintech-banking-application-story-suresh-konakanchi-qwzbf",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
+    "https://aws.plainenglish.io/automating-aws-iam-access-key-management-207ab5d11def",
+    "https://www.cloudyali.io/blogs/how-to-monitor-aws-iam-root-users-at-scale-best-practices",
+    "https://www.netskope.com/blog/a-real-world-look-at-aws-best-practices-iam-user-accounts"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws iam update-access-key --user-name <USER_NAME> --access-key-id <ACCESS_KEY_ID> --status Inactive",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the AWS console and open IAM\n2. Go to Users, select the affected user\n3. Open the Security credentials tab > Access keys\n4. For any key with Last used > 45 days, choose Deactivate (or Delete)\n5. Repeat for any additional unused keys over 45 days for the user",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Find the credentials that they were using and ensure that they are no longer operational. Ideally, you delete credentials if they are no longer needed. You can always recreate them at a later date if the need arises. At the very least, you should change the password or deactivate the access keys so that the former users no longer have access.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html"
+      "Text": "Disable or delete **unused access keys** promptly and prefer **IAM roles** with temporary credentials. Enforce **least privilege**, rotation, and time-bounded access. Monitor `last-used` metadata and automate deactivation of idle keys. Use federation/SSO to avoid long-lived user keys.",
+      "Url": "https://hub.prowler.com/check/iam_user_accesskey_unused"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

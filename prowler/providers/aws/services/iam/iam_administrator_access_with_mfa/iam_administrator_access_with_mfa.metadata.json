@@ -1,31 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "iam_administrator_access_with_mfa",
-  "CheckTitle": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
+  "CheckTitle": "IAM group members granted AdministratorAccess have MFA enabled",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsIamUser",
-  "Description": "Ensure users of groups with AdministratorAccess policy have MFA tokens enabled",
-  "Risk": "Policy may allow Anonymous users to perform actions.",
+  "ResourceType": "AwsIamGroup",
+  "Description": "**IAM groups** with the `AdministratorAccess` managed policy are assessed to ensure all member users have **active MFA**.\n\nThe finding highlights any administrator group that includes a user without MFA enrollment or activation.",
+  "Risk": "**Admin users without MFA** are vulnerable to single-factor compromise. Stolen or guessed credentials can yield full control, enabling privilege escalation, policy changes, data exfiltration, and destructive operations, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_configure-api-require.html",
+    "https://www.radishlogic.com/aws/require-multi-factor-authentication-mfa-for-iam-user-in-aws/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+    "https://repost.aws/knowledge-center/mfa-iam-user-aws-cli",
+    "https://medium.com/@architbidkar_66467/take-charge-of-aws-mandatory-mfa-for-unrestricted-resource-management-95241bd13734?responsesOpen=true&sortBy=REVERSE_CHRON",
+    "https://mharrison.org/post/aws_mfa/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
+      "CLI": "aws iam detach-group-policy --group-name <IAM_GROUP_NAME> --policy-arn arn:aws:iam::aws:policy/AdministratorAccess",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure the IAM group does not have AdministratorAccess attached\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::Group\n    Properties:\n      GroupName: <example_resource_name>\n      ManagedPolicyArns: []  # Critical: remove AdministratorAccess from this group to avoid admin rights without MFA\n```",
+      "Other": "1. In the AWS Console, go to IAM > User groups and open the group that has the AdministratorAccess policy.\n2. Note the users listed in the group. For each user, open IAM > Users > <user>.\n3. On the Security credentials tab, under Multi-factor authentication (MFA), select Assign MFA device.\n4. Choose Authenticator app (or a security key), follow the prompts, enter the two MFA codes, and click Add MFA.\n5. Repeat for all users in the group. Verify in IAM > Credential report that mfa_active is true for each user.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure this repository and its contents should be publicly accessible.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+      "Text": "Enforce **MFA** for all administrator identities.\n- Add conditions (e.g., `aws:MultiFactorAuthPresent`) to privileged permissions\n- Prefer **hardware/FIDO2** devices\n- Apply **least privilege** and favor **roles/SSO** over users\n- Continuously monitor MFA status and remove unused admin access",
+      "Url": "https://hub.prowler.com/check/iam_administrator_access_with_mfa"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,30 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "iam_no_expired_server_certificates_stored",
-  "CheckTitle": "Ensure that all the expired SSL/TLS certificates stored in AWS IAM are removed.",
+  "CheckTitle": "IAM server certificate is not expired",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
-  "ResourceType": "Other",
-  "Description": "Ensure that all the expired SSL/TLS certificates stored in AWS IAM are removed.",
-  "Risk": "Removing expired SSL/TLS certificates eliminates the risk that an invalid certificate will be deployed accidentally to a resource such as AWS Elastic Load Balancer (ELB), which can damage the credibility of the application/website behind the ELB.",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCertificateManagerCertificate",
+  "Description": "IAM server certificates stored in **AWS IAM** are evaluated for **expiration** by comparing their validity period to the current time. Certificates with a `NotAfter` date in the past are identified as expired.",
+  "Risk": "Retaining **expired TLS certificates** risks **availability** loss from failed handshakes and browser warnings, eroding trust.\n\nIf attached to endpoints, users may bypass warnings, weakening **confidentiality** and **integrity**. Stale certs also hinder **secure rotation** and may be picked by automation, causing outages.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws iam delete-server-certificate --server-certificate-name <CERTIFICATE_NAME",
+      "CLI": "aws iam delete-server-certificate --server-certificate-name <CERTIFICATE_NAME>",
       "NativeIaC": "",
-      "Other": "Removing expired certificates via AWS Management Console is not currently supported.",
+      "Other": "1. Deleting IAM server certificates is not supported in the AWS Management Console.\n2. Use the CLI to remove the expired certificate: aws iam delete-server-certificate --server-certificate-name <CERTIFICATE_NAME>",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Deleting the certificate could have implications for your application if you are using an expired server certificate with Elastic Load Balancing, CloudFront, etc. One has to make configurations at respective services to ensure there is no interruption in application functionality.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html"
+      "Text": "Remove **expired certificates** from IAM and ensure endpoints use current, trusted TLS.\n\nPrefer **AWS Certificate Manager** for issuance and auto-renewal, enforce **lifecycle management** with inventory, tagging, and alerts, and apply **least privilege** to certificate access with standardized rotation policies.",
+      "Url": "https://hub.prowler.com/check/iam_no_expired_server_certificates_stored"
     }
   },
   "Categories": [

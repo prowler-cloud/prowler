@@ -1,33 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "iam_support_role_created",
-  "CheckTitle": "Ensure a support role has been created to manage incidents with AWS Support",
+  "CheckTitle": "At least one IAM role has the AWSSupportAccess managed policy attached",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
   "ResourceType": "AwsIamRole",
-  "Description": "Ensure a support role has been created to manage incidents with AWS Support",
-  "Risk": "AWS provides a support center that can be used for incident notification and response, as well as technical support and customer services. Create an IAM Role to allow authorized users to manage incidents with AWS Support.",
+  "Description": "Presence of an **IAM role** that has the AWS managed `AWSSupportAccess` policy attached, designating a support role for interacting with **AWS Support Center** and related tooling.",
+  "Risk": "Without a dedicated support role:\n- Case creation and escalation can be delayed, prolonging outages (**availability**)\n- Teams may use admin/root, increasing blast radius (**confidentiality/integrity**)\n- Audit trails of support actions are weaker, hindering investigations",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v5.0.0_L1.audit:c0a1f18608489c0ae886fd9463cd2af9",
+    "https://docs.aws.amazon.com/awssupport/latest/user/using-service-linked-roles-sup.html",
+    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_iam_25",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/support-role.html",
+    "https://icompaas.freshdesk.com/support/solutions/articles/62000081064-ensure-a-support-role-has-been-created-to-manage-incidents-with-aws-support",
+    "https://www.plerion.com/cloud-knowledge-base/support-role-has-been-created-to-manage-incidents-aws-support",
+    "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSSupportAccess.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws iam attach-role-policy --role-name <example_resource_name> --policy-arn arn:aws:iam::aws:policy/AWSSupportAccess",
+      "NativeIaC": "```yaml\n# CloudFormation: create a role with AWS Support access\nResources:\n  ExampleRole:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::<example_account_id>:user/<example_resource_name>\n            Action: sts:AssumeRole\n      ManagedPolicyArns:\n        - arn:aws:iam::aws:policy/AWSSupportAccess  # Critical: attaches AWS Support access so at least one role has this policy (PASS)\n```",
+      "Other": "1. In the AWS console, go to IAM > Roles\n2. Select any existing role you can use for support access\n3. Click Add permissions (or Attach policies)\n4. Search for \"AWSSupportAccess\" and select it\n5. Click Attach policies to save\n\nThis immediately ensures at least one role has the AWSSupportAccess managed policy (PASS).",
+      "Terraform": "```hcl\n# IAM role with AWS Support access\nresource \"aws_iam_role\" \"example_resource_name\" {\n  name               = \"example_resource_name\"\n  assume_role_policy = jsonencode({\n    Version   = \"2012-10-17\",\n    Statement = [{\n      Effect    = \"Allow\",\n      Principal = { AWS = \"arn:aws:iam::<example_account_id>:user/<example_resource_name>\" },\n      Action    = \"sts:AssumeRole\"\n    }]\n  })\n\n  managed_policy_arns = [\n    \"arn:aws:iam::aws:policy/AWSSupportAccess\"  # Critical: ensures this role has AWSSupportAccess (PASS)\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create an IAM role for managing incidents with AWS.",
-      "Url": "https://docs.aws.amazon.com/awssupport/latest/user/using-service-linked-roles-sup.html"
+      "Text": "Create a dedicated IAM role for AWS Support with `AWSSupportAccess` and:\n- Restrict who can assume it; require MFA and time-bound access\n- Enforce **least privilege** and **separation of duties**\n- Monitor usage via audit logs and review assignments regularly",
+      "Url": "https://hub.prowler.com/check/iam_support_role_created"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "CAF Security Epic: IAM"

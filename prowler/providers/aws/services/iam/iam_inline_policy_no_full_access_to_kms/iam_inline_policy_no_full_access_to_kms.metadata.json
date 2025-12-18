@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "iam_inline_policy_no_full_access_to_kms",
-  "CheckTitle": "Ensure IAM inline policies that allow full \"kms:*\" privileges are not created",
+  "CheckTitle": "IAM inline policy does not allow kms:* privileges",
   "CheckType": [
-    "Software and Configuration Checks"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Privilege Escalation",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "iam",
-  "SubServiceName": "inline_policy",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsIamPolicy",
-  "Description": "Ensure IAM inline policies that allow full \"kms:*\" privileges are not created",
-  "Risk": "KMS is a critical service and IAM policies should follow least privilege model for this service in particular",
+  "Description": "**IAM inline policies** are analyzed to identify statements that grant **unrestricted AWS KMS access** via the wildcard action `kms:*`.",
+  "Risk": "Granting `kms:*` enables decryption of protected data, modification of key policies and grants, and disabling or deleting keys.\n\nImpacts:\n- **Confidentiality** via unauthorized decryption\n- **Integrity** through key/grant tampering\n- **Availability** if keys are disabled or deleted, breaking encrypted workloads",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Inline IAM policy without kms:* full access\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::User\n    Properties:\n      Policies:\n        - PolicyName: <example_resource_name>-policy\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action:\n                  - kms:Encrypt  # CRITICAL: replace 'kms:*' with only required KMS action(s) to remove full access\n                Resource: \"*\"\n```",
+      "Other": "1. In the AWS Console, open IAM and go to Users, Roles, or Groups (where the inline policy is attached)\n2. Select the entity, go to the Permissions tab, and open the inline policy that allows KMS\n3. Click Edit policy and switch to the JSON editor\n4. Replace any \"Action\": \"kms:*\" with only the specific KMS action(s) required (e.g., \"kms:Encrypt\")\n5. Save changes",
+      "Terraform": "```hcl\n# Inline IAM policy without kms:* full access\nresource \"aws_iam_user_policy\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>-policy\"\n  user = \"<example_resource_name>\"\n\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\n        \"kms:Encrypt\" # CRITICAL: replace 'kms:*' with specific action(s) to remove full access\n      ]\n      Resource = \"*\"\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities.",
-      "Url": "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Replace `kms:*` with **least-privilege**, action-scoped permissions limited to required operations and specific key ARNs. Enforce **separation of duties** for key admins vs users. Prefer **managed policies** over inline and apply guardrails (permissions boundaries/SCPs). Add conditions to constrain service, region, and encryption context.",
+      "Url": "https://hub.prowler.com/check/iam_inline_policy_no_full_access_to_kms"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
