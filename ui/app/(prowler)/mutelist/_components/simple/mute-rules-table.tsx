@@ -36,7 +36,28 @@ export async function MuteRulesTable() {
     );
   }
 
-  return <DataTable columns={muteRulesColumns} data={muteRules} />;
+  return (
+    <Card variant="base" className="p-6">
+      <div className="mb-6">
+        <h3 className="text-default-700 mb-2 text-lg font-semibold">
+          Simple Mutelist Rules
+        </h3>
+        <ul className="text-default-600 list-disc pl-5 text-sm">
+          <li>
+            <strong>
+              These rules take effect immediately on existing findings.
+            </strong>
+          </li>
+          <li>
+            Create rules by selecting findings from the Findings page and
+            clicking &quot;Mute&quot;.
+          </li>
+          <li>Toggle rules on/off to enable or disable muting.</li>
+        </ul>
+      </div>
+      <DataTable columns={muteRulesColumns} data={muteRules} />
+    </Card>
+  );
 }
 
 export function MuteRulesTableSkeleton() {
