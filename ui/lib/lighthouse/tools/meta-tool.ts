@@ -6,6 +6,7 @@ import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse/mcp-client";
+import { isBlockedTool } from "@/lib/lighthouse/workflow";
 
 /** Input type for describe_tool */
 interface DescribeToolInput {
@@ -33,6 +34,14 @@ function getAllTools(): StructuredTool[] {
  */
 export const describeTool = tool(
   async ({ toolName }: DescribeToolInput) => {
+    // Block destructive tools from being described
+    if (isBlockedTool(toolName)) {
+      return {
+        found: false,
+        message: `Tool '${toolName}' is not available.`,
+      };
+    }
+
     const allTools = getAllTools();
 
     if (allTools.length === 0) {
@@ -107,6 +116,22 @@ Returns:
  */
 export const executeTool = tool(
   async ({ toolName, toolInput }: ExecuteToolInput) => {
+    // Block destructive tools from being executed
+    if (isBlockedTool(toolName)) {
+      addBreadcrumb({
+        category: "meta-tool",
+        message: `execute_tool: Blocked tool attempted: ${toolName}`,
+        level: "warning",
+        data: { toolName, toolInput },
+      });
+
+      return {
+        error: `Tool '${toolName}' is not available for execution.`,
+        suggestion:
+          "This operation must be performed through the Prowler UI directly.",
+      };
+    }
+
     const allTools = getAllTools();
     const targetTool = allTools.find((t) => t.name === toolName);
 
