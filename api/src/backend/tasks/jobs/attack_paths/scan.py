@@ -7,6 +7,7 @@ from typing import Any, Callable
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
+from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
@@ -100,8 +101,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             )
 
             # Post-processing: Just keeping it to be more Cartography compliant
+            cartography_ontology.run(neo4j_session, cartography_config, 95)
+
             cartography_analysis.run(neo4j_session, cartography_config)
-            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler nodes and relationships
             prowler.analysis(

@@ -3,6 +3,7 @@
 
 from typing import Any
 
+import aioboto3
 import boto3
 import neo4j
 
@@ -41,6 +42,7 @@ def start_aws_ingestion(
         "permission_relationships_file": cartography_config.permission_relationships_file,
         "aws_guardduty_severity_threshold": cartography_config.aws_guardduty_severity_threshold,
         "aws_cloudtrail_management_events_lookback_hours": cartography_config.aws_cloudtrail_management_events_lookback_hours,
+        "experimental_aws_inspector_batch": cartography_config.experimental_aws_inspector_batch,
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
@@ -157,6 +159,10 @@ def get_boto3_session(
     return boto3_session
 
 
+def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:
+    return aioboto3.Session(botocore_session=boto3_session._session)
+
+
 def sync_aws_account(
     prowler_api_provider: ProwlerAPIProvider,
     requested_syncs: list[str],
@@ -167,7 +173,7 @@ def sync_aws_account(
     max_progress = (
         87  # `cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"]` - 1
     )
-    n_steps = len(requested_syncs)
+    n_steps = len(requested_syncs) - 2  # Excluding `permission_relationships` and `resourcegroupstaggingapi`
     progress_step = (max_progress - current_progress) / n_steps
 
     failed_syncs = {}
@@ -185,15 +191,26 @@ def sync_aws_account(
             )
 
             try:
+                # `ecr:image_layers` uses `aioboto3_session` instead of `boto3_session`
+                if func_name == "ecr:image_layers":
+                    cartography_aws.RESOURCE_FUNCTIONS[func_name](
+                        neo4j_session=sync_args.get("neo4j_session"),
+                        aioboto3_session=get_aioboto3_session(sync_args.get("boto3_session")),
+                        regions=sync_args.get("regions"),
+                        current_aws_account_id=sync_args.get("current_aws_account_id"),
+                        update_tag=sync_args.get("update_tag"),
+                        common_job_parameters=sync_args.get("common_job_parameters"),
+                    )
+
                 # Skip permission relationships and tags for now because they rely on data already being in the graph
-                if func_name not in [
+                elif func_name in [
                     "permission_relationships",
                     "resourcegroupstaggingapi",
                 ]:
-                    cartography_aws.RESOURCE_FUNCTIONS[func_name](**sync_args)
+                    continue
 
                 else:
-                    continue
+                    cartography_aws.RESOURCE_FUNCTIONS[func_name](**sync_args)
 
             except Exception as e:
                 exception_message = utils.stringify_exception(
