@@ -1,17 +1,23 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Sum
+from django.db.models import Max, Sum
 from django.utils import timezone
 from tasks.jobs.scan import aggregate_category_counts
 
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import (
+    POSTGRES_TENANT_VAR,
+    SET_CONFIG_QUERY,
+    psycopg_connection,
+    rls_transaction,
+)
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    ProviderComplianceScore,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
@@ -341,3 +347,198 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         )
 
     return {"status": "backfilled", "categories_count": len(category_counts)}
+
+
+def backfill_provider_compliance_scores(tenant_id: str) -> dict:
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    For each provider with completed scans, finds the most recent scan and
+    upserts compliance requirement statuses with FAIL-dominant aggregation.
+
+    Args:
+        tenant_id: Target tenant UUID
+
+    Returns:
+        dict: Statistics about the backfill operation
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        # Get latest completed scan per provider
+        latest_scans = (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+                completed_at__isnull=False,
+            )
+            .values("provider_id")
+            .annotate(latest_completed_at=Max("completed_at"))
+        )
+
+        if not latest_scans:
+            return {"status": "no completed scans"}
+
+        # Get scan IDs for latest scans
+        scan_info = []
+        for latest in latest_scans:
+            scan = (
+                Scan.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=latest["provider_id"],
+                    completed_at=latest["latest_completed_at"],
+                    state=StateChoices.COMPLETED,
+                )
+                .values("id", "provider_id", "completed_at")
+                .first()
+            )
+            if scan:
+                scan_info.append(scan)
+
+        if not scan_info:
+            return {"status": "no scans to process"}
+
+    # Check which providers already have data
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        existing_providers = set(
+            ProviderComplianceScore.objects.filter(tenant_id=tenant_id)
+            .values_list("provider_id", flat=True)
+            .distinct()
+        )
+
+    upsert_sql = """
+        INSERT INTO provider_compliance_scores
+            (id, tenant_id, provider_id, scan_id, compliance_id, requirement_id,
+             requirement_status, scan_completed_at)
+        SELECT
+            gen_random_uuid(),
+            agg.tenant_id,
+            agg.provider_id,
+            agg.scan_id,
+            agg.compliance_id,
+            agg.requirement_id,
+            agg.requirement_status,
+            agg.completed_at
+        FROM (
+            SELECT DISTINCT ON (cro.compliance_id, cro.requirement_id)
+                cro.tenant_id,
+                s.provider_id,
+                cro.scan_id,
+                cro.compliance_id,
+                cro.requirement_id,
+                (CASE
+                    WHEN bool_or(cro.requirement_status = 'FAIL')
+                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'FAIL'
+                    WHEN bool_or(cro.requirement_status = 'MANUAL')
+                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'MANUAL'
+                    ELSE 'PASS'
+                END)::status as requirement_status,
+                s.completed_at
+            FROM compliance_requirements_overviews cro
+            JOIN scans s ON s.id = cro.scan_id
+            WHERE cro.tenant_id = %s AND cro.scan_id = %s
+            ORDER BY cro.compliance_id, cro.requirement_id
+        ) agg
+        ON CONFLICT (tenant_id, provider_id, compliance_id, requirement_id)
+        DO UPDATE SET
+            requirement_status = EXCLUDED.requirement_status,
+            scan_id = EXCLUDED.scan_id,
+            scan_completed_at = EXCLUDED.scan_completed_at
+        WHERE EXCLUDED.scan_completed_at > provider_compliance_scores.scan_completed_at
+    """
+
+    total_upserted = 0
+    providers_processed = 0
+    providers_skipped = 0
+
+    for scan in scan_info:
+        provider_id = scan["provider_id"]
+
+        # Skip if provider already has data (backfill only, not update)
+        if provider_id in existing_providers:
+            providers_skipped += 1
+            continue
+
+        scan_id = scan["id"]
+
+        try:
+            with psycopg_connection(MainRouter.admin_db) as connection:
+                connection.autocommit = False
+                try:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id]
+                        )
+                        cursor.execute(upsert_sql, [tenant_id, str(scan_id)])
+                        upserted = cursor.rowcount
+                    connection.commit()
+                    total_upserted += upserted
+                    providers_processed += 1
+                except Exception:
+                    connection.rollback()
+                    raise
+        except Exception as e:
+            print(f"Error backfilling provider {provider_id}: {e}")
+
+    # Recalculate tenant summary after all providers are backfilled
+    if providers_processed > 0:
+        upsert_tenant_summary_sql = """
+            INSERT INTO tenant_compliance_summaries
+                (id, tenant_id, compliance_id,
+                 requirements_passed, requirements_failed, requirements_manual,
+                 total_requirements, updated_at)
+            SELECT
+                gen_random_uuid(),
+                %s as tenant_id,
+                compliance_id,
+                COUNT(*) FILTER (WHERE req_status = 'PASS') as requirements_passed,
+                COUNT(*) FILTER (WHERE req_status = 'FAIL') as requirements_failed,
+                COUNT(*) FILTER (WHERE req_status = 'MANUAL') as requirements_manual,
+                COUNT(*) as total_requirements,
+                NOW() as updated_at
+            FROM (
+                SELECT
+                    compliance_id,
+                    requirement_id,
+                    CASE
+                        WHEN bool_or(requirement_status = 'FAIL') THEN 'FAIL'
+                        WHEN bool_or(requirement_status = 'MANUAL') THEN 'MANUAL'
+                        ELSE 'PASS'
+                    END as req_status
+                FROM provider_compliance_scores
+                WHERE tenant_id = %s
+                GROUP BY compliance_id, requirement_id
+            ) req_agg
+            GROUP BY compliance_id
+            ON CONFLICT (tenant_id, compliance_id)
+            DO UPDATE SET
+                requirements_passed = EXCLUDED.requirements_passed,
+                requirements_failed = EXCLUDED.requirements_failed,
+                requirements_manual = EXCLUDED.requirements_manual,
+                total_requirements = EXCLUDED.total_requirements,
+                updated_at = NOW()
+        """
+
+        with psycopg_connection(MainRouter.admin_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                    # Advisory lock to prevent race conditions
+                    cursor.execute(
+                        "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                    )
+                    cursor.execute(upsert_tenant_summary_sql, [tenant_id, tenant_id])
+                    tenant_summary_count = cursor.rowcount
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+    else:
+        tenant_summary_count = 0
+
+    return {
+        "status": "backfilled",
+        "providers_processed": providers_processed,
+        "providers_skipped": providers_skipped,
+        "total_upserted": total_upserted,
+        "tenant_summary_count": tenant_summary_count,
+    }

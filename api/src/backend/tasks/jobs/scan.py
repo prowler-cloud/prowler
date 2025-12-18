@@ -1489,3 +1489,191 @@ def aggregate_daily_severity(tenant_id: str, scan_id: str):
         "date": str(scan_date),
         "severity_data": severity_data,
     }
+
+
+def update_provider_compliance_scores(tenant_id: str, scan_id: str):
+    """
+    Update ProviderComplianceScore with requirement statuses from a completed scan.
+
+    Uses atomic SQL upsert with ON CONFLICT for concurrency safety. Only updates
+    if the new scan is more recent than existing data. Also cleans up stale
+    requirements that no longer exist in the new scan.
+
+    Reads from primary DB (not replica) to avoid replication lag issues since
+    this runs immediately after create_compliance_requirements_task.
+
+    Args:
+        tenant_id: Tenant that owns the scan.
+        scan_id: Scan UUID whose compliance data should be materialized.
+
+    Returns:
+        dict: Statistics about the upsert operation.
+    """
+    with rls_transaction(tenant_id):
+        scan = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id,
+                id=scan_id,
+                state=StateChoices.COMPLETED,
+            )
+            .select_related("provider")
+            .first()
+        )
+
+        if not scan:
+            logger.warning(
+                f"Scan {scan_id} not found or not completed for compliance score update"
+            )
+            return {"status": "skipped", "reason": "scan not completed"}
+
+        if not scan.completed_at:
+            logger.warning(f"Scan {scan_id} has no completed_at timestamp")
+            return {"status": "skipped", "reason": "no completed_at"}
+
+        provider_id = str(scan.provider_id)
+        scan_completed_at = scan.completed_at
+
+    upsert_sql = """
+        INSERT INTO provider_compliance_scores
+            (id, tenant_id, provider_id, scan_id, compliance_id, requirement_id,
+             requirement_status, scan_completed_at)
+        SELECT
+            gen_random_uuid(),
+            agg.tenant_id,
+            agg.provider_id,
+            agg.scan_id,
+            agg.compliance_id,
+            agg.requirement_id,
+            agg.requirement_status,
+            agg.completed_at
+        FROM (
+            SELECT DISTINCT ON (cro.compliance_id, cro.requirement_id)
+                cro.tenant_id,
+                s.provider_id,
+                cro.scan_id,
+                cro.compliance_id,
+                cro.requirement_id,
+                (CASE
+                    WHEN bool_or(cro.requirement_status = 'FAIL')
+                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'FAIL'
+                    WHEN bool_or(cro.requirement_status = 'MANUAL')
+                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'MANUAL'
+                    ELSE 'PASS'
+                END)::status as requirement_status,
+                s.completed_at
+            FROM compliance_requirements_overviews cro
+            JOIN scans s ON s.id = cro.scan_id
+            WHERE cro.tenant_id = %s AND cro.scan_id = %s
+            ORDER BY cro.compliance_id, cro.requirement_id
+        ) agg
+        ON CONFLICT (tenant_id, provider_id, compliance_id, requirement_id)
+        DO UPDATE SET
+            requirement_status = EXCLUDED.requirement_status,
+            scan_id = EXCLUDED.scan_id,
+            scan_completed_at = EXCLUDED.scan_completed_at
+        WHERE EXCLUDED.scan_completed_at > provider_compliance_scores.scan_completed_at
+    """
+
+    delete_stale_sql = """
+        DELETE FROM provider_compliance_scores pcs
+        WHERE pcs.tenant_id = %s
+          AND pcs.provider_id = %s
+          AND pcs.scan_completed_at < %s
+          AND NOT EXISTS (
+              SELECT 1 FROM compliance_requirements_overviews cro
+              WHERE cro.tenant_id = pcs.tenant_id
+                AND cro.scan_id = %s
+                AND cro.compliance_id = pcs.compliance_id
+                AND cro.requirement_id = pcs.requirement_id
+          )
+    """
+
+    upsert_tenant_summary_sql = """
+        INSERT INTO tenant_compliance_summaries
+            (id, tenant_id, compliance_id,
+             requirements_passed, requirements_failed, requirements_manual,
+             total_requirements, updated_at)
+        SELECT
+            gen_random_uuid(),
+            %s as tenant_id,
+            compliance_id,
+            COUNT(*) FILTER (WHERE req_status = 'PASS') as requirements_passed,
+            COUNT(*) FILTER (WHERE req_status = 'FAIL') as requirements_failed,
+            COUNT(*) FILTER (WHERE req_status = 'MANUAL') as requirements_manual,
+            COUNT(*) as total_requirements,
+            NOW() as updated_at
+        FROM (
+            SELECT
+                compliance_id,
+                requirement_id,
+                CASE
+                    WHEN bool_or(requirement_status = 'FAIL') THEN 'FAIL'
+                    WHEN bool_or(requirement_status = 'MANUAL') THEN 'MANUAL'
+                    ELSE 'PASS'
+                END as req_status
+            FROM provider_compliance_scores
+            WHERE tenant_id = %s
+            GROUP BY compliance_id, requirement_id
+        ) req_agg
+        GROUP BY compliance_id
+        ON CONFLICT (tenant_id, compliance_id)
+        DO UPDATE SET
+            requirements_passed = EXCLUDED.requirements_passed,
+            requirements_failed = EXCLUDED.requirements_failed,
+            requirements_manual = EXCLUDED.requirements_manual,
+            total_requirements = EXCLUDED.total_requirements,
+            updated_at = NOW()
+    """
+
+    try:
+        with psycopg_connection(MainRouter.admin_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+
+                    # Update requirement-level scores per provider
+                    cursor.execute(upsert_sql, [tenant_id, scan_id])
+                    upserted_count = cursor.rowcount
+
+                    cursor.execute(
+                        delete_stale_sql,
+                        [tenant_id, provider_id, scan_completed_at, scan_id],
+                    )
+                    stale_deleted = cursor.rowcount
+
+                    # Advisory lock on tenant to prevent race conditions when
+                    # multiple scans complete simultaneously for the same tenant
+                    cursor.execute(
+                        "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                    )
+
+                    # Recalculate tenant-level summary (FAIL-dominant across all providers)
+                    cursor.execute(upsert_tenant_summary_sql, [tenant_id, tenant_id])
+                    tenant_summary_count = cursor.rowcount
+
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+
+        logger.info(
+            f"Provider compliance scores updated for scan {scan_id}: "
+            f"{upserted_count} upserted, {stale_deleted} stale deleted, "
+            f"{tenant_summary_count} tenant summaries upserted"
+        )
+
+        return {
+            "status": "completed",
+            "scan_id": str(scan_id),
+            "provider_id": provider_id,
+            "upserted": upserted_count,
+            "stale_deleted": stale_deleted,
+            "tenant_summary_count": tenant_summary_count,
+        }
+
+    except Exception as e:
+        logger.error(
+            f"Error updating provider compliance scores for scan {scan_id}: {e}"
+        )
+        raise
