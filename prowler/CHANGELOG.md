@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.16.0] (Prowler UNRELEASED)
+## [5.16.0] (Prowler v5.16.0)
 
 ### Added
 
-- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
@@ -21,10 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
 - Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
 - Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
-
----
-
-## [5.15.2] (Prowler UNRELEASED)
 
 ### Fixed
 - Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
