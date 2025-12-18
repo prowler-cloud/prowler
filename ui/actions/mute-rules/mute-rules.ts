@@ -252,16 +252,15 @@ export const updateMuteRule = async (
     });
 
     if (!response.ok) {
+      let errorMessage = `Failed to update mute rule: ${response.statusText}`;
       try {
         const errorData = await response.json();
-        throw new Error(
-          errorData?.errors?.[0]?.detail ||
-            errorData?.message ||
-            `Failed to update mute rule: ${response.statusText}`,
-        );
+        errorMessage =
+          errorData?.errors?.[0]?.detail || errorData?.message || errorMessage;
       } catch {
-        throw new Error(`Failed to update mute rule: ${response.statusText}`);
+        // JSON parsing failed, use default error message
       }
+      throw new Error(errorMessage);
     }
 
     revalidatePath("/mutelist");
@@ -306,16 +305,15 @@ export const toggleMuteRule = async (
     });
 
     if (!response.ok) {
+      let errorMessage = `Failed to toggle mute rule: ${response.statusText}`;
       try {
         const errorData = await response.json();
-        throw new Error(
-          errorData?.errors?.[0]?.detail ||
-            errorData?.message ||
-            `Failed to toggle mute rule: ${response.statusText}`,
-        );
+        errorMessage =
+          errorData?.errors?.[0]?.detail || errorData?.message || errorMessage;
       } catch {
-        throw new Error(`Failed to toggle mute rule: ${response.statusText}`);
+        // JSON parsing failed, use default error message
       }
+      throw new Error(errorMessage);
     }
 
     revalidatePath("/mutelist");

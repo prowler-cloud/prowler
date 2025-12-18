@@ -3,13 +3,23 @@ import { Info } from "lucide-react";
 import { getMuteRules } from "@/actions/mute-rules";
 import { Card, Skeleton } from "@/components/shadcn";
 import { DataTable } from "@/components/ui/table";
+import { SearchParamsProps } from "@/types/components";
 
 import { muteRulesColumns } from "./mute-rules-columns";
 
-export async function MuteRulesTable() {
+interface MuteRulesTableProps {
+  searchParams: SearchParamsProps;
+}
+
+export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const sort = searchParams.sort?.toString() || "-inserted_at";
+
   const muteRulesData = await getMuteRules({
-    pageSize: 50,
-    sort: "-inserted_at",
+    page,
+    pageSize,
+    sort,
   });
 
   const muteRules = muteRulesData?.data || [];
@@ -55,7 +65,15 @@ export async function MuteRulesTable() {
           <li>Toggle rules on/off to enable or disable muting.</li>
         </ul>
       </div>
-      <DataTable columns={muteRulesColumns} data={muteRules} />
+      <DataTable
+        columns={muteRulesColumns}
+        data={muteRules}
+        metadata={
+          muteRulesData?.meta
+            ? { ...muteRulesData.meta, version: "" }
+            : undefined
+        }
+      />
     </Card>
   );
 }

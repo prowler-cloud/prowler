@@ -4,14 +4,12 @@ import { VolumeX } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { FindingProps } from "@/types";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
 
 interface FloatingMuteButtonProps {
   selectedCount: number;
   selectedFindingIds: string[];
-  selectedFindings: FindingProps[];
   onComplete?: () => void;
 }
 

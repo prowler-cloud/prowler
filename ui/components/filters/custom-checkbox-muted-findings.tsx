@@ -4,6 +4,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Checkbox } from "@/components/shadcn";
 
+// Constants for muted filter URL values
+const MUTED_FILTER_VALUES = {
+  EXCLUDE: "false",
+  INCLUDE: "include",
+} as const;
+
 export const CustomCheckboxMutedFindings = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -16,7 +22,7 @@ export const CustomCheckboxMutedFindings = () => {
   // URL states:
   // - filter[muted]=false → Exclude muted (checkbox UNCHECKED)
   // - filter[muted]=include → Include muted (checkbox CHECKED)
-  const includeMuted = mutedFilterValue === "include";
+  const includeMuted = mutedFilterValue === MUTED_FILTER_VALUES.INCLUDE;
 
   const handleMutedChange = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
@@ -24,10 +30,10 @@ export const CustomCheckboxMutedFindings = () => {
 
     if (isChecked) {
       // Include muted: set special value (API will ignore invalid value and show all)
-      params.set("filter[muted]", "include");
+      params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
     } else {
       // Exclude muted: apply filter to show only non-muted
-      params.set("filter[muted]", "false");
+      params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
     }
 
     // Reset to page 1 when changing filter

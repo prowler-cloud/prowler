@@ -159,9 +159,11 @@ export const ClientAccordionContent = ({
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
-            // Remove select (index 0) and updated_at (index 6) columns for compliance view
+            // Remove select and updated_at columns for compliance view
             columns={getColumnFindings({}, 0).filter(
-              (_: unknown, index: number) => index !== 0 && index !== 6,
+              (col) =>
+                col.id !== "select" &&
+                !("accessorKey" in col && col.accessorKey === "updated_at"),
             )}
             data={expandedFindings || []}
             metadata={findings?.meta}

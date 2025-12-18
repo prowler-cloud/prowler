@@ -28,19 +28,22 @@ export function FindingsTableWithSelection({
     setRowSelection({});
   }, [metadata?.pagination?.page]);
 
+  // Ensure data is always an array for safe operations
+  const safeData = data ?? [];
+
   // Get selected finding IDs and data (only non-muted findings can be selected)
   const selectedFindingIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
-    .map((idx) => data[parseInt(idx)]?.id)
+    .map((idx) => safeData[parseInt(idx)]?.id)
     .filter(Boolean);
 
   const selectedFindings = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
-    .map((idx) => data[parseInt(idx)])
+    .map((idx) => safeData[parseInt(idx)])
     .filter(Boolean);
 
   // Count of selectable rows (non-muted findings only)
-  const selectableRowCount = data.filter((f) => !f.attributes.muted).length;
+  const selectableRowCount = safeData.filter((f) => !f.attributes.muted).length;
 
   // Function to determine if a row can be selected (muted findings cannot be selected)
   const getRowCanSelect = (row: Row<FindingProps>): boolean => {
@@ -75,7 +78,7 @@ export function FindingsTableWithSelection({
     >
       <DataTable
         columns={columns}
-        data={data}
+        data={safeData}
         metadata={metadata}
         enableRowSelection
         rowSelection={rowSelection}
@@ -87,7 +90,6 @@ export function FindingsTableWithSelection({
         <FloatingMuteButton
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
-          selectedFindings={selectedFindings}
           onComplete={handleMuteComplete}
         />
       )}
