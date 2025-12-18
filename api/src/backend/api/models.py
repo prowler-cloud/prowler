@@ -2603,9 +2603,6 @@ class ProviderComplianceScore(RowLevelSecurityProtectedModel):
 
     Used for efficient compliance watchlist queries with FAIL-dominant aggregation
     across multiple providers. Updated via atomic upsert after each scan completion.
-
-    Query pattern: filter providers → GROUP BY (compliance_id, requirement_id)
-    with bool_or(FAIL) → aggregate to compliance_id level.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -2660,8 +2657,6 @@ class TenantComplianceSummary(RowLevelSecurityProtectedModel):
     One row per (tenant, compliance_id). Used for fast watchlist queries when
     no provider filter is applied. Recalculated after each scan by aggregating
     across all providers with FAIL-dominant logic at requirement level.
-
-    ~70 rows per tenant (one per compliance framework).
     """
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
