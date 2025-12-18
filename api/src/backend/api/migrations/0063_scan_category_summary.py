@@ -59,7 +59,6 @@ class Migration(migrations.Migration):
                             ("low", "Low"),
                             ("informational", "Informational"),
                         ],
-                        max_length=50,
                     ),
                 ),
                 (
