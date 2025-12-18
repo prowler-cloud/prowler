@@ -42,10 +42,7 @@ def init_driver() -> neo4j.Driver:
             config = settings.DATABASES["neo4j"]
 
             _driver = neo4j.GraphDatabase.driver(
-                uri,
-                auth=(config["USER"], config["PASSWORD"]),
-                max_connection_lifetime=604800,  # 7 days
-                keep_alive=True,  # It's the default value, but let's being explicit
+                uri, auth=(config["USER"], config["PASSWORD"])
             )
             _driver.verify_connectivity()
 
