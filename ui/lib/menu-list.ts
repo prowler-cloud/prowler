@@ -70,7 +70,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "/findings",
+          href: "/findings?filter[muted]=false",
           label: "Findings",
           icon: Tag,
         },
