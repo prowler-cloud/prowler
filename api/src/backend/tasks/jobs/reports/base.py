@@ -498,23 +498,7 @@ class BaseComplianceReportGenerator(ABC):
         elements.append(Spacer(1, 0.5 * inch))
 
         # Compliance info table
-        info_rows = [
-            ("Framework:", data.framework),
-            ("ID:", data.compliance_id),
-            ("Name:", data.name),
-            ("Version:", data.version),
-        ]
-
-        # Add provider info if available
-        if data.provider_obj:
-            info_rows.append(("Provider:", data.provider_obj.provider.upper()))
-            info_rows.append(("Account ID:", data.provider_obj.uid or "N/A"))
-            info_rows.append(("Alias:", data.provider_obj.alias or "N/A"))
-
-        info_rows.append(("Scan ID:", data.scan_id))
-
-        if data.description:
-            info_rows.append(("Description:", data.description))
+        info_rows = self._build_info_rows(data, language=self.config.language)
 
         info_table = create_info_table(
             rows=info_rows,
@@ -525,6 +509,73 @@ class BaseComplianceReportGenerator(ABC):
         elements.append(info_table)
 
         return elements
+
+    def _build_info_rows(
+        self, data: ComplianceData, language: str = "en"
+    ) -> list[tuple[str, str]]:
+        """Build the standard info rows for the cover page table.
+
+        This helper method creates the common metadata rows used in all
+        report cover pages. Subclasses can use this to maintain consistency
+        while customizing other aspects of the cover page.
+
+        Args:
+            data: Aggregated compliance data.
+            language: Language for labels ("en" or "es").
+
+        Returns:
+            List of (label, value) tuples for the info table.
+        """
+        # Labels based on language
+        labels = {
+            "en": {
+                "framework": "Framework:",
+                "id": "ID:",
+                "name": "Name:",
+                "version": "Version:",
+                "provider": "Provider:",
+                "account_id": "Account ID:",
+                "alias": "Alias:",
+                "scan_id": "Scan ID:",
+                "description": "Description:",
+            },
+            "es": {
+                "framework": "Framework:",
+                "id": "ID:",
+                "name": "Nombre:",
+                "version": "Versión:",
+                "provider": "Proveedor:",
+                "account_id": "Account ID:",
+                "alias": "Alias:",
+                "scan_id": "Scan ID:",
+                "description": "Descripción:",
+            },
+        }
+        lang_labels = labels.get(language, labels["en"])
+
+        info_rows = [
+            (lang_labels["framework"], data.framework),
+            (lang_labels["id"], data.compliance_id),
+            (lang_labels["name"], data.name),
+            (lang_labels["version"], data.version),
+        ]
+
+        # Add provider info if available
+        if data.provider_obj:
+            info_rows.append(
+                (lang_labels["provider"], data.provider_obj.provider.upper())
+            )
+            info_rows.append(
+                (lang_labels["account_id"], data.provider_obj.uid or "N/A")
+            )
+            info_rows.append((lang_labels["alias"], data.provider_obj.alias or "N/A"))
+
+        info_rows.append((lang_labels["scan_id"], data.scan_id))
+
+        if data.description:
+            info_rows.append((lang_labels["description"], data.description))
+
+        return info_rows
 
     def create_detailed_findings(self, data: ComplianceData, **kwargs) -> list:
         """Create the detailed findings section.

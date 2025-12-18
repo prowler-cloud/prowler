@@ -110,14 +110,17 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
         elements.append(title)
         elements.append(Spacer(1, 0.3 * inch))
 
-        # Compliance metadata table
-        metadata_data = [
-            ["Framework:", data.framework],
-            ["Name:", Paragraph(data.name, self.styles["normal_center"])],
-            ["Version:", data.version or "N/A"],
-            ["Scan ID:", data.scan_id],
-            ["Description:", Paragraph(data.description, self.styles["normal_center"])],
-        ]
+        # Compliance metadata table - use base class helper for consistency
+        info_rows = self._build_info_rows(data, language="en")
+        # Convert tuples to lists and wrap long text in Paragraphs
+        metadata_data = []
+        for label, value in info_rows:
+            if label in ("Name:", "Description:") and value:
+                metadata_data.append(
+                    [label, Paragraph(value, self.styles["normal_center"])]
+                )
+            else:
+                metadata_data.append([label, value])
 
         metadata_table = Table(metadata_data, colWidths=[2 * inch, 4 * inch])
         metadata_table.setStyle(

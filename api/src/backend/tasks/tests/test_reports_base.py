@@ -819,6 +819,219 @@ class TestBaseComplianceReportGenerator:
         assert left == "Página 1"
 
 
+class TestBuildInfoRows:
+    """Tests for _build_info_rows helper method."""
+
+    def _create_generator(self, language="en"):
+        """Create a concrete generator for testing."""
+
+        class ConcreteGenerator(BaseComplianceReportGenerator):
+            def create_executive_summary(self, data):
+                return []
+
+            def create_charts_section(self, data):
+                return []
+
+            def create_requirements_index(self, data):
+                return []
+
+        config = FrameworkConfig(name="test", display_name="Test", language=language)
+        return ConcreteGenerator(config)
+
+    def test_build_info_rows_english(self):
+        """Test info rows are built with English labels."""
+        generator = self._create_generator(language="en")
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test Framework",
+            name="Test Name",
+            version="1.0",
+            description="Test description",
+        )
+
+        rows = generator._build_info_rows(data, language="en")
+
+        assert ("Framework:", "Test Framework") in rows
+        assert ("Name:", "Test Name") in rows
+        assert ("Version:", "1.0") in rows
+        assert ("Scan ID:", "scan-123") in rows
+        assert ("Description:", "Test description") in rows
+
+    def test_build_info_rows_spanish(self):
+        """Test info rows are built with Spanish labels."""
+        generator = self._create_generator(language="es")
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test Framework",
+            name="Test Name",
+            version="1.0",
+            description="Test description",
+        )
+
+        rows = generator._build_info_rows(data, language="es")
+
+        assert ("Framework:", "Test Framework") in rows
+        assert ("Nombre:", "Test Name") in rows
+        assert ("Versión:", "1.0") in rows
+        assert ("Scan ID:", "scan-123") in rows
+        assert ("Descripción:", "Test description") in rows
+
+    def test_build_info_rows_with_provider(self):
+        """Test info rows include provider info when available."""
+        from unittest.mock import Mock
+
+        generator = self._create_generator(language="en")
+
+        mock_provider = Mock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "123456789012"
+        mock_provider.alias = "my-account"
+
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            provider_obj=mock_provider,
+        )
+
+        rows = generator._build_info_rows(data, language="en")
+
+        assert ("Provider:", "AWS") in rows
+        assert ("Account ID:", "123456789012") in rows
+        assert ("Alias:", "my-account") in rows
+
+    def test_build_info_rows_with_provider_spanish(self):
+        """Test provider info uses Spanish labels."""
+        from unittest.mock import Mock
+
+        generator = self._create_generator(language="es")
+
+        mock_provider = Mock()
+        mock_provider.provider = "azure"
+        mock_provider.uid = "subscription-id"
+        mock_provider.alias = "mi-suscripcion"
+
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            provider_obj=mock_provider,
+        )
+
+        rows = generator._build_info_rows(data, language="es")
+
+        assert ("Proveedor:", "AZURE") in rows
+        assert ("Account ID:", "subscription-id") in rows
+        assert ("Alias:", "mi-suscripcion") in rows
+
+    def test_build_info_rows_without_provider(self):
+        """Test info rows work without provider info."""
+        generator = self._create_generator(language="en")
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            provider_obj=None,
+        )
+
+        rows = generator._build_info_rows(data, language="en")
+
+        # Provider info should not be present
+        labels = [label for label, _ in rows]
+        assert "Provider:" not in labels
+        assert "Account ID:" not in labels
+        assert "Alias:" not in labels
+
+    def test_build_info_rows_provider_with_missing_fields(self):
+        """Test provider info handles None values gracefully."""
+        from unittest.mock import Mock
+
+        generator = self._create_generator(language="en")
+
+        mock_provider = Mock()
+        mock_provider.provider = "gcp"
+        mock_provider.uid = None
+        mock_provider.alias = None
+
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            provider_obj=mock_provider,
+        )
+
+        rows = generator._build_info_rows(data, language="en")
+
+        assert ("Provider:", "GCP") in rows
+        assert ("Account ID:", "N/A") in rows
+        assert ("Alias:", "N/A") in rows
+
+    def test_build_info_rows_without_description(self):
+        """Test info rows exclude description when empty."""
+        generator = self._create_generator(language="en")
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+        )
+
+        rows = generator._build_info_rows(data, language="en")
+
+        labels = [label for label, _ in rows]
+        assert "Description:" not in labels
+
+    def test_build_info_rows_defaults_to_english(self):
+        """Test unknown language defaults to English labels."""
+        generator = self._create_generator(language="en")
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="Desc",
+        )
+
+        rows = generator._build_info_rows(data, language="fr")  # Unknown language
+
+        # Should use English labels as fallback
+        assert ("Name:", "Test") in rows
+        assert ("Description:", "Desc") in rows
+
+
 # =============================================================================
 # Integration Tests
 # =============================================================================
