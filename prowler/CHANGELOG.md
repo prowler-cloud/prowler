@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.16.0] (Prowler UNRELEASED)
+## [5.16.0] (Prowler v5.16.0)
 
 ### Added
 
@@ -21,10 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
 - Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
 - Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
-
----
-
-## [5.15.2] (Prowler UNRELEASED)
 
 ### Fixed
 - Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
