@@ -29,7 +29,7 @@ def start_aws_ingestion(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, dict[str, str]]:
     """
-    Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws.__init__.py`.
+    Code based on Cartography version 0.122.0, specifically on `cartography.intel.aws.__init__.py`.
 
     For the scan progress updates:
         - The caller of this function (`tasks.jobs.attack_paths.scan.run`) has set it to 2.
