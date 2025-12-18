@@ -92,7 +92,7 @@ export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
 
   const defaultProvider = tenantConfig?.default_provider || "openai";
   const defaultModels = tenantConfig?.default_models || {};
-  const defaultModel = defaultModels[defaultProvider] || "gpt-4o";
+  const defaultModel = defaultModels[defaultProvider] || "gpt-5.2";
 
   const providerType = (runtimeConfig?.provider ||
     defaultProvider) as ProviderType;
