@@ -4032,13 +4032,11 @@ class TestUpdateProviderComplianceScores:
         self,
         mock_psycopg_connection,
         tenants_fixture,
-        providers_fixture,
         scans_fixture,
         settings,
     ):
         settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
         tenant = tenants_fixture[0]
-        providers_fixture[0]
         scan = scans_fixture[0]
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
