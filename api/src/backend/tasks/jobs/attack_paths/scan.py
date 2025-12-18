@@ -7,6 +7,7 @@ from typing import Any, Callable
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
+from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
@@ -35,7 +36,7 @@ def get_cartography_ingestion_function(provider_type: str) -> Callable | None:
 
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     """
-    Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
+    Code based on Cartography version 0.122.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
     ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
@@ -100,8 +101,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             )
 
             # Post-processing: Just keeping it to be more Cartography compliant
-            cartography_analysis.run(neo4j_session, cartography_config)
+            cartography_ontology.run(neo4j_session, cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
+
+            cartography_analysis.run(neo4j_session, cartography_config)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler nodes and relationships
             prowler.analysis(
