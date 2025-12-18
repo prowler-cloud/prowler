@@ -40,7 +40,33 @@ function truncateDescription(desc: string | undefined, maxLen: number): string {
 }
 
 /**
+ * Tools that are blocked from being listed and executed by the LLM.
+ * These are destructive or sensitive operations that should only be
+ * performed through the UI with explicit user action.
+ */
+const BLOCKED_TOOLS = new Set([
+  "prowler_app_connect_provider",
+  "prowler_app_delete_provider",
+  "prowler_app_trigger_scan",
+  "prowler_app_schedule_daily_scan",
+  "prowler_app_update_scan",
+  "prowler_app_delete_mutelist",
+  "prowler_app_set_mutelist",
+  "prowler_app_create_mute_rule",
+  "prowler_app_update_mute_rule",
+  "prowler_app_delete_mute_rule",
+]);
+
+/**
+ * Check if a tool is blocked
+ */
+export function isBlockedTool(toolName: string): boolean {
+  return BLOCKED_TOOLS.has(toolName);
+}
+
+/**
  * Generate dynamic tool listing from MCP tools
+ * Filters out blocked/destructive tools
  */
 function generateToolListing(): string {
   if (!isMCPAvailable()) {
@@ -53,10 +79,13 @@ function generateToolListing(): string {
     return TOOLS_UNAVAILABLE_MESSAGE;
   }
 
-  let listing = "\n## Available Prowler Tools\n\n";
-  listing += `${mcpTools.length} tools loaded from Prowler MCP\n\n`;
+  // Filter out blocked tools
+  const safeTools = mcpTools.filter((tool) => !isBlockedTool(tool.name));
 
-  for (const tool of mcpTools) {
+  let listing = "\n## Available Prowler Tools\n\n";
+  listing += `${safeTools.length} tools loaded from Prowler MCP\n\n`;
+
+  for (const tool of safeTools) {
     const desc = truncateDescription(tool.description, 150);
     listing += `- **${tool.name}**: ${desc}\n`;
   }
