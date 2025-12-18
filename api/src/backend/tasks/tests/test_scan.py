@@ -24,6 +24,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
 
@@ -4022,3 +4023,124 @@ class TestAggregateCategoryCounts:
         assert len(cache) == 3
         for cat in ["security", "compliance", "data-protection"]:
             assert cache[(cat, "low")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+
+@pytest.mark.django_db
+class TestUpdateProviderComplianceScores:
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_basic(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        providers_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 2
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+        assert result["upserted"] == 2
+        assert cursor.execute.call_count >= 3
+        connection.commit.assert_called_once()
+
+    def test_update_provider_compliance_scores_skips_incomplete_scan(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[1]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not completed"
+
+    def test_update_provider_compliance_scores_skips_no_completed_at(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = None
+        scan.save()
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "no completed_at"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 1
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+
+        calls = [str(c) for c in cursor.execute.call_args_list]
+        assert any("provider_compliance_scores" in c for c in calls)
+        assert any("tenant_compliance_summaries" in c for c in calls)
+        assert any("pg_advisory_xact_lock" in c for c in calls)

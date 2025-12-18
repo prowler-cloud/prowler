@@ -1,9 +1,21 @@
+from datetime import datetime, timezone
+
 import pytest
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from api.db_router import MainRouter
-from api.models import Resource, ResourceTag, SAMLConfiguration, SAMLDomainIndex
+from api.models import (
+    ProviderComplianceScore,
+    Resource,
+    ResourceTag,
+    SAMLConfiguration,
+    SAMLDomainIndex,
+    StateChoices,
+    StatusChoices,
+    TenantComplianceSummary,
+)
 
 
 @pytest.mark.django_db
@@ -324,3 +336,159 @@ class TestSAMLConfigurationModel:
         errors = exc_info.value.message_dict
         assert "metadata_xml" in errors
         assert "There is a problem with your metadata." in errors["metadata_xml"][0]
+
+
+@pytest.mark.django_db
+class TestProviderComplianceScoreModel:
+    def test_create_provider_compliance_score(self, providers_fixture, scans_fixture):
+        provider = providers_fixture[0]
+        scan = scans_fixture[0]
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        score = ProviderComplianceScore.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            scan=scan,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan.completed_at,
+        )
+
+        assert score.compliance_id == "aws_cis_2.0"
+        assert score.requirement_id == "req_1"
+        assert score.requirement_status == StatusChoices.PASS
+
+    def test_unique_constraint_per_provider_compliance_requirement(
+        self, providers_fixture, scans_fixture
+    ):
+        provider = providers_fixture[0]
+        scan = scans_fixture[0]
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        ProviderComplianceScore.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            scan=scan,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan.completed_at,
+        )
+
+        with pytest.raises(IntegrityError):
+            ProviderComplianceScore.objects.create(
+                tenant_id=provider.tenant_id,
+                provider=provider,
+                scan=scan,
+                compliance_id="aws_cis_2.0",
+                requirement_id="req_1",
+                requirement_status=StatusChoices.FAIL,
+                scan_completed_at=scan.completed_at,
+            )
+
+    def test_different_providers_same_requirement_allowed(
+        self, providers_fixture, scans_fixture
+    ):
+        provider1, provider2, *_ = providers_fixture
+        scan1 = scans_fixture[0]
+        scan1.completed_at = datetime.now(timezone.utc)
+        scan1.save()
+
+        scan2 = scans_fixture[2]
+        scan2.state = StateChoices.COMPLETED
+        scan2.completed_at = datetime.now(timezone.utc)
+        scan2.save()
+
+        score1 = ProviderComplianceScore.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        )
+
+        score2 = ProviderComplianceScore.objects.create(
+            tenant_id=provider2.tenant_id,
+            provider=provider2,
+            scan=scan2,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.FAIL,
+            scan_completed_at=scan2.completed_at,
+        )
+
+        assert score1.id != score2.id
+        assert score1.requirement_status != score2.requirement_status
+
+
+@pytest.mark.django_db
+class TestTenantComplianceSummaryModel:
+    def test_create_tenant_compliance_summary(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+
+        summary = TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=5,
+            requirements_failed=2,
+            requirements_manual=1,
+            total_requirements=8,
+        )
+
+        assert summary.compliance_id == "aws_cis_2.0"
+        assert summary.requirements_passed == 5
+        assert summary.requirements_failed == 2
+        assert summary.requirements_manual == 1
+        assert summary.total_requirements == 8
+        assert summary.updated_at is not None
+
+    def test_unique_constraint_per_tenant_compliance(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=5,
+            requirements_failed=2,
+            requirements_manual=1,
+            total_requirements=8,
+        )
+
+        with pytest.raises(IntegrityError):
+            TenantComplianceSummary.objects.create(
+                tenant_id=tenant.id,
+                compliance_id="aws_cis_2.0",
+                requirements_passed=3,
+                requirements_failed=4,
+                requirements_manual=1,
+                total_requirements=8,
+            )
+
+    def test_different_tenants_same_compliance_allowed(self, tenants_fixture):
+        tenant1, tenant2, *_ = tenants_fixture
+
+        summary1 = TenantComplianceSummary.objects.create(
+            tenant_id=tenant1.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=5,
+            requirements_failed=2,
+            requirements_manual=1,
+            total_requirements=8,
+        )
+
+        summary2 = TenantComplianceSummary.objects.create(
+            tenant_id=tenant2.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=3,
+            requirements_failed=4,
+            requirements_manual=1,
+            total_requirements=8,
+        )
+
+        assert summary1.id != summary2.id
+        assert summary1.requirements_passed != summary2.requirements_passed

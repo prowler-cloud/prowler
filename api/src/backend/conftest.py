@@ -30,6 +30,7 @@ from api.models import (
     MuteRule,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderSecret,
     Resource,
@@ -45,6 +46,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    TenantComplianceSummary,
     User,
     UserRoleRelationship,
 )
@@ -1622,6 +1624,108 @@ def create_scan_category_summary():
 
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def provider_compliance_scores_fixture(
+    tenants_fixture, providers_fixture, scans_fixture
+):
+    """Create ProviderComplianceScore entries for compliance watchlist tests."""
+    tenant = tenants_fixture[0]
+    provider1, provider2, *_ = providers_fixture
+    scan1, _, scan3 = scans_fixture
+
+    scan1.completed_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    scan1.save()
+    scan3.state = StateChoices.COMPLETED
+    scan3.completed_at = datetime.now(timezone.utc)
+    scan3.save()
+
+    scores = [
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_2",
+            requirement_status=StatusChoices.FAIL,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_3",
+            requirement_status=StatusChoices.MANUAL,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            scan=scan3,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.FAIL,
+            scan_completed_at=scan3.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            scan=scan3,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_2",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan3.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="gdpr_aws",
+            requirement_id="gdpr_req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        ),
+    ]
+
+    return scores
+
+
+@pytest.fixture
+def tenant_compliance_summary_fixture(tenants_fixture):
+    """Create TenantComplianceSummary entries for compliance watchlist tests."""
+    tenant = tenants_fixture[0]
+
+    summaries = [
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=1,
+            requirements_failed=2,
+            requirements_manual=1,
+            total_requirements=4,
+        ),
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="gdpr_aws",
+            requirements_passed=5,
+            requirements_failed=0,
+            requirements_manual=2,
+            total_requirements=7,
+        ),
+    ]
+
+    return summaries
 
 
 def pytest_collection_modifyitems(items):

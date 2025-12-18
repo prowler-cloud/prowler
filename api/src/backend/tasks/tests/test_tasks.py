@@ -726,7 +726,9 @@ class TestGenerateOutputs:
 
 class TestScanCompleteTasks:
     @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
-    @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_compliance_reports_task.si")
@@ -737,15 +739,22 @@ class TestScanCompleteTasks:
         mock_compliance_reports_task,
         mock_outputs_task,
         mock_scan_summary_task,
+        mock_update_compliance_scores_task,
         mock_compliance_requirements_task,
+        mock_chain,
         mock_attack_surface_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
 
-        # Verify compliance requirements task is called
+        # Verify compliance requirements task is called via chain
         mock_compliance_requirements_task.assert_called_once_with(
-            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+            tenant_id="tenant-id", scan_id="scan-id"
+        )
+
+        # Verify update provider compliance scores task is called via chain
+        mock_update_compliance_scores_task.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id"
         )
 
         # Verify attack surface task is called
