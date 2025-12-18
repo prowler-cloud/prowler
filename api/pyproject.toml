@@ -37,6 +37,7 @@ dependencies = [
   "matplotlib (>=3.10.6,<4.0.0)",
   "reportlab (>=4.4.4,<5.0.0)",
   "neo4j (<6.0.0)",
+  "cartography @ git+https://github.com/prowler-cloud/cartography@azure-mgmt-sql-3",
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
