@@ -1,3 +1,17 @@
+// Base relationship data structure
+export interface RelationshipData {
+  type: "users";
+  id: string;
+}
+
+export interface CreatedByRelationship {
+  data: RelationshipData | null;
+}
+
+export interface MuteRuleRelationships {
+  created_by?: CreatedByRelationship;
+}
+
 export interface MuteRuleAttributes {
   inserted_at: string;
   updated_at: string;
@@ -7,15 +21,6 @@ export interface MuteRuleAttributes {
   finding_uids: string[];
 }
 
-export interface MuteRuleRelationships {
-  created_by?: {
-    data: {
-      type: "users";
-      id: string;
-    } | null;
-  };
-}
-
 export interface MuteRuleData {
   type: "mute-rules";
   id: string;
@@ -23,40 +28,52 @@ export interface MuteRuleData {
   relationships?: MuteRuleRelationships;
 }
 
+// Response pagination and links
+export interface MuteRulesPagination {
+  page: number;
+  pages: number;
+  count: number;
+}
+
+export interface MuteRulesMeta {
+  pagination: MuteRulesPagination;
+}
+
+export interface MuteRulesLinks {
+  first: string;
+  last: string;
+  next: string | null;
+  prev: string | null;
+}
+
 export interface MuteRulesResponse {
   data: MuteRuleData[];
-  meta: {
-    pagination: {
-      page: number;
-      pages: number;
-      count: number;
-    };
-  };
-  links: {
-    first: string;
-    last: string;
-    next: string | null;
-    prev: string | null;
-  };
+  meta: MuteRulesMeta;
+  links: MuteRulesLinks;
 }
 
 export interface MuteRuleResponse {
   data: MuteRuleData;
 }
 
+// Action state types
+export interface MuteRuleActionErrors {
+  name?: string;
+  reason?: string;
+  finding_ids?: string;
+  general?: string;
+}
+
 export type MuteRuleActionState = {
-  errors?: {
-    name?: string;
-    reason?: string;
-    finding_ids?: string;
-    general?: string;
-  };
+  errors?: MuteRuleActionErrors;
   success?: string;
 } | null;
 
+export interface DeleteMuteRuleActionErrors {
+  general?: string;
+}
+
 export type DeleteMuteRuleActionState = {
-  errors?: {
-    general?: string;
-  };
+  errors?: DeleteMuteRuleActionErrors;
   success?: string;
 } | null;
