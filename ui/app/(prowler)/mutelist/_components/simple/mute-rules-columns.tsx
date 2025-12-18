@@ -2,9 +2,9 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
+import { MuteRuleData } from "@/actions/mute-rules/types";
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { MuteRuleData } from "@/types/mute-rules";
 
 import { MuteRuleEnabledToggle } from "./mute-rule-enabled-toggle";
 import { MuteRuleRowActions } from "./mute-rule-row-actions";

@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+
 import {
   DeleteMuteRuleActionState,
   MuteRuleActionState,
   MuteRuleData,
   MuteRulesResponse,
-} from "@/types/mute-rules";
+} from "./types";
 
 interface GetMuteRulesParams {
   page?: number;

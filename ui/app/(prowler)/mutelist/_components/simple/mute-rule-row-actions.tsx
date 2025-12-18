@@ -9,9 +9,9 @@ import {
 } from "@heroui/dropdown";
 import { Pencil, Trash2 } from "lucide-react";
 
+import { MuteRuleData } from "@/actions/mute-rules/types";
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { MuteRuleData } from "@/types/mute-rules";
 
 interface MuteRuleRowActionsProps {
   muteRule: MuteRuleData;

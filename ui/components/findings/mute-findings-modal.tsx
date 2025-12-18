@@ -1,13 +1,19 @@
 "use client";
 
 import { Input, Textarea } from "@heroui/input";
-import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useRef,
+} from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
+import { MuteRuleActionState } from "@/actions/mute-rules/types";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
-import { MuteRuleActionState } from "@/types/mute-rules";
 
 interface MuteFindingsModalProps {
   isOpen: boolean;
@@ -24,6 +30,13 @@ export function MuteFindingsModal({
 }: MuteFindingsModalProps) {
   const { toast } = useToast();
 
+  // Use refs to avoid stale closures in useEffect
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
   const [state, formAction, isPending] = useActionState<
     MuteRuleActionState,
     FormData
@@ -36,8 +49,8 @@ export function MuteFindingsModal({
         description: state.success,
       });
       // Call onComplete BEFORE closing the modal to ensure router.refresh() executes
-      onComplete?.();
-      onOpenChange(false);
+      onCompleteRef.current?.();
+      onOpenChangeRef.current(false);
     } else if (state?.errors?.general) {
       toast({
         variant: "destructive",
@@ -45,7 +58,7 @@ export function MuteFindingsModal({
         description: state.errors.general,
       });
     }
-  }, [state, toast, onOpenChange, onComplete]);
+  }, [state, toast]);
 
   const handleCancel = () => {
     onOpenChange(false);

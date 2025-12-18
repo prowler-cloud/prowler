@@ -4,8 +4,8 @@ import { Switch } from "@heroui/switch";
 import { useState } from "react";
 
 import { toggleMuteRule } from "@/actions/mute-rules";
+import { MuteRuleData } from "@/actions/mute-rules/types";
 import { useToast } from "@/components/ui";
-import { MuteRuleData } from "@/types/mute-rules";
 
 interface MuteRuleEnabledToggleProps {
   muteRule: MuteRuleData;

@@ -4,9 +4,9 @@ import { Input, Textarea } from "@heroui/input";
 import { useActionState, useEffect } from "react";
 
 import { updateMuteRule } from "@/actions/mute-rules";
+import { MuteRuleActionState, MuteRuleData } from "@/actions/mute-rules/types";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
-import { MuteRuleActionState, MuteRuleData } from "@/types/mute-rules";
 
 interface MuteRuleEditFormProps {
   muteRule: MuteRuleData;

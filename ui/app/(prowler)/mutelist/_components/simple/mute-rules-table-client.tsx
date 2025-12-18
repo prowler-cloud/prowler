@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 
 import { deleteMuteRule } from "@/actions/mute-rules";
+import { MuteRuleData } from "@/actions/mute-rules/types";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
-import { MuteRuleData } from "@/types/mute-rules";
 
 import { MuteRuleEditForm } from "./mute-rule-edit-form";
 import { createMuteRulesColumns } from "./mute-rules-columns";

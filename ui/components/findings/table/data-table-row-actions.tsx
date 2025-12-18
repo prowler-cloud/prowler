@@ -69,9 +69,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   };
 
   const handleMuteComplete = () => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      clearSelection();
-    }
+    // Always clear selection when a finding is muted because:
+    // 1. If the muted finding was selected, its index now points to a different finding
+    // 2. rowSelection uses indices (0, 1, 2...) not IDs, so after refresh the wrong findings would appear selected
+    clearSelection();
     router.refresh();
   };
 

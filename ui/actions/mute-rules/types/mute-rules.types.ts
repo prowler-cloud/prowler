@@ -1,3 +1,6 @@
+// Mute Rules Types
+// Corresponds to the /mute-rules endpoint
+
 // Base relationship data structure
 export interface RelationshipData {
   type: "users";

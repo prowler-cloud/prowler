@@ -2,7 +2,7 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DataTable } from "@/components/ui/table";
 import { FindingProps, MetaDataProps } from "@/types";
@@ -23,10 +23,23 @@ export function FindingsTableWithSelection({
   const router = useRouter();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+  // Track the finding IDs to detect when data changes (e.g., after muting)
+  const currentFindingIds = (data ?? []).map((f) => f.id).join(",");
+  const previousFindingIdsRef = useRef(currentFindingIds);
+
   // Reset selection when page changes
   useEffect(() => {
     setRowSelection({});
   }, [metadata?.pagination?.page]);
+
+  // Reset selection when the data changes (e.g., after muting a finding)
+  // This prevents the wrong findings from appearing selected after refresh
+  useEffect(() => {
+    if (previousFindingIdsRef.current !== currentFindingIds) {
+      setRowSelection({});
+      previousFindingIdsRef.current = currentFindingIds;
+    }
+  }, [currentFindingIds]);
 
   // Ensure data is always an array for safe operations
   const safeData = data ?? [];
