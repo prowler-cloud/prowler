@@ -1,29 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "trustedadvisor_premium_support_plan_subscribed",
-  "CheckTitle": "Check if a Premium support plan is subscribed",
-  "CheckType": [],
+  "CheckTitle": "AWS account is subscribed to an AWS Premium Support plan",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "trustedadvisor",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:iam::AWS_ACCOUNT_NUMBER:root",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "Check if a Premium support plan is subscribed.",
-  "Risk": "Ensure that the appropriate support level is enabled for the necessary AWS accounts. For example, if an AWS account is being used to host production systems and environments, it is highly recommended that the minimum AWS Support Plan should be Business.",
-  "RelatedUrl": "https://aws.amazon.com/premiumsupport/plans/",
+  "Description": "**AWS account** is subscribed to an **AWS Premium Support plan** (e.g., Business or Enterprise)",
+  "Risk": "Without **Premium Support**, critical incidents face slower response, reducing **availability** and delaying containment of security events. Limited Trusted Advisor coverage lets **misconfigurations** persist, risking **data exposure** and **privilege misuse**. Lack of expert guidance increases change risk during production impacts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html",
+    "https://aws.amazon.com/premiumsupport/plans/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html",
+      "Other": "1. Sign in to the AWS Management Console as the account root user\n2. Open https://console.aws.amazon.com/support/home#/plans\n3. Click \"Change plan\"\n4. Select \"Business Support\" (or higher) and click \"Continue\"\n5. Review and confirm the upgrade",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "It is recommended that you subscribe to the AWS Business Support tier or higher for all of your AWS production accounts. If you don't have premium support, you must have an action plan to handle issues which require help from AWS Support. AWS Support provides a mix of tools and technology, people, and programs designed to proactively help you optimize performance, lower costs, and innovate faster.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html"
+      "Text": "Adopt **Business** or higher for production and mission-critical accounts.\n- Integrate Support into IR with defined contacts/severity\n- Enforce **least privilege** for case access\n- Use Trusted Advisor for proactive hardening\n- If opting out, ensure an equivalent 24/7 support and escalation path",
+      "Url": "https://hub.prowler.com/check/trustedadvisor_premium_support_plan_subscribed"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

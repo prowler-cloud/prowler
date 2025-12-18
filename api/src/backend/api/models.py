@@ -716,14 +716,19 @@ class Resource(RowLevelSecurityProtectedModel):
             self.clear_tags()
             return
 
-        # Add new relationships with the tenant_id field
+        # Add new relationships with the tenant_id field; avoid touching the
+        # Resource row unless a mapping is actually created to prevent noisy
+        # updates during scans.
+        mapping_created = False
         for tag in tags:
-            ResourceTagMapping.objects.update_or_create(
+            _, created = ResourceTagMapping.objects.update_or_create(
                 tag=tag, resource=self, tenant_id=self.tenant_id
             )
+            mapping_created = mapping_created or created
 
-        # Save the instance
-        self.save()
+        if mapping_created:
+            # Only bump updated_at when the tag set truly changed
+            self.save(update_fields=["updated_at"])
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resources"
@@ -866,6 +871,14 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         models.CharField(max_length=100),
         blank=True,
         null=True,
+    )
+
+    # Check metadata denormalization
+    categories = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Categories from check metadata for efficient filtering",
     )
 
     # Relationships
@@ -1500,6 +1513,65 @@ class ScanSummary(RowLevelSecurityProtectedModel):
         resource_name = "scan-summaries"
 
 
+class DailySeveritySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated daily severity counts per provider.
+    Used by findings_severity/timeseries endpoint for efficient queries.
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    date = models.DateField()
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+
+    # Aggregated fail counts by severity
+    critical = models.IntegerField(default=0)
+    high = models.IntegerField(default=0)
+    medium = models.IntegerField(default=0)
+    low = models.IntegerField(default=0)
+    informational = models.IntegerField(default=0)
+    muted = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "daily_severity_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider", "date"),
+                name="unique_daily_severity_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="dss_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="dss_tenant_provider_idx",
+            ),
+        ]
+
+
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         AMAZON_S3 = "amazon_s3", _("Amazon S3")
@@ -1890,6 +1962,64 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class ScanCategorySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated category metrics per scan by severity.
+
+    Stores one row per (category, severity) combination per scan for efficient
+    overview queries. Categories come from check_metadata.categories.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="category_summaries",
+        related_query_name="category_summary",
+    )
+
+    category = models.CharField(max_length=100)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_category_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="scs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "category", "severity"),
+                name="unique_category_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-category-summaries"
 
 
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):

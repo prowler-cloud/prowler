@@ -1301,6 +1301,7 @@ class FindingSerializer(RLSSerializer):
             "severity",
             "check_id",
             "check_metadata",
+            "categories",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1356,6 +1357,7 @@ class FindingMetadataSerializer(BaseSerializerV1):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
+    categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -2204,6 +2206,22 @@ class OverviewSeveritySerializer(BaseSerializerV1):
         resource_name = "findings-severity-overview"
 
 
+class FindingsSeverityOverTimeSerializer(BaseSerializerV1):
+    """Serializer for daily findings severity trend data."""
+
+    id = serializers.DateField(source="date")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+    scan_ids = serializers.ListField(child=serializers.UUIDField())
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-over-time"
+
+
 class OverviewServiceSerializer(BaseSerializerV1):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()
@@ -2226,12 +2244,24 @@ class AttackSurfaceOverviewSerializer(BaseSerializerV1):
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     muted_failed_findings = serializers.IntegerField()
-    check_ids = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True, default=list, read_only=True
-    )
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class CategoryOverviewSerializer(BaseSerializerV1):
+    """Serializer for category overview aggregations."""
+
+    id = serializers.CharField(source="category")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "category-overviews"
 
 
 class OverviewRegionSerializer(serializers.Serializer):
@@ -3299,6 +3329,19 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
             and provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
+            # For updates, enforce that the authentication method (access keys vs API key)
+            # is immutable. To switch methods, the UI must delete and recreate the provider.
+            existing_credentials = (
+                self.instance.credentials_decoded if self.instance else {}
+            ) or {}
+
+            existing_uses_api_key = "api_key" in existing_credentials
+            existing_uses_access_keys = any(
+                k in existing_credentials
+                for k in ("access_key_id", "secret_access_key")
+            )
+
+            # First run field-level validation on the partial payload
             try:
                 BedrockCredentialsUpdateSerializer(data=credentials).is_valid(
                     raise_exception=True
@@ -3309,6 +3352,31 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     e.detail[f"credentials/{key}"] = value
                     del e.detail[key]
                 raise e
+
+            # Then enforce invariants about not changing the auth method
+            # If the existing config uses an API key, forbid introducing access keys.
+            if existing_uses_api_key and any(
+                k in credentials for k in ("access_key_id", "secret_access_key")
+            ):
+                raise ValidationError(
+                    {
+                        "credentials/non_field_errors": [
+                            "Cannot change Bedrock authentication method from API key "
+                            "to access key via update. Delete and recreate the provider instead."
+                        ]
+                    }
+                )
+
+            # If the existing config uses access keys, forbid introducing an API key.
+            if existing_uses_access_keys and "api_key" in credentials:
+                raise ValidationError(
+                    {
+                        "credentials/non_field_errors": [
+                            "Cannot change Bedrock authentication method from access key "
+                            "to API key via update. Delete and recreate the provider instead."
+                        ]
+                    }
+                )
         elif (
             credentials is not None
             and provider_type
