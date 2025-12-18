@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.17.0] (Prowler 5.16.0)
+## [1.17.0] (Prowler v5.16.0)
 
 ### Added
 - New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
