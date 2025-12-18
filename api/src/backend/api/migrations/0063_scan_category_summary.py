@@ -26,8 +26,11 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "tenant_id",
-                    models.UUIDField(db_index=True, editable=False),
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.tenant",
+                    ),
                 ),
                 (
                     "inserted_at",
@@ -82,6 +85,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "scan_category_summaries",
+                "abstract": False,
             },
         ),
         migrations.AddIndex(
