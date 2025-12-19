@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.16.0] (Prowler Unreleased)
+## [1.16.0] (Prowler v5.16.0)
 
 ### 🚀 Added
 
@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
 - More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
 - Integrated Prowler MCP server with Lighthouse AI for dynamic tool execution [(#9255)](https://github.com/prowler-cloud/prowler/pull/9255)
+- Implement "MuteList Simple" feature allowing users to mute findings directly from the findings table with checkbox selection, and a new dedicated /mutelist route with Simple (mute rules list) and Advanced (YAML config) tabs. [(#9577)](https://github.com/prowler-cloud/prowler/pull/9577)
 
 ### 🔄 Changed
 
@@ -24,7 +25,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.15.1] (Prowler Unreleased)
+## [1.15.1] (Prowler v5.15.1)
 
 ### 🔐 Security
 

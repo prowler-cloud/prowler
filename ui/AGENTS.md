@@ -13,6 +13,32 @@
 - ALWAYS: `const X = { A: "a", B: "b" } as const; type T = typeof X[keyof typeof X]`
 - NEVER: `type T = "a" | "b"`
 
+### Interfaces
+
+- ALWAYS: One level depth only; object property → dedicated interface (recursive)
+- ALWAYS: Reuse via `extends`
+- NEVER: Inline nested objects
+
+```typescript
+// ✅ CORRECT
+interface UserAddress {
+  street: string;
+  city: string;
+}
+interface User {
+  id: string;
+  address: UserAddress;
+}
+interface Admin extends User {
+  permissions: string[];
+}
+
+// ❌ WRONG
+interface User {
+  address: { street: string; city: string };
+}
+```
+
 ### Styling
 
 - Single class: `className="bg-slate-800 text-white"`
