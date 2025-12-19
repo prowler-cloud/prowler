@@ -133,6 +133,19 @@ class Compute(GCPService):
                                     )
                                     for disk in instance.get("disks", [])
                                 ],
+                                disks=[
+                                    Disk(
+                                        name=disk["deviceName"],
+                                        auto_delete=disk.get("autoDelete", False),
+                                        boot=disk.get("boot", False),
+                                        encryption=bool(
+                                            disk.get("diskEncryptionKey", {}).get(
+                                                "sha256"
+                                            )
+                                        ),
+                                    )
+                                    for disk in instance.get("disks", [])
+                                ],
                                 automatic_restart=instance.get("scheduling", {}).get(
                                     "automaticRestart", False
                                 ),
@@ -363,6 +376,13 @@ class Compute(GCPService):
                     )
 
 
+class Disk(BaseModel):
+    name: str
+    auto_delete: bool = False
+    boot: bool
+    encryption: bool = False
+
+
 class Instance(BaseModel):
     name: str
     id: str
@@ -377,6 +397,7 @@ class Instance(BaseModel):
     service_accounts: list
     ip_forward: bool
     disks_encryption: list
+    disks: list[Disk] = []
     automatic_restart: bool = False
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
