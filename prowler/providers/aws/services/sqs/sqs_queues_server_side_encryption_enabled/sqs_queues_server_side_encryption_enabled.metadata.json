@@ -18,11 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
-    "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#terraform",
-    "https://stackoverflow.com/questions/56947804/sqs-encryption-using-cmk",
-    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html",
-    "https://repost.aws/knowledge-center/sns-topic-sqs-queue-sse-cmk-policy",
-    "https://www.linkedin.com/pulse/amazon-simple-queue-service-sqs-encryption-using-aws-sam-ahsan-qadeer"
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html"
   ],
   "Remediation": {
     "Code": {

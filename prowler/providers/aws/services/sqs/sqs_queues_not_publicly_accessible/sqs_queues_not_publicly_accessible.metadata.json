@@ -18,8 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
-    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-sqs-queue-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html"
   ],
   "Remediation": {
     "Code": {
