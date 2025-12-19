@@ -114,7 +114,7 @@ jobs:
           commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
           title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -169,7 +169,7 @@ jobs:
           commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}-branch
           title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -233,7 +233,7 @@ jobs:
           commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
           title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 

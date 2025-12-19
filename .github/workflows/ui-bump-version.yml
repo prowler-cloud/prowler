@@ -98,7 +98,7 @@ jobs:
           commit-message: 'chore(ui): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
           branch: ui-version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
           title: 'chore(ui): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -148,7 +148,7 @@ jobs:
           commit-message: 'chore(ui): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
           branch: ui-version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
           title: 'chore(ui): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -207,7 +207,7 @@ jobs:
           commit-message: 'chore(ui): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
           branch: ui-version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
           title: 'chore(ui): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 

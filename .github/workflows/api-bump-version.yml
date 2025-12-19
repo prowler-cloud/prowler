@@ -118,7 +118,7 @@ jobs:
           commit-message: 'chore(api): Bump version to v${{ env.NEXT_API_VERSION }}'
           branch: api-version-bump-to-v${{ env.NEXT_API_VERSION }}
           title: 'chore(api): Bump version to v${{ env.NEXT_API_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -172,7 +172,7 @@ jobs:
           commit-message: 'chore(api): Bump version to v${{ env.FIRST_API_PATCH_VERSION }}'
           branch: api-version-bump-to-v${{ env.FIRST_API_PATCH_VERSION }}
           title: 'chore(api): Bump version to v${{ env.FIRST_API_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -243,7 +243,7 @@ jobs:
           commit-message: 'chore(api): Bump version to v${{ env.NEXT_API_PATCH_VERSION }}'
           branch: api-version-bump-to-v${{ env.NEXT_API_PATCH_VERSION }}
           title: 'chore(api): Bump version to v${{ env.NEXT_API_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
