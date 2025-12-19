@@ -51,6 +51,27 @@ const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
 };
 
+const parseMetadata = (
+  metadata: Record<string, unknown> | string | null | undefined,
+): Record<string, unknown> | null => {
+  if (!metadata) return null;
+
+  if (typeof metadata === "string") {
+    try {
+      const parsed = JSON.parse(metadata);
+      return typeof parsed === "object" && parsed !== null ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof metadata === "object" && metadata !== null) {
+    return metadata as Record<string, unknown>;
+  }
+
+  return null;
+};
+
 const buildCustomBreadcrumbs = (
   _resourceName: string,
   findingTitle?: string,
@@ -288,6 +309,14 @@ export const ResourceDetail = ({
             </InfoField>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(attributes.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(attributes.details)}
+            </InfoField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Created At">
               <DateWithTime inline dateTime={attributes.inserted_at} />
             </InfoField>
@@ -295,6 +324,29 @@ export const ResourceDetail = ({
               <DateWithTime inline dateTime={attributes.updated_at} />
             </InfoField>
           </div>
+
+          {(() => {
+            const parsedMetadata = parseMetadata(attributes.metadata);
+            return parsedMetadata &&
+              Object.entries(parsedMetadata).length > 0 ? (
+              <InfoField label="Metadata" variant="simple">
+                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
+                  <Snippet
+                    className="absolute top-2 right-2 z-10 bg-transparent"
+                    classNames={{
+                      base: "bg-transparent p-0 min-w-0",
+                      pre: "hidden",
+                    }}
+                  >
+                    {JSON.stringify(parsedMetadata, null, 2)}
+                  </Snippet>
+                  <pre className="minimal-scrollbar mr-10 max-h-[100px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                    {JSON.stringify(parsedMetadata, null, 2)}
+                  </pre>
+                </div>
+              </InfoField>
+            ) : null;
+          })()}
 
           {resourceTags && Object.entries(resourceTags).length > 0 ? (
             <div className="flex flex-col gap-4">

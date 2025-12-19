@@ -20,6 +20,7 @@ env:
 
 jobs:
   api-dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,6 +44,7 @@ jobs:
           ignore: DL3013
 
   api-container-build-and-scan:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -90,7 +92,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
       - name: Scan container with Trivy for ${{ matrix.arch }}
-        if: github.repository == 'prowler-cloud/prowler' && steps.check-changes.outputs.any_changed == 'true'
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}
