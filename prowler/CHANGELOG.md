@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.17.0] (Prowler UNRELEASED)
+
+### Added
+- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
+
+---
+
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
