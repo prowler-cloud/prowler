@@ -95,7 +95,14 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-mute-findings",
+              {
+                "group": "Mutelist",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-simple-mutelist",
+                  "user-guide/tutorials/prowler-app-mute-findings"
+                ]
+              },
               {
                 "group": "Integrations",
                 "expanded": true,
