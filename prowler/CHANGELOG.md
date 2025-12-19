@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 
+- `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
