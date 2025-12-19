@@ -48,10 +48,32 @@ for page in get_parameters_by_path_paginator.paginate(
 logging.info("Updating subservices and the services not present in the original matrix")
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
-# bedrock-agent --> bedrock
-regions_by_service["services"]["bedrock-agent"] = regions_by_service["services"][
-    "bedrock"
-]
+# bedrock-agent is not in SSM, and has different availability than bedrock
+# See: https://docs.aws.amazon.com/bedrock/latest/userguide/agents-supported.html
+regions_by_service["services"]["bedrock-agent"] = {
+    "regions": {
+        "aws": [
+            "ap-northeast-1",
+            "ap-northeast-2",
+            "ap-south-1",
+            "ap-southeast-1",
+            "ap-southeast-2",
+            "ca-central-1",
+            "eu-central-1",
+            "eu-central-2",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-west-3",
+            "sa-east-1",
+            "us-east-1",
+            "us-west-2",
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+            "us-gov-west-1",
+        ],
+    }
+}
 # cognito --> cognito-idp
 regions_by_service["services"]["cognito"] = regions_by_service["services"][
     "cognito-idp"

@@ -619,6 +619,92 @@
         "sqlserver_auditing_retention_90_days",
         "storage_ensure_soft_delete_is_enabled"
       ]
+    },
+    {
+      "Id": "pi_1_2",
+      "Name": "PI1.2 System inputs are measured and recorded completely, accurately, and timely to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives. This includes defining accuracy targets, monitoring input quality, and creating detailed records of each input event.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_2",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "azure",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "app_http_logs_enabled",
+        "network_flow_log_captured_sent",
+        "keyvault_logging_enabled",
+        "monitor_diagnostic_settings_exists",
+        "sqlserver_auditing_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_3",
+      "Name": "PI1.3 Data is processed completely, accurately, and timely as authorized to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure data is processed completely, accurately, and timely. This includes defining processing specifications, identifying processing activities, detecting and correcting errors throughout processing, recording processing activities with accurate logs, and ensuring completeness and timeliness of processing.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_3",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "azure",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "mysql_flexible_server_audit_log_enabled",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "network_flow_log_more_than_90_days"
+      ]
+    },
+    {
+      "Id": "pi_1_4",
+      "Name": "PI1.4 System outputs are complete, accurate, distributed only to intended parties, and retained to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure system outputs are delivered to authorized recipients in the correct format and protected against unauthorized access, modification, theft, destruction, or corruption. This includes output encryption, access controls, and audit trails for output delivery.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_4",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "azure",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_tde_encrypted_with_cmk"
+      ]
+    },
+    {
+      "Id": "pi_1_5",
+      "Name": "PI1.5 Stored data is maintained complete, accurate, and protected from unauthorized modification to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to protect stored inputs, items in processing, and outputs from theft, destruction, corruption, or deterioration. This includes data encryption at rest, key management, backup and recovery procedures, access controls, and data integrity validation.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_5",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "azure",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_ensure_soft_delete_is_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "keyvault_key_rotation_enabled",
+        "keyvault_recoverable"
+      ]
     }
   ]
 }

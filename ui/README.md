@@ -38,13 +38,13 @@ git clone git@github.com:prowler-cloud/ui.git
 #### Build the project
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 #### Run the production server
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## 🧪 Development deployment
@@ -81,13 +81,11 @@ git clone git@github.com:prowler-cloud/ui.git
 
 #### Install dependencies
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
-
 ```bash
-npm install
+pnpm install
 ```
 
-**Note:** The `npm install` command will automatically configure Git hooks for code quality checks. If you experience issues, you can manually configure them:
+**Note:** The `pnpm install` command will automatically configure Git hooks for code quality checks. If you experience issues, you can manually configure them:
 
 ```bash
 git config core.hooksPath "ui/.husky"
@@ -96,18 +94,8 @@ git config core.hooksPath "ui/.husky"
 #### Run the development server
 
 ```bash
-npm run dev
+pnpm run dev
 ```
-
-## Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
-
-```bash
-public-hoist-pattern[]=*@nextui-org/*
-```
-
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
 
 ## Technologies Used
 
