@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
 - Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
+- Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
 
 ---
 
