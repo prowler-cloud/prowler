@@ -14,19 +14,13 @@
   "Risk": "Without **execution logs**, workflow failures and anomalies are **undetectable**, increasing MTTR and risking silent data loss. Missing audit trails weaken **integrity** oversight and complicate **forensics**, enabling misuse of invoked services to go unnoticed and creating **compliance** gaps.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/65891786/how-to-enable-cloudwatch-logging-and-x-ray-for-stepfunction-in-terraform",
-    "https://francismaria.medium.com/building-aws-standard-step-functions-with-enabled-cloudwatch-logs-using-a-sam-template-731466437aa3",
-    "https://repost.aws/questions/QURc2glxBETSe3Q6Y0UwcpQg/bug-with-loggingconfiguration",
     "https://docs.aws.amazon.com/step-functions/latest/dg/logging.html",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sfn_state_machine#logging_configuration",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/stepfunctions-controls.html#stepfunctions-1",
-    "https://support.icompaas.com/support/solutions/articles/62000233757-ensure-step-functions-state-machines-should-have-logging-enabled",
-    "https://www.cloudanix.com/docs/aws/audit/lambdamonitoring/rules/lambda_step_functions_logging_enabled",
-    "https://www.davehall.com.au/blog/2020/07/10/logging-step-functions-cloudwatch/"
+    "https://support.icompaas.com/support/solutions/articles/62000233757-ensure-step-functions-state-machines-should-have-logging-enabled"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.aws.amazon.com/cli/latest/reference/stepfunctions/update-state-machine.html",
+      "CLI": "aws stepfunctions update-state-machine --state-machine-arn <state-machine-arn> --logging-configuration file://logging-config.json",
       "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::StepFunctions::StateMachine\n    Properties:\n      RoleArn: arn:aws:iam::<account-id>:role/<example_role_name>\n      DefinitionString: |\n        {\"StartAt\":\"Pass\",\"States\":{\"Pass\":{\"Type\":\"Pass\",\"End\":true}}}\n      LoggingConfiguration:\n        Destinations:\n          - CloudWatchLogsLogGroup:\n              LogGroupArn: arn:aws:logs:<region>:<account-id>:log-group:<log-group-name>:*  # Critical: target CloudWatch Logs group\n        Level: ERROR  # Critical: enables logging (not OFF)\n```",
       "Other": "1. Open AWS Console > Step Functions > State machines\n2. Select the state machine and click Edit\n3. In Logging, enable logging\n4. Choose an existing CloudWatch Logs log group\n5. Set Level to Error (or All)\n6. Save changes",
       "Terraform": "```hcl\nresource \"aws_sfn_state_machine\" \"<example_resource_name>\" {\n  name       = \"<example_resource_name>\"\n  role_arn   = \"arn:aws:iam::<account-id>:role/<example_role_name>\"\n  definition = jsonencode({ StartAt = \"Pass\", States = { Pass = { Type = \"Pass\", End = true } } })\n\n  logging_configuration {\n    log_destination = \"arn:aws:logs:<region>:<account-id>:log-group:<log-group-name>:*\"  # Critical: CloudWatch Logs destination\n    level           = \"ERROR\"                                                              # Critical: enables logging\n  }\n}\n```"
