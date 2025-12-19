@@ -85,15 +85,15 @@ jobs:
           MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
           MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
           CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
-          
+
           # API version follows Prowler minor + 1
           # For Prowler 5.17.0 -> API 1.18.0
           # For next master (Prowler 5.18.0) -> API 1.19.0
           NEXT_API_VERSION=1.$((MINOR_VERSION + 2)).0
-          
+
           echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
           echo "NEXT_API_VERSION=${NEXT_API_VERSION}" >> "${GITHUB_ENV}"
-          
+
           echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
           echo "Current API version: $CURRENT_API_VERSION"
           echo "Next API minor version (for master): $NEXT_API_VERSION"
@@ -139,15 +139,15 @@ jobs:
           MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
           CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-          
+
           # API version follows Prowler minor + 1
           # For Prowler 5.17.0 release -> version branch v5.17 should have API 1.18.1
           FIRST_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).1
-          
+
           echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
           echo "FIRST_API_PATCH_VERSION=${FIRST_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
           echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
-          
+
           echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
           echo "First API patch version (for ${VERSION_BRANCH}): $FIRST_API_PATCH_VERSION"
           echo "Version branch: $VERSION_BRANCH"
@@ -201,19 +201,19 @@ jobs:
           PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
           CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-          
+
           # Extract current API patch to increment it
           if [[ $CURRENT_API_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             API_PATCH=${BASH_REMATCH[3]}
-            
+
             # API version follows Prowler minor + 1
             # Keep same API minor (based on Prowler minor), increment patch
             NEXT_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).$((API_PATCH + 1))
-            
+
             echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
             echo "NEXT_API_PATCH_VERSION=${NEXT_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
             echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
-            
+
             echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
             echo "Current API version: $CURRENT_API_VERSION"
             echo "Next API patch version: $NEXT_API_PATCH_VERSION"
