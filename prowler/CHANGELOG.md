@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.17.0] (Prowler UNRELEASED)
+
+### Added
+- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
+
+### Changed
+- Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
+- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
+- Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
+
+---
+
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
