@@ -1,4 +1,4 @@
-name: 'SDK: Bump Version'
+name: 'UI: Bump Version'
 
 on:
   release:
@@ -80,12 +80,11 @@ jobs:
           echo "Current version: $PROWLER_VERSION"
           echo "Next minor version: $NEXT_MINOR_VERSION"
 
-      - name: Bump versions in files for master
+      - name: Bump UI version in .env for master
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_MINOR_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_MINOR_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -96,14 +95,17 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: master
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          commit-message: 'chore(ui): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          branch: ui-version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
+          title: 'chore(ui): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
           labels: no-changelog
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.NEXT_MINOR_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
+            Bump Prowler UI version to v${{ env.NEXT_MINOR_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `.env`: `NEXT_PUBLIC_PROWLER_RELEASE_VERSION`
 
             ### License
 
@@ -128,12 +130,11 @@ jobs:
           echo "First patch version: $FIRST_PATCH_VERSION"
           echo "Version branch: $VERSION_BRANCH"
 
-      - name: Bump versions in files for version branch
+      - name: Bump UI version in .env for version branch
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -144,14 +145,17 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          commit-message: 'chore(ui): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          branch: ui-version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
+          title: 'chore(ui): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
           labels: no-changelog
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.FIRST_PATCH_VERSION }} in version branch after releasing v${{ env.PROWLER_VERSION }}.
+            Bump Prowler UI version to v${{ env.FIRST_PATCH_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `.env`: `NEXT_PUBLIC_PROWLER_RELEASE_VERSION`
 
             ### License
 
@@ -185,12 +189,11 @@ jobs:
           echo "Next patch version: $NEXT_PATCH_VERSION"
           echo "Target branch: $VERSION_BRANCH"
 
-      - name: Bump versions in files for version branch
+      - name: Bump UI version in .env for version branch
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -201,14 +204,17 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          commit-message: 'chore(ui): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          branch: ui-version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
+          title: 'chore(ui): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
           labels: no-changelog
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.NEXT_PATCH_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
+            Bump Prowler UI version to v${{ env.NEXT_PATCH_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `.env`: `NEXT_PUBLIC_PROWLER_RELEASE_VERSION`
 
             ### License
 
