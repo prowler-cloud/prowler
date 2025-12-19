@@ -1586,6 +1586,7 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
                 AND cro.compliance_id = pcs.compliance_id
                 AND cro.requirement_id = pcs.requirement_id
           )
+        RETURNING compliance_id
     """
 
     upsert_tenant_summary_sql = """
@@ -1612,7 +1613,7 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
                     ELSE 'PASS'
                 END as req_status
             FROM provider_compliance_scores
-            WHERE tenant_id = %s
+            WHERE tenant_id = %s AND compliance_id = ANY(%s)
             GROUP BY compliance_id, requirement_id
         ) req_agg
         GROUP BY compliance_id
@@ -1623,6 +1624,12 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
             requirements_manual = EXCLUDED.requirements_manual,
             total_requirements = EXCLUDED.total_requirements,
             updated_at = NOW()
+    """
+
+    compliance_ids_sql = """
+        SELECT DISTINCT compliance_id
+        FROM compliance_requirements_overviews
+        WHERE tenant_id = %s AND scan_id = %s
     """
 
     try:
@@ -1636,21 +1643,39 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
                     cursor.execute(upsert_sql, [tenant_id, scan_id])
                     upserted_count = cursor.rowcount
 
+                    cursor.execute(compliance_ids_sql, [tenant_id, scan_id])
+                    scan_rows = cursor.fetchall()
+                    if not isinstance(scan_rows, (list, tuple)):
+                        scan_rows = []
+                    scan_compliance_ids = {row[0] for row in scan_rows}
+
                     cursor.execute(
                         delete_stale_sql,
                         [tenant_id, provider_id, scan_completed_at, scan_id],
                     )
-                    stale_deleted = cursor.rowcount
+                    deleted_rows = cursor.fetchall()
+                    if not isinstance(deleted_rows, (list, tuple)):
+                        deleted_rows = []
+                    deleted_ids = {row[0] for row in deleted_rows}
+                    stale_deleted = len(deleted_ids)
 
-                    # Advisory lock on tenant to prevent race conditions when
-                    # multiple scans complete simultaneously for the same tenant
-                    cursor.execute(
-                        "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
-                    )
+                    impacted_compliance_ids = sorted(scan_compliance_ids | deleted_ids)
 
-                    # Recalculate tenant-level summary (FAIL-dominant across all providers)
-                    cursor.execute(upsert_tenant_summary_sql, [tenant_id, tenant_id])
-                    tenant_summary_count = cursor.rowcount
+                    if impacted_compliance_ids:
+                        # Advisory lock on tenant to prevent race conditions when
+                        # multiple scans complete simultaneously for the same tenant
+                        cursor.execute(
+                            "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                        )
+
+                        # Recalculate tenant-level summary (FAIL-dominant across all providers)
+                        cursor.execute(
+                            upsert_tenant_summary_sql,
+                            [tenant_id, tenant_id, impacted_compliance_ids],
+                        )
+                        tenant_summary_count = cursor.rowcount
+                    else:
+                        tenant_summary_count = 0
 
                 connection.commit()
             except Exception:

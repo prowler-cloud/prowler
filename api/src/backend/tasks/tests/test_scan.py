@@ -4133,6 +4133,7 @@ class TestUpdateProviderComplianceScores:
         mock_psycopg_connection.return_value = context_manager
 
         cursor.rowcount = 1
+        cursor.fetchall.side_effect = [[("aws_cis_2.0",)], []]
 
         result = update_provider_compliance_scores(tenant_id, scan_id)
 

@@ -1,7 +1,8 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Max, Sum
+from celery.utils.log import get_task_logger
+from django.db.models import Sum
 from django.utils import timezone
 from tasks.jobs.scan import aggregate_category_counts
 
@@ -26,6 +27,8 @@ from api.models import (
     ScanSummary,
     StateChoices,
 )
+
+logger = get_task_logger(__name__)
 
 
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
@@ -363,46 +366,33 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
         dict: Statistics about the backfill operation
     """
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Get latest completed scan per provider
-        latest_scans = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-                completed_at__isnull=False,
-            )
-            .values("provider_id")
-            .annotate(latest_completed_at=Max("completed_at"))
+        completed_scans = Scan.all_objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
         )
-
-        if not latest_scans:
+        if not completed_scans.exists():
             return {"status": "no completed scans"}
 
-        # Get scan IDs for latest scans
-        scan_info = []
-        for latest in latest_scans:
-            scan = (
-                Scan.all_objects.filter(
-                    tenant_id=tenant_id,
-                    provider_id=latest["provider_id"],
-                    completed_at=latest["latest_completed_at"],
-                    state=StateChoices.COMPLETED,
-                )
-                .values("id", "provider_id", "completed_at")
-                .first()
-            )
-            if scan:
-                scan_info.append(scan)
-
-        if not scan_info:
-            return {"status": "no scans to process"}
-
-    # Check which providers already have data
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         existing_providers = set(
             ProviderComplianceScore.objects.filter(tenant_id=tenant_id)
             .values_list("provider_id", flat=True)
             .distinct()
         )
+
+        if existing_providers:
+            completed_scans = completed_scans.exclude(
+                provider_id__in=existing_providers
+            )
+
+        scan_info = list(
+            completed_scans.order_by("provider_id", "-completed_at")
+            .distinct("provider_id")
+            .values("id", "provider_id", "completed_at")
+        )
+
+        if not scan_info:
+            return {"status": "no scans to process"}
 
     upsert_sql = """
         INSERT INTO provider_compliance_scores
@@ -452,11 +442,6 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
     for scan in scan_info:
         provider_id = scan["provider_id"]
 
-        # Skip if provider already has data (backfill only, not update)
-        if provider_id in existing_providers:
-            providers_skipped += 1
-            continue
-
         scan_id = scan["id"]
 
         try:
@@ -476,7 +461,13 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
                     connection.rollback()
                     raise
         except Exception as e:
-            print(f"Error backfilling provider {provider_id}: {e}")
+            providers_skipped += 1
+            logger.exception(
+                "Error backfilling provider %s for tenant %s: %s",
+                provider_id,
+                tenant_id,
+                e,
+            )
 
     # Recalculate tenant summary after all providers are backfilled
     if providers_processed > 0:
