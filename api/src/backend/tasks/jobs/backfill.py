@@ -365,7 +365,7 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Get latest completed scan per provider
         latest_scans = (
-            Scan.objects.filter(
+            Scan.all_objects.filter(
                 tenant_id=tenant_id,
                 state=StateChoices.COMPLETED,
                 completed_at__isnull=False,
@@ -381,7 +381,7 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
         scan_info = []
         for latest in latest_scans:
             scan = (
-                Scan.objects.filter(
+                Scan.all_objects.filter(
                     tenant_id=tenant_id,
                     provider_id=latest["provider_id"],
                     completed_at=latest["latest_completed_at"],
@@ -460,7 +460,7 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
         scan_id = scan["id"]
 
         try:
-            with psycopg_connection(MainRouter.admin_db) as connection:
+            with psycopg_connection(MainRouter.default_db) as connection:
                 connection.autocommit = False
                 try:
                     with connection.cursor() as cursor:
@@ -517,7 +517,7 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
                 updated_at = NOW()
         """
 
-        with psycopg_connection(MainRouter.admin_db) as connection:
+        with psycopg_connection(MainRouter.default_db) as connection:
             connection.autocommit = False
             try:
                 with connection.cursor() as cursor:

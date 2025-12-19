@@ -1626,7 +1626,7 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
     """
 
     try:
-        with psycopg_connection(MainRouter.admin_db) as connection:
+        with psycopg_connection(MainRouter.default_db) as connection:
             connection.autocommit = False
             try:
                 with connection.cursor() as cursor:
