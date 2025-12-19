@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0061_daily_severity_summary"),
+        ("api", "0064_finding_categories"),
     ]
 
     operations = [
