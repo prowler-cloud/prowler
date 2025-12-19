@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
+- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
 
 ---
 
@@ -154,8 +155,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
-- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
-
 
 
 ### Fixed

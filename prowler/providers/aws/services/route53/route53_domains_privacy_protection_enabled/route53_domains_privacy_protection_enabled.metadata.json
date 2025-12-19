@@ -16,14 +16,9 @@
   "Risk": "**Public WHOIS contact data** exposes names, emails, phones, and addresses, enabling:\n- **Phishing/social engineering** of the registrar\n- **SIM-swap** or account takeover\n- **Domain hijacking**, affecting DNS integrity/availability\nIt also increases spam and targeted harassment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hexdocs.pm/aws_erlang/aws_route53_domains.html",
     "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/privacy-protection.html",
-    "https://notes.kodekloud.com/docs/AWS-Solutions-Architect-Associate-Certification/Services-Networking/Demo-Route-53",
-    "https://support.icompaas.com/support/solutions/articles/62000233459-enable-privacy-protection-for-for-a-route53-domain-",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.14.53/reference/services/route53domains.html",
-    "https://hackage.haskell.org/package/amazonka-route53-domains-0.0.7/docs/Network-AWS-Route53Domains-RegisterDomain.html",
-    "https://fig.io/manual/aws/route53domains"
+    "https://support.icompaas.com/support/solutions/articles/62000233459-enable-privacy-protection-for-for-a-route53-domain-"
   ],
   "Remediation": {
     "Code": {

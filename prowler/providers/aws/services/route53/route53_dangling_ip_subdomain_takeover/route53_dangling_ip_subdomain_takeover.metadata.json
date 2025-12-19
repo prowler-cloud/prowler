@@ -17,9 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233461-ensure-route53-records-contains-dangling-ips-",
-    "https://github.com/prowler-cloud/prowler/discussions/3177",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/dangling-dns-records.html",
-    "https://security.stackexchange.com/questions/278379/subdomain-takeover-with-a-record",
     "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-deleting.html"
   ],
   "Remediation": {
@@ -35,7 +33,6 @@
     }
   },
   "Categories": [
-    "vulnerabilities",
     "internet-exposed"
   ],
   "DependsOn": [],
