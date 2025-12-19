@@ -12,6 +12,7 @@ from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
     backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -532,6 +533,21 @@ def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
 def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
     """Backfill DailySeveritySummary from historical scans. Use days param to limit scope."""
     return backfill_daily_severity_summaries(tenant_id=tenant_id, days=days)
+
+
+@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates unique categories from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")

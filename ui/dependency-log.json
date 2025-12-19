@@ -1,27 +1,19 @@
 [
   {
     "section": "dependencies",
-    "name": "@ai-sdk/langchain",
-    "from": "1.0.59",
-    "to": "1.0.59",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@ai-sdk/react",
-    "from": "2.0.59",
-    "to": "2.0.59",
+    "from": "2.0.106",
+    "to": "2.0.111",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
     "name": "@aws-sdk/client-bedrock-runtime",
     "from": "3.943.0",
-    "to": "3.943.0",
+    "to": "3.948.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
@@ -51,49 +43,41 @@
     "section": "dependencies",
     "name": "@langchain/aws",
     "from": "0.1.15",
-    "to": "0.1.15",
+    "to": "1.1.0",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-12-12T10:01:54.132Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.78",
-    "to": "0.3.77",
+    "from": "0.3.77",
+    "to": "1.1.4",
     "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
-    "name": "@langchain/langgraph",
-    "from": "0.4.9",
-    "to": "0.4.9",
+    "name": "@langchain/mcp-adapters",
+    "from": "1.0.3",
+    "to": "1.0.3",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@langchain/langgraph-supervisor",
-    "from": "0.0.20",
-    "to": "0.0.20",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-12T10:01:54.132Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/openai",
-    "from": "0.5.18",
-    "to": "0.6.16",
+    "from": "0.6.16",
+    "to": "1.1.3",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-12-12T10:01:54.132Z"
   },
   {
     "section": "dependencies",
     "name": "@next/third-parties",
     "from": "15.3.5",
-    "to": "15.3.5",
+    "to": "15.5.9",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -217,6 +201,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-use-controllable-state",
+    "from": "1.2.2",
+    "to": "1.2.2",
+    "strategy": "installed",
+    "generatedAt": "2025-12-15T08:24:46.195Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@react-aria/i18n",
     "from": "3.12.13",
     "to": "3.12.13",
@@ -269,7 +261,7 @@
     "from": "10.11.0",
     "to": "10.27.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-01T10:01:42.332Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -307,9 +299,9 @@
     "section": "dependencies",
     "name": "ai",
     "from": "5.0.59",
-    "to": "5.0.59",
+    "to": "5.0.109",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
@@ -369,6 +361,14 @@
   },
   {
     "section": "dependencies",
+    "name": "import-in-the-middle",
+    "from": "2.0.0",
+    "to": "2.0.0",
+    "strategy": "installed",
+    "generatedAt": "2025-12-16T08:33:37.278Z"
+  },
+  {
+    "section": "dependencies",
     "name": "intl-messageformat",
     "from": "10.7.16",
     "to": "10.7.16",
@@ -389,7 +389,7 @@
     "from": "4.1.0",
     "to": "4.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-12-01T10:01:42.332Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -398,6 +398,14 @@
     "to": "4.0.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "langchain",
+    "from": "1.1.4",
+    "to": "1.1.5",
+    "strategy": "installed",
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
@@ -426,10 +434,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "15.5.3",
-    "to": "15.5.7",
+    "from": "15.5.7",
+    "to": "15.5.9",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -437,7 +445,7 @@
     "from": "5.0.0-beta.29",
     "to": "5.0.0-beta.30",
     "strategy": "installed",
-    "generatedAt": "2025-12-01T10:01:42.332Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -458,18 +466,18 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.0",
-    "to": "19.2.1",
+    "from": "19.2.1",
+    "to": "19.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "dependencies",
@@ -497,6 +505,14 @@
   },
   {
     "section": "dependencies",
+    "name": "require-in-the-middle",
+    "from": "8.0.1",
+    "to": "8.0.1",
+    "strategy": "installed",
+    "generatedAt": "2025-12-16T08:33:37.278Z"
+  },
+  {
+    "section": "dependencies",
     "name": "rss-parser",
     "from": "3.13.0",
     "to": "3.13.0",
@@ -521,11 +537,19 @@
   },
   {
     "section": "dependencies",
+    "name": "shiki",
+    "from": "3.20.0",
+    "to": "3.20.0",
+    "strategy": "installed",
+    "generatedAt": "2025-12-16T08:33:37.278Z"
+  },
+  {
+    "section": "dependencies",
     "name": "streamdown",
     "from": "1.3.0",
-    "to": "1.3.0",
+    "to": "1.6.10",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
@@ -558,6 +582,14 @@
     "to": "1.4.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "use-stick-to-bottom",
+    "from": "1.1.1",
+    "to": "1.1.1",
+    "strategy": "installed",
+    "generatedAt": "2025-12-15T08:24:46.195Z"
   },
   {
     "section": "dependencies",
@@ -705,6 +737,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "dotenv-expand",
+    "from": "12.0.3",
+    "to": "12.0.3",
+    "strategy": "installed",
+    "generatedAt": "2025-12-16T11:35:31.011Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "eslint",
     "from": "8.57.1",
     "to": "8.57.1",
@@ -714,10 +754,10 @@
   {
     "section": "devDependencies",
     "name": "eslint-config-next",
-    "from": "15.5.3",
-    "to": "15.5.7",
+    "from": "15.5.7",
+    "to": "15.5.9",
     "strategy": "installed",
-    "generatedAt": "2025-12-03T21:53:06.602Z"
+    "generatedAt": "2025-12-15T11:18:25.093Z"
   },
   {
     "section": "devDependencies",

@@ -243,15 +243,28 @@ def _safe_getattr(obj, attr: str, default: str = "N/A") -> str:
 
 
 def _create_info_table_style() -> TableStyle:
-    """Create a reusable table style for information/metadata tables."""
+    """Create a reusable table style for information/metadata tables.
+
+    ReportLab TableStyle coordinate system:
+        - Format: (COMMAND, (start_col, start_row), (end_col, end_row), value)
+        - Coordinates use (column, row) format, starting at (0, 0) for top-left cell
+        - Negative indices work like Python slicing: -1 means "last row/column"
+        - (0, 0) to (0, -1) = entire first column (all rows)
+        - (0, 0) to (-1, 0) = entire first row (all columns)
+        - (0, 0) to (-1, -1) = entire table
+        - Styles are applied in order; later rules override earlier ones
+    """
     return TableStyle(
         [
+            # Column 0 (labels): blue background with white text
             ("BACKGROUND", (0, 0), (0, -1), COLOR_BLUE),
             ("TEXTCOLOR", (0, 0), (0, -1), COLOR_WHITE),
             ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+            # Column 1 (values): light blue background with gray text
             ("BACKGROUND", (1, 0), (1, -1), COLOR_BG_BLUE),
             ("TEXTCOLOR", (1, 0), (1, -1), COLOR_GRAY),
             ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
+            # Apply to entire table
             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -265,19 +278,30 @@ def _create_info_table_style() -> TableStyle:
 
 
 def _create_header_table_style(header_color: colors.Color = None) -> TableStyle:
-    """Create a reusable table style for tables with headers."""
+    """Create a reusable table style for tables with headers.
+
+    ReportLab TableStyle coordinate system:
+        - Format: (COMMAND, (start_col, start_row), (end_col, end_row), value)
+        - (0, 0) to (-1, 0) = entire first row (header row)
+        - (1, 1) to (-1, -1) = all data cells (excludes header row and first column)
+        - See _create_info_table_style() for full coordinate system documentation
+    """
     if header_color is None:
         header_color = COLOR_BLUE
 
     return TableStyle(
         [
+            # Header row (row 0): colored background with white text
             ("BACKGROUND", (0, 0), (-1, 0), header_color),
             ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
             ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
             ("FONTSIZE", (0, 0), (-1, 0), 10),
+            # Apply to entire table
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            # Data cells (excluding header): smaller font
             ("FONTSIZE", (1, 1), (-1, -1), 9),
+            # Apply to entire table
             ("GRID", (0, 0), (-1, -1), 1, COLOR_GRID_GRAY),
             ("LEFTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
             ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
@@ -288,18 +312,30 @@ def _create_header_table_style(header_color: colors.Color = None) -> TableStyle:
 
 
 def _create_findings_table_style() -> TableStyle:
-    """Create a reusable table style for findings tables."""
+    """Create a reusable table style for findings tables.
+
+    ReportLab TableStyle coordinate system:
+        - Format: (COMMAND, (start_col, start_row), (end_col, end_row), value)
+        - (0, 0) to (-1, 0) = entire first row (header row)
+        - (0, 0) to (0, 0) = only the top-left cell
+        - See _create_info_table_style() for full coordinate system documentation
+    """
     return TableStyle(
         [
+            # Header row (row 0): colored background with white text
             ("BACKGROUND", (0, 0), (-1, 0), COLOR_BLUE),
             ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
             ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+            # Only top-left cell centered (for index/number column)
             ("ALIGN", (0, 0), (0, 0), "CENTER"),
+            # Apply to entire table
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("GRID", (0, 0), (-1, -1), 0.1, COLOR_BORDER_GRAY),
+            # Remove padding only from top-left cell
             ("LEFTPADDING", (0, 0), (0, 0), 0),
             ("RIGHTPADDING", (0, 0), (0, 0), 0),
+            # Apply to entire table
             ("TOPPADDING", (0, 0), (-1, -1), PADDING_SMALL),
             ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_SMALL),
         ]
@@ -1103,11 +1139,15 @@ def generate_threatscore_report(
         elements.append(Spacer(1, 0.5 * inch))
 
         # Add compliance information table
+        provider_alias = provider_obj.alias or "N/A"
         info_data = [
             ["Framework:", compliance_framework],
             ["ID:", compliance_id],
             ["Name:", Paragraph(compliance_name, normal_center)],
             ["Version:", compliance_version],
+            ["Provider:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
         ]
@@ -2059,12 +2099,15 @@ def generate_ens_report(
         elements.append(Spacer(1, 0.5 * inch))
 
         # Add compliance information table
+        provider_alias = provider_obj.alias or "N/A"
         info_data = [
             ["Framework:", compliance_framework],
             ["ID:", compliance_id],
             ["Nombre:", Paragraph(compliance_name, normal_center)],
             ["Versión:", compliance_version],
             ["Proveedor:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Descripción:", Paragraph(compliance_description, normal_center)],
         ]
@@ -2072,12 +2115,12 @@ def generate_ens_report(
         info_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (0, 6), colors.Color(0.2, 0.4, 0.6)),
-                    ("TEXTCOLOR", (0, 0), (0, 6), colors.white),
-                    ("FONTNAME", (0, 0), (0, 6), "FiraCode"),
-                    ("BACKGROUND", (1, 0), (1, 6), colors.Color(0.95, 0.97, 1.0)),
-                    ("TEXTCOLOR", (1, 0), (1, 6), colors.Color(0.2, 0.2, 0.2)),
-                    ("FONTNAME", (1, 0), (1, 6), "PlusJakartaSans"),
+                    ("BACKGROUND", (0, 0), (0, -1), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+                    ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                    ("BACKGROUND", (1, 0), (1, -1), colors.Color(0.95, 0.97, 1.0)),
+                    ("TEXTCOLOR", (1, 0), (1, -1), colors.Color(0.2, 0.2, 0.2)),
+                    ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -2997,11 +3040,14 @@ def generate_nis2_report(
         elements.append(Spacer(1, 0.3 * inch))
 
         # Compliance metadata table
+        provider_alias = provider_obj.alias or "N/A"
         metadata_data = [
             ["Framework:", compliance_framework],
             ["Name:", Paragraph(compliance_name, normal_center)],
             ["Version:", compliance_version or "N/A"],
             ["Provider:", provider_type.upper()],
+            ["Account ID:", provider_obj.uid],
+            ["Alias:", provider_alias],
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
         ]

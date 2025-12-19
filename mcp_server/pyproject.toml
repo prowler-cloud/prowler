@@ -11,7 +11,7 @@ description = "MCP server for Prowler ecosystem"
 name = "prowler-mcp"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "0.1.0"
+version = "0.3.0"
 
 [project.scripts]
 generate-prowler-app-mcp-server = "prowler_mcp_server.prowler_app.utils.server_generator:generate_server_file"

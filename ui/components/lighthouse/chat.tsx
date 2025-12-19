@@ -2,12 +2,15 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Copy, Plus, RotateCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Streamdown } from "streamdown";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
-import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import {
   PromptInput,
   PromptInputBody,
@@ -16,7 +19,13 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/lighthouse/ai-elements/prompt-input";
+import {
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+} from "@/components/lighthouse/chat-utils";
 import { Loader } from "@/components/lighthouse/loader";
+import { MessageItem } from "@/components/lighthouse/message-item";
 import {
   Button,
   Card,
@@ -58,6 +67,11 @@ interface SelectedModel {
   providerType: LighthouseProvider | "";
   modelId: string;
   modelName: string;
+}
+
+interface ExtendedError extends Error {
+  status?: number;
+  body?: Record<string, unknown>;
 }
 
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
@@ -202,14 +216,18 @@ export const Chat = ({
       // There is no specific way to output the error message from langgraph supervisor
       // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
       // Detect error messages sent from backend using specific prefix and display the error
+      // Use includes() instead of startsWith() to catch errors that occur mid-stream (after text has been sent)
       const firstTextPart = message.parts.find((p) => p.type === "text");
       if (
         firstTextPart &&
         "text" in firstTextPart &&
-        firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+        firstTextPart.text.includes(ERROR_PREFIX)
       ) {
-        const errorText = firstTextPart.text
-          .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
+        // Extract error text - handle both start-of-message and mid-stream errors
+        const fullText = firstTextPart.text;
+        const errorIndex = fullText.indexOf(ERROR_PREFIX);
+        const errorText = fullText
+          .substring(errorIndex + ERROR_PREFIX.length)
           .trim();
         setErrorMessage(errorText);
         // Remove error message from chat history
@@ -219,7 +237,7 @@ export const Chat = ({
             return !(
               textPart &&
               "text" in textPart &&
-              textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+              textPart.text.includes(ERROR_PREFIX)
             );
           }),
         );
@@ -244,8 +262,6 @@ export const Chat = ({
       );
     },
   });
-
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const restoreLastUserMessage = () => {
     let restoredText = "";
@@ -282,18 +298,13 @@ export const Chat = ({
   };
 
   const stopGeneration = () => {
-    if (status === "streaming" || status === "submitted") {
+    if (
+      status === MESSAGE_STATUS.STREAMING ||
+      status === MESSAGE_STATUS.SUBMITTED
+    ) {
       stop();
     }
   };
-
-  // Auto-scroll to bottom when new messages arrive or when streaming
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, status]);
 
   // Handlers
   const handleNewChat = () => {
@@ -311,7 +322,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col overflow-hidden">
+    <div className="relative flex h-full min-w-0 flex-col overflow-hidden">
       {/* Header with New Chat button */}
       {messages.length > 0 && (
         <div className="border-default-200 dark:border-default-100 border-b px-2 py-3 sm:px-4">
@@ -382,18 +393,18 @@ export const Chat = ({
                   "An error occurred. Please retry your message."}
               </p>
               {/* Original error details for native errors */}
-              {error && (error as any).status && (
+              {error && (error as ExtendedError).status && (
                 <p className="text-text-neutral-tertiary mt-1 text-xs">
-                  Status: {(error as any).status}
+                  Status: {(error as ExtendedError).status}
                 </p>
               )}
-              {error && (error as any).body && (
+              {error && (error as ExtendedError).body && (
                 <details className="mt-2">
                   <summary className="text-text-neutral-tertiary hover:text-text-neutral-secondary cursor-pointer text-xs">
                     Show details
                   </summary>
                   <pre className="bg-bg-neutral-tertiary text-text-neutral-secondary mt-1 max-h-20 overflow-auto rounded p-2 text-xs">
-                    {JSON.stringify((error as any).body, null, 2)}
+                    {JSON.stringify((error as ExtendedError).body, null, 2)}
                   </pre>
                 </details>
               )}
@@ -427,113 +438,48 @@ export const Chat = ({
           </div>
         </div>
       ) : (
-        <div
-          className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-4 sm:p-4"
-          ref={messagesContainerRef}
-        >
-          {messages.map((message, idx) => {
-            const isLastMessage = idx === messages.length - 1;
-            const messageText = message.parts
-              .filter((p) => p.type === "text")
-              .map((p) => ("text" in p ? p.text : ""))
-              .join("");
-
-            // Check if this is the streaming assistant message (last message, assistant role, while streaming)
-            const isStreamingAssistant =
-              isLastMessage &&
-              message.role === "assistant" &&
-              status === "streaming";
-
-            // Use a composite key to ensure uniqueness even if IDs are duplicated temporarily
-            const uniqueKey = `${message.id}-${idx}-${message.role}`;
-
-            return (
-              <div key={uniqueKey}>
-                <div
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === "user"
-                        ? "bg-bg-neutral-tertiary border-border-neutral-secondary border"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {/* Show loader before text appears or while streaming empty content */}
-                    {isStreamingAssistant && !messageText ? (
-                      <Loader size="default" text="Thinking..." />
-                    ) : (
-                      <div>
-                        <Streamdown
-                          parseIncompleteMarkdown={true}
-                          shikiTheme={["github-light", "github-dark"]}
-                          controls={{
-                            code: true,
-                            table: true,
-                            mermaid: true,
-                          }}
-                          allowedLinkPrefixes={["*"]}
-                          allowedImagePrefixes={["*"]}
-                        >
-                          {messageText}
-                        </Streamdown>
-                      </div>
-                    )}
+        <Conversation className="flex-1">
+          <ConversationContent className="gap-4 px-2 py-4 sm:p-4">
+            {messages.map((message, idx) => (
+              <MessageItem
+                key={`${message.id}-${idx}-${message.role}`}
+                message={message}
+                index={idx}
+                isLastMessage={idx === messages.length - 1}
+                status={status}
+                onCopy={(text) => {
+                  navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                onRegenerate={regenerate}
+              />
+            ))}
+            {/* Show loader only if no assistant message exists yet */}
+            {(status === MESSAGE_STATUS.SUBMITTED ||
+              status === MESSAGE_STATUS.STREAMING) &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
+                <div className="flex justify-start">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                    <Loader size="default" text="Thinking..." />
                   </div>
                 </div>
-
-                {/* Actions for assistant messages */}
-                {message.role === "assistant" &&
-                  isLastMessage &&
-                  messageText &&
-                  status !== "streaming" && (
-                    <div className="mt-2 flex justify-start">
-                      <Actions className="max-w-[80%]">
-                        <Action
-                          tooltip="Copy message"
-                          label="Copy"
-                          onClick={() => {
-                            navigator.clipboard.writeText(messageText);
-                            toast({
-                              title: "Copied",
-                              description: "Message copied to clipboard",
-                            });
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Action>
-                        <Action
-                          tooltip="Regenerate response"
-                          label="Retry"
-                          onClick={() => regenerate()}
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Action>
-                      </Actions>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
-          {/* Show loader only if no assistant message exists yet */}
-          {(status === "submitted" || status === "streaming") &&
-            messages.length > 0 &&
-            messages[messages.length - 1].role === "user" && (
-              <div className="flex justify-start">
-                <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                  <Loader size="default" text="Thinking..." />
-                </div>
-              </div>
-            )}
-        </div>
+              )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       )}
 
       <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
         <PromptInput
           onSubmit={(message) => {
-            if (status === "streaming" || status === "submitted") {
+            if (
+              status === MESSAGE_STATUS.STREAMING ||
+              status === MESSAGE_STATUS.SUBMITTED
+            ) {
               return;
             }
             if (message.text?.trim()) {
@@ -599,20 +545,24 @@ export const Chat = ({
             <PromptInputSubmit
               status={status}
               type={
-                status === "streaming" || status === "submitted"
+                status === MESSAGE_STATUS.STREAMING ||
+                status === MESSAGE_STATUS.SUBMITTED
                   ? "button"
                   : "submit"
               }
               onClick={(event) => {
-                if (status === "streaming" || status === "submitted") {
+                if (
+                  status === MESSAGE_STATUS.STREAMING ||
+                  status === MESSAGE_STATUS.SUBMITTED
+                ) {
                   event.preventDefault();
                   stopGeneration();
                 }
               }}
               disabled={
                 !uiState.inputValue?.trim() &&
-                status !== "streaming" &&
-                status !== "submitted"
+                status !== MESSAGE_STATUS.STREAMING &&
+                status !== MESSAGE_STATUS.SUBMITTED
               }
             />
           </PromptInputToolbar>
