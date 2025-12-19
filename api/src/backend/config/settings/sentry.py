@@ -7,6 +7,7 @@ IGNORED_EXCEPTIONS = [
     "ProviderConnectionError",
     # Provider was deleted during a scan
     "ProviderDeletedException",
+    "violates foreign key constraint",
     # Authentication Errors from AWS
     "InvalidToken",
     "AccessDeniedException",
