@@ -647,6 +647,8 @@ export interface FindingProps {
         type: string;
         inserted_at: string;
         updated_at: string;
+        details: string | null;
+        partition: string | null;
       };
       relationships: {
         provider: {
