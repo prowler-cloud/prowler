@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.18.0] (Prowler UNRELEASED)
+
+### Added
+- Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+
+---
+
+## [1.17.1] (Prowler UNRELEASED)
+
+### Fixed
+- Orphan scheduled scans caused by transaction isolation during provider creation [(#9633)](https://github.com/prowler-cloud/prowler/pull/9633)
+
+---
+
+>>>>>>> 641dc78c3 (fix(api): add cleanup for orphan scheduled scans caused by transaction isolation (#9633))
 ## [1.17.0] (Prowler v5.16.0)
 
 ### Added
