@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.18.0] (Prowler UUNRELEASED)
+
+### Added
+- Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+
+---
+
 ## [1.17.0] (Prowler v5.16.0)
 
 ### Added

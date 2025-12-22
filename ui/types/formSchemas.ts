@@ -125,6 +125,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("alibabacloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -245,9 +250,18 @@ export const addCredentialsFormSchema = (
                               .string()
                               .min(1, "Atlas Private Key is required"),
                           }
-                        : {}),
+                        : providerType === "alibabacloud"
+                          ? {
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                z.string().min(1, "Access Key ID is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                z
+                                  .string()
+                                  .min(1, "Access Key Secret is required"),
+                            }
+                          : {}),
     })
-    .superRefine((data: Record<string, any>, ctx) => {
+    .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
         // Validate based on the via parameter
         if (via === "app_client_secret") {
@@ -339,10 +353,27 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
             path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
           },
         )
-    : z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-      });
+    : providerType === "alibabacloud"
+      ? z.object({
+          [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+          [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: z
+            .string()
+            .min(1, "RAM Role ARN is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: z
+            .string()
+            .min(1, "Access Key ID is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: z
+            .string()
+            .min(1, "Access Key Secret is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: z
+            .string()
+            .optional(),
+        })
+      : z.object({
+          providerId: z.string(),
+          providerType: z.string(),
+        });
 
 export const addCredentialsServiceAccountFormSchema = (
   providerType: ProviderType,
