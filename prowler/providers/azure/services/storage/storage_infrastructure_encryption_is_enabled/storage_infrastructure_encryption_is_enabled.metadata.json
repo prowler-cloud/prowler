@@ -1,26 +1,33 @@
 {
   "Provider": "azure",
   "CheckID": "storage_infrastructure_encryption_is_enabled",
-  "CheckTitle": "Ensure that 'Enable Infrastructure Encryption' for Each Storage Account in Azure Storage is Set to 'enabled' ",
+  "CheckTitle": "Storage account has infrastructure encryption enabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "AzureRole",
-  "Description": "Ensure that 'Enable Infrastructure Encryption' for Each Storage Account in Azure Storage is Set to 'enabled' ",
-  "Risk": "Double encryption of Azure Storage data protects against a scenario where one of the encryption algorithms or keys may be compromised",
+  "Severity": "medium",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "Azure Storage accounts have **infrastructure encryption** enabled, providing **double encryption at rest** alongside service-level encryption (`requireInfrastructureEncryption=true`).",
+  "Risk": "Without this second layer, compromise of the service-level key or algorithm can expose stored data, degrading **confidentiality** and weakening **defense in depth**. Insider misuse or key theft is more likely to yield readable blobs, files, or tables.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/infrastructure-encryption.html",
+    "https://stackoverflow.com/questions/65136408/how-to-get-azure-storage-account-infrastructure-encryption-status-in-powershell",
+    "https://learn.microsoft.com/en-us/azure/storage/common/infrastructure-encryption-enable",
+    "https://anishantony.medium.com/azure-storage-account-setup-and-configurations-82b970ede17f",
+    "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/storage/common/infrastructure-encryption-enable.md"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Storage account with infrastructure encryption enabled\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: 'Standard_LRS'\n  }\n  kind: 'StorageV2'\n  properties: {\n    encryption: {\n      keySource: 'Microsoft.Storage'\n      requireInfrastructureEncryption: true // Critical: enables infrastructure-level encryption (double encryption)\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Storage accounts and click Create\n2. Choose a supported type (StorageV2 or a premium blob/page/file account)\n3. Open the Encryption tab and set Enable infrastructure encryption to Enabled\n4. Click Review + create, then Create\n5. Migrate data from the old account to this new account and decommission the old one (infrastructure encryption cannot be enabled on existing accounts)",
+      "Terraform": "```hcl\n# Storage account with infrastructure encryption enabled\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  infrastructure_encryption_enabled = true # Critical: enables infrastructure-level encryption (double encryption)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabling double encryption at the hardware level on top of the default software encryption for Storage Accounts accessing Azure storage solutions.",
-      "Url": ""
+      "Text": "Enable **infrastructure encryption** for accounts or scopes handling sensitive data to strengthen **defense in depth**. Plan it at creation, as the setting is immutable. Maintain strong key hygiene for service-level encryption (use CMK where appropriate, rotate, restrict access) and enforce guardrails with policy.",
+      "Url": "https://hub.prowler.com/check/storage_infrastructure_encryption_is_enabled"
     }
   },
   "Categories": [

@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_blob_public_access_level_is_disabled",
-  "CheckTitle": "Ensure that the 'Public access level' is set to 'Private (no anonymous access)' for all blob containers in your storage account",
+  "CheckTitle": "Storage account has 'Allow blob public access' disabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that the 'Public access level' configuration setting is set to 'Private (no anonymous access)' for all blob containers in your storage account in order to block anonymous access to these Microsoft Azure resources.",
-  "Risk": "A user that accesses blob containers anonymously can use constructors that do not require credentials such as shared access signatures.",
+  "Severity": "high",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** with **blob public access** disabled prevent containers or blobs from being set to a public access level. Setting `allow blob public access` to `false` enforces no anonymous reads across the account.",
+  "Risk": "Allowing public access permits unauthenticated users to read blob data or enumerate container contents when any container is made public, compromising confidentiality.\n\nExposed objects can be scraped at scale, enabling data exfiltration and intelligence gathering without audit attribution.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-accounts-disallow-public-access#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/disable-blob-anonymous-access-for-storage-accounts.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/disable-blob-anonymous-access-for-storage-accounts.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-accounts-disallow-public-access#terraform"
+      "CLI": "az storage account update -g <RESOURCE_GROUP> -n <STORAGE_ACCOUNT_NAME> --allow-blob-public-access false",
+      "NativeIaC": "```bicep\n// Storage account with blob public access disabled\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'StorageV2'\n  sku: { name: 'Standard_LRS' }\n  properties: {\n    allowBlobPublicAccess: false // Critical: disables anonymous/public blob access at the account\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Storage accounts and select the target account\n2. Under Settings, open Configuration\n3. Set \"Allow Blob public access\" to Disabled\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n  allow_blob_public_access = false # Critical: disables anonymous/public blob access\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set 'Public access level' configuration setting to 'Private (no anonymous access)'",
-      "Url": ""
+      "Text": "Disable **blob public access** at the account and enforce authenticated access based on **least privilege**. Prefer **private endpoints** or restricted networks, use short-lived `SAS` or federated identities, and apply **RBAC** with container-level permissions. Monitor access and review exposure regularly.",
+      "Url": "https://hub.prowler.com/check/storage_blob_public_access_level_is_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

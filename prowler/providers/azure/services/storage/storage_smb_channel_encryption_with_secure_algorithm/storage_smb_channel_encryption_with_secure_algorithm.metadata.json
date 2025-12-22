@@ -1,29 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "storage_smb_channel_encryption_with_secure_algorithm",
-  "CheckTitle": "Ensure SMB channel encryption uses a secure algorithm for SMB file shares",
+  "CheckTitle": "Storage account uses AES-256-GCM for SMB channel encryption on file shares",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
-  "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default",
-  "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Implement SMB channel encryption with a secure algorithm for SMB file shares to ensure data confidentiality and integrity in transit.",
-  "Risk": "Not using the recommended SMB channel encryption may expose data transmitted over SMB channels to unauthorized interception and tampering.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-files#recommendations-for-smb-file-shares",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Files SMB shares** are evaluated for **SMB channel encryption** and whether the allowed ciphers include the recommended `AES-256-GCM`.\n\nThis identifies if encryption is configured and a secure algorithm is present in the SMB settings for file shares within the storage account.",
+  "Risk": "Missing or weak SMB channel encryption undermines **confidentiality** and **integrity**. On-path attackers could read sensitive files, capture hashes, or modify data in transit. Allowing legacy ciphers increases downgrade risks and can facilitate **lateral movement**, eroding trust boundaries across networks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/check-for-smb-channel-encryption-type.html",
+    "https://stackoverflow.com/questions/78870070/azure-container-app-jobs-accessing-azure-files-fails-with-mount-error13-perm",
+    "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol?tabs=azure-portal#smb-security-settings",
+    "https://video2.skills-academy.com/en-us/azure/storage/files/files-smb-protocol",
+    "https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-files#recommendations-for-smb-file-shares",
+    "https://stackit.news.blog/2021/09/04/general-availability-azure-files-now-supports-smb-3-1-1/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az storage account file-service-properties update --resource-group <resource-group> --account-name <storage-account> --channel-encryption AES-256-GCM",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Bicep: enforce AES-256-GCM for SMB channel encryption on the storage account's File Service\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource fileService 'Microsoft.Storage/storageAccounts/fileServices@2023-01-01' = {\n  name: 'default'\n  parent: sa\n  properties: {\n    protocolSettings: {\n      smb: {\n        channelEncryption: [ 'AES-256-GCM' ] // CRITICAL: Allows AES-256-GCM for SMB channel encryption to pass the check\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open your storage account\n2. Go to Data storage > File shares\n3. Under File share settings, click Security\n4. Select Custom\n5. Under SMB channel encryption, select AES-256-GCM\n6. Click Save",
+      "Terraform": "```hcl\n# Set SMB channel encryption to AES-256-GCM on the storage account\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  share_properties {\n    smb {\n      channel_encryption_type = \"AES256_GCM\" # CRITICAL: Enables AES-256-GCM for SMB channel encryption\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use the portal, CLI or PowerShell to set the SMB channel encryption to a secure algorithm.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol?tabs=azure-portal#smb-security-settings"
+      "Text": "Enforce **defense in depth** by restricting SMB channel encryption to `AES-256-GCM` on SMB `3.1.1`, removing weaker options.\n\n- Prefer private access (private endpoints/VPN)\n- Require secure transfer and modern TLS\n- Apply **least privilege** on shares\n- Validate client support and monitor connections during rollout",
+      "Url": "https://hub.prowler.com/check/storage_smb_channel_encryption_with_secure_algorithm"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check passes if SMB channel encryption is set to a secure algorithm."

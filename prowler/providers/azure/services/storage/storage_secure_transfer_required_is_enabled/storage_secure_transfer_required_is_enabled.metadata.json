@@ -1,26 +1,30 @@
 {
   "Provider": "azure",
   "CheckID": "storage_secure_transfer_required_is_enabled",
-  "CheckTitle": "Ensure that all data transferred between clients and your Azure Storage account is encrypted using the HTTPS protocol.",
+  "CheckTitle": "Storage account has secure transfer required enabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that all data transferred between clients and your Azure Storage account is encrypted using the HTTPS protocol.",
-  "Risk": "Requests to the storage account sent outside of a secure connection can be eavesdropped",
+  "Severity": "high",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** are evaluated for **secure transfer enforcement**, requiring all client requests to use `HTTPS` only (`enableHttpsTrafficOnly`) and blocking `HTTP`.",
+  "Risk": "Allowing `HTTP` to storage endpoints enables **man-in-the-middle** and **TLS-stripping** attacks.\nIntercepted traffic can expose credentials, SAS tokens, or data (**confidentiality**) and allow request tampering (**integrity**), leading to unauthorized access and **data exfiltration**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-account-enables-secure-transfer"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage account update --name <STORAGE_ACCOUNT_NAME> --https-only true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-account-enables-secure-transfer"
+      "CLI": "az storage account update -g <RESOURCE_GROUP> -n <STORAGE_ACCOUNT_NAME> --https-only true",
+      "NativeIaC": "```bicep\n// Enable secure transfer (HTTPS only) on a Storage Account\nresource <example_resource_name> 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: { name: 'Standard_LRS' }\n  kind: 'StorageV2'\n  properties: {\n    supportsHttpsTrafficOnly: true // Critical: require HTTPS-only (secure transfer)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Storage accounts and select the account\n2. Under Settings, open Configuration\n3. Set Secure transfer required to Enabled\n4. Click Save",
+      "Terraform": "```hcl\n# Enable secure transfer (HTTPS only) on a Storage Account\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  enable_https_traffic_only = true # Critical: require HTTPS-only (secure transfer)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable data encryption in transit.",
-      "Url": ""
+      "Text": "Enforce **HTTPS-only** on all storage accounts (`enableHttpsTrafficOnly`) and use modern TLS.\nApply **least privilege** to SAS and keys, rotate if exposure is suspected, and use **defense in depth**: prefer private endpoints, restrict public access, block `HTTP` at network controls, and ensure all clients use `https://` endpoints.",
+      "Url": "https://hub.prowler.com/check/storage_secure_transfer_required_is_enabled"
     }
   },
   "Categories": [

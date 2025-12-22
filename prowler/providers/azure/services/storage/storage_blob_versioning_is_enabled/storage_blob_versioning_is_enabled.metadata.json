@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "storage_blob_versioning_is_enabled",
-  "CheckTitle": "Ensure Blob Versioning is Enabled on Azure Blob Storage Accounts",
+  "CheckTitle": "Storage account has blob versioning enabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that blob versioning is enabled on Azure Blob Storage accounts to automatically retain previous versions of objects.",
-  "Risk": "Without blob versioning, accidental or malicious changes to blobs cannot be easily recovered, leading to potential data loss.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** have **blob versioning** enabled (`IsVersioningEnabled`) to automatically retain previous versions of blobs created by updates or deletes",
+  "Risk": "Without **blob versioning**:\n- **Integrity**: overwrites can't be reverted\n- **Availability**: deletes or ransomware remove usable copies\n- **Forensics**: no immutable history for investigation and scoped recovery\n\nMistakes or compromised identities can cause irreversible object loss and wider impact.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-overview",
+    "https://learn.microsoft.com/sv-se/azure/storage/blobs/versioning-enable",
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-versioning-for-blobs.html",
+    "https://stackoverflow.com/questions/65605484/azure-storage-enable-blob-versioning-on-storage-account-programmatically",
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/versions-manage-dotnet",
+    "https://learn.microsoft.com/en-us/answers/questions/1285243/after-enabling-versioning-in-azure-storage-account"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az storage account blob-service-properties update --resource-group <resource_group> --account-name <storage-account> --enable-versioning true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-versioning-for-blobs.html",
-      "Terraform": "resource \"azurerm_storage_account\" \"example\" {\n  name                     = \"examplestorageacct\"\n  resource_group_name      = azurerm_resource_group.example.name\n  location                 = azurerm_resource_group.example.location\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  blob_properties {\n    versioning_enabled = true\n  }\n}\n"
+      "NativeIaC": "```bicep\n// Enable blob versioning on an existing storage account\nresource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {\n  name: '<example_resource_name>/default'\n  properties: {\n    isVersioningEnabled: true // Critical: enables blob versioning to pass the check\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and open your storage account\n2. Under Data management, select Data protection\n3. In Tracking, set Enable versioning for blobs to Enabled\n4. Click Save",
+      "Terraform": "```hcl\n# Enable blob versioning on a Storage Account\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  sku_name            = \"Standard_LRS\"\n\n  blob_properties {\n    versioning_enabled = true # Critical: enables blob versioning to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable blob versioning for all Azure Storage accounts that store critical or sensitive data.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable"
+      "Text": "Enable **blob versioning** for accounts holding critical data. Pair with **blob soft delete** and lifecycle rules to retain and age off versions. Enforce **least privilege** on write and version-delete actions, and monitor access. *For high-churn data*, isolate into separate accounts with tailored retention to balance security and cost.",
+      "Url": "https://hub.prowler.com/check/storage_blob_versioning_is_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

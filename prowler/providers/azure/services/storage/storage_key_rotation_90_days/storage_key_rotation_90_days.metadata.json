@@ -1,30 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_key_rotation_90_days",
-  "CheckTitle": "Ensure that Storage Account Access Keys are Periodically Regenerated",
+  "CheckTitle": "Storage account has access key expiration period set to 90 days or less",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that Storage Account Access Keys are Periodically Regenerated",
-  "Risk": "If the access keys are not regenerated periodically, the likelihood of accidental exposures increases, which can lead to unauthorized access to your storage account resources.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage?tabs=azure-portal",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "Azure Storage accounts must define a `key expiration period` for access-key rotation, with a maximum of `90` days. The evaluation looks for accounts lacking this setting or exceeding that limit.",
+  "Risk": "Long-lived storage access keys undermine **confidentiality** and **integrity**: a leaked or reused key grants full data access and can sign SAS tokens. Extended validity enables persistent unauthorized access, data exfiltration, and tampering, and complicates revocation and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage?tabs=azure-portal",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal#regenerate-storage-access-keys",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/regenerate-storage-account-access-keys-periodically.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/regenerate-storage-account-access-keys-periodically.html#",
-      "Terraform": ""
+      "CLI": "az storage account update --name <STORAGE_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP_NAME> --key-exp-days 90",
+      "NativeIaC": "```bicep\n// Set key expiration period to 90 days or less\nresource stg 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  sku: { name: 'Standard_LRS' }\n  kind: 'StorageV2'\n  properties: {\n    keyPolicy: {\n      keyExpirationPeriodInDays: 90 // CRITICAL: enforces rotation reminder at 90 days to pass the check\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to your storage account\n2. Navigate to Security + networking > Access keys\n3. Click Set rotation reminder\n4. Enable key rotation reminders and set the period to 90 days or less\n5. Click Save\n6. If Set rotation reminder is disabled, first regenerate both keys (Regenerate for key1, then key2), then repeat steps 3-5",
+      "Terraform": "```hcl\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_resource_name>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  key_policy {\n    key_expiration_period_in_days = 90 # CRITICAL: sets key expiration period to 90 days to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Azure Storage account access keys are regenerated every 90 days in order to decrease the likelihood of accidental exposures and protect your storage account resources against unauthorized access.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal#regenerate-storage-access-keys"
+      "Text": "Enforce a `key expiration period` of `<= 90` days and automate rotation. Prefer **Microsoft Entra ID** with managed identities over Shared Key; when SAS is needed, use user-delegation SAS. Apply **least privilege**, minimize key distribution, monitor usage, rotate on suspected exposure, and disable Shared Key when feasible.",
+      "Url": "https://hub.prowler.com/check/storage_key_rotation_90_days"
     }
   },
   "Categories": [
-    "encryption"
+    "secrets"
   ],
   "DependsOn": [],
   "RelatedTo": [],
