@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_guest_invite_only_for_admin_roles",
-  "CheckTitle": "Ensure that 'Guest invite restrictions' is set to 'Only users assigned to specific admin roles can invite guest users'",
+  "CheckTitle": "Tenant authorization policy restricts guest invitations to users with specific admin roles or disables guest invitations",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Restrict invitations to users with specific administrative roles only.",
-  "Risk": "Restricting invitations to users with specific administrator roles ensures that only authorized accounts have access to cloud resources. This helps to maintain 'Need to Know' permissions and prevents inadvertent access to data. By default the setting Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins. This would allow anyone within the organization to invite guests and non-admins to the tenant, posing a security risk.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure",
+  "Severity": "high",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra authorization policy** controls who can send **B2B guest invitations**.\n\nSecure posture is when invitations are restricted to specific admin roles (`adminsAndGuestInviters`) or completely disabled (`none`).",
+  "Risk": "**Open guest invitation** rights let members or guests add external users without oversight, expanding the attack surface.\n\nImpacts:\n- **Confidentiality**: data leakage via overshared resources\n- **Integrity**: privilege escalation through group/team access\n- **Availability**: difficult containment due to account sprawl",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/answers/questions/685101/how-to-allow-only-admins-to-add-guests",
+    "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method PATCH --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --headers 'Content-Type=application/json' --body '{\"allowInvitesFrom\":\"adminsAndGuestInviters\"}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Entra ID > External Identities > External collaboration settings\n3. Under Guest invite settings, select \"Only users assigned to specific admin roles can invite guest users\" (or select \"No one in the organization can invite guest users\")\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  allow_invites_from = \"adminsAndGuestInviters\" # Restricts guest invitations to specific admin roles, making the check PASS\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then External Identities 4. Select External collaboration settings 5. Under Guest invite settings, for Guest invite restrictions, ensure that Only users assigned to specific admin roles can invite guest users is selected",
-      "Url": "https://learn.microsoft.com/en-us/answers/questions/685101/how-to-allow-only-admins-to-add-guests"
+      "Text": "Restrict invitations to `Only users assigned to specific admin roles can invite guest users`, or disable them where not needed. Apply **least privilege** (use dedicated Guest Inviter role), enforce approvals, allowlist trusted domains, and run periodic access reviews with audit monitoring to remove stale or risky guests.",
+      "Url": "https://hub.prowler.com/check/entra_policy_guest_invite_only_for_admin_roles"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "With the option of Only users assigned to specific admin roles can invite guest users selected, users with specific admin roles will be in charge of sending invitations to the external users, requiring additional overhead by them to manage user accounts. This will mean coordinating with other departments as they are onboarding new users."

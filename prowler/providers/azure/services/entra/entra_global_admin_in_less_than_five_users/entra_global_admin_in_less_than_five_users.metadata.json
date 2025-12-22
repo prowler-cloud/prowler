@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "entra_global_admin_in_less_than_five_users",
-  "CheckTitle": "Ensure fewer than 5 users have global administrator assignment",
+  "CheckTitle": "Global Administrator role has fewer than 5 members",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.directoryRole",
-  "Description": "This recommendation aims to maintain a balance between security and operational efficiency by ensuring that a minimum of 2 and a maximum of 4 users are assigned the Global Administrator role in Microsoft Entra ID. Having at least two Global Administrators ensures redundancy, while limiting the number to four reduces the risk of excessive privileged access.",
-  "Risk": "The Global Administrator role has extensive privileges across all services in Microsoft Entra ID. The Global Administrator role should never be used in regular daily activities, administrators should have a regular user account for daily activities, and a separate account for administrative responsibilities. Limiting the number of Global Administrators helps mitigate the risk of unauthorized access, reduces the potential impact of human error, and aligns with the principle of least privilege to reduce the attack surface of an Azure tenant. Conversely, having at least two Global Administrators ensures that administrative functions can be performed without interruption in case of unavailability of a single admin.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra Global Administrator** assignments are evaluated by counting current role members per tenant and identifying when the number of assignees is `5` or more.",
+  "Risk": "Having **5+ Global Administrators** expands the privileged attack surface. Compromised credentials or tokens can enable tenant-wide changes, disable security controls, exfiltrate data, and create persistence, impacting **confidentiality**, **integrity**, and **availability** across Entra, Microsoft 365, and Azure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cqureacademy.com/identity-theft-protection/8-things-to-avoid-in-azure-active-directory/",
+    "https://www.hub.trimarcsecurity.com/post/common-azure-ad-microsoft-365-m365-security-misconfigurations",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide#security-guidelines-for-assigning-roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Identity > Roles & admins > Global Administrator\n3. Select View assignments (or Assignments)\n4. Remove members until the total Global Administrator assignments are fewer than 5\n5. Save changes",
+      "Terraform": "```hcl\n# Keep Global Administrator assignments below 5 by defining only required principals\ndata \"azuread_directory_role\" \"global_admin\" {\n  display_name = \"Global Administrator\"\n}\n\n# Critical: This assignment grants GA to a specific principal; keep total GA assignments < 5\nresource \"azuread_directory_role_assignment\" \"ga_primary\" {\n  role_id             = data.azuread_directory_role.global_admin.id  # Assigns the Global Administrator role\n  principal_object_id = \"<example_resource_id>\"                      # Required account (e.g., break-glass)\n}\n\n# Critical: Add only necessary GA assignments; remove extras to ensure count < 5\nresource \"azuread_directory_role_assignment\" \"ga_secondary\" {\n  role_id             = data.azuread_directory_role.global_admin.id  # Assigns the Global Administrator role\n  principal_object_id = \"<example_resource_id>\"                      # Second required account\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Select Roles and Administrators 4. Select Global Administrator 5. Ensure less than 5 users are actively assigned the role. 6. Ensure that at least 2 users are actively assigned the role.",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide#security-guidelines-for-assigning-roles"
+      "Text": "Limit the **Global Administrator** role to **fewer than 5** users.\n- Apply **least privilege**; use narrower roles where possible\n- Use **PIM** for just-in-time, no standing access\n- Enforce **MFA** and dedicated admin accounts\n- Run **access reviews** regularly and keep cloud-only `break-glass` accounts for emergencies",
+      "Url": "https://hub.prowler.com/check/entra_global_admin_in_less_than_five_users"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Implementing this recommendation may require changes in administrative workflows or the redistribution of roles and responsibilities. Adequate training and awareness should be provided to all Global Administrators."

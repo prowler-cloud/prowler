@@ -1,29 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_default_users_cannot_create_security_groups",
-  "CheckTitle": "Ensure that 'Users can create security groups in Azure portals, API or PowerShell' is set to 'No'",
+  "CheckTitle": "Authorization policy disallows non-privileged users from creating security groups",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Restrict security group creation to administrators only.",
-  "Risk": "When creating security groups is enabled, all users in the directory are allowed to create new security groups and add members to those groups. Unless a business requires this day-to-day delegation, security group creation should be restricted to administrators only.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management",
+  "Severity": "medium",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra authorization policy** setting for default user role permissions governing creation of **security groups** by non-privileged users.\n\nThe value of `allowed_to_create_security_groups` is examined to ensure group creation is limited to administrators across portals, API, and PowerShell.",
+  "Risk": "Allowing standard users to create security groups drives **entitlement sprawl** and can grant **unauthorized access** when those groups are tied to apps, sites, or roles. This weakens **least privilege**, complicates audits, and enables **lateral movement** or data exfiltration via misassigned group-based permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.thetechtrails.com/2024/10/top-recommended-security-settings-microsoft-entra-id-guide-m365-admins.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-security-groups.html",
+    "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management",
+    "https://blog.admindroid.com/configure-self-service-group-management-in-microsoft-entra-id/",
+    "https://cloudtips.nl/managing-entra-id-configuration-and-security-using-the-terraform-msgraph-provider-\ufe0f-f67a76360bc1",
+    "https://office365itpros.com/2024/05/09/user-role-permissions/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method PATCH --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --body '{\"defaultUserRolePermissions\":{\"allowedToCreateSecurityGroups\":false}}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-security-groups.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Identity > Users > User settings\n3. Find \"Users can create security groups in Azure portals, API, or PowerShell\"\n4. Set it to \"No\"\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  default_user_role_permissions {\n    allowed_to_create_security_groups = false # Critical: disables security group creation for non-privileged users\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Select Groups 4. Select General under Settings 5. Set Users can create security groups in Azure portals, API or PowerShell to No",
-      "Url": ""
+      "Text": "Restrict creation to **administrators** or a narrowly delegated role per **least privilege**. Set `allowed_to_create_security_groups` to `false` and use request/approval for new groups. Apply **governance**: naming standards, owner accountability, periodic **access reviews**, and monitor group lifecycle in audit logs.",
+      "Url": "https://hub.prowler.com/check/entra_policy_default_users_cannot_create_security_groups"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling this setting could create a number of requests that would need to be managed by an administrator."

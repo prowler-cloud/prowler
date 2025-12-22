@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_ensure_default_user_cannot_create_tenants",
-  "CheckTitle": "Ensure that 'Restrict non-admin users from creating tenants' is set to 'Yes'",
+  "CheckTitle": "Authorization policy restricts non-admin users from creating tenants",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Require administrators or appropriately delegated users to create new tenants.",
-  "Risk": "It is recommended to only allow an administrator to create new tenants. This prevent users from creating new Azure AD or Azure AD B2C tenants and ensures that only authorized users are able to do so.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions",
+  "Severity": "medium",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra authorization policy** governs whether default users can create new tenants. This evaluates if tenant creation is disabled for non-admin users via `allowed_to_create_tenants=false`.",
+  "Risk": "Permitting default users to create tenants fuels **shadow IT** and identity sprawl. Creators become **Global Administrators** of unmanaged tenants, eroding **confidentiality** and **integrity** through unsanctioned apps and unmonitored data flows, and degrading **availability** of centralized governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v2.0.0_E3_Level_1.audit:2903297800f576cc637b3ab36e9e923a",
+    "https://charbelnemnom.com/restrict-non-admin-users-from-creating-tenants/",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/disable-user-tenant-creation.html",
+    "https://docs.kertos.io/en/article/verify-that-restrict-non-admin-users-from-creating-tenants-is-set-to-yes",
+    "https://www.linkedin.com/pulse/stop-tenant-sprawl-azure-ad-entra-id-dr-umesh-pandit-it37c",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Update-MgPolicyAuthorizationPolicy -AuthorizationPolicyId authorizationPolicy -BodyParameter @{ defaultUserRolePermissions = @{ allowedToCreateTenants = $false } }",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Go to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate: Microsoft Entra ID > Users > User settings\n3. Set \"Restrict non-admin users from creating tenants\" to Yes\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select User settings 5. Set 'Restrict non-admin users from creating' tenants to 'Yes'",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
+      "Text": "Apply **least privilege**: set `allowed_to_create_tenants=false` so only vetted admins or the **Tenant Creator** role (managed with **PIM**) can create tenants. Enforce **separation of duties**, require approvals, and monitor audits. Review this setting regularly to prevent tenant sprawl and maintain **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/entra_policy_ensure_default_user_cannot_create_tenants"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enforcing this setting will ensure that only authorized users are able to create new tenants."
