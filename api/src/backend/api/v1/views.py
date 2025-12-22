@@ -359,7 +359,11 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
+<<<<<<< HEAD
         spectacular_settings.VERSION = "1.17.1"
+=======
+        spectacular_settings.VERSION = "1.18.0"
+>>>>>>> f4a78d64f (chore(github): bump version for API, UI and Docs (#9601))
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )

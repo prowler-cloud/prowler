@@ -1,7 +1,11 @@
 openapi: 3.0.3
 info:
   title: Prowler API
+<<<<<<< HEAD
   version: 1.17.1
+=======
+  version: 1.18.0
+>>>>>>> f4a78d64f (chore(github): bump version for API, UI and Docs (#9601))
   description: |-
     Prowler API specification.
 
