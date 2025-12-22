@@ -19,6 +19,7 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from prowler.providers.aws.lib.security_hub.exceptions.exceptions import SecurityHubNoEnabledRegionsError
 
 logger = get_task_logger(__name__)
 
@@ -409,7 +410,8 @@ def upload_security_hub_integration(
                             logger.warning(
                                 f"Failed to archive previous findings: {str(archive_error)}"
                             )
-
+            except SecurityHubNoEnabledRegionsError:
+                continue
             except Exception as e:
                 logger.error(
                     f"Security Hub integration {integration.id} failed: {str(e)}"
