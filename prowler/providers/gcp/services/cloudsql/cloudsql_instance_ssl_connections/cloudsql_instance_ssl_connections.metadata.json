@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_ssl_connections",
-  "CheckTitle": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
+  "CheckTitle": "Cloud SQL database instance requires SSL for all incoming connections",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
-  "Risk": "SQL database connections if successfully trapped (MITM), can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance. This recommendation is applicable for Postgresql, MySql generation 1, MySql generation 2 and SQL Server 2017 instances.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "Cloud SQL instances enforce **SSL/TLS-only connections**, rejecting plaintext traffic. The connection policy requires encryption for all clients (e.g., `ENCRYPTED_ONLY` or `TRUSTED_CLIENT_CERTIFICATE_REQUIRED`) instead of allowing both encrypted and unencrypted connections.",
+  "Risk": "Without enforced TLS, database traffic is exposed to interception.\n- **MITM** can read creds and query results (**confidentiality**)\n- Inject/alter statements to corrupt data (**integrity**)\n\nMixed modes cause accidental plaintext use on public or untrusted networks.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-ssl-for-incoming-connections.html",
+    "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --require-ssl",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --ssl-mode=ENCRYPTED_ONLY",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-ssl-for-incoming-connections.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Click your instance name\n3. Open Connections > Security tab\n4. Select \"Allow only SSL connections\"\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<region>\"\n  database_version = \"<database_version>\"\n\n  settings {\n    tier = \"<tier>\"\n    ip_configuration {\n      ssl_mode = \"ENCRYPTED_ONLY\" # Critical: only allow SSL/TLS-encrypted connections\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enforce all incoming connections to SQL database instance to use SSL.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+      "Text": "Require **TLS for all connections**. Prefer `TRUSTED_CLIENT_CERTIFICATE_REQUIRED` or use Cloud SQL Auth Proxy/Connectors for encrypted, authenticated channels.\n- Disallow mixed plaintext/SSL modes\n- Rotate and monitor certificates\n- Combine with **least privilege** and private access",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_ssl_connections"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

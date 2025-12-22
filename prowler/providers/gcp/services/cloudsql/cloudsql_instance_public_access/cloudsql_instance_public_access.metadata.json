@@ -1,26 +1,30 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_public_access",
-  "CheckTitle": "Ensure That Cloud SQL Database Instances Do Not Implicitly Whitelist All Public IP Addresses ",
+  "CheckTitle": "Cloud SQL instance does not allow 0.0.0.0/0 in authorized networks",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That Cloud SQL Database Instances Do Not Implicitly Whitelist All Public IP Addresses ",
-  "Risk": "To minimize attack surface on a Database server instance, only trusted/known and required IP(s) should be white-listed to connect to it. An authorized network should not have IPs/networks configured to 0.0.0.0/0 which will allow access to the instance from anywhere in the world. Note that authorized networks apply only to instances with public IPs.",
+  "Severity": "critical",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL authorized networks** are checked for the open CIDR `0.0.0.0/0` on instances using a public IP.\n\nThe finding flags configurations where a catch-all entry exists instead of specific client ranges.",
+  "Risk": "Allowing `0.0.0.0/0` makes the database reachable from the Internet, degrading **confidentiality** and **availability**. Attackers can brute-force credentials, probe for vulnerable endpoints, exfiltrate data via unauthorized queries, and trigger resource exhaustion through automated scanning.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/mysql/connection-org-policy",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/publicly-accessible-cloud-sql-instances.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --authorized-networks=IP_ADDR1,IP_ADDR2...",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --authorized-networks=\"\"",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/publicly-accessible-cloud-sql-instances.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to SQL > Instances and select your instance\n2. Open the Connections tab\n3. Under Authorized networks, delete the entry 0.0.0.0/0\n4. Click Save",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"<DATABASE_VERSION>\"\n\n  settings {\n    tier = \"<TIER>\"\n\n    ip_configuration {\n      authorized_networks {\n        value = \"<ALLOWED_CIDR>\" # Critical: remove 0.0.0.0/0; allow only specific CIDR to pass the check\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Database Server should accept connections only from trusted Network(s)/IP(s) and restrict access from public IP addresses.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/connection-org-policy"
+      "Text": "Enforce **least privilege** network access:\n- Remove `0.0.0.0/0`; allow only trusted, fixed IP ranges\n- Prefer **private IP** or **Private Service Connect** with VPC controls\n- Use proxied access (Cloud SQL Auth Proxy) over direct public connections\n- Apply org policies to prevent broad allowlists",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_public_access"
     }
   },
   "Categories": [

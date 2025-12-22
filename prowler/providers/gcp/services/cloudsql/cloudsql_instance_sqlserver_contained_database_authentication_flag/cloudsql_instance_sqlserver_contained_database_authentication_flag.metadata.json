@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_contained_database_authentication_flag",
-  "CheckTitle": "Ensure that the 'contained database authentication' database flag for Cloud SQL on the SQL Server instance is set to 'off' ",
+  "CheckTitle": "Cloud SQL for SQL Server instance has 'contained database authentication' flag set to off",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure that the 'contained database authentication' database flag for Cloud SQL on the SQL Server instance is set to 'off' ",
-  "Risk": "A contained database includes all database settings and metadata required to define the database and has no configuration dependencies on the instance of the Database Engine where the database is installed. Users can connect to the database without authenticating a login at the Database Engine level. Isolating the database from the Database Engine makes it possible to easily move the database to another instance of SQL Server. Contained databases have some unique threats that should be understood and mitigated by SQL Server Database Engine administrators. Most of the threats are related to the USER WITH PASSWORD authentication process, which moves the authentication boundary from the Database Engine level to the database level, hence this is recommended to disable this flag. This recommendation is applicable to SQL Server database instances.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "Cloud SQL for SQL Server instances are evaluated for the **contained database authentication** setting. The check inspects the `contained database authentication` flag and expects its value to be `off`.",
+  "Risk": "Enabling contained authentication moves identity checks to the database, bypassing server-level logins and policies. This weakens centralized controls and auditing, enables password spraying on contained users, and can persist users across copies, increasing unauthorized data access and tampering risk to **confidentiality** and **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-contained-database-authentication-flag.html",
+    "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_contained_database_authentication_flag_remediation",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_10#terraform",
+    "https://guides.spectralops.io/docs/d9_gcp_vln_04",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_10/",
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags contained database authentication=off",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=\"contained database authentication\"=off",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-contained-database-authentication-flag.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_10#terraform"
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open the SQL Server instance\n3. Click Edit\n4. In Database flags, add or edit: contained database authentication = Off\n5. Click Save (the instance may restart)",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<REGION>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"<TIER>\"\n    database_flags {\n      name  = \"contained database authentication\" # critical: target flag\n      value = \"off\"                                # critical: disable contained DB auth\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set contained database authentication database flag for Cloud SQL on the SQL Server instance to off.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Keep `contained database authentication` set to `off`. Centralize authentication and auditing at the server layer or via directory integration, and apply **least privilege**. Avoid `USER WITH PASSWORD` contained users. If containment is unavoidable, tightly scope usage, enforce strong credentials, and monitor login activity.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_contained_database_authentication_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

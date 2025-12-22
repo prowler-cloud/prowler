@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_mysql_local_infile_flag",
-  "CheckTitle": "Ensure That the Local_infile Database Flag for a Cloud SQL MySQL Instance Is Set to Off",
+  "CheckTitle": "Cloud SQL MySQL instance has the local_infile database flag set to off",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That the Local_infile Database Flag for a Cloud SQL MySQL Instance Is Set to Off",
-  "Risk": "The local_infile flag controls the server-side LOCAL capability for LOAD DATA statements. Depending on the local_infile setting, the server refuses or permits local data loading by clients that have LOCAL enabled on the client side.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for MySQL** instances are evaluated for the `local_infile` database flag being explicitly set to `off`, disabling use of `LOAD DATA LOCAL`.\n\nInstances where `local_infile` is absent or not `off` are identified.",
+  "Risk": "With `local_infile` enabled, clients can send local files via `LOAD DATA LOCAL`. A stolen credential or SQL injection can coerce clients to leak files and mass-ingest unvetted data, compromising **confidentiality** and **integrity**, and aiding lateral movement through secrets imported into the database.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_1#terraform",
+    "https://cloud-kb.sentinelone.com/mysql-local-infile-enabled",
+    "https://support.icompaas.com/support/solutions/articles/62000233031-6-1-3-ensure-that-the-local-infile-database-flag-for-a-cloud-sql-mysql-instance-is-set-to-off-au",
+    "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",
+    "https://cloud.google.com/sql/docs/mysql/flags",
+    "https://stackoverflow.com/questions/56799504/loading-csv-into-cloudsql",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-local-infile-flag.html",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_1/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags local_infile=off",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=local_infile=off",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-local-infile-flag.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_1#terraform"
+      "Other": "1. In Google Cloud Console, go to SQL\n2. Select the MySQL instance and click Edit\n3. In Database flags, add or locate \"local_infile\" and set it to Off\n4. Click Save to apply changes",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"MYSQL_8_0\"\n  region           = \"<example_region>\"\n\n  settings {\n    tier = \"<example_tier>\"\n    # Critical: disables LOCAL INFILE to pass the check\n    database_flags {\n      name  = \"local_infile\"  # sets the specific flag\n      value = \"off\"           # required value for compliance\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set the local_infile database flag for a Cloud SQL MySQL instance to off.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Text": "Keep `local_infile` set to `off`. Use governed import channels (e.g., controlled object storage imports) and enforce **least privilege** for bulk-loading. Apply **separation of duties** between ingestion and admin roles, validate file sources and formats, and monitor high-volume loads. *If ever needed, enable only briefly for vetted tasks.*",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_mysql_local_infile_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

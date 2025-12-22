@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_user_connections_flag",
-  "CheckTitle": "Ensure 'user Connections' Database Flag for Cloud Sql Sql Server Instance Is Set to a Non-limiting Value",
+  "CheckTitle": "Cloud SQL SQL Server instance has the 'user connections' database flag set to 0",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure 'user Connections' Database Flag for Cloud Sql Sql Server Instance Is Set to a Non-limiting Value",
-  "Risk": "The user connections option specifies the maximum number of simultaneous user connections that are allowed on an instance of SQL Server. The actual number of user connections allowed also depends on the version of SQL Server that you are using, and also the limits of your application or applications and hardware. SQL Server allows a maximum of 32,767 user connections. Because user connections is by default a self- configuring value, with SQL Server adjusting the maximum number of user connections automatically as needed, up to the maximum value allowable. For example, if only 10 users are logged in, 10 user connection objects are allocated. In most cases, you do not have to change the value for this option. The default is 0, which means that the maximum (32,767) user connections are allowed. However if there is a number defined here that limits connections, SQL Server will not allow anymore above this limit. If the connections are at the limit, any new requests will be dropped, potentially causing lost data or outages for those using the database.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for SQL Server** instances are evaluated to ensure the `user connections` database flag is set to `0` (unlimited), avoiding any artificial cap on concurrent user sessions",
+  "Risk": "A capped `user connections` value can exhaust available sessions, causing login failures, aborted transactions, and timeouts. This reduces **availability**, can delay administrative access, and may lead to **integrity** issues from failed or inconsistent retries under load.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-user-connection-flag.html",
+    "https://cloud.google.com/sql/docs/sqlserver/flags",
+    "https://www.mssqltips.com/sqlservertip/5766/managing-maximum-number-of-concurrent-connections-in-sql-server/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags user connections=0",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags='\"user connections\"=0'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-user-connection-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open the SQL Server instance <example_resource_name> and click Edit\n3. In Database flags, click Add item, select \"user connections\", set value to 0\n4. Click Save (the instance may restart)",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<region>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"db-custom-1-3840\"\n\n    # Critical: ensure the 'user connections' flag is set to 0 to pass the check\n    database_flags {\n      name  = \"user connections\"  # Critical line: target flag\n      value = \"0\"                 # Critical line: set to 0\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to check the user connections for a Cloud SQL SQL Server instance to ensure that it is not artificially limiting connections.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Set `user connections` to `0` to prevent artificial limits. Preserve **availability** with **connection pooling**, controlled retries, and **capacity planning** based on peak usage. *If a cap is required*, size it with ample headroom, monitor connection counts, and review regularly.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_user_connections_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

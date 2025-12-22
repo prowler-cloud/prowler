@@ -1,26 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_public_ip",
-  "CheckTitle": "Check for Cloud SQL Database Instances with Public IPs",
+  "CheckTitle": "Cloud SQL database instance does not have a public IP address",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Check for Cloud SQL Database Instances with Public IPs",
-  "Risk": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL instances** are evaluated for exposure via **public IP addresses** instead of `private IP` connectivity within a VPC.\n\nInstances with an externally routable database endpoint are surfaced.",
+  "Risk": "**Public DB endpoints** expand attack surface:\n- Credential brute force and SQL injection threaten **confidentiality** and **integrity**\n- Internet DDoS reduces **availability**\n- Exposure bypasses VPC controls, easing **lateral movement** and data exfiltration",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
+    "https://cloud.google.com/sql/docs/mysql/configure-private-ip",
+    "https://github.com/paladincloud/ce/wiki/gcp-policy",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
+    "https://groups.google.com/g/google-appengine/c/qx8TsP1R034",
+    "https://stackoverflow.com/questions/60207375/how-to-deploy-a-private-google-cloudsql-instance-assigning-exiting-vpc-network",
+    "https://docs.cloud.google.com/sql/docs/mysql/recommender-disable-public-ip",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <MYSQL_INSTANCE> --project <PROJECT_ID> --network=<NETWORK_ID> --no-assign-ip",
+      "CLI": "gcloud beta sql instances patch <example_resource_id> --project=<example_resource_id> --network=projects/<example_resource_id>/global/networks/<example_resource_name> --no-assign-ip",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#terraform"
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances and select <example_resource_name>\n2. Open Connections > Networking\n3. Check Private IP and select the VPC network; if prompted, click Set up connection to create the private service connection\n4. Uncheck Public IP\n5. Click Save",
+      "Terraform": "```hcl\n# Cloud SQL instance without public IP\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<REGION>\"\n  database_version = \"MYSQL_8_0\"\n\n  settings {\n    tier = \"db-f1-micro\"\n    ip_configuration {\n      ipv4_enabled   = false  # Critical: disables public (IPv4) IP\n      private_network = \"projects/<example_project_id>/global/networks/<example_resource_name>\"  # Critical: ensures private IP via specified VPC\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/configure-private-ip"
+      "Text": "Prefer **private IP** and disable public endpoints. Access databases over VPC, VPN/Interconnect, or **Private Service Connect**. If `authorized networks` are required, restrict to specific sources-never `0.0.0.0/0`. Enforce **least privilege** IAM, use Cloud SQL connectors/proxy, and layer **defense in depth** with network controls and monitoring.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_public_ip"
     }
   },
   "Categories": [

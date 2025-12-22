@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
-  "CheckTitle": "Ensure 'external scripts enabled' database flag for Cloud SQL SQL Server instance is set to 'off'",
+  "CheckTitle": "Cloud SQL SQL Server instance has 'external scripts enabled' flag set to 'off'",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure 'external scripts enabled' database flag for Cloud SQL SQL Server instance is set to 'off'",
-  "Risk": "external scripts enabled enable the execution of scripts with certain remote language extensions. This property is OFF by default. When Advanced Analytics Services is installed, setup can optionally set this property to true. As the External Scripts Enabled feature allows scripts external to SQL such as files located in an R library to be executed, which could adversely affect the security of the system, hence this should be disabled.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for SQL Server** instances have the `external scripts enabled` database flag set to `off`",
+  "Risk": "Allowing **external scripts** lets SQL invoke language extensions (e.g., R/Python), enabling arbitrary code execution. This can cause data exfiltration (**confidentiality**), tampered query results (**integrity**), and resource exhaustion or service degradation (**availability**), and may facilitate lateral movement from the database layer.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/sql/docs/sqlserver/flags?hl=it",
+    "https://cloud.google.com/sql/docs/sqlserver/flags",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-external-scripts-enabled-flag.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags external scripts enabled=off",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=\"external scripts enabled\"=off",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-external-scripts-enabled-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to SQL > Instances and select the SQL Server instance\n2. Click Edit\n3. In the Flags section, add or locate \"external scripts enabled\"\n4. Set its value to Off\n5. Click Save to apply (the instance may restart)",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<REGION>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n\n    # Critical: disables external scripts on the SQL Server instance\n    database_flags {\n      name  = \"external scripts enabled\"  # sets the flag\n      value = \"off\"                        # required value to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set external scripts enabled database flag for Cloud SQL SQL Server instance to off",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Keep `external scripts enabled` set to `off`. Apply **least privilege** and **defense in depth** by disabling code-execution features in the database. If analytics are required, use isolated instances, restrict outbound network access, and enforce change control and auditing to prevent misuse.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_external_scripts_enabled_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

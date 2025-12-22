@@ -1,29 +1,38 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_remote_access_flag",
-  "CheckTitle": "Ensure 'remote access' database flag for Cloud SQL SQL Server instance is set to 'off'",
+  "CheckTitle": "Cloud SQL SQL Server instance has 'remote access' database flag set to 'off'",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure 'remote access' database flag for Cloud SQL SQL Server instance is set to 'off'",
-  "Risk": "The remote access option controls the execution of stored procedures from local or remote servers on which instances of SQL Server are running. This default value for this option is 1. This grants permission to run local stored procedures from remote servers or remote stored procedures from the local server. To prevent local stored procedures from being run from a remote server or remote stored procedures from being run on the local server, this must be disabled. The Remote Access option controls the execution of local stored procedures on remote servers or remote stored procedures on local server. 'Remote access' functionality can be abused to launch a Denial-of- Service (DoS) attack on remote servers by off-loading query processing to a target, hence this should be disabled. This recommendation is applicable to SQL Server database instances.",
+  "Severity": "medium",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for SQL Server** instances where the `remote access` database flag is `on`, allowing remote procedure calls between servers",
+  "Risk": "Enabling **remote procedure calls** expands exposure: untrusted servers can invoke stored procedures, leading to **data exfiltration** (confidentiality), unauthorized changes (**integrity**), and **DoS** via resource-heavy remote execution (**availability**). It can also enable lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://avd.aquasec.com/misconfig/google/sql/sql-server-remote-access-flag-disabled/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-remote-access-flag.html",
+    "https://www.mssqltips.com/sqlservertip/2340/resolving-could-not-open-a-connection-to-sql-server-errors/",
+    "https://github.com/paladincloud/ce/wiki/gcp-policy",
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags=\"remote access\"=off",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-remote-access-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open the SQL Server instance (<example_resource_name>) and click Edit\n3. Scroll to Database flags and click Add item\n4. Select \"remote access\" and set value to off\n5. Click Save and confirm the restart when prompted\n6. Verify under Overview > Database flags that \"remote access\" = off",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n  region           = \"<example_region>\"\n\n  settings {\n    tier = \"<example_tier>\"\n\n    # Critical: disables SQL Server remote access to pass the check\n    database_flags {\n      name  = \"remote access\"\n      value = \"off\"  # sets the flag to off\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set remote access database flag for Cloud SQL SQL Server instance to off.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Set `remote access` to `off` to reduce the attack surface. Apply **least privilege** and **defense in depth**: avoid remote stored procedures; if business-required, allow only trusted peers, enforce strong authentication, audit calls, and monitor for abuse.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_remote_access_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
