@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_tde_encrypted_with_cmk",
-  "CheckTitle": "Ensure SQL server's Transparent Data Encryption (TDE) protector is encrypted with Customer-managed key",
+  "CheckTitle": "SQL server uses a customer-managed key for the TDE protector and all databases have TDE enabled",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Transparent Data Encryption (TDE) with Customer-managed key support provides increased transparency and control over the TDE Protector, increased security with an HSM-backed external service, and promotion of separation of duties.",
-  "Risk": "Customer-managed key support for Transparent Data Encryption (TDE) allows user control of TDE encryption keys and restricts who can access them and when. Azure Key Vault, Azure cloud-based external key management system, is the first key management service where TDE has integrated support for Customer-managed keys. With Customer-managed key support, the database encryption key is protected by an asymmetric key stored in the Key Vault. The asymmetric key is set at the server level and inherited by all databases under that server",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-byok-azure-sql",
+  "Severity": "critical",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** uses **Transparent Data Encryption** with a **customer-managed key** in Azure Key Vault, and each database has TDE `Enabled`",
+  "Risk": "Without **TDE with CMK**, data at rest may be unencrypted or controlled by service keys, weakening **confidentiality** and **key custody**. Attackers or insiders could read backups, snapshots, or stolen disks, and you cannot enforce **rotation**, **revocation**, or **separation of duties**, raising compliance and incident response risks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/use-byok-for-transparent-data-encryption.html#",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql",
+    "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-byok-azure-sql"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az sql server tde-key set --resource-group resourceName --server dbServerName --server-key-type {AzureKeyVault} --kid keyIdentifier",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/use-byok-for-transparent-data-encryption.html#",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```bicep\n// Add the Key Vault key to the SQL server\nresource serverKey 'Microsoft.Sql/servers/keys@2021-11-01' = {\n  name: '<example_resource_name>/<example_resource_name>'\n  properties: {\n    serverKeyType: 'AzureKeyVault' // critical: use a customer-managed key from Azure Key Vault\n    uri: 'https://<example_resource_name>.vault.azure.net/keys/<example_resource_name>/<example_resource_id>' // critical: KID of the Key Vault key\n  }\n}\n\n// Set the server TDE protector to the Key Vault key (CMK)\nresource encryptionProtector 'Microsoft.Sql/servers/encryptionProtector@2021-11-01' = {\n  name: '<example_resource_name>/current'\n  properties: {\n    serverKeyType: 'AzureKeyVault' // critical: switches protector from service-managed to CMK\n    serverKeyName: '<example_resource_name>' // critical: reference the key added above\n  }\n}\n\n// Ensure TDE is enabled on the database\nresource dbTde 'Microsoft.Sql/servers/databases/transparentDataEncryption@2014-04-01' = {\n  name: '<example_resource_name>/<example_resource_name>/current'\n  properties: {\n    status: 'Enabled' // critical: turns on TDE for the database\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to SQL servers > select <server>\n2. Under Security, open Transparent data encryption\n3. Select Customer-managed key and choose the key from Azure Key Vault, then Save\n4. For each database on this server: go to SQL databases > select <database> > Transparent data encryption\n5. Set Status to On and Save",
+      "Terraform": "```hcl\n# Set the SQL Server TDE protector to a Key Vault CMK\nresource \"azurerm_sql_server_key\" \"<example_resource_name>\" {\n  server_id        = \"<example_resource_id>\"\n  key_vault_key_id = \"<key_identifier>\" # critical: KID of the Key Vault key to use as TDE protector\n}\n\n# Ensure TDE is enabled on the database\nresource \"azurerm_sql_database_transparent_data_encryption\" \"<example_resource_name>\" {\n  resource_group_name = \"<example_resource_name>\"\n  server_name         = \"<example_resource_name>\"\n  database_name       = \"<example_resource_name>\"\n  enabled             = true # critical: turns on TDE for the database\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers For the desired server instance 2. Click On Transparent data encryption 3. Set Transparent data encryption to Customer-managed key 4. Browse through your key vaults to Select an existing key or create a new key in the Azure Key Vault. 5. Check Make selected key the default TDE protector",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql"
+      "Text": "Use a **customer-managed TDE protector** in Azure Key Vault or Managed HSM and ensure TDE is `Enabled` for every database.\n- Apply **least privilege** to key access\n- Enable **rotation** and monitor key use\n- Protect keys with soft-delete and purge protection\n- Enforce via **policy** and maintain key backups for restores",
+      "Url": "https://hub.prowler.com/check/sqlserver_tde_encrypted_with_cmk"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Once TDE protector is encrypted with a Customer-managed key, it transfers entire responsibility of respective key management on to you, and hence you should be more careful about doing any operations on the particular key in order to keep data from corresponding SQL server and Databases hosted accessible. When deploying Customer Managed Keys, it is prudent to ensure that you also deploy an automated toolset for managing these keys (this should include discovery and key rotation), and Keys should be stored in an HSM or hardware backed keystore, such as Azure Key Vault. As far as toolsets go, check with your cryptographic key provider, as they may well provide one as an add-on to their service."

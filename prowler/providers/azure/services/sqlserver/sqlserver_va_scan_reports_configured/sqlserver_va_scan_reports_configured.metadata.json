@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_va_scan_reports_configured",
-  "CheckTitle": "Ensure that Vulnerability Assessment (VA) setting 'Send scan reports to' is configured for a SQL server",
+  "CheckTitle": "SQL server has Vulnerability Assessment enabled and scan report recipients configured",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Configure 'Send scan reports to' with email addresses of concerned data owners/stakeholders for a critical SQL servers.",
-  "Risk": "Vulnerability Assessment (VA) scan reports and alerts will be sent to email addresses configured at 'Send scan reports to'. This may help in reducing time required for identifying risks and taking corrective measures",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** vulnerability assessment uses **recurring scans** and emails results to designated recipients. This evaluates that VA is enabled and that `Send scan reports to` (or subscription admin notifications) is configured so scan reports are delivered.",
+  "Risk": "If VA reports aren't sent to responsible owners, findings can be missed, delaying fixes. Attackers may exploit misconfigurations, excessive permissions, or outdated settings, leading to data exposure (C), unauthorized changes (I), and potential service disruption (A).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-send-scan-reports-to-is-configured-for-a-sql-server#terraform",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-send-scan-reports-to-is-configured-for-a-sql-server#terraform"
+      "NativeIaC": "```bicep\n// Configure VA (classic) on a SQL Server and set recipients\nresource sqlServer 'Microsoft.Sql/servers@2021-11-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource va 'Microsoft.Sql/servers/vulnerabilityAssessments@2021-11-01' = {\n  name: 'Default'\n  parent: sqlServer\n  properties: {\n    storageContainerPath: 'https://<example_storage_account>.blob.core.windows.net/<example_container>' // CRITICAL: enables VA classic by setting storage container\n    storageAccountAccessKey: '<example_storage_key>'\n    recurringScans: {\n      isEnabled: true\n      emailSubscriptionAdmins: true // CRITICAL: configures scan report recipients (subscription admins)\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers and select <your server>\n2. Under Security, open Vulnerability assessment\n3. Select a Storage account and Container, then Save\n4. In Recurring scans, turn On and enable Send to subscription admins (or add at least one email)\n5. Save",
+      "Terraform": "```hcl\n# Enable VA (classic) on a SQL Server and configure recipients\nresource \"azurerm_mssql_server_vulnerability_assessment\" \"<example_resource_name>\" {\n  server_id                = \"<example_resource_id>\"\n  storage_container_path   = \"https://<example_storage_account>.blob.core.windows.net/<example_container>\" # CRITICAL: enables VA classic by setting storage container\n  storage_account_access_key = \"<example_storage_key>\"\n\n  recurring_scans {\n    enabled                   = true\n    email_subscription_admins = true # CRITICAL: configures scan report recipients (subscription admins)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers 2. Select a server instance 3. Select Microsoft Defender for Cloud 4. Select Configure next to Enablement status 5. Set Microsoft Defender for SQL to On 6. Under Vulnerability Assessment Settings, select a Storage Account 7. Set Periodic recurring scans to On 8. Under Send scan reports to, provide email addresses for data owners and stakeholders 9. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
+      "Text": "Enable **Vulnerability Assessment**, keep **recurring scans** active, and configure `Send scan reports to` with accountable security owners or subscription admins. Integrate notifications with central alerting, apply **least privilege** to recipients, and enforce SLAs to triage and remediate findings promptly.",
+      "Url": "https://hub.prowler.com/check/sqlserver_va_scan_reports_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling the Microsoft Defender for SQL features will incur additional costs for each SQL server."

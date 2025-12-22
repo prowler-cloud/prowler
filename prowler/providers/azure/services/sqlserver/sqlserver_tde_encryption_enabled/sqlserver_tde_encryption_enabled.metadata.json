@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_tde_encryption_enabled",
-  "CheckTitle": "Ensure SQL server's Transparent Data Encryption (TDE) protector is encrypted",
+  "CheckTitle": "SQL database has Transparent Data Encryption (TDE) enabled",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Enable Transparent Data Encryption on every SQL server.",
-  "Risk": "Azure SQL Database transparent data encryption helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and transaction log files at rest without requiring changes to the application.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-with-azure-sql-database",
+  "Severity": "critical",
+  "ResourceType": "microsoft.sql/servers/databases",
+  "Description": "**Azure SQL user databases** have **Transparent Data Encryption** (`TDE`) enabled, ensuring encryption of database files, backups, and transaction logs at rest.\n\n*The `master` system database is excluded from evaluation.*",
+  "Risk": "Without **TDE**, data at rest remains unencrypted:\n- Stolen backups, snapshots, or compromised storage enable offline data disclosure\n- Attackers with substrate access can bypass DB auth, harming **confidentiality** and enabling **exfiltration**",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-with-azure-sql-database",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/data-encryption.html#",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az sql db tde set --resource-group resourceGroup --server dbServerName --database dbName --status Enabled",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/data-encryption.html#",
-      "Terraform": ""
+      "CLI": "az sql db tde set --resource-group <RESOURCE_GROUP> --server <SERVER_NAME> --database <DATABASE_NAME> --status Enabled",
+      "NativeIaC": "```bicep\n// Enable TDE on an existing Azure SQL Database\nresource tde 'Microsoft.Sql/servers/databases/transparentDataEncryption@2021-11-01' = {\n  name: '<example_server_name>/<example_database_name>/current'\n  properties: {\n    state: 'Enabled' // critical: enables Transparent Data Encryption (TDE)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL databases and select the target database (not master)\n2. Under Settings, open Transparent data encryption\n3. Set Transparent data encryption to On (Enabled) and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_mssql_database\" \"<example_resource_name>\" {\n  name      = \"<example_resource_name>\"\n  server_id = \"<example_resource_id>\"\n\n  transparent_data_encryption_enabled = true # critical: enables TDE\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL databases 2. For each DB instance 3. Click on Transparent data encryption 4. Set Data encryption to On",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql"
+      "Text": "Enable **TDE** on all Azure SQL user databases. Prefer **customer-managed keys** in Key Vault or Managed HSM for control, rotation, and revocation. Apply **least privilege** and **separation of duties** to key access, enforce via **policy**, and monitor key/audit logs. *Maintain key backups and lifecycle to prevent availability loss.*",
+      "Url": "https://hub.prowler.com/check/sqlserver_tde_encryption_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

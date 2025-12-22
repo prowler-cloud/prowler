@@ -1,29 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_microsoft_defender_enabled",
-  "CheckTitle": "Ensure that Microsoft Defender for SQL is set to 'On' for critical SQL Servers",
+  "CheckTitle": "SQL Server has Microsoft Defender for SQL enabled",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Ensure that Microsoft Defender for SQL is set to 'On' for critical SQL Servers",
-  "Risk": "Microsoft Defender for SQL is a unified package for advanced SQL security capabilities. Microsoft Defender is available for Azure SQL Database, Azure SQL Managed  classifying sensitive data, surfacing and mitigating potential database vulnerabilities, and detecting anomalous activities that could indicate a threat to your database. It provides a single go-to location for enabling and managing these capabilities.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
+  "Severity": "high",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** instances are evaluated for the server-level **security alert policy** of **Microsoft Defender for SQL**, expecting the policy state to be `Enabled`.",
+  "Risk": "Without **Defender for SQL**, anomalous logins, SQL injection patterns, and risky configurations may go undetected, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and disruptive queries or ransomware (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.azadvertizer.net/azpolicyadvertizer/7fe3b40f-802b-4cdd-8bd4-fd799c948cc2.html",
+    "https://docs.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-sql-usage",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/policy-reference"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
-      "Terraform": ""
+      "CLI": "az sql server threat-policy update --resource-group <RESOURCE_GROUP> --server <SERVER_NAME> --state Enabled",
+      "NativeIaC": "```bicep\nparam serverName string = '<example_resource_name>'\n\nresource securityAlert 'Microsoft.Sql/servers/securityAlertPolicies@2021-11-01' = {\n  name: '${serverName}/Default'\n  properties: {\n    state: 'Enabled' // Critical: enables the server's security alert policy (Defender for SQL)\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal > SQL servers > select <SERVER_NAME>\n2. Under Security, select Microsoft Defender for SQL (or Microsoft Defender for Cloud)\n3. Toggle to On (Enable) and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_mssql_server_security_alert_policy\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"\n  state     = \"Enabled\" # Critical: enables the server's security alert policy (Defender for SQL)\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers For each production SQL server instance: 2. Click Microsoft Defender for Cloud 3. Click Enable Microsoft Defender for SQL",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-sql-usage"
+      "Text": "Enable **Microsoft Defender for SQL** across all servers and managed instances, preferably at subscription scope. Apply **least privilege**, restrict public exposure, and integrate alerts with your SOC. Regularly review **vulnerability assessment** results and harden findings as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/sqlserver_microsoft_defender_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Microsoft Defender for SQL is a paid feature and will incur additional cost for each SQL server."

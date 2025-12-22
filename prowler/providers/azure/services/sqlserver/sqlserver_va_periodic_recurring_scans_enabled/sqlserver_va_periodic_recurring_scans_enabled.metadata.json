@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_va_periodic_recurring_scans_enabled",
-  "CheckTitle": "Ensure that Vulnerability Assessment (VA) setting 'Periodic recurring scans' is set to 'on' for each SQL server",
+  "CheckTitle": "SQL Server has Vulnerability Assessment periodic recurring scans enabled",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Enable Vulnerability Assessment (VA) Periodic recurring scans for critical SQL servers and corresponding SQL databases.",
-  "Risk": "VA setting 'Periodic recurring scans' schedules periodic (weekly) vulnerability scanning for the SQL server and corresponding Databases. Periodic and regular vulnerability scanning provides risk visibility based on updated known vulnerability signatures and best practices.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL servers** are evaluated for **Vulnerability Assessment** configuration and whether **periodic recurring scans** are scheduled (e.g., weekly) for the server and its databases.\n\nServers with Vulnerability Assessment missing or scans not scheduled are identified.",
+  "Risk": "Without scheduled scans, new misconfigurations and vulnerable settings can persist unnoticed, weakening **confidentiality** and **integrity**. Attackers can exploit stale permissions, unsafe firewall rules, or unpatched features to read or alter data and pivot to other resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-periodic-recurring-scans-is-enabled-on-a-sql-server#terraform",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+    "https://www.pulumi.com/registry/packages/azure/api-docs/mssql/servervulnerabilityassessment/",
+    "https://docs.datadoghq.com/security/default_rules/def-000-s27/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/periodic-vulnerability-scans.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
+    "https://faun.pub/enable-azure-sql-server-vulnerability-assessment-using-terraform-abdffc6307a6",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-periodic-recurring-scans-is-enabled-on-a-sql-server/",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/periodic-vulnerability-scans.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/periodic-vulnerability-scans.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-periodic-recurring-scans-is-enabled-on-a-sql-server#terraform"
+      "CLI": "az rest --method put --url https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Sql/servers/<SERVER_NAME>/vulnerabilityAssessments/Default?api-version=2023-08-01-preview --body '{\"properties\":{\"storageContainerPath\":\"https://<STORAGE_ACCOUNT>.blob.core.windows.net/<CONTAINER>/\",\"storageAccountAccessKey\":\"<ACCESS_KEY>\",\"recurringScans\":{\"isEnabled\":true}}}'",
+      "NativeIaC": "```bicep\n// Enable classic VA with recurring scans on an existing SQL Server\nresource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' existing = {\n  name: '<example_resource_name>'\n}\n\nresource va 'Microsoft.Sql/servers/vulnerabilityAssessments@2023-08-01-preview' = {\n  name: 'Default'\n  parent: sqlServer\n  properties: {\n    storageContainerPath: 'https://<example_storage_account>.blob.core.windows.net/<example_container>/' // CRITICAL: Required so VA is considered configured\n    storageAccountAccessKey: '<example_access_key>'\n    recurringScans: {\n      isEnabled: true // CRITICAL: Enables periodic recurring scans\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers > select <your server>\n2. Under Security, open Vulnerability assessment (classic configuration)\n3. Set Storage container to an existing blob container and Save\n4. Turn Recurring scans to On\n5. Click Save to apply",
+      "Terraform": "```hcl\n# Server VA with periodic recurring scans enabled\nresource \"azurerm_mssql_server_vulnerability_assessment\" \"<example_resource_name>\" {\n  server_security_alert_policy_id = \"<example_resource_id>\"\n  storage_container_path          = \"https://<example_storage_account>.blob.core.windows.net/<example_container>/\" # Required so VA is configured\n  storage_account_access_key      = \"<example_access_key>\"\n\n  recurring_scans {\n    enabled = true # CRITICAL: Enables periodic recurring scans\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers 2. For each server instance 3. Click on Security Center 4. In Section Vulnerability Assessment Settings, set Storage Account if not already 5. Toggle 'Periodic recurring scans' to ON. 6. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
+      "Text": "Enable **recurring Vulnerability Assessment scans** at server scope and ensure results are retained securely (*express configuration or secured storage*). Apply **least privilege**, maintain baselines, and promptly remediate findings. Automate alerting and periodic reviews as part of **defense in depth** and change management.",
+      "Url": "https://hub.prowler.com/check/sqlserver_va_periodic_recurring_scans_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling the Azure Defender for SQL feature will incur additional costs for each SQL server."

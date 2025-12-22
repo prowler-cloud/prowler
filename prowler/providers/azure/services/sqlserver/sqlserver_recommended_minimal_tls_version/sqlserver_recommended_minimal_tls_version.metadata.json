@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_recommended_minimal_tls_version",
-  "CheckTitle": "Ensure SQL server has a recommended minimal TLS version required.",
+  "CheckTitle": "SQL server enforces minimal TLS version 1.2 or 1.3",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Ensure that SQL Server instances are configured with the recommended minimal TLS version to maintain secure connections.",
-  "Risk": "Using outdated or weak TLS versions can expose SQL Server instances to vulnerabilities, increasing the risk of data breaches and unauthorized access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL logical servers** are assessed for the configured **minimum TLS version** for client connections. The finding determines whether the minimal accepted version aligns with recommended modern values such as `1.2` or `1.3`.",
+  "Risk": "Without a modern minimum, clients can negotiate **weak TLS** or be downgraded, enabling **MITM** and decryption. This jeopardizes **confidentiality** (credential/data exposure) and **integrity** (query tampering), and may disrupt **availability** via session resets during handshake interference.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://argonsys.com/microsoft-cloud/library/preparing-for-the-deprecation-of-tls-1-0-and-1-1-in-azure-databases/",
+    "https://githubissues.com/MicrosoftDocs/azure-docs/117817",
+    "https://stackoverflow.com/questions/66102487/jdbc-cant-connect-to-sql-server-azure-sql-database",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/db-minimum-tls-version-check.html",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/minimal-tls-version-configure?view=azuresql",
+    "https://solutions.microsoft.xtivia.com/blog/azure-deprecating-tls-1-0-and-1-1/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az sql server update -n sql-server-name -g sql-server-group --set minimalTlsVersion=<version>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az sql server update -n <SQL_SERVER_NAME> -g <RESOURCE_GROUP> --set minimalTlsVersion=\"1.2\"",
+      "NativeIaC": "```bicep\n// Update Azure SQL logical server to enforce minimum TLS 1.2\nresource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    minimalTlsVersion: '1.2' // Critical: Enforces TLS 1.2+ for client connections\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to SQL servers and select your server\n2. Open Networking > Connectivity\n3. Set Minimum TLS Version to 1.2 (or 1.3)\n4. Click Save",
+      "Terraform": "```hcl\n# Enforce minimum TLS 1.2 on Azure SQL logical server\nresource \"azurerm_mssql_server\" \"<example_resource_name>\" {\n  name                         = \"<example_resource_name>\"\n  resource_group_name          = \"<example_resource_name>\"\n  location                     = \"<example_location>\"\n  version                      = \"12.0\"\n  administrator_login          = \"<example_admin>\"\n  administrator_login_password = \"<example_password>\"\n\n  minimum_tls_version = \"1.2\" # Critical: Enforces TLS 1.2+ for client connections\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to Azure SQL Server 2. Navigate to 'Security' -> 'Networking' 3. Select 'Connectivity' 4. Update the TLS version in the field 'Minimum TLS version' to a recommended minimal version (e.g., TLS 1.2).",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version"
+      "Text": "Set the **minimum TLS** to `1.2` or higher (prefer `1.3` when supported). Upgrade client libraries and OS trust stores; remove legacy protocols and weak ciphers to prevent downgrades. Validate compatibility before enforcement and monitor connections for outdated TLS. Uphold **encryption in transit** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/sqlserver_recommended_minimal_tls_version"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Verify support for the TLS version from the application side before changing the minimal version."
