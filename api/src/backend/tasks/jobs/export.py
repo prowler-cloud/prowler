@@ -51,6 +51,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
+    ProwlerThreatScoreAlibaba,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
@@ -131,6 +134,10 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "alibabacloud": [
         (lambda name: name.startswith("cis_"), AlibabaCloudCIS),
+        (
+            lambda name: name == "prowler_threatscore_alibabacloud",
+            ProwlerThreatScoreAlibaba,
+        ),
     ],
 }
 

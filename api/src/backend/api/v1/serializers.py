@@ -1553,14 +1553,8 @@ class AlibabaCloudProviderSecret(serializers.Serializer):
 
 
 class AlibabaCloudRoleAssumptionProviderSecret(serializers.Serializer):
-    """Serializer for Alibaba Cloud RAM Role Assumption credentials.
-
-    This allows assuming a RAM role using access keys, similar to AWS STS AssumeRole.
-    The SDK will automatically manage the STS token refresh.
-    """
-
     role_arn = serializers.CharField(
-        help_text="ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole)"
+        help_text="Access Key ID of the RAM user that will assume the role"
     )
     access_key_id = serializers.CharField(
         help_text="Access Key ID of the RAM user that will assume the role"
