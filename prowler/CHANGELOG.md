@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
+- `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
@@ -22,7 +23,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
-- `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
 
 ### Changed
 

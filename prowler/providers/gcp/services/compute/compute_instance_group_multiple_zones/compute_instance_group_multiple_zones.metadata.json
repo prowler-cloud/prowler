@@ -6,7 +6,7 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "compute.googleapis.com/InstanceGroupManager",
   "Description": "Managed Instance Groups (MIGs) should be configured for multi-zone deployments to ensure high availability and fault tolerance. A multi-zone MIG distributes instances across multiple zones within a region, protecting applications from zonal failures.",
   "Risk": "Running a MIG in a single zone creates a single point of failure. If that zone experiences an outage, all instances in the group become unavailable, resulting in application downtime during zonal failures, no automatic failover to healthy zones, and reduced resilience against infrastructure issues.",
