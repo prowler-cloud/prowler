@@ -411,7 +411,9 @@ def upload_security_hub_integration(
                                 f"Failed to archive previous findings: {str(archive_error)}"
                             )
             except SecurityHubNoEnabledRegionsError:
-                continue
+                logger.warning(
+                    f"Security Hub integration {integration.id} has no enabled regions"
+                )
             except Exception as e:
                 logger.error(
                     f"Security Hub integration {integration.id} failed: {str(e)}"
