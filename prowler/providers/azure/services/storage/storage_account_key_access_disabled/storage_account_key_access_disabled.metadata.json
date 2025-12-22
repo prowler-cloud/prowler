@@ -1,30 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_account_key_access_disabled",
-  "CheckTitle": "Ensure allow storage account key access is disabled",
+  "CheckTitle": "Storage account has shared key access disabled",
   "CheckType": [],
   "ServiceName": "storage",
-  "SubServiceName": "account",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensures that access to Azure Storage Accounts using account keys is disabled, enforcing the use of Microsoft Entra ID (formerly Azure AD) for authentication.",
-  "Risk": "Using Shared Key authorization poses a security risk due to the high privileges associated with storage account keys and the difficulty in auditing such access. Disabling Shared Key access helps enforce identity-based authentication via Microsoft Entra ID, enhancing security and traceability.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "Azure Storage accounts are evaluated for whether **Shared Key (account key) authorization** is disabled, requiring identity-based access via **Microsoft Entra ID** and RBAC.",
+  "Risk": "Allowing **Shared Key** undermines **confidentiality, integrity, and availability**:\n- A leaked key grants broad read/write/delete across the account\n- Access bypasses **RBAC** and Conditional Access, reducing accountability\n- Activity is hard to attribute, easing data exfiltration and tampering",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/disable-shared-key-authorization.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group> --allow-shared-key-access false",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/disable-shared-key-authorization.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Storage account with Shared Key access disabled\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'StorageV2'\n  sku: { name: 'Standard_LRS' }\n  properties: {\n    allowSharedKeyAccess: false // Critical: disallows Shared Key authorization to pass the check\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the target Storage account\n2. Go to Settings > Configuration\n3. Set \"Allow storage account key access\" to \"Disabled\"\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_storage_account\" \"main\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_resource_name>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  shared_access_key_enabled = false # Critical: disables Shared Key authorization to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Disable Shared Key authorization on storage accounts to enforce the use of Microsoft Entra ID for secure, auditable access.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/shared-key-authorization-prevent"
+      "Text": "Disallow **Shared Key** and require **Microsoft Entra ID** with least-privilege RBAC for all data access.\n- Prefer user delegation SAS over account/service SAS\n- Apply Conditional Access and separation of duties\n- Monitor and phase out key-based clients; rotate and revoke unused keys",
+      "Url": "https://hub.prowler.com/check/storage_account_key_access_disabled"
     }
   },
   "Categories": [
-    "e3"
+    "identity-access",
+    "secrets"
   ],
   "DependsOn": [],
   "RelatedTo": [],

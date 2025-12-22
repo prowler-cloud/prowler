@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
-  "CheckTitle": "Ensure that 'Allow trusted Microsoft services to access this storage account' is enabled for storage accounts",
+  "CheckTitle": "Storage account has 'Allow trusted Microsoft services to access this storage account' enabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that 'Allow trusted Microsoft services to access this storage account' is enabled within your Azure Storage account configuration settings to grant access to trusted cloud services.",
-  "Risk": "Not allowing to access storage account by Azure services the following services: Azure Backup, Azure Event Grid, Azure Site Recovery, Azure DevTest Labs, Azure Event Hubs, Azure Networking, Azure Monitor and Azure SQL Data Warehouse (when registered in the subscription), are not granted access to your storage account",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage account** network rules include the `AzureServices` bypass so **trusted Microsoft services** can reach the account even when firewalls restrict public access",
+  "Risk": "Without this exception, platform services relying on the account (backup, monitoring, replication) can be blocked, causing failed backups, missing logs, and stalled workflows-affecting **availability** and **integrity**. Teams may over-broaden network access to compensate, increasing **confidentiality** risk.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/72653133/status-403-code-authorizationfailure-message-this-request-is-not-authorized-t",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/enable-trusted-microsoft-services-for-storage-account-access#terraform",
+    "https://avd.aquasec.com/misconfig/azure/storage-accounts/trusted-ms-access-enabled/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-trusted-microsoft-services.html",
+    "https://medium.com/medialesson/azure-document-intelligence-fix-contentsourcenotaccessible-invalid-data-url-b1c4f36ede23",
+    "https://support.icompaas.com/support/solutions/articles/62000219788-ensure-allow-azure-services-on-the-trusted-services-list-to-access-this-storage-account-is-enabled-",
+    "https://learn.microsoft.com/en-in/answers/questions/2123022/power-automate-to-azure-storage"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az storage account update --name <StorageAccountName> --resource-group <resourceGroupName> --bypass AzureServices",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-trusted-microsoft-services.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/enable-trusted-microsoft-services-for-storage-account-access#terraform"
+      "NativeIaC": "```bicep\n// Enable trusted Microsoft services on a Storage Account\nresource stg '<example_resource_name>@Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'StorageV2'\n  sku: { name: 'Standard_LRS' }\n  properties: {\n    networkAcls: {\n      bypass: 'AzureServices' // CRITICAL: Allows trusted Microsoft services to bypass network rules\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and select your account\n2. Navigate to Security + networking > Networking\n3. Under Exceptions, check Allow trusted Microsoft services to access this storage account\n4. Click Save",
+      "Terraform": "```hcl\n# Enable trusted Microsoft services on a Storage Account\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  network_rules {\n    bypass = [\"AzureServices\"] # CRITICAL: Allows trusted Microsoft services to bypass network rules\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To allow these Azure services to work as intended and be able to access your storage account resources, you have to add an exception so that the trusted Microsoft Azure services can bypass your network rules",
-      "Url": ""
+      "Text": "Enable the **trusted services** exception (`AzureServices`) for storage accounts used by platform services.\n- Enforce **least privilege** with RBAC and managed identities\n- Keep networks restricted; prefer **private endpoints**\n- Monitor access and review exceptions regularly",
+      "Url": "https://hub.prowler.com/check/storage_ensure_azure_services_are_trusted_to_access_is_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

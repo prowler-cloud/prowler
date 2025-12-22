@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "storage_default_to_entra_authorization_enabled",
-  "CheckTitle": "Ensure Microsoft Entra authorization is enabled by default for Azure Storage Accounts",
+  "CheckTitle": "Storage account uses Microsoft Entra authorization by default",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that the Azure Storage Account setting 'Default to Microsoft Entra authorization in the Azure portal' is enabled to enforce the use of Microsoft Entra ID for accessing blobs, files, queues, and tables.",
-  "Risk": "If this setting is not enabled, the Azure portal may authorize access using less secure methods such as Shared Key, increasing the risk of unauthorized data access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-access-azure-active-directory",
+  "Severity": "medium",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** with `Default to Microsoft Entra authorization in the Azure portal` use **token-based Microsoft Entra ID (Azure RBAC)** by default to access blobs, files, queues, and tables, rather than account keys",
+  "Risk": "Defaulting to **access keys/Shared Key** enables broad, non-scoped access and weak **auditing**. A stolen key grants full data access, risking **confidentiality** (exfiltration), **integrity** (unauthorized writes/deletes), and **availability** (destructive actions). It can also bypass **least privilege** and enable lateral movement via key reuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-microsoft-entra-authorization-by-default.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-microsoft-entra-authorization-by-default.html",
+    "https://docs.datadoghq.com/security/default_rules/def-000-w60/",
+    "https://www.c-sharpcorner.com/article/understanding-and-creation-of-azure-storage-account/",
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-access-azure-active-directory",
+    "https://simpleanalytics.co.nz/blogs/creating-an-azure-storage-account",
+    "https://stackoverflow.com/questions/77511961/azure-cli-default-to-microsoft-entra-authorization-in-the-azure-portal-how",
+    "https://learn.microsoft.com/en-us/azure/storage/files/authorize-data-operations-portal"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group-name> --default-to-AzAd-auth true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-microsoft-entra-authorization-by-default.html",
-      "Terraform": ""
+      "CLI": "az storage account update -g <resource-group-name> -n <storage-account-name> --set defaultToOAuthAuthentication=true",
+      "NativeIaC": "```bicep\n// Enable Microsoft Entra (Azure AD) authorization by default in the portal\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  kind: 'StorageV2'\n  sku: {\n    name: 'Standard_LRS'\n  }\n  properties: {\n    defaultToOAuthAuthentication: true // Critical: defaults portal data access to Microsoft Entra authorization\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and select your account\n2. Under Settings, select Configuration\n3. Set \"Default to Microsoft Entra authorization in the Azure portal\" to Enabled\n4. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Entra authorization by default for the storage account in the portal\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  default_to_oauth_authentication = true # Critical: defaults portal data access to Microsoft Entra authorization\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Microsoft Entra authorization by default in the Azure portal to enhance security and avoid reliance on Shared Key authentication.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-access-azure-active-directory"
+      "Text": "Enable this setting so the portal uses **Microsoft Entra ID** by default. Apply **least privilege** with Azure RBAC, prefer **managed identities** and user-delegation SAS, and *where feasible* disable Shared Key use. Rotate any existing keys, and monitor access with logs to enforce **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/storage_default_to_entra_authorization_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

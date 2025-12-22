@@ -1,30 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "storage_ensure_private_endpoints_in_storage_accounts",
-  "CheckTitle": "Ensure Private Endpoints are used to access Storage Accounts",
+  "CheckTitle": "Storage account has private endpoint connections",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Use private endpoints for your Azure Storage accounts to allow clients and services to securely access data located over a network via an encrypted Private Link. To do this, the private endpoint uses an IP address from the VNet for each service. Network traffic between disparate services securely traverses encrypted over the VNet. This VNet can also link addressing space, extending your network and accessing resources on it. Similarly, it can be a tunnel through public networks to connect remote infrastructures together. This creates further security through segmenting network traffic and preventing outside sources from accessing it.",
-  "Risk": "Storage accounts that are not configured to use Private Endpoints are accessible over the public internet. This can lead to data exfiltration and other security issues.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/storage-private-endpoints",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** are evaluated for the presence of **Private Endpoint** connections. When configured, traffic flows over a VNet private IP via Private Link; when absent, access occurs through the storage account's public endpoint.",
+  "Risk": "Relying on the **public endpoint** widens exposure:\n- Confidentiality: higher risk of key/SAS compromise and unauthorized reads\n- Integrity: abused creds enable writes/deletes\n- Availability: subject to DDoS and internet scanning\nIt can also bypass egress controls, easing covert data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints",
+    "https://learn.microsoft.com/en-in/answers/questions/5538202/create-azure-private-endpoint-for-all-blob-storage",
+    "https://learn.microsoft.com/en-us/azure/private-link/tutorial-private-endpoint-storage-portal",
+    "https://learn.microsoft.com/en-us/answers/questions/1348088/azure-private-endpoints-effect-on-unity-catalog",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-private-endpoints",
+    "https://blog.mashfords.com/2020/03/13/private-endpoints-for-azure-storage-are-now-generally-available/",
+    "https://learn.microsoft.com/en-us/answers/questions/659055/private-endpoint-to-azure-blob-storage-from-on-pre",
+    "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-networking-endpoints",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/private-endpoints.html#"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/private-endpoints.html#",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Create a Private Endpoint for a Storage Account to add a private endpoint connection (PASS)\nparam storageAccountId string  // ID of Microsoft.Storage/storageAccounts\nparam subnetId string          // ID of the subnet to host the Private Endpoint\n\nresource pe 'Microsoft.Network/privateEndpoints@2023-05-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    subnet: { id: subnetId }\n    privateLinkServiceConnections: [\n      {\n        name: 'conn'\n        properties: {\n          privateLinkServiceId: storageAccountId  // Critical: links the Private Endpoint to the storage account\n          groupIds: ['blob']                      // Critical: targets Blob subresource, creating the private endpoint connection\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Storage accounts > select your account\n2. Under Security + networking, choose Networking > Private endpoint connections\n3. Click + Private endpoint > Create\n4. Resource type: Microsoft.Storage/storageAccounts; Resource: your account; Target subresource: blob\n5. Select the Virtual network and Subnet, then Review + create > Create",
+      "Terraform": "```hcl\n# Create a Private Endpoint for a Storage Account to add a private endpoint connection (PASS)\nvariable \"resource_group_name\" { type = string }\nvariable \"location\" { type = string }\nvariable \"subnet_id\" { type = string }\nvariable \"storage_account_id\" { type = string }\n\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = var.resource_group_name\n  location            = var.location\n  subnet_id           = var.subnet_id\n\n  private_service_connection {\n    name                           = \"conn\"\n    private_connection_resource_id = var.storage_account_id  # Critical: links to the storage account\n    subresource_names              = [\"blob\"]                # Critical: targets Blob subresource to create the connection\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use Private Endpoints to access Storage Accounts",
-      "Url": "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints"
+      "Text": "Prefer **Private Endpoints** for storage access and minimize public exposure:\n- Limit or disable `Public network access`\n- Use private DNS so names resolve to private IPs\n- Enforce **least privilege** and **defense in depth** with segmentation and logging\n- Monitor access and rotate keys/SAS *as part of routine hygiene*.",
+      "Url": "https://hub.prowler.com/check/storage_ensure_private_endpoints_in_storage_accounts"
     }
   },
   "Categories": [
-    "encryption"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

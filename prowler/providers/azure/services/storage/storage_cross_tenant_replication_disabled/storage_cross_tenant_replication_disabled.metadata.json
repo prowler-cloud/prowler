@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_cross_tenant_replication_disabled",
-  "CheckTitle": "Ensure cross-tenant replication is disabled",
+  "CheckTitle": "Storage account has cross-tenant replication disabled",
   "CheckType": [],
   "ServiceName": "storage",
-  "SubServiceName": "account",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that cross-tenant replication is not enabled on Azure Storage Accounts to prevent unintended replication of data across tenant boundaries.",
-  "Risk": "If cross-tenant replication is enabled, sensitive data could be inadvertently replicated across tenants, increasing the risk of data leakage, unauthorized access, or non-compliance with data governance and privacy policies.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/object-replication-prevent-cross-tenant-policies?tabs=portal",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** are assessed for whether **cross-tenant object replication** is disallowed via `AllowCrossTenantReplication=false`, limiting replication policies to the same tenant.",
+  "Risk": "Permitting cross-tenant replication can copy sensitive blobs into external tenants, undermining **confidentiality**. A compromised or mismanaged destination enables **data exfiltration**; mirrored updates/deletes can impact **integrity** and retention, complicating auditability and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/object-replication-prevent-cross-tenant-policies?tabs=portal",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/disable-cross-tenant-replication.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group> --default-to-oauth-authentication true --allow-cross-tenant-replication false",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/disable-cross-tenant-replication.html",
-      "Terraform": ""
+      "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group> --allow-cross-tenant-replication false",
+      "NativeIaC": "```bicep\n// Disables cross-tenant replication on the storage account\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  sku: {\n    name: 'Standard_LRS'\n  }\n  kind: 'StorageV2'\n  properties: {\n    allowCrossTenantReplication: false // Critical: disallow cross-tenant object replication\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and open your storage account\n2. Under Data management, select Object replication\n3. Click Advanced settings\n4. Uncheck Allow cross-tenant replication\n5. Click OK/Save\n6. If the option is unavailable, delete any existing cross-tenant object replication policies first, then retry",
+      "Terraform": "```hcl\nresource \"azurerm_storage_account\" \"main\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_resource_name>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  cross_tenant_replication_enabled = false # Critical: disallow cross-tenant object replication\n}\n```"
     },
     "Recommendation": {
-      "Text": "Disable Cross Tenant Replication on storage accounts to ensure that data remains within tenant boundaries unless explicitly shared, reducing the risk of data leakage and unauthorized access.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/blobs/object-replication-prevent-cross-tenant-policies?tabs=portal"
+      "Text": "Enforce `AllowCrossTenantReplication=false` and keep replication within the same tenant. Apply **least privilege** and **separation of duties** for replication management, backed by **policy-based governance** to prevent drift. *If cross-tenant transfer is required*, use formal data-sharing controls, monitoring, and time-bound approvals.",
+      "Url": "https://hub.prowler.com/check/storage_cross_tenant_replication_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,26 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_ensure_encryption_with_customer_managed_keys",
-  "CheckTitle": "Ensure that your Microsoft Azure Storage accounts are using Customer Managed Keys (CMKs) instead of Microsoft Managed Keys",
+  "CheckTitle": "Azure Storage account uses customer-managed keys (CMKs) for encryption",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that your Microsoft Azure Storage accounts are using Customer Managed Keys (CMKs) instead of Microsoft Managed Keys",
-  "Risk": "If you want to control and manage storage account contents encryption key yourself you must specify a customer-managed key",
+  "Severity": "medium",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "Azure Storage accounts use **customer-managed keys** (`CMK`) from **Key Vault/Managed HSM** for service-side encryption of data at rest, rather than platform-managed keys (`encryption_type`=`Microsoft.Keyvault`).",
+  "Risk": "Without **CMK**, keys are provider-controlled, reducing **confidentiality** and governance.\n- Cannot promptly revoke access during incidents\n- No custom rotation or separation of duties\n- Limited key-use auditing\nThis weakens data sovereignty and hinders effective crypto-shredding.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/customer-managed-keys-cmk-azure-microsoft-365-aws-google-kulkarni-3ra4f",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-storage-accounts-use-customer-managed-key-for-encryption#terraform",
+    "https://www.serverlessnotes.com/docs/using-customer-managed-keys-for-encrypting-azure-storage-account",
+    "https://azure.github.io/eu-digital-covid-certificates-reference-architecture/deep-dives/cmk/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/cmk-encryption.html",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryption",
+    "https://learn.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/cmk-encryption.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-storage-accounts-use-customer-managed-key-for-encryption#terraform"
+      "NativeIaC": "```bicep\n// Configure a Storage Account to use Customer-Managed Keys (CMK)\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: { name: 'Standard_LRS' }\n  kind: 'StorageV2'\n  identity: {\n    type: 'SystemAssigned' // CRITICAL: required so the storage account can access the key vault\n  }\n  properties: {\n    encryption: {\n      keySource: 'Microsoft.Keyvault' // CRITICAL: switches encryption to CMK (Prowler checks for this)\n      keyVaultProperties: {\n        keyName: '<key_name>' // required key name\n        keyVaultUri: 'https://<example_resource_name>.vault.azure.net/' // required Key Vault URI\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open your Storage account\n2. Go to Settings > Encryption (or Security + networking > Encryption)\n3. Select Customer-managed keys\n4. Click Select a key vault and key, choose your Key Vault and key\n5. If prompted, enable System-assigned managed identity and grant the key permissions get, wrapKey, unwrapKey\n6. Click Save",
+      "Terraform": "```hcl\n# Configure a Storage Account to use Customer-Managed Keys (CMK)\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  identity {\n    type = \"SystemAssigned\" # CRITICAL: allow storage account to access Key Vault\n  }\n\n  customer_managed_key {\n    key_vault_key_id = \"<example_resource_id>\" # CRITICAL: Key Vault key ID enabling CMK (passes the check)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable sensitive data encryption at rest using Customer Managed Keys rather than Microsoft Managed keys.",
-      "Url": ""
+      "Text": "Adopt **CMK** with keys in Key Vault or Managed HSM. Enforce **least privilege** for the storage identity, regular **key rotation**, and **separation of duties** between key custodians and operators. Audit key usage, enable tamper-resistant key protection (soft-delete/purge protection), and plan for **key revocation/crypto-shredding**.",
+      "Url": "https://hub.prowler.com/check/storage_ensure_encryption_with_customer_managed_keys"
     }
   },
   "Categories": [

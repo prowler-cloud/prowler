@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_smb_protocol_version_is_latest",
-  "CheckTitle": "Ensure SMB protocol version for file shares is set to the latest version.",
+  "CheckTitle": "Storage account allows only the latest SMB protocol version for file shares",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
-  "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that SMB file shares are configured to use only the latest SMB protocol version.",
-  "Risk": "Allowing older SMB protocol versions may expose file shares to known vulnerabilities and security risks.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol#smb-security-settings",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage file shares (SMB)** are configured to allow **only the latest SMB protocol version**, blocking legacy SMB versions at the storage account level",
+  "Risk": "Allowing legacy SMB versions enables **protocol downgrade** and weak cipher negotiation, reducing **confidentiality** and **integrity**. Adversaries can intercept or alter traffic, bypass strong signing/encryption, and exploit known flaws for lateral movement or credential replay",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol#smb-security-settings",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/latest-smb-protocol-version.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage account file-service-properties update --resource-group <resource-group> --account-name <storage-account> --versions <latest-version>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az storage account file-service-properties update --resource-group <RESOURCE_GROUP> --account-name <STORAGE_ACCOUNT_NAME> --versions SMB3.1.1",
+      "NativeIaC": "```bicep\n// Set SMB protocol to only the latest version for Azure Files\nresource fileService 'Microsoft.Storage/storageAccounts/fileServices@2023-01-01' = {\n  name: '<example_resource_name>/default'\n  properties: {\n    protocolSettings: {\n      smb: {\n        versions: 'SMB3.1.1' // Critical: allow only SMB 3.1.1 (latest) to pass the check\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and open your storage account\n2. Navigate to Data storage > File shares\n3. Under File share settings, select Security\n4. Choose Profile: Custom, then under SMB protocol versions select only SMB 3.1.1\n5. Click Save",
+      "Terraform": "```hcl\n# Configure storage account to allow only the latest SMB version for file shares\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  share_properties {\n    smb {\n      versions = [\"SMB3.1.1\"] # Critical: restrict to only SMB 3.1.1 (latest)\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your Azure Storage Account file shares to allow only the latest SMB protocol version.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/latest-smb-protocol-version.html"
+      "Text": "Restrict SMB to the newest version (e.g., `SMB 3.1.1`) and disable older versions. Enforce **encryption in transit** and prefer **Kerberos** over NTLM. Validate client compatibility, apply **least privilege** on shares, and monitor access to maintain **defense in depth**",
+      "Url": "https://hub.prowler.com/check/storage_smb_protocol_version_is_latest"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,26 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "storage_ensure_minimum_tls_version_12",
-  "CheckTitle": "Ensure the 'Minimum TLS version' for storage accounts is set to 'Version 1.2'",
+  "CheckTitle": "Storage account minimum TLS version is 1.2",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure the 'Minimum TLS version' for storage accounts is set to 'Version 1.2'",
-  "Risk": "TLS versions 1.0 and 1.1 are known to be susceptible to certain Common Vulnerabilities and Exposures (CVE) weaknesses and attacks such as POODLE and BEAST",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** enforce a `minimum TLS version` of `1.2` for client connections to data services",
+  "Risk": "Allowing TLS `1.0`/`1.1` enables protocol downgrades and exploitation of known flaws (e.g., BEAST), weakening **confidentiality** and **integrity**. Attackers can intercept or modify data in transit and harvest credentials via weakened cipher suites.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/75672537/azure-storage-minimum-tls-version-1-2-not-enforced-in-protocol-layer",
+    "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2",
+    "https://www.bundle.app/en/technology/azure-blob-and-file-storage-for-it-testing-and-training-environment-7959B94F-B593-44AB-BFC5-DD1D2F59A525",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/minimum-tls-version.html",
+    "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#terraform",
+    "https://dev.to/ifeoma_onyegbumark/how-to-configure-simple-settings-in-the-storage-account-on-azure-14bm",
+    "https://blog.tyang.org/2025/02/10/updated-azure-policy-for-storage-minimum-tls-ver"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#terraform"
+      "CLI": "az storage account update --resource-group <RESOURCE_GROUP> --name <STORAGE_ACCOUNT_NAME> --min-tls-version TLS1_2",
+      "NativeIaC": "```bicep\n// Storage account with minimum TLS 1.2\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'StorageV2'\n  sku: {\n    name: 'Standard_LRS'\n  }\n  properties: {\n    minimumTlsVersion: 'TLS1_2' // CRITICAL: Enforces minimum TLS 1.2 to pass the check\n  }\n}\n```",
+      "Other": "1. In the Azure Portal, go to Storage accounts and open your account\n2. Select Settings > Configuration\n3. Set Minimum TLS version to Version 1.2\n4. Click Save",
+      "Terraform": "```hcl\n# Storage account with minimum TLS 1.2\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  min_tls_version = \"TLS1_2\" # CRITICAL: Enforces minimum TLS 1.2 to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that all your Microsoft Azure Storage accounts are using the latest available version of the TLS protocol.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/minimum-tls-version.html"
+      "Text": "Set the storage account `minimum TLS version` to at least `1.2` (prefer `1.3` where supported) and disable legacy protocols. Apply **defense in depth** by restricting network access, using **least privilege** credentials, and monitoring handshake failures to identify outdated clients.",
+      "Url": "https://hub.prowler.com/check/storage_ensure_minimum_tls_version_12"
     }
   },
   "Categories": [

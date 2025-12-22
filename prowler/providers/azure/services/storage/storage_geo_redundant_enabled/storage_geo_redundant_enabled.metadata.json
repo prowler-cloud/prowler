@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "storage_geo_redundant_enabled",
-  "CheckTitle": "Ensure geo-redundant storage (GRS) is enabled on critical Azure Storage Accounts",
+  "CheckTitle": "Azure Storage account uses geo-redundant replication (GRS, GZRS, RA-GRS, or RA-GZRS)",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "AzureStorageAccount",
-  "Description": "Geo-redundant storage (GRS) must be enabled on critical Azure Storage Accounts to ensure data durability and availability in the event of a regional outage. GRS replicates data within the primary region and asynchronously to a secondary region, offering enhanced resilience and supporting disaster recovery strategies.",
-  "Risk": "Without GRS, critical data may be lost or become unavailable during a regional outage, compromising data durability and disaster recovery efforts.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy",
+  "Severity": "medium",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** configured for **geo-redundant replication** via `Standard_GRS`, `Standard_GZRS`, `Standard_RAGRS`, or `Standard_RAGZRS`.\n\nThe setting indicates data is copied to a paired secondary region, with `RA-*` allowing read access during primary-region unavailability.",
+  "Risk": "Absent **geo-replication**, data resides in one region, undermining **availability** and **durability** during regional failures. Disasters can cause prolonged downtime or unrecoverable loss. With geo-replication but without `RA-*`, the secondary is unreadable, increasing RTO and interrupting business continuity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-geo-redundant-storage.html",
+    "https://docs.azure.cn/en-us/storage/common/storage-redundancy",
+    "https://www.linkedin.com/learning/manage-storage-in-azure/disaster-recovery-and-failover",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy",
+    "https://stackoverflow.com/questions/73270760/azure-how-to-specify-the-secondary-region-for-geo-redundant-storage/73271195",
+    "https://www.ais.com/how-to-choose-the-right-kind-of-azure-storage-account/",
+    "https://learn.microsoft.com/en-us/azure/storage/common/redundancy-migration"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group-name> --sku Standard_GRS",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-geo-redundant-storage.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Storage account with geo-redundant replication enabled\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  kind: 'StorageV2'\n  sku: {\n    name: 'Standard_GRS' // Critical: enables geo-redundant replication (GRS) to pass the check\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and open your storage account\n2. Under Data management, select Redundancy\n3. Change Redundancy to GRS, GZRS, RA-GRS, or RA-GZRS\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_storage_account\" \"example\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_group_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"GRS\" # Critical: enables geo-redundant replication to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable geo-redundant storage (GRS) for critical Azure Storage Accounts to ensure data durability and availability across regional failures.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy"
+      "Text": "Adopt **GRS/GZRS** for critical workloads (prefer `Standard_GZRS` where supported) to achieve cross-region resilience. *If read continuity is required*, use `Standard_RAGRS` or `Standard_RAGZRS`. Define RPO/RTO, regularly test failover, and design for **defense in depth** across regions and zones.",
+      "Url": "https://hub.prowler.com/check/storage_geo_redundant_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
