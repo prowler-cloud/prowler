@@ -2,7 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-
 ## [1.17.1] (Prowler v5.16.1)
 
 ### Changed
