@@ -89,23 +89,23 @@ export const describeTool = tool(
   },
   {
     name: "describe_tool",
-    description: `Get the full schema and parameter details for a specific Prowler Hub tool.
+    description: `Get the full schema and parameter details for a specific Prowler tool.
 
 Use this to understand what parameters a tool requires before executing it.
 Tool names are listed in your system prompt - use the exact name.
 
 You must always provide the toolName key in the JSON object.
-Example: describe_tool({ "toolName": "prowler_hub_list_providers" })
+Example: describe_tool({ "toolName": "prowler_app_search_security_findings" })
 
 Returns:
 - Full parameter schema with types and descriptions
 - Tool description
-- Required vs optional parameters`,
+- Required and optional parameters`,
     schema: z.object({
       toolName: z
         .string()
         .describe(
-          "Exact name of the tool to describe (e.g., 'prowler_hub_list_providers'). You must always provide the toolName key in the JSON object.",
+          "Exact name of the tool to describe (e.g., 'prowler_hub_list_compliances'). You must always provide the toolName key in the JSON object.",
         ),
     }),
   },
@@ -198,20 +198,20 @@ export const executeTool = tool(
   },
   {
     name: "execute_tool",
-    description: `Execute a Prowler Hub MCP tool with the specified parameters.
+    description: `Execute a Prowler MCP tool with the specified parameters.
 
 Provide the exact tool name and its input parameters as specified in the tool's schema.
 
 You must always provide the toolName and toolInput keys in the JSON object.
-Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": {} })
+Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": {} })
 
 All input to the tool must be provided in the toolInput key as a JSON object.
-Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": { "query": "value1", "page": 1, "pageSize": 10 } })
+Example: execute_tool({ "toolName": "prowler_hub_list_compliances", "toolInput": { "provider": ["aws"] } })
 
 Always describe the tool first to understand:
 1. What parameters it requires
 2. The expected input format
-3. Required vs optional parameters`,
+3. Which parameters are mandatory and which are optional`,
     schema: z.object({
       toolName: z
         .string()
@@ -222,7 +222,7 @@ Always describe the tool first to understand:
         .record(z.string(), z.unknown())
         .default({})
         .describe(
-          "Input parameters for the tool as a JSON object. Use empty object {} if tool requires no parameters.",
+          "Input parameters for the tool as a JSON object. Use empty object {} if tool requires no parameters or it has defined defaults or only optional parameters.",
         ),
     }),
   },
