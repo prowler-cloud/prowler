@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_ip_forwarding_is_enabled",
-  "CheckTitle": "Ensure That IP Forwarding Is Not Enabled on Instances",
+  "CheckTitle": "Compute Engine VM instance has IP forwarding disabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VMInstance",
-  "Description": "Compute Engine instance cannot forward a packet unless the source IP address of the packet matches the IP address of the instance. Similarly, GCP won't deliver a packet whose destination IP address is different than the IP address of the instance receiving the packet. However, both capabilities are required if you want to use instances to help route packets. Forwarding of data packets should be disabled to prevent data loss or information disclosure.",
-  "Risk": "When the IP Forwarding feature is enabled on a virtual machine's network interface (NIC), it allows the VM to act as a router and receive traffic addressed to other destinations. ",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "**Compute Engine VM instances** with `canIpForward` enabled are identified. This setting allows a VM to process packets not addressed to its own IP.\n\nInstances created by GKE (`gke-` prefix) are excluded from this evaluation.",
+  "Risk": "With **IP forwarding** a VM can route traffic for other addresses. If compromised, it can:\n- Spoof or tamper flows (**integrity**)\n- Intercept/redirect internal traffic (**confidentiality**)\n- Mask egress for exfiltration and enable lateral movement, degrading **availability**",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.datadoghq.com/security/default_rules/def-000-tqp/",
+    "https://stackoverflow.com/questions/45994148/google-cloud-vm-instance-how-to-turn-on-ip-forwarding",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12#terraform",
+    "https://cloud.google.com/compute/docs/instances/create-start-instance",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12/",
+    "https://serverfault.com/questions/887843/how-to-turn-on-ip-forwarding-for-interface-if-forwarding-rule-was-already-create",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud compute instances update-from-file <example_resource_name> --zone <ZONE> --source=<PATH_TO_CONFIG_WITH_canIpForward_false> --most-disruptive-allowed-action=RESTART",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12#terraform"
+      "Other": "1. In Google Cloud console, go to Compute Engine > VM instances and select the VM (exclude names starting with gke-)\n2. Click Delete to remove the instance with IP forwarding enabled\n3. Click Create instance\n4. Expand Networking > Network interfaces > Edit and ensure IP forwarding is Off (default)\n5. Click Create",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  machine_type = \"e2-micro\"\n  zone         = \"<ZONE>\"\n\n  can_ip_forward = false  # Critical: disables IP forwarding to pass the check\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-12\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that IP Forwarding feature is not enabled at the Google Compute Engine instance level for security and compliance reasons, as instances with IP Forwarding enabled act as routers/packet forwarders. Because IP forwarding is rarely required, except when the virtual machine (VM) is used as a network virtual appliance, each Google Cloud VM instance should be reviewed in order to decide whether the IP forwarding is really needed for the verified instance. IP Forwarding is enabled at the VM instance level and applies to all network interfaces (NICs) attached to the instance. In addition, Instances created by GKE should be excluded from this recommendation because they need to have IP forwarding enabled and cannot be changed. Instances created by GKE have names that start with \"gke- \".",
-      "Url": "https://cloud.google.com/compute/docs/instances/create-start-instance"
+      "Text": "Disable **IP forwarding** on general-purpose VMs and allow it only for vetted **network appliances**, following **least privilege**.\n\nEnforce **network segmentation**, restrict routes, review exceptions regularly, and monitor egress to uphold **defense in depth**. *Exclude platform-managed nodes that require forwarding.*",
+      "Url": "https://hub.prowler.com/check/compute_instance_ip_forwarding_is_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

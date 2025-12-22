@@ -1,26 +1,33 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_public_ip",
-  "CheckTitle": "Check for Virtual Machine Instances with Public IP Addresses",
+  "CheckTitle": "VM instance does not have a public IP address",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VMInstance",
-  "Description": "Check for Virtual Machine Instances with Public IP Addresses",
-  "Risk": "To reduce your attack surface, Compute instances should not have public IP addresses. Instead, instances should be configured behind load balancers, to minimize the instance's exposure to the internet.",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "**Compute Engine VM instances** with an assigned **external (public) IP address** on any network interface are identified.\n\nInstances without an external IP are considered internal-only.",
+  "Risk": "**Internet-exposed VMs** face automated scanning, **brute force**, and **remote exploit** attempts.\n\nCompromise can enable **data exfiltration**, **service account abuse**, and **lateral movement** within the VPC, while public endpoints invite **DDoS**, degrading availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2",
+    "https://docs.inkeep.com/self-hosting/gcp-compute-engine",
+    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#terraform",
+    "https://cloud.google.com/compute/docs/instances/connecting-to-instance",
+    "https://stackoverflow.com/questions/69488409/gce-node-api-use-custom-network-with-no-external-ip/69506942"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud compute instances delete-access-config <example_resource_name> --access-config-name=\"External NAT\" --zone=<example_resource_zone>",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#terraform"
+      "Other": "1. In Google Cloud Console, go to Compute Engine > VM instances\n2. Click the VM name\n3. Click Edit\n4. Under Network interfaces, set External IP to None\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  machine_type = \"e2-micro\"\n  zone         = \"<example_resource_zone>\"\n\n  boot_disk {\n    initialize_params { image = \"debian-cloud/debian-11\" }\n  }\n\n  network_interface {\n    network = \"default\" # Critical: no access_config block -> no public IP\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that your Google Compute Engine instances are not configured to have external IP addresses in order to minimize their exposure to the Internet.",
-      "Url": "https://cloud.google.com/compute/docs/instances/connecting-to-instance"
+      "Text": "Adopt **private-only VMs** and remove external IPs.\n- Place workloads behind **load balancers** or **reverse proxies**\n- Use **Cloud NAT** for egress; admin access via **IAP**, **VPN**, or a hardened **bastion**\n- Apply **least privilege** firewall rules and network segmentation for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/compute_instance_public_ip"
     }
   },
   "Categories": [

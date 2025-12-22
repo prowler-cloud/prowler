@@ -1,29 +1,37 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_block_project_wide_ssh_keys_disabled",
-  "CheckTitle": "Ensure “Block Project-Wide SSH Keys” Is Enabled for VM Instances",
+  "CheckTitle": "VM instance has Block project-wide SSH keys enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "VMInstance",
-  "Description": "It is recommended to use Instance specific SSH key(s) instead of using common/shared project-wide SSH key(s) to access Instances.",
-  "Risk": "Project-wide SSH keys are stored in Compute/Project-meta-data. Project wide SSH keys can be used to login into all the instances within project. Using project-wide SSH keys eases the SSH key management but if compromised, poses the security risk which can impact all the instances within project.",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "**Compute Engine VMs** are evaluated for the metadata key `block-project-ssh-keys` set to `true`, indicating **project-wide SSH keys** are blocked and only instance-level or OS Login credentials are honored.",
+  "Risk": "Allowing **project-wide SSH keys** lets a single compromised key reach many VMs, amplifying blast radius. This endangers **confidentiality** (data exposure) and **integrity** (unauthorized changes) and enables **lateral movement**. Per-instance revocation and accountability are weakened.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_8#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute instances add-metadata <INSTANCE_NAME> --metadata block-projectssh-keys=TRUE",
+      "CLI": "gcloud compute instances add-metadata <INSTANCE_NAME> --zone <ZONE> --metadata=block-project-ssh-keys=true",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_8#terraform"
+      "Other": "1. In Google Cloud Console, go to Compute Engine > VM instances\n2. Click the target VM and then click Edit\n3. Under Custom metadata, click Add item\n4. Key: block-project-ssh-keys, Value: true\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"vm\" {\n  name         = \"<example_resource_name>\"\n  zone         = \"<ZONE>\"\n  machine_type = \"e2-micro\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-12\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n\n  metadata = {\n    block-project-ssh-keys = \"true\" # Critical: blocks project-wide SSH keys for this VM\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to use Instance specific SSH keys which can limit the attack surface if the SSH keys are compromised.",
-      "Url": "https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys"
+      "Text": "Set `block-project-ssh-keys=true` to prevent shared key inheritance. Prefer **OS Login** or instance-specific keys, enforce **least privilege** and **separation of duties** for metadata changes, use **short-lived credentials** with rotation, limit direct SSH, and monitor access for anomalies.",
+      "Url": "https://hub.prowler.com/check/compute_instance_block_project_wide_ssh_keys_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
