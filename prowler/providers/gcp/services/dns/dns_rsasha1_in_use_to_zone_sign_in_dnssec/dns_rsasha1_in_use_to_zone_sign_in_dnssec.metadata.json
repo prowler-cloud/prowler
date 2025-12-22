@@ -1,29 +1,40 @@
 {
   "Provider": "gcp",
   "CheckID": "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
-  "CheckTitle": "Ensure That RSASHA1 Is Not Used for the Zone-Signing Key in Cloud DNS DNSSEC",
+  "CheckTitle": "Cloud DNS managed zone does not use the RSASHA1 algorithm for the DNSSEC zone-signing key",
   "CheckType": [],
   "ServiceName": "dns",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DNS_Zone",
-  "Description": "NOTE: Currently, the SHA1 algorithm has been removed from general use by Google, and, if being used, needs to be whitelisted on a project basis by Google and will also, therefore, require a Google Cloud support contract. DNSSEC algorithm numbers in this registry may be used in CERT RRs. Zone signing (DNSSEC) and transaction security mechanisms (SIG(0) and TSIG) make use of particular subsets of these algorithms. The algorithm used for key signing should be a recommended one and it should be strong.",
-  "Risk": "SHA1 is considered weak and vulnerable to collision attacks.",
+  "Severity": "high",
+  "ResourceType": "dns.googleapis.com/ManagedZone",
+  "Description": "**Cloud DNS** DNSSEC settings are inspected for the **zone-signing key algorithm**. Zones that use `rsasha1` for zone signing are identified.",
+  "Risk": "Using **RSASHA1 for DNSSEC zone signing** weakens record integrity due to known **collision attacks**. Some validating resolvers no longer accept `SHA-1`, causing **resolution failures**. Adversaries may forge `RRSIGs`, enabling **DNS hijacking** or cache poisoning and redirecting traffic.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/dns/docs/dnssec-config",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-zone-signing-algorithm-in-use.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform",
+    "https://cloud-kb.sentinelone.com/dns-security-rsa-sha1-enabled",
+    "https://datatracker.ietf.org/doc/html/rfc9905",
+    "https://stackoverflow.com/questions/68968312/terraform-errors-deploying-google-dns-managed-zone-with-rsasha1",
+    "https://docs.datadoghq.com/security/default_rules/def-000-jud/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-zone-signing-algorithm-in-use.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform"
+      "Other": "1. In Google Cloud Console, go to Networking > Network services > Cloud DNS\n2. Click the managed zone name, then click Edit\n3. If DNSSEC is On and the Zone signing algorithm is RSASHA1: set DNSSEC to Off and Save\n4. Click Edit again, set DNSSEC to On\n5. Open Advanced settings, set Zone signing algorithm to ECDSAP256SHA256 (or RSASHA256)\n6. Click Save",
+      "Terraform": "```hcl\nresource \"google_dns_managed_zone\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  dns_name = \"example.com.\"\n\n  dnssec_config {\n    state = \"on\"\n\n    default_key_specs {\n      algorithm = \"ecdsap256sha256\"  # FIX: use a secure algorithm for zone signing\n      key_type  = \"zoneSigning\"       # Ensures the zone-signing key is not RSASHA1\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Domain Name System Security Extensions (DNSSEC) feature is not using the deprecated RSASHA1 algorithm for the Zone-Signing Key (ZSK) associated with your public DNS managed zone. The algorithm used for DNSSEC signing should be a strong one, such as RSASHA256, as this algorithm is secure and widely deployed, and therefore it is a good candidate for both DNSSEC validation and signing.",
-      "Url": "https://cloud.google.com/dns/docs/dnssec-config"
+      "Text": "Use **strong DNSSEC algorithms** for zone signing (e.g., `rsasha256`, `ecdsa-p256-sha256`, `ed25519`) and avoid `rsasha1`. Practice **crypto agility**: standardize secure defaults, rotate keys, and periodically validate signatures with modern resolvers. Apply **defense in depth** by monitoring DNSSEC health and limiting who can change settings.",
+      "Url": "https://hub.prowler.com/check/dns_rsasha1_in_use_to_zone_sign_in_dnssec"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

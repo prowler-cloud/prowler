@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "dns_dnssec_disabled",
-  "CheckTitle": "Ensure That DNSSEC Is Enabled for Cloud DNS",
+  "CheckTitle": "Cloud DNS managed zone has DNSSEC enabled",
   "CheckType": [],
   "ServiceName": "dns",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DNS_Zone",
-  "Description": "Cloud Domain Name System (DNS) is a fast, reliable and cost-effective domain name system that powers millions of domains on the internet. Domain Name System Security Extensions (DNSSEC) in Cloud DNS enables domain owners to take easy steps to protect their domains against DNS hijacking and man-in-the-middle and other attacks.",
-  "Risk": "Attackers can hijack the process of domain/IP lookup and redirect users to malicious web content through DNS hijacking and Man-In-The-Middle (MITM) attacks.",
+  "Severity": "high",
+  "ResourceType": "dns.googleapis.com/ManagedZone",
+  "Description": "**Cloud DNS managed zones** are assessed for **DNSSEC** status. Zones with DNSSEC sign zone data and publish `DNSKEY`/`RRSIG`; zones without it remain unsigned and unauthenticated.",
+  "Risk": "Without **DNSSEC**, DNS responses lack authenticity, enabling cache poisoning, spoofed referrals, and domain hijacking. Victims may be redirected to attacker hosts, exposing credentials and data (confidentiality), enabling tampered content and records (integrity), and causing misrouting or outages (availability).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/dns/docs/dnssec-config",
+    "https://cloud.google.com/sdk/gcloud/reference/dns/managed-zones/create?authuser=4",
+    "https://cloud.google.com/dns",
+    "https://docs.cloud.google.com/dns/docs/dnssec",
+    "https://cloud.google.com/dns/docs/dnssec-config?hl=vi",
+    "https://cloud.google.com/dns/docs/registrars?hl=Es",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_5#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/enable-dns-sec.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud dns managed-zones update <DNS_ZONE> --dnssec-state on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/enable-dns-sec.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_5#terraform"
+      "Other": "1. In the Google Cloud Console, go to Cloud DNS\n2. Click the managed zone name\n3. Click Edit\n4. Under DNSSEC, select On\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_dns_managed_zone\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  dns_name = \"example.com.\"\n\n  dnssec_config {\n    state = \"on\" # Critical: enables DNSSEC for the managed zone\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that DNSSEC security feature is enabled for all your Google Cloud DNS managed zones in order to protect your domains against spoofing and cache poisoning attacks. By default, DNSSEC is not enabled for Google Cloud public DNS managed zones. DNSSEC security feature helps mitigate the risk of such attacks by encrypting signing DNS records. As a result, it prevents attackers from issuing fake DNS responses that may misdirect web clients to fake, fraudulent or scam websites.",
-      "Url": "https://cloud.google.com/dns/docs/dnssec-config"
+      "Text": "Enable **DNSSEC** on public zones and complete the chain of trust by publishing a `DS` record at your registrar. Use DNSSEC-validating resolvers, apply **least privilege** for DNS administration, and monitor key lifecycle events. *Private zones are not DNSSEC-signed.*",
+      "Url": "https://hub.prowler.com/check/dns_dnssec_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
