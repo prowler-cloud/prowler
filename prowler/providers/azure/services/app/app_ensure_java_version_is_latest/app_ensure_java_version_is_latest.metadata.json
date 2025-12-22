@@ -1,29 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_java_version_is_latest",
-  "CheckTitle": "Ensure that 'Java version' is the latest, if used to run the Web App",
+  "CheckTitle": "App Service web app uses Java version 17",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Periodically, newer versions are released for Java software either due to security flaws or to include additional functionality. Using the latest Java version for web apps is recommended in order to take advantage of security fixes, if any, and/or new functionalities of the newer version.",
-  "Risk": "Newer versions may contain security enhancements and additional functionality. Using the latest software version is recommended in order to take advantage of enhancements and new capabilities. With each software installation, organizations need to determine if a given update meets their requirements. They must also verify the compatibility and support provided for any additional software against the update revision that is selected.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings",
+  "Severity": "medium",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "Azure App Service web apps that run **Java** are assessed to ensure their configured runtime uses the **latest supported major version** (LTS) for the environment, across Linux and Windows.\n\n*Only apps with Java enabled are considered.*",
+  "Risk": "Using an **outdated Java runtime** enables known exploits like **remote code execution**, unsafe **deserialization**, and **cryptographic flaws**, risking data theft and tampering (**confidentiality, integrity**) and outages or takeover (**availability**). Unsupported versions also delay critical security patches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-java.html",
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-language-java?pivots=platform-linux#choosing-a-java-runtime-version",
+    "https://www.azadvertizer.net/azpolicyadvertizer/496223c3-ad65-4ecd-878a-bae78737e9ed.html",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-java-version-is-the-latest-if-used-to-run-the-web-app#terraform",
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-java.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-java-version-is-the-latest-if-used-to-run-the-web-app#terraform"
+      "CLI": "az webapp config set --resource-group <RESOURCE_GROUP> --name <APP_NAME> --linux-fx-version \"JAVA|17-java17\"",
+      "NativeIaC": "```bicep\n// Set Java 17 for a Linux App Service\nresource app 'Microsoft.Web/sites@2022-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource appConfig 'Microsoft.Web/sites/config@2022-09-01' = {\n  name: '${app.name}/web'\n  properties: {\n    linuxFxVersion: 'JAVA|17-java17' // Critical: ensures runtime includes 'java17' so the check passes\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to App Services and open your web app\n2. Select Settings > Configuration > General settings\n3. For Linux apps: under Stack settings, choose Java and set Java version to 17 (or choose Tomcat/JBoss with Java version 17)\n4. For Windows apps: under Stack settings, set Java version to 17\n5. Click Save and restart if prompted",
+      "Terraform": "```hcl\n# Linux Web App configured to use Java 17\nresource \"azurerm_linux_web_app\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  service_plan_id     = \"<example_resource_id>\"\n\n  site_config {\n    application_stack {\n      java_version = \"17\" # Critical: sets Java to 17 to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Settings section, click on Configuration 5. Click on the General settings pane and ensure that for a Stack of Java the Major Version and Minor Version reflect the latest stable and supported release, and that the Java web server version is set to the auto-update option. NOTE: No action is required if Java version is set to Off, as Java is not used by your web app.",
-      "Url": "https://learn.microsoft.com/en-us/azure/app-service/configure-language-java?pivots=platform-linux#choosing-a-java-runtime-version"
+      "Text": "Adopt the **latest supported LTS Java** (`java <latest LTS>`) and standardize on that major line.\n- Enable automatic minor/patch updates\n- Validate upgrades in a staging environment before production\n- Retire deprecated runtimes and track vendor EOL\n\nApply **change management** and **defense in depth** to reduce exposure.",
+      "Url": "https://hub.prowler.com/check/app_ensure_java_version_is_latest"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "If your app is written using version-dependent features or libraries, they may not be available on the latest version. If you wish to upgrade, research the impact thoroughly. Upgrading may have unforeseen consequences that could result in downtime."

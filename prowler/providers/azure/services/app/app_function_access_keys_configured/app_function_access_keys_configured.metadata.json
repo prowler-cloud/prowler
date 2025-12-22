@@ -1,29 +1,43 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_access_keys_configured",
-  "CheckTitle": "Ensure that Azure Functions are using access keys for enhanced security",
+  "CheckTitle": "Azure Function has function keys configured",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Azure Functions provide a way to secure HTTP function endpoints during development and production. Using access keys adds an extra layer of protection, ensuring that only authorized users or systems can access the functions. This is particularly important when dealing with public apps or sensitive data.",
-  "Risk": "Unprotected function endpoints may be vulnerable to unauthorized access, leading to potential data breaches or malicious activity.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2&pivots=programming-language-csharp#authorization-keys",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure Functions** are evaluated for configured **function access keys** on HTTP endpoints.\n\nThe finding distinguishes functions with at least one access key defined from those without any keys configured.",
+  "Risk": "Missing **access keys** weakens authentication, enabling unsolicited calls to function endpoints. This risks:\n- loss of **confidentiality** via data exposure\n- compromised **integrity** by triggering unintended actions\n- reduced **availability** from abuse, throttling, and cost spikes",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://impledge.wordpress.com/2022/02/03/http-trigger-azure-function-authorization-using-custom-binding/",
+    "https://www.linkedin.com/posts/rajpreet-dhillon-30095625b_introduction-to-http-trigger-in-azure-functions-activity-7219693391427616768-h7RO",
+    "https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4#function-access-keys",
+    "https://azurelessons.com/azure-function-http-trigger/",
+    "https://stackoverflow.com/questions/75935063/when-creating-an-azure-function-using-a-http-trigger-to-listen-for-webhooks-whi",
+    "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger",
+    "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2&pivots=programming-language-csharp#authorization-keys",
+    "https://www.c-sharpcorner.com/article/exploring-azure-functions-http-trigger-using-ef-core/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-anonymous-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az functionapp function keys set --resource-group <RESOURCE_GROUP> --name <FUNCTION_APP_NAME> --function-name <FUNCTION_NAME> --key-name default --key-value <KEY_VALUE>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-anonymous-access.html",
+      "Other": "1. Sign in to the Azure portal and go to your Function App\n2. Select Functions, then click the specific function\n3. Open Function keys (or API keys)\n4. Click Add (New function key), set Name (e.g., default) and value (or generate)\n5. Save to create the key",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use access keys to secure Azure Functions. You can create and manage keys in the Azure portal or using the Azure CLI. For more information, see the official documentation.",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4#function-access-keys"
+      "Text": "Enforce **function keys** for non-public endpoints and apply **least privilege**:\n- avoid `anonymous` when not required\n- rotate keys; don't share the `admin` key\n- enable **App Service Authentication** or **API Management** for identity-aware access\n- restrict inbound networks and monitor logs\n- store and rotate secrets in **Key Vault**",
+      "Url": "https://hub.prowler.com/check/app_function_access_keys_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "For additional security, consider using managed identities and key vaults along with access keys. This provides granular control over resource access and improves auditability."
