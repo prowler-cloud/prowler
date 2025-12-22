@@ -1,29 +1,37 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_sa_no_administrative_privileges",
-  "CheckTitle": "Ensure Service Account does not have admin privileges",
+  "CheckTitle": "Service account has no administrative privileges",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "ServiceAccount",
-  "Description": "Ensure Service Account does not have admin privileges",
-  "Risk": "Enrolling ServiceAccount with Admin rights gives full access to an assigned application or a VM. A ServiceAccount Access holder can perform critical actions, such as delete and update change settings, without user intervention.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/restrict-admin-access-for-service-accounts.html",
+  "ResourceType": "iam.googleapis.com/ServiceAccount",
+  "Description": "Google Cloud service accounts with **high-privilege IAM roles** are identified, including `roles/owner`, `roles/editor`, or any role containing `admin`. The evaluation looks for service accounts bound to these roles in IAM policies across the project hierarchy.",
+  "Risk": "Over-privileged service accounts jeopardize the CIA triad:\n- Confidentiality: data can be read and exfiltrated\n- Integrity: configs, IAM, and code can be altered\n- Availability: resources can be deleted or halted\n\nCompromise via key theft or impersonation enables lateral movement and persistence.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/restrict-admin-access-for-service-accounts.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#terraform",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4",
+    "https://cloud.google.com/iam/docs/manage-access-service-accounts"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud projects remove-iam-policy-binding <PROJECT_ID> --member=serviceAccount:<SERVICE_ACCOUNT_EMAIL> --role=<ROLE>",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#terraform"
+      "Other": "1. In the Google Cloud console, go to IAM & Admin > IAM\n2. Select the project (or switch to the folder/organization) where the role is granted\n3. Find the service account by email and click Edit principal\n4. Remove roles: Owner, Editor, and any role with \"Admin\" in the name\n5. Click Save\n6. Repeat at folder/organization level if the role was inherited",
+      "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that your Google Cloud user-managed service accounts are not using privileged (administrator) roles, in order to implement the principle of least privilege and prevent any accidental or intentional modifications that may lead to data leaks and/or data loss.",
-      "Url": "https://cloud.google.com/iam/docs/manage-access-service-accounts"
+      "Text": "Apply **least privilege**: replace `roles/owner`, `roles/editor`, and roles containing `admin` with narrowly scoped predefined or custom roles. Use **separation of duties**, **temporary elevation**, and **IAM Conditions** to limit scope and time. Prefer **impersonation** over long-lived keys and monitor SA usage.",
+      "Url": "https://hub.prowler.com/check/iam_sa_no_administrative_privileges"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

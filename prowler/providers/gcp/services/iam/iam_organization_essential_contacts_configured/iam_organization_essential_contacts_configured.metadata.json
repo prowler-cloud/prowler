@@ -1,29 +1,37 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_organization_essential_contacts_configured",
-  "CheckTitle": "Ensure Essential Contacts is Configured for Organization",
+  "CheckTitle": "Organization has Essential Contacts configured",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Organization",
-  "Description": "It is recommended that Essential Contacts is configured to designate email addresses for Google Cloud services to notify of important technical or security information.",
-  "Risk": "Google Cloud Platform (GCP) services, such as Cloud Billing, send out billing notifications to share important information with the cloud platform users. By default, these types of notifications are sent to members with certain Identity and Access Management (IAM) roles such as 'roles/owner' and 'roles/billing.admin'. With Essential Contacts, you can specify exactly who receives important notifications by providing your own list of contacts (i.e. email addresses).",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Organization",
+  "Description": "Google Cloud organization has **Essential Contacts** defined at the organization level for categories such as `SECURITY`, `BILLING`, `LEGAL`, `SUSPENSION`, `TECHNICAL`, or `PRODUCT_UPDATES`.\n\nEvaluates whether at least one contact is configured.",
+  "Risk": "Missing **Essential Contacts** means security, abuse, and billing notices can go unnoticed or to inappropriate recipients, slowing response.\n\nConsequences: data exposure via unaddressed alerts (C), unauthorized changes persisting (I), and suspensions/outages from unresolved issues (A).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/resource-manager/docs/manage-essential-contacts?hl=es",
+    "https://cloud.google.com/resource-manager/docs/managing-notification-contacts",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/essential-contacts.html",
+    "https://nonameno.com/proxy2/index.php?proxy2=aHR0cHM6Ly9kb2NzLmNsb3VkLmdvb2dsZS5jb20vcmVzb3VyY2UtbWFuYWdlci9kb2NzL2NyZWF0aW5nLW1hbmFnaW5nLW9yZ2FuaXphdGlvbg=="
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud essential-contacts create --email=<EMAIL> --notification-categories=<NOTIFICATION_CATEGORIES> --organization=<ORGANIZATION_ID>",
+      "CLI": "gcloud essential-contacts create --email=<EMAIL> --notification-categories=all --organization=<ORGANIZATION_ID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/essential-contacts.html",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud console, go to Essential Contacts\n2. In the resource selector, choose your Organization\n3. Click Add contact\n4. Enter the contact email and select category All\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_essential_contacts_contact\" \"<example_resource_name>\" {\n  parent = \"organizations/<example_resource_id>\"            # Critical: set at org level to satisfy the check\n  email  = \"<EMAIL>\"                                        # Critical: creates the essential contact\n  notification_category_subscriptions = [\"ALL\"]             # Critical: required; ensures the contact is created\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that Essential Contacts is configured to designate email addresses for Google Cloud services to notify of important technical or security information.",
-      "Url": "https://cloud.google.com/resource-manager/docs/managing-notification-contacts"
+      "Text": "Configure **Essential Contacts** at the organization (and inherit to folders/projects) with group aliases for `SECURITY`, `BILLING`, `LEGAL`, `SUSPENSION`, `TECHNICAL`, and `PRODUCT_UPDATES`.\n\nApply **least privilege** and **separation of duties**. Review quarterly, verify delivery, and restrict contacts to approved domains.",
+      "Url": "https://hub.prowler.com/check/iam_organization_essential_contacts_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

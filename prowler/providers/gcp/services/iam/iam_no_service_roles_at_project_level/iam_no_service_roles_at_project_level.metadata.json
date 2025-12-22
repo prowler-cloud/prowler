@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_no_service_roles_at_project_level",
-  "CheckTitle": "Ensure That IAM Users Are Not Assigned the Service Account User or Service Account Token Creator Roles at Project Level",
+  "CheckTitle": "Project has no IAM users assigned the Service Account User or Service Account Token Creator roles at project level",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "IAM Policy",
-  "Description": "It is recommended to assign the `Service Account User (iam.serviceAccountUser)` and `Service Account Token Creator (iam.serviceAccountTokenCreator)` roles to a user for a specific service account rather than assigning the role to a user at project level.",
-  "Risk": "The Service Account User (iam.serviceAccountUser) role allows an IAM user to attach a service account to a long-running job service such as an App Engine App or Dataflow Job, whereas the Service Account Token Creator (iam.serviceAccountTokenCreator) role allows a user to directly impersonate the identity of a service account.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/check-for-iam-users-with-service-roles.html",
+  "Severity": "high",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Project",
+  "Description": "**Google Cloud IAM policies** are inspected for **project-level grants** of `roles/iam.serviceAccountUser` and `roles/iam.serviceAccountTokenCreator` to principals. The focus is on bindings that enable attaching or impersonating service accounts at the project scope rather than on individual service accounts.",
+  "Risk": "**Project-wide impersonation rights** enable **privilege escalation** and **lateral movement**. Holders can act as any service account, access data across services, modify resources, and persist access. New service accounts inherit exposure, undermining confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/check-for-iam-users-with-service-roles.html",
+    "https://engineering.sada.com/managing-google-cloud-api-keys-using-terraform-37d01f068937",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_3/",
+    "https://cloud.google.com/iam/docs/granting-changing-revoking-access",
+    "https://cloud.google.com/iam/docs/best-practices-service-accounts?ref=alphasec.io",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_3#terraform",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_3",
+    "https://support.icompaas.com/support/solutions/articles/62000232882-1-6-ensure-iam-users-are-not-assigned-service-account-user-or-service-account-token-creator-roles-at-"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_3",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_3#terraform"
+      "Other": "1. In Google Cloud Console, go to IAM & Admin > IAM\n2. Use the filter to find Role: Service Account User\n3. Remove all project-level bindings for this role and click Save\n4. Repeat steps 2-3 for Role: Service Account Token Creator\n5. Do not add these roles at the project level; if needed, grant them on specific service accounts only (IAM & Admin > Service Accounts > select account > Permissions > Grant access)",
+      "Terraform": "```hcl\n# Grant required access at the service account level instead of the project level\nresource \"google_service_account_iam_member\" \"<example_resource_name>\" {\n  service_account_id = \"projects/<example_resource_id>/serviceAccounts/<example_resource_name>@<example_resource_id>.iam.gserviceaccount.com\"  # CRITICAL: scope grant to a specific service account, not the project\n  role               = \"roles/iam.serviceAccountUser\"  # CRITICAL: this role is granted only at the service account level\n  member             = \"user:<example_resource_name>@example.com\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the Service Account User and Service Account Token Creator roles are assigned to a user for a specific GCP service account rather than to a user at the GCP project level, in order to implement the principle of least privilege (POLP). The principle of least privilege (also known as the principle of minimal privilege) is the practice of providing every user the minimal amount of access required to perform its tasks. Google Cloud Platform (GCP) IAM users should not have assigned the Service Account User or Service Account Token Creator roles at the GCP project level. Instead, these roles should be allocated to a user associated with a specific service account, providing that user access to the service account only.",
-      "Url": "https://cloud.google.com/iam/docs/granting-changing-revoking-access"
+      "Text": "Assign `roles/iam.serviceAccountUser` and `roles/iam.serviceAccountTokenCreator` only on the specific service account, not at project scope. Enforce **least privilege** and **separation of duties** with per-SA grants, conditional bindings, and time-bound access. Prefer **short-lived impersonation**; review grants regularly.",
+      "Url": "https://hub.prowler.com/check/iam_no_service_roles_at_project_level"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

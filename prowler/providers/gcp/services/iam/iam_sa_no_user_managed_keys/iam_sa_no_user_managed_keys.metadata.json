@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_sa_no_user_managed_keys",
-  "CheckTitle": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
+  "CheckTitle": "Service account has no user-managed keys",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "ServiceAccountKey",
-  "Description": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
-  "Risk": "Anyone who has access to the keys will be able to access resources through the service account. GCP-managed keys are used by Cloud Platform services such as App Engine and Compute Engine. These keys cannot be downloaded. Google will keep the keys and automatically rotate them on an approximately weekly basis. User-managed keys are created, downloadable, and managed by users.",
+  "Severity": "high",
+  "ResourceType": "iam.googleapis.com/ServiceAccount",
+  "Description": "**IAM service accounts** do not have keys of type `USER_MANAGED`; only Google-managed keys (or no keys) are present.",
+  "Risk": "**User-managed keys** are downloadable and long-lived, increasing theft and reuse risk. An attacker with a key can impersonate the service account, perform unauthorized API calls, exfiltrate data, and alter resources, impacting **confidentiality** and **integrity**, and potentially **availability**. Copies in repos or logs can evade centralized rotation and revocation.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/delete-user-managed-service-account-keys.html",
+    "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud iam service-accounts keys delete <KEY_ID> --iam-account=<SERVICE_ACCOUNT_EMAIL>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/delete-user-managed-service-account-keys.html",
+      "Other": "1. In the Google Cloud console, go to IAM & Admin > Service Accounts\n2. Select your project and click the affected service account\n3. Open the Keys tab\n4. For each key with Type \"User-managed\", click Delete and confirm\n5. Verify no User-managed keys remain for that service account\n6. Repeat for any other affected service accounts",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "It is recommended to prevent user-managed service account keys.",
-      "Url": "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+      "Text": "Avoid **user-managed keys**. Use **service account impersonation** or **Workload Identity Federation** for short-lived credentials and **least privilege**. Enforce `iam.disableServiceAccountKeyCreation`, restrict who can create keys, and monitor usage. *If exceptions are unavoidable*, tightly scope, rotate aggressively, and store keys securely.",
+      "Url": "https://hub.prowler.com/check/iam_sa_no_user_managed_keys"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets",
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

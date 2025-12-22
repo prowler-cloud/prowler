@@ -1,29 +1,43 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_audit_logs_enabled",
-  "CheckTitle": "Configure Google Cloud Audit Logs to Track All Activities",
+  "CheckTitle": "GCP project has Cloud Audit Logs enabled",
   "CheckType": [],
   "ServiceName": "iam",
-  "SubServiceName": "Audit Logs",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "GCPProject",
-  "Description": "Ensure that Google Cloud Audit Logs feature is configured to track Data Access logs for all Google Cloud Platform (GCP) services and users, in order to enhance overall access security and meet compliance requirements. Once configured, the feature can record all admin related activities, as well as all the read and write access requests to user data.",
-  "Risk": "In order to maintain an effective Google Cloud audit configuration for your project, folder, and organization, all 3 types of Data Access logs (ADMIN_READ, DATA_READ and DATA_WRITE) must be enabled for all supported GCP services. Also, Data Access logs should be captured for all IAM users, without exempting any of them. Exemptions let you control which users generate audit logs. When you add an exempted user to your log configuration, audit logs are not created for that user, for the selected log type(s). Data Access audit logs are disabled by default and must be explicitly enabled based on your business requirements.",
+  "Severity": "high",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Project",
+  "Description": "**GCP project** has **Cloud Audit Logs** configured to capture administrative operations and data access events for services and principals (*per IAM Audit Logs*, including `ADMIN_READ`, `DATA_READ`, `DATA_WRITE`).",
+  "Risk": "Absent or partial audit logging reduces visibility into who accessed data or changed configurations, hindering detection and forensics.\n\nMisused identities can alter IAM to persist access, exfiltrate data, or delete resources, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/record-all-activities.html",
+    "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-cloud-audit-logging-is-configured-properly-across-all-services-and-all-users-from-a-project#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudTasks/enable-data-access-audit-logs.html",
+    "https://cloud.google.com/logging/docs/audit/",
+    "https://support.expel.io/hc/en-us/articles/7041816059923-Google-Cloud-Platform-Setup-for-Workbench-Appendix",
+    "https://www.skills.google/focuses/19184?parent=catalog",
+    "https://docs.cloud.google.com/logging/docs/audit/configure-data-access",
+    "https://www.cadosecurity.com/blog/how-to-be-ir-prepared-in-google-cloud-platform-gcp",
+    "https://www.naukri.com/code360/library/cloud-audit-logs-in-gcp"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/record-all-activities.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-cloud-audit-logging-is-configured-properly-across-all-services-and-all-users-from-a-project#terraform"
+      "Other": "1. In the Google Cloud console, go to IAM & Admin > Audit Logs\n2. Click Set default configuration\n3. Under Permission types, check Admin Read, Data Read, and Data Write\n4. Click Save",
+      "Terraform": "```hcl\n# Enable Cloud Audit Logs (Data Access) for all services\nresource \"google_project_iam_audit_config\" \"all\" {\n  project = \"<example_resource_id>\"\n  service = \"allServices\" # Critical: apply to all services\n\n  # Critical: enable Data Access audit log types to pass the check\n  audit_log_config { log_type = \"ADMIN_READ\" }  # metadata/config reads\n  audit_log_config { log_type = \"DATA_READ\" }   # data reads\n  audit_log_config { log_type = \"DATA_WRITE\" }  # data writes\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that Cloud Audit Logging is configured to track all admin activities and read, write access to user data.",
-      "Url": "https://cloud.google.com/logging/docs/audit/"
+      "Text": "Enable comprehensive **Cloud Audit Logs** for all services and principals, including `ADMIN_READ`, `DATA_READ`, `DATA_WRITE`. *Avoid exemptions.* Set org/folder defaults, centralize and retain logs, enforce least privilege on log access, protect logs from alteration, and alert on anomalous access.",
+      "Url": "https://hub.prowler.com/check/iam_audit_logs_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

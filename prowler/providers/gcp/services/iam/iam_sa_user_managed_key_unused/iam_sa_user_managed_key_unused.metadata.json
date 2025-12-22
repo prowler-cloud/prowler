@@ -1,29 +1,38 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_sa_user_managed_key_unused",
-  "CheckTitle": "Ensure That There Are No Unused Service Account Keys for Each Service Account",
+  "CheckTitle": "User-managed service account key was used within the allowed inactivity period",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "ServiceAccountKey",
-  "Description": "Ensure That There Are No Unused Service Account Keys for Each Service Account.",
-  "Risk": "Anyone who has access to the keys will be able to access resources through the service account. GCP-managed keys are used by Cloud Platform services such as App Engine and Compute Engine. These keys cannot be downloaded. Google will keep the keys and automatically rotate them on an approximately weekly basis. User-managed keys are created, downloadable, and managed by users.",
-  "RelatedUrl": "https://cloud.google.com/iam/docs/service-account-overview#identify-unused",
+  "ResourceType": "iam.googleapis.com/ServiceAccountKey",
+  "Description": "**User-managed service account keys** with no recorded activity during the last `max_unused_account_days` are identified using key-usage metrics per service account.",
+  "Risk": "**Stale user-managed keys** expand exposure of long-lived credentials. If leaked, an attacker can authenticate as the service account off-platform, bypass network controls, access data, alter resources, and persist-compromising confidentiality and integrity, and risking availability via destructive changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/iam/docs/creating-managing-service-account-keys",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/delete-user-managed-service-account-keys.html",
+    "https://docs.cloud.google.com/iam/docs/samples/iam-delete-key",
+    "https://cloud.google.com/iam/docs/service-account-overview#identify-unused",
+    "https://stackoverflow.com/questions/49405063/google-cloud-audit-service-account-usage/49536975"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud iam service-accounts keys delete <KEY_ID> --iam-account=<SERVICE_ACCOUNT_EMAIL>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In Google Cloud Console, go to IAM & Admin > Service Accounts\n2. Select your project and click the service account with the unused user-managed key\n3. Open the Keys tab\n4. Find the unused key (Type: User-managed), click Delete, and confirm",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "It is recommended to prevent user-managed service account keys.",
-      "Url": "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+      "Text": "Prefer **managed workload identities** and **service account impersonation** over user-managed keys. Enforce `iam.disableServiceAccountKeyCreation`, remove unused keys, and use short key lifetimes with rotation when unavoidable. Apply **least privilege**, monitor key usage, and enforce **separation of duties** to limit blast radius.",
+      "Url": "https://hub.prowler.com/check/iam_sa_user_managed_key_unused"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

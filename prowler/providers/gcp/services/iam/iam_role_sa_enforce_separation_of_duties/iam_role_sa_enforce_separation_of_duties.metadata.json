@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_role_sa_enforce_separation_of_duties",
-  "CheckTitle": "Enforce Separation of Duties for Service-Account Related Roles",
+  "CheckTitle": "Project enforces separation of duties for Service Account Admin and Service Account User roles",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "IAMRole",
-  "Description": "Ensure that separation of duties (also known as segregation of duties - SoD) is enforced for all Google Cloud Platform (GCP) service-account related roles. The security principle of separation of duties has as its primary objective the prevention of fraud and human error. This objective is achieved by disbanding the tasks and associated privileges for a specific business process among multiple users/members. To follow security best practices, your GCP service accounts should not have the Service Account Admin and Service Account User roles assigned at the same time.",
-  "Risk": "The principle of separation of duties should be enforced in order to eliminate the need for high-privileged IAM members, as the permissions granted to these members can allow them to perform malicious or unwanted actions.",
+  "Severity": "high",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Project",
+  "Description": "Google Cloud IAM policies are evaluated to find principals granted both `roles/iam.serviceAccountAdmin` and `roles/iam.serviceAccountUser` within a project. **Service-account related roles** are expected to be segregated so that service account lifecycle management is distinct from their use or impersonation.",
+  "Risk": "With both roles, a principal can create or modify service accounts and then use or attach them to workloads, enabling unchecked impersonation. This endangers confidentiality (expanded data access), integrity (policy/workload changes), and availability (persistence or sabotage via privileged automation).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/iam/docs/service-account-overview",
+    "https://medium.com/scalesec/overview-of-google-cloud-function-identities-36633a746c1b",
+    "https://support.icompaas.com/support/solutions/articles/62000232885-1-8-ensure-separation-of-duties-is-enforced-when-assigning-service-account-roles-to-users-automated-",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/enforce-separation-of-duties-for-service-account-roles.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_10#terraform",
+    "https://cloud.google.com/iam/docs/understanding-roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/enforce-separation-of-duties-for-service-account-roles.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_10#terraform"
+      "Other": "1. In Google Cloud Console, go to IAM & Admin > IAM\n2. Click the View by Role tab\n3. Select the role Service Account Admin (roles/iam.serviceAccountAdmin)\n4. Remove all listed principals from this role and click Save\n5. Select the role Service Account User (roles/iam.serviceAccountUser)\n6. Remove all listed principals from this role and click Save",
+      "Terraform": "```hcl\n# Remove all project-level principals from Service Account User\nresource \"google_project_iam_binding\" \"sa_user_none\" {\n  project = \"<example_resource_id>\"\n  role    = \"roles/iam.serviceAccountUser\"  # critical: target role to clear at project level\n  members = []                                # critical: empty list removes the binding (no members)\n}\n\n# Remove all project-level principals from Service Account Admin\nresource \"google_project_iam_binding\" \"sa_admin_none\" {\n  project = \"<example_resource_id>\"\n  role    = \"roles/iam.serviceAccountAdmin\"  # critical: target role to clear at project level\n  members = []                                 # critical: empty list removes the binding (no members)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that separation of duties (also known as segregation of duties - SoD) is enforced for all Google Cloud Platform (GCP) service-account related roles. The security principle of separation of duties has as its primary objective the prevention of fraud and human error. This objective is achieved by disbanding the tasks and associated privileges for a specific business process among multiple users/members. To follow security best practices, your GCP service accounts should not have the Service Account Admin and Service Account User roles assigned at the same time.",
-      "Url": "https://cloud.google.com/iam/docs/understanding-roles"
+      "Text": "Enforce separation of duties: assign `roles/iam.serviceAccountAdmin` for lifecycle tasks and `roles/iam.serviceAccountUser` for attach/impersonate, never both to one principal.\n- Apply **least privilege** with narrow scope and conditions\n- Use temporary elevation/approvals\n- Regularly audit IAM bindings and logs",
+      "Url": "https://hub.prowler.com/check/iam_role_sa_enforce_separation_of_duties"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

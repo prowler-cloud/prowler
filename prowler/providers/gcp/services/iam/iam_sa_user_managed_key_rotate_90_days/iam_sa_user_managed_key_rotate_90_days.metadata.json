@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "iam_sa_user_managed_key_rotate_90_days",
-  "CheckTitle": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
+  "CheckTitle": "Service account user-managed key has been rotated within the last 90 days",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "ServiceAccountKey",
-  "Description": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
-  "Risk": "Service Account keys should be rotated to ensure that data cannot be accessed with an old key that might have been lost, cracked, or stolen.",
+  "Severity": "medium",
+  "ResourceType": "iam.googleapis.com/ServiceAccountKey",
+  "Description": "**GCP IAM service account user-managed keys** are evaluated by last rotation. Keys of type `USER_MANAGED` older than `90` days are identified; those rotated within `90` days align with the expected rotation cadence.",
+  "Risk": "**Stale service account keys** extend exposure of **long-lived credentials**. A leaked or retained key can grant persistent API access, enabling **data exfiltration**, tampering, and lateral movement. Weak rotation reduces revocation effectiveness and erodes **confidentiality** and **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/rotate-service-account-user-managed-keys.html",
+    "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud iam service-accounts keys delete <KEY_ID> --iam-account=<SA_NAME>@<PROJECT_ID>.iam.gserviceaccount.com",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/rotate-service-account-user-managed-keys.html",
+      "Other": "1. In Google Cloud Console, go to IAM & Admin > Service Accounts\n2. Open the service account, then go to the Keys tab\n3. If the workload still needs a key: click Add key > Create new key (JSON), download it, and update the workload to use it\n4. Delete the user-managed key(s) older than 90 days by clicking Delete next to each\n5. Re-run the check to confirm only recent keys remain",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "It is recommended that all Service Account keys are regularly rotated.",
-      "Url": "https://cloud.google.com/iam/docs/creating-managing-service-account-keys"
+      "Text": "Rotate **user-managed keys** at least every `90` days and prefer **Workload Identity Federation** or other short-lived credentials over static keys.\n- Minimize key count; remove unused keys\n- Enforce **least privilege** on service accounts\n- Automate rotation and alert on aged keys\n- Set key expiry as **defense in depth**",
+      "Url": "https://hub.prowler.com/check/iam_sa_user_managed_key_rotate_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
