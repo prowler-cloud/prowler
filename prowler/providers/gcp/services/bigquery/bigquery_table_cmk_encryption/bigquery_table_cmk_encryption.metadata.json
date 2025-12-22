@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "bigquery_table_cmk_encryption",
-  "CheckTitle": "Ensure BigQuery tables are encrypted with Customer-Managed Keys (CMKs).",
+  "CheckTitle": "BigQuery table is encrypted with a Customer-Managed Key (CMK)",
   "CheckType": [],
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Table",
-  "Description": "Ensure BigQuery tables are encrypted with Customer-Managed Keys (CMKs) in order to have a more granular control over data encryption/decryption process.",
-  "Risk": "If you want to have greater control, Customer-managed encryption keys (CMEK) can be used as encryption key management solution for BigQuery Tables.",
+  "Severity": "medium",
+  "ResourceType": "bigquery.googleapis.com/Table",
+  "Description": "**BigQuery tables** use **customer-managed encryption keys** (`CMEK`) for at-rest encryption. The evaluation identifies tables lacking a configured **Cloud KMS key**, indicating use of default Google-managed encryption instead.",
+  "Risk": "Without `CMEK`, encryption keys are not under your control, reducing **key custody** and auditability. You can't enforce **region-bound keys**, custom **rotation**, or revoke access by disabling a key, weakening **confidentiality** and **compliance**. A compromised account may retain data access without an external KMS gate.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek#terraform",
+    "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "bq cp -f --destination_kms_key projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY> <DATASET_ID>.<TABLE_ID> <DATASET_ID>.<TABLE_ID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek#terraform"
+      "Other": "1. In Google Cloud Console, go to BigQuery and open the Query editor\n2. Run:\n   ```sql\n   ALTER TABLE <DATASET_ID>.<TABLE_ID>\n   SET OPTIONS (kms_key_name = 'projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY>');\n   ```\n3. Click Run\n4. Open the table Details and verify Customer-managed key shows the specified key",
+      "Terraform": "```hcl\nresource \"google_bigquery_table\" \"<example_resource_name>\" {\n  dataset_id = \"<DATASET_ID>\"\n  table_id   = \"<TABLE_ID>\"\n\n  schema = jsonencode([\n    { name = \"id\", type = \"INT64\", mode = \"NULLABLE\" }\n  ])\n\n  # Critical: enforce CMEK on the table using the specified KMS key\n  encryption_configuration {\n    kms_key_name = \"projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY>\"  # Enables CMK encryption\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Encrypting tables with Cloud KMS Customer-Managed Keys (CMKs) will allow for a more granular control over data encryption/decryption process.",
-      "Url": "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+      "Text": "Protect BigQuery tables with **Cloud KMS CMEK** to retain key ownership and control.\n- Set dataset/project default keys\n- Match key location to dataset region\n- Enforce least-privilege on KMS and monitor usage\n- Rotate keys and define revocation procedures\n- Apply org policies to require CMEK and restrict permissible key projects",
+      "Url": "https://hub.prowler.com/check/bigquery_table_cmk_encryption"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,26 +1,32 @@
 {
   "Provider": "gcp",
   "CheckID": "bigquery_dataset_cmk_encryption",
-  "CheckTitle": "Ensure BigQuery datasets are encrypted with Customer-Managed Keys (CMKs).",
+  "CheckTitle": "BigQuery dataset is encrypted with Customer-Managed Keys (CMKs)",
   "CheckType": [],
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Dataset",
-  "Description": "Ensure BigQuery datasets are encrypted with Customer-Managed Keys (CMKs) in order to have a more granular control over data encryption/decryption process.",
-  "Risk": "If you want to have greater control, Customer-managed encryption keys (CMEK) can be used as encryption key management solution for BigQuery Data Sets.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
+  "Severity": "medium",
+  "ResourceType": "bigquery.googleapis.com/Dataset",
+  "Description": "**BigQuery datasets** use **Customer-Managed Encryption Keys** (`CMEK`) rather than Google-managed encryption. The evaluation identifies datasets configured to use a customer-managed key for data-at-rest protection.",
+  "Risk": "Without **CMEK**, organizations lose **cryptographic control** of data at rest, weakening **confidentiality** and **access governance**. Lack of custom **key rotation**, **revocation** (kill switch), and location control hinders incident response and may conflict with data-sovereignty requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek-1#terraform",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
+    "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "bq update --default_kms_key projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY_NAME> --dataset <DATASET_ID>",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek-1#terraform"
+      "Other": "1. In Google Cloud Console, go to BigQuery\n2. In Explorer, select your project and click the dataset <DATASET_ID>\n3. Click Edit details\n4. Under Encryption, select Customer-managed key and choose or paste the key: projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY_NAME>\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_bigquery_dataset\" \"<example_resource_name>\" {\n  dataset_id = \"<example_resource_id>\"\n  location   = \"<LOCATION>\"\n\n  # Critical: apply CMEK at the dataset level so the check passes\n  default_encryption_configuration {\n    kms_key_name = \"projects/<KMS_PROJECT_ID>/locations/<LOCATION>/keyRings/<KEY_RING>/cryptoKeys/<KEY_NAME>\" # Critical: sets CMEK\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Encrypting datasets with Cloud KMS Customer-Managed Keys (CMKs) will allow for a more granular control over data encryption/decryption process.",
-      "Url": "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+      "Text": "Protect datasets with **CMEK** via Cloud KMS:\n- Set a dataset or project default key\n- Align key location with dataset region\n- Enforce **least privilege** and separation of duties on key usage\n- Rotate keys and define revocation procedures\n- Audit key usage and use org policies to require CMEK",
+      "Url": "https://hub.prowler.com/check/bigquery_dataset_cmk_encryption"
     }
   },
   "Categories": [
