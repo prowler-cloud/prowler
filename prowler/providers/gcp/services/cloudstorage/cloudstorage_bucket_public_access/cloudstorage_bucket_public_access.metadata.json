@@ -1,26 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_public_access",
-  "CheckTitle": "Ensure That Cloud Storage Bucket Is Not Anonymously or Publicly Accessible",
+  "CheckTitle": "Cloud Storage bucket is not publicly accessible",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Bucket",
-  "Description": "Ensure That Cloud Storage Bucket Is Not Anonymously or Publicly Accessible",
-  "Risk": "Allowing anonymous or public access grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data. Hence, ensure that anonymous or public access to a bucket is not allowed.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/publicly-accessible-storage-buckets.html",
+  "Severity": "critical",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "Description": "**Cloud Storage buckets** are assessed for **anonymous or public access** by detecting permissions granted to broad principals like `allUsers` or `allAuthenticatedUsers` that make bucket data reachable without authentication.",
+  "Risk": "**Public buckets** undermine **confidentiality** and **integrity**. Anyone can list or download objects; if write access exists, content can be overwritten or deleted. Abuse enables hotlinking and malware hosting, impacting **availability** and driving unexpected egress costs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/storage/docs/access-control/iam-reference",
+    "https://urlbox.com/docs/storage/configure-google-cloud-storage",
+    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1",
+    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#terraform",
+    "https://dataintegration.info/how-to-create-and-use-a-storage-bucket",
+    "https://stackoverflow.com/questions/78496714/is-it-safe-for-a-django-backends-gcp-storage-bucket-to-be-public",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/publicly-accessible-storage-buckets.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud storage buckets update gs://<example_resource_name> --public-access-prevention enforced",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#terraform"
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open <example_resource_name>\n2. Click the Permissions tab\n3. Set Public access prevention to Enforced\n4. Click Save",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<LOCATION>\"\n\n  public_access_prevention = \"enforced\" # Critical: blocks allUsers/allAuthenticatedUsers, making the bucket not publicly accessible\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that IAM policy on Cloud Storage bucket does not allows anonymous or public access.",
-      "Url": "https://cloud.google.com/storage/docs/access-control/iam-reference"
+      "Text": "Adopt **least privilege**: remove `allUsers`/`allAuthenticatedUsers` and grant only required identities. Enforce **Public Access Prevention** and use uniform bucket-level access. *If external sharing is needed*, issue **signed URLs** or use an authenticated proxy/CDN, and review permissions regularly.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_public_access"
     }
   },
   "Categories": [

@@ -1,32 +1,42 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_log_retention_policy_lock",
-  "CheckTitle": "Cloud Storage log bucket has a Retention Policy with Bucket Lock enabled",
+  "CheckTitle": "Cloud Storage log sink bucket has a retention policy with Bucket Lock enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "storage.googleapis.com/Bucket",
-  "Description": "**Google Cloud Storage buckets** used as **log sinks** are evaluated to ensure that a **Retention Policy** is configured and **Bucket Lock** is enabled. Enabling Bucket Lock permanently prevents the retention policy from being reduced or removed, protecting logs from modification or deletion.",
-  "Risk": "Log sink buckets without a locked retention policy are at risk of log tampering or accidental deletion. Without Bucket Lock, an attacker or user could remove or shorten the retention policy, compromising the integrity of audit logs required for forensics and compliance investigations.",
+  "Description": "**Cloud Storage log sink buckets** have a configured **retention period** with **Bucket Lock** applied, ensuring the retention policy cannot be shortened or removed.",
+  "Risk": "Without a locked retention policy, exported logs can be deleted early or retention reduced, undermining log **integrity** and **availability**. An attacker or malicious insider could purge evidence to evade detection, hindering **forensics** and weakening **non-repudiation** across the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html"
+    "https://www.examtopics.com/discussions/google/view/122735-exam-professional-cloud-devops-engineer-topic-1-question-116/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
+    "https://cloud.google.com/storage/docs/samples/storage-lock-retention-policy?hl=pt",
+    "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform",
+    "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access",
+    "https://www.freecram.net/question/Google.Professional-Cloud-DevOps-Engineer.v2024-08-01.q71/your-company-operates-in-a-highly-regulated-domain-that-requires-you-to-store-all-organization-logs-for",
+    "https://www.skills.google/focuses/3483?locale=fr_CA&parent=catalog",
+    "https://www.youtube.com/watch?v=6nbIPPeKU_A"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud storage buckets lock-retention-policy gs://<LOG_BUCKET_NAME>",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "1) Open Google Cloud Console → Storage → Buckets → <LOG_BUCKET_NAME>\n2) Go to the **Configuration** tab\n3) Under **Retention policy**, ensure a retention duration is set\n4) Click **Lock** to enable Bucket Lock and confirm the operation",
-      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"log_bucket\" {\n  name     = var.log_bucket_name\n  location = var.location\n\n  retention_policy {\n    retention_period = 31536000 # 365 days in seconds\n    is_locked        = true\n  }\n}\n```"
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open the bucket used by your Logs Router sink\n2. Click the Configuration tab\n3. Under Retention policy, click Edit, set any required retention duration, and click Save\n4. Click Lock retention policy, type LOCK to confirm, and confirm to permanently lock it",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<LOCATION>\"\n\n  retention_policy {\n    retention_period = 86400         # Required: enable a retention policy (1 day)\n    is_locked        = true          # CRITICAL: locks the retention policy (Bucket Lock) to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure a retention policy and enable Bucket Lock on all Cloud Storage buckets used as log sinks to ensure log integrity and immutability.",
+      "Text": "Set a **retention policy** on every log sink bucket and enable **Bucket Lock**. Choose durations that meet investigative and regulatory needs. Enforce **least privilege** and **separation of duties** for bucket and logging administration, and apply **defense in depth** so no single actor can weaken log retention.",
       "Url": "https://hub.prowler.com/check/cloudstorage_bucket_log_retention_policy_lock"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
