@@ -16,7 +16,6 @@
   "Risk": "Without **Shield Advanced**, authoritative DNS is vulnerable to:\n- **Volumetric/reflection** floods\n- **Query/application** layer attacks\n\nEffects: disrupted resolution and app outages (**availability**), latency spikes, and unexpected cost from attack traffic.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/it/questions/QUrhpRSVWDQFGx9nuRBHMaXg/shield-advanced-for-route53-delegated-subdomains",
     "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html"
   ],
   "Remediation": {

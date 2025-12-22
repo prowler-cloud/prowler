@@ -15,11 +15,6 @@
   "Risk": "Missing **Shield Advanced** leaves distributions exposed to large **DDoS** that degrade **availability** via L3/L4 floods and L7 request surges. Effects include edge saturation, latency, and outages, plus loss of **cost protection** and expert support, causing unexpected spend and longer recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://reintech.io/blog/securing-cloudfront-distributions-aws-waf-shield",
-    "https://medium.com/@christopheradamson253/enhancing-application-security-with-aws-shield-advanced-bdd7990e01e1",
-    "https://www.stormit.cloud/blog/what-is-aws-shield-how-does-it-work/",
-    "https://aws.amazon.com/shield/pricing/",
-    "https://nadeeshaliyanage.hashnode.dev/understanding-aws-shield-a-beginners-guide",
     "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html"
   ],
   "Remediation": {
@@ -35,8 +30,7 @@
     }
   },
   "Categories": [
-    "resilience",
-    "threat-detection"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

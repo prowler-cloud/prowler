@@ -31,8 +31,7 @@
     }
   },
   "Categories": [
-    "resilience",
-    "threat-detection"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -15,9 +15,6 @@
   "Risk": "Unprotected ELB Classic endpoints are more exposed to large L3/L4 DDoS (e.g., SYN/UDP floods), risking **availability loss** from connection exhaustion and failed health checks, plus operational impact from autoscaling and data transfer surges.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://boto3.amazonaws.com/v1/documentation/api/1.18.42/reference/services/shield.html",
-    "http://man.hubwiz.com/docset/Boto3.docset/Contents/Resources/Documents/reference/services/shield.html",
-    "https://www.stormit.cloud/blog/what-is-aws-shield-how-does-it-work/",
     "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html"
   ],
   "Remediation": {
@@ -33,8 +30,7 @@
     }
   },
   "Categories": [
-    "resilience",
-    "threat-detection"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

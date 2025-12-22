@@ -16,10 +16,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/documentation-overview/shield/",
-    "https://wpyoga.dev/boto3-docs-reformat/html/reference/services/shield.html",
-    "http://man.hubwiz.com/docset/Boto3.docset/Contents/Resources/Documents/reference/services/shield.html",
-    "https://www.slideshare.net/slideshow/announcing-aws-shield-protect-web-applications-from-ddos-attacks/70237520",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/shield/client/create_protection.html",
     "https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html"
   ],
   "Remediation": {
