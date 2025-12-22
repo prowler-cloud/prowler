@@ -1165,6 +1165,11 @@ class TestProviderViewSet:
                     "uid": "64b1d3c0e4b03b1234567890",
                     "alias": "Atlas Organization",
                 },
+                {
+                    "provider": "alibabacloud",
+                    "uid": "1234567890123456",
+                    "alias": "Alibaba Cloud Account",
+                },
             ]
         ),
     )
@@ -1514,6 +1519,36 @@ class TestProviderViewSet:
                     "mongodbatlas-uid",
                     "uid",
                 ),
+                # Alibaba Cloud UID validation - too short (not 16 digits)
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "123456789012345",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
+                # Alibaba Cloud UID validation - too long (not 16 digits)
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "12345678901234567",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
+                # Alibaba Cloud UID validation - contains non-digits
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "123456789012345a",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1687,21 +1722,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    7,
+                    8,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 8),
+                ("inserted_at", TODAY, 9),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2249,6 +2284,46 @@ class TestProviderSecretViewSet:
                 {
                     "atlas_public_key": "public-key",
                     "atlas_private_key": "private-key",
+                },
+            ),
+            # Alibaba Cloud credentials (with access key only)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                },
+            ),
+            # Alibaba Cloud credentials (with STS security token)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                    "security_token": "my-security-token-for-sts",
+                },
+            ),
+            # Alibaba Cloud RAM Role Assumption (minimal required fields)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.ROLE,
+                {
+                    "role_arn": "acs:ram::1234567890123456:role/ProwlerRole",
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                },
+            ),
+            # Alibaba Cloud RAM Role Assumption (with optional role_session_name)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.ROLE,
+                {
+                    "role_arn": "acs:ram::1234567890123456:role/ProwlerRole",
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                    "role_session_name": "ProwlerAuditSession",
                 },
             ),
         ],

@@ -1,4 +1,4 @@
-name: 'SDK: Bump Version'
+name: 'Docs: Bump Version'
 
 on:
   release:
@@ -25,7 +25,18 @@ jobs:
       major_version: ${{ steps.detect.outputs.major_version }}
       minor_version: ${{ steps.detect.outputs.minor_version }}
       patch_version: ${{ steps.detect.outputs.patch_version }}
+      current_docs_version: ${{ steps.get_docs_version.outputs.current_docs_version }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Get current documentation version
+        id: get_docs_version
+        run: |
+          CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' docs/getting-started/installation/prowler-app.mdx)
+          echo "current_docs_version=${CURRENT_DOCS_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Current documentation version: $CURRENT_DOCS_VERSION"
+
       - name: Detect release type and parse version
         id: detect
         run: |
@@ -73,37 +84,45 @@ jobs:
         run: |
           MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
           MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          CURRENT_DOCS_VERSION="${{ needs.detect-release-type.outputs.current_docs_version }}"
 
           NEXT_MINOR_VERSION=${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0
+          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
           echo "NEXT_MINOR_VERSION=${NEXT_MINOR_VERSION}" >> "${GITHUB_ENV}"
 
-          echo "Current version: $PROWLER_VERSION"
+          echo "Current documentation version: $CURRENT_DOCS_VERSION"
+          echo "Current release version: $PROWLER_VERSION"
           echo "Next minor version: $NEXT_MINOR_VERSION"
 
-      - name: Bump versions in files for master
+      - name: Bump versions in documentation for master
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_MINOR_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_MINOR_VERSION}\"|" prowler/config/config.py
+          # Update prowler-app.mdx with current release version
+          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
+          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
 
           echo "Files modified:"
           git --no-pager diff
 
-      - name: Create PR for next minor version to master
+      - name: Create PR for documentation update to master
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: master
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
+          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.NEXT_MINOR_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
+            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
+            - All `*.mdx` files with `<VersionBadge>` components
 
             ### License
 
@@ -118,40 +137,46 @@ jobs:
         run: |
           MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
           MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          CURRENT_DOCS_VERSION="${{ needs.detect-release-type.outputs.current_docs_version }}"
 
           FIRST_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.1
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
 
+          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
           echo "FIRST_PATCH_VERSION=${FIRST_PATCH_VERSION}" >> "${GITHUB_ENV}"
           echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
 
           echo "First patch version: $FIRST_PATCH_VERSION"
           echo "Version branch: $VERSION_BRANCH"
 
-      - name: Bump versions in files for version branch
+      - name: Bump versions in documentation for version branch
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
+          # Update prowler-app.mdx with current release version
+          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
+          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
 
           echo "Files modified:"
           git --no-pager diff
 
-      - name: Create PR for first patch version to version branch
+      - name: Create PR for documentation update to version branch
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}-branch
+          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.FIRST_PATCH_VERSION }} in version branch after releasing v${{ env.PROWLER_VERSION }}.
+            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
 
             ### License
 
@@ -174,41 +199,48 @@ jobs:
           MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
           MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
           PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
+          CURRENT_DOCS_VERSION="${{ needs.detect-release-type.outputs.current_docs_version }}"
 
           NEXT_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.$((PATCH_VERSION + 1))
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
 
+          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
           echo "NEXT_PATCH_VERSION=${NEXT_PATCH_VERSION}" >> "${GITHUB_ENV}"
           echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
 
-          echo "Current version: $PROWLER_VERSION"
+          echo "Current documentation version: $CURRENT_DOCS_VERSION"
+          echo "Current release version: $PROWLER_VERSION"
           echo "Next patch version: $NEXT_PATCH_VERSION"
           echo "Target branch: $VERSION_BRANCH"
 
-      - name: Bump versions in files for version branch
+      - name: Bump versions in documentation for patch version
         run: |
           set -e
 
-          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
-          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
+          # Update prowler-app.mdx with current release version
+          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
+          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
 
           echo "Files modified:"
           git --no-pager diff
 
-      - name: Create PR for next patch version to version branch
+      - name: Create PR for documentation update to version branch
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
+          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
 
-            Bump Prowler version to v${{ env.NEXT_PATCH_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
+            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
 
             ### License
 

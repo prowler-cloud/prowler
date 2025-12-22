@@ -287,6 +287,7 @@ class Provider(RowLevelSecurityProtectedModel):
         MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
+        ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -388,6 +389,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
                 code="mongodbatlas-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_alibabacloud_uid(value):
+        if not re.match(r"^\d{16}$", value):
+            raise ModelValidationError(
+                detail="Alibaba Cloud account ID must be exactly 16 digits.",
+                code="alibabacloud-uid",
                 pointer="/data/attributes/uid",
             )
 
