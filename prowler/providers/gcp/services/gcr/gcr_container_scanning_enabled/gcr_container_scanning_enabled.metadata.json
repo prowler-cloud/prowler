@@ -1,32 +1,43 @@
 {
   "Provider": "gcp",
   "CheckID": "gcr_container_scanning_enabled",
-  "CheckTitle": "Ensure Image Vulnerability Scanning using GCR Container Scanning or a third-party provider",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckTitle": "Project has GCR Container Scanning API enabled",
+  "CheckType": [],
   "ServiceName": "gcr",
-  "SubServiceName": "Container Scanning",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Service",
-  "Description": "Scan images stored in Google Container Registry (GCR) for vulnerabilities using GCR Container Scanning or a third-party provider. This helps identify and mitigate security risks associated with known vulnerabilities in container images.",
-  "Risk": "Without image vulnerability scanning, container images stored in GCR may contain known vulnerabilities, increasing the risk of exploitation by malicious actors.",
-  "RelatedUrl": "https://cloud.google.com/container-registry/docs/container-analysis",
+  "ResourceType": "serviceusage.googleapis.com/Service",
+  "Description": "**Google Cloud projects** with `containerscanning.googleapis.com` enabled perform **automatic vulnerability scanning** for images in Container Registry and Artifact Registry.\n\nThe finding indicates whether that service is active to generate and refresh vulnerability metadata for your container images.",
+  "Risk": "Without **image scanning**, vulnerable packages can reach production unchecked, enabling:\n- **Remote code execution** or **privilege escalation** (integrity/availability)\n- **Data exfiltration** from compromised workloads (confidentiality)\n- **Supply chain compromise** via unvetted base images",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-gcp-gcr-container-vulnerability-scanning-is-enabled#terraform",
+    "https://cloud.google.com/container-registry/docs/container-analysis",
+    "https://medium.com/google-cloud/centrally-managing-artifact-registry-container-image-vulnerabilities-on-google-cloud-part-one-d86fb4791601",
+    "https://codelabs.developers.google.com/securing-container-builds",
+    "https://help.vanta.com/en/articles/11345771-connecting-gcp-container-registry-to-vanta",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ArtifactRegistry/enable-vulnerability-analysis.html",
+    "https://docs.cloud.google.com/artifact-analysis/docs/enable-automatic-scanning",
+    "https://stackoverflow.com/questions/66171291/no-vulnerabilities-reported-on-docker-images-in-artifact-registry",
+    "https://cloud.google.com/container-registry/docs/container-best-practices"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud services enable containerscanning.googleapis.com",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-gcp-gcr-container-vulnerability-scanning-is-enabled#terraform"
+      "Other": "1. In the Google Cloud console, go to APIs & Services > Library\n2. Search for \"Container Scanning API\"\n3. Click the result and then click \"Enable\"",
+      "Terraform": "```hcl\nresource \"google_project_service\" \"<example_resource_name>\" {\n  project = \"<example_project_id>\"\n  service = \"containerscanning.googleapis.com\" # Critical: enables Container Scanning API to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable vulnerability scanning for images stored in GCR using GCR Container Scanning or a third-party provider.",
-      "Url": "https://cloud.google.com/container-registry/docs/container-best-practices"
+      "Text": "Enable `containerscanning.googleapis.com` and integrate results into CI/CD gates. Apply **defense in depth**:\n- Use **Binary Authorization** to block noncompliant images\n- Enforce **least privilege** over who can disable scanning\n- Rebuild and patch frequently; prefer trusted, signed base images",
+      "Url": "https://hub.prowler.com/check/gcr_container_scanning_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities",
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, GCR Container Scanning is disabled."
