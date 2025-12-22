@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "guardduty_no_high_severity_findings",
-  "CheckTitle": "There are High severity GuardDuty findings ",
-  "CheckType": [],
+  "CheckTitle": "GuardDuty detector has no high severity findings",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs",
+    "Unusual Behaviors"
+  ],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
-  "Description": "There are High severity GuardDuty findings ",
-  "Risk": "If critical findings are not addressed threats can spread in the environment.",
-  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html",
+  "Description": "**GuardDuty detectors** are evaluated for the presence of **High-severity findings**. This surfaces whether any detector currently has findings labeled `High` by GuardDuty.",
+  "Risk": "Unresolved **High findings** often signal active compromise, enabling:\n- Data exfiltration and unauthorized access (confidentiality)\n- Privilege escalation and tampering (integrity)\n- Disruption via malware/crypto-mining (availability)\n\nAttackers can pivot laterally and persist if not contained.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html",
+    "https://docs.aws.amazon.com/prescriptive-guidance/latest/vulnerability-management/assess-and-prioritize-security-findings.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/findings.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/findings.html",
+      "Other": "1. Sign in to the AWS console and open Amazon GuardDuty\n2. Use the Region selector to choose a Region where GuardDuty is enabled\n3. Go to Findings and filter: Severity = High (7-8.9), Archived status = Not archived\n4. Select all results, click Actions > Archive\n5. Repeat steps 2-4 for every Region with GuardDuty enabled\n6. Confirm there are 0 active High severity findings in each Region",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Review and remediate critical GuardDuty findings as quickly as possible.",
-      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html"
+      "Text": "Treat **High findings** as incidents.\n\n- Prioritize triage and containment; isolate affected resources, rotate secrets\n- Automate alerting and response with playbooks; integrate into IR\n- Enforce **least privilege**, network segmentation, and hardened baselines\n- Continuously tune detections and remove unused access to prevent recurrence",
+      "Url": "https://hub.prowler.com/check/guardduty_no_high_severity_findings"
     }
   },
   "Categories": [],

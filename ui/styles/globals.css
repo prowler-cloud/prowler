@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
-@source "../node_modules/streamdown/dist/index.js";
+@source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -75,6 +75,10 @@
 
   /* Chart Dots */
   --chart-dots: var(--color-neutral-200);
+
+  /* Progress Bar */
+  --shadow-progress-glow:
+    0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 }
 
 /* ===== DARK THEME ===== */
@@ -144,6 +148,10 @@
 
   /* Chart Dots */
   --chart-dots: var(--text-neutral-primary);
+
+  /* Progress Bar */
+  --shadow-progress-glow:
+    0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -211,6 +219,9 @@
   --color-bg-warning: var(--bg-warning-primary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+
+  /* Shadows */
+  --shadow-progress-glow: var(--shadow-progress-glow);
 }
 
 /* ===== CONTAINER UTILITY ===== */
@@ -224,6 +235,66 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  /* Lighthouse chat markdown styles */
+  .lighthouse-markdown ul,
+  .lighthouse-markdown ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .lighthouse-markdown li {
+    margin-top: 0.375rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .lighthouse-markdown li > p {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Nested list styling - different bullets for different levels */
+  .lighthouse-markdown > ul {
+    list-style-type: disc !important;
+  }
+
+  .lighthouse-markdown > ul > li > ul,
+  .lighthouse-markdown ul ul {
+    list-style-type: "◦ " !important;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .lighthouse-markdown > ul > li > ul > li > ul,
+  .lighthouse-markdown ul ul ul {
+    list-style-type: "▪ " !important;
+  }
+
+  .lighthouse-markdown > ul > li > ul > li > ul > li > ul,
+  .lighthouse-markdown ul ul ul ul {
+    list-style-type: "- " !important;
+  }
+
+  /* Nested lists indentation */
+  .lighthouse-markdown ul ul,
+  .lighthouse-markdown ol ol,
+  .lighthouse-markdown ul ol,
+  .lighthouse-markdown ol ul {
+    padding-left: 1.25rem;
+  }
+
+  .lighthouse-markdown h2,
+  .lighthouse-markdown h3,
+  .lighthouse-markdown h4 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .lighthouse-markdown p + ul,
+  .lighthouse-markdown p + ol {
+    margin-top: 0.25rem;
   }
 }
 

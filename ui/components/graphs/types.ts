@@ -27,11 +27,12 @@ export interface DonutDataPoint {
 
 export interface LineDataPoint {
   date: string;
-  [key: string]: string | number;
+  [key: string]: string | number | string[];
 }
 
 export interface RadarDataPoint {
   category: string;
+  categoryId: string;
   value: number;
   change?: number;
   severityData?: BarDataPoint[];
@@ -60,5 +61,5 @@ export interface TooltipData {
   new?: number;
   muted?: number;
   change?: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | string[] | undefined;
 }

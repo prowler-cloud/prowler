@@ -9,14 +9,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.scan import (
+    _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
     _copy_compliance_requirement_rows,
     _create_compliance_summaries,
     _create_finding_delta,
+    _get_attack_surface_mapping_from_provider,
     _normalized_compliance_key,
     _persist_compliance_requirement_rows,
     _process_finding_micro_batch,
     _store_resources,
+    aggregate_attack_surface,
+    aggregate_category_counts,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -1374,6 +1378,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1391,6 +1396,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1483,6 +1489,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1500,6 +1507,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         existing_resource.refresh_from_db()
@@ -1607,6 +1615,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1625,6 +1634,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         # Verify the long UID finding was NOT created
@@ -1644,6 +1654,118 @@ class TestProcessFindingMicroBatch:
             f"Scan {scan.id}: Skipped 1 finding(s)" in str(call)
             for call in warning_calls
         )
+
+    def test_process_finding_micro_batch_tracks_categories(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        finding1 = FakeFinding(
+            uid="finding-cat-1",
+            status=StatusChoices.PASS,
+            status_extended="all good",
+            severity=Severity.low,
+            check_id="genai_check",
+            resource_uid="arn:aws:bedrock:::model/test",
+            resource_name="test-model",
+            region="us-east-1",
+            service_name="bedrock",
+            resource_type="model",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["gen-ai", "security"]},
+            muted=False,
+        )
+
+        finding2 = FakeFinding(
+            uid="finding-cat-2",
+            status=StatusChoices.FAIL,
+            status_extended="bad",
+            severity=Severity.high,
+            check_id="iam_check",
+            resource_uid="arn:aws:iam:::user/test",
+            resource_name="test-user",
+            region="us-east-1",
+            service_name="iam",
+            resource_type="user",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security", "iam"]},
+            muted=False,
+        )
+
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding1, finding2],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+            )
+
+        # finding1: PASS, severity=low, categories=["gen-ai", "security"]
+        # finding2: FAIL, severity=high, categories=["security", "iam"]
+        # Keys are (category, severity) tuples
+        assert set(scan_categories_cache.keys()) == {
+            ("gen-ai", "low"),
+            ("security", "low"),
+            ("security", "high"),
+            ("iam", "high"),
+        }
+        assert scan_categories_cache[("gen-ai", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+        assert scan_categories_cache[("iam", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+
+        created_finding1 = Finding.objects.get(uid="finding-cat-1")
+        created_finding2 = Finding.objects.get(uid="finding-cat-2")
+        assert set(created_finding1.categories) == {"gen-ai", "security"}
+        assert set(created_finding2.categories) == {"security", "iam"}
 
 
 @pytest.mark.django_db
@@ -3474,3 +3596,429 @@ class TestAggregateFindingsByRegion:
 
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
+
+
+@pytest.mark.django_db
+class TestAggregateAttackSurface:
+    """Test aggregate_attack_surface function and related caching."""
+
+    def setup_method(self):
+        """Clear cache before each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    def teardown_method(self):
+        """Clear cache after each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_caches_result(self, mock_check_metadata_list):
+        """Test that _get_attack_surface_mapping_from_provider caches results."""
+        mock_check_metadata_list.return_value = {"check_internet_exposed_1"}
+
+        # First call should hit CheckMetadata.list
+        result1 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # internet-exposed, secrets
+
+        # Second call should use cache
+        result2 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # No additional calls
+
+        assert result1 is result2
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_different_providers(
+        self, mock_check_metadata_list
+    ):
+        """Test caching works independently for different providers."""
+        mock_check_metadata_list.return_value = {"check_1"}
+
+        _get_attack_surface_mapping_from_provider("aws")
+        aws_call_count = mock_check_metadata_list.call_count
+
+        _get_attack_surface_mapping_from_provider("gcp")
+        gcp_call_count = mock_check_metadata_list.call_count
+
+        # Both providers should have made calls
+        assert gcp_call_count > aws_call_count
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+        assert "gcp" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_returns_hardcoded_checks(
+        self, mock_check_metadata_list
+    ):
+        """Test that hardcoded check IDs are returned for privilege-escalation and ec2-imdsv1."""
+        mock_check_metadata_list.return_value = set()
+
+        result = _get_attack_surface_mapping_from_provider("aws")
+
+        # Hardcoded checks should be present
+        assert (
+            "iam_policy_allows_privilege_escalation" in result["privilege-escalation"]
+        )
+        assert (
+            "iam_inline_policy_allows_privilege_escalation"
+            in result["privilege-escalation"]
+        )
+        assert "ec2_instance_imdsv2_enabled" in result["ec2-imdsv1"]
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_creates_overview_records(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that aggregate_attack_surface creates AttackSurfaceOverview records."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": {"check_privesc_1"},
+            "ec2-imdsv1": {"check_imdsv1_1"},
+        }
+
+        # Mock findings aggregation
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_secrets_1", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_called_once()
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        # Should create records for internet-exposed and secrets (the ones with findings)
+        assert len(objects) == 2
+        assert kwargs["batch_size"] == 500
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_skips_unsupported_provider(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that ec2-imdsv1 is skipped for non-AWS providers."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "gcp"
+        scan.provider.uid = "gcp-test-project-id"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": set(),  # Not supported for GCP
+            "ec2-imdsv1": {"check_imdsv1_1"},  # Should be skipped for GCP
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 5, "failed": 1, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        # ec2-imdsv1 check_ids should not be in the filter
+        filter_call = mock_findings_filter.call_args
+        check_ids_in_filter = filter_call[1]["check_id__in"]
+        assert "check_imdsv1_1" not in check_ids_in_filter
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_no_findings(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that no records are created when there are no findings."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_1"},
+            "secrets": {"check_2"},
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = []  # No findings
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_not_called()
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_aggregates_counts_correctly(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that counts from multiple check_ids are aggregated per attack surface type."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": set(),
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_internet_2", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        assert len(objects) == 1
+        overview = objects[0]
+        assert overview.attack_surface_type == "internet-exposed"
+        assert overview.total_findings == 15  # 10 + 5
+        assert overview.failed_findings == 5  # 3 + 2
+        assert overview.muted_failed_findings == 1  # 1 + 0
+
+    @patch("tasks.jobs.scan.Scan.all_objects.select_related")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_uses_select_related(
+        self, mock_rls_transaction, mock_select_related, tenants_fixture, scans_fixture
+    ):
+        """Test that select_related is used to avoid N+1 query."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_scan = MagicMock()
+        mock_scan.provider.provider = "aws"
+
+        mock_select_related.return_value.get.return_value = mock_scan
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        with patch(
+            "tasks.jobs.scan._get_attack_surface_mapping_from_provider"
+        ) as mock_map:
+            mock_map.return_value = {}
+
+            aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_select_related.assert_called_once_with("provider")
+
+
+class TestAggregateCategoryCounts:
+    """Test aggregate_category_counts helper function."""
+
+    def test_aggregate_category_counts_basic(self):
+        """Test basic category counting for a non-muted PASS finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "iam"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert ("security", "high") in cache
+        assert ("iam", "high") in cache
+        assert cache[("security", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+        assert cache[("iam", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_fail_not_muted(self):
+        """Test category counting for a non-muted FAIL finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="critical",
+            status="FAIL",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "critical")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 0,
+        }
+
+    def test_aggregate_category_counts_new_fail(self):
+        """Test category counting for a new FAIL finding (delta='new')."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["gen-ai"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("gen-ai", "high")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+    def test_aggregate_category_counts_muted_finding(self):
+        """Test that muted findings are excluded from all counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=True,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 0, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_accumulates(self):
+        """Test that multiple calls accumulate counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+
+        # First finding: PASS
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        # Second finding: FAIL (new)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        # Third finding: FAIL (changed)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 3, "failed": 2, "new_failed": 1}
+
+    def test_aggregate_category_counts_empty_categories(self):
+        """Test with empty categories list."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=[],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache == {}
+
+    def test_aggregate_category_counts_changed_delta(self):
+        """Test that changed delta increments failed but not new_failed."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["iam"],
+            severity="medium",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("iam", "medium")] == {"total": 1, "failed": 1, "new_failed": 0}
+
+    def test_aggregate_category_counts_multiple_categories_single_finding(self):
+        """Test single finding with multiple categories."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "compliance", "data-protection"],
+            severity="low",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert len(cache) == 3
+        for cat in ["security", "compliance", "data-protection"]:
+            assert cache[(cat, "low")] == {"total": 1, "failed": 1, "new_failed": 1}

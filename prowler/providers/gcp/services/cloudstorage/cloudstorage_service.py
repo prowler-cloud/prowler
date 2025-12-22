@@ -1,5 +1,6 @@
 from typing import Optional
 
+from googleapiclient.errors import HttpError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -12,6 +13,7 @@ class CloudStorage(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("storage", provider)
         self.buckets = []
+        self.vpc_service_controls_protected_projects = set()
         self._get_buckets()
 
     def _get_buckets(self):
@@ -75,7 +77,7 @@ class CloudStorage(GCPService):
                             Bucket(
                                 name=bucket["name"],
                                 id=bucket["id"],
-                                region=bucket["location"],
+                                region=bucket["location"].lower(),
                                 uniform_bucket_level_access=bucket["iamConfiguration"][
                                     "uniformBucketLevelAccess"
                                 ]["enabled"],
@@ -92,6 +94,17 @@ class CloudStorage(GCPService):
 
                     request = self.client.buckets().list_next(
                         previous_request=request, previous_response=response
+                    )
+            except HttpError as http_error:
+                # Check if the error is due to VPC Service Controls blocking the API
+                if "vpcServiceControlsUniqueIdentifier" in str(http_error):
+                    self.vpc_service_controls_protected_projects.add(project_id)
+                    logger.warning(
+                        f"Project {project_id} is protected by VPC Service Controls for Cloud Storage API."
+                    )
+                else:
+                    logger.error(
+                        f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
                     )
             except Exception as error:
                 logger.error(

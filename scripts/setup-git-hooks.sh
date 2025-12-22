@@ -18,13 +18,13 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Check if we're in a git repository
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo -e "${RED}❌ Not in a git repository${NC}"
   exit 1
 fi
 
 # Check if Poetry is installed
-if ! command -v poetry &> /dev/null; then
+if ! command -v poetry &>/dev/null; then
   echo -e "${RED}❌ Poetry is not installed${NC}"
   echo -e "${YELLOW}   Install Poetry: https://python-poetry.org/docs/#installation${NC}"
   exit 1
@@ -46,6 +46,12 @@ else
 fi
 
 echo ""
+# Clear any existing core.hooksPath to avoid pre-commit conflicts
+if git config --get core.hooksPath >/dev/null 2>&1; then
+  echo -e "${YELLOW}🧹 Clearing existing core.hooksPath configuration...${NC}"
+  git config --unset-all core.hooksPath
+fi
+
 echo -e "${YELLOW}🔗 Installing pre-commit hooks...${NC}"
 poetry run pre-commit install
 

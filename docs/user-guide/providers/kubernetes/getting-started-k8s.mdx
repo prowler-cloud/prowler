@@ -47,8 +47,43 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
     kubectl create token prowler-sa -n prowler-ns --duration=0
     ```
 
-    - **Security Note:** The `--duration=0` option generates a non-expiring token, which may pose a security risk if not managed properly. Users should decide on an appropriate expiration time based on their security policies. If a limited-time token is preferred, set `--duration=<TIME>` (e.g., `--duration=24h`).
-    - **Important:** If the token expires, Prowler Cloud will no longer be able to authenticate with the cluster. In this case, you will need to generate a new token and **remove and re-add the provider in Prowler Cloud** with the updated `kubeconfig`.
+    - **Security Note:** The `--duration=0` option generates a non-expiring token, which may pose a security risk if not managed properly. Choose an appropriate expiration time based on security policies. For a limited-time token, set `--duration=<TIME>` (e.g., `--duration=24h`).
+    <Note>
+    **Important:** If the token expires, Prowler Cloud can no longer authenticate with the cluster. Generate a new token and **remove and re-add the provider in Prowler Cloud** with the updated `kubeconfig`.
+    </Note>
+    <Tip>
+    **Token Expiration Limits**
+
+
+    When the Kubernetes cluster has `--service-account-max-token-expiration` configured, any token requested with a duration exceeding the maximum allowed value (including `--duration=0`) is automatically reduced to the cluster's maximum token expiration time. As an alternative solution, create a legacy Secret manually. Although Kubernetes no longer creates these secrets automatically, manual creation and linking to a ServiceAccount is still supported. These tokens do not expire until the secret or ServiceAccount is deleted.
+
+      **Steps:**
+
+      1. Create a `secret-sa.yaml` file (or any preferred name) with the following content:
+
+         ```yaml
+         apiVersion: v1
+         kind: Secret
+         metadata:
+           name: prowler-token-long-lived
+           namespace: prowler-ns
+           annotations:
+             kubernetes.io/service-account.name: "prowler-sa"
+         type: kubernetes.io/service-account-token
+         ```
+
+      2. Apply the secret:
+
+         ```console
+         kubectl apply -f secret-sa.yaml
+         ```
+
+      3. Retrieve the token (which will be permanent):
+
+         ```console
+         kubectl get secret prowler-token-long-lived -n prowler-ns -o jsonpath='{.data.token}' | base64 --decode
+         ```
+     </Tip>
 
 3. Update your `kubeconfig` to use the ServiceAccount token:
 

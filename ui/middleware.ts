@@ -49,6 +49,20 @@ export default auth((req: NextRequest & { auth: any }) => {
     }
   }
 
+  // Redirect /findings to include default muted filter if not present
+  if (
+    pathname === "/findings" &&
+    !req.nextUrl.searchParams.has("filter[muted]")
+  ) {
+    const findingsUrl = new URL("/findings", req.url);
+    // Preserve existing search params
+    req.nextUrl.searchParams.forEach((value, key) => {
+      findingsUrl.searchParams.set(key, value);
+    });
+    findingsUrl.searchParams.set("filter[muted]", "false");
+    return NextResponse.redirect(findingsUrl);
+  }
+
   return NextResponse.next();
 });
 
