@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_rbac_enabled",
-  "CheckTitle": "Enable Role Based Access Control for Azure Key Vault",
+  "CheckTitle": "Azure Key Vault uses Azure RBAC for access control",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KeyVault",
-  "Description": "WARNING: Role assignments disappear when a Key Vault has been deleted (soft-delete) and recovered. Afterwards it will be required to recreate all role assignments. This is a limitation of the soft-delete feature across all Azure services.",
-  "Risk": "The new RBAC permissions model for Key Vaults enables a much finer grained access control for key vault secrets, keys, certificates, etc., than the vault access policy. This in turn will permit the use of privileged identity management over these roles, thus securing the key vaults with JIT Access management.",
-  "RelatedUrl": "https://docs.microsoft.com/en-gb/azure/key-vault/general/rbac-migration#vault-access-policy-to-azure-rbac-migration-steps",
+  "ResourceType": "microsoft.keyvault/vaults",
+  "Description": "**Azure Key Vault** uses the **Azure RBAC permission model** for data-plane access to keys, secrets, and certificates, rather than legacy access policies.\n\nEvaluates whether data access is managed through role assignments at the vault.",
+  "Risk": "Without **Azure RBAC**, data access relies on coarse access policies. **Control-plane Contributors** can grant themselves data-plane rights, enabling secret or key exfiltration and unauthorized crypto operations.\n\nLack of JIT and least-privilege weakens **confidentiality** and **integrity** and hinders auditing.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.azure.cn/en-us/key-vault/general/rbac-guide?tabs=azure-cli",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide",
+    "https://docs.microsoft.com/en-gb/azure/key-vault/general/rbac-migration#vault-access-policy-to-azure-rbac-migration-steps",
+    "https://www.linkedin.com/pulse/cloud-diaries-day-8-lets-explore-creating-key-vault-storing-jahnavi-6rb7c",
+    "https://github.com/MicrosoftDocs/azure-security-docs/blob/main/articles/key-vault/general/rbac-guide.md",
+    "https://docs.microsoft.com/en-gb/azure/role-based-access-control/role-assignments-portal?tabs=current",
+    "https://video2.skills-academy.com/en-us/azure/key-vault/general/rbac-guide",
+    "https://aspire.dev/da/deployment/azure/azure-security-best-practices/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az keyvault update --name <KEY_VAULT_NAME> --resource-group <RESOURCE_GROUP_NAME> --enable-rbac-authorization true",
+      "NativeIaC": "```bicep\n// Enable Azure RBAC on a Key Vault\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    tenantId: '<tenant_id>'\n    enableRbacAuthorization: true // Critical: switches permission model to Azure RBAC to pass the check\n    sku: {\n      family: 'A'\n      name: 'standard'\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Key Vaults and open <KEY_VAULT_NAME>\n2. Under Settings, select Properties\n3. Set Permission model to Azure role-based access control\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_key_vault\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  location                   = \"<location>\"\n  resource_group_name        = \"<example_resource_name>\"\n  tenant_id                  = \"<tenant_id>\"\n  sku_name                   = \"standard\"\n  enable_rbac_authorization  = true // Critical: enables Azure RBAC to satisfy the control\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal Key Vaults can be configured to use Azure role-based access control on creation. For existing Key Vaults: 1. From Azure Home open the Portal Menu in the top left corner 2. Select Key Vaults 3. Select a Key Vault to audit 4. Select Access configuration 5. Set the Permission model radio button to Azure role-based access control, taking note of the warning message 6. Click Save 7. Select Access Control (IAM) 8. Select the Role Assignments tab 9. Reapply permissions as needed to groups or users",
-      "Url": "https://docs.microsoft.com/en-gb/azure/role-based-access-control/role-assignments-portal?tabs=current"
+      "Text": "Adopt **Azure RBAC** for Key Vault data access and design roles with **least privilege** at appropriate scopes (prefer vault-level per app/env). Use **Privileged Identity Management** for JIT, restrict control-plane Contributor rights, and monitor role assignments. *Role assignments aren't preserved after soft-delete recovery*.",
+      "Url": "https://hub.prowler.com/check/keyvault_rbac_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Implementation needs to be properly designed from the ground up, as this is a fundamental change to the way key vaults are accessed/managed. Changing permissions to key vaults will result in loss of service as permissions are re-applied. For the least amount of downtime, map your current groups and users to their corresponding permission needs."

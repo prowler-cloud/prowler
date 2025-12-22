@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_private_endpoints",
-  "CheckTitle": "Ensure that Private Endpoints are Used for Azure Key Vault",
+  "CheckTitle": "Azure Key Vault uses private endpoints",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KeyVault",
-  "Description": "Private endpoints will secure network traffic from Azure Key Vault to the resources requesting secrets and keys.",
-  "Risk": "Private endpoints will keep network requests to Azure Key Vault limited to the endpoints attached to the resources that are whitelisted to communicate with each other. Assigning the Key Vault to a network without an endpoint will allow other resources on that network to view all traffic from the Key Vault to its destination. In spite of the complexity in configuration, this is recommended for high security secrets.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
+  "ResourceType": "microsoft.keyvault/vaults",
+  "Description": "**Azure Key Vault** has **private endpoint connections** to serve secret and key operations over a private IP within your virtual network via Azure Private Link.",
+  "Risk": "Without **private endpoints**, the vault relies on a public endpoint, expanding exposure to scanning and misconfigured allowlists. Egress controls are harder to enforce, enabling unauthorized secret retrieval for **data exfiltration** and potential key misuse, impacting confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
+    "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az network private-endpoint create --name <example_resource_name> --resource-group <example_resource_name> --location <LOCATION> --vnet-name <example_resource_name> --subnet <example_resource_name> --private-connection-resource-id <example_resource_id> --group-ids vault --connection-name <example_resource_name>",
+      "NativeIaC": "```bicep\n// Create a Private Endpoint for an existing Key Vault\nresource pe 'Microsoft.Network/privateEndpoints@2021-08-01' = {\n  name: '<example_resource_name>'\n  location: '<LOCATION>'\n  properties: {\n    subnet: {\n      id: '<example_resource_id>' // Critical: subnet resource ID where the private endpoint NIC will be placed\n    }\n    privateLinkServiceConnections: [\n      {\n        name: '<example_resource_name>'\n        properties: {\n          privateLinkServiceId: '<example_resource_id>' // Critical: Key Vault resource ID to connect to\n          groupIds: [ 'vault' ] // Critical: targets the Key Vault subresource to create the private endpoint connection\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure portal, open your Key Vault\n2. Go to Networking > Private endpoint connections > + Create\n3. Basics: select Subscription and Resource group, then Next\n4. Resource: Service = Microsoft.KeyVault/vaults (your vault is preselected), Subresource = vault, Next\n5. Configuration: choose Virtual network and Subnet, then Next and Create\n6. Wait for the connection state to show Approved (auto-approves if you have permission)",
+      "Terraform": "```hcl\n# Create a Private Endpoint for an existing Key Vault\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<LOCATION>\"\n  resource_group_name = \"<example_resource_name>\"\n  subnet_id           = \"<example_resource_id>\" # Critical: subnet resource ID for the private endpoint NIC\n\n  private_service_connection {\n    name                           = \"<example_resource_name>\"\n    private_connection_resource_id = \"<example_resource_id>\" # Critical: Key Vault resource ID to connect\n    subresource_names              = [\"vault\"]               # Critical: targets Key Vault subresource to create the connection\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Please see the additional information about the requirements needed before starting this remediation procedure. From Azure Portal 1. From Azure Home open the Portal Menu in the top left. 2. Select Key Vaults. 3. Select a Key Vault to audit. 4. Select Networking in the left column. 5. Select Private endpoint connections from the top row. 6. Select + Create. 7. Select the subscription the Key Vault is within, and other desired configuration. 8. Select Next. 9. For resource type select Microsoft.KeyVault/vaults. 10. Select the Key Vault to associate the Private Endpoint with. 11. Select Next. 12. In the Virtual Networking field, select the network to assign the Endpoint. 13. Select other configuration options as desired, including an existing or new application security group. 14. Select Next. 15. Select the private DNS the Private Endpoints will use. 16. Select Next. 17. Optionally add Tags. 18. Select Next : Review + Create. 19. Review the information and select Create. Follow the Audit Procedure to determine if it has successfully applied. 20. Repeat steps 3-19 for each Key Vault. From Azure CLI 1. To create an endpoint, run the following command: az network private-endpoint create --resource-group <resourceGroup --vnet- name <vnetName> --subnet <subnetName> --name <PrivateEndpointName> -- private-connection-resource-id '/subscriptions/<AZURE SUBSCRIPTION ID>/resourceGroups/<resourceGroup>/providers/Microsoft.KeyVault/vaults/<keyVa ultName>' --group-ids vault --connection-name <privateLinkConnectionName> -- location <azureRegion> --manual-request 2. To manually approve the endpoint request, run the following command: az keyvault private-endpoint-connection approve --resource-group <resourceGroup> --vault-name <keyVaultName> –name <privateLinkName> 4. Determine the Private Endpoint's IP address to connect the Key Vault to the Private DNS you have previously created: 5. Look for the property networkInterfaces then id, the value must be placed in the variable <privateEndpointNIC> within step 7. az network private-endpoint show -g <resourceGroupName> -n <privateEndpointName> 6. Look for the property networkInterfaces then id, the value must be placed on <privateEndpointNIC> in step 7. az network nic show --ids <privateEndpointName> 7. Create a Private DNS record within the DNS Zone you created for the Private Endpoint: az network private-dns record-set a add-record -g <resourcecGroupName> -z 'privatelink.vaultcore.azure.net' -n <keyVaultName> -a <privateEndpointNIC> 8. nslookup the private endpoint to determine if the DNS record is correct: nslookup <keyVaultName>.vault.azure.net nslookup <keyVaultName>.privatelink.vaultcore.azure.n",
-      "Url": "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints"
+      "Text": "Enable **Private Endpoints** for each Key Vault and disable public network access. Use private DNS so the vault FQDN resolves to the private IP. Apply **least privilege** with RBAC and managed identities, restrict traffic with NSGs and routing, and monitor access logs as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/keyvault_private_endpoints"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Incorrect or poorly-timed changing of network configuration could result in service interruption. There are also additional costs tiers for running a private endpoint perpetabyte or more of networking traffic."
