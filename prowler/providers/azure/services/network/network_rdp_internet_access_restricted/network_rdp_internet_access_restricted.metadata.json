@@ -1,29 +1,43 @@
 {
   "Provider": "azure",
   "CheckID": "network_rdp_internet_access_restricted",
-  "CheckTitle": "Ensure that RDP access from the Internet is evaluated and restricted",
+  "CheckTitle": "Network security group does not allow inbound RDP (TCP 3389) from the Internet",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
-  "Risk": "The potential security problem with using RDP over the Internet is that attackers can use various brute force techniques to gain access to Azure Virtual Machines. Once the attackers gain access, they can use a virtual machine as a launch point for compromising other machines on an Azure Virtual Network or even attack networked devices outside of Azure.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+  "ResourceType": "microsoft.network/networksecuritygroups",
+  "Description": "**Azure NSG inbound rules** are evaluated for **public RDP exposure**. The finding flags rules that `Allow` `TCP` traffic to `port 3389` from broad sources like `0.0.0.0/0`, `Internet`, or `*`, including ranges that cover `3389`.",
+  "Risk": "Exposed **RDP** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized console access.\n\nCompromise can cause data theft (**confidentiality**), tampering or malware deployment (**integrity**), VM lockout or disruption (**availability**), and **lateral movement** within the VNet.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-rdp-access.html#",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/unrestricted-rdp-access.html",
+    "https://learn.microsoft.com/en-za/answers/questions/1374791/policy-to-block-the-creation-of-nsgs-with-rules-th",
+    "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+    "https://vaggeliskappas.com/2015/06/01/secure-azure-virtual-network-using-network-security-groups/",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_2#terraform",
+    "https://github.com/Azure/azure-policy/issues/305",
+    "https://praveenkumarsreeram.com/2020/09/10/azure-virtual-machines-restrict-remote-desktop-access-to-an-ip-address-using-network-security-groups/",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries",
+    "https://stackoverflow.com/questions/78860454/azure-policy-to-prevent-overly-permissive-nsg-rules-being-created"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-rdp-access.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_2#terraform"
+      "CLI": "az network nsg rule delete --resource-group <RESOURCE_GROUP> --nsg-name <example_resource_name> --name <RDP_RULE_NAME>",
+      "NativeIaC": "```bicep\n// NSG with RDP allowed only from a restricted CIDR (not Internet)\nresource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  properties: {\n    securityRules: [\n      {\n        name: 'Allow-RDP-Restricted'\n        properties: {\n          priority: 100\n          direction: 'Inbound'\n          access: 'Allow'\n          protocol: 'Tcp'\n          sourcePortRange: '*'\n          destinationPortRange: '3389'\n          destinationAddressPrefix: '*'\n          sourceAddressPrefix: '<AUTHORIZED_CIDR>' // CRITICAL: restrict source; not \"Internet\", \"*\", or \"0.0.0.0/0\" to pass the check\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Network Security Groups and open the NSG attached to the resource\n2. Select Inbound security rules\n3. Find any rule that allows TCP 3389 with Source set to Any/Internet/*/0.0.0.0/0\n4. Delete the rule, or edit it and set Source to a specific IP/CIDR (e.g., <AUTHORIZED_CIDR>)\n5. Save",
+      "Terraform": "```hcl\n# NSG with RDP allowed only from a restricted CIDR (not Internet)\nresource \"azurerm_network_security_group\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<region>\"\n  resource_group_name = \"<example_resource_name>\"\n\n  security_rule {\n    name                       = \"Allow-RDP-Restricted\"\n    priority                   = 100\n    direction                  = \"Inbound\"\n    access                     = \"Allow\"\n    protocol                   = \"Tcp\"\n    source_port_range          = \"*\"\n    destination_port_range     = \"3389\"\n    destination_address_prefix = \"*\"\n    source_address_prefix      = \"<AUTHORIZED_CIDR>\" # CRITICAL: restrict source; not \"*\", \"Internet\", or \"0.0.0.0/0\" so the check passes\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Where RDP is not explicitly required and narrowly configured for resources attached to the Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRoute Site-to-site VPN Point-to-site VPN",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+      "Text": "Enforce **least privilege** for remote admin:\n- Remove `Allow` to `3389` from `0.0.0.0/0`\n- Limit access to fixed IPs or private networks\n- Prefer Azure Bastion, JIT, or VPN/ExpressRoute\n- Harden auth (strong keys, MFA) and monitor\n\nAdopt **zero trust** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/network_rdp_internet_access_restricted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,43 @@
 {
   "Provider": "azure",
   "CheckID": "network_flow_log_more_than_90_days",
-  "CheckTitle": "Ensure that Network Security Group Flow Log retention period is 0, 90 days or greater",
+  "CheckTitle": "Network Watcher has all flow logs enabled with retention set to 0 or at least 90 days",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "Network Security Group Flow Logs should be enabled and the retention period set to greater than or equal to 90 days.",
-  "Risk": "Flow logs enable capturing information about IP traffic flowing in and out of network security groups. Logs can be used to check for anomalies and give insight into suspected breaches.",
-  "RelatedUrl": " https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview",
+  "ResourceType": "microsoft.network/networkwatchers",
+  "Description": "**NSG flow logs** in Azure Network Watcher are configured and retained for at least `90` days (or `0` for unlimited). The evaluation checks that flow logging is enabled and that the retention policy meets the required duration for each configured log.",
+  "Risk": "Absent or short-retained **NSG flow logs** reduce visibility into IP flows, delaying detection of port scans, brute force, data exfiltration, and lateral movement.\n\nForensics and accountability degrade, threatening **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
+    "https://cloud-kb.sentinelone.com/nsg-flow-logs-retention-period",
+    "https://docs.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1/",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1#terraform",
+    "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
+    "https://github.com/MicrosoftDocs/azure-docs/issues/69518",
+    "https://support.icompaas.com/support/solutions/articles/62000229906-ensure-that-network-security-group-flow-log-retention-period-is-greater-than-90-days-"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 -- storage-account <NameorID of the storage account to save flow logs>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1#terraform"
+      "CLI": "az network watcher flow-log create --location <LOCATION> --name <example_resource_name> --nsg <example_resource_id> --storage-account <example_resource_id> --retention 90",
+      "NativeIaC": "```bicep\n// Enable NSG flow logs with retention >= 90 days\nresource flowlog 'Microsoft.Network/networkWatchers/flowLogs@2023-09-01' = {\n  name: '<example_resource_name>/<example_resource_name>'\n  location: '<LOCATION>'\n  properties: {\n    targetResourceId: '<example_resource_id>'\n    storageId: '<example_resource_id>'\n    enabled: true           // critical: turns on flow logs\n    retentionPolicy: {\n      enabled: true         // critical: activates retention policy\n      days: 90              // critical: 0 (unlimited) or >= 90 to pass\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Network Watcher > NSG flow logs\n2. Select the NSG to configure\n3. Set Status to On\n4. Set Retention (days) to 0 (unlimited) or at least 90\n5. Select a Storage account\n6. Click Save",
+      "Terraform": "```hcl\n# Enable NSG flow logs with retention >= 90 days\nresource \"azurerm_network_watcher_flow_log\" \"<example_resource_name>\" {\n  name                 = \"<example_resource_name>\"\n  network_watcher_name = \"<example_resource_name>\"\n  resource_group_name  = \"<example_resource_name>\"\n  target_resource_id   = \"<example_resource_id>\"\n  storage_account_id   = \"<example_resource_id>\"\n\n  enabled = true  # critical: turns on flow logs\n\n  retention_policy {\n    enabled = true # critical: activates retention policy\n    days    = 90   # critical: 0 (unlimited) or >= 90 to pass\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Go to Network Watcher 2. Select NSG flow logs blade in the Logs section 3. Select each Network Security Group from the list 4. Ensure Status is set to On 5. Ensure Retention (days) setting greater than 90 days 6. Select your storage account in the Storage account field 7. Select Save From Azure CLI Enable the NSG flow logs and set the Retention (days) to greater than or equal to 90 days. az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 --storage-account <NameorID of the storage account to save flow logs>",
-      "Url": "https://docs.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest"
+      "Text": "Enable **NSG flow logs** and keep retention  `90` days (`0` for unlimited). Restrict and monitor access to logs, store immutably, and stream to a SIEM to detect anomalies. Apply **defense in depth** and **least privilege**. Plan migration to **Virtual network flow logs** as NSG flow logs are being retired.",
+      "Url": "https://hub.prowler.com/check/network_flow_log_more_than_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This will keep IP traffic logs for longer than 90 days. As a level 2, first determine your need to retain data, then apply your selection here. As this is data stored for longer, your monthly storage costs will increase depending on your data use."

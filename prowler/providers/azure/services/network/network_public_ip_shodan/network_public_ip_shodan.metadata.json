@@ -1,26 +1,30 @@
 {
   "Provider": "azure",
   "CheckID": "network_public_ip_shodan",
-  "CheckTitle": "Check if an Azure Public IP is exposed in Shodan (requires Shodan API KEY).",
+  "CheckTitle": "Azure public IP address is not listed in Shodan",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Check if an Azure Public IP is exposed in Shodan (requires Shodan API KEY).",
-  "Risk": "If an Azure Public IP is exposed in Shodan, it can be accessed by anyone on the internet. This can lead to unauthorized access to your resources.",
+  "ResourceType": "microsoft.network/publicipaddresses",
+  "Description": "Azure Public IP addresses detected as **indexed by Shodan**, indicating Internet-visible services with open `ports` and service banner metadata.",
+  "Risk": "Shodan-visible IPs are easy to discover and target, elevating risks to **confidentiality** and **integrity**. Adversaries can enumerate banners, probe open ports, brute-force access, and exploit known CVEs, enabling unauthorized entry, data exfiltration, and lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.shodan.io/",
+    "https://cqr.company/blog/external-attack-surface-audit-how-fofa-shodan-and-censys-help-you-find-forgotten-services-and-leaks/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az network public-ip delete --resource-group <RESOURCE_GROUP> --name <PUBLIC_IP_NAME>",
+      "NativeIaC": "```bicep\n// Remove public exposure by NOT associating a public IP\nresource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {\n  name: '<example_vnet_name>/<example_subnet_name>'\n}\n\nresource nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    ipConfigurations: [\n      {\n        name: 'ipconfig1'\n        properties: {\n          privateIPAllocationMethod: 'Dynamic'\n          subnet: { id: subnet.id }\n          // CRITICAL: No 'publicIPAddress' property -> NIC has no public IP, preventing Shodan listing\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Public IP addresses and select the affected IP\n2. Click Dissociate and confirm to remove it from the attached resource\n3. Click Delete to remove the Public IP from your subscription",
+      "Terraform": "```hcl\n# NIC without a public IP association\nresource \"azurerm_network_interface\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<LOCATION>\"\n  resource_group_name = \"<RESOURCE_GROUP>\"\n\n  ip_configuration {\n    name                          = \"ipconfig1\"\n    subnet_id                     = \"<example_resource_id>\"\n    private_ip_address_allocation = \"Dynamic\"\n    # CRITICAL: Omit public_ip_address_id -> no public IP, preventing Shodan listing\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Check Identified IPs, Consider changing them to private ones and delete them from Shodan.",
-      "Url": "https://www.shodan.io/"
+      "Text": "Minimize **public exposure**: prefer **private endpoints** or VPN/bastion, restrict ingress per least privilege (avoid `0.0.0.0/0`), close unused ports, patch and harden services, and apply defense-in-depth segmentation. Continuously inventory public IPs and rotate them if sensitive banners were exposed.",
+      "Url": "https://hub.prowler.com/check/network_public_ip_shodan"
     }
   },
   "Categories": [
