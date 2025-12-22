@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_alert_delete_security_solution",
-  "CheckTitle": "Ensure that Activity Log Alert exists for Delete Security Solution",
+  "CheckTitle": "Subscription has an Azure Monitor Activity Log alert for Microsoft.Security/securitySolutions delete operations",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Monitor",
-  "Description": "Create an activity log alert for the Delete Security Solution event.",
-  "Risk": "Monitoring for Delete Security Solution events gives insight into changes to the active security solutions and may reduce the time it takes to detect suspicious activity.",
-  "RelatedUrl": "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+  "Severity": "medium",
+  "ResourceType": "microsoft.insights/activitylogalerts",
+  "Description": "**Azure activity log alerts** monitor deletions of **Security Solutions** by targeting the operation `Microsoft.Security/securitySolutions/delete` at subscription scope.\n\nIdentifies whether notifications are configured for security solution removal events.",
+  "Risk": "Without this alert, **unauthorized or accidental deletions** of security tooling may go **unnoticed**, reducing the **availability** of protections and the **integrity** of monitoring. Adversaries can evade defenses, prolong dwell time, and enable **data exfiltration** under reduced visibility.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/delete-security-solution-alert.html",
+    "https://guides.spectralops.io/docs/d9_azu_mon_33",
+    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+    "https://learn.microsoft.com/en-us/cli/azure/monitor/activity-log/alert?view=azure-cli-latest",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-security-solution-alert.html#trendmicro",
+    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
+    "https://docs.datadoghq.com/security/default_rules/i4l-os2-ir5/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor activity-log alert create --resource-group '<resource group name>' --condition category=Administrative and operationName=Microsoft.Security/securitySolutions/delete and level=<verbose | information | warning | error | critical>--scope '/subscriptions/<subscription ID>' --name '<activity log rule name>' -- subscription <subscription id> --action-group <action group ID> --location global",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-security-solution-alert.html#trendmicro",
-      "Terraform": ""
+      "CLI": "az monitor activity-log alert create -g <example_resource_name> -n <example_resource_name> --condition operationName=Microsoft.Security/securitySolutions/delete --scope /subscriptions/<example_resource_id>",
+      "NativeIaC": "```bicep\n// Activity Log Alert for Security Solution delete\nresource alert 'Microsoft.Insights/activityLogAlerts@2017-04-01' = {\n  name: '<example_resource_name>'\n  location: 'global'\n  properties: {\n    enabled: true\n    scopes: [ subscription().id ]\n    condition: {\n      allOf: [\n        {\n          field: 'operationName'\n          equals: 'Microsoft.Security/securitySolutions/delete' // Critical: alerts on Security Solution delete\n        }\n      ]\n    }\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Monitor > Alerts > + Create > Alert rule\n2. Scope: Select your subscription and click Apply\n3. Condition: Click Add condition, search and select \"Delete Security Solutions (Microsoft.Security/securitySolutions)\", then Add\n4. Ensure no filters for Level or Status are set\n5. Details: Enter an Alert rule name and choose a resource group\n6. Create: Review + create, then Create",
+      "Terraform": "```hcl\n# Activity Log Alert for Security Solution delete\nresource \"azurerm_monitor_activity_log_alert\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  scopes              = [\"/subscriptions/<example_resource_id>\"]\n\n  criteria {\n    operation_name = \"Microsoft.Security/securitySolutions/delete\" # Critical: alerts on delete operation\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Navigate to the Monitor blade. 2. Select Alerts. 3. Select Create. 4. Select Alert rule. 5. Under Filter by subscription, choose a subscription. 6. Under Filter by resource type, select Security Solutions (securitySolutions). 7. Under Filter by location, select All. 8. From the results, select the subscription. 9. Select Done. 10. Select the Condition tab. 11. Under Signal name, click Delete Security Solutions (Microsoft.Security/securitySolutions). 12. Select the Actions tab. 13. To use an existing action group, click Select action groups. To create a new action group, click Create action group. Fill out the appropriate details for the selection. 14. Select the Details tab. 15. Select a Resource group, provide an Alert rule name and an optional Alert rule description. 16. Click Review + create. 17. Click Create.curitySolutions). 7. Under Filter by location, select All. 8. From the results, select the subscription. 9. Select Done. 10. Select the Condition tab. 11. Under Signal name, click Create or Update Security Solutions (Microsoft.Security/securitySolutions). 12. Select the Actions tab. 13. To use an existing action group, click Select action groups. To create a new action group, click Create action group. Fill out the appropriate details for the selection. 14. Select the Details tab. 15. Select a Resource group, provide an Alert rule name and an optional Alert rule description. 16. Click Review + create. 17. Click Create.",
-      "Url": "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement"
+      "Text": "Configure a **dedicated activity log alert** for `Microsoft.Security/securitySolutions/delete` and route it to resilient **action groups** (email, chat, ticketing, SIEM). Apply **least privilege** and **resource locks** to deter tampering. Test alerting routinely and integrate it into **defense-in-depth** monitoring.",
+      "Url": "https://hub.prowler.com/check/monitor_alert_delete_security_solution"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, no monitoring alerts are created."

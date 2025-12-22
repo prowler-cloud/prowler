@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_diagnostic_setting_with_appropriate_categories",
-  "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
+  "CheckTitle": "Subscription has a diagnostic setting capturing Administrative, Security, Alert, and Policy categories",
   "CheckType": [],
   "ServiceName": "monitor",
-  "SubServiceName": "Configuring Diagnostic Settings",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Monitor",
-  "Description": "Prerequisite: A Diagnostic Setting must exist. If a Diagnostic Setting does not exist, the navigation and options within this recommendation will not be available. Please review the recommendation at the beginning of this subsection titled: 'Ensure that a 'Diagnostic Setting' exists.' The diagnostic setting should be configured to log the appropriate activities from the control/management plane.",
-  "Risk": "A diagnostic setting controls how the diagnostic log is exported. Capturing the diagnostic setting categories for appropriate control/management plane activities allows proper alerting.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+  "Severity": "high",
+  "ResourceType": "microsoft.resources/subscriptions",
+  "Description": "**Azure Monitor Activity Log** diagnostic settings capture **control-plane events** at the subscription level. This evaluates whether at least one setting collects the categories: `Administrative`, `Security`, `Policy`, and `Alert`.",
+  "Risk": "Without these categories, critical control-plane actions may go unrecorded. Attackers could change policies, roles, or alerts unnoticed, enabling privilege escalation and resource tampering. This erodes **integrity**, threatens **confidentiality**, and weakens **availability** and **incident response**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
+    "https://learn.microsoft.com/en-us/azure/storage/common/manage-storage-analytics-logs?toc=%2Fazure%2Fstorage%2Fblobs%2Ftoc.json&bc=%2Fazure%2Fstorage%2Fblobs%2Fbreadcrumb%2Ftoc.json&tabs=azure-portal"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor diagnostic-settings subscription create --subscription <subscription id> --name <diagnostic settings name> --location <location> <[- -event-hub <event hub ID> --event-hub-auth-rule <event hub auth rule ID>] [-- storage-account <storage account ID>] [--workspace <log analytics workspace ID>] --logs '[{category:Security,enabled:true},{category:Administrative,enabled:true},{ca tegory:Alert,enabled:true},{category:Policy,enabled:true}]'>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
-      "Terraform": ""
+      "CLI": "az monitor diagnostic-settings subscription create --name <example_resource_name> --workspace <example_resource_id> --logs '[{\"category\":\"Administrative\",\"enabled\":true},{\"category\":\"Security\",\"enabled\":true},{\"category\":\"Alert\",\"enabled\":true},{\"category\":\"Policy\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Create a subscription-level diagnostic setting capturing required categories\ntargetScope = 'subscription'\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  properties: {\n    workspaceId: '<example_resource_id>' // Critical: send Activity Log to this Log Analytics workspace\n    logs: [\n      { category: 'Administrative', enabled: true } // Critical: required category\n      { category: 'Security',      enabled: true } // Critical: required category\n      { category: 'Alert',         enabled: true } // Critical: required category\n      { category: 'Policy',        enabled: true } // Critical: required category\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Monitor > Activity log\n2. Click Diagnostic settings > Add diagnostic setting\n3. Name the setting\n4. Under Categories, check: Administrative, Security, Alert, Policy\n5. Under Destination, select Send to Log Analytics workspace and choose your workspace\n6. Click Save",
+      "Terraform": "```hcl\n# Subscription Activity Log diagnostic setting capturing required categories\nresource \"azurerm_monitor_diagnostic_setting\" \"example\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"/subscriptions/<example_resource_id>\" # Critical: scope set to the subscription\n  log_analytics_workspace_id = \"<example_resource_id>\"                 # Critical: destination workspace\n\n  enabled_log { category = \"Administrative\" } # Critical: required category\n  enabled_log { category = \"Security\" }      # Critical: required category\n  enabled_log { category = \"Alert\" }         # Critical: required category\n  enabled_log { category = \"Policy\" }        # Critical: required category\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to Azure Monitor 2. Click Activity log 3. Click on Export Activity Logs 4. Select the Subscription from the drop down menu 5. Click on Add diagnostic setting 6. Enter a name for your new Diagnostic Setting 7. Check the following categories: Administrative, Alert, Policy, and Security 8. Choose the destination details according to your organization's needs.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/manage-storage-analytics-logs?toc=%2Fazure%2Fstorage%2Fblobs%2Ftoc.json&bc=%2Fazure%2Fstorage%2Fblobs%2Fbreadcrumb%2Ftoc.json&tabs=azure-portal"
+      "Text": "Collect `Administrative`, `Security`, `Policy`, and `Alert` via a subscription diagnostic setting and route them to a centralized, tamper-resistant destination. Enforce **least privilege** on log access, set retention, and create **alerts** for high-risk changes as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/monitor_diagnostic_setting_with_appropriate_categories"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "When the diagnostic setting is created using Azure Portal, by default no categories are selected."
