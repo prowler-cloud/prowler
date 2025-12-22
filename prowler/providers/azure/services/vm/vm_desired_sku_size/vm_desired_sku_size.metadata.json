@@ -1,26 +1,34 @@
 {
   "Provider": "azure",
   "CheckID": "vm_desired_sku_size",
-  "CheckTitle": "Ensure that your virtual machine instances are using SKU sizes that are approved by your organization",
+  "CheckTitle": "Virtual machine uses an organization-approved SKU size",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure that your virtual machine instances are using SKU sizes that are approved by your organization. This check requires configuration of the desired VM SKU sizes in the Prowler configuration file.",
-  "Risk": "Setting limits for the SKU size(s) of the virtual machine instances provisioned in your Microsoft Azure account can help you to manage better your cloud compute power, address internal compliance requirements and prevent unexpected charges on your Azure monthly bill. Without proper SKU size controls, organizations may face cost overruns and compliance violations.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview",
+  "Severity": "medium",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure virtual machines** are compared against an organization **allowlist of VM size SKUs** defined in `desired_vm_sku_sizes`.\n\nInstances using sizes outside this list are flagged as non-standard.",
+  "Risk": "Unrestricted VM sizes enable over-provisioned or exotic SKUs, leading to:\n- Sudden cost spikes and quota exhaustion (availability)\n- Use of hardware lacking required security features (confidentiality/integrity)\n- Abuse by compromised accounts for cryptomining at scale",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/resize-vm",
+    "https://petri.com/it-governance-with-azure-policy/",
+    "https://cloudjourney.medium.com/aws-organization-policy-and-azure-policy-7a27a491acbb",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview",
+    "https://github.com/MicrosoftDocs/azure-docs/blob/main/includes/policy/reference/bycat/policies-compute.md",
+    "https://wedoazure.ie/2024/01/09/control-vm-skus-with-azure-policy-and-bicep/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az policy assignment create --display-name 'Allowed VM SKU Sizes' --policy cccc23c7-8427-4f53-ad12-b6a63eb452b3 -p '{\"listOfAllowedSKUs\": {\"value\": [\"<desired-sku-1>\", \"<desired-sku-2>\"]}}' --scope /subscriptions/<subscription-id>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az vm resize --resource-group <RESOURCE_GROUP> --name <VM_NAME> --size <desired-sku-1>",
+      "NativeIaC": "```bicep\n// Resize VM to an approved SKU\nresource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    hardwareProfile: {\n      vmSize: '<desired-sku-1>' // CRITICAL: sets VM to an approved size so the check passes\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Virtual machines and select the VM\n2. Under Availability + scale, select Size\n3. Choose an approved size (e.g., <desired-sku-1>) and click Resize\n4. If the size isn't listed, Stop (deallocate) the VM, then retry Resize",
+      "Terraform": "```hcl\n# Enforce allowed VM SKUs via Azure Policy\nresource \"azurerm_policy_assignment\" \"<example_resource_name>\" {\n  name                 = \"<example_resource_name>\"\n  scope                = \"/subscriptions/<example_resource_id>\"\n  policy_definition_id = \"/providers/Microsoft.Authorization/policyDefinitions/<example_resource_id>\"\n\n  parameters = jsonencode({\n    listOfAllowedSKUs = { value = [\"<desired-sku-1>\", \"<desired-sku-2>\"] } # CRITICAL: only these SKUs are allowed\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Define and document your organization's approved VM SKU sizes based on workload requirements, cost constraints, and compliance needs. 2. Implement Azure Policy to enforce VM size restrictions across your subscriptions. 3. Use the 'Allowed virtual machine size SKUs' built-in policy to restrict VM creation to approved sizes. 4. Regularly review and update your approved SKU list based on changing business requirements and cost optimization goals. 5. Monitor VM usage and costs to ensure compliance with your SKU size policies.",
-      "Url": "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/resize-vm"
+      "Text": "Adopt a **least privilege, policy-enforced allowlist** of VM size SKUs per workload tier and region.\n- Deny creation of non-approved sizes across scopes\n- Require exception reviews with time-bound overrides\n- Reassess the list regularly for cost, performance, and compliance\n- Monitor provisioning and cost anomalies for drift",
+      "Url": "https://hub.prowler.com/check/vm_desired_sku_size"
     }
   },
   "Categories": [],

@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "vm_scaleset_not_empty",
-  "CheckTitle": "Check for Empty Virtual Machine Scale Sets",
+  "CheckTitle": "Azure virtual machine scale set has at least one VM instance",
   "CheckType": [],
   "ServiceName": "vm",
-  "SubServiceName": "scaleset",
-  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
-  "Severity": "low",
-  "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
-  "Description": "Identify and remove empty virtual machine scale sets from your Azure cloud account.",
-  "Risk": "Empty virtual machine scale sets may incur unnecessary costs and complicate cloud resource management, impacting cost optimization and compliance.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.compute/virtualmachinescalesets",
+  "Description": "**Azure VM scale sets** with `0` VM instances are identified as *empty*.",
+  "Risk": "Orphaned scale sets degrade governance and can hide **stale autoscale** or permissive identities. If reactivated, they may launch VMs from **outdated images**, exposing vulnerable services and enabling lateral movement, impacting **confidentiality** and **availability**. They also create inventory sprawl and unnecessary spend.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az vmss delete --name <scale-set-name> --resource-group <resource-group>",
+      "CLI": "az vmss scale --resource-group <resource-group> --name <scale-set-name> --new-capacity 1",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html",
-      "Terraform": ""
+      "Other": "1. In Azure Portal, go to Virtual machine scale sets and select <scale-set-name>\n2. Under Settings, click Scaling\n3. Set Instance count to 1\n4. Click Save",
+      "Terraform": "```hcl\n# Patch the scale set to have at least one instance\nresource \"azapi_update_resource\" \"<example_resource_name>\" {\n  type        = \"Microsoft.Compute/virtualMachineScaleSets@2024-03-01\"\n  resource_id = \"<example_resource_id>\"\n\n  body = jsonencode({\n    sku = {\n      capacity = 1 # Critical: ensures the scale set has at least one VM instance\n    }\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Remove empty Azure virtual machine scale sets to optimize costs and simplify management.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html"
+      "Text": "Decommission empty scale sets or consolidate capacity. Apply **resource lifecycle** and **governance policies** to prevent drift; require tagging and owners, review regularly. Manage capacity through **IaC**, enforce **least privilege** on scale set identities, and use change control to avoid unintended autoscale activations. *If retained temporarily*, document purpose and review date.",
+      "Url": "https://hub.prowler.com/check/vm_scaleset_not_empty"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

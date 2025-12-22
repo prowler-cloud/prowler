@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "vm_linux_enforce_ssh_authentication",
-  "CheckTitle": "Ensure SSH key authentication is enforced on Linux-based Virtual Machines",
+  "CheckTitle": "Linux virtual machine has password authentication disabled (SSH key authentication enforced)",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
-  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure that Azure Linux-based virtual machines are configured to use SSH keys by disabling password authentication.",
-  "Risk": "Allowing password-based SSH authentication increases the risk of brute-force attacks and unauthorized access. Enforcing SSH key authentication ensures only users with the private key can access the VM.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure Linux virtual machines** are assessed for SSH configuration where `disablePasswordAuthentication` is set to `true`, allowing only **public key authentication** and disallowing interactive passwords.",
+  "Risk": "With **password-based SSH**, attackers can run brute-force or password-spray campaigns. A successful login grants remote shell, enabling command execution, data exfiltration, and lateral movement, degrading **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://askubuntu.com/questions/1440290/unable-to-disable-password-authentication-over-ssh",
+    "https://howto.im/q/how-to-disable-password-authentication-for-ssh-on-an-azure-linux-vm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/ssh-authentication-type.html",
+    "https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed",
+    "https://unix.stackexchange.com/questions/727492/passwordauthentication-no-but-i-can-still-login-by-password",
+    "https://github.com/Azure/terraform-azurerm-avm-res-compute-virtualmachine",
+    "https://azure.github.io/PSRule.Rules.Azure/en/rules/Azure.VM.PublicKey/",
+    "https://stackoverflow.com/questions/79694218/unable-to-connect-to-linux-vm-via-ssh"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/ssh-authentication-type.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Bicep snippet to enforce SSH key authentication on a Linux VM\nresource linuxVm 'Microsoft.Compute/virtualMachines@2024-03-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    osProfile: {\n      linuxConfiguration: {\n        disablePasswordAuthentication: true // CRITICAL: Disables password-based SSH; enforces SSH key authentication\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to your Linux VM > Settings > Export template\n2. Click Edit template\n3. Find properties.osProfile.linuxConfiguration and set disablePasswordAuthentication to true\n4. Ensure an SSH public key is provided (adminPassword must be absent)\n5. Click Save, then Review + create to deploy the update",
+      "Terraform": "```hcl\n# Minimal Terraform to enforce SSH key authentication on a Linux VM\nresource \"azurerm_linux_virtual_machine\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  size                = \"Standard_B1s\"\n  network_interface_ids = [\"<example_resource_id>\"]\n  admin_username        = \"azureuser\"\n\n  disable_password_authentication = true  # CRITICAL: Disables password-based SSH; enforces SSH key authentication\n\n  admin_ssh_key {                         # Required when password auth is disabled\n    username   = \"azureuser\"\n    public_key = \"<example_public_key>\"\n  }\n\n  os_disk {\n    caching              = \"ReadWrite\"\n    storage_account_type = \"Standard_LRS\"\n  }\n\n  source_image_reference {\n    publisher = \"Canonical\"\n    offer     = \"0001-com-ubuntu-server-focal\"\n    sku       = \"20_04-lts\"\n    version   = \"latest\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Recreate Linux VMs with SSH key authentication enabled and password authentication disabled.",
-      "Url": "https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed"
+      "Text": "Enforce **key-only SSH** by setting `disablePasswordAuthentication` to `true` and disallowing OS password logins. Use strong, passphrase-protected keys with rotation; restrict SSH via NSGs and private access or **Azure Bastion**; enable JIT; and apply **least privilege**.",
+      "Url": "https://hub.prowler.com/check/vm_linux_enforce_ssh_authentication"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "vm_backup_enabled",
-  "CheckTitle": "Ensure Backups are enabled for Azure Virtual Machines",
+  "CheckTitle": "Azure virtual machine is protected by Azure Backup",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure that Microsoft Azure Backup service is in use for your Azure virtual machines (VMs) to protect against accidental deletion or corruption.",
-  "Risk": "Without Azure Backup enabled, VMs are at risk of data loss due to accidental deletion, corruption, or other failures, and recovery options are limited.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/backup/backup-overview",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure VMs** are evaluated for protection by **Azure Backup** by confirming they exist as VM backup items in a **Recovery Services vault**.\n\nVMs absent from any vault item indicate no configured backup coverage.",
+  "Risk": "Unprotected VMs jeopardize **availability** and **integrity**. Deletion, corruption, or ransomware can wipe data, and without recovery points recovery is slow or impossible, causing extended outages, missed `RPO/RTO`, and cascading impact on dependent services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mssqltips.com/sqlservertip/6408/restore-an-azure-sql-vm-using-recovery-services-vault/",
+    "https://supportlatam.zendesk.com/hc/en-us/articles/360039073412-Support-matrix-for-Azure-Backup",
+    "https://docs.microsoft.com/en-us/azure/backup/quick-backup-vm-portal",
+    "https://learn.microsoft.com/en-us/++azure/backup/backup-azure-arm-vms-prepare",
+    "https://www.cybrary.it/course/enable-vm-backup-using-recovery-services-vault",
+    "https://learn.microsoft.com/en-us/azure/backup/quick-backup-vm-portal",
+    "https://goayxh.medium.com/microsoft-azure-az-104-azure-vm-backup-3621a9b4bd80?source=user_profile_page---------24-------------beb79bdb919----------------------",
+    "https://docs.microsoft.com/en-us/azure/backup/backup-overview",
+    "https://www.linkedin.com/pulse/azure-virtual-machine-vm-backup-restore-automation-kelvin-sikamoi"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az backup protection enable-for-vm --resource-group <resource-group> --vm <vm-name> --vault-name <vault-name> --policy-name DefaultPolicy",
-      "NativeIaC": "",
-      "Other": "https://learn.microsoft.com/en-us/azure/backup/quick-backup-vm-portal",
-      "Terraform": ""
+      "CLI": "az backup protection enable-for-vm --resource-group <vault-resource-group> --vault-name <vault-name> --vm <vm-name> --vm-resource-group <vm-resource-group> --policy-name DefaultPolicy",
+      "NativeIaC": "```bicep\n// Enable Azure Backup protection for an existing VM in an existing Recovery Services vault\nparam vmId string            // e.g., /subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Compute/virtualMachines/<vm>\nparam vaultName string\nparam vaultRg string\nparam policyId string        // e.g., /subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.RecoveryServices/vaults/<vault>/backupPolicies/<policy>\n\nresource vault 'Microsoft.RecoveryServices/vaults@2023-04-01' existing = {\n  name: vaultName\n  scope: resourceGroup(vaultRg)\n}\n\nvar vmRg = split(split(vmId, '/resourceGroups/')[1], '/')[0]\nvar vmName = split(vmId, '/virtualMachines/')[1]\n\nresource protect 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2023-02-01' = {\n  // critical: this resource creates the protected item, enabling backup for the VM\n  name: '${vault.name}/Azure/protectionContainers/iaasvmcontainer;iaasvmcontainerv2;${vmRg};${vmName}/protectedItems/VM;iaasvmcontainerv2;${vmRg};${vmName}'\n  properties: {\n    protectedItemType: 'Microsoft.Compute/virtualMachines' // critical: VM backup item type\n    sourceResourceId: vmId                                 // critical: target VM to protect\n    policyId: policyId                                     // critical: associates the VM with a backup policy\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Virtual machines > <VM> > Backup\n2. Select a Recovery Services vault in the same region (or create one if prompted)\n3. Choose the DefaultPolicy (or an existing VM backup policy)\n4. Click Enable backup",
+      "Terraform": "```hcl\n# Protect an existing VM with Azure Backup\nresource \"azurerm_backup_protected_vm\" \"<example_resource_name>\" {\n  resource_group_name = \"<example_resource_name>\"   # vault's resource group\n  recovery_vault_name = \"<example_resource_name>\"\n  source_vm_id        = \"<example_resource_id>\"     # critical: VM to protect\n  backup_policy_id    = \"<example_resource_id>\"     # critical: policy that enables backup\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Azure Backup for each VM by associating it with a Recovery Services vault and a backup policy.",
-      "Url": "https://docs.microsoft.com/en-us/azure/backup/quick-backup-vm-portal"
+      "Text": "Protect all VMs with **Azure Backup** in a **Recovery Services vault** under a standardized policy. Align schedules and retention to `RPO/RTO`, use `GRS`/`ZRS` and `immutable` vault features, enforce least privilege on backup operations, automate enrollment at provisioning, and regularly test restores.",
+      "Url": "https://hub.prowler.com/check/vm_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

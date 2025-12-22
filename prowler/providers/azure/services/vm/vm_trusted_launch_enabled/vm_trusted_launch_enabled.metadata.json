@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "vm_trusted_launch_enabled",
-  "CheckTitle": "Ensure Trusted Launch is enabled on Virtual Machines",
+  "CheckTitle": "Virtual machine has Trusted Launch with Secure Boot and vTPM enabled",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "When Secure Boot and vTPM are enabled together, they provide a strong foundation for protecting your VM from boot attacks. For example, if an attacker attempts to replace the bootloader with a malicious version, Secure Boot will prevent the VM from booting. If the attacker is able to bypass Secure Boot and install a malicious bootloader, vTPM can be used to detect the intrusion and alert you.",
-  "Risk": "Secure Boot and vTPM work together to protect your VM from a variety of boot attacks, including bootkits, rootkits, and firmware rootkits. Not enabling Trusted Launch in Azure VM can lead to increased vulnerability to rootkits and boot-level malware, reduced ability to detect and prevent unauthorized changes to the boot process, and a potential compromise of system integrity and data security.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal",
+  "Severity": "medium",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure VMs** are evaluated for **Trusted Launch** with both **Secure Boot** and **vTPM** enabled.\n\nIdentifies VMs not set to `TrustedLaunch` or missing `secureBootEnabled` and `vTpmEnabled` together.",
+  "Risk": "Missing **Trusted Launch** weakens boot-chain integrity. Attackers can persist via bootkits/rootkits, bypass OS controls, steal secrets, and tamper with drivers. Loss of attestation reduces detection, risking **integrity**, **confidentiality**, and **availability** through stealthy, hard-to-remediate compromises.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.tbone.se/2022/07/11/create-a-secure-workstation-image-with-trusted-launch-enabled-in-azure/",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal#enable-trusted-launch-on-existing-vm",
+    "https://www.anoopcnair.com/enable-trusted-launch-for-azure-virtual-machine/",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch",
+    "https://github.com/MicrosoftDocs/azure-compute-docs/blob/main/articles/virtual-machines/trusted-launch.md",
+    "https://windowsforum.com/threads/enable-trusted-launch-in-place-for-azure-vms-secure-boot-and-vtpm.379613/",
+    "https://docs.azure.cn/en-us/virtual-machines/trusted-launch"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Enables Trusted Launch with Secure Boot and vTPM on the VM\nresource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  properties: {\n    securityProfile: {\n      securityType: 'TrustedLaunch' // Critical: sets VM security type to Trusted Launch\n      uefiSettings: {\n        secureBootEnabled: true     // Critical: enables Secure Boot\n        vTpmEnabled: true           // Critical: enables vTPM\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open the VM and click Stop to deallocate it\n2. Go to Settings > Configuration\n3. Under Security type, select Trusted launch\n4. Check Secure Boot and vTPM\n5. Click Save\n6. Start the VM from the Overview page",
+      "Terraform": "```hcl\n# Patch the existing VM to enable Trusted Launch with Secure Boot and vTPM\nresource \"azapi_update_resource\" \"<example_resource_name>\" {\n  type        = \"Microsoft.Compute/virtualMachines@2022-11-01\"\n  resource_id = \"<example_resource_id>\"\n\n  body = jsonencode({\n    properties = {\n      securityProfile = {\n        securityType = \"TrustedLaunch\" # Critical: sets VM security type to Trusted Launch\n        uefiSettings = {\n          secureBootEnabled = true      # Critical: enables Secure Boot\n          vTpmEnabled       = true      # Critical: enables vTPM\n        }\n      }\n    }\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to Virtual Machines 2. For each VM, under Settings, click on Configuration on the left blade 3. Under Security Type, select 'Trusted Launch Virtual Machines' 4. Make sure Enable Secure Boot & Enable vTPM are checked 5. Click on Apply.",
-      "Url": "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal#enable-trusted-launch-on-existing-vm"
+      "Text": "Adopt **defense in depth**: enable **Trusted Launch** with **Secure Boot** and **vTPM** on Gen2 VMs. Standardize on images with signed boot components and use supported sizes/OS. Enforce **least privilege** for administrators and enable attestation monitoring to prevent and detect boot-level tampering.",
+      "Url": "https://hub.prowler.com/check/vm_trusted_launch_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "node-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Secure Boot and vTPM are not currently supported for Azure Generation 1 VMs. IMPORTANT: Before enabling Secure Boot and vTPM on a Generation 2 VM which does not already have both enabled, it is highly recommended to create a restore point of the VM prior to remediation."
