@@ -1,29 +1,34 @@
 {
   "Provider": "azure",
   "CheckID": "vm_jit_access_enabled",
-  "CheckTitle": "Enable Just-In-Time Access for Virtual Machines",
+  "CheckTitle": "Virtual machine has Just-in-Time (JIT) access enabled",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
-  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure that Microsoft Azure virtual machines are configured to use Just-in-Time (JIT) access.",
-  "Risk": "Without JIT access, management ports such as 22 (SSH) and 3389 (RDP) may be exposed, increasing the risk of brute-force and DDoS attacks.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "Azure virtual machines are associated with a **Just-in-Time (JIT) network access policy** that opens management ports only for approved, time-bound requests from specified source IPs.",
+  "Risk": "Without **JIT**, management ports like `22`/`3389` may stay reachable, enabling:\n- brute-force and password-spray attempts\n- exploitation of remote access flaws or stolen keys\nThis threatens **confidentiality** (data exfiltration), **integrity** (unauthorized changes), and **availability** (service disruption).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az security jit-policy list --query '[*].virtualMachines[*].id | []'",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az security jit-policy create -g <RESOURCE_GROUP> -l <LOCATION> -n default --jit-policy '{\"kind\":\"Basic\",\"properties\":{\"virtualMachines\":[{\"id\":\"/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Compute/virtualMachines/<VM_NAME>\",\"ports\":[{\"number\":22,\"protocol\":\"*\",\"allowedSourceAddressPrefix\":[\"*\"],\"maxRequestAccessDuration\":\"PT3H\"}]}]}}'",
+      "NativeIaC": "```bicep\n// Bicep: Enable JIT for a VM by creating a JIT policy that references the VM\nparam location string = \"<LOCATION>\"\nparam vmId string = \"/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<example_resource_name>/providers/Microsoft.Compute/virtualMachines/<example_resource_name>\"\n\nresource jit 'Microsoft.Security/locations/jitNetworkAccessPolicies@2020-01-01' = {\n  name: '${location}/default'\n  properties: {\n    virtualMachines: [\n      {\n        id: vmId // Critical: Adding the VM ID enables JIT for this VM\n        ports: [\n          {\n            number: 22\n            protocol: '*'\n            allowedSourceAddressPrefix: ['*']\n            maxRequestAccessDuration: 'PT3H' // Critical: Minimal required port configuration for JIT\n          }\n        ]\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Workload protections > Just-in-time VM access\n3. Open the Not configured tab, select the VM, and click Enable JIT on VMs\n4. Keep the default port (22 for Linux or 3389 for Windows) and click Save",
+      "Terraform": "```hcl\n# Enable JIT by creating a Security Center JIT policy for the VM\nresource \"azurerm_security_center_jit_network_access_policy\" \"<example_resource_name>\" {\n  name                = \"default\"\n  location            = \"<LOCATION>\"\n  resource_group_name = \"<example_resource_name>\"\n\n  virtual_machines {\n    id = \"<example_resource_id>\" # Critical: VM ID included in the JIT policy enables JIT for this VM\n\n    ports {\n      number                           = 22\n      protocol                         = \"*\"\n      allowed_source_address_prefixes   = [\"*\"]\n      max_request_access_duration       = \"PT3H\" # Critical: Minimal port config required by JIT\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Just-in-Time (JIT) network access for your Microsoft Azure virtual machines using the Azure Portal under Security Center > Just-in-time VM access.",
-      "Url": "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc"
+      "Text": "Enable **JIT network access** and apply **least privilege** and **zero trust**:\n- keep admin ports closed by default\n- approve only specific IPs, minimal ports (e.g., `22`, `3389`), and short windows\n- favor **private access** (VPN, Bastion)\n- layer controls (**defense in depth**) and audit access requests",
+      "Url": "https://hub.prowler.com/check/vm_jit_access_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "JIT access can only be enabled via the Azure Portal. Ensure Security Center standard pricing tier for servers is enabled."

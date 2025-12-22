@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "vm_scaleset_associated_with_load_balancer",
-  "CheckTitle": "VM Scale Set Is Associated With Load Balancer",
+  "CheckTitle": "VM scale set is associated with a load balancer backend pool",
   "CheckType": [],
   "ServiceName": "vm",
-  "SubServiceName": "scaleset",
-  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
-  "Description": "Ensure that your Azure virtual machine scale sets are using load balancers for traffic distribution.",
-  "Risk": "Without load balancer integration, Azure virtual machine scale sets may experience reduced availability and potential service disruptions during traffic spikes or instance failures, leading to degraded user experience and potential business impact.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-network/network-overview",
+  "ResourceType": "microsoft.compute/virtualmachinescalesets",
+  "Description": "**Azure VM scale sets** are associated with at least one **load balancer backend pool**.\n\nThe evaluation looks for a backend pool link on each scale set's network configuration.",
+  "Risk": "Without a load balancer, traffic targets instances directly, bypassing health-based distribution. This degrades **availability** (overloads, no failover) and **reliability** (dropped sessions, uneven scaling) and can amplify **DoS** impact by concentrating flows on fewer nodes, increasing outage risk.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/69030099/terraform-how-can-i-configure-the-backend-pool-vm-scale-set-in-a-second-load-ba",
+    "https://negatblog.wordpress.com/2018/06/21/scale-sets-and-load-balancers/",
+    "https://learn.microsoft.com/en-us/azure/virtual-network/network-overview",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/associated-load-balancers.html",
+    "https://learn.microsoft.com/ms-my/azure/load-balancer/load-balancer-multiple-virtual-machine-scale-set?tabs=azureportal",
+    "https://www.thealteroffice.com/blog/effortlessly-scale-your-servers-for-multiplayer-games",
+    "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview",
+    "https://turingtaco.medium.com/common-misconceptions-about-load-balanced-azure-vms-2b3833399cdc"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/associated-load-balancers.html",
-      "Terraform": ""
+      "CLI": "az vmss update --resource-group <RESOURCE_GROUP> --name <VMSS_NAME> --add virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].ipConfigurations[0].loadBalancerBackendAddressPools '{\"id\":\"/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Network/loadBalancers/<LB_NAME>/backendAddressPools/<BACKEND_POOL_NAME>\"}'",
+      "NativeIaC": "```bicep\n// Associate VMSS with a Load Balancer backend pool\nresource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    virtualMachineProfile: {\n      networkProfile: {\n        networkInterfaceConfigurations: [\n          {\n            name: 'nic'\n            properties: {\n              ipConfigurations: [\n                {\n                  name: 'ipcfg'\n                  properties: {\n                    loadBalancerBackendAddressPools: [\n                      { id: '<example_resource_id>' } // CRITICAL: attach VMSS NIC IP config to LB backend pool\n                    ]\n                  }\n                }\n              ]\n            }\n          }\n        ]\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Load balancers > select <LB_NAME>\n2. Under Settings, open Backend pools and select the target backend pool\n3. Click Add > IP configurations\n4. Choose Virtual machine scale set, select <VMSS_NAME> and its IP configuration\n5. Click Add, then Save to attach the scale set to the backend pool",
+      "Terraform": "```hcl\n# Attach VMSS to an existing Load Balancer backend pool\nresource \"azurerm_linux_virtual_machine_scale_set\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  sku                 = \"Standard_DS1_v2\"\n  instances           = 1\n\n  admin_username                  = \"azureuser\"\n  disable_password_authentication = true\n  admin_ssh_key {\n    username   = \"azureuser\"\n    public_key = \"<SSH_PUBLIC_KEY>\"\n  }\n\n  source_image_reference {\n    publisher = \"Canonical\"\n    offer     = \"0001-com-ubuntu-server-jammy\"\n    sku       = \"22_04-lts\"\n    version   = \"latest\"\n  }\n\n  network_interface {\n    name    = \"nic\"\n    primary = true\n    ip_configuration {\n      name                                   = \"ipcfg\"\n      primary                                = true\n      subnet_id                              = \"<example_resource_id>\"\n      load_balancer_backend_address_pool_ids = [\"<example_resource_id>\"] # CRITICAL: associates VMSS with LB backend pool\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Attach a load balancer to your Azure virtual machine scale set to ensure high availability and optimal traffic distribution.",
-      "Url": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
+      "Text": "Associate VM scale sets with a **Standard Load Balancer** backend pool to enforce health-probed, even distribution and seamless failover.\n\nDesign for **high availability**: run multiple instances across zones, enable autoscale, and apply **defense in depth** with limited exposure and NSG controls. *Prefer SKU `Standard` over legacy Basic.*",
+      "Url": "https://hub.prowler.com/check/vm_scaleset_associated_with_load_balancer"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

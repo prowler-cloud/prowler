@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "vm_ensure_using_approved_images",
-  "CheckTitle": "Ensure that Azure VMs are using an approved machine image.",
+  "CheckTitle": "Azure VM uses an approved custom machine image",
   "CheckType": [],
   "ServiceName": "vm",
-  "SubServiceName": "image",
-  "ResourceIdTemplate": "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Compute/images/<virtual-machine-image-id>",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Compute/images",
-  "Description": "Ensure that all your Azure virtual machine instances are launched from approved machine images only.",
-  "Risk": "An approved machine image is a custom virtual machine (VM) image that contains a pre-configured OS and a well-defined stack of server software approved by Azure, fully configured to run your application. Using approved (golden) machine images to launch new VM instances within your Azure cloud environment brings major benefits such as fast and stable application deployment and scaling, secure application stack upgrades, and versioning.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure VMs** are evaluated for use of an **approved custom image** by inspecting the VM image reference. The expected format is a subscription-scoped ID like `/subscriptions/.../providers/Microsoft.Compute/images/<image>`, not marketplace, gallery, or community sources.",
+  "Risk": "Using **unapproved images** undermines **integrity** and **confidentiality** by introducing unknown packages, misconfigurations, or malware. Attackers can implant backdoors, weaken hardening, and bypass baselines, enabling data exfiltration and lateral movement, and harming **availability** with unpatched software.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/approved-machine-image.html",
+    "https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/approved-machine-image.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Create a VM using an approved custom managed image\nparam location string = resourceGroup().location\nparam nicId string\nparam adminUsername string\nparam adminPassword string\n\nresource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: location\n  properties: {\n    hardwareProfile: { vmSize: 'Standard_DS1_v2' }\n    storageProfile: {\n      imageReference: {\n        id: '/subscriptions/<subscription_id>/resourceGroups/<example_resource_id>/providers/Microsoft.Compute/images/<example_resource_name>' // CRITICAL: use managed image ID to pass check\n      }\n      osDisk: { createOption: 'FromImage' }\n    }\n    osProfile: {\n      computerName: '<example_resource_name>'\n      adminUsername: adminUsername\n      adminPassword: adminPassword\n    }\n    networkProfile: {\n      networkInterfaces: [{ id: nicId }]\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Virtual machines > Create > Azure virtual machine\n2. Under Image, click See all images, then select the My Images tab\n3. Choose the approved managed image (type: Microsoft.Compute/images)\n4. Complete required basics and create the VM\n5. If replacing a non-compliant VM, migrate workload and delete the old VM",
+      "Terraform": "```hcl\n# VM created from an approved custom managed image\nresource \"azurerm_windows_virtual_machine\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_id>\"\n  location            = \"<example_resource_location>\"\n  size                = \"Standard_DS1_v2\"\n  admin_username      = \"<example_resource_name>\"\n  admin_password      = \"<example_resource_id>\"\n  network_interface_ids = [\"<example_resource_id>\"]\n\n  source_image_id = \"/subscriptions/<subscription_id>/resourceGroups/<example_resource_id>/providers/Microsoft.Compute/images/<example_resource_name>\" # CRITICAL: managed image ID ensures PASS\n\n  os_disk {\n    caching              = \"ReadWrite\"\n    storage_account_type = \"Standard_LRS\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Re-create the required VM instances using the approved (golden) machine image.",
-      "Url": "https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed"
+      "Text": "Standardize on **golden images** maintained in an Azure Compute Gallery or managed images.\n- Harden and patch each release; scan for vulnerabilities\n- Restrict who can create/publish images (**least privilege**)\n- Enforce deployments only from approved images via policy\n- Version, sign, and retire images regularly",
+      "Url": "https://hub.prowler.com/check/vm_ensure_using_approved_images"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check only validates if the VM was launched from a custom image. It does not validate the image content or security baseline."

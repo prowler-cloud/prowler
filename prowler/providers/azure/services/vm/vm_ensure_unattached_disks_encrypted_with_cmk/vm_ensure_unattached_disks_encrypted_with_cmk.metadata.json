@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "vm_ensure_unattached_disks_encrypted_with_cmk",
-  "CheckTitle": "Ensure that 'Unattached disks' are encrypted with 'Customer Managed Key' (CMK)",
+  "CheckTitle": "Unattached disk is encrypted with a customer-managed key (CMK)",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure that unattached disks in a subscription are encrypted with a Customer Managed Key (CMK).",
-  "Risk": "Managed disks are encrypted by default with Platform-managed keys. Using Customer-managed keys may provide an additional level of security or meet an organization's regulatory requirements. Encrypting managed disks ensures that its entire content is fully unrecoverable without a key and thus protects the volume from unwarranted reads. Even if the disk is not attached to any of the VMs, there is always a risk where a compromised user account with administrative access to VM service can mount/attach these data disks, which may lead to sensitive information disclosure and tampering.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security/fundamentals/azure-disk-encryption-vms-vmss",
+  "Severity": "medium",
+  "ResourceType": "microsoft.compute/disks",
+  "Description": "Unattached **Azure managed disks** use **Customer-Managed Keys** (`CMK`) for server-side encryption rather than platform-managed keys. Only disks not currently attached to a VM are in scope.",
+  "Risk": "Without **CMK**, you lack independent key control on unattached disks. A compromised admin could attach a disk to read or alter data before you can revoke access. Missing customer-controlled rotation and revocation weakens **confidentiality** and **integrity**, and can hinder data-sovereignty compliance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sse-unattached-disk-cmk.html#",
+    "https://learn.microsoft.com/en-us/azure/security/fundamentals/data-encryption-best-practices#protect-data-at-rest",
+    "https://learn.microsoft.com/en-us/rest/api/compute/disks/delete?view=rest-compute-2023-10-02&tabs=HTTP",
+    "https://docs.microsoft.com/en-us/azure/security/fundamentals/azure-disk-encryption-vms-vmss"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sse-unattached-disk-cmk.html#",
-      "Terraform": ""
+      "CLI": "az disk update -g <RESOURCE_GROUP> -n <DISK_NAME> --encryption-type EncryptionAtRestWithCustomerKey --disk-encryption-set <DES_ID>",
+      "NativeIaC": "```bicep\n// Update an existing managed disk to use a customer-managed key via Disk Encryption Set\nresource example_disk 'Microsoft.Compute/disks@2023-08-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    encryption: {\n      type: 'EncryptionAtRestWithCustomerKey' // CRITICAL: switch to CMK-based encryption\n      diskEncryptionSetId: '<example_resource_id>' // CRITICAL: DES resource ID that holds the CMK\n    }\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Disks and open the unattached disk\n2. Select Encryption\n3. Set Encryption type to Customer-managed key\n4. Select the Disk encryption set to use\n5. Click Save",
+      "Terraform": "```hcl\n# Associate an unattached managed disk with a Disk Encryption Set (CMK)\nresource \"azurerm_managed_disk\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<example_resource_name>\"\n  create_option       = \"Empty\"\n  disk_size_gb        = 1\n\n  disk_encryption_set_id = \"<example_resource_id>\" # CRITICAL: enables CMK by linking the Disk Encryption Set\n}\n```"
     },
     "Recommendation": {
-      "Text": "If data stored in the disk is no longer useful, refer to Azure documentation to delete unattached data disks at: https://learn.microsoft.com/en-us/rest/api/compute/disks/delete?view=rest-compute-2023-10-02&tabs=HTTP",
-      "Url": "https://learn.microsoft.com/en-us/azure/security/fundamentals/data-encryption-best-practices#protect-data-at-rest"
+      "Text": "Encrypt unattached disks with **CMK** backed by a hardened key service. Enforce **least privilege** for disk attachment and key usage, enable key rotation and auditing, and restrict access to keys. Apply lifecycle governance-*remove stale disks*-to reduce exposure and support **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/vm_ensure_unattached_disks_encrypted_with_cmk"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "You must have your key vault set up to utilize this. Encryption is available only on Standard tier VMs. This might cost you more. Utilizing and maintaining Customer-managed keys will require additional work to create, protect, and rotate keys."

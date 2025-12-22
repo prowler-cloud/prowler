@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "vm_sufficient_daily_backup_retention_period",
-  "CheckTitle": "Ensure there is a sufficient daily backup retention period configured for Azure virtual machines.",
+  "CheckTitle": "Azure virtual machine has a backup policy with a daily retention period meeting the configured minimum",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Ensure there is a sufficient daily backup retention period configured for Azure virtual machines.",
-  "Risk": "Having an optimal daily backup retention period for your Azure virtual machines will enforce your backup strategy to follow the best practices as specified in the compliance regulations promoted by your organization. Retaining VM backups for a longer period of time will allow you to handle more efficiently your data restoration process in the event of a failure.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "**Azure virtual machines** are evaluated for a backup policy in a Recovery Services vault with a **daily retention** period that meets the configured minimum. VMs lacking protection or using a shorter retention window are identified for review.",
+  "Risk": "**Insufficient or missing VM backups** weaken **availability** and **integrity**. Short retention reduces recovery points, limiting rollback after **ransomware**, accidental deletion, or faulty changes. This increases RPO, extends RTO, and can force rebuilds, causing data loss and downtime.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/54564906/how-to-use-terraform-template-to-add-an-azure-vm-into-a-recovery-service-vault",
+    "https://medium.com/@obaff/azure-backup-automation-script-35ab582e0e28",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sufficient-backup-retention-period.html",
+    "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction",
+    "https://github.com/hashicorp/terraform-provider-azurerm/blob/main/website/docs/r/backup_policy_vm.html.markdown",
+    "https://www.linkedin.com/learning/windows-server-hybrid-administrator-associate-az-801-cert-prep-3-implement-disaster-recovery/implement-azure-backup-policies",
+    "https://www.pulumi.com/ai/answers/eivLgQ2uCU7yVfJMBzooYZ/azure-backup-policyvm-creation-in-c"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sufficient-backup-retention-period.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Create/ensure a VM backup policy with daily retention >= minimum\nresource rv 'Microsoft.RecoveryServices/vaults@2023-01-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource vmPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2023-02-01' = {\n  name: '${rv.name}/<example_resource_name>'\n  properties: {\n    backupManagementType: 'AzureIaasVM'\n    schedulePolicy: {\n      schedulePolicyType: 'SimpleSchedulePolicyV2'\n      scheduleRunFrequency: 'Daily'\n      scheduleRunTimes: ['2020-01-01T23:00:00Z']\n    }\n    retentionPolicy: {\n      retentionPolicyType: 'LongTermRetentionPolicy'\n      dailySchedule: {\n        retentionTimes: ['2020-01-01T23:00:00Z']\n        retentionDuration: {\n          count: 7 // CRITICAL: sets daily retention to at least the minimum required days\n          durationType: 'Days' // explains the unit\n        }\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Recovery Services vault <example_resource_name>\n2. Select Backup policies > Azure Virtual Machine > Edit (or Create new)\n3. Set Daily retention to at least 7 days and Save\n4. Go to Backup items > Azure Virtual Machine\n5. If the VM is unprotected: click Backup, select the policy from step 3, and Enable\n6. If the VM is already protected with an insufficient policy: select the VM > Change Policy > choose the policy from step 3 > Save",
+      "Terraform": "```hcl\n# Backup policy with sufficient daily retention\nresource \"azurerm_backup_policy_vm\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  recovery_vault_name = \"<example_resource_name>\"\n\n  backup {\n    frequency = \"Daily\"\n    time      = \"23:00\"\n  }\n\n  retention_daily {\n    count = 7 # CRITICAL: ensures daily retention meets minimum required days\n  }\n}\n\n# Protect the VM with the compliant policy\nresource \"azurerm_backup_protected_vm\" \"<example_resource_name>\" {\n  resource_group_name = \"<example_resource_name>\"\n  recovery_vault_name = \"<example_resource_name>\"\n  source_vm_id        = \"<example_resource_id>\"\n  backup_policy_id    = azurerm_backup_policy_vm.<example_resource_name>.id # CRITICAL: applies the policy to the VM\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set the daily backup retention period for each VM's backup policy to meet or exceed your organization's minimum requirement.",
-      "Url": "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction"
+      "Text": "Enforce backup policies that provide **daily retention** aligned to business RPO/RTO for every VM. Apply **defense in depth**: isolate backups in a vault, enable immutability/soft delete, limit changes with **least privilege** and MFA, and regularly test restores. Use tiered retention (daily/weekly/monthly/yearly) based on data criticality.",
+      "Url": "https://hub.prowler.com/check/vm_sufficient_daily_backup_retention_period"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

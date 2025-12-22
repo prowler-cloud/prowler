@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "vm_ensure_using_managed_disks",
-  "CheckTitle": "Ensure Virtual Machines are utilizing Managed Disks",
+  "CheckTitle": "Virtual machine uses managed disks for OS and data disks",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Compute/virtualMachines",
-  "Description": "Migrate blob-based VHDs to Managed Disks on Virtual Machines to exploit the default features of this configuration. The features include: 1. Default Disk Encryption 2. Resilience, as Microsoft will managed the disk storage and move around if underlying hardware goes faulty 3. Reduction of costs over storage accounts",
-  "Risk": "Managed disks are by default encrypted on the underlying hardware, so no additional encryption is required for basic protection. It is available if additional encryption is required. Managed disks are by design more resilient that storage accounts. For ARM-deployed Virtual Machines, Azure Adviser will at some point recommend moving VHDs to managed disks both from a security and cost management perspective.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/unmanaged-disks-deprecation",
+  "Severity": "high",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "Description": "Azure virtual machines use **managed disks** for the OS disk and every data disk, rather than page blob VHDs in storage accounts.\n\nThe evaluation confirms that all attached VM disks are managed.",
+  "Risk": "Using **unmanaged disks** ties VM data to storage account keys and SAS, increasing exposure of disk contents if those secrets leak (**confidentiality/integrity**). Limited platform resiliency and quotas increase **availability** risk. With Azure retiring unmanaged disks on `2026-03-31`, such VMs may be stopped and unable to start.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/73750730/moving-storage-from-azure-unmanaged-diskspace-to-managed/74175807",
+    "https://petri.com/converting-azure-vm-disks-managed-disks/",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/unmanaged-disks-deprecation",
+    "https://charbelnemnom.com/how-to-convert-azure-stack-vm-from-unmanaged-disks-to-managed-disks/",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/convert-unmanaged-to-managed-disks",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default",
+    "https://www.jorgebernhardt.com/convert-azure-vm-managed-disks-powershell/",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-virtual-machines-are-utilizing-managed-disks#terraform"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-virtual-machines-are-utilizing-managed-disks#terraform"
+      "NativeIaC": "```bicep\n// VM configured to use a managed OS disk\nresource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    hardwareProfile: { vmSize: 'Standard_DS1_v2' }\n    storageProfile: {\n      osDisk: {\n        name: 'osdisk'\n        osType: 'Linux'\n        createOption: 'Attach'\n        managedDisk: {\n          id: '<example_resource_id>' // CRITICAL: attaching a managed disk makes the VM use managed disks\n        }\n      }\n    }\n    networkProfile: { networkInterfaces: [ { id: '<example_resource_id>' } ] }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Virtual machines > select your VM\n2. Click Stop to deallocate the VM\n3. In the VM menu, select Disks\n4. Click Migrate to managed disks, then click Migrate to start\n5. After migration completes, click Start to power on the VM\n6. If the VM is in an availability set: first go to Availability sets > select the set > Convert to managed (SKU: Aligned), then repeat steps 1-5",
+      "Terraform": "```hcl\n# VM attached to a managed OS disk\nresource \"azurerm_virtual_machine\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<LOCATION>\"\n  resource_group_name   = \"<RESOURCE_GROUP>\"\n  network_interface_ids = [\"<example_resource_id>\"]\n  vm_size               = \"Standard_DS1_v2\"\n\n  storage_os_disk {\n    name            = \"osdisk\"\n    create_option   = \"Attach\"\n    managed_disk_id = \"<example_resource_id>\" # CRITICAL: use a managed disk for the OS disk\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Using the search feature, go to Virtual Machines 2. Select the virtual machine you would like to convert 3. Select Disks in the menu for the VM 4. At the top select Migrate to managed disks 5. You may follow the prompts to convert the disk and finish by selecting Migrate to start the process",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default"
+      "Text": "Adopt **managed disks** for all VM OS and data volumes.\n- Enforce **least privilege** via RBAC at disk scope\n- Use encryption at rest; prefer `CMEK` when mandated\n- Apply backups/snapshots and zone-aware designs for **defense in depth**\n- After migration, delete orphaned VHD blobs to avoid data exposure and cost.",
+      "Url": "https://hub.prowler.com/check/vm_ensure_using_managed_disks"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "There are additional costs for managed disks based off of disk space allocated. When converting to managed disks, VMs will be powered off and back on."
