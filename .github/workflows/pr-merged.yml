@@ -13,7 +13,10 @@ concurrency:
 
 jobs:
   trigger-cloud-pull-request:
-    if: github.event.pull_request.merged == true && github.repository == 'prowler-cloud/prowler'
+    if: |
+      github.event.pull_request.merged == true &&
+      github.repository == 'prowler-cloud/prowler' &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-sync')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

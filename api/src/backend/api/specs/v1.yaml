@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.17.0
+  version: 1.18.0
   description: |-
     Prowler API specification.
 
@@ -894,6 +894,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -904,6 +905,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -921,6 +923,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -933,6 +936,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1447,6 +1451,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1457,6 +1462,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1474,6 +1480,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1486,6 +1493,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1908,6 +1916,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1918,6 +1927,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1935,6 +1945,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1947,6 +1958,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2367,6 +2379,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2377,6 +2390,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2394,6 +2408,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2406,6 +2421,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2814,6 +2830,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2824,6 +2841,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2841,6 +2859,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2853,6 +2872,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4947,6 +4967,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4957,6 +4978,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4974,6 +4996,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4986,6 +5009,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -5136,6 +5160,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5146,6 +5171,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5163,6 +5189,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5175,6 +5202,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -5319,6 +5347,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5329,6 +5358,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5345,6 +5375,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5357,6 +5388,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -5543,6 +5575,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5553,6 +5586,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5570,6 +5604,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5582,6 +5617,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -5715,6 +5751,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5725,6 +5762,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5742,6 +5780,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5754,6 +5793,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6534,6 +6574,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6544,6 +6585,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider__in]
         schema:
@@ -6561,6 +6603,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6573,6 +6616,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6590,6 +6634,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6600,6 +6645,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6617,6 +6663,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6629,6 +6676,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -7240,6 +7288,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7250,6 +7299,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7267,6 +7317,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7279,6 +7330,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7623,6 +7675,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7633,6 +7686,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7650,6 +7704,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7662,6 +7717,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7901,6 +7957,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7911,6 +7968,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7928,6 +7986,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7940,6 +7999,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -8185,6 +8245,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8195,6 +8256,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8212,6 +8274,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -8224,6 +8287,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -9032,6 +9096,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9042,6 +9107,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -9059,6 +9125,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -9071,6 +9138,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -16566,6 +16634,7 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
+              - alibabacloud
               type: string
               description: |-
                 * `aws` - AWS
@@ -16577,6 +16646,7 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
               x-spec-enum-id: eca8c51e6bd28935
             uid:
               type: string
@@ -16692,6 +16762,7 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
+              - alibabacloud
               type: string
               x-spec-enum-id: eca8c51e6bd28935
               description: |-
@@ -16706,6 +16777,7 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -16752,6 +16824,7 @@ components:
                   - mongodbatlas
                   - iac
                   - oraclecloud
+                  - alibabacloud
                   type: string
                   x-spec-enum-id: eca8c51e6bd28935
                   description: |-
@@ -16766,6 +16839,7 @@ components:
                     * `mongodbatlas` - MongoDB Atlas
                     * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
+                    * `alibabacloud` - Alibaba Cloud
                 uid:
                   type: string
                   minLength: 3
