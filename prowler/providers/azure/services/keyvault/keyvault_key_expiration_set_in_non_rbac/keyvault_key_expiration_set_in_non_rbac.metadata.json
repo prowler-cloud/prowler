@@ -1,29 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_key_expiration_set_in_non_rbac",
-  "CheckTitle": "Ensure that the Expiration Date is set for all Keys in Non-RBAC Key Vaults.",
+  "CheckTitle": "Key Vault without RBAC authorization has expiration date set for all enabled keys",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KeyVault",
-  "Description": "Ensure that all Keys in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
-  "Risk": "Azure Key Vault enables users to store and use cryptographic keys within the Microsoft Azure environment. The exp (expiration date) attribute identifies the expiration date on or after which the key MUST NOT be used for a cryptographic operation. By default, keys never expire. It is thus recommended that keys be rotated in the key vault and set an explicit expiration date for all keys. This ensures that the keys cannot be used beyond their assigned lifetimes.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis",
+  "ResourceType": "microsoft.keyvault/vaults",
+  "Description": "Azure Key Vaults using access policies (non-RBAC) are assessed to confirm all **enabled keys** have an `expiration` (`exp`) defined. The finding highlights keys in these vaults that lack a set lifetime.",
+  "Risk": "Non-expiring keys enable indefinite use, degrading **confidentiality** and **integrity**. Stale or compromised keys can decrypt data, forge signatures, and maintain persistence. Absent lifetimes weaken rotation discipline and impede timely revocation, increasing exposure to cryptographic and operational drift.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://hub.steampipe.io/plugins/turbot/azure/queries/key_vault/keyvault_with_non_rbac_key_expiration_set",
+    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/set-an-expiration-date-on-all-keys#terraform",
+    "https://docs.microsoft.com/en-us/rest/api/keyvault/about-keys--secrets-and-certificates#key-vault-keys",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/key-expiration-check.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az keyvault key set-attributes --name <keyName> --vault-name <vaultName> --expires Y-m-d'T'H:M:S'Z'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/key-expiration-check.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/set-an-expiration-date-on-all-keys#terraform"
+      "CLI": "az keyvault key set-attributes --vault-name <example_resource_name> --name <example_resource_name> --expires 2030-01-01T00:00:00Z",
+      "NativeIaC": "```bicep\n// Set expiration on a Key Vault key\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource key 'Microsoft.KeyVault/vaults/keys@2023-07-01' = {\n  name: '<example_resource_name>'\n  parent: kv\n  properties: {\n    kty: 'RSA'\n    attributes: {\n      exp: 1893456000 // CRITICAL: sets the key expiration (Unix epoch seconds) to pass the check\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Key vaults and open the vault\n2. Select Keys and choose the enabled key that failed\n3. Open the current version and click Edit (or Update)\n4. Set Expiration date (UTC) to a future date\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_key_vault_key\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  key_vault_id = \"<example_resource_id>\"\n  key_type     = \"RSA\"\n\n  expires_on = \"2030-01-01T00:00:00Z\" # CRITICAL: sets key expiration to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal: 1. Go to Key vaults. 2. For each Key vault, click on Keys. 3. In the main pane, ensure that an appropriate Expiration date is set for any keys that are Enabled. From Azure CLI: Update the Expiration date for the key using the below command: az keyvault key set-attributes --name <keyName> --vault-name <vaultName> -- expires Y-m-d'T'H:M:S'Z' Note: To view the expiration date on all keys in a Key Vault using Microsoft API, the 'List' Key permission is required. To update the expiration date for the keys: 1. Go to the Key vault, click on Access Control (IAM). 2. Click on Add role assignment and assign the role of Key Vault Crypto Officer to the appropriate user. From PowerShell: Set-AzKeyVaultKeyAttribute -VaultName <VaultName> -Name <KeyName> -Expires <DateTime>",
-      "Url": "https://docs.microsoft.com/en-us/rest/api/keyvault/about-keys--secrets-and-certificates#key-vault-keys"
+      "Text": "Set an `expiration` on all keys and enforce **automated rotation** with advance alerts. Retire or disable old versions promptly and rotate after any suspected exposure. Apply **least privilege** and **separation of duties** for key administration. Prefer standardized lifecycle policies (e.g., RBAC-based governance) to enforce consistent control.",
+      "Url": "https://hub.prowler.com/check/keyvault_key_expiration_set_in_non_rbac"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Keys cannot be used beyond their assigned expiration dates respectively. Keys need to be rotated periodically wherever they are used."

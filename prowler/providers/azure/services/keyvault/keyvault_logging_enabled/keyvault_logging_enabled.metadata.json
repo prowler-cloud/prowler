@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_logging_enabled",
-  "CheckTitle": "Ensure that logging for Azure Key Vault is 'Enabled'",
+  "CheckTitle": "Azure Key Vault has a diagnostic setting capturing audit logs",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KeyVault",
-  "Description": "Enable AuditEvent logging for key vault instances to ensure interactions with key vaults are logged and available.",
-  "Risk": "Monitoring how and when key vaults are accessed, and by whom, enables an audit trail of interactions with confidential information, keys, and certificates managed by Azure Keyvault. Enabling logging for Key Vault saves information in an Azure storage account which the user provides. This creates a new container named insights-logs-auditevent automatically for the specified storage account. This same storage account can be used for collecting logs for multiple key vaults.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-logging",
+  "Severity": "high",
+  "ResourceType": "microsoft.keyvault/vaults",
+  "Description": "**Azure Key Vault** diagnostic settings capture **audit logs** (`AuditEvent`) when category groups `audit` and `allLogs` are enabled and routed to a supported destination. Logged events include management and data-plane operations on vaults, keys, secrets, and certificates.",
+  "Risk": "Without **Key Vault audit logging**, access and changes to keys, secrets, and certificates are untracked.\n\nAttackers can misuse keys to decrypt data, alter or delete crypto material, and evade detection-eroding **confidentiality** and **integrity** and delaying **incident response**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-logging",
+    "https://github.com/uglide/azure-content/blob/master/articles/log-analytics/log-analytics-azure-key-vault.md",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
+    "https://www.pulumi.com/registry/packages/azure/api-docs/monitoring/diagnosticsetting/",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-8-ensure-security-of-key-and-certificate-repository",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/howto-logging",
+    "https://medium.com/azure-terraformer/decoding-azure-monitor-mastering-log-categories-and-category-groups-with-the-azure-portals-json-7c8f462b382a",
+    "http://man.hubwiz.com/docset/Terraform.docset/Contents/Resources/Documents/docs/providers/azurerm/r/monitor_diagnostic_setting.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor diagnostic-settings create --name <diagnostic settings name> --resource <key vault resource ID> --logs'[{category:AuditEvents,enabled:true,retention-policy:{enabled:true,days:180}}]' --metrics'[{category:AllMetrics,enabled:true,retention-policy:{enabled:true,days:180}}]' <[--event-hub <event hub ID> --event-hub-rule <event hub auth rule ID> | --storage-account <storage account ID> |--workspace <log analytics workspace ID> | --marketplace-partner-id <full resource ID of third-party solution>]>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
-      "Terraform": ""
+      "CLI": "az monitor diagnostic-settings create --name <example_resource_name> --resource <example_resource_id> --workspace <example_resource_id> --logs '[{\"categoryGroup\":\"audit\",\"enabled\":true},{\"categoryGroup\":\"allLogs\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Enable Key Vault diagnostic settings with audit + allLogs\nparam keyVaultName string\nparam workspaceId string\n\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' existing = {\n  name: keyVaultName\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: kv\n  properties: {\n    workspaceId: workspaceId\n    logs: [\n      {\n        categoryGroup: 'audit'   // critical: enables audit logs\n        enabled: true            // required to pass the check\n      }\n      {\n        categoryGroup: 'allLogs' // critical: enables allLogs group\n        enabled: true            // required to pass the check\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to your Key Vault > Monitoring > Diagnostic settings\n2. Click Add diagnostic setting\n3. Under Category groups, select audit and allLogs\n4. Choose a destination (e.g., Send to Log Analytics workspace) and select the workspace\n5. Click Save",
+      "Terraform": "```hcl\n# Enable diagnostic settings on Key Vault with audit + allLogs\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"<example_resource_id>\"           # Key Vault resource ID\n  log_analytics_workspace_id = \"<example_resource_id>\"           # Destination workspace ID\n\n  enabled_log {                                                  # critical: audit category group\n    category_group = \"audit\"                                    # enables audit logs\n  }\n  enabled_log {                                                  # critical: allLogs category group\n    category_group = \"allLogs\"                                  # enables all logs\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to Key vaults 2. For each Key vault 3. Go to Diagnostic settings 4. Click on Edit Settings 5. Ensure that Archive to a storage account is Enabled 6. Ensure that AuditEvent is checked, and the retention days is set to 180 days or as appropriate",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-8-ensure-security-of-key-and-certificate-repository"
+      "Text": "Enable **diagnostic settings** to collect `AuditEvent` logs-covering category groups `audit` and `allLogs`-and send them to a central sink. Apply **least privilege** to log access, enforce secure **retention/immutability**, monitor with alerts for anomalous operations, and use **separation of duties** to prevent logging bypass.",
+      "Url": "https://hub.prowler.com/check/keyvault_logging_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, Diagnostic AuditEvent logging is not enabled for Key Vault instances."
