@@ -61,6 +61,58 @@ from prowler.lib.outputs.finding import Finding as FindingOutput
 logger = get_task_logger(__name__)
 
 
+def _cleanup_orphan_scheduled_scans(
+    tenant_id: str,
+    provider_id: str,
+    scheduler_task_id: int,
+) -> int:
+    """
+    TEMPORARY WORKAROUND: Clean up orphan AVAILABLE scans.
+
+    Detects and removes AVAILABLE scans that were never used due to an
+    issue during the first scheduled scan setup.
+
+    An AVAILABLE scan is considered orphan if there's also a SCHEDULED scan for
+    the same provider with the same scheduler_task_id. This situation indicates
+    that the first scan execution didn't find the AVAILABLE scan (because it
+    wasn't committed yet, probably) and created a new one, leaving the AVAILABLE orphaned.
+
+    Args:
+        tenant_id: The tenant ID.
+        provider_id: The provider ID.
+        scheduler_task_id: The PeriodicTask ID that triggers these scans.
+
+    Returns:
+        Number of orphan scans deleted (0 if none found).
+    """
+    orphan_available_scans = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.AVAILABLE,
+        scheduler_task_id=scheduler_task_id,
+    )
+
+    scheduled_scan_exists = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.SCHEDULED,
+        scheduler_task_id=scheduler_task_id,
+    ).exists()
+
+    if scheduled_scan_exists and orphan_available_scans.exists():
+        orphan_count = orphan_available_scans.count()
+        logger.warning(
+            f"[WORKAROUND] Found {orphan_count} orphan AVAILABLE scan(s) for "
+            f"provider {provider_id} alongside a SCHEDULED scan. Cleaning up orphans..."
+        )
+        orphan_available_scans.delete()
+        return orphan_count
+
+    return 0
+
+
 def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str):
     """
     Helper function to perform tasks after a scan is completed.
@@ -247,6 +299,14 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             return serializer.data
 
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+
+        # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
+        _cleanup_orphan_scheduled_scans(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scheduler_task_id=periodic_task_instance.id,
+        )
+
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
             provider_id=provider_id,
