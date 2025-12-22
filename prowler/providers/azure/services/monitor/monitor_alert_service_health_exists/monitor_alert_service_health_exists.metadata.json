@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_alert_service_health_exists",
-  "CheckTitle": "Ensure that an Activity Log Alert exists for Service Health",
+  "CheckTitle": "Azure subscription has an enabled Activity Log alert for Service Health incidents",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Monitor",
-  "Description": "Ensure that an Azure activity log alert is configured to trigger when Service Health events occur within your Microsoft Azure cloud account. The alert should activate when new events match the specified conditions in the alert rule configuration.",
-  "Risk": "Lack of monitoring for Service Health events may result in missing critical service issues, planned maintenance, security advisories, or other changes that could impact Azure services and regions in use.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/service-health/overview",
+  "Severity": "medium",
+  "ResourceType": "microsoft.insights/activitylogalerts",
+  "Description": "Azure subscriptions have an **Activity Log alert** configured for **Service Health** notifications where `category` is `ServiceHealth` and `properties.incidentType` is `Incident`, with the rule enabled.",
+  "Risk": "Without alerts for **Service Health incidents**, teams may miss Azure outages or degradations, harming **availability** and delaying failover. Unseen incidents can cause cascading errors, timeouts, deployment failures, and SLA breaches across dependent workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/service-health/service-health-notifications-properties",
+    "https://stackoverflow.com/questions/65401019/create-azure-service-health-alert-in-terraform",
+    "https://thomasthornton.cloud/2019/07/18/creating-azure-service-health-alerts-in-powershell/",
+    "https://learn.microsoft.com/en-us/azure/service-health/alerts-activity-log-service-notifications-portal",
+    "https://learn.microsoft.com/en-us/azure/service-health/overview",
+    "https://github.com/MicrosoftDocs/azure-monitor-docs/blob/main/articles/service-health/service-health-alert-webhook-servicenow.md",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/platform/activity-log-schema",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/service-health-alert.html",
+    "https://www.shawntabrizi.com/blog/code/set-azure-service-health-alerts-programmatically-using-powershell/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor activity-log alert create --subscription <subscription-id> --resource-group <resource-group> --name <alert-rule> --condition category=ServiceHealth and properties.incidentType=Incident --scope /subscriptions/<subscription-id> --action-group <action-group>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/service-health-alert.html",
-      "Terraform": ""
+      "CLI": "az monitor activity-log alert create --resource-group <resource-group> --name <alert-rule> --scopes /subscriptions/<subscription-id> --condition \"category=ServiceHealth and properties.incidentType=Incident\"",
+      "NativeIaC": "```bicep\n// Activity Log Alert for Service Health Incidents\nresource alert 'Microsoft.Insights/activityLogAlerts@2017-04-01' = {\n  name: '<example_resource_name>'\n  location: 'Global'\n  properties: {\n    enabled: true\n    scopes: [ subscription().id ]\n    condition: {\n      allOf: [\n        { field: 'category', equals: 'ServiceHealth' }           // Critical: match Service Health category\n        { field: 'properties.incidentType', equals: 'Incident' } // Critical: alert only on Incident events\n      ]\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Service Health > Health alerts > Create service health alert\n2. Scope: select your Subscription and choose the Resource group to save the alert\n3. Event types: select only Service issues (Incidents)\n4. Leave other filters as default, ensure Enable rule is On, then click Create",
+      "Terraform": "```hcl\n# Activity Log Alert for Service Health Incidents\nresource \"azurerm_monitor_activity_log_alert\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  scopes              = [\"/subscriptions/<example_subscription_id>\"]\n\n  criteria {\n    category = \"ServiceHealth\"                           # Critical: Service Health category\n    service_health {\n      events = [\"Incident\"]                              # Critical: alert only on Incident type\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create an activity log alert for Service Health events and configure an action group to notify appropriate personnel.",
-      "Url": "https://learn.microsoft.com/en-us/azure/service-health/alerts-activity-log-service-notifications-portal"
+      "Text": "Create and maintain an enabled **Activity Log alert** for **Service Health Incident** events.\n- Route via **Action Groups** to on-call channels\n- Filter to critical services/regions\n- Test routing and refine recipients regularly\n- Integrate with **incident response** and **defense-in-depth** monitoring",
+      "Url": "https://hub.prowler.com/check/monitor_alert_service_health_exists"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, in your Azure subscription there will not be any activity log alerts configured for Service Health events."

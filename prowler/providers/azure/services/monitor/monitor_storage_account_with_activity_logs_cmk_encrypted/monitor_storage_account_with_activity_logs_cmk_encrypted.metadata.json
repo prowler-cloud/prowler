@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_storage_account_with_activity_logs_cmk_encrypted",
-  "CheckTitle": "Ensure the storage account containing the container with activity logs is encrypted with Customer Managed Key",
+  "CheckTitle": "Storage account storing Activity Log data is encrypted with a customer-managed key",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Monitor",
-  "Description": "Storage accounts with the activity log exports can be configured to use CustomerManaged Keys (CMK).",
-  "Risk": "Configuring the storage account with the activity log export container to use CMKs provides additional confidentiality controls on log data, as a given user must have read permission on the corresponding storage account and must be granted decrypt permission by the CMK.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-encrypt-sensitive-data-at-rest",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Storage accounts** configured as destinations for **Activity Log** export are evaluated to confirm encryption with **Customer-Managed Keys** (`CMK`) instead of Microsoft-managed keys.",
+  "Risk": "Storing activity logs without **CMK** weakens confidentiality and control of audit data. You lose independent key ownership, limiting rapid rotation/revocation and separation of duties. If storage credentials are compromised, attackers can exfiltrate logs that map resources and changes, aiding targeted attacks and hindering effective incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log?tabs=cli#managing-legacy-log-profiles",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-encrypt-sensitive-data-at-rest",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-storage-accounts-use-customer-managed-key-for-encryption#terraform",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/use-cmk-for-activity-log-storage-container-encryption.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage account update --name <name of the storage account> --resource-group <resource group for a storage account> --encryption-key-source=Microsoft.Keyvault --encryption-key-vault <Key Vault URI> --encryption-key-name <KeyName> --encryption-key-version <Key Version>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/use-cmk-for-activity-log-storage-container-encryption.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-storage-accounts-use-customer-managed-key-for-encryption#terraform"
+      "CLI": "az storage account update --name <example_resource_name> --resource-group <example_resource_name> --assign-identity --encryption-key-source Microsoft.Keyvault --encryption-key-vault <KeyVaultURI> --encryption-key-name <KeyName>",
+      "NativeIaC": "```bicep\n// Storage account encrypted with a customer-managed key (CMK)\nresource stg 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'StorageV2'\n  sku: { name: 'Standard_LRS' }\n  identity: { type: 'SystemAssigned' } // Required for Storage to access the Key Vault key\n  properties: {\n    encryption: {\n      keySource: 'Microsoft.Keyvault' // CRITICAL: switches encryption from Microsoft.Storage to CMK\n      keyVaultProperties: {\n        keyName: '<KeyName>'\n        keyVaultUri: '<KeyVaultURI>' // Uses latest key version if not specified\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Storage accounts and open the account used by your Activity Log diagnostic setting\n2. Select Identity > System assigned > set Status to On > Save\n3. Go to Settings > Encryption\n4. Select Customer-managed keys, choose your Key vault and Key, then click Save\n5. Ensure the storage account's identity has Get, Wrap Key, and Unwrap Key permissions on the key in Key Vault",
+      "Terraform": "```hcl\n# Storage account encrypted with a customer-managed key (CMK)\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_location>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  identity {\n    type = \"SystemAssigned\" # Required for Storage to access the Key Vault key\n  }\n\n  customer_managed_key {\n    key_vault_key_id = \"<key_vault_key_id>\" # CRITICAL: enables CMK by pointing to the Key Vault key\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to Activity log 2. Select Export 3. Select Subscription 4. In section Storage Account, note the name of the Storage account 5. Close the Export Audit Logs blade. Close the Monitor - Activity Log blade. 6. In right column, Click service Storage Accounts to access Storage account blade 7. Click on the storage account name noted in step 4. This will open blade specific to that storage account 8. Under Security + networking, click Encryption. 9. Ensure Customer-managed keys is selected and Key URI is set.",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log?tabs=cli#managing-legacy-log-profiles"
+      "Text": "Encrypt the storage account that holds exported **Activity Logs** with **Customer-Managed Keys** via Azure Key Vault or Managed HSM. Apply **least privilege** to key usage, enforce regular rotation and revocation, and enable soft delete and purge protection. Complement with network isolation and immutable retention for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/monitor_storage_account_with_activity_logs_cmk_encrypted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "NOTE: You must have your key vault setup to utilize this. All Audit Logs will be encrypted with a key you provide. You will need to set up customer managed keys separately, and you will select which key to use via the instructions here. You will be responsible for the lifecycle of the keys, and will need to manually replace them at your own determined intervals to keep the data secure."

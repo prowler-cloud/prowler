@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_alert_create_update_security_solution",
-  "CheckTitle": "Ensure that Activity Log Alert exists for Create or Update Security Solution",
+  "CheckTitle": "Subscription has Activity Log alert for Security Solution create or update",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Monitor",
-  "Description": "Create an activity log alert for the Create or Update Security Solution event.",
-  "Risk": "Monitoring for Create or Update Security Solution events gives insight into changes to the active security solutions and may reduce the time it takes to detect suspicious activity.",
-  "RelatedUrl": "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+  "Severity": "medium",
+  "ResourceType": "microsoft.insights/activitylogalerts",
+  "Description": "An **Azure Monitor activity log alert** is configured to capture **Security Solutions** create/update operations (`Microsoft.Security/securitySolutions/write`) at subscription scope.",
+  "Risk": "Without this alert, **unauthorized or mistaken changes** to security tooling can go undetected. Attackers could disable defenses, alter integrations, or weaken policies, eroding the **integrity** of controls, creating blind spots that threaten **confidentiality**, and delaying incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
+    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-security-solution-alert.html#trendmicro"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor activity-log alert create --resource-group '<resource group name>' --condition category=Administrative and operationName=Microsoft.Security/securitySolutions/write and level=<verbose | information | warning | error | critical>--scope '/subscriptions/<subscription ID>' --name '<activity log rule name>' -- subscription <subscription id> --action-group <action group ID> --location global",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-security-solution-alert.html#trendmicro",
-      "Terraform": ""
+      "CLI": "az monitor activity-log alert create --name \"<activity log rule name>\" --resource-group \"<example_resource_name>\" --scopes \"/subscriptions/<example_resource_id>\" --condition \"category=Administrative and operationName=Microsoft.Security/securitySolutions/write\" --location Global",
+      "NativeIaC": "```bicep\n// Activity Log Alert for Security Solution create/update\nresource activityLogAlert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {\n  name: '<example_resource_name>'\n  location: 'Global'\n  properties: {\n    scopes: [ '/subscriptions/<example_resource_id>' ]\n    condition: {\n      allOf: [\n        {\n          field: 'category'\n          equals: 'Administrative'\n        }\n        {\n          field: 'operationName' // Critical: match Security Solution create/update\n          equals: 'Microsoft.Security/securitySolutions/write' // Triggers on this operation\n        }\n      ]\n    }\n    enabled: true\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Monitor > Alerts > + Create > Alert rule\n2. Scope: Select your Subscription and click Apply\n3. Condition: Choose Activity log, set Signal name to Administrative, then add a filter Operation name = Microsoft.Security/securitySolutions/write\n4. Actions: Skip (no action group required)\n5. Details: Enter a Name, set Region to Global, ensure Enable alert rule upon creation is checked\n6. Review + create > Create",
+      "Terraform": "```hcl\n# Activity Log Alert for Security Solution create/update\nresource \"azurerm_monitor_activity_log_alert\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  scopes              = [\"/subscriptions/<example_resource_id>\"]\n\n  criteria {\n    category       = \"Administrative\"\n    operation_name = \"Microsoft.Security/securitySolutions/write\" # Critical: fires on Security Solution create/update\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Navigate to the Monitor blade. 2. Select Alerts. 3. Select Create. 4. Select Alert rule. 5. Under Filter by subscription, choose a subscription. 6. Under Filter by resource type, select Security Solutions (securitySolutions). 7. Under Filter by location, select All. 8. From the results, select the subscription. 9. Select Done. 10. Select the Condition tab. 11. Under Signal name, click Create or Update Security Solutions (Microsoft.Security/securitySolutions). 12. Select the Actions tab. 13. To use an existing action group, click Select action groups. To create a new action group, click Create action group. Fill out the appropriate details for the selection. 14. Select the Details tab. 15. Select a Resource group, provide an Alert rule name and an optional Alert rule description. 16. Click Review + create. 17. Click Create.",
-      "Url": "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement"
+      "Text": "Configure an **activity log alert** for `Microsoft.Security/securitySolutions/write` and route it to action groups for prompt notification/automation.\n\nApply **least privilege**, require **change control**, and forward alerts to a central SIEM to strengthen **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/monitor_alert_create_update_security_solution"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, no monitoring alerts are created."

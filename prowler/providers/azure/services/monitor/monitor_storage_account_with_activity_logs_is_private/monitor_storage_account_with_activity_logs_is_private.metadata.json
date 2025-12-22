@@ -1,29 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_storage_account_with_activity_logs_is_private",
-  "CheckTitle": "Ensure the Storage Container Storing the Activity Logs is not Publicly Accessible",
+  "CheckTitle": "Storage account storing activity logs does not allow public blob access",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Monitor",
-  "Description": "The storage account container containing the activity log export should not be publicly accessible.",
-  "Risk": "Allowing public access to activity log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+  "ResourceType": "microsoft.storage/storageaccounts",
+  "Description": "**Azure Monitor activity logs** sent to a **Storage account** are evaluated for **Blob public access**. The finding identifies whether the account that stores the logs has `AllowBlobPublicAccess` turned on.",
+  "Risk": "Exposed log data undermines **confidentiality** by revealing operations, resource IDs, IPs, and identities.\n\nAdversaries gain **reconnaissance** to map controls, craft targeted attacks, and time actions to avoid detection, enabling **lateral movement** and broader compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-2-secure-cloud-services-with-network-controls",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible#terraform",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az storage container set-permission --name insights-activity-logs --account-name <Storage Account Name> --public-access off",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible#terraform"
+      "CLI": "az storage account update --name <STORAGE_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP_NAME> --allow-blob-public-access false",
+      "NativeIaC": "```bicep\n// Set storage account to disallow public blob access\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  sku: { name: 'Standard_LRS' }\n  kind: 'StorageV2'\n  properties: {\n    allowBlobPublicAccess: false // Critical: disables public access at the account level\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to the storage account used by the diagnostic/Activity Log export\n2. Under Settings, select Configuration\n3. Set \"Allow Blob public access\" to Disabled\n4. Click Save",
+      "Terraform": "```hcl\n# Disable public blob access on the storage account\nresource \"azurerm_storage_account\" \"<example_resource_name>\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = \"<example_resource_name>\"\n  location                 = \"<example_resource_name>\"\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  allow_blob_public_access = false # Critical: disables public access at the account level\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Search for Storage Accounts to access Storage account blade 3. Click on the storage account name 4. Click on Configuration under settings 5. Select Enabled under 'Allow Blob public access'",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-2-secure-cloud-services-with-network-controls"
+      "Text": "Set `AllowBlobPublicAccess=false` on the storage account holding logs. Enforce **least privilege** via RBAC or scoped SAS, use **private endpoints** and network restrictions, and enable **immutability** for log containers to add **defense in depth** and prevent unauthorized access.",
+      "Url": "https://hub.prowler.com/check/monitor_storage_account_with_activity_logs_is_private"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Configuring container Access policy to private will remove access from the container for everyone except owners of the storage account. Access policy needs to be set explicitly in order to allow access to other desired users."

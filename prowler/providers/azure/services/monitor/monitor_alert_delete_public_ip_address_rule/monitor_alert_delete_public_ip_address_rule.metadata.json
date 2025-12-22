@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "monitor_alert_delete_public_ip_address_rule",
-  "CheckTitle": "Ensure that Activity Log Alert exists for Delete Public IP Address rule",
+  "CheckTitle": "Azure subscription has an Activity Log alert for public IP address deletion",
   "CheckType": [],
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Monitor",
-  "Description": "Create an activity log alert for the Delete Public IP Address rule.",
-  "Risk": "Monitoring for Delete Public IP Address events gives insight into network access changes and may reduce the time it takes to detect suspicious activity.",
-  "RelatedUrl": "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+  "Severity": "medium",
+  "ResourceType": "microsoft.insights/activitylogalerts",
+  "Description": "Azure Monitor activity log alert exists for the **Delete Public IP Address** operation (`Microsoft.Network/publicIPAddresses/delete`), capturing subscription-wide events when Public IP resources are removed.",
+  "Risk": "Unmonitored deletion of Public IPs can abruptly sever ingress/egress, break DNS and allowlists, and take services offline (**availability**). Attackers or misconfigurations can delete IPs to cause **DoS** or evade controls, and delayed visibility hinders **incident response** and **forensics**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-public-ip-alert.html#trendmicro",
+    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
+    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor activity-log alert create --resource-group '<resource group name>' --condition category=Administrative and operationName=Microsoft.Network/publicIPAddresses/delete and level=<verbose | information | warning | error | critical>--scope '/subscriptions/<subscription ID>' --name '<activity log rule name>' -- subscription <subscription id> --action-group <action group ID> --location global",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-public-ip-alert.html#trendmicro",
-      "Terraform": ""
+      "CLI": "az monitor activity-log alert create --name <activity_log_rule_name> --resource-group <resource_group_name> --location global --scopes /subscriptions/<subscription_id> --condition category=Administrative and operationName=Microsoft.Network/publicIPAddresses/delete",
+      "NativeIaC": "```bicep\n// Activity Log alert for Public IP deletion\nresource alert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {\n  name: '<example_resource_name>'\n  location: 'Global'\n  properties: {\n    enabled: true\n    scopes: [\n      '/subscriptions/<example_resource_id>' // Scope the alert to the subscription\n    ]\n    condition: {\n      allOf: [\n        { field: 'category', equals: 'Administrative' }\n        { field: 'operationName', equals: 'Microsoft.Network/publicIPAddresses/delete' } // Critical: triggers when a Public IP is deleted\n      ]\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Monitor > Alerts > + Create > Alert rule\n2. Scope: Select your subscription and click Apply\n3. Condition: Choose Activity log, then set Category = Administrative and Operation name = Microsoft.Network/publicIPAddresses/delete; click Apply\n4. Actions: Skip (no action group required to pass)\n5. Details: Enter an alert name, set Region to Global, ensure Enable alert rule upon creation is checked\n6. Review + create > Create",
+      "Terraform": "```hcl\nresource \"azurerm_monitor_activity_log_alert\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  scopes              = [\"/subscriptions/<example_resource_id>\"]\n\n  criteria {\n    category       = \"Administrative\"\n    operation_name = \"Microsoft.Network/publicIPAddresses/delete\" # Critical: alert when a Public IP is deleted\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Navigate to the Monitor blade. 2. Select Alerts. 3. Select Create. 4. Select Alert rule. 5. Under Filter by subscription, choose a subscription. 6. Under Filter by resource type, select Public IP addresses. 7. Under Filter by location, select All. 8. From the results, select the subscription. 9. Select Done. 10. Select the Condition tab. 11. Under Signal name, click Delete Public Ip Address (Microsoft.Network/publicIPAddresses). 12. Select the Actions tab. 13. To use an existing action group, click Select action groups. To create a new action group, click Create action group. Fill out the appropriate details for the selection. 14. Select the Details tab. 15. Select a Resource group, provide an Alert rule name and an optional Alert rule description. 16. Click Review + create. 17. Click Create.",
-      "Url": "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement"
+      "Text": "Implement an activity log alert for `Microsoft.Network/publicIPAddresses/delete` and route it to an action group for rapid response.\n- Apply **least privilege** and change approval for IP deletions\n- Use **resource locks** on critical IPs\n- Centralize alerts in your SIEM and define runbooks for containment",
+      "Url": "https://hub.prowler.com/check/monitor_alert_delete_public_ip_address_rule"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, no monitoring alerts are created."
