@@ -2,7 +2,11 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
 ## [1.16.1] (Prowler v5.16.1)
+=======
+## [1.16.1] (Prowler v5.17.1)
+>>>>>>> 5118d0ecb (chore(lighthouse): change meta tools descriptions to be more accurate (#9632))
 
 ### 🔄 Changed
 
