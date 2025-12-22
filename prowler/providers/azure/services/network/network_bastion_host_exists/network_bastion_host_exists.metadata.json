@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "network_bastion_host_exists",
-  "CheckTitle": "Ensure an Azure Bastion Host Exists",
+  "CheckTitle": "Azure subscription has at least one Bastion Host",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "The Azure Bastion service allows secure remote access to Azure Virtual Machines over the Internet without exposing remote access protocol ports and services directly to the Internet. The Azure Bastion service provides this access using TLS over 443/TCP, and subscribes to hardened configurations within an organization's Azure Active Directory service.",
-  "Risk": "The Azure Bastion service allows organizations a more secure means of accessing Azure Virtual Machines over the Internet without assigning public IP addresses to those Virtual Machines. The Azure Bastion service provides Remote Desktop Protocol (RDP) and Secure Shell (SSH) access to Virtual Machines using TLS within a web browser, thus preventing organizations from opening up 3389/TCP and 22/TCP to the Internet on Azure Virtual Machines. Additional benefits of the Bastion service includes Multi-Factor Authentication, Conditional Access Policies, and any other hardening measures configured within Azure Active Directory using a central point of access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku",
+  "ResourceType": "microsoft.network/bastionhosts",
+  "Description": "Azure subscription contains an **Azure Bastion host** for secure RDP/SSH brokering over TLS on `443/TCP` to virtual machines using private IPs. The assessment identifies whether such a bastion is available.",
+  "Risk": "Absent **Bastion**, admins often assign public IPs or open `22/3389`, expanding attack surface.\n\nThis enables Internet brute force, credential stuffing, and RDP/SSH exploits, leading to unauthorized access, data exfiltration, and lateral movement. CIA impact: confidentiality/integrity loss and potential downtime from ransomware.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/az.network/get-azbastion?view=azps-9.2.0",
+    "https://adamtheautomator.com/azure-bastion/",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/bastionhosts",
+    "https://medium.com/@jose.ruy.borges/use-bastion-host-to-connect-to-a-vm-without-setting-up-a-vpn-connection-in-azure-9d6fcfbb487a",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/bastion-host-exists.html",
+    "https://platform.qa.com/lab/connecting-to-azure-vm-using-bastion-host/creating-an-azure-bastion-host-using-azure-portal/",
+    "https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku",
+    "https://learn.microsoft.com/en-us/azure/firewall/deploy-ps",
+    "https://github.com/anuyen/terraform-azurerm-bastion"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az network bastion create --location <location> --name <name of bastion host> --public-ip-address <public IP address name or ID> --resource-group <resource group name or ID> --vnet-name <virtual network containing subnet called 'AzureBastionSubnet'> --scale-units <integer> --sku Standard [--disable-copy- paste true|false] [--enable-ip-connect true|false] [--enable-tunneling true|false]",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/bastion-host-exists.html",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```bicep\n// Minimal Bicep to ensure at least one Bastion Host exists in the subscription\nparam location string = resourceGroup().location\n\nresource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {\n  name: '<example_resource_name>-vnet'\n  location: location\n  properties: {\n    addressSpace: { addressPrefixes: ['10.0.0.0/24'] }\n    subnets: [\n      {\n        name: 'AzureBastionSubnet'\n        properties: { addressPrefix: '10.0.0.0/27' }\n      }\n    ]\n  }\n}\n\nresource pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = {\n  name: '<example_resource_name>-pip'\n  location: location\n  sku: { name: 'Standard' }\n  properties: { publicIPAllocationMethod: 'Static' }\n}\n\nresource bastion 'Microsoft.Network/bastionHosts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: location\n  sku: { name: 'Basic' }\n  properties: {\n    ipConfigurations: [\n      {\n        name: 'IpConf'\n        properties: {\n          subnet: { id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, 'AzureBastionSubnet') } // Critical: attaches Bastion to required AzureBastionSubnet so resource can be created\n          publicIPAddress: { id: pip.id } // Critical: associates required Public IP with Bastion\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Networking > Bastions > Create\n2. Select your Subscription and a Resource group\n3. Enter a Name and Region\n4. Under Virtual network, select an existing VNet or click Create new\n5. Ensure a subnet named AzureBastionSubnet exists with a /27 address space; create it if prompted\n6. For Public IP address, click Create new and accept defaults\n7. Click Review + create, then Create\n8. After deployment completes, the subscription now has a Bastion Host (check passes)",
+      "Terraform": "```hcl\n# Minimal Terraform to create one Bastion Host (fixes FAIL by ensuring existence)\nresource \"azurerm_resource_group\" \"example\" {\n  name     = \"<example_resource_name>\"\n  location = \"eastus\"\n}\n\nresource \"azurerm_virtual_network\" \"example\" {\n  name                = \"<example_resource_name>-vnet\"\n  location            = azurerm_resource_group.example.location\n  resource_group_name = azurerm_resource_group.example.name\n  address_space       = [\"10.0.0.0/24\"]\n}\n\nresource \"azurerm_subnet\" \"bastion\" {\n  name                 = \"AzureBastionSubnet\"\n  resource_group_name  = azurerm_resource_group.example.name\n  virtual_network_name = azurerm_virtual_network.example.name\n  address_prefixes     = [\"10.0.0.0/27\"]\n}\n\nresource \"azurerm_public_ip\" \"example\" {\n  name                = \"<example_resource_name>-pip\"\n  location            = azurerm_resource_group.example.location\n  resource_group_name = azurerm_resource_group.example.name\n  allocation_method   = \"Static\"\n  sku                 = \"Standard\"\n}\n\nresource \"azurerm_bastion_host\" \"example\" {\n  name                = \"<example_resource_name>\"\n  location            = azurerm_resource_group.example.location\n  resource_group_name = azurerm_resource_group.example.name\n\n  # Critical: creating the Bastion Host resource is what changes the check to PASS\n  sku = \"Basic\"  # Critical: required for Bastion creation\n\n  ip_configuration {                     \n    name                 = \"IpConf\"\n    subnet_id            = azurerm_subnet.bastion.id            # Critical: attaches Bastion to AzureBastionSubnet\n    public_ip_address_id = azurerm_public_ip.example.id         # Critical: associates required Public IP\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal* 1. Click on Bastions 2. Select the Subscription 3. Select the Resource group 4. Type a Name for the new Bastion host 5. Select a Region 6. Choose Standard next to Tier 7. Use the slider to set the Instance count 8. Select the Virtual network or Create new 9. Select the Subnet named AzureBastionSubnet. Create a Subnet named AzureBastionSubnet using a /26 CIDR range if it doesn't already exist. 10. Selct the appropriate Public IP address option. 11. If Create new is selected for the Public IP address option, provide a Public IP address name. 12. If Use existing is selected for Public IP address option, select an IP address from Choose public IP address 13. Click Next: Tags > 14. Configure the appropriate Tags 15. Click Next: Advanced > 16. Select the appropriate Advanced options 17. Click Next: Review + create > 18. Click Create From Azure CLI az network bastion create --location <location> --name <name of bastion host> --public-ip-address <public IP address name or ID> --resource-group <resource group name or ID> --vnet-name <virtual network containing subnet called 'AzureBastionSubnet'> --scale-units <integer> --sku Standard [--disable-copy- paste true|false] [--enable-ip-connect true|false] [--enable-tunneling true|false] From PowerShell Create the appropriate Virtual network settings and Public IP Address settings. $subnetName = 'AzureBastionSubnet' $subnet = New-AzVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix <IP address range in CIDR notation making sure to use a /26> $virtualNet = New-AzVirtualNetwork -Name <virtual network name> - ResourceGroupName <resource group name> -Location <location> -AddressPrefix <IP address range in CIDR notation> -Subnet $subnet $publicip = New-AzPublicIpAddress -ResourceGroupName <resource group name> - Name <public IP address name> -Location <location> -AllocationMethod Dynamic -Sku Standard",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/az.network/get-azbastion?view=azps-9.2.0"
+      "Text": "Standardize on **Azure Bastion** for admin access.\n\nRemove VM public IPs and deny inbound `22`/`3389` via perimeter controls and NSGs. Apply **least privilege** and just-in-time access, integrate **Entra ID** with **MFA** and conditional access, monitor sessions/logs, and segment networks so only Bastion can reach management ports.",
+      "Url": "https://hub.prowler.com/check/network_bastion_host_exists"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "The Azure Bastion service incurs additional costs and requires a specific virtual network configuration. The Standard tier offers additional configuration options compared to the Basic tier and may incur additional costs for those added features."

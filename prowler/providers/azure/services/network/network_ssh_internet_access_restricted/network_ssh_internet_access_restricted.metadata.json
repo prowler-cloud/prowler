@@ -1,29 +1,43 @@
 {
   "Provider": "azure",
   "CheckID": "network_ssh_internet_access_restricted",
-  "CheckTitle": "Ensure that SSH access from the Internet is evaluated and restricted",
+  "CheckTitle": "Network security group does not allow inbound SSH (TCP port 22) from the Internet",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
-  "Risk": "The potential security problem with using SSH over the Internet is that attackers can use various brute force techniques to gain access to Azure Virtual Machines. Once the attackers gain access, they can use a virtual machine as a launch point for compromising other machines on the Azure Virtual Network or even attack networked devices outside of Azure.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+  "ResourceType": "microsoft.network/networksecuritygroups",
+  "Description": "**Azure NSG** inbound rules that allow **SSH** on `TCP 22` from `0.0.0.0/0`, `Internet`, or `*` are identified, including rules where port ranges include `22` and protocol is `TCP` or `*`.\n\nIndicates NSGs exposing SSH to the Internet.",
+  "Risk": "Public **SSH** access weakens **confidentiality** and **integrity**. Open `22` invites brute force and key theft, enabling remote shell control, persistence, and **lateral movement**. Attackers can pivot into VNets, exfiltrate data, deploy crypto-miners, and impact **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.techbloat.com/terraform-azurerm-network-security-group.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/unrestricted-ssh-access.html",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-ssh-access.html",
+    "https://www.mantra-networking.com/azure-nsgs/",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_3#terraform",
+    "https://github.com/Gautam01Dev/Azure-Network",
+    "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+    "https://dev.to/charlie_barajas_353e28103/azure-nsg-routes-3k7a",
+    "https://stackoverflow.com/questions/35780769/changing-ssh-port-22-to-a-custom-port-in-azure-resource-group-vm",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-ssh-access.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_3#terraform"
+      "CLI": "az network nsg rule delete --resource-group <RESOURCE_GROUP> --nsg-name <NSG_NAME> --name <RULE_NAME>",
+      "NativeIaC": "```bicep\n// NSG allowing SSH only from a specific source (not the Internet)\nresource <example_resource_name> 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    securityRules: [\n      {\n        name: '<example_rule_name>'\n        properties: {\n          priority: 100\n          direction: 'Inbound'\n          access: 'Allow'\n          protocol: 'Tcp'\n          sourcePortRange: '*'\n          destinationPortRange: '22'\n          sourceAddressPrefix: '<ALLOWED_CIDR>' // CRITICAL: restrict SSH source; not Internet/*/0.0.0.0/0\n          destinationAddressPrefix: '*'\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Network security groups and open <NSG_NAME>\n2. Select Inbound security rules\n3. Find any rule that allows TCP 22 from Internet/Any/0.0.0.0/0\n4. Delete the rule, or Edit it and set Source to IP Addresses with only your allowed CIDR(s)\n5. Save",
+      "Terraform": "```hcl\n# Restrict SSH to a specific source so port 22 is not open to the Internet\nresource \"azurerm_network_security_rule\" \"<example_resource_name>\" {\n  name                        = \"<example_rule_name>\"\n  resource_group_name         = \"<example_resource_name>\"\n  network_security_group_name = \"<example_resource_name>\"\n  priority                    = 100\n  direction                   = \"Inbound\"\n  access                      = \"Allow\"\n  protocol                    = \"Tcp\"\n  source_port_range           = \"*\"\n  destination_port_range      = \"22\"\n  source_address_prefix       = \"<ALLOWED_CIDR>\" # CRITICAL: restrict SSH source; not Internet/*/0.0.0.0/0\n  destination_address_prefix  = \"*\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Where SSH is not explicitly required and narrowly configured for resources attached to the Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRoute Site-to-site VPN Point-to-site VPN",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+      "Text": "Apply **least privilege** on SSH:\n- Remove public rules to `TCP 22` from `0.0.0.0/0`\n- Allowlist specific admin IPs or management subnets\n- Prefer **Azure Bastion**, **JIT access**, or **VPN/ExpressRoute** for admin\n- Use key-based auth, disable passwords, and remove unnecessary public IPs\n\nAdopt **defense in depth** with logging and periodic reviews.",
+      "Url": "https://hub.prowler.com/check/network_ssh_internet_access_restricted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

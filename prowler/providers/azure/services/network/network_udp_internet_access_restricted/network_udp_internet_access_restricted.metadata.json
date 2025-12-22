@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "network_udp_internet_access_restricted",
-  "CheckTitle": "Ensure that UDP access from the Internet is evaluated and restricted",
+  "CheckTitle": "Network security group does not allow inbound UDP from the Internet",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
-  "Risk": "The potential security problem with broadly exposing UDP services over the Internet is that attackers can use DDoS amplification techniques to reflect spoofed UDP traffic from Azure Virtual Machines. The most common types of these attacks use exposed DNS, NTP, SSDP, SNMP, CLDAP and other UDP-based services as amplification sources for disrupting services of other machines on the Azure Virtual Network or even attack networked devices outside of Azure.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#secure-your-critical-azure-service-resources-to-only-your-virtual-networks",
+  "ResourceType": "microsoft.network/networksecuritygroups",
+  "Description": "Network Security Group rules are assessed for **inbound UDP** exposure to the public Internet (e.g., `0.0.0.0/0`, `*`, `Internet`). The finding identifies allow rules that permit unsolicited **UDP** traffic from any external source to attached resources.",
+  "Risk": "Publicly reachable **UDP** services enable **DDoS reflection/amplification**, exhausting bandwidth and compute and degrading **availability** for workloads and networks. Open services (DNS, NTP, SSDP, SNMP, CLDAP) can be abused with spoofed traffic, turning endpoints into amplifiers and disrupting adjacent resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/security/fundamentals/ddos-best-practices",
+    "https://docs.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#secure-your-critical-azure-service-resources-to-only-your-virtual-networks",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-udp-services-are-restricted-from-the-internet#terraform",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-udp-access.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-udp-access.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-udp-services-are-restricted-from-the-internet#terraform"
+      "CLI": "az network nsg rule update --resource-group <RESOURCE_GROUP> --nsg-name <NSG_NAME> --name <RULE_NAME> --access Deny",
+      "NativeIaC": "```bicep\n// Update the existing NSG rule to block UDP from the Internet\nresource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource rule 'Microsoft.Network/networkSecurityGroups/securityRules@2023-09-01' = {\n  name: '${nsg.name}/<example_resource_name>'\n  properties: {\n    priority: 100\n    direction: 'Inbound'\n    access: 'Deny' // CRITICAL: Change access to Deny so UDP from Internet is not allowed\n    protocol: 'Udp'\n    sourceAddressPrefix: '*'\n    destinationAddressPrefix: '*'\n    sourcePortRange: '*'\n    destinationPortRange: '*'\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Network security groups and open the NSG attached to the resource\n2. Select Inbound security rules\n3. Find any rule with Protocol = UDP, Direction = Inbound, Action = Allow, and Source set to Any/Internet/0.0.0.0/0\n4. Click the rule, set Action to Deny (or change Source to a specific trusted range), then Save\n5. Repeat for any remaining UDP Allow rules from the Internet",
+      "Terraform": "```hcl\n# Modify the existing NSG rule to deny UDP from the Internet\nresource \"azurerm_network_security_rule\" \"<example_resource_name>\" {\n  name                        = \"<example_resource_name>\"  # existing rule name\n  resource_group_name         = \"<example_resource_name>\"\n  network_security_group_name = \"<example_resource_name>\"\n  priority                    = 100\n  direction                   = \"Inbound\"\n  access                      = \"Deny\" # CRITICAL: Change access to Deny to remove the Allow condition\n  protocol                    = \"Udp\"\n  source_address_prefix       = \"*\"\n  destination_address_prefix  = \"*\"\n  source_port_range           = \"*\"\n  destination_port_range      = \"*\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Where UDP is not explicitly required and narrowly configured for resources attached tothe Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRouteSite-to-site VPN Point-to-site VPN",
-      "Url": "https://docs.microsoft.com/en-us/azure/security/fundamentals/ddos-best-practices"
+      "Text": "Apply **least privilege** on NSG rules:\n- Deny Internet `UDP` inbound by default\n- Allow only required sources/ports\n- Prefer private access (VNets, private endpoints, VPN/ExpressRoute)\n- Use **defense in depth** with Azure Firewall and DDoS Protection\n- Monitor and disable or rate-limit unnecessary UDP services",
+      "Url": "https://hub.prowler.com/check/network_udp_internet_access_restricted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

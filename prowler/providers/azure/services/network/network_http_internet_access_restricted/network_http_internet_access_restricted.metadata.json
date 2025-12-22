@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "network_http_internet_access_restricted",
-  "CheckTitle": "Ensure that HTTP(S) access from the Internet is evaluated and restricted",
+  "CheckTitle": "Network security group restricts inbound HTTP (port 80) access from the Internet",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required and narrowly configured.",
-  "Risk": "The potential security problem with using HTTP(S) over the Internet is that attackers can use various brute force techniques to gain access to Azure resources. Once the attackers gain access, they can use the resource as a launch point for compromising other resources within the Azure tenant.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries",
+  "Severity": "medium",
+  "ResourceType": "microsoft.network/networksecuritygroups",
+  "Description": "**Azure Network Security Groups** are evaluated for inbound rules that allow public **HTTP** access on `TCP 80`, including cases where `80` is covered by a port range, from `0.0.0.0/0`, `Internet`, or `*`.",
+  "Risk": "Exposing `TCP 80` to the Internet increases attack surface:\n- Web recon and exploits compromise **integrity** and **availability**\n- Cleartext HTTP can leak credentials, cookies, and data, harming **confidentiality**\n- Public endpoints enable bot abuse and footholds for lateral movement",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://dev.to/buzzgk/azure-network-security-groups-nsgs-securing-your-azure-virtual-network-1kf8",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-http-access.html",
+    "https://notes.51sec.org/Collections/29157b51-1fff-4d97-9b63-22d4cc98efe1",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-http-access.html",
-      "Terraform": ""
+      "CLI": "az network nsg rule update --resource-group <RESOURCE_GROUP> --nsg-name <NSG_NAME> --name <RULE_NAME> --access Deny",
+      "NativeIaC": "```bicep\n// Deny inbound HTTP from Internet on an existing NSG\nresource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource denyHttp 'Microsoft.Network/networkSecurityGroups/securityRules@2023-09-01' = {\n  name: '${nsg.name}/Deny-HTTP-Internet'\n  properties: {\n    priority: 100\n    direction: 'Inbound'\n    access: 'Deny'                 // CRITICAL: Denies the HTTP rule so it no longer allows Internet traffic\n    protocol: 'Tcp'\n    sourceAddressPrefix: 'Internet' // CRITICAL: Targets traffic coming from the Internet\n    destinationAddressPrefix: '*'\n    sourcePortRange: '*'\n    destinationPortRange: '80'      // CRITICAL: Blocks port 80 (HTTP)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Network Security Groups and select your NSG\n2. Open Inbound security rules\n3. Find any rule with Action Allow, Protocol TCP or Any, Destination port 80 (or range including 80), and Source Internet/*/0.0.0.0/0\n4. Select the rule and click Edit\n5. Change Action to Deny (or delete the rule)\n6. Click Save",
+      "Terraform": "```hcl\n# Deny inbound HTTP from Internet on an existing NSG\nresource \"azurerm_network_security_rule\" \"deny_http_internet\" {\n  name                        = \"deny-http-internet\"\n  resource_group_name         = \"<example_resource_name>\"\n  network_security_group_name = \"<example_resource_name>\"\n  priority                    = 100\n  direction                   = \"Inbound\"\n  access                      = \"Deny\"           # CRITICAL: Deny so HTTP from Internet is not allowed\n  protocol                    = \"Tcp\"\n  source_address_prefix       = \"Internet\"       # CRITICAL: Matches traffic from the Internet\n  destination_address_prefix  = \"*\"\n  source_port_range           = \"*\"\n  destination_port_range      = \"80\"             # CRITICAL: Blocks port 80 (HTTP)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Where HTTP(S) is not explicitly required and narrowly configured for resources attached to the Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRoute Site-to-site VPN Point-to-site VPN",
-      "Url": ""
+      "Text": "Apply **least privilege** at NSGs:\n- Remove broad allows to `TCP 80`, or restrict to trusted sources\n- Enforce **HTTPS (443)** and redirect or block HTTP\n- Use **private access** patterns and segmentation for **defense in depth**\n- If exposure is necessary, place services behind a **WAF**, enable **DDoS** protections, and monitor",
+      "Url": "https://hub.prowler.com/check/network_http_internet_access_restricted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

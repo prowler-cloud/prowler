@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "network_watcher_enabled",
-  "CheckTitle": "Ensure that Network Watcher is 'Enabled' for all locations in the Azure subscription",
+  "CheckTitle": "Network Watcher is enabled for all locations in the subscription",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "Enable Network Watcher for Azure subscriptions.",
-  "Risk": "Network diagnostic and visualization tools available with Network Watcher help users understand, diagnose, and gain insights to the network in Azure.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview",
+  "Severity": "high",
+  "ResourceType": "microsoft.network/networkwatchers",
+  "Description": "**Azure Network Watcher** presence across the subscription's regions. The assessment checks that a Network Watcher instance exists in every subscription location where resources may be deployed.",
+  "Risk": "Absent **Network Watcher** in a region creates blind spots in **network telemetry and diagnostics**, hindering detection of anomalies. Attackers can exploit unnoticed NSG or routing issues for lateral movement or data exfiltration, degrading **confidentiality** and **availability** and slowing incident triage.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities",
+    "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html",
-      "Terraform": ""
+      "CLI": "az network watcher configure --resource-group NetworkWatcherRG --enabled true --locations <LOCATION_1> <LOCATION_2>",
+      "NativeIaC": "```bicep\n// Deploy this to the resource group named \"NetworkWatcherRG\"\nparam locations array\n\nresource watchers 'Microsoft.Network/networkWatchers@2023-09-01' = [for loc in locations: {\n  name: 'NetworkWatcher_${loc}'\n  location: loc // CRITICAL: creates a Network Watcher in the specified region\n}]\n```",
+      "Other": "1. In Azure Portal, search for \"Network Watcher\" and open it\n2. Select the target subscription\n3. In Overview, under Regions, for each region with Status = Disabled, click Enable\n4. Confirm all regions show Enabled",
+      "Terraform": "```hcl\nvariable \"locations\" {\n  type = list(string)\n}\n\nresource \"azurerm_network_watcher\" \"watchers\" {\n  for_each           = toset(var.locations)\n  name               = \"NetworkWatcher_${each.value}\"\n  location           = each.value       # CRITICAL: ensures a watcher exists in this region\n  resource_group_name = \"NetworkWatcherRG\" # CRITICAL: place in NetworkWatcherRG as expected by the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Opting out of Network Watcher automatic enablement is a permanent change. Once you opt-out you cannot opt-in without contacting support.",
-      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities"
+      "Text": "Enable **Network Watcher** in all regions and keep it enabled as your footprint expands.\n\nApply **defense in depth** by centralizing network logs and analytics, enforce coverage with policy, and restrict tool access by **least privilege**. Align retention and monitoring to support timely detection and investigation.",
+      "Url": "https://hub.prowler.com/check/network_watcher_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "There are additional costs per transaction to run and store network data. For high-volume networks these charges will add up quickly."
