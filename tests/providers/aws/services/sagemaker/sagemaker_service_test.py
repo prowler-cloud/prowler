@@ -1,9 +1,12 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import botocore
 
-from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
+from prowler.providers.aws.services.sagemaker.sagemaker_service import (
+    Model,
+    SageMaker,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -245,3 +248,78 @@ class Test_SageMaker_Service:
                 assert prod_variant.initial_instance_count == 5
             else:
                 assert prod_variant.initial_instance_count == 2
+
+    # Test SageMaker _list_tags_for_resource
+    def test_list_tags_for_resource_calls_client(self):
+        """Test that _list_tags_for_resource calls the correct AWS client and updates the resource."""
+        # Mock audit info
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = AWS_ACCOUNT_NUMBER
+        audit_info.audit_resources = None
+
+        # Mock regional client
+        regional_client = MagicMock()
+        regional_client.region = AWS_REGION_EU_WEST_1
+        regional_client.list_tags.return_value = {
+            "Tags": [{"Key": "foo", "Value": "bar"}]
+        }
+
+        # Create service instance (mocking init to avoid full setup)
+        with patch.object(SageMaker, "__init__", return_value=None):
+            sagemaker_service = SageMaker(audit_info)
+            sagemaker_service.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+            sagemaker_service.audit_info = audit_info
+
+        # Create a mock resource
+        resource = Model(
+            name="test-model",
+            region=AWS_REGION_EU_WEST_1,
+            arn=f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:model/test-model",
+        )
+
+        # Execute method under test
+        sagemaker_service._list_tags_for_resource(resource)
+
+        # Verification
+        regional_client.list_tags.assert_called_once_with(ResourceArn=resource.arn)
+        assert len(resource.tags) == 1
+        assert resource.tags[0]["Key"] == "foo"
+        assert resource.tags[0]["Value"] == "bar"
+
+    # Test SageMaker parallel tag listing
+    def test_init_calls_threading_for_tags(self):
+        """Test that __init__ calls __threading_call__ for tag listing for each resource type."""
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = AWS_ACCOUNT_NUMBER
+
+        # We mock __threading_call__ to verify it is called with the right arguments
+        with patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker.__threading_call__"
+        ) as mock_threading_call:
+            # We also need to mock the other methods called in init to avoid errors
+            with (
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_notebook_instances"
+                ),
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_models"
+                ),
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_training_jobs"
+                ),
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_endpoint_configs"
+                ),
+            ):
+                sagemaker_service = SageMaker(audit_info)
+
+                # Check that __threading_call__ was called for _list_tags_for_resource
+                # (at least 4 calls expected, one for each resource type)
+                tag_calls = [
+                    c
+                    for c in mock_threading_call.call_args_list
+                    if c[0][0] == sagemaker_service._list_tags_for_resource
+                ]
+                assert len(tag_calls) == 4
