@@ -1,30 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "route53_public_hosted_zones_cloudwatch_logging_enabled",
-  "CheckTitle": "Check if Route53 public hosted zones are logging queries to CloudWatch Logs.",
-  "CheckType": [],
+  "CheckTitle": "Route53 public hosted zone has query logging enabled to a CloudWatch Logs log group",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "route53",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRoute53HostedZone",
-  "Description": "Check if Route53 public hosted zones are logging queries to CloudWatch Logs.",
-  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
-  "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html",
+  "Description": "**Route 53 public hosted zones** have **DNS query logging** enabled to **CloudWatch Logs**, recording resolver requests for the zone and writing events to an associated log group.",
+  "Risk": "Missing **DNS query logs** removes visibility into domain use, weakening detection of:\n- **Data exfiltration** via DNS\n- **Malware C2/DGA** patterns\n- **Hijacking or misconfigurations**\nThis degrades **incident response**, threatens data **confidentiality** and **integrity**, and slows **availability** troubleshooting.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/enable-query-logging.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws route53 create-query-logging-config  --hosted-zone-id <zone_id>  --cloud-watch-logs-log-group-arn <log_group_arn>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/enable-query-logging.html",
-      "Terraform": ""
+      "CLI": "aws route53 create-query-logging-config --hosted-zone-id <HOSTED_ZONE_ID> --cloud-watch-logs-log-group-arn <LOG_GROUP_ARN>",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable query logging for a public hosted zone\nResources:\n  <example_resource_name>:\n    Type: AWS::Route53::HostedZone\n    Properties:\n      Name: <example_domain_name>\n      QueryLoggingConfig:\n        CloudWatchLogsLogGroupArn: <example_log_group_arn>  # Critical: enables Route53 query logging to this CloudWatch Logs group\n```",
+      "Other": "1. Open the AWS Console and go to Route 53 > Hosted zones\n2. Select the public hosted zone\n3. Choose Query logging > Enable\n4. Select the target CloudWatch Logs log group and click Save\n5. If prompted, allow Route 53 to write to the log group (approve the CloudWatch Logs resource policy)",
+      "Terraform": "```hcl\n# Enable Route53 query logging for a public hosted zone\nresource \"aws_route53_query_log\" \"example\" {\n  zone_id                   = \"<example_resource_id>\"        # Critical: target hosted zone\n  cloudwatch_log_group_arn  = \"<example_log_group_arn>\"      # Critical: delivers logs to this CloudWatch Logs group\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable CloudWatch logs and define metrics and uses cases for the events recorded.",
-      "Url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/monitoring-hosted-zones-with-cloudwatch.html"
+      "Text": "Enable **Route 53 query logging** for public zones to a centralized **CloudWatch Logs** group. Apply **least privilege** to log delivery, set **retention** and **metric filters/alerts**, and stream to your **SIEM**. Use **defense in depth** by correlating DNS logs with network and endpoint telemetry and regularly review baselines.",
+      "Url": "https://hub.prowler.com/check/route53_public_hosted_zones_cloudwatch_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

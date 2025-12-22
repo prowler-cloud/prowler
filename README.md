@@ -277,11 +277,12 @@ python prowler-cli.py -v
 # ✏️ High level architecture
 
 ## Prowler App
-**Prowler App** is composed of three key components:
+**Prowler App** is composed of four key components:
 
 - **Prowler UI**: A web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
+- **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
 ![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
 

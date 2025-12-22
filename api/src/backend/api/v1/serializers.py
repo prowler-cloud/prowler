@@ -1390,12 +1390,23 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OracleCloudProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
                 serializer = MongoDBAtlasProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
                 )
         elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            if provider_type == Provider.ProviderChoices.AWS.value:
+                serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                    }
+                )
         elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
             serializer = GCPServiceAccountProviderSecret(data=secret)
         else:
@@ -1527,6 +1538,34 @@ class OracleCloudProviderSecret(serializers.Serializer):
     tenancy = serializers.CharField()
     region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudProviderSecret(serializers.Serializer):
+    access_key_id = serializers.CharField()
+    access_key_secret = serializers.CharField()
+    security_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudRoleAssumptionProviderSecret(serializers.Serializer):
+    role_arn = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_id = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_secret = serializers.CharField(
+        help_text="Access Key Secret of the RAM user that will assume the role"
+    )
+    role_session_name = serializers.CharField(
+        required=False,
+        help_text="Session name for the assumed role session (optional, defaults to 'ProwlerSession')",
+    )
 
     class Meta:
         resource_name = "provider-secrets"

@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "sqs_queues_not_publicly_accessible",
-  "CheckTitle": "Check if SQS queues have policy set as Public",
-  "CheckType": [],
+  "CheckTitle": "SQS queue policy does not allow public access",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "sqs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsSqsQueue",
-  "Description": "Check if SQS queues have policy set as Public",
-  "Risk": "Sensitive information could be disclosed",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+  "Description": "Amazon SQS queue policies are assessed for **public access**. The finding highlights queues with `Allow` statements using a wildcard `Principal` without restrictive conditions, compared to queues that only grant access to the owning account or explicitly trusted principals.",
+  "Risk": "**Public SQS access** can expose message data (**confidentiality**), enable unauthorized send/receive or tampering (**integrity**), and allow purge/delete operations that disrupt processing (**availability**). It may also trigger unbounded message ingestion, causing cost spikes and consumer overload.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sqs-queue-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "CLI": "aws sqs set-queue-attributes --queue-url <example_queue_url> --attributes Policy='{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"<example_account_id>\"},\"Action\":\"sqs:*\",\"Resource\":\"<example_queue_arn>\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Restrict SQS policy to a specific principal (not public)\nResources:\n  QueuePolicy:\n    Type: AWS::SQS::QueuePolicy\n    Properties:\n      Queues:\n        - \"<example_queue_url>\"\n      PolicyDocument:\n        Version: \"2012-10-17\"\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: \"<example_account_id>\" # CRITICAL: restrict access to a specific account (removes public \"*\")\n            Action: \"sqs:*\"\n            Resource: \"<example_queue_arn>\"\n```",
+      "Other": "1. Open the Amazon SQS console and select the queue\n2. Go to Permissions (Access policy) and click Edit\n3. In the JSON policy, replace any \"Principal\": \"*\" with \"Principal\": { \"AWS\": \"<your_account_id>\" } or remove those public statements\n4. Save changes",
+      "Terraform": "```hcl\n# Restrict SQS policy to a specific principal (not public)\nresource \"aws_sqs_queue_policy\" \"<example_resource_name>\" {\n  queue_url = \"<example_queue_url>\"\n  policy    = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = \"<example_account_id>\" } # CRITICAL: restrict to a specific principal (removes public \"*\")\n      Action    = \"sqs:*\"\n      Resource  = \"<example_queue_arn>\"\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review service with overly permissive policies. Adhere to Principle of Least Privilege.",
-      "Url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html"
+      "Text": "Apply **least privilege** on SQS resource policies:\n- Avoid `Principal: *`; grant access only to specific accounts, roles, or services\n- Add restrictive conditions to tightly scope access\n- Prefer private connectivity and defense-in-depth controls\n- Review policies and audit activity regularly to prevent drift",
+      "Url": "https://hub.prowler.com/check/sqs_queues_not_publicly_accessible"
     }
   },
   "Categories": [

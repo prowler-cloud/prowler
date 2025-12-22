@@ -3,6 +3,7 @@
 import { filterFindings } from "@/components/filters/data-filters";
 import { FilterControls } from "@/components/filters/filter-controls";
 import { useRelatedFilters } from "@/hooks";
+import { getCategoryLabel } from "@/lib/categories";
 import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
 
 interface FindingsFiltersProps {
@@ -14,6 +15,7 @@ interface FindingsFiltersProps {
   uniqueRegions: string[];
   uniqueServices: string[];
   uniqueResourceTypes: string[];
+  uniqueCategories: string[];
 }
 
 export const FindingsFilters = ({
@@ -24,6 +26,7 @@ export const FindingsFilters = ({
   uniqueRegions,
   uniqueServices,
   uniqueResourceTypes,
+  uniqueCategories,
 }: FindingsFiltersProps) => {
   const { availableProviderIds, availableScans } = useRelatedFilters({
     providerIds,
@@ -65,6 +68,13 @@ export const FindingsFilters = ({
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
             index: 8,
+          },
+          {
+            key: FilterType.CATEGORY,
+            labelCheckboxGroup: "Category",
+            values: uniqueCategories,
+            labelFormatter: getCategoryLabel,
+            index: 5,
           },
           {
             key: FilterType.SCAN,

@@ -287,6 +287,7 @@ class Provider(RowLevelSecurityProtectedModel):
         MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
+        ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -388,6 +389,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
                 code="mongodbatlas-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_alibabacloud_uid(value):
+        if not re.match(r"^\d{16}$", value):
+            raise ModelValidationError(
+                detail="Alibaba Cloud account ID must be exactly 16 digits.",
+                code="alibabacloud-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -716,14 +726,19 @@ class Resource(RowLevelSecurityProtectedModel):
             self.clear_tags()
             return
 
-        # Add new relationships with the tenant_id field
+        # Add new relationships with the tenant_id field; avoid touching the
+        # Resource row unless a mapping is actually created to prevent noisy
+        # updates during scans.
+        mapping_created = False
         for tag in tags:
-            ResourceTagMapping.objects.update_or_create(
+            _, created = ResourceTagMapping.objects.update_or_create(
                 tag=tag, resource=self, tenant_id=self.tenant_id
             )
+            mapping_created = mapping_created or created
 
-        # Save the instance
-        self.save()
+        if mapping_created:
+            # Only bump updated_at when the tag set truly changed
+            self.save(update_fields=["updated_at"])
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resources"

@@ -86,7 +86,6 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_MINOR_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_MINOR_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -100,7 +99,7 @@ jobs:
           commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
           branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
           title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -135,7 +134,6 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -149,7 +147,7 @@ jobs:
           commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
           branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
           title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -193,7 +191,6 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -207,7 +204,7 @@ jobs:
           commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
           branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
           title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          labels: no-changelog
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 

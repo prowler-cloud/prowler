@@ -2,20 +2,38 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.16.0] (Prowler Unreleased)
-
-### 🚀 Added
-
-- Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
-- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+## [1.16.1] (Prowler v5.17.1)
 
 ### 🔄 Changed
 
-### 🐞 Fixed
+- Lighthouse AI meta tools descriptions updated for clarity with more representative examples [(#9632)](https://github.com/prowler-cloud/prowler/pull/9632)
 
 ---
 
-## [1.15.1] (Prowler Unreleased)
+## [1.16.0] (Prowler v5.16.0)
+
+### 🚀 Added
+
+- SSO and API Key link cards to Integrations page for better discoverability [(#9570)](https://github.com/prowler-cloud/prowler/pull/9570)
+- Risk Radar component with category-based severity breakdown to Overview page [(#9532)](https://github.com/prowler-cloud/prowler/pull/9532)
+- More extensive resource details (partition, details and metadata) within Findings detail and Resources detail view [(#9515)](https://github.com/prowler-cloud/prowler/pull/9515)
+- Integrated Prowler MCP server with Lighthouse AI for dynamic tool execution [(#9255)](https://github.com/prowler-cloud/prowler/pull/9255)
+- Implement "MuteList Simple" feature allowing users to mute findings directly from the findings table with checkbox selection, and a new dedicated /mutelist route with Simple (mute rules list) and Advanced (YAML config) tabs. [(#9577)](https://github.com/prowler-cloud/prowler/pull/9577)
+
+### 🔄 Changed
+
+- Lighthouse AI markdown rendering with strict markdownlint compliance and nested list styling [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+- Lighthouse AI default model updated from gpt-4o to gpt-5.2 [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+- Lighthouse AI destructive MCP tools blocked from LLM access (delete, trigger scan, etc.) [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+
+### 🐞 Fixed
+
+- Lighthouse AI angle-bracket placeholders now render correctly in chat messages [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+- Lighthouse AI recommended model badge contrast improved [(#9586)](https://github.com/prowler-cloud/prowler/pull/9586)
+
+---
+
+## [1.15.1] (Prowler v5.15.1)
 
 ### 🔐 Security
 
@@ -32,6 +50,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation progress bar for page transitions using Next.js `onRouterTransitionStart` [(#9465)](https://github.com/prowler-cloud/prowler/pull/9465)
 - Findings Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+- Add Alibaba Cloud provider [(#9501)](https://github.com/prowler-cloud/prowler/pull/9501)
 
 ### 🔄 Changed
 
