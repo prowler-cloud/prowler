@@ -6,6 +6,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
+
+---
+
+## [1.16.1] (Prowler v5.17.1)
+
+### 🔄 Changed
+
 - Lighthouse AI meta tools descriptions updated for clarity with more representative examples [(#9632)](https://github.com/prowler-cloud/prowler/pull/9632)
 
 ---
