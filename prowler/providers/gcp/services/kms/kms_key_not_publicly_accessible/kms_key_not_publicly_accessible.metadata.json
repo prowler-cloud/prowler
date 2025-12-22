@@ -1,30 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "kms_key_not_publicly_accessible",
-  "CheckTitle": "Check for Publicly Accessible Cloud KMS Keys",
+  "CheckTitle": "Cloud KMS key has no public IAM access",
   "CheckType": [],
   "ServiceName": "kms",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "CryptoKey",
-  "Description": "Check for Publicly Accessible Cloud KMS Keys",
-  "Risk": "Ensure that the IAM policy associated with your Cloud Key Management Service (KMS) keys is restricting anonymous and/or public access",
+  "Severity": "critical",
+  "ResourceType": "cloudkms.googleapis.com/CryptoKey",
+  "Description": "**Cloud KMS crypto keys** are evaluated for **public principals** in their IAM bindings, specifically `allUsers` and `allAuthenticatedUsers`.\n\nThe finding reflects whether these memberships are present on a key.",
+  "Risk": "Granting **public principals** access lets anyone on the Internet or any Google account use permissions on the key.\n- **Confidentiality** loss via unauthorized `decrypt`\n- **Integrity** compromise via illicit `sign`\n- **Availability** impact from disable, rotation, or destruction",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-that-cloud-kms-cryptokeys-are-not-anonymously-or-publicly-accessible#terraform",
+    "https://cloud.google.com/kms/docs/iam"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-that-cloud-kms-cryptokeys-are-not-anonymously-or-publicly-accessible#terraform"
+      "Other": "1. In Google Cloud Console, go to Security > Key Management > Key rings\n2. Open the key ring, then select the affected key\n3. Click the Permissions tab\n4. Remove principals \"allUsers\" and \"allAuthenticatedUsers\" from all roles\n5. Click Save",
+      "Terraform": "```hcl\n# Replace the IAM policy on the KMS key to remove any public members\nresource \"google_kms_crypto_key_iam_policy\" \"<example_resource_name>\" {\n  crypto_key_id = \"<example_resource_id>\"\n  \n  policy_data = jsonencode({\n    bindings = [] # Critical: empty bindings remove all IAM principals, eliminating allUsers/allAuthenticatedUsers\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "To deny access from anonymous and public users, remove the bindings for 'allUsers' and 'allAuthenticatedUsers' members from the KMS key's IAM policy.",
-      "Url": "https://cloud.google.com/kms/docs/iam"
+      "Text": "Remove `allUsers` and `allAuthenticatedUsers` from key IAM. Grant access only to specific groups or service accounts with **least privilege** at the key scope. Enforce **separation of duties** between admins and users, and regularly review inherited bindings and audit logs.",
+      "Url": "https://hub.prowler.com/check/kms_key_not_publicly_accessible"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],
