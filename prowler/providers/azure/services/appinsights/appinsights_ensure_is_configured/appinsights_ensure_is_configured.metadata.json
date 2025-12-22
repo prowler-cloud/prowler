@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "appinsights_ensure_is_configured",
-  "CheckTitle": "Ensure Application Insights are Configured.",
+  "CheckTitle": "Subscription has at least one Application Insights resource configured",
   "CheckType": [],
   "ServiceName": "appinsights",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "Microsoft.Insights/components",
-  "Description": "Application Insights within Azure act as an Application Performance Monitoring solution providing valuable data into how well an application performs and additional information when performing incident response. The types of log data collected include application metrics, telemetry data, and application trace logging data providing organizations with detailed information about application activity and application transactions. Both data sets help organizations adopt a proactive and retroactive means to handle security and performance related metrics within their modern applications.",
-  "Risk": "Configuring Application Insights provides additional data not found elsewhere within Azure as part of a much larger logging and monitoring program within an organization's Information Security practice. The types and contents of these logs will act as both a potential cost saving measure (application performance) and a means to potentially confirm the source of a potential incident (trace logging). Metrics and Telemetry data provide organizations with a proactive approach to cost savings by monitoring an application's performance, while the trace logging data provides necessary details in a reactive incident response scenario by helping organizations identify the potential source of an incident within their application.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+  "Severity": "medium",
+  "ResourceType": "microsoft.insights/components",
+  "Description": "**Azure subscription** contains at least one **Application Insights** resource collecting application telemetry (metrics, traces, logs) for monitored workloads.\n\nThe check determines whether telemetry collection exists at the subscription level, indicating that application monitoring is configured.",
+  "Risk": "If **Application Insights** is missing, applications run with reduced **observability**, limiting detection of anomalies and attacks.\n\nThis undermines **integrity** and accountability (fewer traces), degrades **availability** by slowing troubleshooting, and increases exposure to undetected data exfiltration or injection at the app layer.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+    "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:8a7a608d180042689ad9d3f16aa359f1"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor app-insights component create --app <app name> --resource-group <resource group name> --location <location> --kind 'web' --retention-time <INT days to retain logs> --workspace <log analytics workspace ID> -- subscription <subscription ID>",
-      "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:8a7a608d180042689ad9d3f16aa359f1",
-      "Terraform": ""
+      "CLI": "az monitor app-insights component create --app <APP_NAME> --resource-group <RESOURCE_GROUP> --location <LOCATION> --application-type web --subscription <SUBSCRIPTION_ID>",
+      "NativeIaC": "```bicep\n// Create a minimal Application Insights resource\nresource appInsights 'Microsoft.Insights/components@2020-02-02' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    Application_Type: 'web' // Critical: creates the App Insights component required to pass the check\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Azure Monitor > Application Insights\n2. Click Create\n3. Select a Subscription and Resource group\n4. Enter a Name and choose a Region\n5. Click Review + create, then Create\n6. Verify the resource appears under Application Insights in the selected subscription",
+      "Terraform": "```hcl\n# Critical: This resource creates an Application Insights component to satisfy the check\nresource \"azurerm_application_insights\" \"main\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<example_resource_name>\"\n  application_type    = \"web\" # Critical: ensures creation of the component\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Navigate to Application Insights 2. Under the Basics tab within the PROJECT DETAILS section, select the Subscription 3. Select the Resource group 4. Within the INSTANCE DETAILS, enter a Name 5. Select a Region 6. Next to Resource Mode, select Workspace-based 7. Within the WORKSPACE DETAILS, select the Subscription for the log analytics workspace 8. Select the appropriate Log Analytics Workspace 9. Click Next:Tags > 10. Enter the appropriate Tags as Name, Value pairs. 11. Click Next:Review+Create 12. Click Create.",
-      "Url": ""
+      "Text": "Deploy **Application Insights** for all critical workloads and centralize data in a **Log Analytics workspace**. Configure actionable alerts and dashboards, enforce **least privilege** on telemetry, and set retention/export policies. Use private connectivity and appropriate sampling, and integrate with SIEM for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/appinsights_ensure_is_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Because Application Insights relies on a Log Analytics Workspace, an organization will incur additional expenses when using this service."
