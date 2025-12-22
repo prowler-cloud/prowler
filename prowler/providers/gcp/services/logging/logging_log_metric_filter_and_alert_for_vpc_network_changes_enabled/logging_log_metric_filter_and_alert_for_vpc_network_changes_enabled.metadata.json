@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes.",
+  "CheckTitle": "Log metric filter for VPC network changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes.",
-  "Risk": "Monitoring changes to a VPC will help ensure VPC traffic flow is not getting impacted.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "Cloud projects are evaluated for a **log-based metric** with a linked **Cloud Monitoring alert** that targets **VPC network changes** on `gce_network` audit events: `compute.networks.insert`, `patch`, `delete`, `addPeering`, `removePeering`.\n\nIt checks that these changes are captured and generate notifications.",
+  "Risk": "Missing alerts on VPC changes lets **unauthorized or accidental modifications** go unnoticed, risking:\n- Data exposure via unintended peering or new networks\n- Segmentation bypass through routing/subnet edits\n- Outages from deletions or misconfigurations\n\nThis affects confidentiality, integrity, and availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-vpc-network-changes-monitoring.html",
+    "https://www.gcpweekly.com/gcp-resources/tag/cloud-monitoring/",
+    "https://cloud.google.com/monitoring/alerts"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-vpc-network-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud Console, go to Logging > Logs-based metrics > + Create metric\n2. Name: <example_resource_name>\n3. In Filter, paste exactly:\n   resource.type=\"gce_network\" AND (protoPayload.methodName:\"compute.networks.insert\" OR protoPayload.methodName:\"compute.networks.patch\" OR protoPayload.methodName:\"compute.networks.delete\" OR protoPayload.methodName:\"compute.networks.removePeering\" OR protoPayload.methodName:\"compute.networks.addPeering\")\n4. Click Create metric\n5. Go to Monitoring > Alerting > + Create policy > Add condition\n6. Select the metric logging.googleapis.com/user/<example_resource_name>\n7. Condition: Greater than, Threshold: 0, For: 0 minutes; click Add\n8. Name the policy and click Create policy",
+      "Terraform": "```hcl\n# Create a logs-based metric for VPC network changes\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  # CRITICAL: Filter capturing VPC network create/modify/delete/peering changes\n  filter = \"resource.type=\\\"gce_network\\\" AND (protoPayload.methodName:\\\"compute.networks.insert\\\" OR protoPayload.methodName:\\\"compute.networks.patch\\\" OR protoPayload.methodName:\\\"compute.networks.delete\\\" OR protoPayload.methodName:\\\"compute.networks.removePeering\\\" OR protoPayload.methodName:\\\"compute.networks.addPeering\\\")\"\n}\n\n# Alert policy associated with the logs-based metric\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n\n  conditions {\n    condition_threshold {\n      # CRITICAL: Reference the logs-based metric so the policy is associated with it\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/<example_resource_name>\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) network changes.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Implement a **log-based metric** for VPC change audit events and attach an **alerting policy** that notifies accountable teams.\n\nApply **least privilege** for network admins, enforce **change approval**, and adopt **defense in depth** to prevent and quickly detect unintended network changes.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

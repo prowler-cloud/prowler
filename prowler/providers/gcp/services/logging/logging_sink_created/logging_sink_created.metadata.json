@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_sink_created",
-  "CheckTitle": "Ensure there is at least one sink used to export copies of all the log entries.",
+  "CheckTitle": "Project has at least one logging sink exporting copies of all log entries",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Sink",
-  "Description": "Ensure there is at least one sink used to export copies of all the log entries.",
-  "Risk": "If sinks are not created, logs would be deleted after the configured retention period, and would not be backed up.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogSink",
+  "Description": "**Cloud Logging** project contains at least one **sink** that exports a copy of **all log entries** to a destination for centralized retention or processing",
+  "Risk": "Without exporting all logs, audit evidence can expire or be altered in-project, reducing the **availability** and **integrity** of telemetry. This hinders threat detection and forensics, prevents cross-project correlation, and can let attacker actions evade scrutiny after log rotation or deletion.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/logging/docs/export",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/export-all-log-entries.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud logging sinks create <project_id> <destination_bucket>",
+      "CLI": "gcloud logging sinks create <example_resource_name> logging.googleapis.com/projects/<example_resource_id>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/export-all-log-entries.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Logging > Log Router\n2. Click Create sink\n3. Set Sink name to <example_resource_name>\n4. For Sink destination, select Google Cloud project and choose <example_resource_id>\n5. Leave the inclusion filter empty (exports all logs)\n6. Click Create",
+      "Terraform": "```hcl\n# Create a project-level logging sink exporting all logs\nresource \"google_logging_project_sink\" \"sink\" {\n  name        = \"<example_resource_name>\" # critical: creates the sink required by the check\n  destination = \"logging.googleapis.com/projects/<example_resource_id>\" # critical: required destination\n  # No filter set -> exports all log entries (fixes the finding)\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to create a sink that will export copies of all the log entries. This can help aggregate logs from multiple projects and export them to a Security Information and Event Management (SIEM).",
-      "Url": "https://cloud.google.com/logging/docs/export"
+      "Text": "Create a **centralized export sink** that routes all logs to a secured, durable, preferably **immutable** destination with extended retention. Apply **least privilege** to sink identities, separate duties by isolating destinations, use **defense in depth** (encryption, access controls), and monitor sink health for continuity.",
+      "Url": "https://hub.prowler.com/check/logging_sink_created"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

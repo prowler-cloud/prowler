@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
+  "CheckTitle": "Log metric filter for Cloud Storage IAM permission changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
-  "Risk": "Monitoring changes to cloud storage bucket permissions may reduce the time needed to detect and correct permissions on sensitive cloud storage buckets and objects inside the bucket.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "**Cloud Logging** defines a log-based metric for **Cloud Storage IAM changes** using filter `resource.type=\"gcs_bucket\" AND protoPayload.methodName=\"storage.setIamPermissions\"`, and a **Cloud Monitoring alert policy** that references that metric.",
+  "Risk": "Lack of alerting on bucket IAM changes degrades **confidentiality and integrity**. Adversaries or misconfigurations can:\n- grant broad/public access\n- persist access by adding roles\n- read, alter, or delete data\nDelays in detection enable **data exfiltration**, tampering, and disruptive actions.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-bucket-permission-changes-monitoring.html",
+    "https://shisho.dev/docs/g/managed/providers/googlecloud/",
+    "https://cloud.google.com/monitoring/alerts",
+    "https://www.npmjs.com/package/@cloudgraph/policy-pack-gcp-cis-1.3.0",
+    "https://guides.spectralops.io/docs/d9_gcp_log_25",
+    "https://guides.g5cybersecurity.com/kb/ensure-that-the-log-metric-filter-and-alerts-exist-for-cloud-storage-iam-permission-changes-metric/",
+    "https://api.lacework.net/ui/documents/GCP_CIS_Foundations_Benchmark.pdf"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-bucket-permission-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud console, go to Logging > Logs-based metrics\n2. Click Create metric\n3. Name: <example_resource_name>\n4. In Filter, paste: resource.type=\"gcs_bucket\" AND protoPayload.methodName=\"storage.setIamPermissions\"\n5. Click Create\n6. In the metrics list, click the three dots for the new metric and select Create alert from metric\n7. Keep condition as Count > 0 for Most recent value and click Save",
+      "Terraform": "```hcl\n# Create a logs-based metric for GCS IAM permission changes\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  filter = \"resource.type=\\\"gcs_bucket\\\" AND protoPayload.methodName=\\\"storage.setIamPermissions\\\"\" # CRITICAL: matches required filter for detection\n}\n\n# Alert policy referencing the above metric\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  combiner     = \"OR\"\n  conditions {\n    display_name = \"<example_resource_name>\"\n    condition_threshold {\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/${google_logging_metric.<example_resource_name>.name}\\\"\" # CRITICAL: ties alert to the metric so check passes\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for Cloud Storage Bucket IAM changes.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Establish a **log-based metric** for bucket IAM permission changes with filter `resource.type=\"gcs_bucket\" AND protoPayload.methodName=\"storage.setIamPermissions\"` and link a **log-based alert policy** with clear notifications. Enforce **least privilege** and **separation of duties**, and routinely review alerts and audit logs to prevent and contain unauthorized access.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

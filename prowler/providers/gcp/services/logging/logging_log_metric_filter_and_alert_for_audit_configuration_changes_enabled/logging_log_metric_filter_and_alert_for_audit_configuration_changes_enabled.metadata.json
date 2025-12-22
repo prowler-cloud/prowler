@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes.",
+  "CheckTitle": "Log metric filter for audit configuration changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes.",
-  "Risk": "Admin Activity audit logs and Data Access audit logs produced by the Google Cloud Audit Logs service can be extremely useful for security analysis, resource change tracking, and compliance auditing.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "**Cloud Logging** log-based metrics capture **audit configuration changes** (e.g., `SetIamPolicy` with `auditConfigDeltas`), and an associated **Cloud Monitoring alert policy** notifies when such log entries occur.",
+  "Risk": "Unmonitored **Audit Config** changes can reduce or disable **Admin Activity/Data Access** logging, creating blind spots. Adversaries could suppress evidence, evade detection, and alter permissions unnoticed, degrading **confidentiality**, **integrity**, and the **availability** of forensic telemetry.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-audit-configuration-changes-monitoring.html",
+    "https://cloud.google.com/monitoring/alerts"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-audit-configuration-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Cloud Console, go to Logging > Logs-based metrics and click Create metric\n2. Set Metric type to Counter, Name to <example_resource_name>, and Filter to:\n   protoPayload.methodName=\"SetIamPolicy\" AND protoPayload.serviceData.policyDelta.auditConfigDeltas:*\n3. Save the metric\n4. Go to Monitoring > Alerting > Create policy > Add condition\n5. Select Metric as the condition type, then choose metric: logging.googleapis.com/user/<example_resource_name>\n6. Set condition to is above 0 for 1 minute and click Done\n7. Name the policy and click Create (notification channels are optional for this check)",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"metric\" {\n  name   = \"<example_resource_name>\"\n  # Critical: this filter captures audit config changes via SetIamPolicy\n  filter = \"protoPayload.methodName=\\\"SetIamPolicy\\\" AND protoPayload.serviceData.policyDelta.auditConfigDeltas:*\"\n}\n\nresource \"google_monitoring_alert_policy\" \"alert\" {\n  display_name = \"<example_resource_name>\"\n  combiner     = \"OR\"\n\n  conditions {\n    display_name = \"<example_resource_name>\"\n    condition_threshold {\n      # Critical: associates the alert with the log-based metric created above\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/<example_resource_name>\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"60s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "By using Google Cloud alerting policies to detect audit configuration changes, you make sure that the recommended state of audit configuration is well maintained so that all the activities performed within your GCP project are available for security analysis and auditing at any point in time.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Create a log-based metric for **audit configuration changes** and pair it with a **log-based alert policy** that notifies responders.\n- Enforce **least privilege** on logging/IAM changes\n- Apply **change control** and **separation of duties**\n- Route alerts to durable channels and include response runbooks for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

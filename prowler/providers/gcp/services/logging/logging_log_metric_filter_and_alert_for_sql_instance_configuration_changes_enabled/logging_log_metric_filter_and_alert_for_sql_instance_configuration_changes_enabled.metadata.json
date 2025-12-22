@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for SQL Instance Configuration Changes.",
+  "CheckTitle": "Log metric filter for Cloud SQL instance configuration changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for SQL Instance Configuration Changes.",
-  "Risk": "Monitoring changes to SQL instance configuration changes may reduce the time needed to detect and correct misconfigurations done on the SQL server.",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "**Cloud Logging** has a log-based metric matching Cloud SQL instance updates (`protoPayload.methodName=\"cloudsql.instances.update\"`) and a **Cloud Monitoring** alert policy references that metric to notify on configuration changes.",
+  "Risk": "Without this visibility, **unauthorized or accidental Cloud SQL configuration changes** can persist undetected. Attackers or insiders might open public access, relax TLS, alter authorized networks, or disable backups, degrading **confidentiality**, **integrity**, and **availability** and delaying containment.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/monitoring/alerts",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud console, go to Logging > Logs-based metrics and click Create metric\n2. Set Name to <example_resource_name> and Filter to: protoPayload.methodName=\"cloudsql.instances.update\" then click Create\n3. Go to Monitoring > Alerting > Create policy\n4. Click Add condition > Metric\n5. For Metric, select logging.googleapis.com/user/<example_resource_name>\n6. Set threshold to Greater than 0 over 0 minutes and click Add\n7. Click Save policy",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"sql_config_changes\" {\n  name   = \"<example_resource_name>\"\n  # Critical: captures Cloud SQL instance configuration updates\n  filter = \"protoPayload.methodName=\\\"cloudsql.instances.update\\\"\"\n}\n\nresource \"google_monitoring_alert_policy\" \"sql_config_change_alert\" {\n  display_name = \"<example_resource_name>\"\n  combiner     = \"OR\"\n\n  conditions {\n    condition_threshold {\n      # Critical: reference the logs-based metric so the alert is associated\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/${google_logging_metric.sql_config_changes.name}\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for SQL instance configuration changes.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Implement a **log-based metric** for Cloud SQL update events and attach a **Monitoring alert policy** that routes timely notifications. Apply **least privilege** for admin actions, enforce **change management** and **separation of duties**, and integrate alerts with on-call workflows to speed triage and prevent misconfigurations.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
