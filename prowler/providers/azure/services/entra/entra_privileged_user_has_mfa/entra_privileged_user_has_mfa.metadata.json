@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "entra_privileged_user_has_mfa",
-  "CheckTitle": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Privileged Users",
+  "CheckTitle": "Privileged user has multi-factor authentication enabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.users",
-  "Description": "Enable multi-factor authentication for all roles, groups, and users that have write access or permissions to Azure resources. These include custom created objects or built-in roles such as, - Service Co-Administrators - Subscription Owners - Contributors",
-  "Risk": "Multi-factor authentication requires an individual to present a minimum of two separate forms of authentication before access is granted. Multi-factor authentication provides additional assurance that the individual attempting to gain access is who they claim to be. With multi-factor authentication, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra** privileged accounts are expected to use **multifactor authentication**. This evaluates users assigned to elevated directory roles and confirms they have **multiple authentication methods** registered for sign-in.",
+  "Risk": "Without **MFA**, privileged accounts face **phishing**, **password spraying**, and **credential reuse** risks. Compromise can grant tenant-wide admin control to alter roles, create backdoors, exfiltrate data, and weaken defenses, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-privileged-users.html#",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method post --url https://graph.microsoft.com/v1.0/users/<example_resource_id>/authentication/phoneMethods --body '{\"phoneNumber\":\"+10000000000\",\"phoneType\":\"mobile\"}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-privileged-users.html#",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center\n2. Go to Identity > Protection > Conditional Access > + New policy\n3. Name the policy\n4. Under Users > Select users and groups > Directory roles, select the privileged roles to protect\n5. Under Target resources (or Cloud apps), select All cloud apps\n6. Under Grant, select Grant access and check Require multifactor authentication\n7. Set Enable policy to On and click Create\n8. Have each privileged user go to https://myaccount.microsoft.com/security-info and add at least one MFA method (e.g., Microsoft Authenticator or phone) to complete registration",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\"\n\n  conditions {\n    users {\n      included_roles = [\"<example_role_template_id>\"]  # Critical: targets privileged role(s)\n    }\n    applications {\n      included_applications = [\"All\"]\n    }\n  }\n\n  grant_controls {\n    operator            = \"OR\"\n    built_in_controls   = [\"mfa\"]  # Critical: requires MFA to access\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Activate one of the available multi-factor authentication methods for users in Microsoft Entra ID.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa"
+      "Text": "Enforce **MFA** for all privileged roles via **Conditional Access** or security defaults. Prefer **phishing-resistant** methods (FIDO2, passkeys, Authenticator push) over SMS/voice. Require registration before granting privileges, block legacy/basic auth, and apply **least privilege** with protected break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_privileged_user_has_mfa"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Users would require two forms of authentication before any access is granted. Additional administrative time will be required for managing dual forms of authentication when enabling multi-factor authentication."

@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_ensure_default_user_cannot_create_apps",
-  "CheckTitle": "Ensure That 'Users Can Register Applications' Is Set to 'No'",
+  "CheckTitle": "Tenant does not allow non-admin users to register applications",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Require administrators or appropriately delegated users to register third-party applications.",
-  "Risk": "It is recommended to only allow an administrator to register custom-developed applications. This ensures that the application undergoes a formal security review and approval process prior to exposing Azure Active Directory data. Certain users like developers or other high-request users may also be delegated permissions to prevent them from waiting on an administrative user. Your organization should review your policies and decide your needs.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity-platform/how-applications-are-added#who-has-permission-to-add-applications-to-my-azure-ad-instance",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra authorization policy** controls whether default users can create application registrations via `allowed_to_create_apps`. App creation is expected to be limited to administrators or explicitly delegated roles.",
+  "Risk": "Permitting default users to register apps enables **unvetted service principals**, **consent phishing**, and **over-privileged API access**, threatening data **confidentiality** and **integrity**. Adversaries can persist with app credentials, exfiltrate mail/files, and perform **lateral movement** using rogue permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-register-applications.html",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications",
+    "https://learn.microsoft.com/en-us/entra/identity-platform/how-applications-are-added#who-has-permission-to-add-applications-to-my-azure-ad-instance"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method PATCH --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --body '{\"defaultUserRolePermissions\":{\"allowedToCreateApps\":false}}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-register-applications.html",
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Microsoft Entra ID > Users > User settings\n3. Set \"Users can register applications\" to \"No\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select User settings 5. Ensure that Users can register applications is set to No",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications"
+      "Text": "Apply **least privilege**: restrict app registration to admins or delegated roles; set `Users can register applications` to `No`. Use the **Application Developer** role for exceptions, require **admin consent** workflows, routinely review app/service principal permissions, and audit changes for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/entra_policy_ensure_default_user_cannot_create_apps"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enforcing this setting will create additional requests for approval that will need to be addressed by an administrator. If permissions are delegated, a user may approve a malevolent third party application, potentially giving it access to your data."

@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "entra_non_privileged_user_has_mfa",
-  "CheckTitle": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
+  "CheckTitle": "Non-privileged user has multi-factor authentication enabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "#microsoft.graph.users",
-  "Description": "Enable multi-factor authentication for all non-privileged users.",
-  "Risk": "Multi-factor authentication requires an individual to present a minimum of two separate forms of authentication before access is granted. Multi-factor authentication provides additional assurance that the individual attempting to gain access is who they claim to be. With multi-factor authentication, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks",
+  "Severity": "medium",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra** non-privileged users are assessed for **multifactor authentication** by verifying they have **two or more registered authentication methods** (*MFA enrollment*).",
+  "Risk": "Absent **MFA** on standard accounts enables password-only logins after phishing, reuse, or spraying, leading to **account takeover**. Attackers can access email, files, and apps, send internal phishing, and escalate, undermining **confidentiality** and **integrity**, and risking **availability** via malicious changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-non-privileged-users.html#",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method POST --url https://graph.microsoft.com/v1.0/users/<example_user_id>/authentication/temporaryAccessPassMethods --body '{\"lifetimeInMinutes\":60,\"isUsableOnce\":true}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-non-privileged-users.html#",
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Entra ID > Users and select the non-privileged user\n3. Select Security > Authentication methods\n4. Click Add authentication method > Temporary Access Pass\n5. Click Create (accept defaults)\n6. Confirm the method appears under the user's authentication methods",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Activate one of the available multi-factor authentication methods for users in Microsoft Entra ID.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa"
+      "Text": "Enforce **MFA** for all users, including non-privileged. Prefer **phishing-resistant** methods (FIDO2/passkeys or Authenticator with number matching); avoid SMS/voice when possible. Use **Conditional Access** to require MFA by risk and context. Pair with **least privilege**, device trust, and sign-in monitoring.",
+      "Url": "https://hub.prowler.com/check/entra_non_privileged_user_has_mfa"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Users would require two forms of authentication before any access is granted. Also, this requires an overhead for managing dual forms of authentication."

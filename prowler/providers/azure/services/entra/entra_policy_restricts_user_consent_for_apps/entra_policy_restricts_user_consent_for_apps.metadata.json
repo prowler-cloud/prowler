@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_restricts_user_consent_for_apps",
-  "CheckTitle": "Ensure 'User consent for applications' is set to 'Do not allow user consent'",
+  "CheckTitle": "Entra authorization policy disallows user consent for applications",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Require administrators to provide consent for applications before use.",
-  "Risk": "If Microsoft Entra ID is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
-  "RelatedUrl": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "Microsoft Entra authorization settings are evaluated to determine if the default user role permits **user consent to applications**. The check looks at permission grant policies to see whether end users can authorize apps to access organization data on their behalf, or if consent is restricted (e.g., `Do not allow user consent`).",
+  "Risk": "Permitting end-user consent enables **consent phishing** and over-privileged OAuth grants. Attackers can obtain tokens to read/send mail, access files, or act as the user, causing **data exfiltration**, persistence beyond password resets/MFA changes, and abuse of connected apps, impacting confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://derkvanderwoude.medium.com/user-consent-to-apps-from-a-soc-perspective-19d443122509",
+    "https://www.appgovscore.com/blog/microsoft-disables-user-consent-by-default-are-you-ready-for-mc1097272",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-privileged-access#pa-1-separate-and-limit-highly-privilegedadministrative-users",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-consent-to-apps-accessing-company-data-on-their-behalf.html#",
+    "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
+    "https://mrmicrosoft.com/turn-off-user-application-consent-in-microsoft-entra/",
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent",
+    "https://community.spiceworks.com/t/office-365-allow-users-to-consent-to-aprroved-apps-without-an-admin-approval/798998",
+    "https://www.cloudcoffee.ch/microsoft-azure/microsoft-entra-id-admin-consent-workflow/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Update-MgPolicyAuthorizationPolicy -BodyParameter @{ permissionGrantPolicyIdsAssignedToDefaultUserRole = @() }",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-consent-to-apps-accessing-company-data-on-their-behalf.html#",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center (entra.microsoft.com) with a Global Administrator\n2. Go to Identity > Applications > Enterprise applications\n3. Select Consent and permissions > User consent settings\n4. Choose Do not allow user consent\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  # Critical: remove all self-consent policies so users cannot consent to apps\n  permission_grant_policy_ids_assigned_to_default_user_role = []\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Select Enterprise Applications 4. Select Consent and permissions 5. Select User consent settings 6. Set User consent for applications to Do not allow user consent 7. Click save",
-      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-privileged-access#pa-1-separate-and-limit-highly-privilegedadministrative-users"
+      "Text": "Enforce **least privilege** by setting user consent to `Do not allow user consent`. Use the **admin consent workflow** to review requests and pre-approve only vetted apps. *If needed*, allow consent only for verified publishers with low-impact scopes. Regularly review existing grants and monitor audit/sign-in logs.",
+      "Url": "https://hub.prowler.com/check/entra_policy_restricts_user_consent_for_apps"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enforcing this setting may create additional requests that administrators need to review."

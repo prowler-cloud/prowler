@@ -1,29 +1,35 @@
 {
   "Provider": "azure",
   "CheckID": "entra_policy_guest_users_access_restrictions",
-  "CheckTitle": "Ensure That 'Guest users access restrictions' is set to 'Guest user access is restricted to properties and memberships of their own directory objects'",
+  "CheckTitle": "Authorization policy restricts guest user access to properties and memberships of their own directory objects",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "#microsoft.graph.authorizationPolicy",
-  "Description": "Limit guest user permissions.",
-  "Risk": "Limiting guest access ensures that guest accounts do not have permission for certain directory tasks, such as enumerating users, groups or other directory resources, and cannot be assigned to administrative roles in your directory. Guest access has three levels of restriction. 1. Guest users have the same access as members (most inclusive), 2. Guest users have limited access to properties and memberships of directory objects (default value), 3. Guest user access is restricted to properties and memberships of their own directory objects (most restrictive). The recommended option is the 3rd, most restrictive: 'Guest user access is restricted to their own directory object'.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra authorization policy** guest settings are assessed to determine whether guest user access is limited to the properties and memberships of their own directory objects (`Restricted access`) instead of broader visibility into users and groups",
+  "Risk": "Excess guest visibility enables **directory reconnaissance**, exposing user and group details for **phishing**, **password spraying**, and targeted attacks. This weakens **confidentiality** and can facilitate **privilege escalation** and lateral movement through informed abuse of group memberships and access paths.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method patch --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --body '{\"guestUserRoleId\":\"2af84b1e-32c8-42b7-82bc-daa82404023b\"}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Go to Microsoft Entra admin center > External Identities > External collaboration settings\n2. Select \"Guest user access is restricted to properties and memberships of their own directory objects\"\n3. Click Save\n4. Allow up to 15 minutes for the change to take effect",
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  # Critical: sets guests to 'Restricted access' so they can only access their own directory object\n  guest_user_role_id = \"2af84b1e-32c8-42b7-82bc-daa82404023b\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then External Identities 4. Select External collaboration settings 5. Under Guest user access, change Guest user access restrictions to be Guest user access is restricted to properties and memberships of their own directory objects",
-      "Url": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users"
+      "Text": "Apply **least privilege** to external users:\n- Set guest access to `Restricted access` so guests can only view their own directory objects\n- Avoid assigning admin roles to guests; use **PIM** for rare exceptions\n- Constrain external collaboration and group visibility, and run periodic **access reviews** to remove stale guest access",
+      "Url": "https://hub.prowler.com/check/entra_policy_guest_users_access_restrictions"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This may create additional requests for permissions to access resources that administrators will need to approve. According to https://learn.microsoft.com/en-us/azure/active-directory/enterprise- users/users-restrict-guest-permissions#services-currently-not-supported Service without current support might have compatibility issues with the new guest restriction setting."

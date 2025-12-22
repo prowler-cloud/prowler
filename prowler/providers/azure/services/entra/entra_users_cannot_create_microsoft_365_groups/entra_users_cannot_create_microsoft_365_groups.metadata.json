@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "entra_users_cannot_create_microsoft_365_groups",
-  "CheckTitle": "Ensure that 'Users can create Microsoft 365 groups in Azure portals, API or PowerShell' is set to 'No'",
+  "CheckTitle": "Microsoft 365 group creation by users is disabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Users/Settings",
-  "Description": "Restrict Microsoft 365 group creation to administrators only.",
-  "Risk": "Restricting Microsoft 365 group creation to administrators only ensures that creation of Microsoft 365 groups is controlled by the administrator. Appropriate groups should be created and managed by the administrator and group creation rights should not be delegated to any other user.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/community/all-about-groups#microsoft-365-groups",
+  "Severity": "medium",
+  "ResourceType": "microsoft.aadiam/tenants",
+  "Description": "**Microsoft Entra** directory setting **Group.Unified** governs who can create **Microsoft 365 Groups**. The evaluation inspects `EnableGroupCreation` and, when present, `GroupCreationAllowedGroupId` to determine if group creation is broadly allowed or restricted to a designated group.",
+  "Risk": "Unrestricted group creation drives sprawl of Teams, SharePoint sites, and mailboxes, undermining **confidentiality** via public spaces and guest invites. Compromised accounts can create groups to stage exfiltration or impersonation. It also heightens **integrity** risks from unsanctioned owners and **operational** burden for lifecycle and governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-office-365-groups.html#",
+    "https://cloudaen.com/blogs/view/ms_teams_restricting_creation",
+    "https://docs.easylife365.cloud/collab/getting-started/control-microsoft-groups-creation",
+    "https://bytesolutions.com/how-to-restrict-users-from-creating-teams-and-groups-in-microsoft-365/",
+    "https://www.sharepointdiary.com/2019/07/disable-office-365-group-creation-using-powershell.html",
+    "https://thecloudtechnologist.com/2017/01/17/how-to-restrict-office-365-groups-creation-to-it-department-only/",
+    "https://learn.microsoft.com/en-us/microsoft-365/community/all-about-groups#microsoft-365-groups",
+    "https://woshub.com/prevent-users-creating-new-groups-microsoft-365-teams-outlook/",
+    "https://learn.microsoft.com/en-us/microsoft-365/solutions/manage-creation-of-groups?view=o365-worldwide&redirectSourcePath=%252fen-us%252farticle%252fControl-who-can-create-Office-365-Groups-4c46c8cb-17d0-44b5-9776-005fced8e618"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-office-365-groups.html#",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Groups > General\n3. Set \"Users can create Microsoft 365 groups in Azure portals, API, or PowerShell\" to \"No\"\n4. Click Save",
+      "Terraform": "```hcl\ndata \"azuread_directory_setting_template\" \"unified\" {\n  display_name = \"Group.Unified\"\n}\n\nresource \"azuread_directory_setting\" \"example_resource_name\" {\n  template_id = data.azuread_directory_setting_template.unified.id\n\n  values = {\n    EnableGroupCreation = \"false\"\n    # Critical: sets EnableGroupCreation to false so users cannot create Microsoft 365 groups\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then Groups 4. Select General in settings 5. Set Users can create Microsoft 365 groups in Azure portals, API or PowerShell to No",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/solutions/manage-creation-of-groups?view=o365-worldwide&redirectSourcePath=%252fen-us%252farticle%252fControl-who-can-create-Office-365-Groups-4c46c8cb-17d0-44b5-9776-005fced8e618"
+      "Text": "Apply **least privilege**: set `EnableGroupCreation=false` and allow only a controlled group via `GroupCreationAllowedGroupId`. Use **governed provisioning** with naming policies, sensitivity labels, and expiration/owner reviews. Monitor creation events and enforce **separation of duties** with approvals and lifecycle management.",
+      "Url": "https://hub.prowler.com/check/entra_users_cannot_create_microsoft_365_groups"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling this setting could create a number of requests that would need to be managed by an administrator."
