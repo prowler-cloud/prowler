@@ -186,3 +186,68 @@ class TestComputeService:
             assert compute_client.load_balancers[3].service == "regional_service2"
             assert compute_client.load_balancers[3].project_id == GCP_PROJECT_ID
             assert not compute_client.load_balancers[3].logging
+
+            # Test Managed Instance Groups
+            # We expect 3 MIGs: 2 regional (from region europe-west1-b) and 1 zonal (from zone1)
+            assert len(compute_client.instance_groups) == 3
+
+            # First regional MIG - multiple zones
+            regional_mig_1 = next(
+                (
+                    mig
+                    for mig in compute_client.instance_groups
+                    if mig.name == "regional-mig-1"
+                ),
+                None,
+            )
+            assert regional_mig_1 is not None
+            assert regional_mig_1.id.__class__.__name__ == "str"
+            assert regional_mig_1.region == "europe-west1-b"
+            assert regional_mig_1.zone is None  # Regional MIGs don't have a single zone
+            assert len(regional_mig_1.zones) == 3
+            assert "europe-west1-b" in regional_mig_1.zones
+            assert "europe-west1-c" in regional_mig_1.zones
+            assert "europe-west1-d" in regional_mig_1.zones
+            assert regional_mig_1.is_regional
+            assert regional_mig_1.target_size == 3
+            assert regional_mig_1.project_id == GCP_PROJECT_ID
+
+            # Second regional MIG - single zone
+            regional_mig_2 = next(
+                (
+                    mig
+                    for mig in compute_client.instance_groups
+                    if mig.name == "regional-mig-single-zone"
+                ),
+                None,
+            )
+            assert regional_mig_2 is not None
+            assert regional_mig_2.id.__class__.__name__ == "str"
+            assert regional_mig_2.region == "europe-west1-b"
+            assert regional_mig_2.zone is None
+            assert len(regional_mig_2.zones) == 1
+            assert "europe-west1-b" in regional_mig_2.zones
+            assert regional_mig_2.is_regional
+            assert regional_mig_2.target_size == 1
+            assert regional_mig_2.project_id == GCP_PROJECT_ID
+
+            # Zonal MIG
+            zonal_mig = next(
+                (
+                    mig
+                    for mig in compute_client.instance_groups
+                    if mig.name == "zonal-mig-1"
+                ),
+                None,
+            )
+            assert zonal_mig is not None
+            assert zonal_mig.id.__class__.__name__ == "str"
+            assert (
+                zonal_mig.region == "zone1"
+            )  # zone1 has no hyphen so region is "zone1"
+            assert zonal_mig.zone == "zone1"
+            assert len(zonal_mig.zones) == 1
+            assert "zone1" in zonal_mig.zones
+            assert not zonal_mig.is_regional
+            assert zonal_mig.target_size == 2
+            assert zonal_mig.project_id == GCP_PROJECT_ID

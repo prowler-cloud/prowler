@@ -14,6 +14,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Changed
 - Security Hub integration error when no regions [(#9635)](https://github.com/prowler-cloud/prowler/pull/9635)
 
+### Fixed
+- Orphan scheduled scans caused by transaction isolation during provider creation [(#9633)](https://github.com/prowler-cloud/prowler/pull/9633)
+
 ---
 
 ## [1.17.0] (Prowler v5.16.0)
