@@ -11,6 +11,7 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
 )
@@ -44,6 +45,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    update_provider_compliance_scores,
 )
 from tasks.utils import batched, get_next_execution_datetime
 
@@ -70,9 +72,10 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
-    create_compliance_requirements_task.apply_async(
-        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
-    )
+    chain(
+        create_compliance_requirements_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        update_provider_compliance_scores_task.si(tenant_id=tenant_id, scan_id=scan_id),
+    ).apply_async()
     aggregate_attack_surface_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
@@ -550,6 +553,20 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
     return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(name="backfill-provider-compliance-scores", queue="backfill")
+def backfill_provider_compliance_scores_task(tenant_id: str):
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    Used to populate the compliance watchlist materialized table for tenants
+    that had scans before the feature was deployed.
+
+    Args:
+        tenant_id: Target tenant UUID.
+    """
+    return backfill_provider_compliance_scores(tenant_id=tenant_id)
+
+
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 @handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
@@ -581,6 +598,21 @@ def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-provider-compliance-scores", queue="compliance")
+def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
+    """
+    Update provider compliance scores from a completed scan.
+
+    This task materializes compliance requirement statuses into ProviderComplianceScore
+    for efficient watchlist queries. Uses atomic upsert with concurrency protection.
+
+    Args:
+        tenant_id (str): The tenant ID for which to update scores.
+        scan_id (str): The ID of the scan whose data should be materialized.
+    """
+    return update_provider_compliance_scores(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="scan-daily-severity", queue="overview")

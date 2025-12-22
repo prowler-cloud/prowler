@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
 )
@@ -260,3 +261,20 @@ class TestBackfillScanCategorySummaries:
             assert summary.total_findings == 1
             assert summary.failed_findings == 1
             assert summary.new_failed_findings == 1
+
+
+@pytest.mark.django_db
+class TestBackfillProviderComplianceScores:
+    def test_no_completed_scans(self, tenants_fixture):
+        tenant = tenants_fixture[2]
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no completed scans"}
+
+    def test_no_scans_to_process(self, tenants_fixture, scans_fixture):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.completed_at = None
+        scan.save()
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no completed scans"}

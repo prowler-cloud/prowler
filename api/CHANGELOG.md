@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.18.0] (Prowler UNRELEASED)
+
+### Added
+- New endpoint to retrieve the compliance watchlist [(#9596)](https://github.com/prowler-cloud/prowler/pull/9596)
+
+---
+
 ## [1.17.0] (Prowler v5.16.0)
 
 ### Added

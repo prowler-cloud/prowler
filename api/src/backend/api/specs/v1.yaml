@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.17.0
+  version: 1.18.0
   description: |-
     Prowler API specification.
 
@@ -4862,6 +4862,42 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/PaginatedCategoryOverviewList'
+          description: ''
+  /api/v1/overviews/compliance-watchlist:
+    get:
+      operationId: overviews_compliance_watchlist_retrieve
+      description: |-
+        Get compliance watchlist overview with FAIL-dominant aggregation.
+
+        Without filters: uses pre-aggregated TenantComplianceSummary (~70 rows).
+        With provider filters: queries ProviderComplianceScore with FAIL-dominant logic.
+      parameters:
+      - in: query
+        name: fields[compliance-watchlist-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - compliance_id
+            - requirements_passed
+            - requirements_failed
+            - requirements_manual
+            - total_requirements
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ComplianceWatchlistOverviewResponse'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -11349,6 +11385,50 @@ components:
                 type: string
           required:
           - regions
+    ComplianceWatchlistOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - compliance-watchlist-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            compliance_id:
+              type: string
+            requirements_passed:
+              type: integer
+            requirements_failed:
+              type: integer
+            requirements_manual:
+              type: integer
+            total_requirements:
+              type: integer
+          required:
+          - id
+          - compliance_id
+          - requirements_passed
+          - requirements_failed
+          - requirements_manual
+          - total_requirements
+    ComplianceWatchlistOverviewResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ComplianceWatchlistOverview'
+      required:
+      - data
     Finding:
       type: object
       required:
