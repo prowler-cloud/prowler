@@ -1,29 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_unrestricted_inbound_access",
-  "CheckTitle": "Ensure no Azure SQL Databases allow ingress from 0.0.0.0/0 (ANY IP)",
+  "CheckTitle": "Azure SQL Server does not have firewall rules allowing 0.0.0.0-255.255.255.255",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "SQLServer",
-  "Description": "Ensure that there are no firewall rules allowing traffic from 0.0.0.0-255.255.255.255",
-  "Risk": "Azure SQL servers provide a firewall that, by default, blocks all Internet connections. When the rule (0.0.0.0-255.255.255.255) is used, the server can be accessed by any source from the Internet, incrementing significantly the attack surface of the SQL Server. It is recommended to use more granular firewall rules.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-vnet-service-endpoint-rule-overview",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** server-level firewall rules are evaluated for an entry that allows the entire IPv4 space (`0.0.0.0` to `255.255.255.255`).\n\nThe finding identifies presence of this Internet-wide rule on the server firewall.",
+  "Risk": "An Internet-wide rule permits unsolicited access from any host, enabling mass scanning, brute force, and exploitation of weak configurations.\n- Confidentiality: unauthorized data access/exfiltration\n- Integrity: malicious data/DDL changes\n- Availability: resource abuse or DoS via excessive connections",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_4#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/unrestricted-sql-database-access.html",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-vnet-service-endpoint-rule-overview",
+    "https://www.developerload.com/how-to-disable-firewall-in-azure-sql-database",
+    "https://eitanblumin.com/sql-vulnerability-assessment-tool-rules-reference-list/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az sql server firewall-rule delete --resource-group resource_group_name --server sql_server_name --name rule_name",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/unrestricted-sql-database-access.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_4#terraform"
+      "CLI": "az sql server firewall-rule delete --resource-group <RESOURCE_GROUP> --server <SERVER_NAME> --name <RULE_NAME>",
+      "NativeIaC": "```bicep\n// Update the firewall rule to not allow the entire Internet\nresource sqlServer 'Microsoft.Sql/servers@2021-11-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource restricted 'Microsoft.Sql/servers/firewallRules@2021-11-01' = {\n  name: '${sqlServer.name}/<example_resource_name>'\n  properties: {\n    startIpAddress: '<START_IP>' // Critical: not 0.0.0.0; restricts start IP\n    endIpAddress: '<END_IP>'     // Critical: not 255.255.255.255; restricts end IP\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to SQL servers and select your server\n2. Open Security > Networking\n3. Under Firewall rules, find any rule with Start IP 0.0.0.0 and End IP 255.255.255.255\n4. Select the rule and click Delete\n5. Click Save",
+      "Terraform": "```hcl\n# Replace any allow-all firewall rule with a restricted range\nresource \"azurerm_mssql_firewall_rule\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  server_id        = \"<example_resource_id>\"\n  start_ip_address = \"<START_IP>\" # Critical: not 0.0.0.0\n  end_ip_address   = \"<END_IP>\"   # Critical: not 255.255.255.255\n}\n```"
     },
     "Recommendation": {
-      "Text": "Remove firewall rules allowing all sources and, instead, use more granular rules",
-      "Url": ""
+      "Text": "Remove the all-open rule and enforce **least privilege**.\n- Restrict access to specific IPs/ranges\n- Prefer **private endpoints** or VNet rules to avoid Internet exposure\n- Layer controls (NSGs, Azure Firewall)\n- Avoid broad exceptions like `Allow Azure services` and never use `0.0.0.0/0`",
+      "Url": "https://hub.prowler.com/check/sqlserver_unrestricted_inbound_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

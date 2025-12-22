@@ -1,29 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_va_emails_notifications_admins_enabled",
-  "CheckTitle": "Ensure that Vulnerability Assessment (VA) setting 'Also send email notifications to admins and subscription owners' is set for each SQL Server",
+  "CheckTitle": "SQL Server has Vulnerability Assessment enabled and email notifications to subscription admins configured",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Enable Vulnerability Assessment (VA) setting 'Also send email notifications to admins and subscription owners'.",
-  "Risk": "VA scan reports and alerts will be sent to admins and subscription owners by enabling setting 'Also send email notifications to admins and subscription owners'. This may help in reducing time required for identifying risks and taking corrective measures.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** Vulnerability Assessment configuration, specifically whether recurring scans are set to email results to subscription admins/owners via `Also send email notifications to admins and subscription owners`.",
+  "Risk": "Without these notifications, findings may go unnoticed, delaying fixes. Prolonged exposure of misconfigurations and weak permissions threatens data **confidentiality** and **integrity**, can affect **availability**, and slows **incident response** and audit readiness.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/enable-email-alerts-for-administrators-and-subscription-owners.html",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server/",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
+    "https://guides.spectralops.io/docs/d9_azu_mon_25",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server#terraform",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server#terraform"
+      "CLI": "az rest --method put --url \"https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Sql/servers/<SERVER_NAME>/vulnerabilityAssessments/default?api-version=2021-11-01\" --body '{\"properties\":{\"storageContainerPath\":\"https://<STORAGE_ACCOUNT>.blob.core.windows.net/<CONTAINER>\",\"storageAccountAccessKey\":\"<STORAGE_KEY>\",\"recurringScans\":{\"isEnabled\":true,\"emailSubscriptionAdmins\":true}}}'",
+      "NativeIaC": "```bicep\n// Enable VA at server level with classic storage and email to subscription admins\nresource sqlServer 'Microsoft.Sql/servers@2021-11-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource va 'Microsoft.Sql/servers/vulnerabilityAssessments@2021-11-01' = {\n  name: 'default'\n  parent: sqlServer\n  properties: {\n    storageContainerPath: 'https://<example_resource_name>.blob.core.windows.net/<example_resource_name>' // Critical: required so the check detects VA configured\n    storageAccountAccessKey: '<example_resource_id>'\n    recurringScans: {\n      isEnabled: true\n      emailSubscriptionAdmins: true // Critical: sends scan reports to subscription admins to PASS the check\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers and open <SERVER_NAME>\n2. Under Security, select Vulnerability assessment (classic)\n3. Select a Storage account container and click Save (ensures a storage container path)\n4. Enable Recurring scans\n5. Enable Send scan reports to subscription admins\n6. Click Save",
+      "Terraform": "```hcl\n# Enable VA at server level and email subscription admins\nresource \"azurerm_mssql_server_security_alert_policy\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"\n  state     = \"Enabled\"\n}\n\nresource \"azurerm_mssql_server_vulnerability_assessment\" \"<example_resource_name>\" {\n  server_security_alert_policy_id = azurerm_mssql_server_security_alert_policy.<example_resource_name>.id\n  storage_container_path          = \"https://<example_resource_name>.blob.core.windows.net/<example_resource_name>\" # Critical: required so the check detects VA configured\n  storage_account_access_key      = \"<example_resource_id>\"\n\n  recurring_scans {\n    enabled                   = true\n    email_subscription_admins = true # Critical: sends scan reports to subscription admins to PASS the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers 2. Select a server instance 3. Click on Security Center 4. Select Configure next to Enabled at subscription-level 5. In Section Vulnerability Assessment Settings, configure Storage Accounts if not already 6. Check/enable 'Also send email notifications to admins and subscription owners' 7. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
+      "Text": "Enable VA email alerts for admins/owners (`Also send...`) so findings reach accountable staff promptly.\n\n- Route to a monitored security group and SIEM\n- Review recipients regularly; remove stale accounts\n- Apply **least privilege** and maintain recurring scans for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/sqlserver_va_emails_notifications_admins_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling the Microsoft Defender for SQL features will incur additional costs for each SQL server."

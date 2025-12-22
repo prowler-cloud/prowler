@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_auditing_enabled",
-  "CheckTitle": "Ensure that SQL Servers have an audit policy configured",
+  "CheckTitle": "SQL Server has an auditing policy configured",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Ensure that there is an audit policy configured",
-  "Risk": "Audit policies are used to store logs associated to the SQL server (for instance, successful/unsuccesful log in attempts). These logs may be useful to detect anomalies or to perform an investigation in case a security incident is detected",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
+  "Severity": "high",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server** auditing is assessed at the server level to confirm audit logging is active. Configurations with any auditing policy state set to `Disabled` indicate auditing is not configured for the server and its databases.",
+  "Risk": "Without **SQL auditing**, visibility into logins, privilege changes, and query activity is lost. Stealthy data exfiltration and tampering can go undetected, impacting **confidentiality** and **integrity**. Absent audit trails hinder **forensics**, slow incident response, and weaken compliance evidence.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/learning/microsoft-azure-database-administrator-associate-dp-300-cert-prep-by-microsoft-press/configure-server-and-database-audits",
+    "https://irzu.org/research/auditing-azure-sql-microsoft-qa/",
+    "https://learn.microsoft.com/is-is/azure/azure-sql/database/auditing-overview?view=azuresql&viewFallbackFrom=azuresql-vm",
+    "https://www.mssqltips.com/sqlservertip/6732/azure-sql-database-auditing/",
+    "https://connectioncloudsupport.zendesk.com/hc/en-us/articles/4402652204441-Auditing-for-Azure-SQL-Database-and-Azure-Synapse-Analytics",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#terraform",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/auditing.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-AzureRmSqlServerAuditingPolicy -ResourceGroupName <RESOURCE_GROUP_NAME> -ServerName <SERVER_NAME> -AuditType <AUDIT_TYPE> -StorageAccountName <STORAGE_ACCOUNT_NAME>",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#terraform"
+      "CLI": "az sql server audit-policy update --resource-group <RESOURCE_GROUP_NAME> --name <SERVER_NAME> --state Enabled --storage-account <STORAGE_ACCOUNT_NAME>",
+      "NativeIaC": "```bicep\n// Enable server-level auditing to an existing Storage Account\nparam sqlServerName string = \"<example_resource_name>\"\nparam storageAccountName string = \"<example_resource_name>\"\n\nresource sql 'Microsoft.Sql/servers@2021-11-01' existing = {\n  name: sqlServerName\n}\n\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {\n  name: storageAccountName\n}\n\nresource audit 'Microsoft.Sql/servers/auditingSettings@2021-11-01' = {\n  name: 'default'\n  parent: sql\n  properties: {\n    state: 'Enabled' // Critical: turns on auditing\n    storageEndpoint: 'https://${sa.name}.blob.core.windows.net/' // Critical: audit log destination\n    storageAccountAccessKey: listKeys(sa.id, '2023-01-01').keys[0].value // Critical: grants write access to logs\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers and select your server\n2. Under Security, click Auditing\n3. Set Auditing to On\n4. Select Storage as the destination and choose a Storage account\n5. Click Save",
+      "Terraform": "```hcl\n# Enable server-level auditing to Azure Storage\nresource \"azurerm_mssql_server_extended_auditing_policy\" \"<example_resource_name>\" {\n  server_id                  = \"<example_resource_id>\"\n  storage_endpoint           = \"https://<STORAGE_ACCOUNT_NAME>.blob.core.windows.net/\" # Critical: audit log destination\n  storage_account_access_key = \"<STORAGE_ACCOUNT_KEY>\"                                  # Critical: allows writing audit logs\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create an audit policy for the SQL server",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/auditing.html"
+      "Text": "Enable server-level **auditing** and send logs to a centralized, tamper-resistant store with defined retention. Enforce **least privilege** and **separation of duties** for log access, integrate with monitoring for alerts, and periodically validate coverage. Use database-level auditing only for specific exceptions.",
+      "Url": "https://hub.prowler.com/check/sqlserver_auditing_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

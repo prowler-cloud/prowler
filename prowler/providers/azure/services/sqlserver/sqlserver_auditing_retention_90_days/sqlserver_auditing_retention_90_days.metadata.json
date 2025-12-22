@@ -1,29 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_auditing_retention_90_days",
-  "CheckTitle": "Ensure that 'Auditing' Retention is 'greater than 90 days'",
+  "CheckTitle": "SQL server has auditing enabled with retention greater than 90 days",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "SQL Server Audit Retention should be configured to be greater than 90 days.",
-  "Risk": "Audit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
+  "Severity": "high",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "**Azure SQL Server auditing** settings are evaluated to ensure **auditing is enabled** and log retention is greater than `90` days. It considers the auditing policy state and the configured `retention_days` value.",
+  "Risk": "Without adequate retention or with auditing disabled, **activity trails expire too soon**, limiting detection and investigation of **unauthorized access, data exfiltration, and privilege abuse**. This weakens **confidentiality** and **integrity** and slows incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/purview/audit-log-retention-policies",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_3",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/auditing-retention.html#",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-AzSqlServerAudit -ResourceGroupName resource_group_name -ServerName SQL_Server_name -RetentionInDays 100 -LogAnalyticsTargetState Enabled -WorkspaceResourceId '/subscriptions/subscription_ID/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/workspace_name'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/auditing-retention.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_3"
+      "CLI": "Set-AzSqlServerAudit -ResourceGroupName <example_resource_name> -ServerName <example_resource_name> -RetentionInDays 91 -LogAnalyticsTargetState Enabled -WorkspaceResourceId <example_resource_id>",
+      "NativeIaC": "```bicep\n// Enable server-level auditing with retention > 90 days\nresource audit 'Microsoft.Sql/servers/auditingSettings@2021-02-01-preview' = {\n  name: '<example_resource_name>/default'\n  properties: {\n    state: 'Enabled'                         // Critical: turns auditing ON\n    retentionDays: 91                        // Critical: > 90 days\n    isAzureMonitorTargetEnabled: true        // Critical: send to Log Analytics\n    workspaceResourceId: '<example_resource_id>' // Critical: target workspace\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers and select <example_resource_name>\n2. Under Security, click Auditing\n3. Set Auditing to On\n4. Destination: select Log Analytics workspace and choose your workspace\n5. Set Retention (days) to 91\n6. Click Save",
+      "Terraform": "```hcl\n# Enable server-level auditing with retention > 90 days\nresource \"azurerm_mssql_server_extended_auditing_policy\" \"audit\" {\n  server_id          = \"<example_resource_id>\"\n  log_monitoring_enabled = true   # Critical: enable Log Analytics target\n  retention_in_days      = 91     # Critical: > 90 days\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers 2. For each server instance 3. Click on Auditing 4. If storage is selected, expand Advanced properties 5. Set the Retention (days) setting greater than 90 days or 0 for unlimited retention. 6. Select Save",
-      "Url": "https://learn.microsoft.com/en-us/purview/audit-log-retention-policies"
+      "Text": "Enable **server-level auditing** and set retention above `90` days, aligned with policy needs. Store logs in **tamper-resistant, centralized storage**, restrict access with **least privilege**, and integrate alerting and review. Apply **defense in depth** with continuous monitoring.",
+      "Url": "https://hub.prowler.com/check/sqlserver_auditing_retention_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

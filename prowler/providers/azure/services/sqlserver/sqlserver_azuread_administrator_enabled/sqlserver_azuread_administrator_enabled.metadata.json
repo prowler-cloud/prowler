@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "sqlserver_azuread_administrator_enabled",
-  "CheckTitle": "Ensure that SQL Servers have an Azure Active Directory administrator",
+  "CheckTitle": "SQL Server has an Azure Active Directory administrator configured",
   "CheckType": [],
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "SQLServer",
-  "Description": "Ensure that there is an Azure Active Directory administrator configured",
-  "Risk": "Azure Active Directory provides a centralized way of managing identities. Using local SQL administrator identites makes it more difficult to manage user accounts. In addition, from Azure Active Directory, security policies can be enforced to users in centralized way.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-aad-authentication",
+  "ResourceType": "microsoft.sql/servers",
+  "Description": "Azure SQL Server is configured with a **Microsoft Entra (Azure AD) administrator** at the server scope, indicated by `administrator_type` set to `ActiveDirectory`.",
+  "Risk": "Without a **Microsoft Entra admin**, the server can't use Entra identities, pushing reliance on **SQL authentication**. This weakens confidentiality and integrity: no MFA/conditional access, harder offboarding and auditing, and compromised passwords can enable unauthorized data access and privilege escalation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-active-directory-admin-is-configured#terraform",
+    "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-aad-authentication",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/active-directory-admin.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az sql server ad-admin create --resource-group resource_group_name --server server_name --display-name display_name --object-id user_object_id",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/active-directory-admin.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-active-directory-admin-is-configured#terraform"
+      "CLI": "az sql server ad-admin create --resource-group <RESOURCE_GROUP> --server <SERVER_NAME> --display-name <AAD_ADMIN_NAME> --object-id <AAD_OBJECT_ID>",
+      "NativeIaC": "```bicep\n// Configure Microsoft Entra (Azure AD) admin on an existing SQL Server\nresource aadAdmin 'Microsoft.Sql/servers/administrators@2021-11-01' = {\n  name: '<example_resource_name>/ActiveDirectory' // serverName/ActiveDirectory\n  properties: {\n    administratorType: 'ActiveDirectory' // CRITICAL: ensures admin type is AAD\n    login: '<AAD_ADMIN_NAME>'             // CRITICAL: AAD admin display name\n    sid: '<AAD_OBJECT_ID>'                // CRITICAL: AAD object (GUID)\n    tenantId: '<TENANT_ID>'               // CRITICAL: Tenant where the AAD object exists\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to SQL servers and select <SERVER_NAME>\n2. Select Active Directory admin\n3. Click Set admin\n4. Select the desired Microsoft Entra user or group and click Select\n5. Click Save",
+      "Terraform": "```hcl\n# Set Microsoft Entra (Azure AD) admin on an existing SQL Server\nresource \"azurerm_mssql_active_directory_administrator\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"  # CRITICAL: target SQL server resource ID\n  login     = \"<AAD_ADMIN_NAME>\"        # CRITICAL: AAD admin display name\n  object_id = \"<AAD_OBJECT_ID>\"         # CRITICAL: AAD object (GUID)\n  tenant_id = \"<TENANT_ID>\"             # CRITICAL: Tenant where the AAD object exists\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable an Azure Active Directory administrator",
-      "Url": ""
+      "Text": "Assign a **Microsoft Entra administrator** (prefer a security group) at the server level and manage access via Entra groups. Enforce **least privilege**, require **MFA/conditional access**, and use **managed identities** for services. *If feasible*, adopt Entra-only authentication and phase out shared SQL logins.",
+      "Url": "https://hub.prowler.com/check/sqlserver_azuread_administrator_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
