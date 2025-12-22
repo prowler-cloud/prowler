@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_auth_is_set_up",
-  "CheckTitle": "Ensure App Service Authentication is set up for apps in Azure App Service",
+  "CheckTitle": "Azure App Service app has App Service Authentication enabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Azure App Service Authentication is a feature that can prevent anonymous HTTP requests from reaching a Web Application or authenticate those with tokens before they reach the app. If an anonymous request is received from a browser, App Service will redirect to a logon page. To handle the logon process, a choice from a set of identity providers can be made, or a custom authentication mechanism can be implemented.",
-  "Risk": "By Enabling App Service Authentication, every incoming HTTP request passes through it before being handled by the application code. It also handles authentication of users with the specified provider (Azure Active Directory, Facebook, Google, Microsoft Account, and Twitter), validation, storing and refreshing of tokens, managing the authenticated sessions and injecting identity information into request headers.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization",
+  "Severity": "high",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure App Service** can enforce built-in **Authentication/Authorization** (Easy Auth) so requests are authenticated by a provider before reaching app code.\n\nThis evaluates whether platform auth is enabled for the app and an identity provider is configured.",
+  "Risk": "Without platform **authentication**, apps may accept **anonymous requests**, enabling unauthorized access to APIs and data. Attackers can enumerate endpoints and bypass weak app checks, risking data exposure (C), unauthorized changes (I), and automated abuse impacting availability (A).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-app-service-authentication.html",
+    "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service",
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#website-contributor",
+    "https://www.geeksforgeeks.org/cloud-computing/how-to-use-azure-active-directory-to-manage-user-authentication-and-authorization/",
+    "https://parveensingh.com/easy-auth-for-azure-app-service/",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_2#terraform",
+    "https://medium.com/geekculture/easyauth-in-functions-app-with-azure-active-directory-29c01cad8477",
+    "https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az webapp auth update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --enabled true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-app-service-authentication.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_2#terraform"
+      "NativeIaC": "```bicep\n// Enable App Service Authentication (Easy Auth) for an existing Web App\nresource auth 'Microsoft.Web/sites/config@2022-03-01' = {\n  name: '<example_resource_name>/authsettingsV2'\n  properties: {\n    platformEnabled: true // CRITICAL: Turns on built-in authentication for the app\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure Portal and go to App Services\n2. Select <APP_NAME> and open Authentication\n3. Click Add identity provider, choose Microsoft, and click Add\n4. Save changes\n\nThis enables App Service Authentication for the app",
+      "Terraform": "```hcl\n# Enable App Service Authentication for an App Service\nresource \"azurerm_app_service\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  app_service_plan_id = \"<example_resource_id>\"\n\n  auth_settings {\n    enabled = true # CRITICAL: Enables built-in authentication (Easy Auth)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, click on Authentication 5. If no identity providers are set up, then click Add identity provider 6. Choose other parameters as per your requirements and click on Add",
-      "Url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#website-contributor"
+      "Text": "Enable App Service **Authentication/Authorization** and set `Require authentication` for unauthenticated requests. Use **Microsoft Entra** or a trusted IdP, restrict tenants/audiences, enforce HTTPS, and apply **least privilege** with role/claim checks and Conditional Access for defense-in-depth. Avoid `Allow anonymous requests`.",
+      "Url": "https://hub.prowler.com/check/app_ensure_auth_is_set_up"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This is only required for App Services which require authentication. Enabling on site like a marketing or support website will prevent unauthenticated access which would be undesirable. Adding Authentication requirement will increase cost of App Service and require additional security components to facilitate the authentication"

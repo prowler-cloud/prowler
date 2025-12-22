@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "app_register_with_identity",
-  "CheckTitle": "Ensure that Register with Azure Active Directory is enabled on App Service",
+  "CheckTitle": "App Service app has a managed identity configured",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Managed service identity in App Service provides more security by eliminating secrets from the app, such as credentials in the connection strings. When registering with Azure Active Directory in App Service, the app will connect to other Azure services securely without the need for usernames and passwords.",
-  "Risk": "App Service provides a highly scalable, self-patching web hosting service in Azure. It also provides a managed identity for apps, which is a turn-key solution for securing access to Azure SQL Database and other Azure services.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad?tabs=workforce-tenant",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure App Service app** is configured with a **managed identity** (`identity`: `SystemAssigned` or `UserAssigned`) for token-based access to Azure resources without embedded credentials",
+  "Risk": "**Missing managed identity** drives reliance on stored secrets. Leaked credentials enable **unauthorized access** to SQL, Storage, or Key Vault, leading to **data exfiltration**, tampering, and lateral movement. Secret expiry or revocation can break connectivity, degrading **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity",
+    "https://learn.microsoft.com/en-us/azure/azure-app-configuration/howto-integrate-azure-managed-service-identity",
+    "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service",
+    "https://learn.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database",
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad?tabs=workforce-tenant",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-registration-with-microsoft-entra-id.html",
+    "https://docs.prowler.com/checks/azure/azure-iam-policies/bc_azr_iam_1#terraform"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az webapp identity assign --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-registration-with-microsoft-entra-id.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-iam-policies/bc_azr_iam_1#terraform"
+      "NativeIaC": "```bicep\n// Enable system-assigned managed identity on an existing App Service app\nresource app 'Microsoft.Web/sites@2022-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  identity: {\n    type: 'SystemAssigned' // Critical: enables a managed identity for the app\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal\n2. Go to App Services and select your app\n3. Under Settings, select Identity\n4. On the System assigned tab, set Status to On\n5. Click Save and confirm",
+      "Terraform": "```hcl\n# Enable system-assigned managed identity on the App Service app\nresource \"azurerm_app_service\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = azurerm_resource_group.<example_resource_name>.location\n  resource_group_name = azurerm_resource_group.<example_resource_name>.name\n  app_service_plan_id = azurerm_app_service_plan.<example_resource_name>.id\n\n  identity {                       # Critical: enables managed identity\n    type = \"SystemAssigned\"       # Creates a system-assigned identity for the app\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Identity 5. Under the System assigned pane, set Status to On",
-      "Url": "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service"
+      "Text": "Enable a **managed identity** and use it for all service-to-service access. Apply **least privilege** on target resources and eliminate secrets from code and app settings. Remove legacy credentials, rotate residual keys, and monitor usage for **defense in depth**. *Use system-assigned per app; user-assigned for reuse or separation.*",
+      "Url": "https://hub.prowler.com/check/app_register_with_identity"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, Managed service identity via Azure AD is disabled."

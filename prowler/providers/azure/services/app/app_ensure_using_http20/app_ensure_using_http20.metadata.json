@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_using_http20",
-  "CheckTitle": "Ensure that 'HTTP Version' is the Latest, if Used to Run the Web App",
+  "CheckTitle": "App Service web app has HTTP/2.0 enabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Periodically, newer versions are released for HTTP either due to security flaws or to include additional functionality. Using the latest HTTP version for web apps to take advantage of security fixes, if any, and/or new functionalities of the newer version.",
-  "Risk": "Newer versions may contain security enhancements and additional functionality. Using the latest version is recommended in order to take advantage of enhancements and new capabilities. With each software installation, organizations need to determine if a given update meets their requirements. They must also verify the compatibility and support provided for any additional software against the update revision that is selected. HTTP 2.0 has additional performance improvements on the head-of-line blocking problem of old HTTP version, header compression, and prioritization of requests. HTTP 2.0 no longer supports HTTP 1.1's chunked transfer encoding mechanism, as it provides its own, more efficient, mechanisms for data streaming.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure App Service apps** are evaluated for **HTTP/2 support** via the `http20_enabled` configuration, indicating whether the site serves traffic using the HTTP/2 protocol",
+  "Risk": "Without **HTTP/2**, apps remain on **HTTP/1.1**, increasing connection overhead and head-of-line blocking, which can reduce **availability** under load. Inefficient use of TLS sessions raises **DoS susceptibility** and degrades user experience, impacting service reliability",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://azure.microsoft.com/en-us/blog/announcing-http-2-support-in-azure-app-service/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-http-2-for-app-service-web-applications.html",
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az webapp config set --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --http20-enabled true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-http-2-for-app-service-web-applications.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Enable HTTP/2.0 on an existing App Service web app\nresource webConfig 'Microsoft.Web/sites/config@2022-09-01' = {\n  name: '<example_resource_name>/web'\n  properties: {\n    http20Enabled: true // Critical: enables HTTP/2.0 for the app\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and go to App Services\n2. Select your web app\n3. Navigate to Settings > Configuration > General settings\n4. Set HTTP version to 2.0\n5. Click Save",
+      "Terraform": "```hcl\n# Enable HTTP/2.0 for an App Service\nresource \"azurerm_app_service\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<LOCATION>\"\n  resource_group_name = \"<example_resource_group>\"\n  app_service_plan_id = \"<example_resource_id>\"\n\n  http2_enabled = true # Critical: enables HTTP/2.0\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Configuration 5. Set HTTP version to 2.0 under General settings",
-      "Url": "https://azure.microsoft.com/en-us/blog/announcing-http-2-support-in-azure-app-service/"
+      "Text": "Enable **HTTP/2** (`http20_enabled=true`) to use a modern, efficient transport.\n\n- Enforce `HTTPS Only` and a strong minimum `TLS` version for defense-in-depth\n- Validate app/library compatibility before rollout\n- Monitor performance and errors post-change; deploy gradually",
+      "Url": "https://hub.prowler.com/check/app_ensure_using_http20"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities"

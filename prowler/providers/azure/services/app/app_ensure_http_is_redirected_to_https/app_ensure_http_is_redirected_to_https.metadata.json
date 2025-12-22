@@ -1,29 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_http_is_redirected_to_https",
-  "CheckTitle": "Ensure Web App Redirects All HTTP traffic to HTTPS in Azure App Service",
+  "CheckTitle": "Azure App Service web app redirects HTTP to HTTPS",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites/config",
-  "Description": "Azure Web Apps allows sites to run under both HTTP and HTTPS by default. Web apps can be accessed by anyone using non-secure HTTP links by default. Non-secure HTTP requests can be restricted and all HTTP requests redirected to the secure HTTPS port. It is recommended to enforce HTTPS-only traffic.",
-  "Risk": "Enabling HTTPS-only traffic will redirect all non-secure HTTP requests to HTTPS ports. HTTPS uses the TLS/SSL protocol to provide a secure connection which is both encrypted and authenticated. It is therefore important to support HTTPS for the security benefits.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-https",
+  "Severity": "high",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure App Service web apps** redirect `HTTP` traffic to `HTTPS` when the `HTTPS Only` setting is enabled. This evaluation identifies apps that do not force secure transport by checking whether plaintext requests are automatically redirected to encrypted endpoints.",
+  "Risk": "Leaving **HTTP accessible** enables **man-in-the-middle** interception, credential and cookie theft, and response tampering. This undermines **confidentiality** and **integrity**, and can lead to session hijacking or downgrade attacks that bypass TLS.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_5#terraform",
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-https",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-https-only-traffic.html#",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az webapp update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --set httpsOnly=true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-https-only-traffic.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_5#terraform"
+      "NativeIaC": "```bicep\n// Enable HTTPS-only redirect on an existing App Service\nresource app 'Microsoft.Web/sites@2022-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    httpsOnly: true  // Critical: forces redirect from HTTP to HTTPS\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and go to App Services\n2. Select your web app\n3. Go to TLS/SSL settings and set HTTPS Only to On\n4. Click Save",
+      "Terraform": "```hcl\n# Enforce HTTPS-only on an App Service\nresource \"azurerm_windows_web_app\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  service_plan_id     = \"<example_resource_id>\"\n\n  https_only = true # Critical: redirects HTTP to HTTPS\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Configuration 5. In the General Settings section, set the HTTPS Only to On 6. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"
+      "Text": "Enforce **HTTPS-only** for all apps.\n- Use trusted certificates and require `TLS 1.2` or later\n- Enable **HSTS** to prevent downgrade/mixed-content\n- Redirect legacy `http` links to `https`\n- Minimize HTTP exposure via WAF/CDN or private access\nApply **defense in depth** to protect data in transit.",
+      "Url": "https://hub.prowler.com/check/app_ensure_http_is_redirected_to_https"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "When it is enabled, every incoming HTTP request is redirected to the HTTPS port. This means an extra level of security will be added to the HTTP requests made to the app."

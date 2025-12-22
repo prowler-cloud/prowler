@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_latest_runtime_version",
-  "CheckTitle": "Ensure Azure Functions are using the latest supported runtime",
+  "CheckTitle": "Azure Function uses the latest supported runtime version (~4)",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Keeping Azure Functions up to date with the latest supported runtime version is crucial for security and performance. Updates often include security patches and enhancements, helping to protect against known vulnerabilities and potential exploits. Additionally, newer runtime versions may offer improved functionality and optimized resource utilization.",
-  "Risk": "Using outdated runtime versions may introduce security risks and performance degradation. Outdated runtimes may have unpatched vulnerabilities, making them susceptible to attacks.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-functions/functions-versions",
+  "Severity": "medium",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure Function Apps** are assessed for the **runtime version** set via `FUNCTIONS_EXTENSION_VERSION`. The finding identifies apps not configured to use the current supported major version `~4`.",
+  "Risk": "Outdated Functions runtimes erode CIA:\n- **Confidentiality**: known flaws enable unauthorized data access.\n- **Integrity**: RCE or binding bugs allow code tampering.\n- **Availability**: missing fixes cause crashes and scale faults.\n\nEnd-of-support versions (e.g., 2.x/3.x) lack security patches, increasing exploitability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/azure/azure-functions/functions-versions",
+    "https://learn.microsoft.com/en-us/azure/azure-functions/migrate-version-3-version-4?tabs=net8%2Cazure-cli%2Cwindows&pivots=programming-language-python",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-runtime-version.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az functionapp config appsettings set --name <function_app_name> --resource-group <resource_group_name> --settings FUNCTIONS_EXTENSION_VERSION=~4",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-runtime-version.html",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Set Azure Functions runtime to v4 for an existing Function App\nresource functionApp 'Microsoft.Web/sites@2022-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource appSettings 'Microsoft.Web/sites/config@2022-09-01' = {\n  name: '${functionApp.name}/appsettings'\n  properties: {\n    FUNCTIONS_EXTENSION_VERSION: '~4' // Critical: ensures the Function App uses runtime ~4\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Function App <example_resource_name>\n2. Select Configuration > Application settings\n3. Add or edit the setting:\n   - Name: FUNCTIONS_EXTENSION_VERSION\n   - Value: ~4\n4. Click Save and confirm the restart\n5. Verify the setting shows FUNCTIONS_EXTENSION_VERSION = ~4",
+      "Terraform": "```hcl\n# Minimal Function App with runtime set to v4 (~4)\nresource \"azurerm_resource_group\" \"example\" {\n  name     = \"<example_resource_name>\"\n  location = \"eastus\"\n}\n\nresource \"azurerm_storage_account\" \"example\" {\n  name                     = \"<example_resource_name>\"\n  resource_group_name      = azurerm_resource_group.example.name\n  location                 = azurerm_resource_group.example.location\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n}\n\nresource \"azurerm_app_service_plan\" \"example\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = azurerm_resource_group.example.name\n  location            = azurerm_resource_group.example.location\n  kind                = \"FunctionApp\"\n  sku {\n    tier = \"Dynamic\"\n    size = \"Y1\"\n  }\n}\n\nresource \"azurerm_function_app\" \"example\" {\n  name                       = \"<example_resource_name>\"\n  location                   = azurerm_resource_group.example.location\n  resource_group_name        = azurerm_resource_group.example.name\n  app_service_plan_id        = azurerm_app_service_plan.example.id\n  storage_account_name       = azurerm_storage_account.example.name\n  storage_account_access_key = azurerm_storage_account.example.primary_access_key\n\n  app_settings = {\n    FUNCTIONS_EXTENSION_VERSION = \"~4\" # Critical: ensures the Function App uses runtime ~4\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-functions/migrate-version-3-version-4?tabs=net8%2Cazure-cli%2Cwindows&pivots=programming-language-python"
+      "Text": "Standardize on supported runtime `~4` and align language/extension versions.\n- Enforce upgrades in CI/CD and use staging to validate before rollout.\n- Apply **least privilege** for app identities and secrets.\n- Prefer automated patching and periodic reviews to avoid drift; avoid downgrades or indefinite minor pinning.",
+      "Url": "https://hub.prowler.com/check/app_function_latest_runtime_version"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Stay informed about the latest security updates and patch releases for Azure Functions to maintain a secure and up-to-date environment."

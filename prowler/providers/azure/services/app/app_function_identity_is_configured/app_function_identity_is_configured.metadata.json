@@ -1,29 +1,41 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_identity_is_configured",
-  "CheckTitle": "Ensure Azure function has system or user assigned managed identity configured",
+  "CheckTitle": "Azure Function has a system-assigned or user-assigned managed identity enabled",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Azure Functions should have managed identities configured for enhanced security and access control.",
-  "Risk": "Not using managed identities can lead to less secure authentication and authorization practices, potentially exposing sensitive data.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure Function Apps** are evaluated for an enabled **managed identity** (`SystemAssigned` or `UserAssigned`) configured on the app.\n\nThe finding indicates whether an identity is present to support token-based access to other Azure resources.",
+  "Risk": "Without **managed identities**, apps rely on stored secrets/keys, risking:\n- Confidentiality loss from leaked credentials\n- Integrity tampering via unauthorized writes\n- Availability outages from secret expiry/rotation\n\nCompromised keys enable unauthorized access and lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-system-assigned-identity.html",
+    "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity",
+    "https://blog.johnfolberth.com/azure-managed-identities-user-vs-system-assigned/",
+    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+    "https://learn.microsoft.com/en-us/answers/questions/1696360/azure-function-app-using-system-assigned-managed-i",
+    "https://stackoverflow.com/questions/69451720/unable-to-use-user-managed-identity-with-azure-function-app",
+    "https://stackoverflow.com/questions/78772444/azure-subscriber-function-not-running-with-managed-identity",
+    "https://www.red-gate.com/simple-talk/cloud/azure/azure-function-and-user-assigned-managed-identities/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az functionapp identity assign --name <function_name> --resource-group <resource_group> --identities [system]",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-system-assigned-identity.html",
-      "Terraform": ""
+      "CLI": "az functionapp identity assign --resource-group <resource_group> --name <function_name>",
+      "NativeIaC": "```bicep\n// Enable managed identity on an existing Function App\nparam location string = resourceGroup().location\n\nresource functionApp 'Microsoft.Web/sites@2022-03-01' = {\n  name: '<example_resource_name>'\n  location: location\n  identity: {\n    type: 'SystemAssigned' // CRITICAL: Enables a system-assigned managed identity so the check passes\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to your Function App\n2. Under Settings, select Identity\n3. On the System assigned tab, set Status to On\n4. Click Save",
+      "Terraform": "```hcl\n# Enable managed identity on an existing Function App via PATCH\nresource \"azapi_update_resource\" \"<example_resource_name>\" {\n  type       = \"Microsoft.Web/sites@2022-03-01\"\n  resource_id = \"<example_resource_id>\"\n  body = jsonencode({\n    identity = {\n      type = \"SystemAssigned\" # CRITICAL: Enables a system-assigned managed identity so the check passes\n    }\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable managed identities for Azure Functions to enhance security and access control. This allows the function app to easily access other Azure resources securely and with the appropriate permissions.",
-      "Url": "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity"
+      "Text": "Enable a **managed identity** on each Function App (`SystemAssigned` per app, `UserAssigned` for shared/long-lived needs). Replace secrets with token-based access and grant only required RBAC roles (**least privilege**). Remove keys from settings, apply **separation of duties**, and monitor access as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/app_function_identity_is_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

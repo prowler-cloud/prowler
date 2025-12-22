@@ -1,29 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "app_http_logs_enabled",
-  "CheckTitle": "Ensure that logging for Azure AppService 'HTTP logs' is enabled",
+  "CheckTitle": "Azure App Service app has HTTP logs enabled in diagnostic settings",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "Microsoft.Web/sites/config",
-  "Description": "Enable AppServiceHTTPLogs diagnostic log category for Azure App Service instances to ensure all http requests are captured and centrally logged.",
-  "Risk": "Capturing web requests can be important supporting information for security analysts performing monitoring and incident response activities. Once logging, these logs can be ingested into SIEM or other central aggregation point for the organization.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
+  "Severity": "medium",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "Azure App Service diagnostic settings include **HTTP request logging** when the `AppServiceHTTPLogs` category (or the `allLogs` group) is enabled to capture web access events.",
+  "Risk": "Without **HTTP access logs**, visibility into requests is lost, hindering **detection** of brute force, probing, and injection attempts. This weakens **forensics** and reduces **confidentiality** and **integrity** by masking data access paths and blocking reliable incident timelines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
+    "https://stackoverflow.com/questions/61540726/sending-azure-app-service-http-logs-from-diagnostics-settings-to-azure-monitor-l",
+    "https://stackoverflow.com/questions/52402682/enable-diagnostics-logs-for-app-service-using-arm-template",
+    "https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs",
+    "https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs",
+    "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-that-app-service-enables-http-logging#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-that-app-service-enables-http-logging#terraform"
+      "CLI": "az monitor diagnostic-settings create --name <example_resource_name> --resource /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Web/sites/<APP_NAME> --workspace <LOG_ANALYTICS_WORKSPACE_RESOURCE_ID> --logs '[{\"category\":\"AppServiceHTTPLogs\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Enable HTTP Logs for an existing App Service via Azure Monitor diagnostic setting\nresource app 'Microsoft.Web/sites@2022-03-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: app\n  properties: {\n    workspaceId: '<example_resource_id>' // Destination Log Analytics workspace\n    logs: [\n      {\n        category: 'AppServiceHTTPLogs' // Critical: enable the HTTP Logs category\n        enabled: true                  // Critical: turns HTTP Logs on\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to your App Service > Monitoring > Diagnostic settings\n2. Click + Add diagnostic setting\n3. Under Logs, check AppServiceHTTPLogs (or select the allLogs category group)\n4. Choose a destination (Log Analytics workspace, Storage account, or Event Hub)\n5. Click Save",
+      "Terraform": "```hcl\n# Enable HTTP Logs for App Service via Azure Monitor diagnostic setting\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Web/sites/<example_resource_name>\"\n  log_analytics_workspace_id = \"<example_resource_id>\" # Destination Log Analytics workspace\n\n  log {                      # Critical: enables the HTTP Logs category\n    category = \"AppServiceHTTPLogs\"\n    enabled  = true\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to App Services For each App Service: 2. Go to Diagnostic Settings 3. Click Add Diagnostic Setting 4. Check the checkbox next to 'HTTP logs' 5. Configure a destination based on your specific logging consumption capability (for example Stream to an event hub and then consuming with SIEM integration for Event Hub logging).",
-      "Url": "https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs"
+      "Text": "Enable **diagnostic settings** with `AppServiceHTTPLogs` (or `allLogs`) and route logs to a centralized store. Enforce **least privilege**, retention, and tamper-resistant storage. Integrate with a **SIEM** for analytics and alerting, and periodically verify logging coverage across all apps and regions.",
+      "Url": "https://hub.prowler.com/check/app_http_logs_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Log consumption and processing will incur additional cost."

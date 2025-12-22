@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "app_ftp_deployment_disabled",
-  "CheckTitle": "Ensure FTP deployments are Disabled",
+  "CheckTitle": "App Service app has FTP disabled or FTPS-only enforced",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites/config",
-  "Description": "By default, Azure Functions, Web, and API Services can be deployed over FTP. If FTP is required for an essential deployment workflow, FTPS should be required for FTP login for all App Service Apps and Functions.",
-  "Risk": "Azure FTP deployment endpoints are public. An attacker listening to traffic on a wifi network used by a remote employee or a corporate network could see login traffic in clear-text which would then grant them full control of the code base of the app or service. This finding is more severe if User Credentials for deployment are set at the subscription level rather than using the default Application Credentials which are unique per App.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/deploy-ftp?tabs=portal",
+  "Severity": "high",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure App Service** apps are evaluated for **FTP exposure** via the `ftpsState` setting. Values `FtpsOnly` or `Disabled` indicate FTP is not allowed; `AllAllowed` means both FTP and FTPS are accepted.",
+  "Risk": "Allowing **FTP (unencrypted)** exposes credentials on public endpoints, enabling **credential theft** and **session hijacking**.\n\nCompromise grants write access to code and content, enabling **malicious deployments**, backdoors, and data leakage, degrading **integrity** and **confidentiality**-with greater blast radius if shared, user-scope publishing credentials are used.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/app-service/deploy-ftp?tabs=portal",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/ftp-access-disabled.html",
+    "https://learn.microsoft.com/en-gb/answers/questions/1323820/can-i-create-an-azure-policy-that-disables-both-ft",
+    "https://www.burgerhout.org/how-i-moved-my-website-to-azure-app-service/",
+    "https://azureappservices.blogspot.com/2020/11/disable-ftp-in-azure-app-service-using.html",
+    "https://stackoverflow.com/questions/43061946/azure-web-apps-removing-ftp-access/52136735",
+    "https://github.com/Azure/azure-policy/issues/190",
+    "https://icompaas.freshdesk.com/support/solutions/articles/62000234759-ensure-ftp-state-is-set-to-ftps-only-or-disabled-",
+    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-ftp-deployments-are-disabled#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az webapp config set --resource-group <resource group name> --name <app name> --ftps-state [disabled|FtpsOnly]",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/ftp-access-disabled.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-ftp-deployments-are-disabled#terraform"
+      "CLI": "az webapp config set --resource-group <RESOURCE_GROUP> --name <APP_NAME> --ftps-state FtpsOnly",
+      "NativeIaC": "```bicep\n// Configure an existing App Service to enforce FTPS-only\nresource webConfig 'Microsoft.Web/sites/config@2022-03-01' = {\n  name: '<example_resource_name>/web'\n  properties: {\n    ftpsState: 'FtpsOnly' // CRITICAL: Sets FTP state to FTPS-only, avoiding insecure 'AllAllowed'\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to App Services and select your app\n2. Go to Settings > Configuration > General settings\n3. Set FTP state to FTPS only (or Disabled)\n4. Click Save",
+      "Terraform": "```hcl\n# Enforce FTPS-only on an App Service\nresource \"azurerm_windows_web_app\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  service_plan_id     = \"<example_resource_id>\"\n\n  site_config {\n    ftps_state = \"FtpsOnly\" # CRITICAL: Enforces FTPS-only (not AllAllowed)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to the Azure Portal 2. Select App Services 3. Click on an app 4. Select Settings and then Configuration 5. Under General Settings, for the Platform Settings, the FTP state should be set to Disabled or FTPS Only",
-      "Url": ""
+      "Text": "Disable FTP or enforce **FTPS** (`ftpsState: FtpsOnly` or `Disabled`).\n\nPrefer **CI/CD** over manual FTP and apply **least privilege** with app-scoped credentials. Rotate publishing secrets, enforce modern TLS, and restrict access via private networking. *If FTP is unavoidable*, require FTPS and monitor publishing logs.",
+      "Url": "https://hub.prowler.com/check/app_ftp_deployment_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Any deployment workflows that rely on FTP or FTPs rather than the WebDeploy or HTTPs endpoints may be affected."

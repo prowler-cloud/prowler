@@ -1,29 +1,42 @@
 {
   "Provider": "azure",
   "CheckID": "app_client_certificates_on",
-  "CheckTitle": "Ensure the web app has 'Client Certificates (Incoming client certificates)' set to 'On'",
+  "CheckTitle": "Web app requires incoming client certificates",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Web/sites/config",
-  "Description": "Client certificates allow for the app to request a certificate for incoming requests. Only clients that have a valid certificate will be able to reach the app.",
-  "Risk": "The TLS mutual authentication technique in enterprise environments ensures the authenticity of clients to the server. If incoming client certificates are enabled, then only an authenticated client who has valid certificates can access the app.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth?tabs=azurecli",
+  "ResourceType": "microsoft.web/sites/config",
+  "Description": "**Azure App Service apps** enforce **mutual TLS** when `client certificate mode` is set to `Required`, meaning every inbound request must present a valid client certificate that the app can validate.",
+  "Risk": "Without **mTLS**, clients aren't cryptographically authenticated at the transport layer. Adversaries can reach endpoints using spoofed sources or stolen tokens, leading to unauthorized data access (confidentiality), request tampering (integrity), and automated abuse that degrades service (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://portal.azure.com",
+    "https://www.starwindsoftware.com/blog/mutual-tls-mtls-or-client-certificate-authentication-with-an-azure-application-gateway-and-an-app-service-application/",
+    "https://video2.skills-academy.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth",
+    "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth?tabs=azurecli",
+    "https://konradmisniakiewicz.wordpress.com/2017/12/11/web-app-in-azure-security-check-list-and-guidelines/",
+    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_7#terraform",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-4-authenticate-server-and-services",
+    "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth",
+    "https://stackoverflow.com/questions/72260003/tls-mutual-authentication-for-azure-app-service"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az webapp update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --set clientCertEnabled=true",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_7#terraform"
+      "CLI": "az webapp update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --set clientCertEnabled=true clientCertMode=Required",
+      "NativeIaC": "```bicep\n// Require client certificates for the web app\nresource appService 'Microsoft.Web/sites@2022-03-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    serverFarmId: '<example_resource_id>'\n    clientCertEnabled: true   // Critical: enables mutual TLS\n    clientCertMode: 'Required' // Critical: enforces client certs (passes the check)\n  }\n}\n```",
+      "Other": "1. Open Azure Portal and go to App Services\n2. Select your web app\n3. Go to Configuration > General settings\n4. Under Client certificate mode, select Required\n5. Click Save",
+      "Terraform": "```hcl\n# Require client certificates for the App Service\nresource \"azurerm_app_service\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  resource_group_name = \"<example_resource_name>\"\n  app_service_plan_id = \"<example_resource_id>\"\n\n  client_cert_enabled = true            # Critical: enables mutual TLS\n  client_cert_mode    = \"Required\"     # Critical: enforces client certs (passes the check)\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under the Settings section, Click on Configuration, then General settings 5. Set the option Client certificate mode located under Incoming client certificates to Require",
-      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-4-authenticate-server-and-services"
+      "Text": "Set `client certificate mode` to `Required` and validate client certs in application logic (issuer, validity, revocation).\n\nEnforce HTTPS only, avoid broad exclusion paths, and manage certs via a trusted CA with rotation and revocation. Apply **least privilege** and **zero trust**, layering with private access or IP restrictions *as needed*.",
+      "Url": "https://hub.prowler.com/check/app_client_certificates_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Utilizing and maintaining client certificates will require additional work to obtain and manage replacement and key rotation."

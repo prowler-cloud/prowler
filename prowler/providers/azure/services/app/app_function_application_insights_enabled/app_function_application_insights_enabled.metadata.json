@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_application_insights_enabled",
-  "CheckTitle": "Ensure Function App has Application Insights configured",
+  "CheckTitle": "Function App has Application Insights configured",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Application Insights is a powerful tool for monitoring the performance and health of Azure Function Apps. It provides valuable insights into exceptions, performance issues, and usage patterns, enabling timely detection and resolution of issues.",
-  "Risk": "Without Application Insights, you may miss critical errors, performance degradation, or abnormal behavior in your Function App, potentially impacting availability and user experience.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+  "Severity": "medium",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure Function App** is configured to send telemetry to **Application Insights** when application settings include `APPLICATIONINSIGHTS_CONNECTION_STRING` or `APPINSIGHTS_INSTRUMENTATIONKEY`.",
+  "Risk": "Without this telemetry, **visibility** into exceptions, dependencies, and performance is lost, reducing **availability** and delaying response. Gaps in traces mask anomalous traffic and failures, enabling prolonged outages and undermining **integrity** of processing (e.g., undetected retries or timeouts).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/app/monitor-functions",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/function-app-insights-on.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/function-app-insights-on.html",
-      "Terraform": ""
+      "CLI": "az functionapp config appsettings set --resource-group <RESOURCE_GROUP> --name <FUNCTION_APP_NAME> --settings APPLICATIONINSIGHTS_CONNECTION_STRING=<CONNECTION_STRING>",
+      "NativeIaC": "```bicep\n// Add Application Insights connection string to an existing Function App\nresource functionApp 'Microsoft.Web/sites@2022-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource appSettings 'Microsoft.Web/sites/config@2022-09-01' = {\n  name: '${functionApp.name}/appsettings'\n  properties: {\n    APPLICATIONINSIGHTS_CONNECTION_STRING: '<CONNECTION_STRING>' // Critical: setting this enables Application Insights for the Function App\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Function App > Configuration > Application settings\n2. Click + New application setting\n3. Name: APPLICATIONINSIGHTS_CONNECTION_STRING\n4. Value: paste the connection string from your Application Insights resource (Overview > Connection string)\n5. Click OK, then Save\n6. If prompted, click Continue to apply the changes",
+      "Terraform": "```hcl\n# Add Application Insights connection string to an existing Function App via ARM deployment\nresource \"azurerm_resource_group_template_deployment\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<RESOURCE_GROUP>\"\n  deployment_mode     = \"Incremental\"\n\n  template_content = jsonencode({\n    \"$schema\"      = \"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\",\n    \"contentVersion\" = \"1.0.0.0\",\n    \"resources\"    = [\n      {\n        \"type\"       = \"Microsoft.Web/sites/config\",\n        \"apiVersion\" = \"2022-09-01\",\n        \"name\"       = \"<FUNCTION_APP_NAME>/appsettings\",\n        \"properties\" = {\n          \"APPLICATIONINSIGHTS_CONNECTION_STRING\" = \"<CONNECTION_STRING>\" // Critical: setting this enables Application Insights for the Function App\n        }\n      }\n    ]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Application Insights for your Azure Function App to monitor its performance and health.",
-      "Url": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/monitor-functions"
+      "Text": "Enable **Application Insights** for each Function App using a `APPLICATIONINSIGHTS_CONNECTION_STRING` and standardize telemetry. Apply **defense in depth**: use distributed tracing, alert on errors/latency, and enforce least-privilege access and retention on logs to prevent blind spots and speed recovery.",
+      "Url": "https://hub.prowler.com/check/app_function_application_insights_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

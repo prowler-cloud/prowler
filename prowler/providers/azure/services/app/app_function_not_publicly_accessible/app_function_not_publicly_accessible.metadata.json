@@ -1,29 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_not_publicly_accessible",
-  "CheckTitle": "Ensure Azure Functions are not publicly accessible",
+  "CheckTitle": "Azure Function is not publicly accessible",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "Azure Functions should not be exposed to the public internet. Restricting access helps protect applications from potential threats and reduces the attack surface.",
-  "Risk": "Exposing Azure Functions to the public internet increases the risk of unauthorized access, data breaches, and other security threats.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "**Azure Function apps** are assessed for whether they are reachable from the public Internet. The evaluation considers the app's `publicNetworkAccess` state and the presence of access restrictions or private endpoints to limit inbound traffic.",
+  "Risk": "Public exposure allows unauthorized invocation, risking data disclosure and tampering (**confidentiality** and **integrity**). Attackers can brute-force tokens or abuse misconfigurations for remote execution. Unrestricted calls also enable abuse and DoS, driving cost and harming **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/app-service/overview-access-restrictions",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-exposed.html",
+    "https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-exposed.html",
-      "Terraform": ""
+      "CLI": "az functionapp update --resource-group <RESOURCE_GROUP> --name <FUNCTION_APP_NAME> --set publicNetworkAccess=Disabled",
+      "NativeIaC": "```bicep\n// Disable public access by denying all unmatched traffic\nresource functionApp 'Microsoft.Web/sites@2022-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource siteConfig 'Microsoft.Web/sites/config@2022-09-01' = {\n  name: '${functionApp.name}/web'\n  properties: {\n    ipSecurityRestrictionsDefaultAction: 'Deny' // Critical: blocks public access via default endpoint\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to your Function App\n2. Select Networking\n3. Under Public access, set Public network access to Disabled\n4. Click Save",
+      "Terraform": "```hcl\n# Disable public network access for the Function App\nresource \"azurerm_linux_function_app\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  location                   = azurerm_resource_group.main.location\n  resource_group_name        = azurerm_resource_group.main.name\n  service_plan_id            = azurerm_service_plan.main.id\n  storage_account_name       = azurerm_storage_account.main.name\n  storage_account_access_key = azurerm_storage_account.main.primary_access_key\n\n  public_network_access_enabled = false # Critical: disables public endpoint access\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review the Azure Functions security guidelines and ensure that access restrictions are in place. Use Azure Private Link and Key Vault for enhanced security.",
-      "Url": "https://learn.microsoft.com/en-us/azure/app-service/overview-access-restrictions"
+      "Text": "Apply network isolation and least privilege:\n- Set `publicNetworkAccess=Disabled`\n- Use access restrictions for trusted IPs/VNets or **Private Endpoints**\n- Require strong auth (e.g., **Microsoft Entra ID**) over shared keys\n- Front with **API Management/WAF**\n- Keep secrets in **Key Vault** and monitor access logs",
+      "Url": "https://hub.prowler.com/check/app_function_not_publicly_accessible"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

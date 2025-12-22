@@ -1,29 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_identity_without_admin_privileges",
-  "CheckTitle": "Ensure that your Azure functions are not configured with an identity with admin privileges",
+  "CheckTitle": "Azure Function app managed identity is not assigned Owner, Contributor, User Access Administrator, or Role Based Access Control Administrator roles",
   "CheckType": [],
   "ServiceName": "app",
-  "SubServiceName": "function",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.Web/sites",
-  "Description": "It is important to ensure that Azure functions are not configured with administrative privileges to maintain the principle of least privilege and reduce the attack surface. By limiting the privileges of Azure functions, potential security risks and data leaks can be mitigated.",
-  "Risk": "If Azure functions are configured with administrative privileges, it increases the risk of unauthorized access, privilege escalation, and data breaches. Attackers can exploit these privileges to gain access to sensitive data and compromise the entire system.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+  "ResourceType": "microsoft.web/sites",
+  "Description": "Azure Functions with managed identities are evaluated for assignments to broad **administrative roles**: **Owner**, **Contributor**, **User Access Administrator**, **RBAC Administrator**.\n\nThe finding highlights functions whose identity carries elevated permissions beyond normal runtime needs.",
+  "Risk": "Admin rights on a function's identity expose the control plane.\n- Confidentiality: read secrets and data\n- Integrity: alter configs, grant roles, deploy changes\n- Availability: stop or delete resources\nA runtime compromise can enable **lateral movement** and **privilege escalation** across the environment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-admin-permissions.html",
+    "https://docs.microsoft.com/en-us/azure/architecture/framework/security/design-identity-authorization#use-the-principle-of-least-privilege",
+    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview-for-developers",
+    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az role assignment delete --assignee <MANAGED_IDENTITY_PRINCIPAL_ID> --scope <SCOPE_ID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-admin-permissions.html",
+      "Other": "1. In the Azure portal, open the scope where the role is assigned (e.g., Subscription, Resource group, or the Function App resource)\n2. Go to Access control (IAM) > Role assignments\n3. In the Principal filter, search for the Function App's managed identity (<function-app-name>)\n4. For each assignment with role Owner, Contributor, User Access Administrator, or Role Based Access Control Administrator, click Remove\n5. Repeat steps 1-4 at all relevant scopes (subscription, resource group, and Function App) until no such admin roles remain for this identity",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To remediate this issue, ensure that Azure functions are not configured with an identity that has administrative privileges. Instead, use the principle of least privilege to grant only the necessary permissions to Azure functions. For more information, refer to the official documentation: Use the principle of least privilege.",
-      "Url": "https://docs.microsoft.com/en-us/azure/architecture/framework/security/design-identity-authorization#use-the-principle-of-least-privilege"
+      "Text": "Apply **least privilege**: grant only narrowly scoped, data-plane permissions needed by the function; avoid broad roles like `Owner` or `Contributor`.\nUse **separation of duties** and **just-in-time** elevation for rare admin tasks.\nRegularly review role assignments and restrict scope to the smallest necessary boundary.",
+      "Url": "https://hub.prowler.com/check/app_function_identity_without_admin_privileges"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check helps prevent privilege escalation attacks and ensures that Azure functions operate with the necessary permissions, reducing the impact of potential security breaches."
