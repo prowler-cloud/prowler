@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "dns_rsasha1_in_use_to_key_sign_in_dnssec",
-  "CheckTitle": "Ensure That RSASHA1 Is Not Used for the Key-Signing Key in Cloud DNS DNSSEC",
+  "CheckTitle": "Cloud DNS managed zone DNSSEC key-signing key does not use RSASHA1",
   "CheckType": [],
   "ServiceName": "dns",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DNS_Zone",
-  "Description": "NOTE: Currently, the SHA1 algorithm has been removed from general use by Google, and, if being used, needs to be whitelisted on a project basis by Google and will also, therefore, require a Google Cloud support contract. DNSSEC algorithm numbers in this registry may be used in CERT RRs. Zone signing (DNSSEC) and transaction security mechanisms (SIG(0) and TSIG) make use of particular subsets of these algorithms. The algorithm used for key signing should be a recommended one and it should be strong.",
-  "Risk": "SHA1 is considered weak and vulnerable to collision attacks.",
+  "Severity": "high",
+  "ResourceType": "dns.googleapis.com/ManagedZone",
+  "Description": "**Cloud DNS zones** are assessed for DNSSEC **Key-Signing Key (KSK)** algorithms, specifically detecting use of `rsasha1`. Zones with KSKs on modern algorithms are distinguished from those still using `rsasha1`.",
+  "Risk": "Using `rsasha1` for KSK weakens DNSSEC. Collision-based forgeries can enable signed record spoofing, resulting in domain hijack, cache poisoning, and redirection-compromising **integrity** and **confidentiality**. Some validators reject SHA-1, causing resolution errors and reduced **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/dns/docs/dnssec-config",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-key-signing-algorithm-in-use.html",
+    "https://docs.cloud.google.com/dns/docs/dnssec-config",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform",
+    "https://cloud.google.com/dns/docs/dnssec-advanced?hl=id",
+    "https://docs.cloud.google.com/dns/docs/dnssec-advanced"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud dns managed-zones update <example_resource_name> --dnssec-state on --ksk-algorithm RSASHA256 --ksk-key-length 2048 --zsk-algorithm RSASHA256 --zsk-key-length 1024",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-key-signing-algorithm-in-use.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform"
+      "Other": "1. In Google Cloud Console, go to Networking > Cloud DNS and open the affected managed zone\n2. Click Edit\n3. If DNSSEC is enabled, set DNSSEC to Off and Save; then click Edit again\n4. Set DNSSEC to On, expand Advanced options\n5. Set Key-signing key (KSK) algorithm to RSASHA256 (not RSASHA1); set Zone-signing key (ZSK) algorithm to RSASHA256\n6. Click Save",
+      "Terraform": "```hcl\nresource \"google_dns_managed_zone\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  dns_name = \"example.com.\"\n\n  dnssec_config {\n    state = \"on\"\n\n    default_key_specs {\n      key_type   = \"keySigning\"\n      algorithm  = \"rsasha256\" # FIX: use a non-RSASHA1 KSK algorithm to pass the check\n      key_length = 2048\n    }\n\n    default_key_specs {\n      key_type   = \"zoneSigning\"\n      algorithm  = \"rsasha256\"\n      key_length = 1024\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Domain Name System Security Extensions (DNSSEC) feature is not using the deprecated RSASHA1 algorithm for the Key-Signing Key (KSK) associated with your DNS managed zone file. The algorithm used for DNSSEC signing should be a strong one, such as ECDSAP256SHA256 algorithm, as this is secure and widely deployed, and therefore it is a good choice for both DNSSEC validation and signing.",
-      "Url": "https://cloud.google.com/dns/docs/dnssec-config"
+      "Text": "Adopt **strong, supported DNSSEC algorithms** for KSKs (e.g., `ECDSAP256SHA256` or `RSASHA256`) and retire `rsasha1`. Rotate keys and validate changes before deployment. Keep KSK and ZSK algorithms consistent, document key-rotation policy, and enforce **least privilege** for DNS/DNSSEC administration.",
+      "Url": "https://hub.prowler.com/check/dns_rsasha1_in_use_to_key_sign_in_dnssec"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
