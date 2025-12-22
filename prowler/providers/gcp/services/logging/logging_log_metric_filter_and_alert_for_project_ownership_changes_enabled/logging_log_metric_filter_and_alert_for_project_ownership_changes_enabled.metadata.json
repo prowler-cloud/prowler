@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
-  "CheckTitle": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
+  "CheckTitle": "Log metric filter for project ownership assignments/changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
-  "Risk": "Project ownership has the highest level of privileges on a GCP project. These privileges include viewer permissions on all GCP services inside the project, permission to modify the state of all GCP services within the project, set up billing and manage roles and permissions for the project and all the resources inside the project.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "Cloud Logging contains a **log-based metric** targeting project ownership changes in Cloud Resource Manager events, and Cloud Monitoring has an **alerting policy** tied to that metric. It detects metrics matching `roles/owner` additions/removals or ownership invites, and whether an alert references that metric.",
+  "Risk": "Lack of alerts on ownership changes enables **privilege escalation** and **project takeover**. Attackers can add/remove `roles/owner`, causing unauthorized data access (confidentiality), unauthorized config/billing changes (integrity), and resource deletion or lockout (availability) without timely detection.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-ownership-assignments-monitoring.html",
+    "https://cloud.google.com/monitoring/alerts"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-ownership-assignments-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud console, go to Logging > Logs-based metrics and click Create metric\n2. Set Name to <example_resource_name>\n3. In Filter, paste:\n   (protoPayload.serviceName=\"cloudresourcemanager.googleapis.com\") AND (ProjectOwnership OR projectOwnerInvitee) OR (protoPayload.serviceData.policyDelta.bindingDeltas.action=\"REMOVE\" AND protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/owner\") OR (protoPayload.serviceData.policyDelta.bindingDeltas.action=\"ADD\" AND protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/owner\")\n4. Click Create\n5. Go to Monitoring > Alerting > Create policy > Add condition\n6. Choose Metric, then select metric type logging.googleapis.com/user/<example_resource_name>\n7. Set condition to Greater than 0 with a duration of 0 minutes, then click Add\n8. Click Create policy (notification channels optional)\n9. Verify the alert condition filter contains <example_resource_name>",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  # CRITICAL: Detects project ownership assignments/changes\n  filter = <<-EOT\n(protoPayload.serviceName=\"cloudresourcemanager.googleapis.com\") AND (ProjectOwnership OR projectOwnerInvitee) OR (protoPayload.serviceData.policyDelta.bindingDeltas.action=\"REMOVE\" AND protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/owner\") OR (protoPayload.serviceData.policyDelta.bindingDeltas.action=\"ADD\" AND protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/owner\")\nEOT\n}\n\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  combiner     = \"OR\"\n\n  conditions {\n    condition_threshold {\n      # CRITICAL: References the log-based metric so an alert is associated with it\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/${google_logging_metric.<example_resource_name>.name}\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Using Google Cloud alerting policies to detect ownership assignments/changes will help you maintain the right access permissions for each IAM member created within your project, follow the security principle of least privilege, and prevent any accidental or intentional changes that may lead to unauthorized actions.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Create a log-based metric for ownership assignment/removal events and link it to an alerting policy that notifies a monitored channel. Minimize use of `roles/owner` per **least privilege**, require approvals and separation of duties, and apply **defense in depth** with centralized monitoring of IAM changes across projects.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

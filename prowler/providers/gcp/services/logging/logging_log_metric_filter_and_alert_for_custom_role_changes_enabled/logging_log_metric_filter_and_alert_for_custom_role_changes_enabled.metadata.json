@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for Custom Role Changes.",
+  "CheckTitle": "Log metric filter for IAM custom role changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for Custom Role Changes.",
-  "Risk": "Google Cloud IAM provides predefined roles that give granular access to specific Google Cloud Platform resources and prevent unwanted access to other resources.",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "Cloud projects are assessed for log-based metrics that filter `resource.type=\"iam_role\"` and the methods `CreateRole`, `DeleteRole`, `UpdateRole`, and for an associated Cloud Monitoring **alert policy** that references those metrics.",
+  "Risk": "Without alerts on custom role changes, privilege modifications can go unnoticed, enabling **privilege escalation**, unauthorized data access (confidentiality), permission tampering (integrity), and accidental revocations that disrupt services (availability). Insider misuse or compromised admins can silently reshape access across projects.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-custom-role-changes-monitoring.html",
+    "https://cloud.google.com/monitoring/alerts",
+    "https://security.snyk.io/rules/cloud/SNYK-CC-00436"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-custom-role-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Logging > Logs-based metrics\n2. Click Create metric (Counter), set Name to <example_resource_name>\n3. In Filter, paste exactly: resource.type=\"iam_role\" AND (protoPayload.methodName=\"google.iam.admin.v1.CreateRole\" OR protoPayload.methodName=\"google.iam.admin.v1.DeleteRole\" OR protoPayload.methodName=\"google.iam.admin.v1.UpdateRole\") and Save\n4. Go to Monitoring > Alerting > Create policy\n5. Add Condition > Metric\n6. For Metric, search and select logging.googleapis.com/user/<example_resource_name>\n7. Set threshold > 0 and duration 0 min (or 0s), then Save the policy",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  # Critical: log-based metric for IAM custom role create/update/delete\n  filter = \"resource.type=\\\"iam_role\\\" AND (protoPayload.methodName=\\\"google.iam.admin.v1.CreateRole\\\" OR protoPayload.methodName=\\\"google.iam.admin.v1.DeleteRole\\\" OR protoPayload.methodName=\\\"google.iam.admin.v1.UpdateRole\\\")\"\n}\n\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  conditions {\n    condition_threshold {\n      # Critical: alert policy targets the user log-based metric by name\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/<example_resource_name>\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for changes to Identity and Access Management (IAM) role creation, deletion and updating activities.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Define log-based metrics capturing `resource.type=\"iam_role\"` events for `CreateRole`, `DeleteRole`, and `UpdateRole`, and attach **alert policies** to notify responders.\n\nEnforce **least privilege**, **separation of duties**, and **change control** for role management, and retain **audit logs** for investigation.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_custom_role_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

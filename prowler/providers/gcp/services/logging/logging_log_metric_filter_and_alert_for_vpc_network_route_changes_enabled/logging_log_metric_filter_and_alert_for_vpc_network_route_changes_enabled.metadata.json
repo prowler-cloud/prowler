@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Route Changes.",
+  "CheckTitle": "Log metric filter for VPC network route changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Route Changes.",
-  "Risk": "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "**Cloud Logging** includes a **log-based metric** for **VPC route modifications** and a linked **Cloud Monitoring alert**.\n\nIt targets `gce_route` entries for `compute.routes.insert` and `compute.routes.delete` so route creations or deletions generate alertable signals.",
+  "Risk": "Without visibility into **route changes**, attackers or mistakes can:\n- Reroute traffic to bypass inspection  **data exfiltration** (confidentiality)\n- Alter paths enabling **lateral movement** (integrity)\n- Blackhole networks causing **outages** (availability)",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://turbot.com/guardrails/changelog/gcp-cisv2-0-v5-0-0",
+    "https://cloud.google.com/monitoring/alerts",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Logging > Logs-based metrics and click Create metric\n2. Set Name to <example_resource_name>\n3. In Filter, paste: resource.type=\"gce_route\" AND (protoPayload.methodName:\"compute.routes.delete\" OR protoPayload.methodName:\"compute.routes.insert\")\n4. Click Create metric\n5. Go to Monitoring > Alerting > Create policy\n6. Add Condition: Metric threshold; Select metric logging.googleapis.com/user/<example_resource_name>; Set condition to > 0 for 0 minutes\n7. Click Create policy (skip notification channels if not needed)\n",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  filter = \"resource.type=\\\"gce_route\\\" AND (protoPayload.methodName:\\\"compute.routes.delete\\\" OR protoPayload.methodName:\\\"compute.routes.insert\\\")\" # Critical: matches VPC route insert/delete events\n}\n\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n\n  conditions {\n    condition_threshold {\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/<example_resource_name>\\\"\" # Critical: alert evaluates the log-based metric by name\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) network route changes.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Create a **log-based metric** for `compute.routes.insert` and `compute.routes.delete`, and attach a **log-based alert** with reliable notifications.\n\nApply **least privilege** to route management, require **change approval**, and use **defense in depth** (egress filtering, private routing, durable audit logs).",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

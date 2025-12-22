@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
-  "CheckTitle": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Firewall Rule Changes.",
+  "CheckTitle": "Log metric filter for VPC network firewall rule changes has an associated alert policy",
   "CheckType": [],
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MetricFilter",
-  "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Firewall Rule Changes.",
-  "Risk": "Monitoring for Create or Update Firewall rule events gives insight to network access changes and may reduce the time it takes to detect suspicious activity.",
+  "Severity": "high",
+  "ResourceType": "logging.googleapis.com/LogMetric",
+  "Description": "Cloud Logging has a log-based metric for **VPC firewall rule** changes, matching `resource.type=\"gce_firewall_rule\"` and `protoPayload.methodName` of `compute.firewalls.insert`, `compute.firewalls.patch`, or `compute.firewalls.delete`, and Cloud Monitoring includes an alerting policy that references this metric.",
+  "Risk": "Without alerts on firewall rule changes, unauthorized or accidental modifications can go unnoticed, exposing services or blocking critical traffic.\n\nConfidentiality suffers (opened ports), integrity is reduced (tampered controls), and availability can be impacted (outages), enabling lateral movement and data exfiltration.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-firewall-rule-changes-monitoring.html",
+    "https://cloud.google.com/monitoring/alerts"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-firewall-rule-changes-monitoring.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Logging > Logs-based metrics\n2. Click Create metric, set Name to <example_resource_name>\n3. In Filter, paste: resource.type=\"gce_firewall_rule\" AND (protoPayload.methodName:\"compute.firewalls.patch\" OR protoPayload.methodName:\"compute.firewalls.insert\" OR protoPayload.methodName:\"compute.firewalls.delete\")\n4. Save the metric\n5. Go to Monitoring > Alerting > Create policy\n6. Add Condition > Metric threshold\n7. For Metric, select User-defined and choose logging.googleapis.com/user/<example_resource_name>\n8. Set condition to > 0 with duration 0 minutes (or the minimum allowed)\n9. Create the policy (notification channels are optional)",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  # CRITICAL: this filter captures VPC firewall rule changes\n  filter = \"resource.type=\\\"gce_firewall_rule\\\" AND (protoPayload.methodName:\\\"compute.firewalls.patch\\\" OR protoPayload.methodName:\\\"compute.firewalls.insert\\\" OR protoPayload.methodName:\\\"compute.firewalls.delete\\\")\"\n}\n\nresource \"google_monitoring_alert_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  combiner     = \"OR\"\n\n  conditions {\n    display_name = \"<example_resource_name>\"\n    condition_threshold {\n      # CRITICAL: reference the user log metric so the alert policy is associated\n      # This makes the policy filter contain the metric name, satisfying the check\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/${google_logging_metric.<example_resource_name>.name}\\\"\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n      duration        = \"0s\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for Virtual Private Cloud (VPC) Network Firewall rule changes.",
-      "Url": "https://cloud.google.com/monitoring/alerts"
+      "Text": "Establish a log-based metric for `gce_firewall_rule` insert/patch/delete events and tie it to an alerting policy that notifies responders.\n\nEnforce **least privilege** and change control on firewall updates, apply **separation of duties**, and monitor all projects for rapid, auditable detection of network control changes.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
