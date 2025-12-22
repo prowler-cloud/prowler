@@ -22,7 +22,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
         self.__threading_call__(self._list_endpoint_configs)
-        
+
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
         self.__threading_call__(
@@ -34,7 +34,7 @@ class SageMaker(AWSService):
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
-        
+
         # List tags concurrently for each resource collection
         # This replaces the previous sequential sequential execution to improve performance
         self.__threading_call__(self._list_tags_for_resource, self.sagemaker_models)
@@ -202,7 +202,6 @@ class SageMaker(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
 
     def _list_tags_for_resource(self, resource):
         """
