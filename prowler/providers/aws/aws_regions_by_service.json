@@ -40,6 +40,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -83,6 +84,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "me-central-1",
           "me-south-1",
           "sa-east-1",
@@ -126,6 +128,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -174,6 +177,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -374,6 +378,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -500,6 +505,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -548,6 +554,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -896,6 +903,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -944,6 +952,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -988,6 +997,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1076,6 +1086,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1124,6 +1135,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1183,6 +1195,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1206,7 +1219,13 @@
     "awstransform": {
       "regions": {
         "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
           "eu-central-1",
+          "eu-west-2",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -1253,6 +1272,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1333,6 +1353,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1356,6 +1377,7 @@
     "bcm-dashboards": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -1365,6 +1387,7 @@
     "bcm-data-exports": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -1406,6 +1429,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1547,6 +1571,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -1836,6 +1861,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -1967,6 +1993,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -2045,7 +2072,9 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-5",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2057,6 +2086,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -2155,6 +2185,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -2226,6 +2257,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -2781,6 +2813,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -2798,6 +2831,31 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "compute-optimizer-automation": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "config": {
@@ -2828,6 +2886,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -2907,6 +2966,7 @@
     "connectcases": {
       "regions": {
         "aws": [
+          "af-south-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-southeast-1",
@@ -3034,6 +3094,7 @@
     "cost-optimization-hub": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -3043,6 +3104,7 @@
     "costexplorer": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [
@@ -3170,6 +3232,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3200,6 +3263,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
@@ -3255,15 +3319,6 @@
           "us-east-1",
           "us-east-2",
           "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
-    "deepracer": {
-      "regions": {
-        "aws": [
-          "us-east-1"
         ],
         "aws-cn": [],
         "aws-us-gov": []
@@ -3362,6 +3417,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3425,6 +3481,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3473,6 +3530,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3515,6 +3573,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "mx-central-1",
@@ -3600,6 +3659,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3666,6 +3726,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3714,6 +3775,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3762,6 +3824,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3810,6 +3873,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3858,6 +3922,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3916,6 +3981,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -3964,6 +4030,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4012,6 +4079,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4105,6 +4173,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4134,13 +4203,18 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
           "eu-south-2",
@@ -4210,6 +4284,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4258,6 +4333,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4306,6 +4382,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4457,6 +4534,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4505,6 +4583,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4553,6 +4632,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4595,16 +4675,22 @@
         "aws": [
           "ap-northeast-1",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-5",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-south-1",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "mx-central-1",
+          "sa-east-1",
           "us-east-1",
           "us-east-2",
+          "us-west-1",
           "us-west-2"
         ],
         "aws-cn": [],
@@ -4639,6 +4725,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4736,6 +4823,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -4775,6 +4863,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -5287,6 +5376,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -5399,6 +5489,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -5422,6 +5513,7 @@
     "health": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1",
           "us-east-2"
         ],
@@ -5463,6 +5555,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -5488,6 +5581,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -5557,6 +5651,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -5605,6 +5700,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -5880,6 +5976,17 @@
         ]
       }
     },
+    "iot-managed-integrations": {
+      "regions": {
+        "aws": [
+          "ca-central-1",
+          "eu-west-1",
+          "me-central-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "iotanalytics": {
       "regions": {
         "aws": [
@@ -6025,27 +6132,6 @@
         "aws-us-gov": [
           "us-gov-west-1"
         ]
-      }
-    },
-    "iotfleethub": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-south-1",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ca-central-1",
-          "eu-central-1",
-          "eu-north-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
       }
     },
     "iotfleetwise": {
@@ -6232,6 +6318,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6361,6 +6448,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6397,6 +6485,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
@@ -6408,6 +6497,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6488,6 +6578,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6535,6 +6626,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6583,6 +6675,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6618,6 +6711,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
@@ -6691,19 +6785,10 @@
     "lex-models": {
       "regions": {
         "aws": [
-          "ap-northeast-1",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "eu-central-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-west-2"
+          "us-east-1"
         ],
         "aws-cn": [],
-        "aws-us-gov": [
-          "us-gov-west-1"
-        ]
+        "aws-us-gov": []
       }
     },
     "lex-runtime": {
@@ -6775,6 +6860,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -6937,6 +7023,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -7199,6 +7286,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -7231,6 +7319,7 @@
     "marketplace-entitlement": {
       "regions": {
         "aws": [
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [
@@ -7582,6 +7671,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -7820,6 +7910,29 @@
         "aws-us-gov": []
       }
     },
+    "mwaa-serverless": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "neptune": {
       "regions": {
         "aws": [
@@ -7837,11 +7950,13 @@
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8049,6 +8164,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8066,6 +8182,16 @@
       "regions": {
         "aws": [
           "ap-southeast-5",
+          "eusc-de-east-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "nova-act": {
+      "regions": {
+        "aws": [
           "us-east-1"
         ],
         "aws-cn": [],
@@ -8100,6 +8226,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8123,15 +8250,19 @@
     "observabilityadmin": {
       "regions": {
         "aws": [
+          "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -8199,6 +8330,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8314,6 +8446,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8409,6 +8542,24 @@
         "aws-us-gov": []
       }
     },
+    "partnercentral-account": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "partnercentral-channel": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "partnercentral-selling": {
       "regions": {
         "aws": [
@@ -8425,11 +8576,14 @@
           "ap-northeast-1",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
+          "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
           "eu-west-1",
           "eu-west-2",
+          "eu-west-3",
           "us-east-1",
           "us-east-2",
           "us-west-2"
@@ -8466,6 +8620,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8506,6 +8661,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8590,6 +8746,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8683,6 +8840,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8777,6 +8935,7 @@
         "aws": [
           "ap-south-1",
           "eu-central-1",
+          "eusc-de-east-1",
           "us-east-1"
         ],
         "aws-cn": [
@@ -8813,6 +8972,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -8903,25 +9063,6 @@
         "aws-us-gov": []
       }
     },
-    "qldb-session": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ca-central-1",
-          "eu-central-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "quicksight": {
       "regions": {
         "aws": [
@@ -8985,6 +9126,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9033,6 +9175,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9081,6 +9224,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9160,6 +9304,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9208,6 +9353,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9359,6 +9505,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
@@ -9412,6 +9559,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9460,6 +9608,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9508,6 +9657,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9594,6 +9744,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9642,6 +9793,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9789,6 +9941,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9894,6 +10047,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9938,6 +10092,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -9991,6 +10146,28 @@
         ]
       }
     },
+    "s3vectors": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "sagemaker": {
       "regions": {
         "aws": [
@@ -10007,6 +10184,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
@@ -10018,6 +10196,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10109,6 +10288,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-south-1",
           "sa-east-1",
@@ -10201,6 +10381,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10248,6 +10429,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10351,6 +10533,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10374,17 +10557,27 @@
     "security-ir": {
       "regions": {
         "aws": [
+          "af-south-1",
+          "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
+          "me-south-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -10422,6 +10615,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10530,6 +10724,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10660,6 +10855,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10702,6 +10898,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10740,6 +10937,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -10813,7 +11011,57 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "signin": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-east-2",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-south-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ap-southeast-4",
+          "ap-southeast-5",
+          "ap-southeast-6",
+          "ap-southeast-7",
+          "ca-central-1",
+          "ca-west-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "eusc-de-east-1",
+          "il-central-1",
+          "me-central-1",
+          "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -10986,6 +11234,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11058,6 +11307,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11106,6 +11356,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11309,6 +11560,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11357,6 +11609,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11405,6 +11658,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11453,6 +11707,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11512,6 +11767,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11560,6 +11816,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11789,6 +12046,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11837,6 +12095,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -11911,6 +12170,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -12087,6 +12347,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -12171,6 +12432,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -12215,6 +12477,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -12304,6 +12567,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
@@ -12543,6 +12807,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "eusc-de-east-1",
           "il-central-1",
           "me-central-1",
           "me-south-1",
