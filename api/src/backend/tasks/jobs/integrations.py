@@ -225,8 +225,9 @@ def get_security_hub_client_from_integration(
         )
         return True, security_hub
     else:
-        # Reset regions information if connection fails
+        # Reset regions information if connection fails and integration is not connected
         with rls_transaction(tenant_id, using=MainRouter.default_db):
+            integration.connected = False
             integration.configuration["regions"] = {}
             integration.save()
 
@@ -333,15 +334,18 @@ def upload_security_hub_integration(
                                 )
 
                                 if not connected:
-                                    logger.error(
-                                        f"Security Hub connection failed for integration {integration.id}: "
-                                        f"{security_hub.error}"
-                                    )
-                                    with rls_transaction(
-                                        tenant_id, using=MainRouter.default_db
+                                    if isinstance(
+                                        security_hub.error,
+                                        SecurityHubNoEnabledRegionsError,
                                     ):
-                                        integration.connected = False
-                                        integration.save()
+                                        logger.warning(
+                                            f"Security Hub integration {integration.id} has no enabled regions"
+                                        )
+                                    else:
+                                        logger.error(
+                                            f"Security Hub connection failed for integration {integration.id}: "
+                                            f"{security_hub.error}"
+                                        )
                                     break  # Skip this integration
 
                                 security_hub_client = security_hub
@@ -412,24 +416,15 @@ def upload_security_hub_integration(
                             logger.warning(
                                 f"Failed to archive previous findings: {str(archive_error)}"
                             )
-            except SecurityHubNoEnabledRegionsError:
-                logger.warning(
-                    f"Security Hub integration {integration.id} has no enabled regions"
-                )
             except Exception as e:
                 logger.error(
                     f"Security Hub integration {integration.id} failed: {str(e)}"
                 )
-                continue
 
         result = integration_executions == len(integrations)
         if result:
             logger.info(
                 f"All Security Hub integrations completed successfully for provider {provider_id}"
-            )
-        else:
-            logger.error(
-                f"Some Security Hub integrations failed for provider {provider_id}"
             )
 
         return result
