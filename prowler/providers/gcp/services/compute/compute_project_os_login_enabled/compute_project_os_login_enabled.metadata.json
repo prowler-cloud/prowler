@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_project_os_login_enabled",
-  "CheckTitle": "Ensure Os Login Is Enabled for a Project",
+  "CheckTitle": "Project has OS Login enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "GCPProject",
-  "Description": "Ensure that the OS Login feature is enabled at the Google Cloud Platform (GCP) project level in order to provide you with centralized and automated SSH key pair management.",
-  "Risk": "Enabling OS Login feature ensures that the SSH keys used to connect to VM instances are mapped with Google Cloud IAM users. Revoking access to corresponding IAM users will revoke all the SSH keys associated with these users, therefore it facilitates centralized SSH key pair management, which is extremely useful in handling compromised or stolen SSH key pairs and/or revocation of external/third-party/vendor users.",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Project",
+  "Description": "Project metadata has **OS Login** enabled (`enable-oslogin`), so VM SSH access uses IAM-linked Linux identities instead of static project or instance keys.",
+  "Risk": "Without **OS Login**, SSH relies on static metadata keys that are hard to rotate and revoke. Leaked or orphaned keys can retain VM access, enabling unauthorized commands, data exfiltration, and lateral movement-impacting **confidentiality** and **integrity** and weakening accountability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_9#terraform",
+    "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_9#terraform"
+      "Other": "1. In Google Cloud Console, select your project\n2. Go to Compute Engine > Metadata\n3. Click Edit > Add item\n4. Set Key to enable-oslogin and Value to TRUE\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_project_metadata_item\" \"<example_resource_name>\" {\n  # Critical: this key/value enables OS Login at the project level\n  key   = \"enable-oslogin\"\n  value = \"TRUE\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the OS Login feature is enabled at the Google Cloud Platform (GCP) project level in order to provide you with centralized and automated SSH key pair management.",
-      "Url": "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
+      "Text": "Enable **OS Login** at the project level to centralize SSH through **IAM**.\n- Apply **least privilege** to OS Login roles\n- Remove metadata SSH keys\n- Enforce MFA and short-lived credentials\n- Monitor login activity and add network restrictions for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/compute_project_os_login_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

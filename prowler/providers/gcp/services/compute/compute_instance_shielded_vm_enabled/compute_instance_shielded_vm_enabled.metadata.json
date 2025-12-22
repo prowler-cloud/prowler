@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_shielded_vm_enabled",
-  "CheckTitle": "Ensure Compute Instances Are Launched With Shielded VM Enabled",
+  "CheckTitle": "Compute instance has vTPM and Integrity Monitoring enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VMInstance",
-  "Description": "To defend against advanced threats and ensure that the boot loader and firmware on your VMs are signed and untampered, it is recommended that Compute instances are launched with Shielded VM enabled.",
-  "Risk": "Whithout shielded VM enabled is not possible to defend against advanced threats and ensure that the boot loader and firmware on your Google Compute Engine instances are signed and untampered.",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "Compute Engine VM instances have **vTPM** and **Integrity Monitoring** enabled as part of Shielded VM configuration.",
+  "Risk": "Without **vTPM** or **Integrity Monitoring**, boot integrity isn't verified. Attackers can persist **bootkits/rootkits**, alter firmware, and evade attestation, enabling covert control and data theft.\n- Integrity: compromised boot chain\n- Confidentiality: secrets bound to TPM exposed\n- Availability: malicious boot code can brick VMs",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instances/modifying-shielded-vm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_y#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute instances update <INSTANCE_NAME> --shielded-vtpm --shielded-vmintegrity-monitoring",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_y#terraform"
+      "Other": "1. In Google Cloud Console, go to Compute Engine > VM instances\n2. Click the VM name\n3. Click Stop and wait for the VM to stop\n4. Click Edit\n5. In Shielded VM, enable vTPM and enable Integrity monitoring\n6. Click Save\n7. Click Start to start the VM",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  machine_type = \"e2-micro\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n\n  shielded_instance_config {\n    enable_vtpm                 = true  # Critical: enable vTPM\n    enable_integrity_monitoring = true  # Critical: enable Integrity Monitoring\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that your Google Compute Engine instances are configured to use Shielded VM security feature for protection against rootkits and bootkits.Google Compute Engine service can enable 3 advanced security components for Shielded VM instances: 1. Virtual Trusted Platform Module (vTPM) - this component validates the guest virtual machine (VM) pre-boot and boot integrity, and provides key generation and protection. 2. Integrity Monitoring - lets you monitor and verify the runtime boot integrity of your shielded VM instances using Google Cloud Operations reports (also known as Stackdriver reports). 3. Secure boot helps - this security component protects your VM instances against boot-level and kernel-level malware and rootkits. To defend against advanced threats and ensure that the boot loader and firmware on your Google Compute Engine instances are signed and untampered, it is strongly recommended that your production instances are launched with Shielded VM enabled.",
-      "Url": "https://cloud.google.com/compute/docs/instances/modifying-shielded-vm"
+      "Text": "Enable **Shielded VM** with `vTPM` and **Integrity Monitoring** set to `enabled` on all VMs. Prefer **Secure Boot** where compatible. Enforce via hardened images/templates, apply **least privilege** to shielded settings, and monitor integrity results-supporting **defense in depth** and trusted boot.",
+      "Url": "https://hub.prowler.com/check/compute_instance_shielded_vm_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "node-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,38 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_network_not_legacy",
-  "CheckTitle": "Ensure Legacy Networks Do Not Exist",
+  "CheckTitle": "VPC network is not legacy",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "In order to prevent use of legacy networks, a project should not have a legacy network configured. As of now, Legacy Networks are gradually being phased out, and you can no longer create projects with them. This recommendation is to check older projects to ensure that they are not using Legacy Networks.",
-  "Risk": "Google Cloud legacy networks have a single global IPv4 range which cannot be divided into subnets, and a single gateway IP address for the whole network. Legacy networks do not support several Google Cloud networking features such as subnets, alias IP ranges, multiple network interfaces, Cloud NAT (Network Address Translation), Virtual Private Cloud (VPC) Peering, and private access options for GCP services. Legacy networks are not recommended for high network traffic projects and are subject to a single point of contention or failure.",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/Network",
+  "Description": "**Google Cloud networks** are evaluated for **legacy mode** (`subnet_mode: legacy`). The finding highlights networks using the older, non-subnetted design instead of **VPC with regional subnets**.",
+  "Risk": "Legacy networks lack subnets, peering, and private access. This reduces isolation and forces public IP paths, weakening **confidentiality** and enabling lateral movement/data exfiltration. Coarse controls and routing limits threaten **integrity**. A single global range and gateway create contention that can degrade **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html",
+    "https://stackoverflow.com/questions/73843490/vpc-network-upgrade",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
+    "https://cloud.google.com/vpc/docs/using-legacy#deleting_a_legacy_network",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-legacy-networks-do-not-exist-for-a-project#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute networks delete <LEGACY_NETWORK_NAME>",
+      "CLI": "gcloud beta compute networks update <LEGACY_NETWORK_NAME> --switch-to-custom-subnet-mode",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-legacy-networks-do-not-exist-for-a-project#terraform"
+      "Other": "1. In Google Cloud Console, go to Networking > VPC network > VPC networks\n2. Find the network with Subnet creation mode showing Legacy\n3. Select it and click Delete VPC network\n4. Type the network name to confirm and click Delete",
+      "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that your Google Cloud Platform (GCP) projects are not using legacy networks as this type of network is no longer recommended for production environments because it does not support advanced networking features. Instead, it is strongly recommended to use Virtual Private Cloud (VPC) networks for existing and future GCP projects.",
-      "Url": "https://cloud.google.com/vpc/docs/using-legacy#deleting_a_legacy_network"
+      "Text": "Decommission legacy networks. Migrate to **custom-mode VPCs** with regional subnets and granular firewall policies. Apply **least privilege** segmentation, enable private access and **Cloud NAT** to avoid public exposure, and use peering or private connectivity for dependencies. *Plan and test migration to limit downtime*.",
+      "Url": "https://hub.prowler.com/check/compute_network_not_legacy"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

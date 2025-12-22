@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_serial_ports_in_use",
-  "CheckTitle": "Ensure ‘Enable Connecting to Serial Ports’ Is Not Enabled for VM Instance",
+  "CheckTitle": "VM instance has 'Enable Connecting to Serial Ports' disabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VMInstance",
-  "Description": "Interacting with a serial port is often referred to as the serial console, which is similar to using a terminal window, in that input and output is entirely in text mode and there is no graphical interface or mouse support. If you enable the interactive serial console on an instance, clients can attempt to connect to that instance from any IP address. Therefore interactive serial console support should be disabled.",
-  "Risk": "If you enable the interactive serial console on your VM instance, clients can attempt to connect to your instance from any IP address and this allows anybody to access the instance if they know the user name, the SSH key, the project ID, and the instance name and zone.",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "**Compute Engine VM instance** with the **interactive serial console** enabled via metadata `serial-port-enable` (`1`/`true`). Instances with this flag disabled do not allow interactive serial console connections.",
+  "Risk": "Enabling the **serial console** creates **out-of-band access** that can bypass network controls. Abuse can grant low-level OS interaction, expose sensitive boot logs, alter configuration, or disrupt services, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_11#terraform",
+    "https://cloud.google.com/compute",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-interactive-serial-console-support.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud compute instances add-metadata <INSTANCE_NAME> --zone=<ZONE> --metadata=serial-port-enable=false",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-interactive-serial-console-support.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_11#terraform"
+      "Other": "1. In Google Cloud Console, go to Compute Engine > VM instances\n2. Click the target VM name, then click Edit\n3. Uncheck \"Enable connecting to serial ports\"\n4. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  machine_type = \"e2-micro\"\n  zone         = \"us-central1-a\"\n\n  boot_disk {\n    initialize_params { image = \"debian-cloud/debian-12\" }\n  }\n\n  network_interface { network = \"default\" }\n\n  metadata = {\n    serial-port-enable = \"false\" # Critical: disables connecting to serial ports to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that \"Enable connecting to serial ports\" configuration setting is disabled for all your production Google Compute Engine instances. A Google Cloud virtual machine (VM) instance has 4 virtual serial ports. On your VM instances, the operating system (OS), BIOS, and other system-level entities write often output data to the serial ports and can accept input, such as commands or answers, to prompts. Usually, these system-level entities use the first serial port (Port 1) and Serial Port 1 is often referred to as the interactive serial console. This interactive serial console does not support IP-based access restrictions such as IP address whitelists. To adhere to cloud security best practices and reduce the risk of unauthorized access, interactive serial console support should be disabled for all instances used in production.",
-      "Url": "https://cloud.google.com/compute"
+      "Text": "Disable the **interactive serial console** on production VMs (`serial-port-enable=false`). Use it only for *break-glass* cases. Enforce **least privilege** for console roles, prefer controlled access paths (IAP/SSH or session tools), and monitor access. Apply **defense in depth** to reduce alternate entry points.",
+      "Url": "https://hub.prowler.com/check/compute_instance_serial_ports_in_use"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

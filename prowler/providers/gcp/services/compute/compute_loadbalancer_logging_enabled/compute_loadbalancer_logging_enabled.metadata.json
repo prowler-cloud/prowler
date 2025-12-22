@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_loadbalancer_logging_enabled",
-  "CheckTitle": "Ensure Logging is enabled for HTTP(S) Load Balancer",
+  "CheckTitle": "HTTP(S) load balancer has logging enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "LoadBalancer",
-  "Description": "Logging enabled on a HTTPS Load Balancer will show all network traffic and its destination.",
-  "Risk": "HTTP(S) load balancing log entries contain information useful for monitoring and debugging web traffic. Google Cloud exports this logging data to Cloud Monitoring service so that monitoring metrics can be created to evaluate a load balancer's configuration, usage, and performance, troubleshoot problems, and improve resource utilization and user experience.",
+  "ResourceType": "compute.googleapis.com/BackendService",
+  "Description": "**Application Load Balancer** (HTTP/S) backend services have **Cloud Logging for requests** enabled at the backend service level.\n\n*Only load balancers with a backend service support this setting.*",
+  "Risk": "Without **request logs**, visibility into HTTP(S) traffic is reduced, hindering detection of credential stuffing, path traversal, WAF bypass, and data exfiltration. This impacts **confidentiality** and **integrity**, and delays incident response; availability issues (surges in `5xx`) may go unnoticed.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://serverfault.com/questions/977992/how-to-monitor-https-and-tcp-load-balancers-on-gcp",
+    "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/enableLoad-balancing-backend-service-logging.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
+    "https://docs.cloud.google.com/load-balancing/docs/l7-internal/monitoring",
+    "https://medium.com/google-cloud/load-balancer-backend-logs-and-me-6a8fd9ec193d"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute backend-services update <serviceName> --region=REGION --enable-logging --logging-sample-rate=<percentageAsADecimal>",
+      "CLI": "gcloud compute backend-services update <example_resource_name> --global --enable-logging",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/enableLoad-balancing-backend-service-logging.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Networking > Load balancing\n2. Click your HTTP(S) load balancer, then click Edit\n3. Open Backend configuration and click Edit next to the backend service\n4. Check Enable logging\n5. Click Update (backend service), then Update (load balancer)\n6. Verify logs appear in Logs Explorer under Cloud HTTP Load Balancer",
+      "Terraform": "```hcl\nresource \"google_compute_backend_service\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  health_checks = [\"<example_health_check_self_link>\"]\n\n  log_config {\n    enable = true # Critical: enables logging on the backend service\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Logging will allow you to view HTTPS network traffic to your web applications.",
-      "Url": "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode"
+      "Text": "Enable **request logging** on backend services with a risk-appropriate `sampleRate`; include key optional fields when needed. Export logs to monitoring for alerts and dashboards, enforce retention and integrity controls, and restrict access using **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/compute_loadbalancer_logging_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

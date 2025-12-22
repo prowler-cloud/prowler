@@ -1,29 +1,37 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_network_default_in_use",
-  "CheckTitle": "Ensure that the default network does not exist",
+  "CheckTitle": "Project does not have a default VPC network",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Ensure that the default network does not exist",
-  "Risk": "The default network has a preconfigured network configuration and automatically generates insecure firewall rules.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/default-vpc-in-use.html",
+  "Severity": "low",
+  "ResourceType": "compute.googleapis.com/Network",
+  "Description": "Projects are assessed for a **VPC network** named `default` (the pre-created, auto-mode network).",
+  "Risk": "Using the **default VPC** can weaken segmentation and expose services via **permissive firewall rules** (e.g., broad internal trust or public admin ports). This increases likelihood of **unauthorized access**, **lateral movement**, and data exfiltration, impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7",
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/default-vpc-in-use.html",
+    "https://cloud.google.com/vpc/docs/using-vpc"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud compute networks delete default --quiet",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7#terraform"
+      "Other": "1. In Google Cloud Console, go to Networking > VPC network > VPC networks\n2. Select the network named \"default\"\n3. Click Delete VPC network and confirm\n4. If deletion is blocked, remove or migrate any resources using the \"default\" network, then retry Delete",
+      "Terraform": "```hcl\n# Deletes the default VPC network to pass the check\nresource \"google_project_default_network\" \"<example_resource_name>\" {}  # Ensures the 'default' network is removed\n```"
     },
     "Recommendation": {
-      "Text": "When an organization deletes the default network, it may need to migrate or service onto a new network.",
-      "Url": "https://cloud.google.com/vpc/docs/using-vpc"
+      "Text": "Prefer **custom VPCs** over `default`. Remove unused default networks and apply **least privilege** with explicit firewall rules, private connectivity, and workload-based segmentation. Enforce creation controls (e.g., org policy to skip default network) and use **defense in depth** with logging and monitoring.",
+      "Url": "https://hub.prowler.com/check/compute_network_default_in_use"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

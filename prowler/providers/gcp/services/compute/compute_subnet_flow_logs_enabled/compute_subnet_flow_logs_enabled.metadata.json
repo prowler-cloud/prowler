@@ -1,29 +1,42 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_subnet_flow_logs_enabled",
-  "CheckTitle": "Enable VPC Flow Logs for VPC Subnets",
+  "CheckTitle": "Subnet has VPC Flow Logs enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Subnet",
-  "Description": "Ensure that VPC Flow Logs is enabled for every subnet created within your production Virtual Private Cloud (VPC) network. Flow Logs is a logging feature that enables users to capture information about the IP traffic (accepted, rejected, or all traffic) going to and from the network interfaces (ENIs) available within your VPC subnets.",
-  "Risk": "By default, the VPC Flow Logs feature is disabled when a new VPC network subnet is created. Once enabled, VPC Flow Logs will start collecting network traffic data to and from your Virtual Private Cloud (VPC) subnets, logging data that can be useful for understanding network usage, network traffic expense optimization, network forensics, and real-time security analysis. To enhance Google Cloud VPC network visibility and security it is strongly recommended to enable Flow Logs for every business-critical or production VPC subnet.",
+  "ResourceType": "compute.googleapis.com/Subnetwork",
+  "Description": "**GCP VPC subnets** have **VPC Flow Logs** enabled at the subnet scope to capture connection metadata for traffic to and from VM interfaces.",
+  "Risk": "Without **VPC Flow Logs**, network activity lacks visibility, weakening **detection and response**. Blind spots enable covert **data exfiltration** (C), undetected **lateral movement** and policy bypass (I), and hinder containment and recovery (A). Forensics and cost insights are degraded.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/vpc/docs/using-flow-logs#enabling_vpc_flow_logging",
+    "https://docs.prowler.com/checks/gcp/logging-policies-1/bc_gcp_logging_1#terraform",
+    "https://docs.cloud.google.com/vpc/docs/flow-logs",
+    "https://docs.cloud.google.com/vpc/docs/org-policy-flow-logs",
+    "https://docs.cloud.google.com/vpc/docs/access-flow-logs",
+    "https://cloud.google.com/blog/products/networking/how-to-use-vpc-flow-logs-in-gcp-for-network-traffic-analysis",
+    "https://docs.cloud.google.com/vpc/docs/using-flow-logs",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/enable-vpc-flow-logs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute networks subnets update [SUBNET_NAME] --region [REGION] --enable-flow-logs",
+      "CLI": "gcloud compute networks subnets update <SUBNET_NAME> --region <REGION> --enable-flow-logs",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/enable-vpc-flow-logs.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/logging-policies-1/bc_gcp_logging_1#terraform"
+      "Other": "1. In the Google Cloud console, go to Networking > VPC networks\n2. Open the Subnets tab and click the target subnet\n3. Click Edit\n4. Set Flow logs to On\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_subnetwork\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  ip_cidr_range = \"10.0.0.0/24\"\n  region        = \"<REGION>\"\n  network       = \"<VPC_NETWORK_SELF_LINK>\"\n\n  enable_flow_logs = true # Critical: enables VPC Flow Logs so the subnet passes the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that VPC Flow Logs is enabled for every subnet created within your production Virtual Private Cloud (VPC) network. Flow Logs is a logging feature that enables users to capture information about the IP traffic (accepted, rejected, or all traffic) going to and from the network interfaces (ENIs) available within your VPC subnets.",
-      "Url": "https://cloud.google.com/vpc/docs/using-flow-logs#enabling_vpc_flow_logging"
+      "Text": "Enable **VPC Flow Logs** on all production subnets. Tune aggregation, sampling, and metadata to balance visibility and cost.\n\nExport to centralized logging for analytics and alerting, apply **least privilege** to log access, and use organization guardrails to enforce consistent coverage as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/compute_subnet_flow_logs_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

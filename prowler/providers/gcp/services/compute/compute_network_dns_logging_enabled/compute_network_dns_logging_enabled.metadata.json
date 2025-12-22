@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_network_dns_logging_enabled",
-  "CheckTitle": "Enable Cloud DNS Logging for VPC Networks",
+  "CheckTitle": "VPC network has Cloud DNS logging enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "Ensure that Cloud DNS logging is enabled for all your Virtual Private Cloud (VPC) networks using DNS server policies. Cloud DNS logging records queries that the name servers resolve for your Google Cloud VPC networks, as well as queries from external entities directly to a public DNS zone. Recorded queries can come from virtual machine (VM) instances, GKE containers running in the same VPC network, peering zones, or other Google Cloud resources provisioned within your VPC.",
-  "Risk": "Cloud DNS logging is disabled by default on each Google Cloud VPC network. By enabling monitoring of Cloud DNS logs, you can increase visibility into the DNS names requested by the clients within your VPC network. Cloud DNS logs can be monitored for anomalous domain names and evaluated against threat intelligence.",
+  "ResourceType": "compute.googleapis.com/Network",
+  "Description": "**VPC networks** are assessed for a **DNS policy** that enables **Cloud DNS query logging**. When present, resolvers record queries for the network from VMs, GKE, peering, and inbound forwarding, with entries written to Cloud Logging.",
+  "Risk": "Without **DNS query logs**, suspicious lookups (C2, DGA, DNS exfiltration) go unseen, reducing **confidentiality** and hindering **incident response**. Visibility gaps also hide misconfigurations and elevated `NXDOMAIN` rates that can impact the **availability** of name resolution.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/dns/docs/monitoring",
+    "https://viao.co.uk/blog/add-new-gcp-check-to",
+    "https://www.cloudquery.io/docs/plugins/sources/gcp/tables/gcp_dns_policies",
+    "https://docs.cloud.google.com/compute/docs/networking/monitor-dns-failures",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/dns-logging-for-vpcs.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/dns-logging-for-vpcs.html",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud console, go to Cloud DNS > Policies\n2. If the VPC already has a policy: select the policy, click Edit, check Enable logging, click Save\n3. If there is no policy for the VPC: click Create policy, enter a name, check Enable logging, add the target VPC network, click Create",
+      "Terraform": "```hcl\nresource \"google_dns_policy\" \"<example_resource_name>\" {\n  name           = \"<example_resource_name>\"\n  enable_logging = true  # CRITICAL: turns on DNS query logging for the policy\n\n  networks {\n    network_url = \"projects/<PROJECT_ID>/global/networks/<example_resource_name>\"  # Attach to the target VPC\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Cloud DNS logging records the queries from the name servers within your VPC to Stackdriver. Logged queries can come from Compute Engine VMs, GKE containers, or other GCP resources provisioned within the VPC.",
-      "Url": "https://cloud.google.com/dns/docs/monitoring"
+      "Text": "Enable **Cloud DNS query logging** for all VPC networks via **DNS policies** and route logs to centralized analysis. Enforce **least privilege** on log access, set retention and sampling to manage cost, and add detections for malicious domains. Apply **defense in depth** with DNS response policies and egress controls.",
+      "Url": "https://hub.prowler.com/check/compute_network_dns_logging_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

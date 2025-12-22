@@ -1,26 +1,31 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_firewall_rdp_access_from_the_internet_allowed",
-  "CheckTitle": "Ensure That RDP Access Is Restricted From the Internet",
+  "CheckTitle": "Firewall rule does not allow ingress from 0.0.0.0/0 to TCP port 3389 (RDP)",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "FirewallRule",
-  "Description": "GCP `Firewall Rules` are specific to a `VPC Network`. Each rule either `allows` or `denies` traffic when its conditions are met. Its conditions allow users to specify the type of traffic, such as ports and protocols, and the source or destination of the traffic, including IP addresses, subnets, and instances. Firewall rules are defined at the VPC network level and are specific to the network in which they are defined. The rules themselves cannot be shared among networks. Firewall rules only support IPv4 traffic. When specifying a source for an ingress rule or a destination for an egress rule by address, an `IPv4` address or `IPv4 block in CIDR` notation can be used. Generic `(0.0.0.0/0)` incoming traffic from the Internet to a VPC or VM instance using `RDP` on `Port 3389` can be avoided.",
-  "Risk": "Allowing unrestricted Remote Desktop Protocol (RDP) access can increase opportunities for malicious activities such as hacking, Man-In-The-Middle attacks (MITM) and Pass-The-Hash (PTH) attacks.",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/Firewall",
+  "Description": "**VPC firewall rules** permitting inbound **RDP** (`TCP 3389`) from `0.0.0.0/0` are flagged, including ingress rules that allow all TCP ports or `all` protocols",
+  "Risk": "Exposed **RDP** enables Internet-wide scanning and **brute force**. Exploits can yield **remote code execution**, followed by **lateral movement** and data theft.\n\nThis endangers **confidentiality**, **integrity**, and **availability** (e.g., ransomware, service disruption).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_2#terraform",
+    "https://cloud.google.com/vpc/docs/using-firewalls",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-rdp-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud compute firewall-rules delete default-allow-rdp",
+      "CLI": "gcloud compute firewall-rules delete <FIREWALL_RULE_NAME>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-rdp-access.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_2#terraform"
+      "Other": "1. In Google Cloud Console, go to Networking > VPC network > Firewall.\n2. Find the ingress rule that allows TCP port 3389 with Source IPv4 ranges set to 0.0.0.0/0.\n3. Select the rule and click Delete, then confirm.",
+      "Terraform": "```hcl\nresource \"google_compute_firewall\" \"<example_resource_name>\" {\n  name    = \"<example_resource_name>\"\n  network = \"<example_resource_id>\"\n\n  allow {\n    protocol = \"tcp\"\n    ports    = [\"3389\"]\n  }\n\n  source_ranges = [\"10.0.0.0/8\"] # CRITICAL: removes 0.0.0.0/0 so RDP is not exposed to the Internet\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Google Cloud Virtual Private Cloud (VPC) firewall rules do not allow unrestricted access (i.e. 0.0.0.0/0) on TCP port 3389 in order to restrict Remote Desktop Protocol (RDP) traffic to trusted IP addresses or IP ranges only and reduce the attack surface. TCP port 3389 is used for secure remote GUI login to Windows VM instances by connecting a RDP client application with an RDP server.",
-      "Url": "https://cloud.google.com/vpc/docs/using-firewalls"
+      "Text": "Restrict **RDP** to trusted IP ranges or a hardened **bastion/IAP** proxy; prefer private access with no public IPs. Apply **least privilege** and network segmentation, use just-in-time access and strong authentication, and monitor logs. Aim for **defense in depth** to minimize exposure.",
+      "Url": "https://hub.prowler.com/check/compute_firewall_rdp_access_from_the_internet_allowed"
     }
   },
   "Categories": [

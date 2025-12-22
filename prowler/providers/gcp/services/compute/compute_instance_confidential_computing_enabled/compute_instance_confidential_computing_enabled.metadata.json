@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_confidential_computing_enabled",
-  "CheckTitle": "Ensure Compute Instances Have Confidential Computing Enabled",
+  "CheckTitle": "Compute instance has Confidential Computing enabled",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VMInstance",
-  "Description": "Ensure that the Confidential Computing security feature is enabled for your Google Cloud virtual machine (VM) instances in order to add protection to your sensitive data in use by keeping it encrypted in memory and using encryption keys that Google doesn't have access to. Confidential Computing is a breakthrough technology which encrypts data while it is being processed. This technology keeps data encrypted in memory, outside the CPU.",
-  "Risk": "Confidential Computing keeps your sensitive data encrypted while it is used, indexed, queried, or trained on, and does not allow Google to access the encryption keys (these keys are generated in hardware, per VM instance, and can't be exported). In this way, the Confidential Computing feature can help alleviate concerns about risk related to either dependency on Google Cloud infrastructure or Google insiders' access to your data in the clear.",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "**Google Compute Engine VMs** configured as **Confidential VMs** encrypt data in use with hardware-based memory protection and per-instance keys.\n\nThis assessment identifies whether **Confidential Computing** is enabled on each VM instance.",
+  "Risk": "Absent **Confidential Computing**, plaintext data in RAM can be exposed via host introspection, hypervisor compromise, or cold-boot/DMA attacks, undermining **confidentiality** and enabling **in-memory tampering** that impacts **integrity** of computations, models, and secrets.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/confidential-computing.html",
+    "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/confidential-computing.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Compute Engine > VM instances\n2. Select <instance> and click Stop\n3. Click Edit\n4. Under Confidential VM service, check Enable Confidential VM service\n5. If the option is unavailable, change Machine series to a supported one (e.g., N2D) and select a type\n6. Click Save, then click Start to power on the instance",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  machine_type = \"n2d-standard-2\"  # Supported for Confidential VM\n  zone         = \"<ZONE>\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-12\"\n    }\n  }\n\n  network_interface {}\n\n  # Critical: Enables Confidential Computing on the VM\n  confidential_instance_config {\n    enable_confidential_compute = true  # Turns on Confidential VM\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the Confidential Computing security feature is enabled for your Google Cloud virtual machine (VM) instances in order to add protection to your sensitive data in use by keeping it encrypted in memory and using encryption keys that Google doesn't have access to. Confidential Computing is a breakthrough technology which encrypts data while it is being processed. This technology keeps data encrypted in memory, outside the CPU.",
-      "Url": "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
+      "Text": "Enable **Confidential VMs** for workloads processing sensitive data to protect data-in-use. Apply **defense in depth**: enforce **least privilege** on administrative access, use disk encryption with `CMEK`, and require workload attestation/trusted images. *If unsupported*, isolate or refactor workloads to compatible options.",
+      "Url": "https://hub.prowler.com/check/compute_instance_confidential_computing_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,28 +1,30 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_public_address_shodan",
-  "CheckTitle": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
-  "CheckType": [
-    "Infrastructure Security"
-  ],
+  "CheckTitle": "Public IP address is not listed in Shodan",
+  "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "GCPComputeAddress",
-  "Description": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
-  "Risk": "Sites like Shodan index exposed systems and further expose them to wider audiences as a quick way to find exploitable systems.",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Address",
+  "Description": "**Compute Engine** public IP addresses are cross-checked with **Shodan** to identify Internet-exposed hosts that have been indexed, including observed open ports and metadata.\n\n*Only `EXTERNAL` addresses are evaluated.*",
+  "Risk": "Being listed in **Shodan** indicates an Internet-reachable host with identifiable services. Adversaries can quickly enumerate ports, run brute-force or exploit scans, and weaponize misconfigurations, leading to data exposure (C), service tampering (I), and outages from abuse or DDoS (A).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cqr.company/blog/external-attack-surface-audit-how-fofa-shodan-and-censys-help-you-find-forgotten-services-and-leaks/",
+    "https://www.shodan.io/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud compute addresses delete <example_resource_name> --region <REGION>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud Console, go to: VPC network > IP addresses > External\n2. Find the public IP shown in the finding\n3. If it is attached to a VM: go to the VM > Edit > Network interfaces > set External IP to None > Save\n4. Return to External IP addresses and click Release to delete the public IP",
+      "Terraform": "```hcl\n# Reserve an internal address instead of a public one\nresource \"google_compute_address\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  region       = \"<REGION>\"\n  subnetwork   = \"<example_subnetwork_name>\"\n  address_type = \"INTERNAL\" # FIX: use INTERNAL to avoid a public (EXTERNAL) IP listed by Shodan\n}\n```"
     },
     "Recommendation": {
-      "Text": "Check Identified IPs, consider changing them to private ones and delete them from Shodan.",
-      "Url": "https://www.shodan.io/"
+      "Text": "Minimize Internet exposure:\n- Remove unused public IPs; prefer private addressing with controlled egress\n- Avoid `0.0.0.0/0`; restrict by allowlists and firewall policies\n- Place services behind proxies/VPN/bastions; close unused ports\n\nApply **least privilege** and **defense in depth**; continuously monitor external footprint.",
+      "Url": "https://hub.prowler.com/check/compute_public_address_shodan"
     }
   },
   "Categories": [
