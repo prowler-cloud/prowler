@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "kms_key_rotation_enabled",
-  "CheckTitle": "Ensure KMS keys are rotated within a period of 90 days",
+  "CheckTitle": "KMS key is rotated at least annually",
   "CheckType": [],
   "ServiceName": "kms",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "CryptoKey",
-  "Description": "Ensure KMS keys are rotated within a period of 90 days",
-  "Risk": "Ensure that all your Cloud Key Management Service (KMS) keys are rotated within a period of 90 days in order to meet security and compliance requirements",
+  "Severity": "high",
+  "ResourceType": "cloudkms.googleapis.com/CryptoKey",
+  "Description": "Google Cloud KMS customer-managed keys have **automatic rotation** enabled or a rotation interval  `365` days.\n\nThe evaluation reviews each key's rotation settings to confirm periodic creation of new key versions.",
+  "Risk": "Without timely rotation, a stolen key can decrypt an expanding volume of data, eroding **confidentiality**. Prolonged key lifetimes widen windows for misuse, impact **integrity** of protected workloads, and make emergency rollover harder, risking **availability** disruptions.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_4#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
+    "https://cloud.google.com/iam/docs/manage-access-service-accounts"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud kms keys update new --keyring=<KEY_RING> --location=<LOCATION> --nextrotation-time=<NEXT_ROTATION_TIME> --rotation-period=<ROTATION_PERIOD>",
+      "CLI": "gcloud kms keys update <KEY_NAME> --keyring=<KEY_RING> --location=<LOCATION> --rotation-period=365d --next-rotation-time=<RFC3339_TIME>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_4#terraform"
+      "Other": "1. In Google Cloud Console, go to Security > Key Management > Key rings\n2. Open the key ring and select the key\n3. Click Edit rotation schedule (or Set rotation schedule)\n4. Set Rotation period to 365 days or less\n5. Set Next rotation date/time\n6. Click Save",
+      "Terraform": "```hcl\nresource \"google_kms_crypto_key\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  key_ring = \"<example_resource_id>\"\n  purpose  = \"ENCRYPT_DECRYPT\"\n\n  rotation_period = \"31536000s\" # Critical: sets automatic rotation to 365 days (<= 365 ensures PASS)\n}\n```"
     },
     "Recommendation": {
-      "Text": "After a successful key rotation, the older key version is required in order to decrypt the data encrypted by that previous key version.",
-      "Url": "https://cloud.google.com/iam/docs/manage-access-service-accounts"
+      "Text": "Enable **auto-rotation** for customer-managed keys with an interval  `365` days.\n\nAdopt a **key lifecycle** policy: enforce **least privilege** on key usage, apply **separation of duties** between key admins and users, monitor key access, and rehearse emergency rotation to minimize blast radius.",
+      "Url": "https://hub.prowler.com/check/kms_key_rotation_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
