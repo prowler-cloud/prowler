@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "bigquery_dataset_public_access",
-  "CheckTitle": "Ensure That BigQuery Datasets Are Not Anonymously or Publicly Accessible.",
+  "CheckTitle": "BigQuery dataset is not publicly accessible",
   "CheckType": [],
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Dataset",
-  "Description": "Ensure That BigQuery Datasets Are Not Anonymously or Publicly Accessible.",
-  "Risk": "Granting permissions to allUsers or allAuthenticatedUsers allows anyone to access the dataset. Such access might not be desirable if sensitive data is being stored in the dataset. Therefore, ensure that anonymous and/or public access to a dataset is not allowed.",
+  "Severity": "critical",
+  "ResourceType": "bigquery.googleapis.com/Dataset",
+  "Description": "BigQuery datasets are evaluated for exposure to **public identities**. The finding highlights datasets that grant any role to `allUsers` or `allAuthenticatedUsers`, which makes the dataset publicly accessible beyond intended principals.",
+  "Risk": "Public dataset access erodes **confidentiality** by enabling unrestricted reads and metadata discovery. Attackers can query and copy data for **exfiltration** and use schema details for **lateral movement**. It can also trigger unexpected **costs** from abusive or high-volume queries.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/forseti-security/forseti-security/issues/3406",
+    "https://support.icompaas.com/support/solutions/articles/62000233051-7-1-ensure-bigquery-datasets-are-not-anonymously-or-publicly-accessible-automated-",
+    "https://securitylabs.datadoghq.com/cloud-security-atlas/vulnerabilities/bigquery-publicly-accessible-dataset/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/publicly-accessible-big-query-datasets.html",
+    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_3#terraform",
+    "https://cloud.google.com/blog/products/identity-security/automatic-dlp-for-bigquery",
+    "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/publicly-accessible-big-query-datasets.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_3#terraform"
+      "Other": "1. Open Google Cloud Console and go to BigQuery\n2. In Explorer, select the dataset\n3. Click SHARING > Permissions\n4. Remove principals named AllUsers and AllAuthenticatedUsers\n5. Click Save",
+      "Terraform": "```hcl\n# Ensure the dataset is not public by removing public principals from IAM (authoritative for this role)\nresource \"google_bigquery_dataset_iam_binding\" \"<example_resource_name>\" {\n  dataset_id = \"<example_resource_id>\"\n  role       = \"roles/bigquery.dataViewer\"\n  members    = [\n    \"user:<example_user_email>\" # CRITICAL: exclude allUsers/allAuthenticatedUsers to remove public access\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that the IAM policy on BigQuery datasets does not allow anonymous and/or public access.",
-      "Url": "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
+      "Text": "Apply **least privilege** on datasets:\n- Remove `allUsers` and `allAuthenticatedUsers`\n- Grant access only to required groups or service accounts\n- Use **authorized views** or controlled listings for sharing\n- Review access regularly and enforce org policies that block public identities for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/bigquery_dataset_public_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
