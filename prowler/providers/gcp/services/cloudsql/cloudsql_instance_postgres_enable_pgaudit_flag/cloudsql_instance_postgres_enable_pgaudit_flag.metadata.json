@@ -1,29 +1,40 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_enable_pgaudit_flag",
-  "CheckTitle": "Ensure That 'cloudsql.enable_pgaudit' Database Flag for each Cloud Sql Postgresql Instance Is Set to 'on' For Centralized Logging",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has 'cloudsql.enable_pgaudit' flag set to 'on'",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That 'cloudsql.enable_pgaudit' Database Flag for each Cloud Sql Postgresql Instance Is Set to 'on' For Centralized Logging",
-  "Risk": "Ensure cloudsql.enable_pgaudit database flag for Cloud SQL PostgreSQL instance is set to on to allow for centralized logging.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** instances are evaluated for the database flag `cloudsql.enable_pgaudit` being set to `on`",
+  "Risk": "Without `cloudsql.enable_pgaudit`, **database activity** lacks granular audit trails. Undetected reads/writes enable insider abuse, credential reuse, or SQL injection without evidence, harming **confidentiality** and **integrity**. Poor traceability slows incident response, forensics, and undermines compliance.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/flags",
+    "https://www.skills.google/focuses/22793?parent=catalog",
+    "https://stackoverflow.com/questions/65291896/gcp-cloud-sql-query-logging-for-postgres",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/postgre-sql-audit-flag.html",
+    "https://medium.com/google-cloud/audit-logs-on-steroids-with-cloud-sql-for-postgresql-and-pgaudit-d1fdf8725faf",
+    "https://docs.cloud.google.com/sql/docs/postgres/pg-audit"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags cloudsql.enable_pgaudit=On",
+      "CLI": "gcloud sql instances patch <example_resource_id> --database-flags cloudsql.enable_pgaudit=on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/postgre-sql-audit-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to SQL\n2. Select your PostgreSQL instance and click Edit\n3. In Database flags, click Add item\n4. Set Flag to cloudsql.enable_pgaudit and Value to on\n5. Click Save and restart if prompted",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_id>\"\n  region           = \"us-central1\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"db-custom-1-3840\"\n    database_flags {\n      name  = \"cloudsql.enable_pgaudit\"  # Critical: enable pgAudit\n      value = \"on\"                        # Critical: set flag to 'on' to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "As numerous other recommendations in this section consist of turning on flags for logging purposes, your organization will need a way to manage these logs. You may have a solution already in place. If you do not, consider installing and enabling the open source pgaudit extension within PostgreSQL and enabling its corresponding flag of cloudsql.enable_pgaudit. This flag and installing the extension enables database auditing in PostgreSQL through the open-source pgAudit extension. This extension provides detailed session and object logging to comply with government, financial, & ISO standards and provides auditing capabilities to mitigate threats by monitoring security events on the instance. Enabling the flag and settings later in this recommendation will send these logs to Google Logs Explorer so that you can access them in a central location.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Enable `cloudsql.enable_pgaudit` and configure **pgAudit** to log required classes (e.g., `read`, `write`, `ddl`) under least privilege. Centralize logs, enforce retention and RBAC, and monitor with alerts. *Scope auditing to sensitive data to reduce noise and overhead, and review coverage regularly.*",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_enable_pgaudit_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

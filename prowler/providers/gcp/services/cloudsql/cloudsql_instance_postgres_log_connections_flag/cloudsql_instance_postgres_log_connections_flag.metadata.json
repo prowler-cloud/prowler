@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_connections_flag",
-  "CheckTitle": "Ensure That the Log_connections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has log_connections flag set to on",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That the Log_connections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
-  "Risk": "Enabling the log_connections setting causes each attempted connection to the server to be logged, along with successful completion of client authentication. This parameter cannot be changed after the session starts.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** instances have the `log_connections` flag set to `on`, causing the server to record every connection attempt and the result of client authentication.",
+  "Risk": "Without connection logs, unauthorized access attempts can go unnoticed. Attackers may brute-force or reuse credentials without audit evidence, enabling stealthy data access (**confidentiality**), changes via compromised accounts (**integrity**), and connection floods that impact service (**availability**).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/flags",
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_3#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_connections=on",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=log_connections=on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_3#terraform"
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open your PostgreSQL instance and click Edit\n3. In Flags, click Add item, select log_connections, set value to on\n4. Click Save and confirm the restart",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"POSTGRES_14\"\n  region           = \"<region>\"\n\n  settings {\n    tier = \"db-f1-micro\"\n\n    # Critical: enables connection logging to pass the check\n    database_flags {\n      name  = \"log_connections\"  # critical\n      value = \"on\"                # critical\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "PostgreSQL does not log attempted connections by default. Enabling the log_connections setting will create log entries for each attempted connection as well as successful completion of client authentication which can be useful in troubleshooting issues and to determine any unusual connection attempts to the server.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Enable `log_connections`=`on` for all PostgreSQL instances.\n- Apply **defense in depth**: also capture disconnects and audit events\n- Centralize logs, retain them, and alert on anomalies\n- Enforce **least privilege** and strong authentication to reduce exposure and improve detection",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_connections_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,40 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_mysql_skip_show_database_flag",
-  "CheckTitle": "Ensure Skip_show_database Database Flag for Cloud SQL MySQL Instance Is Set to On",
+  "CheckTitle": "Cloud SQL MySQL instance has skip_show_database flag set to on",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure Skip_show_database Database Flag for Cloud SQL MySQL Instance Is Set to On",
-  "Risk": "'skip_show_database' database flag prevents people from using the SHOW DATABASES statement if they do not have the SHOW DATABASES privilege.",
+  "Severity": "low",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL MySQL** instances configure the `skip_show_database` database flag to `on`, limiting use of `SHOW DATABASES` to accounts with the `SHOW DATABASES` privilege.",
+  "Risk": "Without `skip_show_database` set to `on`, database names can be exposed to unprivileged users, reducing **confidentiality**. Attackers can perform schema **enumeration** and targeted probing, enabling **lateral movement** and privilege escalation against specific datasets.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000233030-6-1-2-ensure-skip-show-database-database-flag-for-cloud-sql-mysql-instance-is-set-to-on-automate",
+    "https://hub.steampipe.io/mods/turbot/gcp_compliance/controls/control.sql_instance_mysql_skip_show_database_flag_on",
+    "https://guides.spectralops.io/docs/d9_gcp_vln_05",
+    "https://docs.datadoghq.com/security/default_rules/def-000-ht8/",
+    "https://cloud.google.com/sql/docs/mysql/flags",
+    "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_skip_show_database_flag",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags skip_show_database=on",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=skip_show_database=on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open your MySQL instance and click Edit\n3. Under Flags, click Add item, select skip_show_database, set value to ON\n4. Click Save",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"MYSQL_8_0\"\n  region           = \"<example_region>\"\n\n  settings {\n    tier = \"db-custom-1-3840\"\n\n    database_flags {\n      name  = \"skip_show_database\"   # Critical: enforce hiding databases from users without SHOW DATABASES privilege\n      value = \"on\"                   # Critical: set flag to 'on' to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set skip_show_database database flag for Cloud SQL Mysql instance to on.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/flags"
+      "Text": "Set `skip_show_database` to `on` for all Cloud SQL MySQL instances. Enforce **least privilege** by granting `SHOW DATABASES` only when necessary and reviewing roles regularly. Use **defense in depth**: monitor access and admin actions, and plan changes in maintenance windows as flag updates may trigger restarts.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_mysql_skip_show_database_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

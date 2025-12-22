@@ -1,29 +1,40 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_trace_flag",
-  "CheckTitle": "Ensure '3625 (trace flag)' database flag for all Cloud SQL Server instances is set to 'on' ",
+  "CheckTitle": "Cloud SQL for SQL Server instance has trace flag 3625 set to 'on'",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure '3625 (trace flag)' database flag for all Cloud SQL Server instances is set to 'on' ",
-  "Risk": "Microsoft SQL Trace Flags are frequently used to diagnose performance issues or to debug stored procedures or complex computer systems, but they may also be recommended by Microsoft Support to address behavior that is negatively impacting a specific workload. All documented trace flags and those recommended by Microsoft Support are fully supported in a production environment when used as directed. 3625(trace log) Limits the amount of information returned to users who are not members of the sysadmin fixed server role, by masking the parameters of some error messages using '******'. Setting this in a Google Cloud flag for the instance allows for security through obscurity and prevents the disclosure of sensitive information, hence this is recommended to set this flag globally to on to prevent the flag having been left off, or changed by bad actors. This recommendation is applicable to SQL Server database instances.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for SQL Server** instances have the `3625 (trace flag)` database flag set to `on`",
+  "Risk": "Without `3625` enabled, SQL errors can reveal parameters and object names to non-admins, weakening **confidentiality** and aiding targeted **injection**, account enumeration, and data discovery. Leaked context helps craft exploits and pivot attacks, ultimately risking data integrity and availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-3625-trace-flag.html",
+    "https://docs.datadoghq.com/security/default_rules/def-000-6vu/",
+    "https://learn.microsoft.com/en-us/sql/relational-databases/security/metadata-visibility-configuration?view=sql-server-ver17",
+    "https://www.patrickkeisler.com/2023/12/how-to-test-trace-flag-3625/",
+    "https://guides.spectralops.io/docs/d9_gcp_vln_08",
+    "https://cloud.google.com/sql/docs/sqlserver/flags",
+    "https://www.sqlservercentral.com/blogs/trace-flag-3625-follow-up"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags 3625=on",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=3625=on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-3625-trace-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances and open <INSTANCE_NAME>\n2. Click Edit\n3. In Flags, click Add item\n4. Select 3625 (trace flag) and set value to on\n5. Click Save and confirm the restart",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<example_region>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"<example_tier>\"\n\n    # Critical: enable SQL Server trace flag 3625\n    # This sets the flag to 'on' so the check passes\n    database_flags {\n      name  = \"3625\"\n      value = \"on\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set 3625 (trace flag) database flag for Cloud SQL SQL Server instance to on.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Set trace flag `3625` to `on` for all SQL Server instances in Cloud SQL to limit error details for non-admins. Apply **least privilege**, practice **defense in depth** with application-level error handling, and centralize diagnostics in logs rather than returning verbose messages to clients.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_trace_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,36 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_disconnections_flag",
-  "CheckTitle": "Ensure That the log_disconnections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has log_disconnections flag set to on",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That the log_disconnections Database Flag for Cloud SQL PostgreSQL Instance Is Set to On",
-  "Risk": "PostgreSQL does not log session details such as duration and session end by default. Enabling the log_disconnections setting will create log entries at the end of each session which can be useful in troubleshooting issues and determine any unusual activity across a time period.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** instances have the `log_disconnections` flag set to `on`, creating a record each time a client session ends, including its duration and status",
+  "Risk": "Without **disconnection logs**, session lifecycles lack visibility, obscuring **credential misuse**, **session hijacking**, and short-lived data exfiltration.\n\nWeak audit trails hinder correlation and forensics, undermining confidentiality and integrity and slowing incident response.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform",
+    "https://cloud.google.com/sql/docs/postgres/flags",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_disconnections=on",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags=log_disconnections=on",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform"
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Click your PostgreSQL instance\n3. Click Edit\n4. In Database flags, click Add item\n5. Select log_disconnections and set value to on\n6. Click Save and confirm the restart",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<REGION>\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"<TIER>\"\n\n    # Critical: enable disconnect logging\n    database_flags {\n      name  = \"log_disconnections\"  # sets the required flag\n      value = \"on\"                   # ensures the check passes\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabling the log_disconnections setting logs the end of each session, including the session duration.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Enable `log_disconnections=on` to ensure complete session auditing.\n- Pair with `log_connections` and a consistent `log_line_prefix`\n- Centralize and retain logs; alert on anomalies\n- Apply **defense in depth** with routine review of access and audit events",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_disconnections_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_min_messages_flag",
-  "CheckTitle": "Ensure that the Log_min_messages Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has the log_min_messages flag set to WARNING or higher",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure that the Log_min_messages Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
-  "Risk": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_min_messages is not set to the correct value, messages may not be classified as error messages appropriately. An organization will need to decide their own threshold for logging log_min_messages flag.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** instances are evaluated for the `log_min_messages` flag being set to a sufficiently high severity. Instances with the flag missing or set below `ERROR` (e.g., `DEBUG*`, `INFO`, `NOTICE`) are identified.",
+  "Risk": "Insufficient `log_min_messages` severity degrades **audit log integrity**, causing real failures to be treated as non-errors or lack context. This delays detection and impairs **forensics**, enabling unnoticed data tampering or repeated faulty operations, impacting the **integrity** and **availability** of the service.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform",
+    "https://cloud.google.com/sql/docs/postgres/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_min_messages=warning",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags=log_min_messages=warning",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform"
+      "Other": "1. In Google Cloud Console, go to SQL and select your PostgreSQL instance\n2. Click Edit\n3. In Database flags, click Add item\n4. Choose log_min_messages and set value to warning\n5. Click Save and confirm the restart",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<example_region>\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"db-f1-micro\"\n\n    # Critical: sets the minimum PostgreSQL log level to WARNING (or higher) to pass the check\n    database_flags {\n      name  = \"log_min_messages\"  # sets the flag\n      value = \"warning\"            # acceptable level (WARNING or higher)\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "The log_min_messages flag defines the minimum message severity level that is considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each severity level includes the subsequent levels mentioned above. ERROR is considered the best practice setting. Changes should only be made in accordance with the organization's logging policy.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Set `log_min_messages` to **ERROR or stricter** to ensure error statements are captured with context. Align with centralized logging, retention, and review processes. Prefer **defense in depth** by preserving actionable error telemetry, while balancing verbosity and cost per your logging policy.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_min_messages_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

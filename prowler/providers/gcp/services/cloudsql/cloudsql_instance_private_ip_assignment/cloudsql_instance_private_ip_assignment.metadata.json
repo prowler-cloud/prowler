@@ -1,29 +1,39 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_private_ip_assignment",
-  "CheckTitle": "Ensure Instance IP assignment is set to private",
+  "CheckTitle": "Cloud SQL instance has no public IP addresses",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure Instance IP assignment is set to private",
-  "Risk": "Instance addresses can be public IP or private IP. Public IP means that the instance is accessible through the public internet. In contrast, instances using only private IP are not accessible through the public internet, but are accessible through a Virtual Private Cloud (VPC). Limiting network access to your database will limit potential attacks.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "Cloud SQL instances are evaluated for IP assignment, highlighting instances that have any **public IP** instead of being restricted to **private IP** only.",
+  "Risk": "**Public database endpoints** expose services to Internet scanning, brute-force logins, and exploit attempts. A compromise can cause data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and outages or DDoS impact (**availability**), while bypassing VPC isolation and enabling lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/mysql/configure-private-ip",
+    "https://medium.com/google-cloud/cloud-sql-with-private-ip-only-the-good-the-bad-and-the-ugly-de4ac23ce98a",
+    "https://github.com/gruntwork-io/terraform-google-sql/blob/master/examples/postgres-private-ip/main.tf",
+    "https://stackoverflow.com/questions/70625753/in-dataprep-how-to-create-connection-with-instance-of-sql-without-public-ip-on/71122701",
+    "https://docs.cloud.google.com/sql/docs/sqlserver/recommender-disable-public-ip",
+    "https://serverfault.com/questions/999967/how-to-connect-to-postgres-cloud-sql-without-public-ip-from-cloud-run"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud beta sql instances patch <example_resource_id> --project=<example_project_id> --network=projects/<example_project_id>/global/networks/<example_resource_name> --no-assign-ip",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL and open <example_resource_id>\n2. Click Connections > Networking\n3. Uncheck Public IP\n4. Check Private IP and select your VPC network\n5. If prompted, click Set up connection to create private services access, then continue\n6. Click Save and wait for the instance to restart",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<example_region>\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"db-f1-micro\"\n\n    ip_configuration {\n      ipv4_enabled    = false  # Critical: disables public IP\n      private_network = \"projects/<example_project_id>/global/networks/<example_resource_name>\"  # Critical: enables private IP on the specified VPC\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Setting databases access only to private will reduce attack surface.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/configure-private-ip"
+      "Text": "Use **private IP-only** connectivity for databases. Remove public IPs, segment access to required VPCs/subnets, and enforce **least privilege** with strong auth and TLS. For external access, use secure private channels (VPN/Interconnect) or a hardened bastion. Monitor connections as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_private_ip_assignment"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

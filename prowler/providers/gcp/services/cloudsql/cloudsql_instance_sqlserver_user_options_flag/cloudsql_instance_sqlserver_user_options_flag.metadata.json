@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_user_options_flag",
-  "CheckTitle": "Ensure 'user options' database flag for Cloud SQL SQL Server instance is not configured",
+  "CheckTitle": "Cloud SQL for SQL Server instance does not have the 'user options' flag configured",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure 'user options' database flag for Cloud SQL SQL Server instance is not configured",
-  "Risk": "The user options option specifies global defaults for all users. A list of default query processing options is established for the duration of a user's work session. The user options option allows you to change the default values of the SET options (if the server's default settings are not appropriate). A user can override these defaults by using the SET statement. You can configure user options dynamically for new logins. After you change the setting of user options, new login sessions use the new setting, current login sessions are not affected.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for SQL Server** instances are evaluated for the `user options` database flag configured with any value.\n\nThis flag sets global defaults for session `SET` behaviors; the check identifies instances where this global override is present.",
+  "Risk": "Global `user options` changes affect all sessions, impacting **data integrity** and **availability**. Disabling safe **ANSI behaviors** or enabling **implicit transactions** can alter NULL comparisons and error handling, leading to inconsistent results, lock contention, and application failures, reducing predictability and complicating auditing.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/user-options-flag-not-configured.html",
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud sql instances patch <example_resource_name> --clear-database-flags",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/user-options-flag-not-configured.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL and open your SQL Server instance\n2. Click Edit\n3. In Database flags, locate 'user options' and click the X to remove it\n4. Click Save\n5. Allow the instance to restart to apply the change",
+      "Terraform": "```hcl\n# Cloud SQL for SQL Server instance with no 'user options' flag set\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<example_region>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n    # Remediation: Do NOT set a database_flags block for 'user options'\n    # This omission removes/unsets the 'user options' flag so the check passes.\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that, user options database flag for Cloud SQL SQL Server instance should not be configured.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Leave `user options` unset at the instance level; keep default behavior. Control `SET` options explicitly at session or database scope.\n\n- Enforce **least privilege** for flag management\n- Use **change control** and testing before rollout\n- Monitor for configuration drift as part of **defense in depth**",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_user_options_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

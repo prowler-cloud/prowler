@@ -1,29 +1,41 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
-  "CheckTitle": "Ensure that the 'cross db ownership chaining' database flag for Cloud SQL SQL Server instance is set to 'off'",
+  "CheckTitle": "Cloud SQL SQL Server instance has 'cross db ownership chaining' flag set to off",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure that the 'cross db ownership chaining' database flag for Cloud SQL SQL Server instance is set to 'off'",
-  "Risk": "Use the cross db ownership for chaining option to configure cross-database ownership chaining for an instance of Microsoft SQL Server. This server option allows you to control cross-database ownership chaining at the database level or to allow cross- database ownership chaining for all databases. Enabling cross db ownership is not recommended unless all of the databases hosted by the instance of SQL Server must participate in cross-database ownership chaining and you are aware of the security implications of this setting.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL SQL Server** instances are evaluated for the `cross db ownership chaining` server flag. The finding identifies SQL Server instances where this flag isn't set to `off`, meaning cross-database ownership chaining is permitted.",
+  "Risk": "Allowing cross-database ownership chaining erodes database boundaries, impacting **confidentiality** and **integrity**. Users with privileges in one database can traverse ownership chains to access or modify objects in others, enabling **privilege escalation**, **lateral movement**, and unauthorized data exposure.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://hub.powerpipe.io/mods/turbot/gcp_compliance/controls/control.cis_v130_6_3_2",
+    "https://github.com/PaladinCloud/CE/wiki/GCP-Policy",
+    "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-cross-db-ownership-chaining-flag.html",
+    "https://guides.spectralops.io/docs/d9_gcp_vln_03",
+    "https://cloud.google.com/sql/docs/sqlserver/flags",
+    "https://docs.datadoghq.com/security/code_security/iac_security/iac_rules/terraform/gcp/sql_database_has_cross_db_ownership_chaining/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags cross db ownership=off",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags '\"cross db ownership chaining\"=off'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-cross-db-ownership-chaining-flag.html",
-      "Terraform": ""
+      "Other": "1. In the Google Cloud Console, go to SQL > Instances\n2. Open the SQL Server instance (<example_resource_name>) and click Edit\n3. Scroll to Flags and click Add item (or edit if present)\n4. Select cross db ownership chaining and set value to off\n5. Click Save and restart if prompted",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<REGION>\"\n  database_version = \"SQLSERVER_2019_STANDARD\"\n\n  settings {\n    tier = \"<TIER>\"\n\n    # Critical: ensures the flag is OFF to pass the check\n    database_flags {\n      name  = \"cross db ownership chaining\"  # disables cross-database ownership chaining\n      value = \"off\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set cross db ownership chaining database flag for Cloud SQL SQL Server instance to off.",
-      "Url": "https://cloud.google.com/sql/docs/sqlserver/flags"
+      "Text": "Keep `cross db ownership chaining` set to `off` to maintain database isolation. Enforce **least privilege** with explicit per-database permissions and **separation of duties**. Prefer controlled execution patterns (e.g., signed modules) over implicit trusts, and periodically review flags and access. *This flag is deprecated-do not enable it.*",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

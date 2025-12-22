@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_min_error_statement_flag",
-  "CheckTitle": "Ensure that the Log_min_error_statement Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
+  "CheckTitle": "Cloud SQL for PostgreSQL instance has log_min_error_statement set to error",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure that the Log_min_error_statement Flag for a Cloud SQL PostgreSQL Instance Is Set Appropriately",
-  "Risk": "The log_min_error_statement flag defines the minimum message severity level that are considered as an error statement. Messages for error statements are logged with the SQL statement. Valid values include DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each severity level includes the subsequent levels mentioned above. Ensure a value of ERROR or stricter is set.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** uses the `log_min_error_statement` flag and expects it set to `error`, the severity threshold that controls when SQL text is logged with error messages.",
+  "Risk": "An incorrect threshold skews visibility and exposure:\n- Lower than `error`: logs excessive SQL, risking **confidentiality** loss and alert noise (monitoring availability).\n- Higher than `error`: omits query context for real errors, weakening audit trail **integrity** and incident response.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-log-min-error-statement-flag.html",
+    "https://cloud.google.com/sql/docs/postgres/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_min_error_statement=error",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags=log_min_error_statement=error",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-log-min-error-statement-flag.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances and open your PostgreSQL instance\n2. Click Edit\n3. In Database flags, click Add item, select log_min_error_statement, set value to error\n4. Click Save (the instance will restart)",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  database_version = \"POSTGRES_14\"\n  region           = \"us-central1\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n    database_flags {\n      name  = \"log_min_error_statement\"  # critical: requires minimum 'error' level\n      value = \"error\"                     # sets the flag to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_min_error_statement is not set to the correct value, messages may not be classified as error messages appropriately. Considering general log messages as error messages would make is difficult to find actual errors and considering only stricter severity levels as error messages may skip actual errors to log their SQL statements. The log_min_error_statement flag should be set to ERROR or stricter.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Set `log_min_error_statement` to `error` to balance insight and exposure. Enforce a **logging policy** that limits sensitive data in queries and supports **defense in depth**. Periodically review severity and retention to match workload and compliance needs and maintain reliable forensic readiness.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_min_error_statement_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

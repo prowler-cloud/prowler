@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_automated_backups",
-  "CheckTitle": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
+  "CheckTitle": "Cloud SQL database instance has automated backups configured",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
-  "Risk": "Backups provide a way to restore a Cloud SQL instance to recover lost data or recover from a problem with that instance. Automated backups need to be set for any instance that contains data that should be protected from loss or damage. This recommendation is applicable for SQL Server, PostgreSql, MySql generation 1 and MySql generation 2 instances.",
+  "Severity": "high",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL instances** are checked for **automated backups** being configured to run on a schedule and support point-in-time recovery.",
+  "Risk": "Absent **automated backups**, unintended deletes, corruption, or ransomware can become irreversible. This degrades data **integrity** and **availability**, removes point-in-time recovery options, and widens `RPO`/`RTO`, causing prolonged outages and incomplete restoration after incidents or schema changes.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-automated-backups.html",
+    "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --backup-start-time <[HH:MM]>",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --backup-start-time <HH:MM>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-automated-backups.html",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Click your instance name, then click Edit\n3. In the Backups section, enable Automated backups and set a Start time\n4. Click Save to apply",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_id>\"\n  database_version = \"POSTGRES_14\"\n  region           = \"<REGION>\"\n\n  settings {\n    tier = \"db-custom-1-3840\"\n\n    backup_configuration {\n      enabled    = true      # Critical: turns on automated backups\n      start_time = \"02:00\"  # Critical: required to enable backups and set start time\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to have all SQL database instances set to enable automated backups.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
+      "Text": "Enable **automated backups** on all Cloud SQL instances holding important data. Set retention and schedules to meet `RPO`/`RTO`, and enable point-in-time recovery. Apply **least privilege** to backup access, use **separation of duties**, consider cross-region resilience, and regularly test restores with monitoring and alerts for failures.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_automated_backups"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
