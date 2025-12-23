@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "sns_topics_not_publicly_accessible",
-  "CheckTitle": "Check if SNS topics have policy set as Public",
-  "CheckType": [],
+  "CheckTitle": "SNS topic is not publicly accessible",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access"
+  ],
   "ServiceName": "sns",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sns:region:account-id:topic",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSnsTopic",
-  "Description": "Check if SNS topics have policy set as Public",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html",
+  "Description": "**SNS topic policies** are analyzed for **public principals** (e.g., `*`). Topics that grant access without restrictive conditions such as `aws:SourceArn`, `aws:SourceAccount`, `aws:PrincipalOrgID`, or `sns:Endpoint` scoping are treated as publicly accessible.",
+  "Risk": "**Public SNS topics** allow anyone or unknown accounts to:\n- **Subscribe** and siphon messages (confidentiality)\n- **Publish** spoofed payloads that alter workflows (integrity)\n- **Flood** messages causing outages and costs (availability)\nThey also enable cross-account abuse and bypass expected trust boundaries.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sns-topic-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "CLI": "aws sns set-topic-attributes --topic-arn <TOPIC_ARN> --attribute-name Policy --attribute-value '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<ACCOUNT_ID>:root\"},\"Action\":\"sns:Publish\",\"Resource\":\"<TOPIC_ARN>\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict SNS topic policy to the account (not public)\nResources:\n  <example_resource_name>:\n    Type: AWS::SNS::TopicPolicy\n    Properties:\n      Topics:\n        - arn:aws:sns:<region>:<account_id>:<example_resource_name>\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Action: sns:Publish\n            Resource: arn:aws:sns:<region>:<account_id>:<example_resource_name>\n            Principal:\n              AWS: arn:aws:iam::<account_id>:root  # Critical: restrict to account root to remove public access\n```",
+      "Other": "1. Open the Amazon SNS console and select Topics\n2. Choose the topic and go to the Access policy tab\n3. Edit the policy and remove any Principal set to \"*\" (Everyone/Public)\n4. Add a statement allowing only your account root: Principal = arn:aws:iam::<ACCOUNT_ID>:root with Action sns:Publish and Resource set to the topic ARN\n5. Save changes",
+      "Terraform": "```hcl\n# Restrict SNS topic policy to the account (not public)\nresource \"aws_sns_topic_policy\" \"<example_resource_name>\" {\n  arn    = \"<TOPIC_ARN>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Action    = \"sns:Publish\"\n      Resource  = \"<TOPIC_ARN>\"\n      Principal = { AWS = \"arn:aws:iam::<ACCOUNT_ID>:root\" } # Critical: restrict principal to the account to remove public access\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure there is a business requirement for service to be public.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html"
+      "Text": "Restrict the **topic policy** to specific principals and minimal actions:\n- Avoid `Principal:*`\n- Allow only needed actions (e.g., `sns:Publish`)\n- Add conditions like `aws:SourceArn`, `aws:SourceAccount`, `aws:PrincipalOrgID`, or `sns:Endpoint`\nApply **least privilege**, separate duties, and review policies regularly.",
+      "Url": "https://hub.prowler.com/check/sns_topics_not_publicly_accessible"
     }
   },
   "Categories": [

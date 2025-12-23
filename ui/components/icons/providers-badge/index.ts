@@ -1,5 +1,8 @@
+import type { FC } from "react";
+
 import { IconSvgProps } from "@/types";
 
+import { AlibabaCloudProviderBadge } from "./alibabacloud-provider-badge";
 import { AWSProviderBadge } from "./aws-provider-badge";
 import { AzureProviderBadge } from "./azure-provider-badge";
 import { GCPProviderBadge } from "./gcp-provider-badge";
@@ -11,6 +14,7 @@ import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
 import { OracleCloudProviderBadge } from "./oraclecloud-provider-badge";
 
 export {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
@@ -23,7 +27,7 @@ export {
 };
 
 // Map provider display names to their icon components
-export const PROVIDER_ICONS: Record<string, React.FC<IconSvgProps>> = {
+export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
   AWS: AWSProviderBadge,
   Azure: AzureProviderBadge,
   "Google Cloud": GCPProviderBadge,
@@ -33,4 +37,5 @@ export const PROVIDER_ICONS: Record<string, React.FC<IconSvgProps>> = {
   "Infrastructure as Code": IacProviderBadge,
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
   "MongoDB Atlas": MongoDBAtlasProviderBadge,
+  "Alibaba Cloud": AlibabaCloudProviderBadge,
 };

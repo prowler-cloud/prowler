@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_in_transit_encryption_enabled",
-  "CheckTitle": "Ensure Kafka Cluster Encryption in Transit is Enabled",
+  "CheckTitle": "Kafka cluster has encryption in transit enabled",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsMskCluster",
-  "Description": "Kafka clusters should have encryption in transit enabled to protect data as it travels across the network. This ensures that data is encrypted when transmitted between clients and brokers, preventing unauthorized access or data breaches.",
-  "Risk": "If encryption in transit is not enabled, data transmitted over the network could be vulnerable to eavesdropping or man-in-the-middle attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+  "Description": "**Amazon MSK clusters** are evaluated for **encryption in transit** on both paths: **clientbroker** set to `TLS` only and **inter-broker** encryption enabled. *Serverless clusters provide this by default*.\n\nThe finding highlights clusters where client-broker traffic isn't `TLS`-only or inter-broker encryption is turned off.",
+  "Risk": "Unencrypted or mixed (`TLS_PLAINTEXT`/`PLAINTEXT`) traffic enables interception of records, credentials, and metadata, supporting **MITM**, replay, and message tampering.\n\nPlaintext inter-broker links expose replication data within the VPC, enabling **lateral movement** and topic poisoning, degrading data **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kafka create-cluster --cluster-name <CLUSTER_NAME> --broker-node-group-info <NODE_JSON> --encryption-info <INFO_JSON> --kafka-version <VERSION> --number-of-broker-nodes <NUMBER>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: MSK cluster with encryption in transit enforced\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <VERSION>\n      NumberOfBrokerNodes: 3\n      BrokerNodeGroupInfo:\n        ClientSubnets:\n          - <example_resource_id>\n          - <example_resource_id>\n        InstanceType: kafka.m5.large\n      EncryptionInfo:\n        EncryptionInTransit:\n          ClientBroker: TLS  # Critical: forces client-to-broker TLS only\n          InCluster: true    # Critical: enables inter-broker encryption\n```",
+      "Other": "1. In the AWS Console, go to Amazon MSK > Clusters and select your cluster\n2. Click Edit (Security)\n3. Under Encryption in transit, set Client-broker to TLS only\n4. Save changes\n5. Verify Inter-broker (in-cluster) encryption is enabled; if it is disabled (immutable), create a new cluster with:\n   - Encryption in transit: Client-broker = TLS only, Inter-broker encryption = Enabled\n   - Migrate clients to the new cluster, then decommission the old one",
+      "Terraform": "```hcl\n# Terraform: MSK cluster with encryption in transit enforced\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<VERSION>\"\n  number_of_broker_nodes = 3\n\n  broker_node_group_info {\n    instance_type  = \"kafka.m5.large\"\n    client_subnets = [\n      \"subnet-<example_resource_id>\",\n      \"subnet-<example_resource_id>\",\n    ]\n  }\n\n  encryption_info {\n    encryption_in_transit {\n      client_broker = \"TLS\"  # Critical: forces client-to-broker TLS only\n      in_cluster    = true    # Critical: enables inter-broker encryption\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable encryption in transit for Kafka clusters to protect data confidentiality and integrity.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html"
+      "Text": "Enforce end-to-end transport protection:\n- Require `client_broker=TLS` for all clients\n- Enable `in_cluster=true` for broker-to-broker links\n\nApply **defense in depth**: restrict network paths, prefer private connectivity, and use strong client authentication with **least privilege** authorization to limit blast radius.",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_in_transit_encryption_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

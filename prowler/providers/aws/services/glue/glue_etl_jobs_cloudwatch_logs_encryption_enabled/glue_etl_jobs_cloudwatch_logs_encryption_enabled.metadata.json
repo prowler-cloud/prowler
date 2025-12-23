@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
-  "CheckTitle": "Check if Glue ETL Jobs have CloudWatch Logs encryption enabled.",
+  "CheckTitle": "Glue ETL job has CloudWatch Logs encryption enabled",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)"
   ],
   "ServiceName": "glue",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsGlueJob",
-  "Description": "Check if Glue ETL Jobs have CloudWatch Logs encryption enabled.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+  "Description": "**AWS Glue ETL jobs** are evaluated for a **security configuration** with **CloudWatch Logs encryption** (`SSE-KMS`) enabled. Jobs without a security configuration, or with CloudWatch Logs encryption set to `DISABLED`, are highlighted.",
+  "Risk": "Unencrypted Glue logs weaken **confidentiality**.\n\nLog entries can expose credentials, PII, connection strings, and schema details. Anyone with log storage access can harvest secrets for **lateral movement** and data exfiltration, widening the blast radius of compromises.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws glue create-security-configuration --name cw-encrypted-sec-config --encryption-configuration {'CloudWatchEncryption': [{'CloudWatchEncryptionMode': 'SSE-KMS','KmsKeyArn': <kms_arn>}]}",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: enable CloudWatch Logs encryption and attach to the job\nResources:\n  ExampleSecurityConfiguration:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        CloudWatchEncryption:  # Critical: enable CloudWatch Logs encryption for Glue\n          CloudWatchEncryptionMode: SSE-KMS  # Critical: must not be DISABLED\n          KmsKeyArn: <example_kms_key_arn>   # Critical: KMS key used for encryption\n\n  ExampleJob:\n    Type: AWS::Glue::Job\n    Properties:\n      Role: <example_role_arn>\n      Command:\n        Name: glueetl\n        ScriptLocation: s3://<example_script_path>\n      SecurityConfiguration: !Ref ExampleSecurityConfiguration  # Critical: attach security configuration to the job\n```",
+      "Other": "1. In the AWS Glue console, go to Security configurations > Add security configuration\n2. Enter a name, enable CloudWatch Logs encryption, select SSE-KMS, and choose/provide the KMS key ARN; Save\n3. Go to Jobs, select the target job, click Edit\n4. Set Security configuration to the one created in step 2\n5. Save changes",
+      "Terraform": "```hcl\n# Enable CloudWatch Logs encryption and attach to the Glue job\nresource \"aws_glue_security_configuration\" \"example_resource_name\" {\n  name = \"<example_resource_name>\"\n\n  encryption_configuration {\n    cloudwatch_encryption {\n      cloudwatch_encryption_mode = \"SSE-KMS\"          # Critical: enable CW Logs encryption\n      kms_key_arn                = \"<example_kms_key_arn>\" # Critical: KMS key for encryption\n    }\n  }\n}\n\nresource \"aws_glue_job\" \"example_resource_name\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  command {\n    name            = \"glueetl\"\n    script_location = \"s3://<example_script_path>\"\n  }\n\n  security_configuration = aws_glue_security_configuration.example_resource_name.name # Critical: attach security config to job\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption in the Security configurations.",
-      "Url": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html"
+      "Text": "Enable **at-rest encryption** for Glue logs via a **security configuration** using customer-managed KMS keys. Apply **least privilege** to KMS and CloudWatch Logs, rotate keys, and require all jobs to attach an approved configuration. Embed this baseline in IaC for consistent, **defense-in-depth** coverage.",
+      "Url": "https://hub.prowler.com/check/glue_etl_jobs_cloudwatch_logs_encryption_enabled"
     }
   },
   "Categories": [

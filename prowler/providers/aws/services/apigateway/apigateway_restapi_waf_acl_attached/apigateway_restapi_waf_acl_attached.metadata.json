@@ -29,9 +29,7 @@
       "Url": "https://hub.prowler.com/check/apigateway_restapi_waf_acl_attached"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "",

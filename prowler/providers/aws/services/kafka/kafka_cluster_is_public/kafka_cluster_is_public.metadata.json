@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_is_public",
-  "CheckTitle": "Kafka Cluster Exposed to the Public",
-  "CheckType": [],
+  "CheckTitle": "Kafka cluster is not publicly accessible",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
-  "Severity": "high",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsMskCluster",
-  "Description": "The Kafka cluster is publicly accessible, which can expose sensitive data and increase the attack surface.",
-  "Risk": "Exposing the Kafka cluster to the public can lead to unauthorized access, data breaches, and potential security threats.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html",
+  "Description": "**Amazon MSK clusters** with broker endpoints **exposed to the public Internet**.\n\nServerless clusters are private by default; provisioned clusters are evaluated for their `public access` configuration.",
+  "Risk": "Public brokers erode **CIA**:\n- **Confidentiality**: unauthorized consumers can read topics\n- **Integrity**: rogue producers inject or alter events\n- **Availability**: floods or scans strain brokers\n\nThis enables metadata enumeration, data exfiltration, stream poisoning, and costly egress.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/public-access-msk-cluster.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kafka update-connectivity --cluster-arn cluster_arn --current-version kafka_version --connectivity-info '{\"PublicAccess\": {\"Type\": \"DISABLED\"}}'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/public-access-msk-cluster.html",
-      "Terraform": ""
+      "CLI": "aws kafka update-connectivity --cluster-arn <CLUSTER_ARN> --current-version <CURRENT_CLUSTER_VERSION> --connectivity-info '{\"PublicAccess\":{\"Type\":\"DISABLED\"}}'",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure MSK cluster is not publicly accessible\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: \"2.8.1\"\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        ClientSubnets:\n          - <example_subnet_id_1>\n          - <example_subnet_id_2>\n        InstanceType: kafka.t3.small\n        ConnectivityInfo:\n          PublicAccess:\n            Type: DISABLED  # Critical: disables public access to brokers\n```",
+      "Other": "1. Open the Amazon MSK console\n2. Select your cluster and go to the Properties tab\n3. In Network settings, click Edit public access\n4. Set Public access to Disabled (Off)\n5. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: ensure MSK cluster is not publicly accessible\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"2.8.1\"\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    client_subnets = [\n      \"<example_subnet_id_1>\",\n      \"<example_subnet_id_2>\",\n    ]\n    instance_type = \"kafka.t3.small\"\n\n    connectivity_info {\n      public_access {\n        type = \"DISABLED\"  # Critical: disables public access to brokers\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to restrict access to the Kafka cluster to only authorized entities. Enable encryption for data in transit and at rest to protect sensitive information.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html"
+      "Text": "Keep brokers private within the VPC by disabling public access and limiting exposure to trusted networks.\n\nEnforce strong auth (SASL/IAM, SASL/SCRAM, or mTLS), require TLS, and apply Kafka ACLs. Provide access via VPN, bastion, or private networking (peering/Transit Gateway). Apply **least privilege** and monitor broker connections.",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_is_public"
     }
   },
   "Categories": [

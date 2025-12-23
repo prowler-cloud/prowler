@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "mq_broker_not_publicly_accessible",
-  "CheckTitle": "MQ brokers should not be publicly accessible.",
+  "CheckTitle": "Amazon MQ broker is not publicly accessible",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "mq",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsAmazonMQBroker",
-  "Description": "Brokers created without public accessibility can't be accessed from outside of your VPC. This greatly reduces your broker's susceptibility to Distributed Denial of Service (DDoS) attacks from the public internet.",
-  "Risk": "Public Amazon MQ brokers can be accessed directly, outside of a Virtual Private Cloud (VPC), therefore every machine on the Internet can reach your brokers through their public endpoints and this can increase the opportunity for malicious activity such as cross-site scripting (XSS) and clickjacking attacks. ",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility",
+  "Description": "**Amazon MQ brokers** are evaluated for **public accessibility**, determining whether a broker exposes a public endpoint or is restricted to VPC-only connectivity via its `publicly accessible` setting.",
+  "Risk": "**Publicly reachable brokers** expand exposure: internet hosts can probe protocols and consoles, attempt credential spraying, publish/consume messages, and flood connections. This threatens **confidentiality** (data leakage), **integrity** (message tampering), and **availability** (DoS/resource exhaustion).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/publicly-accessible.html#"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/publicly-accessible.html#",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Amazon MQ broker without public accessibility\nResources:\n  <example_resource_name>:\n    Type: AWS::AmazonMQ::Broker\n    Properties:\n      BrokerName: <example_resource_name>\n      EngineType: ACTIVEMQ\n      EngineVersion: <example_engine_version>\n      HostInstanceType: <example_instance_type>\n      PubliclyAccessible: false  # Critical: disables public internet access\n      Users:\n        - Username: <example_username>\n          Password: <example_password>\n      SubnetIds:\n        - <example_subnet_id>\n      SecurityGroups:\n        - <example_security_group_id>\n      AutoMinorVersionUpgrade: true\n```",
+      "Other": "1. Open the AWS Console and go to Amazon MQ\n2. Create a new broker and set Public accessibility to Disabled/No\n3. Point your clients to the new broker's private endpoints\n4. Delete the old publicly accessible broker",
+      "Terraform": "```hcl\n# Amazon MQ broker without public accessibility\nresource \"aws_mq_broker\" \"<example_resource_name>\" {\n  broker_name         = \"<example_resource_name>\"\n  engine_type         = \"ActiveMQ\"\n  engine_version      = \"<example_engine_version>\"\n  host_instance_type  = \"<example_instance_type>\"\n  publicly_accessible = false # Critical: disables public internet access\n  security_groups     = [\"<example_security_group_id>\"]\n  subnet_ids          = [\"<example_subnet_id>\"]\n\n  user {\n    username = \"<example_username>\"\n    password = \"<example_password>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the Amazon MQ brokers provisioned in your AWS account are not publicly accessible from the Internet in order to avoid exposing sensitive data and minimize security risks.",
-      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility"
+      "Text": "Prefer private deployment: set `publicly_accessible=false`, place brokers in private subnets, and restrict security groups to trusted producers/consumers. Use private connectivity (VPC endpoints, peering, VPN/Direct Connect). Enforce strong authn and authorization maps, and allow only required protocol ports. Apply **least privilege**.",
+      "Url": "https://hub.prowler.com/check/mq_broker_not_publicly_accessible"
     }
   },
   "Categories": [

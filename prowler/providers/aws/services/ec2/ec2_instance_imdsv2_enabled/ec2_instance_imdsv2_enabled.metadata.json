@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html#configuring-instance-metadata-options"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "ec2-imdsv1"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

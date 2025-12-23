@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "guardduty_is_enabled",
-  "CheckTitle": "Check if GuardDuty is enabled",
-  "CheckType": [],
+  "CheckTitle": "GuardDuty detector is enabled and not suspended",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
-  "Description": "Check if GuardDuty is enabled",
-  "Risk": "Amazon GuardDuty is a continuous security monitoring service that analyzes and processes several datasources.",
-  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
+  "Description": "**Amazon GuardDuty** detector existence and health are evaluated per Region. It identifies where GuardDuty isn't enabled for the account, where a detector has no status, or where a detector is configured but `suspended`.",
+  "Risk": "Without active **GuardDuty**, threats in CloudTrail, VPC Flow Logs, DNS, S3, EKS, EBS, and Lambda can go unnoticed. Attackers can exfiltrate data, move laterally, and mine crypto, degrading confidentiality, integrity, and availability-especially in unmonitored Regions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
+    "https://aws.plainenglish.io/how-to-protect-your-organizations-aws-account-with-aws-guardduty-a1a635c417aa",
+    "https://medium.com/swlh/aws-cdk-automating-guardduty-event-notifications-in-all-regions-f0bbcec6077d",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
+    "https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/use-terraform-to-automatically-enable-amazon-guardduty-for-an-organization.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty create-detector --region <REGION> --enable",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-guardduty-is-enabled-to-specific-orgregion#fix---buildtime"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: Ensure GuardDuty detector is enabled (not suspended) in the Region\nResources:\n  ExampleGuardDutyDetector:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true  # Critical: enables the detector so GuardDuty is active (not suspended)\n```",
+      "Other": "1. Sign in to the AWS Console and open Amazon GuardDuty\n2. Switch to the target AWS Region\n3. If prompted with Get started, click Enable GuardDuty\n4. If GuardDuty is already configured but suspended, go to Settings and click Enable (or Resume) to activate the detector\n5. Repeat in each required Region",
+      "Terraform": "```hcl\n# Terraform: Ensure GuardDuty detector is enabled (not suspended) in the Region\nresource \"aws_guardduty_detector\" \"example_resource_name\" {\n  enable = true  # Critical: turns GuardDuty on and ensures it is not suspended\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable GuardDuty and analyze its findings.",
-      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html"
+      "Text": "Enable and keep **GuardDuty** active in all supported Regions and accounts under a delegated admin. Turn on relevant protection plans and auto-enroll new accounts. Avoid `suspended` detectors, enforce **least privilege** for admins, and integrate findings into response for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/guardduty_is_enabled"
     }
   },
   "Categories": [

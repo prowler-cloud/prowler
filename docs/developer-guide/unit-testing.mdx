@@ -63,6 +63,82 @@ Other Commands for Running Tests
 Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) for more details.
 
 </Note>
+
+## AWS Service Dependency Table (CI Optimization)
+
+To optimize CI pipeline execution time, the GitHub Actions workflow for AWS tests uses a **service dependency table** that determines which tests to run based on changed files. This ensures that when a service is modified, all dependent services are also tested.
+
+### How It Works
+
+The dependency table is defined in `.github/workflows/sdk-tests.yml` within the "Resolve AWS services under test" step. When files in a specific AWS service are changed:
+
+1. Tests for the changed service are run
+2. Tests for all services that **depend on** the changed service are also run
+
+For example, if you modify the `ec2` service, tests will also run for `dlm`, `dms`, `elbv2`, `emr`, `inspector2`, `rds`, `redshift`, `route53`, `shield`, `ssm`, and `workspaces` because these services use the EC2 client.
+
+### Current Dependency Table
+
+The table maps a service (key) to the list of services that depend on it (values):
+
+| Service | Dependent Services |
+|---------|-------------------|
+| `acm` | `elb` |
+| `autoscaling` | `dynamodb` |
+| `awslambda` | `ec2`, `inspector2` |
+| `backup` | `dynamodb`, `ec2`, `rds` |
+| `cloudfront` | `shield` |
+| `cloudtrail` | `awslambda`, `cloudwatch` |
+| `cloudwatch` | `bedrock` |
+| `ec2` | `dlm`, `dms`, `elbv2`, `emr`, `inspector2`, `rds`, `redshift`, `route53`, `shield`, `ssm` |
+| `ecr` | `inspector2` |
+| `elb` | `shield` |
+| `elbv2` | `shield` |
+| `globalaccelerator` | `shield` |
+| `iam` | `bedrock`, `cloudtrail`, `cloudwatch`, `codebuild` |
+| `kafka` | `firehose` |
+| `kinesis` | `firehose` |
+| `kms` | `kafka` |
+| `organizations` | `iam`, `servicecatalog` |
+| `route53` | `shield` |
+| `s3` | `bedrock`, `cloudfront`, `cloudtrail`, `macie` |
+| `ssm` | `ec2` |
+| `vpc` | `awslambda`, `ec2`, `efs`, `elasticache`, `neptune`, `networkfirewall`, `rds`, `redshift`, `workspaces` |
+| `waf` | `elbv2` |
+| `wafv2` | `cognito`, `elbv2` |
+
+### When to Update the Table
+
+You must update the dependency table when:
+
+1. **A new check or service uses another service's client**: If your check imports a client from another service (e.g., `from prowler.providers.aws.services.ec2.ec2_client import ec2_client` in a non-ec2 check), add your service to the dependent services list of that client's service.
+
+2. **A service relationship changes**: If you remove or add a service client dependency in an existing check, update the table accordingly.
+
+### How to Update the Table
+
+1. Open `.github/workflows/sdk-tests.yml`
+2. Find the `dependents` dictionary in the "Resolve AWS services under test" step
+3. Add or modify entries as needed
+4. **Update this documentation page** (`docs/developer-guide/unit-testing.mdx`) to reflect the changes in the [Current Dependency Table](#current-dependency-table) section above
+
+```python
+dependents = {
+    # ... existing entries ...
+    "service_being_used": ["service_that_uses_it"],
+}
+```
+
+**Example**: If you create a new check in the `newservice` service that imports `ec2_client`, add `newservice` to the `ec2` entry:
+
+```python
+"ec2": ["dlm", "dms", "elbv2", "emr", "inspector2", "newservice", "rds", "redshift", "route53", "shield", "ssm"],
+```
+
+<Warning>
+Failing to update this table when adding cross-service dependencies may result in CI tests passing even when related functionality is broken, as the dependent service tests won't be triggered.
+</Warning>
+
 ## AWS Testing Approaches
 
 For AWS provider, different testing approaches apply based on API coverage based on several criteria.

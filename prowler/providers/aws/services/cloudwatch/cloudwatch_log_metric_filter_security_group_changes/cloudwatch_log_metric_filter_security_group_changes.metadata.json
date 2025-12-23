@@ -33,8 +33,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "threat-detection"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],
