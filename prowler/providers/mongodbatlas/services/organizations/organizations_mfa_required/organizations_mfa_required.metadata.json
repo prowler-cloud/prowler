@@ -1,29 +1,34 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "organizations_mfa_required",
-  "CheckTitle": "Ensure organization requires MFA",
+  "CheckTitle": "Organization requires multi-factor authentication for user access",
   "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "MongoDBAtlasOrganization",
-  "Description": "Ensure organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization",
-  "Risk": "Without MFA requirement, user accounts are vulnerable to credential-based attacks and unauthorized access",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas organization** mandates **multi-factor authentication** for all members before accessing organization resources (`multi_factor_auth_required`).",
+  "Risk": "Without enforced **MFA**, compromised passwords can grant organization access, enabling:\n- Data exposure (confidentiality)\n- Unauthorized configuration or role changes (integrity)\n- Resource deletion or disruption (availability)\nIncreases success of phishing, brute force, and session takeover.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mongodb.com/docs/atlas/security-multi-factor-authentication/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl --digest -u \"<PUBLIC_KEY>:<PRIVATE_KEY>\" -H \"Content-Type: application/json\" -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/orgs/<example_resource_id>\" -d '{\"multiFactorAuthRequired\":true}'",
       "NativeIaC": "",
-      "Other": "https://www.mongodb.com/docs/atlas/security-multi-factor-authentication/",
+      "Other": "1. Sign in to MongoDB Atlas\n2. Select the target Organization (top-left org selector)\n3. Go to Organization Settings > Security > Multi-Factor Authentication\n4. Enable \"Require Multi-Factor Authentication\" for the organization\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable MFA requirement for the organization by setting multiFactorAuthRequired to true in the organization settings.",
-      "Url": "https://www.mongodb.com/docs/atlas/security-multi-factor-authentication/"
+      "Text": "Enforce org-wide **MFA** (`multi_factor_auth_required`). Prefer **phishing-resistant factors** (security keys/biometrics) over SMS, and require at least two methods for recovery. Integrate with **SSO**, apply **least privilege**, and block access until all users enroll.",
+      "Url": "https://hub.prowler.com/check/organizations_mfa_required"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

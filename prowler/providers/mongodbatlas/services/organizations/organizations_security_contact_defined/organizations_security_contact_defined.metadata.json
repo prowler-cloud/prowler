@@ -1,29 +1,34 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "organizations_security_contact_defined",
-  "CheckTitle": "Ensure organization has a Security Contact defined",
+  "CheckTitle": "MongoDB Atlas organization has a security contact defined",
   "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "MongoDBAtlasOrganization",
-  "Description": "Ensure organization has a security contact defined to receive security-related notifications",
-  "Risk": "Without a security contact, the organization may not receive important security notifications and alerts",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas organizations** specify a designated **security contact** email to receive **security notifications** and advisories.\n\nAssesses whether this contact is configured at the organization level.",
+  "Risk": "Missing or stale **security contact** causes critical advisories and incident alerts to be missed or delayed, slowing containment and patching. This elevates risks to **confidentiality** (undetected data access), **integrity** (malicious changes persist), and **availability** (abuse or outages escalate).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mongodb.com/docs/atlas/tutorial/manage-organization-settings/#add-security-contact-information"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl --digest -u \"<PUBLIC_KEY>:<PRIVATE_KEY>\" -H \"Content-Type: application/json\" -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/orgs/<ORG_ID>/settings\" -d '{\"securityContact\":\"<EMAIL_ADDRESS>\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to MongoDB Atlas\n2. In the top bar, select your organization from the Organizations menu\n3. Go to Organization Settings\n4. In Atlas Security Contact Information, click Edit\n5. Enter the security contact email and click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Set a security contact email address in the organization settings to receive security-related notifications.",
-      "Url": "https://www.mongodb.com/docs/atlas/tutorial/manage-organization-settings/#add-security-contact-information"
+      "Text": "Define a monitored distribution list as the **security contact**.\n\n- Ensure 24/7 coverage and escalation\n- Keep it current and test delivery\n- Integrate with IR/ticketing workflows\n- Apply **least privilege** and document ownership",
+      "Url": "https://hub.prowler.com/check/organizations_security_contact_defined"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

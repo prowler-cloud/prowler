@@ -17,6 +17,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
 - Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
 - Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
+- Update MongoDB Atlas Organizations service metadata to new format [(#9658)](https://github.com/prowler-cloud/prowler/pull/9658)
+
 
 ---
 

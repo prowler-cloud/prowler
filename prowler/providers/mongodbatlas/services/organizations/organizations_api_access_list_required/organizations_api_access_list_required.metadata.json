@@ -1,29 +1,39 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "organizations_api_access_list_required",
-  "CheckTitle": "Ensure organization requires API access list",
+  "CheckTitle": "Organization requires API operations to originate from an IP address on the API access list",
   "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "MongoDBAtlasOrganization",
-  "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
-  "Risk": "Without API access list requirement, API operations can originate from any IP address, increasing the risk of unauthorized access",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas organizations** can require Atlas Administration API requests to originate only from IPs or CIDRs listed in the organization's **API access list** (`apiAccessListRequired`).",
+  "Risk": "Without IP allowlisting, the Atlas Administration API is reachable from any network. A leaked token can be used from arbitrary hosts to:\n- change org/project settings and users\n- create, modify, or delete clusters\nThis undermines **integrity** and **availability** and expands the blast radius of credential compromise.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mongodb.com/docs/atlas/access/orgs-create-view-edit-delete/",
+    "https://www.mongodb.com/docs/atlas/configure-api-access/",
+    "https://www.mongodb.com/docs/atlas/configure-api-access-mult-org/",
+    "https://www.mongodb.com/docs/atlas/tutorial/manage-organizations/",
+    "https://www.mongodb.com/docs/atlas/security/ip-access-list/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl --digest -u \"<PUBLIC_KEY>:<PRIVATE_KEY>\" -H \"Content-Type: application/json\" -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/orgs/<ORG_ID>/settings\" -d '{\"apiAccessListRequired\":true}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the MongoDB Atlas UI, open the target organization and go to Organization Settings\n2. Toggle \"Require IP Access List for the Atlas Administration API\" to On\n3. Click Save",
+      "Terraform": "```hcl\nresource \"mongodbatlas_organization_settings\" \"<example_resource_name>\" {\n  org_id = \"<example_resource_id>\"\n\n  api_access_list_required = true # Critical: Enforces that Atlas Admin API calls must originate from IPs on the org's API access list\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable API access list requirement for the organization by setting apiAccessListRequired to true in the organization settings.",
-      "Url": "https://www.mongodb.com/docs/atlas/security/ip-access-list/"
+      "Text": "Require the org **API access list** and restrict it to trusted, fixed egress IPs/CIDRs. Enforce **least privilege** on service accounts, prefer short-lived tokens, rotate secrets, and review entries regularly. Pair with **MFA/SSO** and monitoring for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/organizations_api_access_list_required"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "If you are running this check from Prowler Cloud, you will need to add our IP to the API access list of your API Key and then enable apiAccessListRequired to make this check pass."
