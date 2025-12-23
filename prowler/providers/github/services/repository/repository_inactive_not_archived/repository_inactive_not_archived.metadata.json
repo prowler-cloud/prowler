@@ -1,29 +1,35 @@
 {
   "Provider": "github",
   "CheckID": "repository_inactive_not_archived",
-  "CheckTitle": "Check for inactive repositories that are not archived",
+  "CheckTitle": "Repository is archived or active within the configured inactivity threshold",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that repositories with no activity are reviewed and considered for archival. Inactive repositories may have outdated dependencies or security configurations that could pose security risks.",
-  "Risk": "Inactive repositories that are not archived may contain outdated dependencies, unpatched vulnerabilities, or misconfigured security settings. These repositories increase the attack surface and could be targeted by malicious actors.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories",
+  "ResourceType": "",
+  "Description": "**GitHub repositories** that remain **unarchived** and show no activity beyond a configured inactivity window (e.g., `180` days) are identified. The evaluation considers the most recent repository activity to surface long-idle codebases that are still unarchived.",
+  "Risk": "Unarchived, long-inactive repos expand attack surface. Stale code and dependencies can hide unpatched flaws; writable state enables **integrity** compromise via malicious commits or workflow abuse; exposed secrets threaten **confidentiality**. Attackers can leverage them for lateral movement and supply-chain tampering.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories",
+    "https://github.blog/news-insights/product-news/archiving-repositories/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh repo archive <OWNER>/<REPO> --yes",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Open the repository on GitHub\n2. Click Settings\n3. Scroll to Danger Zone\n4. Click Archive this repository\n5. Type the repository name and confirm by clicking I understand the consequences, archive this repository",
+      "Terraform": "```hcl\nresource \"github_repository\" \"repo\" {\n  name     = \"<example_resource_name>\"\n  archived = true  # Critical: archives the repository so inactive repos pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review inactive repositories and either: 1) Archive them if they are no longer needed, 2) Update their dependencies and security configurations if they are still required, or 3) Delete them if they contain no valuable information.",
-      "Url": "https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories"
+      "Text": "Adopt **lifecycle management**:\n- Archive or delete repos no longer needed\n- If retained, update dependencies, rotate secrets, disable unused workflows, and restrict writes under **least privilege**\n- Define an inactivity policy (e.g., `180` days) with periodic reviews to prevent dormant, writable codebases",
+      "Url": "https://hub.prowler.com/check/repository_inactive_not_archived"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,38 @@
 {
   "Provider": "github",
   "CheckID": "repository_has_codeowners_file",
-  "CheckTitle": "Check if repositories have a CODEOWNERS file",
+  "CheckTitle": "Repository has a CODEOWNERS file",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
-  "Severity": "high",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that repositories have a CODEOWNERS file.",
-  "Risk": "Not having a CODEOWNERS file in a repository may lead to unclear code ownership and review responsibilities, increasing the risk of unreviewed or unauthorized changes.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "GitHub repositories declare **code ownership** via a `CODEOWNERS` file mapping file patterns to users or teams. This evaluation checks whether such a file exists in standard locations (`/`, `.github/`, or `docs/`) to enable automatic reviewer assignment.",
+  "Risk": "Missing `CODEOWNERS` undermines **integrity** and **separation of duties**:\n- PRs can merge without accountable, domain reviews\n- Critical paths risk unauthorized or low-quality changes\nThis raises **software supply chain** exposure, enabling code tampering, hidden backdoors, and unsafe config modifications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
+    "https://graphite.com/guides/in-depth-guide-github-codeowners",
+    "https://github.blog/news-insights/product-news/introducing-code-owners/",
+    "https://dev.to/aviator_co/a-modern-guide-to-codeowners-242h",
+    "https://blog.nashtechglobal.com/default-reviewers-through-codeowners-file/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PUT repos/<example_org_or_user>/<example_repo>/contents/.github/CODEOWNERS -f message='add CODEOWNERS' -f content=\"$(printf '* @<example_owner>\\n' | base64 | tr -d '\\n')\"",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the target repository\n2. Click Add file > Create new file\n3. Set the filename to .github/CODEOWNERS\n4. Add a single line: `* @<example_owner>`\n5. Click Commit new file (commit to the default branch)",
+      "Terraform": "```hcl\nresource \"github_repository_file\" \"<example_resource_name>\" {\n  repository = \"<example_repo>\"\n  file       = \".github/CODEOWNERS\"  # Critical: creates the CODEOWNERS file so the check passes\n  content    = \"* @<example_owner>\"   # Critical: minimal valid content so the file is recognized\n}\n```"
     },
     "Recommendation": {
-      "Text": "Add a CODEOWNERS file to the root, .github/, or docs/ directory of the repository. The file should specify code owners for files and directories as appropriate for your organization.",
-      "Url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners"
+      "Text": "Define and maintain a `CODEOWNERS` file mapping sensitive paths to responsible teams or users, preferring teams for resilience. Combine with branch protections requiring code-owner reviews to enforce **separation of duties** and **least privilege**. Keep entries current and cover critical directories to avoid pattern gaps.",
+      "Url": "https://hub.prowler.com/check/repository_has_codeowners_file"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

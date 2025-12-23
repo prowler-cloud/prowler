@@ -1,29 +1,40 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_protection_enabled",
-  "CheckTitle": "Check if branch protection is enforced on the default branch ",
+  "CheckTitle": "Repository enforces branch protection on the default branch",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
-  "Severity": "critical",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure branch protection is enforced on the default branch",
-  "Risk": "The absence of branch protection on the default branch increases the risk of unauthorized, unreviewed, or untested changes being merged. This can compromise the stability, security, and reliability of the codebase, which is especially critical for production deployments.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Repository default branch** has **branch protection rules** enabled to restrict direct changes and require reviewed, validated merges. The evaluation determines whether the default branch enforces such rules.",
+  "Risk": "Without default-branch protection, changes can bypass reviews and checks, enabling:\n- Unauthorized direct pushes/force pushes\n- Malicious code injection and workflow tampering\n- Accidental deletions or unstable releases\nThis undermines code **integrity** and service **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://spectralops.io/blog/how-to-set-up-git-branch-protection-rules/",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule#creating-a-branch-protection-rule",
+    "https://web.archive.org/web/20210212232912/https://docs.github.com/en/github/administering-a-repository/managing-a-branch-protection-rule",
+    "https://dev.to/pixiebrix/disable-a-direct-push-to-github-main-branch-8c2"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PUT repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection -f required_status_checks='null' -f required_pull_request_reviews='null' -f enforce_admins=false -f restrictions='null'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and go to Settings\n2. Under \"Code and automation\", click Branches\n3. Click Add rule under \"Branch protection rules\"\n4. Set Branch name pattern to the default branch (e.g., main)\n5. Click Create to save the rule",
+      "Terraform": "```hcl\n# Enable branch protection on the default branch\n# Minimal: create a protection rule targeting the default branch\n\ndata \"github_repository\" \"repo\" {\n  full_name = \"<OWNER>/<REPO>\"\n}\n\nresource \"github_branch_protection_v3\" \"<example_resource_name>\" {\n  repository_id = data.github_repository.repo.node_id\n  pattern       = \"<DEFAULT_BRANCH>\"  # Critical: protects the default branch so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Apply branch protection rules to the default branch to ensure it is safeguarded against unauthorized or improper modifications. This helps maintain code quality, enforces proper review and testing procedures, and reduces the risk of accidental or malicious changes.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule#creating-a-branch-protection-rule"
+      "Text": "Enforce **branch protection** on the default branch:\n- Require pull requests with approvals (least privilege)\n- Enforce required status checks and conversation resolution\n- Require signed commits and linear history; block force pushes/deletions\n- Restrict push to trusted actors and apply rules to admins\nUse **CODEOWNERS** to strengthen review accountability.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_protection_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

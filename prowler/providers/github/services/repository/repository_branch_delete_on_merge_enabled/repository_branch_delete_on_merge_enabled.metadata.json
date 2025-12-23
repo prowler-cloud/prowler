@@ -1,29 +1,35 @@
 {
   "Provider": "github",
   "CheckID": "repository_branch_delete_on_merge_enabled",
-  "CheckTitle": "Check if a repository deletes the branch after merging",
+  "CheckTitle": "Repository deletes branches after pull request merge",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that the repository deletes the branch after merging.",
-  "Risk": "Inactive branches pose a security risk as they can accumulate outdated code, dependencies, and potential vulnerabilities over time. Malicious actors may exploit these branches, and they can clutter the repository, making it harder to manage and track the active code. Additionally, stale branches may unintentionally be accessed or used inappropriately, leading to potential security breaches.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+  "Severity": "low",
+  "ResourceType": "",
+  "Description": "**GitHub repository** setting that enables **automatic deletion of head branches** when pull requests merge into the default branch (`delete_branch_on_merge`).",
+  "Risk": "Without automatic deletion, merged branches persist, weakening **integrity** and **confidentiality**: outdated code may be reused, secret remnants can linger, and reviews become ambiguous. Stale refs can still trigger CI with obsolete workflows, raising risks of supply-chain tampering and faulty deployments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PATCH repos/<OWNER>/<REPO> -f delete_branch_on_merge=true",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and click Settings\n2. Under General, scroll to Pull Requests\n3. Check Automatically delete head branches\n4. Click Save",
+      "Terraform": "```hcl\nresource \"github_repository\" \"<example_resource_name>\" {\n  name                   = \"<example_resource_name>\"\n  delete_branch_on_merge = true  # Enables automatic deletion of PR head branches after merge\n}\n```"
     },
     "Recommendation": {
-      "Text": "Regularly review and remove inactive branches from your repositories. This helps reduce the risk of malicious code injection, sensitive data leaks, and unnecessary clutter in the repository. By keeping branches active and up to date, you ensure that your codebase remains secure and manageable.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches"
+      "Text": "Enable **automatic head-branch deletion** after merges to minimize stale refs and confusion.\n- Enforce **least privilege** for branch creation\n- Apply **branch protection** and rulesets\n- Prefer short-lived feature branches with periodic pruning\n- Guard CI to avoid runs from obsolete branches",
+      "Url": "https://hub.prowler.com/check/repository_branch_delete_on_merge_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

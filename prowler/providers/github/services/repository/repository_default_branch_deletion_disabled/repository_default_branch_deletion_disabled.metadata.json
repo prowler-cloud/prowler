@@ -1,29 +1,37 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_deletion_disabled",
-  "CheckTitle": "Check if a repository denies default branch deletion",
+  "CheckTitle": "Repository denies default branch deletion",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that the repository denies default branch deletion.",
-  "Risk": "Allowing the deletion of protected branches by users with push access increases the risk of accidental or intentional branch removal, potentially resulting in significant data loss or disruption to the development process.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-deletions",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "**Default branch deletion** setting in GitHub repositories; evaluates whether branch protections or rulesets have `Allow deletions` disabled for the default branch.",
+  "Risk": "Permitting default branch deletion undermines **availability** by breaking CI/CD, releases, and PR targets.\n\nIt also impacts **integrity**: the canonical ref can be removed, enabling history tampering, branch hijacking, and harder audits/rollbacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-deletions"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X DELETE repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection/allow_deletions",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and go to Settings > Branches\n2. Edit the branch protection rule for the default branch (or Add rule if none exists)\n3. Ensure \"Allow deletions\" is unchecked\n4. Click Save changes",
+      "Terraform": "```hcl\nresource \"github_branch_protection_v3\" \"<example_resource_name>\" {\n  repository_id    = \"<example_resource_name>\"\n  pattern          = \"<default_branch>\"\n  allows_deletions = false  # Critical: disables deletion of the default branch\n}\n```"
     },
     "Recommendation": {
-      "Text": "Deny the ability to delete protected branches to ensure the preservation of critical branch data. This prevents accidental or malicious deletions and helps maintain the integrity and stability of the repository.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+      "Text": "Disable deletions on the **default branch** using **branch protection** or **rulesets** (`Allow deletions=false`). Apply controls to admins, minimize bypass lists, and enforce **least privilege**. Combine with required pull requests and status checks for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_deletion_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

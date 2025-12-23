@@ -1,29 +1,40 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_requires_codeowners_review",
-  "CheckTitle": "Check if code owner approval is required for changes to owned code",
+  "CheckTitle": "Repository default branch requires code owner approval for changes to owned code",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that code owners are required to review and approve any proposed changes that affect their respective areas of ownership in the code base.",
-  "Risk": "If code owner approval is not required, unauthorized or unqualified individuals may merge changes to sensitive or critical areas of the codebase, increasing the risk of security vulnerabilities, bugs, or malicious modifications.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#requiring-code-owner-review",
+  "ResourceType": "",
+  "Description": "Repository default branch requires **Code Owners** approval for pull requests that modify paths declared in `CODEOWNERS`",
+  "Risk": "Without required **Code Owners** review, non-owners can merge changes to sensitive code, undermining **integrity**.\nThis increases the chance of **malicious code injection**, hidden backdoors, or fragile changes that enable **data exfiltration** or cause outages, impacting confidentiality and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-review-from-code-owners",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://vercel.com/academy/production-monorepos/code-governance",
+    "https://www.arnica.io/blog/what-every-developer-should-know-about-github-codeowners",
+    "https://stackoverflow.com/questions/77440426/require-only-one-codeowner-on-github-to-review-a-pr",
+    "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#requiring-code-owner-review",
+    "https://www.baeldung.com/ops/github-block-pull-request-merge"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PATCH repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection/required_pull_request_reviews -f require_code_owner_reviews=true",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and go to Settings > Branches\n2. Edit the branch protection rule for <DEFAULT_BRANCH> (or click Add rule)\n3. Set Branch name pattern to <DEFAULT_BRANCH>\n4. Check Require a pull request before merging\n5. Under Pull request reviews, check Require review from Code Owners\n6. Click Create/Save to apply",
+      "Terraform": "```hcl\nresource \"github_branch_protection\" \"<example_resource_name>\" {\n  repository_id = \"<example_resource_id>\"\n  pattern       = \"<DEFAULT_BRANCH>\"\n\n  required_pull_request_reviews {\n    require_code_owner_reviews = true  # Critical: enforces CODEOWNERS approval on the default branch\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To require code owner review, navigate to the repository settings, click on 'Branches', add or edit a branch protection rule, and enable 'Require review from Code Owners'.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-review-from-code-owners"
+      "Text": "Enforce **Code Owners** review on the default branch and keep `CODEOWNERS` accurate and team-based.\nApply **least privilege**, require **status checks** and **signed commits**, extend protections to admins, and audit ownership regularly. Co-own critical paths to ensure coverage and reduce single-point approval gaps.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_requires_codeowners_review"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
