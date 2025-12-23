@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "admincenter_users_between_two_and_four_global_admins",
-  "CheckTitle": "Ensure that between two and four global admins are designated",
+  "CheckTitle": "Microsoft 365 tenant has between two and four Global Administrators",
   "CheckType": [],
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Active users",
-  "Description": "Ensure that there are between two and four global administrators designated in your tenant. This ensures monitoring, redundancy, and reduces the risk associated with having too many privileged accounts.",
-  "Risk": "Having only one global administrator increases the risk of unmonitored actions and operational disruptions if that administrator is unavailable. Having more than four increases the likelihood of a breach through one of these highly privileged accounts.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Count of users assigned the **Global Administrator** role in the tenant is between `2` and `4` (inclusive).",
+  "Risk": "Having 1 **Global Administrator** jeopardizes availability if that account is unavailable or locked out. Having 5 expands the attack surface; one compromised admin can enable tenant-wide changes, data exfiltration, and privilege escalation, impacting confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://admin.microsoft.com",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft 365 admin center https://admin.microsoft.com 2. Select Users > Active Users. 3. In the Search field enter the name of the user to be made a Global Administrator. 4. To create a new Global Admin: 1. Select the user's name. 2. A window will appear to the right. 3. Select Manage roles. 4. Select Admin center access. 5. Check Global Administrator. 6. Click Save changes. 5. To remove Global Admins: 1. Select User. 2. Under Roles select Manage roles. 3. De-Select the appropriate role. 4. Click Save changes.",
-      "Terraform": ""
+      "Other": "1. Go to https://entra.microsoft.com and sign in as Privileged Role Administrator or Global Administrator\n2. Navigate to Entra ID > Roles & admins > Global Administrator\n3. Select Assignments\n4. To add: click Add assignments, select user(s), click Add; repeat until total Global Administrators is between 2 and 4\n5. To remove: select extra assignment(s), click Remove, confirm\n6. Verify the Assignments count shows between 2 and 4",
+      "Terraform": "```hcl\n# Assign the Global Administrator role to a specific principal (user or group)\n# Critical: Looks up the built-in Global Administrator role\ndata \"azuread_directory_role\" \"global_admin\" {\n  display_name = \"Global Administrator\"\n}\n\n# Critical: Creates the role assignment so the principal becomes a Global Administrator\n# This helps reach the recommended 2-4 Global Administrators\nresource \"azuread_directory_role_assignment\" \"<example_resource_name>\" {\n  role_id             = data.azuread_directory_role.global_admin.object_id  # Critical: GA role ID\n  principal_object_id = \"<example_resource_id>\"                             # Critical: target user/group object ID\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review the number of global administrators in your tenant. Add or remove global admins as necessary to ensure compliance with the recommended range of two to four.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
+      "Text": "Maintain `2-4` standing **Global Administrators** (include two break-glass accounts). Apply **least privilege** using scoped roles and **just-in-time** elevation. Enforce **MFA**, run periodic **access reviews**, and implement **separation of duties** to limit standing privileged exposure.",
+      "Url": "https://hub.prowler.com/check/admincenter_users_between_two_and_four_global_admins"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "admincenter_organization_customer_lockbox_enabled",
-  "CheckTitle": "Ensure that customer lockbox is enabled for the organization",
+  "CheckTitle": "Customer Lockbox is enabled at the organization level",
   "CheckType": [],
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Exchange Organization Configuration",
-  "Description": "Customer Lockbox ensures that Microsoft support engineers cannot access content in your tenant to perform a service operation without explicit approval. This feature provides an additional layer of control and transparency over data access requests.",
-  "Risk": "If Customer Lockbox is not enabled, Microsoft support personnel can access your organization's data for troubleshooting without explicit approval, potentially increasing the risk of unauthorized access or data exfiltration.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/security/fundamentals/customer-lockbox-overview",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "**Microsoft 365 organization** setting indicates whether **Customer Lockbox** is enabled to require explicit approval for Microsoft support access to customer content",
+  "Risk": "Without **Customer Lockbox**, Microsoft engineers may access tenant content during support without your approval, undermining **confidentiality** and **accountability**. This increases risks of targeted data exposure, insider misuse, and weakens auditability of access during troubleshooting.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://blog.ciaops.com/2016/08/31/enable-customer-lockbox-from-classic-office-365-admin-portal/",
+    "https://www.gitbit.org/course/ms-500/learn/locking-down-your-microsoft-365-tenant-from-microsoft-engineers-fldnualgc",
+    "https://microsoft365junction.com/2024/01/08/power-platform-implementing-security-customer-loxbox-how-to-enable-customer-lockbox-policy/",
+    "https://learn.microsoft.com/en-us/azure/security/fundamentals/customer-lockbox-overview",
+    "https://learn.microsoft.com/en-us/microsoft-365/compliance/customer-lockbox-requests?redirectSourcePath=%2flv-lv%2farticle%2fOffice-365-klientu-lockbox-piepras%25C4%25ABjumu-36f9cdd1-e64c-421b-a7e4-4a54d16440a2&view=o365-worldwide",
+    "https://petri.com/windows-365-customer-lockbox/",
+    "https://admin.microsoft.com.",
+    "https://learnthecontent.com/exam/microsoft-365/ms-700-managing-microsoft-teams/s/enable-customer-lockbox-for-data-security"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-OrganizationConfig -CustomerLockBoxEnabled $true",
+      "CLI": "Set-OrganizationConfig -CustomerLockboxEnabled $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 admin center https://admin.microsoft.com. 2. Click Settings > Org settings. 3. Select the Security & privacy tab. 4. Click Customer lockbox. 5. Check the box 'Require approval for all data access requests'. 6. Click Save.",
+      "Other": "1. Go to https://admin.microsoft.com and sign in\n2. Navigate to Settings > Org settings\n3. Select Security & privacy\n4. Click Customer Lockbox\n5. Check \"Require approval for all data access requests\"\n6. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the Customer Lockbox feature to ensure explicit approval is required before Microsoft engineers can access your data during support operations.",
-      "Url": "https://learn.microsoft.com/en-us/azure/security/fundamentals/customer-lockbox-overview"
+      "Text": "Enable **Customer Lockbox** to enforce tenant approval for data access (`Require approval for all data access requests`).\n- Limit approvers per **least privilege**\n- Establish an on-call review workflow\n- Audit requests and engineer actions\n- Layer with **defense in depth** (MFA, RBAC, logging) to strengthen control",
+      "Url": "https://hub.prowler.com/check/admincenter_organization_customer_lockbox_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e5"
   ],
   "DependsOn": [],
