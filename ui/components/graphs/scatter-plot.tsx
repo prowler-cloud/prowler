@@ -60,10 +60,10 @@ const CustomTooltip = ({ active, payload }: ScatterTooltipProps) => {
           className="mt-1 text-xs"
           style={{ color: "var(--color-text-neutral-secondary)" }}
         >
-          <span style={{ color: severityColor }}>{data.x}</span> Risk Score
+          Risk Score: <span style={{ color: severityColor }}>{data.x}</span>
         </p>
         <div className="mt-2">
-          <AlertPill value={data.y} />
+          <AlertPill value={data.y} label="Failed Findings" />
         </div>
       </div>
     );
@@ -79,6 +79,8 @@ interface ScatterDotProps {
   onSelectPoint?: (point: ScatterDataPoint) => void;
 }
 
+const SELECTED_COLOR = "var(--bg-button-primary)";
+
 const CustomScatterDot = ({
   cx,
   cy,
@@ -89,7 +91,7 @@ const CustomScatterDot = ({
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
   const fill = isSelected
-    ? "#86DA26"
+    ? SELECTED_COLOR
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
       "var(--color-text-neutral-tertiary)";
 
@@ -99,9 +101,9 @@ const CustomScatterDot = ({
       cy={cy}
       r={size / 2}
       fill={fill}
-      stroke={isSelected ? "#86DA26" : "transparent"}
+      stroke={isSelected ? SELECTED_COLOR : "transparent"}
       strokeWidth={2}
-      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
+      className={isSelected ? "selected-dot-glow" : ""}
       style={{ cursor: "pointer" }}
       onClick={() => onSelectPoint?.(payload)}
     />
@@ -157,62 +159,69 @@ export function ScatterPlot({
   );
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="var(--color-border-neutral-tertiary)"
-        />
-        <XAxis
-          type="number"
-          dataKey="x"
-          name={xLabel}
-          label={{
-            value: xLabel,
-            position: "bottom",
-            offset: 10,
-            fill: "var(--color-text-neutral-secondary)",
-          }}
-          tick={{ fill: "var(--color-text-neutral-secondary)" }}
-          domain={[0, 10]}
-        />
-        <YAxis
-          type="number"
-          dataKey="y"
-          name={yLabel}
-          label={{
-            value: yLabel,
-            angle: -90,
-            position: "left",
-            offset: 10,
-            fill: "var(--color-text-neutral-secondary)",
-          }}
-          tick={{ fill: "var(--color-text-neutral-secondary)" }}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend content={<CustomLegend />} />
-        {Object.entries(dataByProvider).map(([provider, points]) => (
-          <Scatter
-            key={provider}
-            name={provider}
-            data={points}
-            fill={
-              PROVIDER_COLORS[provider as keyof typeof PROVIDER_COLORS] ||
-              PROVIDER_COLORS.Default
-            }
-            shape={(props: unknown) => {
-              const dotProps = props as ScatterDotProps;
-              return (
-                <CustomScatterDot
-                  {...dotProps}
-                  selectedPoint={selectedPoint}
-                  onSelectPoint={handlePointClick}
-                />
-              );
-            }}
+    <div
+      className="relative h-full w-full"
+      style={{
+        background:
+          "linear-gradient(to bottom, transparent 0%, rgba(125, 26, 26, 0.6) 100%)",
+      }}
+    >
+      <ResponsiveContainer width="100%" height={height}>
+        <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--color-border-neutral-tertiary)"
           />
-        ))}
-      </ScatterChart>
-    </ResponsiveContainer>
+          <XAxis
+            type="number"
+            dataKey="x"
+            name={xLabel}
+            label={{
+              value: xLabel,
+              position: "bottom",
+              offset: 10,
+              fill: "var(--color-text-neutral-secondary)",
+            }}
+            tick={{ fill: "var(--color-text-neutral-secondary)" }}
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            name={yLabel}
+            label={{
+              value: yLabel,
+              angle: -90,
+              position: "left",
+              offset: 10,
+              fill: "var(--color-text-neutral-secondary)",
+            }}
+            tick={{ fill: "var(--color-text-neutral-secondary)" }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend content={<CustomLegend />} />
+          {Object.entries(dataByProvider).map(([provider, points]) => (
+            <Scatter
+              key={provider}
+              name={provider}
+              data={points}
+              fill={
+                PROVIDER_COLORS[provider as keyof typeof PROVIDER_COLORS] ||
+                PROVIDER_COLORS.Default
+              }
+              shape={(props: unknown) => {
+                const dotProps = props as ScatterDotProps;
+                return (
+                  <CustomScatterDot
+                    {...dotProps}
+                    selectedPoint={selectedPoint}
+                    onSelectPoint={handlePointClick}
+                  />
+                );
+              }}
+            />
+          ))}
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

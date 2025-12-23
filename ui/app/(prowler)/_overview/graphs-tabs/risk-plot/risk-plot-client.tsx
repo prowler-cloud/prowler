@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   CartesianGrid,
+  ReferenceArea,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -217,6 +218,9 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
     {},
   );
 
+  // Calculate max X value (Fail Findings) for ReferenceArea to cover entire plot
+  const maxFailFindings = Math.max(...data.map((d) => d.y), 100);
+
   const providers = Object.keys(dataByProvider);
 
   const handleSelectPoint = (point: RiskPlotPoint) => {
@@ -278,33 +282,62 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                 <ScatterChart
                   margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
                 >
+                  {/* SVG gradient requires hex colors - CSS variables don't resolve properly in SVG defs */}
+                  <defs>
+                    <linearGradient
+                      id="riskPlotGradient"
+                      x1="0"
+                      y1="1"
+                      x2="0"
+                      y2="0"
+                    >
+                      <stop offset="0%" stopColor="#7D1A1A" stopOpacity={0.6} />
+                      <stop
+                        offset="40%"
+                        stopColor="#7D1A1A"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="transparent"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <ReferenceArea
+                    x1={0}
+                    x2={maxFailFindings * 1.1}
+                    y1={0}
+                    y2={100}
+                    fill="url(#riskPlotGradient)"
+                    ifOverflow="extendDomain"
+                  />
                   <CartesianGrid
                     horizontal={true}
-                    vertical={false}
+                    vertical={true}
                     strokeOpacity={1}
                     stroke="var(--border-neutral-secondary)"
                   />
                   <XAxis
                     type="number"
-                    dataKey="x"
-                    name="Prowler ThreatScore"
+                    dataKey="y"
+                    name="Fail Findings"
                     label={{
-                      value: "Prowler ThreatScore",
+                      value: "Fail Findings",
                       position: "bottom",
                       offset: 10,
                       fill: "var(--color-text-neutral-secondary)",
                     }}
                     tick={CustomXAxisTick}
                     tickLine={false}
-                    domain={[0, 100]}
                     axisLine={false}
                   />
                   <YAxis
                     type="number"
-                    dataKey="y"
-                    name="Fail Findings"
+                    dataKey="x"
+                    name="Prowler ThreatScore"
                     label={{
-                      value: "Fail Findings",
+                      value: "Prowler ThreatScore",
                       angle: -90,
                       position: "left",
                       offset: 10,
@@ -316,6 +349,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                     }}
                     tickLine={false}
                     axisLine={false}
+                    domain={[0, 100]}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   {Object.entries(dataByProvider).map(([provider, points]) => (
