@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_event_record_qps",
-  "CheckTitle": "Ensure that the kubelet eventRecordQPS argument is set to an appropriate level",
+  "CheckTitle": "Kubelet eventRecordQPS is set to a positive value",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that the Kubelet is configured with an appropriate eventRecordQPS level. The eventRecordQPS parameter limits the rate at which events are gathered, ensuring important security events are not missed while preventing potential denial-of-service conditions.",
-  "Risk": "An inappropriate eventRecordQPS setting could lead to missing vital security events or DoS conditions.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "Severity": "high",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configuration defines **event rate limiting** via `eventRecordQPS`. The setting is evaluated for presence and a positive value, where `0` means unlimited event generation.",
+  "Risk": "Uncapped or mis-tuned event rates can overwhelm the API and etcd, reducing **availability**, or suppress key signals, harming the **integrity** of telemetry. Noisy pods or abuse can flood events; too-low caps drop diagnostics, hindering detection and response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--event-qps=<appropriate_level>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-event-qps-argument-is-set-to-0-or-a-level-which-ensures-appropriate-event-capture",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each node running kubelet\n2. Edit /var/lib/kubelet/config.yaml and set: eventRecordQPS: 5 (any integer > 0)\n3. Restart kubelet: sudo systemctl restart kubelet",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure kubelet with a balanced eventRecordQPS setting for effective event capture without causing DoS conditions.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+      "Text": "Set `eventRecordQPS` to a positive, workload-appropriate rate and avoid `0`. Monitor event volumes and backpressure and tune periodically. Apply **defense in depth** by limiting noisy workloads and enforcing operational safeguards to prevent event storms.",
+      "Url": "https://hub.prowler.com/check/kubelet_event_record_qps"
     }
   },
   "Categories": [
-    "logging"
+    "resilience",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

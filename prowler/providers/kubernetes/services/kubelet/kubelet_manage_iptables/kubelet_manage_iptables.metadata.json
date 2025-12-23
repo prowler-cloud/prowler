@@ -1,30 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_manage_iptables",
-  "CheckTitle": "Ensure that the kubelet --make-iptables-util-chains argument is set to true",
+  "CheckTitle": "Kubelet configuration has makeIPTablesUtilChains set to true",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that the Kubelet is configured to manage iptables, which keeps the iptables configuration in sync with the dynamic pod network configuration. Allowing the Kubelet to manage iptables helps to avoid network communication issues between pods/containers.",
-  "Risk": "If kubelet does not manage iptables, manual configurations might conflict with dynamic pod networking, causing communication issues.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configured with `makeIPTablesUtilChains` manages **iptables utility chains**, keeping node firewall primitives aligned with dynamic pod networking. The setting is expected to be present and enabled in kubelet configuration.",
+  "Risk": "Without kubelet-managed iptables chains, nodes can drift to inconsistent firewall states, enabling:\n- Traffic drops and service outages (availability)\n- Unintended inter-pod exposure (confidentiality)\n- Conflicting rules altering expected flows (integrity)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--make-iptables-util-chains=true",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-make-iptables-util-chains-argument-is-set-to-true",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each node running kubelet\n2. Edit the kubelet config file:\n   - sudo vi /var/lib/kubelet/config.yaml\n3. In the KubeletConfiguration, set:\n   - makeIPTablesUtilChains: true\n4. Save and restart kubelet:\n   - sudo systemctl restart kubelet",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable kubelet management of iptables for consistent network configuration.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+      "Text": "Enable kubelet management of **iptables utility chains** by setting `makeIPTablesUtilChains=true`.\n\nPrefer **automation over manual iptables edits** to prevent drift. Combine with **network policies**, least privilege, and **defense in depth** to control east-west traffic. *If your CNI replaces iptables, document the exception*.",
+      "Url": "https://hub.prowler.com/check/kubelet_manage_iptables"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

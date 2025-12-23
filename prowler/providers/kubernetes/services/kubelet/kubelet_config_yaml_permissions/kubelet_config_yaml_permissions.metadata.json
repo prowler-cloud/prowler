@@ -1,26 +1,29 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_config_yaml_permissions",
-  "CheckTitle": "Validate kubelet config.yaml File Permissions",
+  "CheckTitle": "Kubelet config.yaml file permissions on the node are set to 600 or more restrictive",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesWorkerNode",
-  "Description": "Ensure that if the kubelet refers to a configuration file with the --config argument, that file has permissions of 600 or more restrictive. The kubelet config file contains various critical parameters for the kubelet service on worker nodes, and its permissions should be strictly controlled.",
-  "Risk": "Improper file permissions on kubelet config.yaml can expose sensitive data or allow unauthorized modifications.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+  "ResourceType": "Node",
+  "Description": "**Kubelet configuration file** (`/var/lib/kubelet/config.yaml`) is evaluated for **restrictive file permissions**. When kubelet uses `--config`, the file is expected to be owner-only readable/writable (`600`) or more restrictive.",
+  "Risk": "Overly permissive kubelet config permissions allow unauthorized reads or edits. Attackers could extract credentials, adjust auth settings, or change node behavior, leading to data exposure (C), configuration tampering (I), and potential service disruption (A).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "chmod 600 /var/lib/kubelet/config.yaml",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH into the affected node with sufficient privileges\n2. Set the file permission:\n   ```bash\n   sudo chmod 600 /var/lib/kubelet/config.yaml\n   ```\n3. Verify:\n   ```bash\n   stat -c \"%a\" /var/lib/kubelet/config.yaml\n   # should output: 600\n   ```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Secure the kubelet configuration by enforcing strict file permissions.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+      "Text": "Apply **least privilege** to the kubelet config:\n- Set mode `600` or stricter\n- Ensure trusted ownership; deny group/world access\n- Harden the parent directory\n- Enforce via config management and file integrity monitoring\n- Limit interactive access to worker nodes",
+      "Url": "https://hub.prowler.com/check/kubelet_config_yaml_permissions"
     }
   },
   "Categories": [

@@ -1,26 +1,30 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_conf_file_permissions",
-  "CheckTitle": "Ensure kubelet.conf file permissions are set to 600 or more restrictive",
+  "CheckTitle": "Node kubelet.conf file permissions are set to 600 or more restrictive",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesWorkerNode",
-  "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has permissions set to 600 or more restrictive. This ensures the integrity and security of the node's configuration.",
-  "Risk": "Improper permissions on kubelet.conf can expose sensitive configuration data, potentially leading to cluster security compromises.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
+  "ResourceType": "Node",
+  "Description": "**Kubelet kubeconfig** at `/etc/kubernetes/kubelet.conf` must have **owner-only** permissions (`0600` or stricter). The check evaluates the file mode to ensure it is not more permissive than `0600`.",
+  "Risk": "**Overly permissive `kubelet.conf`** exposes kubelet credentials, allowing local users or malware to act as the node.\n- Integrity: modify workloads or node state\n- Confidentiality: access secrets/metadata\n- Availability: disrupt scheduling or drain nodes",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "chmod 600 /etc/kubernetes/kubelet.conf",
+      "CLI": "sudo chmod 600 /etc/kubernetes/kubelet.conf",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH into the node running kubelet\n2. Set restrictive permissions:\n   ```\n   sudo chmod 600 /etc/kubernetes/kubelet.conf\n   ```\n3. Verify it reads 600:\n   ```\n   stat -c \"%a %n\" /etc/kubernetes/kubelet.conf\n   ```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure kubelet.conf file permissions are correctly set to protect the node's configuration.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+      "Text": "Apply **least privilege** to `/etc/kubernetes/kubelet.conf`:\n- Set permissions to `0600` or stricter\n- Restrict ownership to the kubelet user; no group/world access\n- Limit shell access and monitor file changes\n- Layer controls with **RBAC** and certificate/key rotation",
+      "Url": "https://hub.prowler.com/check/kubelet_conf_file_permissions"
     }
   },
   "Categories": [

@@ -1,30 +1,37 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_config_yaml_ownership",
-  "CheckTitle": "Validate kubelet config.yaml File Ownership",
+  "CheckTitle": "Node kubelet config.yaml file ownership is root:root",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesWorkerNode",
-  "Description": "Ensure that if the kubelet refers to a configuration file with the --config argument, that file is owned by root:root. The kubelet config file contains various critical parameters for the kubelet service on worker nodes, and its ownership should be strictly controlled.",
-  "Risk": "Improper file ownership on kubelet config.yaml can expose sensitive data or allow unauthorized modifications.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+  "ResourceType": "Node",
+  "Description": "**Kubelet** configuration file `config.yaml` (e.g., `/var/lib/kubelet/config.yaml`) is evaluated to confirm ownership by `root:root` when the kubelet uses a config file via `--config`.",
+  "Risk": "**Non-root ownership** of kubelet `config.yaml` enables local users or daemons to alter node-agent settings, affecting confidentiality, integrity, and availability. They could weaken authN/Z, enable insecure ports, or redirect certificate paths, leading to node takeover, lateral movement, data exfiltration, and workload disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000234742-if-the-kubelet-config-yaml-configuration-file-is-being-used-validate-file-ownership-is-set-to-root-r",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+    "https://www.tenable.com/audits/items/CIS_Kubernetes_v1.10.0_Level_1_Worker.audit:64df71090138c3971f7c99863f3528c5",
+    "https://paper.bobylive.com/Security/CIS/CIS_Kubernetes_Benchmark_v1_6_0.pdf"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "chown root:root /var/lib/kubelet/config.yaml",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH into the Kubernetes node running the kubelet\n2. Set ownership to root:root:\n   ```bash\n   sudo chown root:root /var/lib/kubelet/config.yaml\n   ```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Secure the kubelet configuration by enforcing strict file ownership.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+      "Text": "Enforce `root:root` ownership with restrictive permissions on the kubelet config. Apply **least privilege** and **separation of duties** so only trusted admins/processes can write. Use centralized, immutable configuration, monitor with integrity/audit logs, and limit interactive access to nodes for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/kubelet_config_yaml_ownership"
     }
   },
   "Categories": [
-    "node-security"
+    "node-security",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

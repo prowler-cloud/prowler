@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_disable_read_only_port",
-  "CheckTitle": "Verify that the kubelet --read-only-port argument is set to 0",
+  "CheckTitle": "Kubelet read-only port is disabled (set to 0)",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that the read-only port of the Kubelet is disabled by verifying that the --read-only-port argument is set to 0. Disabling the read-only port is crucial to prevent unauthenticated access to sensitive cluster data.",
-  "Risk": "If the read-only port is open, it could allow unauthenticated access to sensitive cluster information.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "Severity": "medium",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configuration is inspected for the `readOnlyPort` setting and whether it is set to `0` to disable the unauthenticated HTTP endpoint.",
+  "Risk": "An open **kubelet read-only port** allows unauthenticated queries to node and pod metadata and metrics, causing **information disclosure**. Attackers can map workloads, discover endpoints, and prepare **lateral movement**, undermining **confidentiality** and enabling targeted exploitation of weak configurations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--read-only-port=0",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-read-only-port-argument-is-set-to-0",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Edit the kubelet configuration ConfigMap: run `kubectl -n kube-system edit configmap/<example_resource_name>` (e.g., kubelet-config-1.xx)\n2. In the data entry that contains the KubeletConfiguration YAML, add or set this top-level line:\n   ```\n   readOnlyPort: 0\n   ```\n3. Save and exit\n4. Restart kubelet on each node to apply:\n   ```\n   sudo systemctl restart kubelet\n   ```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable the read-only port in the kubelet for enhanced cluster security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+      "Text": "Disable the unauthenticated endpoint by setting `readOnlyPort: 0`.\n\nApply **least privilege**: expose only the TLS-authenticated kubelet endpoint, enforce authorization, and restrict network access to kubelet with host firewalls or network policies. Monitor nodes for unexpected open ports.",
+      "Url": "https://hub.prowler.com/check/kubelet_disable_read_only_port"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,30 +1,38 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_authorization_mode",
-  "CheckTitle": "Ensure that the kubelet --authorization-mode argument is not set to AlwaysAllow",
+  "CheckTitle": "Kubelet --authorization-mode is not set to AlwaysAllow",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that kubelets are not set to use the 'AlwaysAllow' authorization mode, which would allow all authenticated requests without explicit authorization.",
-  "Risk": "Setting --authorization-mode to AlwaysAllow can lead to unauthorized access to kubelet services.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** authorization configuration is inspected to confirm the mode is not `AlwaysAllow`.\n\n*If authorization settings are absent, the effective mode requires manual verification.*",
+  "Risk": "With `AlwaysAllow`, any authenticated user (or anonymous if enabled) can call **kubelet APIs**. This enables reading logs and stats, running `exec`, or disrupting pods, leading to takeover, data exfiltration, and node abuse, degrading **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/zh/docs/reference/command-line-tools-reference/kubelet/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=Webhook",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In your cluster admin shell, run: kubectl -n kube-system edit configmap kubelet-config-<version>\n2. In the opened YAML, set the authorization mode to Webhook (add if missing):\n   authorization:\n     mode: Webhook\n3. Save and exit. Re-run the scan to confirm the finding is now PASS.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure kubelet is configured with an authorization mode other than AlwaysAllow.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization"
+      "Text": "Use kubelet authorization mode `Webhook` so decisions defer to **RBAC**. Apply **least privilege** on node subresources, disable anonymous access, and restrict network exposure of the kubelet endpoint. Employ **defense in depth** with TLS and audit to monitor and control access.",
+      "Url": "https://hub.prowler.com/check/kubelet_authorization_mode"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],
