@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_pod_creation_access",
-  "CheckTitle": "Minimize access to create pods",
+  "CheckTitle": "Kubernetes Role or ClusterRole does not grant create permission on pods",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Pod",
-  "Description": "This check ensures that the ability to create pods in a Kubernetes cluster is restricted to a minimal group of users. Limiting pod creation access mitigates the risk of privilege escalation and exposure of sensitive data.",
-  "Risk": "Unrestricted access to create pods can lead to potential security risks and privilege escalation within the cluster.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+  "ResourceType": "ClusterRole",
+  "Description": "**Kubernetes RBAC** Roles and ClusterRoles that grant the `create` verb on `pods` are identified.\n\nRules are examined to find permissions allowing pod creation at namespace or cluster scope.",
+  "Risk": "Overly broad pod-creation rights allow adversaries to run **malicious pods**, mount service account tokens, or request privileged configs, enabling lateral movement. This endangers **confidentiality** (secrets), **integrity** (unauthorized changes), and **availability** (resource abuse, disruption).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://atmosly.com/blog/kubernetes-rbac-complete-authorization-guide-with-examples-2025",
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+    "https://kubegrade.com/kubernetes-access-control/",
+    "https://www.paloaltonetworks.com/cyberpedia/kubernetes-security",
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole",
+    "https://www.ewere.tech/blog/rbac-in-kubernetes-role-based-approach-to-regulating-access-4304a6/",
+    "https://www.linkedin.com/pulse/day2460-rbac-service-accounts-master-kubernetes-least-chikkela-twnpe"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl patch clusterrole <CLUSTERROLE_NAME> -p '{\"rules\":[{\"apiGroups\":[\"\"],\"resources\":[\"pods\"],\"verbs\":[\"get\",\"list\",\"watch\"]}]}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Identify the failing RBAC object (Role or ClusterRole) that allows pods create\n2. For a ClusterRole: run `kubectl edit clusterrole <CLUSTERROLE_NAME>`\n3. For a namespaced Role: run `kubectl edit role <ROLE_NAME> -n <NAMESPACE>`\n4. In `rules`, find entries with `resources: [\"pods\"]` and remove `create` from `verbs` (keep only read verbs like get/list/watch)\n5. Save and exit; verify with `kubectl get` that the change applied",
+      "Terraform": "```hcl\nresource \"kubernetes_cluster_role_v1\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  rule {\n    api_groups = [\"\"]\n    resources  = [\"pods\"]\n    verbs      = [\"get\", \"list\", \"watch\"] # critical: omit \"create\" to prevent pod creation and pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict pod creation access to minimize security risks.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole"
+      "Text": "Apply **least privilege**: limit `pods` `create` to narrowly scoped service accounts and namespaces. Use **separation of duties** and avoid wildcards. Enforce controls with **Pod Security Admission** and policy engines (OPA/Kyverno) to block risky specs. Review RBAC regularly and remove unused grants.",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_pod_creation_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

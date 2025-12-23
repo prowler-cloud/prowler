@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_cluster_admin_usage",
-  "CheckTitle": "Ensure that the cluster-admin role is only used where required",
+  "CheckTitle": "Cluster role binding does not grant the cluster-admin role",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "ClusterRoleBinding",
-  "Description": "This check ensures that the 'cluster-admin' role, which provides wide-ranging powers, is used only where necessary. The 'cluster-admin' role grants super-user access to perform any action on any resource, including all namespaces. It should be applied cautiously to avoid excessive privileges.",
-  "Risk": "Inappropriate use of the 'cluster-admin' role can lead to excessive privileges, increasing the risk of malicious actions and potentially impacting the cluster's security posture.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+  "Description": "RBAC ClusterRoleBindings that bind to the `cluster-admin` ClusterRole are identified, showing where subjects receive super-user permissions across all namespaces.",
+  "Risk": "**Excessive `cluster-admin` grants** give full API control, risking:\n- Secret exfiltration (confidentiality)\n- RBAC tampering (integrity)\n- Destructive actions causing outages (availability)\n\nA compromised subject can escalate, persist via new bindings, and laterally impact all namespaces.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#clusterrolebinding-example"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl delete clusterrolebinding <example_resource_name>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. List ClusterRoleBindings that use cluster-admin:\n   ```\n   kubectl get clusterrolebindings -o json | jq -r '.items[] | select(.roleRef.name==\"cluster-admin\") | .metadata.name'\n   ```\n2. For each name returned, delete the binding:\n   ```\n   kubectl delete clusterrolebinding <example_resource_name>\n   ```\n3. If access is still required, recreate with least privilege (example uses view):\n   ```\n   kubectl create clusterrolebinding <example_resource_name> --clusterrole=view --user=<example_resource_id>\n   ```",
+      "Terraform": "```hcl\nresource \"kubernetes_cluster_role_binding\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  role_ref {\n    api_group = \"rbac.authorization.k8s.io\"\n    kind      = \"ClusterRole\"\n    name      = \"view\" # Critical: replace any \"cluster-admin\" binding with a limited role\n  }\n  subject {\n    kind = \"User\"\n    name = \"<example_resource_id>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Audit and assess the use of 'cluster-admin' role in all ClusterRoleBindings. Ensure it is assigned only to subjects that require such extensive privileges. Consider using more restrictive roles wherever possible.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#clusterrolebinding-example"
+      "Text": "Apply **least privilege**: replace `cluster-admin` with narrowly scoped Roles/ClusterRoles and bind per namespace. Reserve super-user access for break-glass, time-bound with approval and audit. Enforce **separation of duties**, review RBAC regularly, and monitor role/binding changes for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/rbac_cluster_admin_usage"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

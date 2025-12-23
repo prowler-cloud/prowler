@@ -1,30 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_csr_approval_access",
-  "CheckTitle": "Minimize access to the approval sub-resource of certificatesigningrequests objects",
+  "CheckTitle": "User or group lacks update and patch access to the certificatesigningrequests/approval sub-resource",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "CertificateSigningRequestApproval",
-  "Description": "This check ensures that access to the approval sub-resource of certificate signing request (CSR) objects is restricted. Access to update the approval sub-resource can lead to privilege escalation, allowing creation of new high-privileged user accounts in the cluster.",
-  "Risk": "Unauthorized access to update the approval sub-resource of CSR objects can lead to significant security vulnerabilities, including unauthorized user creation and privilege escalation.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#csrs-and-certificate-issuing",
+  "Severity": "critical",
+  "ResourceType": "ClusterRoleBinding",
+  "Description": "**RBAC assignments** that grant `update` or `patch` on the `certificatesigningrequests/approval` subresource to **users or groups** via cluster-wide roles and bindings.\n\nThis highlights principals allowed to approve CSRs based on permissions defined in referenced ClusterRoles.",
+  "Risk": "Excess CSR approval rights enable **privilege escalation**. A malicious user can approve CSRs to mint client certificates for arbitrary identities, gaining unauthorized API access, impersonating system components, and enabling **data exfiltration** and tampering, harming **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#csrs-and-certificate-issuing"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-clusterroles-that-grant-permissions-to-approve-certificatesigningrequests-are-minimized",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl delete clusterrolebinding <example_resource_name>",
+      "NativeIaC": "",
+      "Other": "1. Open the Kubernetes Dashboard\n2. Go to Access control (RBAC) > Cluster Role Bindings\n3. Find the binding that assigns a User or Group to a role permitting certificatesigningrequests/approval\n4. Click the binding, then Delete to remove it\n5. If you must keep the binding: go to Access control (RBAC) > Cluster Roles, open the referenced role, click Edit (YAML), remove the rule that has resource \"certificatesigningrequests/approval\" with verbs [\"update\", \"patch\"], and save",
+      "Terraform": "```hcl\nresource \"kubernetes_cluster_role\" \"safe\" {\n  metadata { name = \"<example_resource_name>\" }\n  # No rules included -> ensures no update/patch on certificatesigningrequests/approval\n}\n\nresource \"kubernetes_cluster_role_binding\" \"safe_bind\" {\n  metadata { name = \"<example_resource_name>\" }\n  role_ref {\n    api_group = \"rbac.authorization.k8s.io\"\n    kind      = \"ClusterRole\"\n    name      = kubernetes_cluster_role.safe.metadata[0].name  # Critical: binds subject to a role without CSR approval rights\n  }\n  subject {\n    kind      = \"User\"  # Use \"Group\" if binding a group\n    name      = \"<example_user_or_group>\"\n    api_group = \"rbac.authorization.k8s.io\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict access to the approval sub-resource of CSR objects in the cluster.",
-      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#csrs-and-certificate-issuing"
+      "Text": "Apply **least privilege**: allow CSR approval only to a small, trusted approver role.\n- Enforce **separation of duties** between CSR creation and approval\n- Prefer automated approver controllers over manual grants\n- Regularly review RBAC and remove broad ClusterRoleBindings\n- Use **defense in depth** with auditing and short-lived credentials",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_csr_approval_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

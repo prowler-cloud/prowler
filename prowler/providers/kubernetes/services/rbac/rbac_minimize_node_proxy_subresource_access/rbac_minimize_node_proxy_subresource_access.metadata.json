@@ -1,30 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_node_proxy_subresource_access",
-  "CheckTitle": "Minimize access to the proxy sub-resource of nodes",
+  "CheckTitle": "User or group has no get, list, or watch permissions on the nodes/proxy sub-resource",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "NodeProxySubResource",
-  "Description": "This check ensures that access to the proxy sub-resource of node objects is restricted. Access to this sub-resource can grant privileges to use the Kubelet API directly, bypassing Kubernetes API controls like audit logging and admission control, potentially leading to privilege escalation.",
-  "Risk": "Unauthorized access to the proxy sub-resource of node objects can lead to significant security vulnerabilities, including privilege escalation.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",
+  "Severity": "critical",
+  "ResourceType": "ClusterRoleBinding",
+  "Description": "**RBAC permissions** to the `nodes/proxy` subresource are analyzed. Any user or group granted `get`, `list`, or `watch` via cluster-wide bindings is reported.",
+  "Risk": "Access to `nodes/proxy` exposes the **Kubelet API** through the apiserver proxy, which can bypass **audit** and **admission** controls. An adversary could execute commands in pods, read sensitive data, and pivot across nodes, impacting confidentiality and integrity; broad access also risks node-wide service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",
+    "https://www.linkedin.com/pulse/kubernetes-docker-security-best-practices-mahesh-guruprasad",
+    "https://stackoverflow.com/questions/69200128/what-is-node-proxy-subresource-in-kubernetes"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl delete clusterrolebinding <example_resource_name>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Identify the ClusterRoleBinding that grants the user/group access: in your RBAC list, locate the binding referencing a ClusterRole that includes resources: nodes/proxy with verbs get, list, or watch\n2. Edit the ClusterRole: run `kubectl edit clusterrole <example_resource_name>`\n3. In `rules`, remove any entry where `resources` includes `nodes/proxy` and `verbs` includes `get`, `list`, or `watch`; save and exit\n4. If you cannot modify the role (shared role), delete the specific ClusterRoleBinding that attaches it to the user/group: `kubectl delete clusterrolebinding <example_resource_name>`",
+      "Terraform": "```hcl\n# Remove nodes/proxy access by defining the ClusterRole without that permission\nresource \"kubernetes_cluster_role\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  # Critical fix: no rule granting get/list/watch on \"nodes/proxy\" so subjects won't have that access\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict access to the proxy sub-resource of node objects in the cluster.",
-      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes"
+      "Text": "Apply **least privilege**: avoid granting any verbs on `nodes/proxy` to users or groups. If access is unavoidable, limit it to trusted admins, scope narrowly, make it time-bound, and enforce **separation of duties**. Prefer namespace roles over cluster-wide bindings and review RBAC regularly as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_node_proxy_subresource_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
