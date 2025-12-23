@@ -2,15 +2,40 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [5.17.0] (Prowler UNRELEASED)
+
+### Added
+- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
+- `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
+- Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
+
+### Changed
+- Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
+- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
+- Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
+- Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
+- Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
+- Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
+
+---
+
+## [5.16.1] (Prowler UNRELEASED)
+
+### Fixed
+- Fix ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
+
+---
+
+>>>>>>> be759216c (fix(compliance): handle ZeroDivision error from Prowler ThreatScore (#9653))
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
-
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
-
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
 - Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 - Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
