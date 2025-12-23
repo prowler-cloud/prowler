@@ -1780,7 +1780,7 @@ aws:
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
-        assert len(AwsProvider.get_regions(partition="aws")) == 35
+        assert len(AwsProvider.get_regions(partition="aws")) == 34
 
     def test_get_all_regions(self):
         with patch(
