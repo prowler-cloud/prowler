@@ -2,7 +2,24 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.17.0] (Prowler UNRELEASED)
+## [1.18.0] (Prowler UNRELEASED)
+
+### Added
+- Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+
+---
+
+## [1.17.1] (Prowler v5.16.1)
+
+### Changed
+- Security Hub integration error when no regions [(#9635)](https://github.com/prowler-cloud/prowler/pull/9635)
+
+### Fixed
+- Orphan scheduled scans caused by transaction isolation during provider creation [(#9633)](https://github.com/prowler-cloud/prowler/pull/9633)
+
+---
+
+## [1.17.0] (Prowler v5.16.0)
 
 ### Added
 - New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
