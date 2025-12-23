@@ -1,31 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_kubelet_tls_auth",
-  "CheckTitle": "Ensure that the --kubelet-client-certificate and --kubelet-client-key arguments are set as appropriate",
+  "CheckTitle": "API server pod has --kubelet-client-certificate and --kubelet-client-key arguments configured",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is set up with certificate-based authentication to the kubelet. This setup requires the --kubelet-client-certificate and --kubelet-client-key arguments in the kube-apiserver configuration to be set, ensuring secure communication between the API server and kubelets.",
-  "Risk": "Without certificate-based authentication to kubelets, requests from the apiserver are treated as anonymous, which could lead to unauthorized access and manipulation of node resources.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** is configured to use **TLS client certificates** when communicating with kubelets via `--kubelet-client-certificate` and `--kubelet-client-key`.",
+  "Risk": "Without **mTLS to kubelets**, apiserver requests may be **anonymous or weakly authenticated**. Adversaries can abuse kubelet endpoints to:\n- Read logs and files (C)\n- Exec into pods (I)\n- Evict or disrupt pods (A)\nEnables lateral movement and workload tampering.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/setup/best-practices/certificates/",
+    "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--kubelet-client-certificate=/path/to/client-certificate-file --kubelet-client-key=/path/to/client-key-file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-client-certificate-and-kubelet-client-key-arguments-are-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node.\n2. Edit the API server static pod manifest: /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under spec.containers[0].command add both flags (use existing certs in /etc/kubernetes/pki):\n   \n   --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt\n   --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key\n\n4. Save the file; the kubelet will automatically restart the API server with the new flags.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable TLS authentication between the apiserver and kubelets by specifying the client certificate and key in the kube-apiserver configuration.",
-      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually"
+      "Text": "Enforce **mutual TLS** between apiserver and kubelets using a dedicated client certificate/key (`--kubelet-client-certificate`, `--kubelet-client-key`) signed by a trusted CA. Apply **least privilege** to kubelet authorization and disable **anonymous access** to strengthen defense-in-depth.",
+      "Url": "https://hub.prowler.com/check/apiserver_kubelet_tls_auth"
     }
   },
   "Categories": [
     "cluster-security",
-    "internet-exposed"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

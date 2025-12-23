@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_auth_mode_not_always_allow",
-  "CheckTitle": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
+  "CheckTitle": "API server pod does not use the AlwaysAllow authorization mode",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is not configured to always authorize all requests. The 'AlwaysAllow' mode bypasses all authorization checks, which should not be used on production clusters.",
-  "Risk": "If set to AlwaysAllow, the API server would authorize all requests, potentially leading to unauthorized access and security vulnerabilities.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** authorization is evaluated via the `--authorization-mode` setting to detect any use of `AlwaysAllow`. The focus is whether policy-driven authorizers are configured instead of an allow-all mode.",
+  "Risk": "`AlwaysAllow` permits all API requests, eroding **confidentiality** (secrets readable), **integrity** (privilege escalation, role changes, config edits), and **availability** (object deletion, cluster disruption). Enables rapid cluster takeover and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://goteleport.com/blog/kubernetes-api-access-security/",
+    "https://notes.kodekloud.com/docs/Certified-Kubernetes-Security-Specialist-CKS/Cluster-Setup-and-Hardening/Authorization",
+    "https://habr.com/ru/companies/slurm/articles/712736/",
+    "https://github.com/kubernetes/kubernetes/issues/124021",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
+    "https://yuminlee2.medium.com/kubernetes-authorization-part1-authorization-modes-overview-18538759e2d5"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=RBAC",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-is-not-set-to-alwaysallow",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Edit the API server static pod manifest: /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In the kube-apiserver container args, set the authorization mode (add or replace if present):\n   ```yaml\n   - --authorization-mode=RBAC\n   ```\n4. Save the file; the kubelet will automatically restart the API server with the updated setting",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure the API server is using a secure authorization mode, such as RBAC, and not set to AlwaysAllow.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Use policy-based authorization and avoid `AlwaysAllow`. Prefer `RBAC` with `Node` (and Webhook if needed) to enforce **least privilege** and **separation of duties**. Define granular roles, avoid broad bindings like `cluster-admin`, and audit access for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_auth_mode_not_always_allow"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

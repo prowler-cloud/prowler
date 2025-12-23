@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_etcd_tls_config",
-  "CheckTitle": "Ensure that the --etcd-certfile and --etcd-keyfile arguments are set as appropriate",
+  "CheckTitle": "API server pod has --etcd-certfile and --etcd-keyfile configured for etcd TLS",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with TLS encryption for etcd client connections, using --etcd-certfile and --etcd-keyfile arguments. Setting up TLS for etcd is crucial for securing the sensitive data stored in etcd as it's the primary datastore for Kubernetes.",
-  "Risk": "Without TLS encryption, data stored in etcd is susceptible to eavesdropping and man-in-the-middle attacks, potentially leading to data breaches.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** uses **TLS** for its etcd client connection, signaled by `--etcd-certfile` and `--etcd-keyfile` in the API server pod arguments.\n\nThis evaluates whether client-certificate authentication is configured between the API server and etcd.",
+  "Risk": "Without **TLS and client certs**, API server-etcd traffic can be **intercepted or altered**, compromising **confidentiality** (Secrets, tokens), **integrity** (state tampering), and **availability** (control-plane instability). Attackers could perform MITM, exfiltrate data, or inject state to seize cluster control.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters",
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-etcd-certfile-and-etcd-keyfile-arguments-are-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command add:\n   - --etcd-certfile=<path/to/client-certificate-file>\n   - --etcd-keyfile=<path/to/client-key-file>\n4. Save the file; the kubelet will restart the API server with the new flags",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable TLS encryption for etcd client connections to secure sensitive data.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
+      "Text": "Enforce **mutual TLS** between API server and etcd with trusted CAs and unique client certificates. Restrict etcd network access to control-plane nodes, rotate keys, and monitor certificate expiry. Apply **least privilege** and **defense in depth** using private networking and firewall policies.",
+      "Url": "https://hub.prowler.com/check/apiserver_etcd_tls_config"
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

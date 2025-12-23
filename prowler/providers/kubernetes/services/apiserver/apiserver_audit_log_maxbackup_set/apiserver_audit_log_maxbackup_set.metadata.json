@@ -1,26 +1,33 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_maxbackup_set",
-  "CheckTitle": "Ensure that the --audit-log-maxbackup argument is set to 10 or as appropriate",
+  "CheckTitle": "API server pod has --audit-log-maxbackup set to 10 or the configured value",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with an appropriate number of audit log backups. Setting --audit-log-maxbackup to 10 or as per business requirements helps maintain a sufficient log backup for investigations or analysis.",
-  "Risk": "Without an adequate number of audit log backups, there may be insufficient log history to investigate past events or security incidents.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server audit logging** uses `--audit-log-maxbackup` to set how many rotated audit log files are kept. This evaluates whether that value is explicitly configured as `10` or an approved organizational setting across API server containers.",
+  "Risk": "Insufficient **audit log retention** reduces **accountability** and hampers **forensics**. Limited backups cause older events to be overwritten, letting attackers hide activity until rotation. This undermines the **confidentiality**, **integrity**, and **availability** of evidence needed for incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://stackoverflow.com/questions/60371587/unable-to-start-kube-apiserver-service",
+    "https://docs.kics.io/2.0.0/queries/kubernetes-queries/768aab52-2504-4a2f-a3e3-329d5a679848/",
+    "https://openai.com/index/scaling-kubernetes-to-2500-nodes/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-maxbackup=10",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxbackup-argument-is-set-to-10-or-as-appropriate#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control plane node\n2. Edit the static Pod manifest: /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under spec.containers[0].command, add or update this flag:\n   - --audit-log-maxbackup=10\n4. Save the file; the kubelet will restart the API server automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the API server audit log backup retention to 10 or as per your organization's requirements.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Establish explicit **audit log retention**. Set `--audit-log-maxbackup` to `10` or higher based on data sensitivity, and align with `--audit-log-maxsize` and `--audit-log-maxage`. Forward logs to centralized, immutable storage, restrict access, and monitor rotation. Apply **defense in depth** and **least privilege** to audit systems.",
+      "Url": "https://hub.prowler.com/check/apiserver_audit_log_maxbackup_set"
     }
   },
   "Categories": [

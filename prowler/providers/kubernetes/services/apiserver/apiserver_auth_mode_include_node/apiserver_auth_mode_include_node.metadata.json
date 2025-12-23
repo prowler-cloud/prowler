@@ -1,30 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_auth_mode_include_node",
-  "CheckTitle": "Ensure that the --authorization-mode argument includes Node",
+  "CheckTitle": "API server pod has Node in --authorization-mode",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured to include 'Node' in its --authorization-mode argument. This mode restricts kubelets to only read objects associated with their nodes, enhancing security.",
-  "Risk": "If the Node authorization mode is not included, kubelets may have broader access than necessary, which can pose a security risk.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** authorization settings include the **Node authorizer** in `--authorization-mode`. The evaluation looks for `Node` among the configured modes.",
+  "Risk": "Without **Node authorization**, kubelet identities may gain overly broad permissions via other modes. A compromised node could read unrelated **Secrets**, enumerate cluster workloads, or alter node/pod status, degrading **confidentiality** and **integrity** and enabling lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/node/",
+    "https://docs.kics.io/2.0.0/queries/kubernetes-queries/4d7ee40f-fc5d-427d-8cac-dffbe22d42d1/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=Node,RBAC",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-node",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Open /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under spec.containers[0].command, ensure the flag includes Node:\n   - If --authorization-mode=... exists, add Node to the comma-separated list\n   - If missing, add a new entry: - --authorization-mode=Node\n4. Save the file; the kubelet will restart the API server automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the API server to use Node authorization mode along with other modes like RBAC to restrict kubelet access to the necessary resources.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Include **Node** alongside **RBAC** by adding `Node` to `--authorization-mode`. Apply **least privilege** so kubelets are limited to their node and bound pods, and use `NodeRestriction` for **defense in depth**. Periodically review kubelet permissions and audit access.",
+      "Url": "https://hub.prowler.com/check/apiserver_auth_mode_include_node"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

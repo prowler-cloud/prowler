@@ -1,30 +1,33 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_disable_profiling",
-  "CheckTitle": "Ensure that the --profiling argument is set to false",
+  "CheckTitle": "API server pod has profiling disabled (--profiling=false)",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that profiling is disabled in the Kubernetes API server. Profiling generates extensive data about the system's performance and operations, which, if not needed, should be disabled to reduce the attack surface.",
-  "Risk": "Enabled profiling can potentially expose detailed system and program data, which might be exploited for malicious purposes.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** runtime profiling is controlled by the `--profiling` flag. The evaluation inspects API server container arguments to confirm `--profiling=false` and that profiling endpoints (such as `/debug/pprof`) are not enabled.",
+  "Risk": "With profiling enabled, `/debug/pprof` exposes stack traces, heap data, and request details that can leak secrets and topology, degrading **confidentiality**. Heavy profiling queries can exhaust CPU and memory, threatening **availability**. Insight into code paths and timings can aid exploitation, affecting **integrity** of the control plane.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false-2",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command, add: `--profiling=false`\n4. Save the file; the kubelet will restart the API server automatically\n5. Verify the flag is active: `ps aux | grep kube-apiserver | grep -- '--profiling=false'`",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable profiling in the API server unless it is necessary for troubleshooting performance bottlenecks.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Keep API server profiling disabled by default. *If diagnostics are required*, enable it briefly in a controlled, isolated environment.\n\nApply **least privilege** to debug access, restrict exposure via network controls, and audit usage. Use **defense in depth** and separation of duties for any profiling enablement.",
+      "Url": "https://hub.prowler.com/check/apiserver_disable_profiling"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

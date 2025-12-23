@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_no_token_auth_file",
-  "CheckTitle": "Ensure that the --token-auth-file parameter is not set",
+  "CheckTitle": "API server pod does not have --token-auth-file enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is not using static token-based authentication, which is less secure. Static tokens are stored in clear-text and lack features like revocation or rotation without restarting the API server.",
-  "Risk": "Using static token-based authentication exposes the cluster to security risks due to the static nature of the tokens, their clear-text storage, and the inability to revoke or rotate them easily.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** configuration is reviewed for use of **static token file authentication** by inspecting API server containers for the `--token-auth-file` argument",
+  "Risk": "Using **static bearer tokens** undermines CIA:\n- Confidentiality: leaked tokens grant API access\n- Integrity: long-lived tokens enable unauthorized changes\n- Availability: access can't be revoked quickly\nTokens are clear-text and lack **revocation/rotation**, enabling persistent access if exposed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://notes.kodekloud.com/docs/CKA-Certification-Course-Certified-Kubernetes-Administrator/Security/Authentication",
+    "https://goteleport.com/blog/kubernetes-api-access-security/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#static-token-file",
+    "https://stackoverflow.com/questions/43072514/kubernetes-how-to-enable-api-server-bearer-token-auth",
+    "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+    "https://www.golinuxcloud.com/kubernetes-authentication-authorization/",
+    "https://k8s-security.geek-kb.com/docs/fundamentals/authentication/authentication_methods/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-token-auth-file-parameter-is-not-set",
-      "Other": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control plane node\n2. Open /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command, remove the line containing: --token-auth-file=</path/to/file>  \n4. Save the file; the kubelet will automatically restart the API server\n5. Repeat on all control plane nodes\n6. Verify the flag is absent: kubectl -n kube-system get pods -l component=kube-apiserver -o yaml | grep -- --token-auth-file || echo \"not present\"",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Replace token-based authentication with more secure mechanisms like client certificate authentication. Ensure the --token-auth-file argument is not used in the API server configuration.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#static-token-file"
+      "Text": "Avoid **static token files**. Prefer **client certificates**, **OIDC/webhook authenticators**, or **service accounts** with short-lived tokens. Apply **least privilege** with RBAC, enforce **rotation** and short expirations, and disable `--token-auth-file` to support **defense in depth** and rapid credential revocation.",
+      "Url": "https://hub.prowler.com/check/apiserver_no_token_auth_file"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

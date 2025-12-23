@@ -1,30 +1,39 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_anonymous_requests",
-  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
+  "CheckTitle": "API server pod has anonymous-auth disabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "Disable anonymous requests to the API server. When enabled, requests that are not rejected by other configured authentication methods are treated as anonymous requests, which are then served by the API server. Disallowing anonymous requests strengthens security by ensuring all access is authenticated.",
-  "Risk": "Enabling anonymous access to the API server can expose the cluster to unauthorized access and potential security vulnerabilities.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** anonymous authentication configuration, identified by `--anonymous-auth=true`. With this setting, unauthenticated requests are mapped to `system:anonymous` and processed by the server.",
+  "Risk": "**Anonymous API access** exposes cluster details for **reconnaissance** and enumeration, eroding confidentiality.\n\nIf **RBAC** is misconfigured, unauthenticated users may read sensitive data or trigger actions, impacting integrity. Floods of anonymous requests can also reduce **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.hacktricks.wiki/en/pentesting-cloud/kubernetes-security/pentesting-kubernetes-services/index.html",
+    "https://github.com/clastix/kamaji/discussions/862",
+    "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
+    "https://docs.kics.io/develop/queries/kubernetes-queries/1de5cc51-f376-4638-a940-20f2e85ae238/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://errorism.dev/issues/kubernetes-kubeadm-node-fails-to-join-if-masters-kube-apiserver-has---anonymous-authfalse-and-basic-auth"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--anonymous-auth=false",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Edit the API server static Pod manifest:\n   sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[].command or args, remove \"--anonymous-auth=true\" or replace it with:\n   ```\n   - --anonymous-auth=false\n   ```\n4. Save the file; the kubelet will automatically restart the API server with the updated flag",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure the --anonymous-auth argument in the API server is set to false. This will reject all anonymous requests, enforcing authenticated access to the server.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Require **authenticated access** for all API requests and avoid reliance on anonymous users. Enforce **least privilege RBAC** for explicit principals only. *If health checks must be public*, restrict to minimal paths and methods. Add **network segmentation**, mutual TLS, and **audit logging** for defense in depth.",
+      "Url": "https://hub.prowler.com/check/apiserver_anonymous_requests"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

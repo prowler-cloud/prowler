@@ -1,30 +1,41 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_node_restriction_plugin",
-  "CheckTitle": "Ensure that the admission control plugin NodeRestriction is set",
+  "CheckTitle": "API server pod has NodeRestriction admission control plugin enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the NodeRestriction admission control plugin is enabled in the Kubernetes API server. NodeRestriction limits the Node and Pod objects that a kubelet can modify, enhancing security by ensuring kubelets are restricted to manage their own node and pods.",
-  "Risk": "Without NodeRestriction, kubelets may have broader access to Node and Pod objects, potentially leading to unauthorized modifications and security risks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** has the **NodeRestriction** admission controller enabled via `--enable-admission-plugins`.\n\nThis setting confines kubelets to modify only their own `Node` object and bound `Pod` objects.",
+  "Risk": "Without **NodeRestriction**, a compromised or misconfigured kubelet could alter other nodes or pods, change critical labels/taints, or delete node objects.\n\nThis enables lateral movement and workload hijacking, impacting **integrity** and **availability** of the cluster.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/67172030/how-do-i-configure-noderestriction-plug-in-on-kubelet",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction",
+    "https://blog.codefarm.me/2021/12/15/kubernetes-admission-controllers/",
+    "https://notes.kodekloud.com/docs/Certified-Kubernetes-Application-Developer-CKAD/Security/Solution-Admission-Controllers",
+    "https://cjyabraham.gitlab.io/docs/reference/access-authn-authz/admission-controllers/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,NodeRestriction,...",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-noderestriction-is-set",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node running the API server\n2. Edit the static pod manifest: /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under spec > containers[0] > command, ensure this flag is present and includes NodeRestriction (add it if missing):\n   - --enable-admission-plugins=NodeRestriction\n   If the flag already exists with other plugins, append ,NodeRestriction to the comma-separated list\n4. Save the file; the kubelet will automatically restart the API server",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the NodeRestriction admission control plugin in the API server for enhanced node and pod security.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction"
+      "Text": "Enable the **NodeRestriction** admission controller to enforce **least privilege** for kubelets.\n\nPair it with **Node** and **RBAC** authorization, strong kubelet identity, and audit monitoring for defense-in-depth. Regularly rotate credentials and limit kubelet access to only its node.",
+      "Url": "https://hub.prowler.com/check/apiserver_node_restriction_plugin"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

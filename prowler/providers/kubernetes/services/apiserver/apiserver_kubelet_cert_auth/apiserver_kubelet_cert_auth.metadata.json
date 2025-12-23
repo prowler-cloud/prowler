@@ -1,31 +1,39 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_kubelet_cert_auth",
-  "CheckTitle": "Ensure that the --kubelet-certificate-authority argument is set as appropriate",
+  "CheckTitle": "API server pod has --kubelet-certificate-authority configured",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is set up with a specified certificate authority for kubelet connections, using the --kubelet-certificate-authority argument. This setup is crucial for verifying the kubelet's certificate to prevent man-in-the-middle attacks during connections from the apiserver to the kubelet.",
-  "Risk": "Without the --kubelet-certificate-authority argument, connections to kubelets are not verified, increasing the risk of man-in-the-middle attacks, especially over untrusted networks.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** is configured with a **kubelet certificate authority** via `--kubelet-certificate-authority` so it can validate kubelet serving certificates during APIkubelet TLS connections.",
+  "Risk": "Without a trusted kubelet CA, the API server can't verify kubelet identities, weakening TLS and enabling **man-in-the-middle** on control planenode traffic. Attackers could read logs/exec streams (**Confidentiality**), tamper with responses or commands (**Integrity**), and disrupt node management (**Availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://jamesdefabia.github.io/docs/admin/kube-apiserver/",
+    "https://kubernetes.io/docs/setup/best-practices/certificates/",
+    "https://stackoverflow.com/questions/63994701/how-do-i-properly-set-kubelet-certificate-authority-apiserver-parameter",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually",
+    "https://docs.kics.io/latest/queries/kubernetes-queries/ec18a0d3-0069-4a58-a7fb-fbfe0b4bbbe0/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--kubelet-certificate-authority=/path/to/ca-file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-certificate-authority-argument-is-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "```yaml\n# kube-apiserver Pod with kubelet CA configured\napiVersion: v1\nkind: Pod\nmetadata:\n  name: <example_resource_name>\n  namespace: kube-system\nspec:\n  containers:\n  - name: kube-apiserver\n    image: registry.k8s.io/kube-apiserver:v1.27.0\n    command:\n    - kube-apiserver\n    - --kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt  # Critical: verifies kubelet certs using this CA to secure apiserver<->kubelet\n```",
+      "Other": "1. SSH to the control-plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In containers[].command, add: --kubelet-certificate-authority=/etc/kubernetes/pki/ca.crt\n4. Save the file; the kubelet will restart the API server automatically\n5. Verify the flag is present in the manifest and the apiserver pod is Running in kube-system",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable TLS verification between the apiserver and kubelets by specifying the certificate authority in the kube-apiserver configuration.",
-      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually"
+      "Text": "Enforce **mutual TLS** for API server-kubelet communication. Provide a trusted CA using `--kubelet-certificate-authority`, issue certs from controlled PKI, rotate keys, and limit client credentials per *least privilege*. Prefer private networking and layered controls for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_kubelet_cert_auth"
     }
   },
   "Categories": [
     "cluster-security",
-    "internet-exposed"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
