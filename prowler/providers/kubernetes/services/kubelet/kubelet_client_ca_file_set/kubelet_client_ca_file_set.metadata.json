@@ -1,30 +1,37 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_client_ca_file_set",
-  "CheckTitle": "Ensure that the kubelet --client-ca-file argument is set as appropriate",
+  "CheckTitle": "Kubelet has a client CA file configured for authentication",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check verifies that the kubelet is configured with the --client-ca-file argument to enable authentication using certificates. This configuration is essential to secure the connections from the apiserver to the kubelet.",
-  "Risk": "If --client-ca-file is not set, the apiserver cannot authenticate the kubelet, potentially leading to man-in-the-middle attacks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** is evaluated for X.509 client certificate authentication by checking if its config sets `authentication.x509.clientCAFile` to validate clients on the HTTPS endpoint.",
+  "Risk": "Without a **client CA**, the kubelet cannot verify client certificates, weakening authentication. With network access, attackers could impersonate trusted clients to read pod logs/stats or perform node/pod actions, impacting confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
+    "https://hatchjs.com/kubelet-failed-to-load-kubelet-config-file/",
+    "https://discuss.kubernetes.io/t/kubelet-service-fail-to-start/26728",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--client-ca-file=/path/to/ca-file",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. On each node, open the kubelet config file used by the --config flag (commonly /var/lib/kubelet/config.yaml).\n2. Add or update this setting to provide a client CA bundle path:\n   ```yaml\n   authentication:\n     x509:\n       clientCAFile: <path_to_ca_file>\n   ```\n3. Save and restart kubelet: `sudo systemctl restart kubelet`",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure Kubelet with a client CA file for secure authentication.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization"
+      "Text": "Enforce **mutual TLS** to the kubelet by providing a trusted `clientCAFile`.\n- Disable anonymous access\n- Delegate authorization to the API server with least-privilege RBAC\n- Restrict network exposure to the kubelet\n- Rotate certificates and monitor access\n\n*Use defense-in-depth across authn and authz.*",
+      "Url": "https://hub.prowler.com/check/kubelet_client_ca_file_set"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

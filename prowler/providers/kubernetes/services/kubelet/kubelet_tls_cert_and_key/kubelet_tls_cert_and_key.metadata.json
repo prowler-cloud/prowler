@@ -1,31 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_tls_cert_and_key",
-  "CheckTitle": "Ensure that the kubelet TLS certificate and private key are set appropriately",
+  "CheckTitle": "Kubelet has TLS certificate and private key files configured",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that each Kubelet is configured with a TLS certificate and private key for secure connections. These settings are crucial for preventing man-in-the-middle attacks and ensuring secure communication between the apiserver and kubelets.",
-  "Risk": "Not setting the kubelet's TLS certificate and private key can expose the node to security vulnerabilities and interception of sensitive data.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configuration includes a TLS serving certificate and private key defined by `tlsCertFile` and `tlsPrivateKeyFile` to secure its HTTPS endpoint.",
+  "Risk": "Without a verifiable TLS serving cert/key, kubelet traffic may fall back to self-signed or skipped verification, enabling **MITM** and endpoint **spoofing**. Attackers could read logs or pod data, run **exec/attach**, and alter node interactions, compromising **confidentiality** and **integrity**, and risking **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#client-and-serving-certificates"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate-for-kubelet",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl -n kube-system patch configmap <example_resource_name> --type merge -p '{\"data\":{\"kubelet\":\"tlsCertFile: /var/lib/kubelet/pki/kubelet.crt\\ntlsPrivateKeyFile: /var/lib/kubelet/pki/kubelet.key\\n\"}}'",
+      "NativeIaC": "",
+      "Other": "1. In your cluster, open the kubelet config ConfigMap: kubectl -n kube-system edit configmap kubelet-config-<version>\n2. Under the KubeletConfiguration root, add:\n   - tlsCertFile: /var/lib/kubelet/pki/kubelet.crt\n   - tlsPrivateKeyFile: /var/lib/kubelet/pki/kubelet.key\n3. Save and exit.\n4. On each node, restart kubelet to apply: sudo systemctl restart kubelet\n5. Verify the ConfigMap now contains both fields and the check passes.",
+      "Terraform": "```hcl\nresource \"kubernetes_config_map\" \"<example_resource_name>\" {\n  metadata {\n    name      = \"<example_resource_name>\"\n    namespace = \"kube-system\"\n  }\n  data = {\n    kubelet = <<-YAML\n      tlsCertFile: /var/lib/kubelet/pki/kubelet.crt        # FIX: adds kubelet TLS cert path\n      tlsPrivateKeyFile: /var/lib/kubelet/pki/kubelet.key  # FIX: adds kubelet TLS key path\n    YAML\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure each kubelet with its own TLS certificate and private key for secure connections.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#client-and-serving-certificates"
+      "Text": "Provision a **CA-signed, node-unique** serving certificate and private key for each kubelet and set `tlsCertFile` and `tlsPrivateKeyFile`. Prefer automated issuance and rotation. Ensure clients validate the certificate and limit kubelet API exposure with network controls and RBAC, applying **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/kubelet_tls_cert_and_key"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

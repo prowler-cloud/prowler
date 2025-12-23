@@ -1,31 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_strong_ciphers_only",
-  "CheckTitle": "Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers",
+  "CheckTitle": "Kubelet uses only strong TLS cipher suites",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check verifies that the kubelet is configured to use only strong cryptographic ciphers. Ensuring the use of strong ciphers is essential to minimize the risk of vulnerabilities and enhance the security of TLS connections to the kubelet.",
-  "Risk": "Using weak ciphers can expose the kubelet to cryptographic attacks, compromising the security of data in transit.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+  "Severity": "medium",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet HTTPS** configuration is assessed for use of **strong TLS cipher suites**. The presence of `tlsCipherSuites` is checked and its values are validated against an approved, modern allowlist (e.g., ECDHE with GCM/CHACHA20).",
+  "Risk": "Weak or unspecified ciphers enable downgrade and cryptographic attacks on kubelet traffic. Adversaries could read logs/exec streams, hijack sessions, or tamper with requests, undermining **confidentiality** and **integrity** and facilitating lateral movement across nodes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+    "https://paper.bobylive.com/Security/CIS/CIS_Kubernetes_V1_20_Benchmark_v1_0_0_PDF.pdf",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options",
+    "https://support.icompaas.com/support/solutions/articles/62000234732-ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers",
+    "https://github.com/awslabs/amazon-eks-ami/issues/99",
+    "https://www.cnblogs.com/renshengdezheli/p/17640119.html",
+    "https://davidxiao.me/posts/k8s-security/file/cis-k8s-v161.pdf"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,...",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify the kubelet config ConfigMap name:\n   - Run: kubectl -n kube-system get configmap | grep kubelet-config\n2. Edit that ConfigMap:\n   - Run: kubectl -n kube-system edit configmap <kubelet-config-<version>>\n   - In the data.kubelet YAML (KubeletConfiguration), add the following and save:\n     \n     tlsCipherSuites:\n     - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256\n     - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256\n     - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305\n     - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384\n     - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305\n     - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384\n     - TLS_RSA_WITH_AES_256_GCM_SHA384\n     - TLS_RSA_WITH_AES_128_GCM_SHA256\n3. Apply on each node (required for kubelets using local config):\n   - SSH to the node, edit /var/lib/kubelet/config.yaml to include the same tlsCipherSuites list\n   - Restart kubelet: sudo systemctl restart kubelet",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict the kubelet to only use strong cryptographic ciphers for enhanced security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+      "Text": "Restrict `tlsCipherSuites` to a minimal set of modern suites (ECDHE with GCM or CHACHA20) and prefer `TLS1.2+`/`TLS1.3`. Remove deprecated CBC/RC4/3DES suites. Apply **defense in depth**: limit network access to the kubelet, rotate certificates, and review cipher policy regularly for deprecations.",
+      "Url": "https://hub.prowler.com/check/kubelet_strong_ciphers_only"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,26 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_streaming_connection_timeout",
-  "CheckTitle": "Ensure that the kubelet --streaming-connection-idle-timeout argument is not set to 0",
+  "CheckTitle": "Kubelet streaming connection idle timeout is not set to 0",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that the Kubelet is configured with a non-zero timeout for streaming connections. Setting a non-zero timeout helps protect against Denial-of-Service attacks and resource exhaustion due to idle connections.",
-  "Risk": "A zero timeout on streaming connections can lead to Denial-of-Service attacks and resource exhaustion.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** streaming sessions use a **non-zero idle timeout** via `streamingConnectionIdleTimeout` for `exec`, `logs`, and `port-forward` connections.\n\nAssesses whether this setting exists and is not `0`.",
+  "Risk": "With `0` (no timeout), idle `exec/logs/port-forward` streams can persist, consuming sockets, file descriptors, and memory. This enables resource exhaustion and **DoS**, degrading node **availability** and potentially disrupting workload operations and administrative access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/47484312/kubectl-port-forwarding-timeout-issue",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options",
+    "https://hub.armosec.io/docs/c-0176",
+    "https://www.tenable.com/audits/items/CIS_Google_Kubernetes_Engine_GKE_v1.7.0_L1_Node.audit:ffa1a649283ad2518361d1ac9094fa62",
+    "https://docs.datadoghq.com/security/default_rules/rii-wmd-3qm/",
+    "https://docs.truewatch.com/scheck/0425-k8s-idle-timeout/",
+    "https://orca.security/resources/blog/kubernetes-nodes-kubelet-streaming-connection-idle-timeout-is-set-0/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--streaming-connection-idle-timeout=<non-zero value>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-streaming-connection-idle-timeout-argument-is-not-set-to-0",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each Kubernetes node.\n2. If kubelet uses a config file, set a non-zero timeout:\n   - Find the path: `systemctl cat kubelet | grep -- --config=`\n   - Edit that file and add/update:\n     ```yaml\n     streamingConnectionIdleTimeout: \"5m\"\n     ```\n3. If no config file is used, add the flag to the kubelet service drop-in (e.g., `/etc/systemd/system/kubelet.service.d/10-kubeadm.conf`) so the kubelet starts with:\n   ```\n   --streaming-connection-idle-timeout=5m\n   ```\n4. Apply the change: `sudo systemctl daemon-reload && sudo systemctl restart kubelet`",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure a non-zero timeout for streaming connections in kubelet to enhance node security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+      "Text": "Set a bounded, non-zero `streamingConnectionIdleTimeout` aligned to operational needs; avoid `0`.\n\nApply consistently across nodes, prefer fail-safe defaults, and monitor for unusually long streaming sessions. This supports **defense in depth** and preserves node **availability**.",
+      "Url": "https://hub.prowler.com/check/kubelet_streaming_connection_timeout"
     }
   },
   "Categories": [

@@ -1,26 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_conf_file_ownership",
-  "CheckTitle": "Ensure kubelet.conf file ownership is set to root:root",
+  "CheckTitle": "Node kubelet.conf file ownership is set to root:root",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesWorkerNode",
-  "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has its file ownership set to root:root. This check verifies the proper ownership settings to maintain the security and integrity of the node's configuration.",
-  "Risk": "Incorrect file ownership settings on kubelet.conf can lead to unauthorized access and potential security vulnerabilities.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
+  "ResourceType": "Node",
+  "Description": "**Node kubeconfig** at `/etc/kubernetes/kubelet.conf` is evaluated for file ownership `root:root`. The check focuses on who owns the file that defines the kubelet's API client settings and certificates.",
+  "Risk": "Non-root ownership lets local users alter kubelet API credentials and endpoints, enabling **node impersonation**, unauthorized control of Pods, and **data exfiltration** via the kubelet. This threatens **integrity** (config tampering), **confidentiality** (secrets access), and **availability** (pod eviction or node disruption).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
+    "https://stackarmor.com/securing-kubernetes-for-compliance-with-fedramp-fisma-or-cmmc-requirements/",
+    "https://blog.palark.com/kubernetes-security-with-kube-bench-and-kube-hunter/",
+    "https://learn.microsoft.com/en-us/azure/aks/cis-kubernetes",
+    "https://www.bordergate.co.uk/kubernetes-penetration-testing/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "chown root:root /etc/kubernetes/kubelet.conf",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH into the affected node\n2. Run: sudo chown root:root /etc/kubernetes/kubelet.conf",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure kubelet.conf file ownership is correctly set to protect the node's configuration.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+      "Text": "Set `/etc/kubernetes/kubelet.conf` ownership to `root:root` and use restrictive perms (e.g., `600`). Apply **least privilege** on node access, protect kubelet dirs, and enable **file integrity monitoring**. Use **defense in depth**: configuration management to enforce state and periodic audits to detect drift.",
+      "Url": "https://hub.prowler.com/check/kubelet_conf_file_ownership"
     }
   },
   "Categories": [

@@ -1,31 +1,41 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_rotate_certificates",
-  "CheckTitle": "Ensure that the kubelet client certificate rotation is enabled",
+  "CheckTitle": "Kubelet client certificate rotation is enabled",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that the kubelet client certificate rotation is enabled, allowing for automated periodic rotation of credentials, thereby addressing availability concerns in the security triad. This is crucial for avoiding downtime due to expired certificates.",
-  "Risk": "Not enabling kubelet client certificate rotation may lead to service interruptions due to expired certificates, compromising the availability of the node.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configuration is inspected for client TLS credential rotation. The finding determines whether `rotateCertificates` is enabled so kubelets automatically renew the client certificates they use to authenticate to the API server.",
+  "Risk": "Without rotation, kubelet client certs can expire, breaking authentication to the API server and making nodes NotReady, disrupting scheduling and operations (**availability**). Long-lived certs also widen exposure if keys leak, risking unauthorized access (**integrity**, **confidentiality**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+    "https://suraj.io/post/add-new-k8s-node-cert-rotate/",
+    "https://docs.kics.io/2.0.0/queries/kubernetes-queries/52d70f2e-3257-474c-b3dc-8ad9ba6a061a/",
+    "https://github.com/SUSE/kucero",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/",
+    "https://docs.datadoghq.com/security/default_rules/vc8-r6d-eye/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#certificate-rotation",
+    "https://www.outofmemory.info/tanzu/vsphere-with-tanzu/cluster-lifecycle-management/tkgs-certificate-rotation/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--rotate-certificates=true",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotate-certificates-argument-is-not-set-to-false",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each Kubernetes node\n2. Open /var/lib/kubelet/config.yaml\n3. Add or set the line:\n   ```yaml\n   rotateCertificates: true\n   ```\n   If using kubelet flags instead of a config file, remove --rotate-certificates=false (or set --rotate-certificates=true) from the kubelet service options\n4. Restart kubelet:\n   ```\n   sudo systemctl restart kubelet\n   ```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable kubelet client certificate rotation for automated renewal of credentials.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#certificate-rotation"
+      "Text": "Enable **kubelet client certificate rotation** by setting `rotateCertificates: true`. Apply controlled CSR approval and monitor certificate health to ensure timely renewals. Prefer short-lived, automatically rotated credentials over static keys, aligning with **least privilege** and **defense in depth**. *If using an external CA*, implement equivalent automated rotation.",
+      "Url": "https://hub.prowler.com/check/kubelet_rotate_certificates"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

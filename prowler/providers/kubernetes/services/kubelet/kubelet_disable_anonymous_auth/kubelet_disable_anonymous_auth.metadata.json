@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_disable_anonymous_auth",
-  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
+  "CheckTitle": "Kubelet anonymous authentication is disabled",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesKubelet",
-  "Description": "This check ensures that anonymous requests to the Kubelet server are disabled by setting the --anonymous-auth argument to false. Disabling anonymous requests enhances the security by ensuring that all requests are authenticated and authorized.",
-  "Risk": "Enabling anonymous requests can lead to unauthorized access to Kubelet APIs and potentially sensitive cluster data.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
+  "ResourceType": "ConfigMap",
+  "Description": "**Kubelet** configuration for its HTTPS endpoint is evaluated to ensure **anonymous authentication** is disabled, requiring authenticated requests (`authentication.anonymous.enabled=false`).",
+  "Risk": "Allowing anonymous access to the kubelet exposes node and pod data and can permit privileged actions, impacting CIA: disclosure via logs/metrics (C), unauthorized container operations or exec (I), and pod or node disruption (A). This can enable lateral movement and broader cluster compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--anonymous-auth=false",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH to each Kubernetes node with root privileges\n2. Edit /var/lib/kubelet/config.yaml and set the following:\n\n```yaml\n# Critical: disables anonymous requests to the kubelet\nauthentication:\n  anonymous:\n    enabled: false\n```\n\n3. Restart kubelet:\n\n```bash\nsudo systemctl restart kubelet\n```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that anonymous requests to the Kubelet server are disabled for enhanced cluster security.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
+      "Text": "Disable anonymous auth and require **strong, authenticated clients** (mTLS or tokens). Delegate authorization to **RBAC** and apply **least privilege** for kubelet APIs. Limit network exposure to the kubelet endpoint and monitor access patterns as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/kubelet_disable_anonymous_auth"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

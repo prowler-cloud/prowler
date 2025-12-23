@@ -1,26 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "kubelet_service_file_permissions",
-  "CheckTitle": "Ensure that the kubelet service file permissions are set to 600 or more restrictive",
+  "CheckTitle": "Node kubelet service file permissions are set to 600 or more restrictive",
   "CheckType": [],
   "ServiceName": "kubelet",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesNode",
-  "Description": "This check ensures that the kubelet service file on worker nodes has permissions set to 600 or more restrictive, limiting the file's write access to only system administrators. This measure is crucial to maintain the integrity and security of the kubelet service configuration.",
-  "Risk": "Improper file permissions on the kubelet service file could lead to unauthorized modifications, compromising node security and stability.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/",
+  "ResourceType": "Node",
+  "Description": "**Kubelet service file** on worker nodes is assessed for restrictive permissions of `600` or tighter. The evaluation reviews the kubelet systemd drop-in configuration to confirm only the owner has read/write access and no broader permissions are granted.",
+  "Risk": "Excess permissions let local users alter kubelet startup options, undermining **integrity** and **availability**. Attackers could enable insecure ports, weaken auth/TLS, or inject flags, leading to node compromise, pod tampering, and **lateral movement** that threatens cluster **confidentiality**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://hub.armosec.io/docs/c-0162",
+    "https://paper.bobylive.com/Security/CIS/CIS-Kubernetes-Benchmark-V1_23--PDF.pdf",
+    "https://support.icompaas.com/support/solutions/articles/62000234693-ensure-that-the-kubelet-service-file-permissions-are-set-to-600-or-more-restrictive",
+    "https://www.cnblogs.com/lldhsds/p/18246352",
+    "https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#44-joining-your-nodes",
+    "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "chmod 600 /etc/systemd/system/kubelet.service.d/kubeadm.conf",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH to the affected Kubernetes node as a privileged user\n2. Set the kubelet service file permissions: `chmod 600 /etc/systemd/system/kubelet.service.d/kubeadm.conf`\n3. Repeat on each node where this file exists",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure the kubelet service file is securely configured with restrictive permissions.",
-      "Url": "https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#44-joining-your-nodes"
+      "Text": "Apply **least privilege**: set the kubelet service file to `600` with root control to block group/other access. Enforce via **configuration management**, restrict administrative shell access to nodes, and monitor with **file integrity** alerts. Use **defense in depth** by maintaining strong kubelet auth and TLS settings.",
+      "Url": "https://hub.prowler.com/check/kubelet_service_file_permissions"
     }
   },
   "Categories": [
