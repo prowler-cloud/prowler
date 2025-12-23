@@ -1,29 +1,37 @@
 {
   "Provider": "kubernetes",
   "CheckID": "scheduler_bind_address",
-  "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1 for the Scheduler",
+  "CheckTitle": "Scheduler pod has --bind-address set to 127.0.0.1",
   "CheckType": [],
   "ServiceName": "scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesScheduler",
-  "Description": "This check ensures that the Kubernetes Scheduler is bound to the loopback address (127.0.0.1) to minimize the cluster's attack surface. Binding to the loopback address prevents unauthorized network access to the Scheduler's health and metrics information.",
-  "Risk": "Binding the Scheduler to a non-loopback address exposes sensitive health and metrics information without authentication or encryption.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes scheduler** is configured with `--bind-address=127.0.0.1` so its health and metrics endpoints listen only on localhost.\n\nThe evaluation inspects scheduler pod commands for this bind address.",
+  "Risk": "Exposing scheduler endpoints on non-loopback addresses can:\n- leak cluster state and scheduling metrics (**confidentiality**)\n- aid recon that enables privilege escalation (**integrity**)\n- allow health endpoint abuse for DoS (**availability**)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.datadoghq.com/security/default_rules/35s-cvw-j67/",
+    "https://github.com/kubernetes-sigs/kubespray/issues/4111",
+    "https://groups.google.com/g/prometheus-users/c/_aI-HySJ-xM",
+    "https://kodekloud.com/community/t/so-im-working-on-the-multiple-schedulers-exercise-i-had-actually-completed-th/18651",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--bind-address=127.0.0.1",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-bind-address-argument-is-set-to-127001-1",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Open the static pod manifest: sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml\n3. In spec.containers[0].command (or args) for kube-scheduler, add or set this exact flag: --bind-address=127.0.0.1\n4. Save the file; the kubelet will automatically restart the scheduler with the new setting",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Bind the Scheduler to the loopback address for enhanced security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/"
+      "Text": "Bind the scheduler to localhost with `--bind-address=127.0.0.1` and disable insecure serving (`--port=0`). Use the secure port with TLS, restrict access via private networks or network policies, and limit metrics exposure. Apply **least privilege** and **defense in depth**, and monitor access.",
+      "Url": "https://hub.prowler.com/check/scheduler_bind_address"
     }
   },
   "Categories": [
+    "cluster-security",
     "internet-exposed"
   ],
   "DependsOn": [],
