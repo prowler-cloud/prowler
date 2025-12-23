@@ -81,4 +81,5 @@ RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
+EXPOSE 11666
 ENTRYPOINT ["poetry", "run", "prowler"]
