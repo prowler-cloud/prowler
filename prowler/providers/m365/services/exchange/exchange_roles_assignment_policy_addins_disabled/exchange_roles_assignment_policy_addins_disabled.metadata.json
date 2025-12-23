@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_roles_assignment_policy_addins_disabled",
-  "CheckTitle": "Ensure there is no policy with Outlook add-ins allowed.",
+  "CheckTitle": "Exchange role assignment policy does not allow Outlook add-ins",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Role Assignment Policy",
-  "Description": "Restricting users from installing Outlook add-ins reduces the risk of data exposure or exploitation through unapproved or vulnerable add-ins.",
-  "Risk": "Allowing users to install add-ins may expose sensitive information or introduce malicious behavior through third-party integrations. Disabling this capability mitigates the risk of unauthorized data access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/add-ins-for-outlook/specify-who-can-install-and-manage-add-ins",
+  "ResourceType": "",
+  "Description": "**Exchange Online role assignment policies** are assessed for roles that permit installing or managing **Outlook add-ins** (such as `My Marketplace Apps`, `My Custom Apps`, `My ReadWriteMailbox Apps`, `Org Marketplace Apps`, `Org Custom Apps`). Presence of these roles indicates users or admins can deploy add-ins from the store or custom sources.",
+  "Risk": "Allowing add-in installation exposes mailboxes to **malicious or vulnerable add-ins**. With `ReadWriteMailbox`, an add-in can read, copy, or alter messages, auto-forward mail, and access tokens, enabling **data exfiltration**, message tampering, and **lateral movement**, impacting confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/add-ins-for-outlook/specify-who-can-install-and-manage-add-ins",
+    "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies",
+    "https://admin.exchange.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "$policy = \"Role Assignment Policy - Prevent Add-ins\"; $roles = \"MyTextMessaging\", \"MyDistributionGroups\", \"MyMailSubscriptions\", \"MyBaseOptions\", \"MyVoiceMail\", \"MyProfileInformation\", \"MyContactInformation\", \"MyRetentionPolicies\", \"MyDistributionGroupMembership\"; New-RoleAssignmentPolicy -Name $policy -Roles $roles; Set-RoleAssignmentPolicy -id $policy -IsDefault; Get-EXOMailbox -ResultSize Unlimited | Set-Mailbox -RoleAssignmentPolicy $policy",
+      "CLI": "Get-ManagementRoleAssignment -RoleAssigneeType RoleAssignmentPolicy | Where-Object {$_.Name -like \"My Custom Apps-*\" -or $_.Name -like \"My Marketplace Apps-*\" -or $_.Name -like \"My ReadWriteMailbox Apps-*\"} | Remove-ManagementRoleAssignment -Confirm:$false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com. 2. Click to expand Roles > User roles. 3. Select Default Role Assignment Policy. 4. In the right pane, click Manage permissions. 5. Uncheck My Custom Apps, My Marketplace Apps and My ReadWriteMailboxApps under Other roles. 6. Save changes.",
+      "Other": "1. Sign in to the Exchange admin center: https://admin.exchange.microsoft.com\n2. Go to Roles > User roles\n3. For each role assignment policy:\n   - Select the policy > Manage permissions\n   - Under Other roles, uncheck: My Custom Apps, My Marketplace Apps, My ReadWriteMailbox Apps\n   - Save changes\n4. Repeat for all role assignment policies so none include these three roles",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict Outlook add-in installation by updating the Role Assignment Policy to exclude roles that allow app installation.",
-      "Url": "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies"
+      "Text": "Enforce **least privilege** for add-ins: remove add-in roles from end-user policies, reserve add-in management for trusted admins, and only deploy vetted add-ins via an **allowlist**. Review role assignment policies regularly to sustain **defense in depth** and prevent unapproved extensions.",
+      "Url": "https://hub.prowler.com/check/exchange_roles_assignment_policy_addins_disabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

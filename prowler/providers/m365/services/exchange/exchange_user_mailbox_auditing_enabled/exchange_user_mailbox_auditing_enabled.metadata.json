@@ -1,29 +1,39 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_user_mailbox_auditing_enabled",
-  "CheckTitle": "Ensure mailbox auditing is enabled for all user mailboxes.",
+  "CheckTitle": "User mailbox auditing is enabled with required Admin, Delegate, and Owner actions and audit log age meets the minimum",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Mailboxes Properties",
-  "Description": "Ensure mailbox auditing is enabled for all user mailboxes, including the configuration of audit actions for owners, delegates, and admins beyond the Microsoft defaults. The difference between both subscription is the log age so this parameter is configurable and users can set it to their subscription needs.",
-  "Risk": "If auditing is not properly enabled and configured, critical mailbox actions may go unrecorded, reducing the ability to investigate incidents, enforce compliance, or detect malicious behavior.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+  "ResourceType": "",
+  "Description": "**Exchange user mailboxes** have auditing enabled, include a defined set of actions for **Owner**, **Delegate**, and **Admin**, and retain audit records for at least the configured baseline (default `90` days).",
+  "Risk": "**Incomplete or short-retained mailbox audits** degrade confidentiality and integrity.\n- Untracked `SendAs`, inbox rule changes, and deletions enable covert access and data loss\n- Narrow log windows create blind spots, delaying detection and hindering forensics and eDiscovery",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://woshub.com/mailbox-audit-logging-exchange-microsoft-365/",
+    "https://howdoicomputer.com/2016/05/exchange-online-and-hybrid-exchange-auditing-configurations/",
+    "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+    "https://blog.ciaops.com/2025/10/15/configuring-exchange-online-mailbox-logging-best-practices-and-step-by-step-guide/",
+    "https://www.codetwo.com/admins-blog/user-mailbox-and-shared-mailbox-auditing-in-exchange-2013/",
+    "https://o365info.com/mailbox-audit-powershell-microsoft-365/",
+    "https://exchangepedia.com/2013/01/change-mailbox-audit-logging-age-limit-in-exchange-201.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "$AuditAdmin = @(\"ApplyRecord\", \"Copy\", \"Create\", \"FolderBind\", \"HardDelete\", \"Move\", \"MoveToDeletedItems\", \"SendAs\", \"SendOnBehalf\", \"SoftDelete\", \"Update\", \"UpdateCalendarDelegation\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $AuditDelegate = @(\"ApplyRecord\", \"Create\", \"FolderBind\", \"HardDelete\", \"Move\", \"MoveToDeletedItems\", \"SendAs\", \"SendOnBehalf\", \"SoftDelete\", \"Update\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $AuditOwner = @(\"ApplyRecord\", \"Create\", \"HardDelete\", \"MailboxLogin\", \"Move\", \"MoveToDeletedItems\", \"SoftDelete\", \"Update\", \"UpdateCalendarDelegation\", \"UpdateFolderPermissions\", \"UpdateInboxRules\"); $MBX = Get-EXOMailbox -ResultSize Unlimited | Where-Object { $_.RecipientTypeDetails -eq \"UserMailbox\" }; $MBX | Set-Mailbox -AuditEnabled $true -AuditLogAgeLimit 90 -AuditAdmin $AuditAdmin -AuditDelegate $AuditDelegate -AuditOwner $AuditOwner",
+      "CLI": "Get-EXOMailbox -ResultSize Unlimited -RecipientTypeDetails UserMailbox | Set-Mailbox -AuditEnabled $true -AuditLogAgeLimit 90 -AuditAdmin @('ApplyRecord','Copy','Create','FolderBind','HardDelete','Move','MoveToDeletedItems','SendAs','SendOnBehalf','SoftDelete','Update','UpdateCalendarDelegation','UpdateFolderPermissions','UpdateInboxRules') -AuditDelegate @('ApplyRecord','Create','FolderBind','HardDelete','Move','MoveToDeletedItems','SendAs','SendOnBehalf','SoftDelete','Update','UpdateFolderPermissions','UpdateInboxRules') -AuditOwner @('ApplyRecord','Create','HardDelete','MailboxLogin','Move','MoveToDeletedItems','SoftDelete','Update','UpdateCalendarDelegation','UpdateFolderPermissions','UpdateInboxRules')",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable mailbox auditing for all user mailboxes and configure auditing for key mailbox actions for owners, delegates, and admins.",
-      "Url": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide"
+      "Text": "Standardize mailbox auditing on all user mailboxes. Log critical actions for **Owner**, **Delegate**, and **Admin** (e.g., `SendAs`, `UpdateInboxRules`, `HardDelete`, `MailboxLogin`). Set `AuditLogAgeLimit` to meet policy ( baseline). Apply least privilege for delegates, avoid audit bypass, and regularly review or forward logs to monitoring.",
+      "Url": "https://hub.prowler.com/check/exchange_user_mailbox_auditing_enabled"
     }
   },
   "Categories": [
+    "logging",
     "e3",
     "e5"
   ],

@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_transport_config_smtp_auth_disabled",
-  "CheckTitle": "Ensure SMTP AUTH is disabled.",
+  "CheckTitle": "SMTP AUTH is disabled in the Exchange Online Transport Configuration",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Transport Config",
-  "Description": "Ensure that SMTP AUTH is disabled at the organization level in Exchange Online to reduce exposure to legacy protocols that can be exploited for malicious use.",
-  "Risk": "Leaving SMTP AUTH enabled allows legacy clients to authenticate using outdated methods, increasing the risk of credential compromise and unauthorized email sending.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
+  "ResourceType": "",
+  "Description": "**Exchange Online transport configuration** disables **authenticated SMTP submission** (`SMTP AUTH`) at the organization level",
+  "Risk": "With **SMTP AUTH enabled**, attackers can:\n- Launch **password spraying** against mailboxes\n- Bypass **MFA** on SMTP submissions\n- Send **unauthorized email**, enabling internal spoofing and phishing\n\nThis undermines message **integrity**, aids **lateral movement**, and harms tenant reputation and deliverability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
+    "https://admin.exchange.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-TransportConfig -SmtpClientAuthenticationDisabled $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com. 2. Select Settings > Mail flow. 3. Ensure 'Turn off SMTP AUTH protocol for your organization' is checked.",
+      "Other": "1. Open the Exchange admin center: https://admin.exchange.microsoft.com\n2. Go to Settings > Mail flow\n3. Turn on \"Turn off SMTP AUTH protocol for your organization\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable SMTP AUTH at the organization level to support secure, modern authentication practices and block legacy protocol usage.",
-      "Url": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission"
+      "Text": "Disable **SMTP AUTH** tenant-wide and allow per-mailbox exceptions only when justified, time-bound, and monitored. Prefer **modern authentication** and secure submission alternatives. Apply **least privilege** and **defense in depth**, restrict app access, rotate secrets, and monitor send patterns for anomalies.",
+      "Url": "https://hub.prowler.com/check/exchange_transport_config_smtp_auth_disabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],
