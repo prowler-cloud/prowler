@@ -55,7 +55,7 @@ class Bedrock(AWSService):
     def _list_guardrails(self, regional_client):
         logger.info("Bedrock - Listing Guardrails...")
         try:
-            paginator = regional_client.get_paginator('list_guardrails')
+            paginator = regional_client.get_paginator("list_guardrails")
             for page in paginator.paginate():
                 for guardrail in page.get("guardrails", []):
                     if not self.audit_resources or (
@@ -132,7 +132,7 @@ class BedrockAgent(AWSService):
     def _list_agents(self, regional_client):
         logger.info("Bedrock Agent - Listing Agents...")
         try:
-            paginator = regional_client.get_paginator('list_agents')
+            paginator = regional_client.get_paginator("list_agents")
             for page in paginator.paginate():
                 for agent in page.get("agentSummaries", []):
                     agent_arn = f"arn:aws:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
