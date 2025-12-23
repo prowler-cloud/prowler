@@ -1,12 +1,11 @@
 "use client";
 
-import { Input } from "@heroui/input";
-import { RadioGroup } from "@heroui/radio";
-import { SearchIcon, XCircle } from "lucide-react";
 import { FC, useState } from "react";
 import { Control, Controller } from "react-hook-form";
 import { z } from "zod";
 
+import { SearchInput } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 import { addProviderFormSchema } from "@/types";
 
 import {
@@ -21,7 +20,6 @@ import {
   MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
-import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
 
 const PROVIDERS = [
@@ -104,72 +102,66 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
       name="providerType"
       control={control}
       render={({ field }) => (
-        <div className="flex h-[calc(100vh-200px)] flex-col gap-2">
-          <div className="shrink-0">
-            <Input
+        <div className="flex h-[calc(100vh-200px)] flex-col px-4">
+          <div className="relative z-10 shrink-0 pb-4">
+            <SearchInput
               aria-label="Search providers"
               placeholder="Search providers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              startContent={
-                <SearchIcon
-                  className="text-bg-button-secondary shrink-0"
-                  width={16}
-                />
-              }
-              endContent={
-                searchTerm && (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    onClick={() => setSearchTerm("")}
-                    className="text-bg-button-secondary shrink-0 focus:outline-none"
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </button>
-                )
-              }
-              classNames={{
-                base: "w-full",
-                input:
-                  "text-bg-button-secondary placeholder:text-bg-button-secondary text-sm",
-                inputWrapper:
-                  "!border-border-input-primary !bg-bg-input-primary dark:!bg-input/30 dark:hover:!bg-input/50 hover:!bg-bg-neutral-secondary !border !rounded-lg !shadow-xs !transition-[color,box-shadow] focus-within:!border-border-input-primary-press focus-within:!ring-1 focus-within:!ring-border-input-primary-press focus-within:!ring-offset-1 !h-10 !px-4 !py-3 !outline-none",
-              }}
+              onClear={() => setSearchTerm("")}
             />
           </div>
 
-          <div className="minimal-scrollbar flex-1 overflow-y-scroll pr-4">
-            <RadioGroup
-              className="flex flex-wrap"
-              isInvalid={isInvalid}
-              {...field}
-              value={field.value || ""}
+          <div className="minimal-scrollbar relative flex-1 overflow-y-auto pr-3">
+            <div
+              role="listbox"
+              aria-label="Select a provider"
+              className="flex flex-col gap-3"
+              style={{
+                maskImage:
+                  "linear-gradient(to bottom, transparent, black 24px)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent, black 24px)",
+                paddingTop: "24px",
+                marginTop: "-24px",
+              }}
             >
-              <div className="flex flex-col gap-4">
-                {filteredProviders.length > 0 ? (
-                  filteredProviders.map((provider) => {
-                    const BadgeComponent = provider.badge;
-                    return (
-                      <CustomRadio
-                        key={provider.value}
-                        description={provider.label}
-                        value={provider.value}
-                      >
-                        <div className="flex items-center">
-                          <BadgeComponent size={26} />
-                          <span className="ml-2">{provider.label}</span>
-                        </div>
-                      </CustomRadio>
-                    );
-                  })
-                ) : (
-                  <p className="text-default-500 py-4 text-sm">
-                    No providers found matching &quot;{searchTerm}&quot;
-                  </p>
-                )}
-              </div>
-            </RadioGroup>
+              {filteredProviders.length > 0 ? (
+                filteredProviders.map((provider) => {
+                  const BadgeComponent = provider.badge;
+                  const isSelected = field.value === provider.value;
+
+                  return (
+                    <button
+                      key={provider.value}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => field.onChange(provider.value)}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-left transition-all",
+                        "hover:border-button-primary",
+                        "focus-visible:border-button-primary focus-visible:ring-button-primary focus:outline-none focus-visible:ring-1",
+                        isSelected
+                          ? "border-button-primary bg-bg-neutral-tertiary"
+                          : "border-border-neutral-secondary bg-bg-neutral-secondary",
+                        isInvalid && "border-bg-fail",
+                      )}
+                    >
+                      <BadgeComponent size={26} />
+                      <span className="text-text-neutral-primary text-sm font-medium">
+                        {provider.label}
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-text-neutral-tertiary py-4 text-sm">
+                  No providers found matching &quot;{searchTerm}&quot;
+                </p>
+              )}
+            </div>
           </div>
 
           {errorMessage && (
