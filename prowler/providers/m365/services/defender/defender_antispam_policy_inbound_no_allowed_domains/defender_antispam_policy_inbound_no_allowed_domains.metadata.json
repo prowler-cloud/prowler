@@ -1,29 +1,41 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_policy_inbound_no_allowed_domains",
-  "CheckTitle": "Ensure inbound anti-spam policies do not contain allowed domains",
+  "CheckTitle": "Inbound anti-spam policy does not contain allowed domains",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "Defender Anti-Spam Policy",
-  "Description": "Ensure that inbound anti-spam policies do not have any domains listed in the AllowedSenderDomains. Messages from these domains bypass most email protections, increasing the risk of successful phishing attacks.",
-  "Risk": "Having domains in the AllowedSenderDomains list allows emails from these domains to bypass essential security checks, increasing the risk of phishing attacks and other malicious activities.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-protection-about#allow-and-block-lists-in-anti-spam-policies",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Inbound anti-spam policies** are evaluated for domains listed in `AllowedSenderDomains`.\n\nThe finding identifies any policy where this list is populated rather than empty.",
+  "Risk": "Populating `AllowedSenderDomains` makes messages from those domains skip **spam filtering** and **email authentication** (SPF, DKIM, DMARC), often delivered with SCL `-1`. Attackers can spoof such domains to phish credentials, enable BEC, and alter mailboxes, undermining **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alitajran.com/allowlist-domain-microsoft-365/",
+    "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-hostedcontentfilterpolicy?view=exchange-ps",
+    "https://security.microsoft.com).",
+    "https://lazyadmin.nl/office-365/whitelist-domain-office-365/",
+    "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/configure-the-allowed-sender-domains?view=o365-worldwide",
+    "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-policies-configure",
+    "https://www.youtube.com/watch?v=nT5xjJzlKzc",
+    "https://cloudinfra.net/bypass-spam-filtering-in-microsoft-365-office-365/",
+    "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-protection-about#allow-and-block-lists-in-anti-spam-policies"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-HostedContentFilterPolicy -Identity <Policy name> -AllowedSenderDomains @{}",
+      "CLI": "Set-HostedContentFilterPolicy -Identity <Policy name> -AllowedSenderDomains $null",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender (https://security.microsoft.com). 2. Click to expand Email & collaboration and select Policies & rules > Threat policies. 3. Under Policies, select Anti-spam. 4. Open each out-of-compliance inbound anti-spam policy by clicking on it. 5. Click Edit allowed and blocked senders and domains. 6. Select Allow domains. 7. Delete each domain from the domains list. 8. Click Done > Save. 9. Repeat as needed.",
+      "Other": "1. Open Microsoft 365 Defender: https://security.microsoft.com/antispam\n2. Open each inbound anti-spam policy (Default and any custom).\n3. Click Edit allowed and blocked senders and domains.\n4. Select Allow domains.\n5. Remove all domains, then click Done and Save.\n6. Repeat for any remaining inbound anti-spam policies.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that the AllowedSenderDomains list in your inbound anti-spam policies is empty to prevent bypassing essential security checks.",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/configure-the-allowed-sender-domains?view=o365-worldwide"
+      "Text": "- Keep `AllowedSenderDomains` empty.\n- Use narrowly scoped allow logic that requires authentication alignment and additional conditions (sender, IP, headers).\n- Make any exceptions temporary and reviewed.\n\nApply **least privilege** and **defense in depth** to email trust decisions.",
+      "Url": "https://hub.prowler.com/check/defender_antispam_policy_inbound_no_allowed_domains"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],
