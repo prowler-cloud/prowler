@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "entra_managed_device_required_for_mfa_registration",
-  "CheckTitle": "Ensure that only managed devices are required for MFA registration",
+  "CheckTitle": "Tenant has a Conditional Access policy that requires a managed device for MFA registration for all users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that only managed devices are required for MFA registration. This ensures that users enroll MFA using secure, organization-controlled devices.",
-  "Risk": "If users are allowed to register MFA on unmanaged or potentially compromised devices, attackers with stolen credentials may register their own MFA methods, effectively locking out legitimate users and taking over accounts. This increases the risk of unauthorized access, data breaches, and privilege escalation.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Microsoft Entra **Conditional Access** evaluates whether **MFA registration** is restricted to organization-managed devices. It looks for policies that target the security info registration action for all users and require a **managed (compliant or hybrid-joined) device** when registering authentication methods.",
+  "Risk": "Allowing **MFA enrollment** from unmanaged or compromised devices enables attackers with stolen passwords to add their own factors, causing **account takeover** and potential lockout of the legitimate user.\n\nThis jeopardizes **confidentiality** (data access), **integrity** (unauthorized changes), and **availability** (user access disruption).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-registration",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "New-MgIdentityConditionalAccessPolicy -BodyParameter @{displayName=\"<example_resource_name>\";state=\"enabled\";conditions=@{users=@{includeUsers=@(\"All\")};applications=@{includeUserActions=@(\"urn:user:registersecurityinfo\")}};grantControls=@{operator=\"OR\";builtInControls=@(\"mfa\",\"domainJoinedDevice\")}}",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. Under Users include All users. Under Target resources select User actions and check Register security information. Under Grant select Grant access. Check Require multifactor authentication and Require Microsoft Entra hybrid joined device. Choose Require one of the selected controls and click Select at the bottom. 4. Under Enable policy set it to Report Only until the organization is ready to enable it. 5. Click Create.",
-      "Terraform": ""
+      "Other": "1. Go to Microsoft Entra admin center > Protection > Conditional Access > Policies\n2. Click New policy\n3. Users: Include > All users\n4. Target resources: User actions > check Register security information\n5. Grant: Grant access > check Require multifactor authentication and Require Microsoft Entra hybrid joined device > select Require one of the selected controls\n6. Enable policy: On\n7. Click Create",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\" # Critical: policy must be enforced (not report-only)\n\n  conditions {\n    users {\n      include_users = [\"All\"] # Critical: applies to all users\n    }\n    applications {\n      include_user_actions = [\"urn:user:registersecurityinfo\"] # Critical: targets security info (MFA) registration\n    }\n  }\n\n  grant_controls {\n    operator          = \"OR\" # Critical: required by the check logic\n    built_in_controls = [\"mfa\", \"domainJoinedDevice\"] # Critical: require MFA or hybrid joined device\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enforce MFA registration only from managed devices by requiring compliance through Intune or Entra hybrid join. This ensures that users enroll MFA using secure, organization-controlled devices.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-registration"
+      "Text": "Enforce **MFA registration** only from **managed devices** using Conditional Access. Apply the policy broadly, with minimal exclusions for break-glass accounts.\n\nAlign with **Zero Trust** and **least privilege** by requiring devices be compliant or hybrid-joined, monitoring enrollment activity, and regularly reviewing policies to prevent bypass and abuse.",
+      "Url": "https://hub.prowler.com/check/entra_managed_device_required_for_mfa_registration"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

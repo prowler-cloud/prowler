@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "entra_dynamic_group_for_guests_created",
-  "CheckTitle": "Ensure a dynamic group for guest users is created.",
+  "CheckTitle": "A dynamic membership group for guest users exists in Microsoft Entra",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Group Settings",
-  "Description": "Ensure that a dynamic group is created for guest users in Microsoft Entra to enforce conditional access policies and security controls automatically.",
-  "Risk": "Without a dynamic group for guest users, administrators may need to manually manage access controls, leading to potential security gaps and inconsistent policy enforcement.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/groups-create-rule",
+  "Severity": "low",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra groups** are evaluated for **dynamic membership** that includes only users with `userType -eq \"Guest\"`.\n\nThe finding indicates whether a guest-targeted dynamic group exists to centrally scope policies and governance.",
+  "Risk": "Without a dedicated dynamic guest group, guests may evade consistent **Conditional Access** and least-privilege controls. This threatens **confidentiality** via excess data access, weakens **integrity** through unauthorized changes, and leaves stale external accounts that enable lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://entra.microsoft.com/.",
+    "https://learn.microsoft.com/en-us/entra/identity/users/groups-create-rule"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "New-MgGroup -DisplayName 'Dynamic Guest Users' -MailNickname 'DynGuestUsers' -MailEnabled $false -SecurityEnabled $true -GroupTypes 'DynamicMembership' -MembershipRule '(user.userType -eq \"Guest\")' -MembershipRuleProcessingState 'On'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Click to expand Identity > Groups and select All groups. 3. Select 'New group' and configure: Group type: Security, Membership type: Dynamic User. 4. Add dynamic query with rule: (user.userType -eq 'Guest'). 5. Click Save.",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center (https://entra.microsoft.com/)\n2. Go to Identity > Groups > All groups > New group\n3. Set Group type: Security; Membership type: Dynamic User\n4. Click Add dynamic query and set the rule: user.userType -eq \"Guest\"; click Save\n5. Click Create",
+      "Terraform": "```hcl\nresource \"azuread_group\" \"example\" {\n  display_name     = \"<example_resource_name>\"\n  security_enabled = true\n\n  dynamic_membership {\n    enabled = true  # critical: enables dynamic membership\n    rule    = \"user.userType -eq \\\"Guest\\\"\"  # critical: includes only guest users\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create a dynamic group for guest users to automate policy enforcement and access control.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/users/groups-create-rule"
+      "Text": "Establish a **dynamic group** limited to users with `userType -eq \"Guest\"` and use it to scope **Conditional Access**, least-privilege roles, and access reviews.\n\nSegment guests by risk into separate groups, enforce lifecycle policies, and regularly audit membership and policy coverage.",
+      "Url": "https://hub.prowler.com/check/entra_dynamic_group_for_guests_created"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

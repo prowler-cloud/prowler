@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_users_sign_in_frequency_enabled",
-  "CheckTitle": "Ensure Sign-in frequency periodic reauthentication is enabled and properly configured.",
+  "CheckTitle": "Admin users have sign-in frequency enforced by Conditional Access at or below the recommended interval",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure Sign-in frequency periodic reauthentication is enabled and properly configured to reduce the risk of unauthorized access and session hijacking.",
-  "Risk": "Allowing persistent browser sessions and long sign-in frequencies for administrative users increases the risk of unauthorized access. Attackers could exploit session persistence to maintain access to an admin account without reauthentication, increasing the likelihood of account compromise, especially in cases of credential theft or session hijacking.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency",
+  "ResourceType": "",
+  "Description": "**Conditional Access** evaluates whether admin roles are covered by policies that enforce a defined **sign-in frequency** and **non-persistent browser sessions** across *all cloud apps*. It looks for reauthentication set to a time interval or `Every time`, persistent browser set to `never`, and policies that are enforced rather than report-only or disabled.",
+  "Risk": "Lax reauthentication and persistent sessions let admin tokens live too long, enabling **session hijacking**, **token replay**, and access after **credential theft**. Attackers can modify configurations, elevate privileges, and exfiltrate data, threatening **confidentiality** and **integrity** and increasing risk of **tenant takeover**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://entra.microsoft.com/.",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime#user-sign-in-frequency",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Click to expand Protection > Conditional Access Select Policies. 3. Click New policy. Under Users include, select users and groups and check Directory roles. At a minimum, include the directory roles listed below in this section of the document. Under Target resources, include All cloud apps and do not create any exclusions. Under Grant, select Grant Access and check Require multifactor authentication. Under Session, select Sign-in frequency, select Periodic reauthentication, and set it to 4 hours for E3 tenants. E5 tenants with PIM can be set to a maximum value of 24 hours. Check Persistent browser session, then select Never persistent in the drop-down menu. 4. Under Enable policy, set it to Report Only until the organization is ready to enable it.",
-      "Terraform": ""
+      "Other": "1. Go to Microsoft Entra admin center (https://entra.microsoft.com/)\n2. Navigate to Protection > Conditional Access > Policies > New policy\n3. Users > Include > Select users and groups > Directory roles: select admin roles (e.g., Global Administrator)\n4. Target resources (Cloud apps): Select All cloud apps\n5. Session:\n   - Enable Sign-in frequency and set to Every time OR set 4 hours (or less)\n   - Set Persistent browser session to Never persistent\n6. Enable policy: On, then Create",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\" # Critical: must be enabled (not report-only) to enforce\n\n  conditions {\n    users {\n      included_roles = [\"<example_role_id>\"] # Critical: target admin directory roles (e.g., Global Administrator)\n    }\n    applications {\n      included_applications = [\"All\"] # Critical: apply to all cloud apps\n    }\n  }\n\n  session_controls {\n    sign_in_frequency          = 4          # Critical: enforce reauth at or below 4 hours\n    sign_in_frequency_interval = \"hours\"   # Critical: time-based frequency in hours\n    persistent_browser_mode    = \"never\"   # Critical: enforce non-persistent browser sessions\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enforce a sign-in frequency limit of no more than 4 hours for E3 tenants (or 24 hours for E5 with Privileged Identity Management) and set browser sessions to Never persistent. This ensures that administrative users are regularly reauthenticated, reducing the risk of prolonged unauthorized access and mitigating session hijacking threats.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime#user-sign-in-frequency"
+      "Text": "Use **Conditional Access** for admin roles to:\n- Enforce short sign-in frequency (e.g.,  `4` hours, or `Every time` for critical actions)\n- Set persistent browser to `never`\n- Cover all apps and run in enforce mode\n\nPair with **least privilege**, **MFA**, **PIM**, and **token protection** to reduce session abuse.",
+      "Url": "https://hub.prowler.com/check/entra_admin_users_sign_in_frequency_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

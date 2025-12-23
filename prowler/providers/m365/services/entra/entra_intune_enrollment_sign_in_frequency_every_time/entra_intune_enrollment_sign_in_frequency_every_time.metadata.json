@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_intune_enrollment_sign_in_frequency_every_time",
-  "CheckTitle": "Ensure sign-in frequency for Intune Enrollment is set to every time",
+  "CheckTitle": "Conditional Access enforces Every Time sign-in frequency for Intune Enrollment",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that Conditional Access policies enforce sign-in frequency to Every time for Microsoft Intune Enrollment Application.",
-  "Risk": "If not enforced, attackers with compromised credentials may enroll a new device into Intune and gain persistent and elevated access through a bypass of compliance-based Conditional Access rules.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/intune/intune-service/fundamentals/deployment-guide-enrollment",
+  "ResourceType": "",
+  "Description": "**Conditional Access** for **Microsoft Intune Enrollment** enforces the session control **sign-in frequency** set to `Every time` for all users.\n\nThis evaluates whether an active policy targets the Intune Enrollment app and requires reauthentication on each enrollment attempt.",
+  "Risk": "Absent `Every time` reauth at enrollment, attackers with stolen or replayed credentials can enroll rogue devices and obtain compliant access.\n\nImpacts:\n- Confidentiality: data exposure from unauthorized devices\n- Integrity: untrusted endpoints modifying resources\n- Availability: persistence via device-based access paths",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/intune/intune-service/fundamentals/deployment-guide-enrollment",
+    "https://mobile-jon.com/2024/09/09/the-magnificent-8-conditional-access-policies-of-microsoft-entra/",
+    "https://redmondmag.com/Articles/2024/02/27/Microsoft-Conditional-Access-Reauthentications.aspx",
+    "https://petri.com/microsoft-conditional-access-policy-reauthentication/",
+    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/conditional-access/concept-session-lifetime.md",
+    "https://www.tbone.se/2022/05/13/conditional-access-can-now-require-reauthentication-every-time/",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method POST --url https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies --headers 'Content-Type=application/json' --body '{\"displayName\":\"Intune Enrollment - Every time\",\"state\":\"enabled\",\"conditions\":{\"users\":{\"includeUsers\":[\"All\"]},\"applications\":{\"includeApplications\":[\"d4ebce55-015a-49b5-a083-c84d1797ae8c\"]}},\"sessionControls\":{\"signInFrequency\":{\"isEnabled\":true,\"type\":\"everyTime\"}}}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. o Under Users include All users. o Under Target resources select Resources (formerly cloud apps), choose Select resources and add Microsoft Intune Enrollment to the list. o Under Grant select Grant access. o Check either Require multifactor authentication or Require authentication strength. o Under Session check Sign-in frequency and select Every time. 4. Under Enable policy set it to Report-only until the organization is ready to enable it. 5. Click Create",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center (entra.microsoft.com)\n2. Go to Protection > Conditional Access > Policies > New policy\n3. Users > Include: select All users\n4. Target resources (Resources/Cloud apps) > Select resources: choose Microsoft Intune Enrollment\n5. Session > Sign-in frequency: select Every time\n6. Enable policy: On\n7. Create the policy",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\"\n\n  conditions {\n    users {\n      include_users = [\"All\"] # critical: include all users\n    }\n    applications {\n      include_applications = [\"d4ebce55-015a-49b5-a083-c84d1797ae8c\"] # critical: target Microsoft Intune Enrollment app\n    }\n  }\n\n  session_controls {\n    sign_in_frequency {\n      is_enabled = true      # critical: enable sign-in frequency control\n      type       = \"everyTime\" # critical: require reauthentication every time\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure a Conditional Access policy that targets Microsoft Intune Enrollment and enforces sign-in frequency to 'Every time'. This ensures that users must reauthenticate for each Intune enrollment action, reducing the risk of unauthorized device enrollment using compromised credentials. Note: Microsoft accounts for a five-minute clock skew when 'every time' is selected, ensuring users are not prompted more frequently than once every five minutes.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
+      "Text": "Implement a **Conditional Access** policy on the **Intune Enrollment** app that sets sign-in frequency to `Every time` and applies broadly.\n\nCombine with **MFA** and device **compliance** requirements, use **least privilege** exclusions sparingly, and monitor sign-in/audit logs to strengthen **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/entra_intune_enrollment_sign_in_frequency_every_time"
     }
   },
   "Categories": [
+    "identity-access",
     "e3",
     "e5"
   ],

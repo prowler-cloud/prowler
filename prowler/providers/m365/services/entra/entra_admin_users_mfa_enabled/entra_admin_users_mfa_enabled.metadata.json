@@ -1,35 +1,46 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_users_mfa_enabled",
-  "CheckTitle": "Ensure multifactor authentication is enabled for all users in administrative roles.",
-  "CheckAliases": [
-    "entra_admin_mfa_enabled_for_administrative_roles"
-  ],
+  "CheckTitle": "Users in administrative roles require multifactor authentication via a Conditional Access policy for all applications",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that multifactor authentication (MFA) is enabled for all users in administrative roles to enhance security and reduce the risk of unauthorized access.",
-  "Risk": "Without MFA enabled for administrative roles, attackers could compromise privileged accounts with only a single authentication factor, increasing the risk of data breaches and unauthorized access to sensitive resources.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa",
+  "ResourceType": "",
+  "Description": "Microsoft Entra Conditional Access policies that enforce **multifactor authentication** for users in **administrative roles** across all resources.\n\nThe assessment identifies at least one active policy that targets admin roles (or all users), includes all applications, and grants access only when `Require multifactor authentication` is satisfied.",
+  "Risk": "Without enforced **MFA** on privileged accounts, stolen or phished passwords can grant admin access, enabling tenant takeover. Attackers may exfiltrate data, change configurations, consent malicious apps, and disable protections, impacting confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://janbakker.tech/all-you-need-to-know-about-the-mandatory-multifactor-authentication-for-azure-and-other-administration-portals/",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-getstarted",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-all-users-compliant-hybrid-or-mfa",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-admin-device-compliand-hybrid",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userstates",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method post --url https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies --body '{\"displayName\":\"Require MFA for all users\",\"state\":\"enabled\",\"conditions\":{\"users\":{\"includeUsers\":[\"All\"]},\"applications\":{\"includeApplications\":[\"All\"]}},\"grantControls\":{\"operator\":\"OR\",\"builtInControls\":[\"mfa\"]}}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com. 2. Expand Protection > Conditional Access and select Policies. 3. Click 'New policy' and configure: Users: Select users and groups > Directory roles (include admin roles). Target resources: Include 'All cloud apps' with no exclusions. Grant: Select 'Grant Access' and check 'Require multifactor authentication'. 4. Set policy to 'Report Only' for testing before full enforcement. 5. Click 'Create'.",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center > Entra ID > Protection > Conditional Access > Policies > New policy\n2. Users: Include > All users\n3. Target resources: Include > All cloud apps (All resources)\n4. Grant: Grant access > Require multifactor authentication > Select\n5. Enable policy: On > Create",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"Require MFA for all users\"\n  state        = \"enabled\" # Critical: policy must be enabled to enforce\n\n  conditions {\n    users {\n      include_users = [\"All\"] # Critical: applies to all users, covering all admin roles\n    }\n    applications {\n      included_applications = [\"All\"] # Critical: targets all cloud apps/resources\n    }\n  }\n\n  grant_controls {\n    built_in_controls = [\"mfa\"] # Critical: require multifactor authentication\n    operator          = \"OR\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable MFA for all users in administrative roles using a Conditional Access policy in Microsoft Entra.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa"
+      "Text": "Require **MFA** for all administrative roles with Conditional Access scoped to `All cloud apps` to avoid gaps. Prefer **phishing-resistant** methods (FIDO2, passkeys, Authenticator). Apply least privilege, limit exclusions, protect break-glass accounts, monitor sign-ins, and verify policies actively enforce, not just report.",
+      "Url": "https://hub.prowler.com/check/entra_admin_users_mfa_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "CheckAliases": [
+    "entra_admin_mfa_enabled_for_administrative_roles"
+  ]
 }
