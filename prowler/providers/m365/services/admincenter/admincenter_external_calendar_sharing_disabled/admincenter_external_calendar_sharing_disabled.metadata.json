@@ -1,30 +1,38 @@
 {
   "Provider": "m365",
   "CheckID": "admincenter_external_calendar_sharing_disabled",
-  "CheckTitle": "Ensure external sharing of calendars is disabled",
+  "CheckTitle": "External calendar sharing is disabled at the organization level",
   "CheckType": [],
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Sharing Policy",
-  "Description": "Restrict the ability for users to share their calendars externally in Microsoft 365. This prevents users from sending calendar sharing links to external recipients, reducing information exposure.",
-  "Risk": "Allowing calendar sharing outside the organization can help attackers build knowledge of personnel availability, relationships, and activity patterns, aiding social engineering or targeted attacks.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/share-calendars-with-external-users?view=o365-worldwide",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft 365 calendar sharing** is evaluated at the organization level to determine if sharing with external recipients is disabled, including blocking anonymous access and links sent outside the tenant.",
+  "Risk": "Allowing **external calendar sharing** exposes meeting metadata (subjects, locations, attendees, patterns), weakening confidentiality. Adversaries can profile staff, craft convincing spear-phish or fake invites, time fraud attempts, and stage meeting hijacks, increasing **BEC** and social engineering success.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.infrassist.com/script-hub/disable-calendar-sharing-with-external-users/",
+    "https://admin.microsoft.com.",
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/share-calendars-with-external-users?view=o365-worldwide",
+    "https://m365scripts.com/microsoft365/how-to-stop-users-from-sharing-their-own-calendars/",
+    "https://learn.microsoft.com/en-my/answers/questions/1165808/external-calendar-sharing-for-single-user-in-exo"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-SharingPolicy -Identity \"Default Sharing Policy\" -Enabled $False",
+      "CLI": "Set-SharingPolicy -Identity \"Default Sharing Policy\" -Enabled $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to https://admin.microsoft.com. 2. Click Settings > Org settings. 3. Select Calendar in the Services section. 4. Uncheck 'Let your users share their calendars with people outside of your organization who have Office 365 or Exchange'. 5. Click Save.",
+      "Other": "1. Go to https://admin.microsoft.com and sign in\n2. Navigate to Settings > Org settings > Services > Calendar\n3. Under External sharing, uncheck \"Let your users share their calendars with people outside of your organization who have Microsoft 365 or Exchange\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable external calendar sharing by setting the Default Sharing Policy to disabled.",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/share-calendars-with-external-users?view=o365-worldwide"
+      "Text": "Apply **least privilege**: disable **external calendar sharing** tenant-wide. If business-needed, allow only approved domains, require authenticated recipients (no anonymous), and limit details to `Free/Busy (time only)`. Review sharing policies regularly under **zero trust** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/admincenter_external_calendar_sharing_disabled"
     }
   },
   "Categories": [
-    "e5"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
