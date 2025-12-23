@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_wildcard_use_roles",
-  "CheckTitle": "Minimize wildcard use in Roles and ClusterRoles",
+  "CheckTitle": "Role or ClusterRole does not use wildcard resources or verbs",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Role/ClusterRole",
-  "Description": "This check ensures that Roles and ClusterRoles in Kubernetes minimize the use of wildcards. Restricting wildcards enhances security by enforcing the principle of least privilege, ensuring users have only the access required for their role.",
-  "Risk": "Use of wildcards can lead to excessive rights being granted, potentially allowing users to access or modify resources beyond their scope of responsibility.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+  "ResourceType": "ClusterRole",
+  "Description": "**Kubernetes RBAC Roles/ClusterRoles** are evaluated for wildcard use in rule `resources` or `verbs`. The presence of `*` means all resources or all actions are granted. This finding highlights roles whose rules include such wildcards.",
+  "Risk": "Using `*` broadens access beyond intent:\n- Confidentiality: unrestricted reads of sensitive data\n- Integrity/Availability: create/update/delete across resources\n- Privilege escalation and lateral movement\n- Future drift: new APIs/verbs inherit access automatically",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-resources"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-minimized-wildcard-use-in-roles-and-clusterroles",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl patch clusterrole <example_resource_name> --type=merge -p '{\"rules\":[{\"apiGroups\":[\"\"],\"resources\":[\"pods\"],\"verbs\":[\"get\"]}]}'",
+      "NativeIaC": "",
+      "Other": "1. Run: kubectl edit clusterrole <example_resource_name>\n2. In rules, replace any resources: [\"*\"] with only the needed resources (e.g., [\"pods\"]).\n3. Replace any verbs: [\"*\"] with only required verbs (e.g., [\"get\"]).\n4. Save and exit. Repeat for any Role or ClusterRole still using wildcards.",
+      "Terraform": "```hcl\nresource \"kubernetes_cluster_role_v1\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n\n  rule {\n    api_groups = [\"\"]\n    resources  = [\"pods\"]  # critical: replace wildcard resources with specific resource\n    verbs      = [\"get\"]   # critical: replace wildcard verbs with specific verb\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Replace wildcards in roles and clusterroles with specific permissions.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-resources"
+      "Text": "Apply **least privilege**: replace `*` with explicit `resources`, `verbs`, and `resourceNames`. Split read/write duties, scope Roles to namespaces, use ClusterRoles only when needed, and bind to specific subjects. Periodically review roles to prevent privilege creep as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_wildcard_use_roles"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

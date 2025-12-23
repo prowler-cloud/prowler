@@ -1,30 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_webhook_config_access",
-  "CheckTitle": "Minimize access to webhook configuration objects",
+  "CheckTitle": "User or group does not have create, update, or delete permissions on webhook configurations",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "WebhookConfiguration",
-  "Description": "This check ensures that access to webhook configuration objects (validatingwebhookconfigurations and mutatingwebhookconfigurations) is restricted. Unauthorized access or modification of these objects can lead to privilege escalation or disruption of cluster operations.",
-  "Risk": "Inadequately restricted access to webhook configurations can result in unauthorized control over webhooks, potentially allowing privilege escalation or interference with cluster functionality.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks",
+  "Severity": "critical",
+  "ResourceType": "ClusterRoleBinding",
+  "Description": "User or group RBAC assignments that grant privileges to `create`, `update`, or `delete` `validatingwebhookconfigurations` and `mutatingwebhookconfigurations` are identified.\n\nFocus is on permissions that allow modifying **admission webhook** configuration objects.",
+  "Risk": "Excess rights over **admission webhooks** allow reading or mutating all admitted API objects, undermining **confidentiality** and **integrity**.\n\nAn attacker could inject privileged mutations, bypass policy, or block admissions, leading to **privilege escalation** and cluster-wide **denial of service**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-clusterroles-that-grant-control-over-validating-or-mutating-admission-webhook-configurations-are-minimized",
-      "Other": "",
+      "CLI": "kubectl delete clusterrolebinding <example_resource_name>",
+      "NativeIaC": "",
+      "Other": "1. Identify the ClusterRoleBinding that assigns a User or Group to a ClusterRole with create, update, or delete on validatingwebhookconfigurations or mutatingwebhookconfigurations (e.g., kubectl get clusterrolebindings).\n2. Delete that ClusterRoleBinding, or edit the bound ClusterRole to remove any rules granting those verbs on these resources.\n3. Save/apply the change; no restart is required.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict access to webhook configuration objects in the cluster.",
-      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks"
+      "Text": "- Enforce **least privilege**; limit webhook config `create`, `update`, `delete` to a small, trusted admin group.\n- Avoid wildcard resources/verbs and use **separation of duties** with change approval.\n- Monitor changes via **audit logging** to provide **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_webhook_config_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,30 +1,38 @@
 {
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_pv_creation_access",
-  "CheckTitle": "Minimize access to create persistent volumes",
+  "CheckTitle": "User or group does not have permission to create PersistentVolumes",
   "CheckType": [],
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "PersistentVolume",
-  "Description": "This check ensures that the ability to create persistent volumes in Kubernetes is restricted to authorized users only. Limiting this capability helps prevent privilege escalation scenarios through the creation of hostPath volumes.",
-  "Risk": "Excessive permissions to create persistent volumes can lead to unauthorized access to sensitive host files, overriding the restrictions imposed by Pod Security Admission policies.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation",
+  "ResourceType": "ClusterRoleBinding",
+  "Description": "**Kubernetes RBAC** mapping of **users or groups** with the `create` verb on `persistentvolumes` through ClusterRoleBindings.\n\nShows which principals can provision PersistentVolumes cluster-wide.",
+  "Risk": "With `create` on `persistentvolumes`, a principal can define **hostPath PVs** and mount them via claims, exposing node files and bypassing pod safeguards.\n\nResults include secret disclosure and filesystem tampering (**confidentiality**/**integrity**), and potential node compromise affecting **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/kubernetes/kubernetes/issues/81110",
+    "https://www.radsecurity.ai/blog/what-is-kubernetes-rbac",
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/",
+    "https://www.bogotobogo.com/DevOps/Docker/Docker_Kubernetes_PersistentVolumes_PersistentVolumeClaims.php",
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl delete clusterrolebinding <example_resource_name>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Open the Kubernetes Dashboard (or your cluster RBAC UI)\n2. Navigate to ClusterRoles and select the role referenced by the failing ClusterRoleBinding\n3. Edit the role and locate the rule for resources: persistentvolumes\n4. Remove the verb \"create\" from that rule's verbs list\n5. Save the change to apply updated permissions",
+      "Terraform": "```hcl\nresource \"kubernetes_cluster_role\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n\n  rule {\n    api_groups = [\"\"]\n    resources  = [\"persistentvolumes\"]\n    verbs      = [\"get\", \"list\", \"watch\"]\n    # Critical: exclude \"create\" on persistentvolumes to prevent PV creation\n    # This removes the permission that caused the FAIL finding.\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict access to create persistent volumes in the cluster.",
-      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation"
+      "Text": "Enforce **least privilege**: permit `create` on `persistentvolumes` only for trusted storage controllers and select administrators.\n\nAdopt **dynamic provisioning**, maintain **separation of duties**, and use **defense in depth** (Pod Security and admission policies) to prevent unsafe volumes like `hostPath`.",
+      "Url": "https://hub.prowler.com/check/rbac_minimize_pv_creation_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "identity-access",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
