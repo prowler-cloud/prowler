@@ -14,7 +14,6 @@ requires-python = ">=3.12"
 version = "0.3.0"
 
 [project.scripts]
-generate-prowler-app-mcp-server = "prowler_mcp_server.prowler_app.utils.server_generator:generate_server_file"
 prowler-mcp = "prowler_mcp_server.main:main"
 
 [tool.uv]
