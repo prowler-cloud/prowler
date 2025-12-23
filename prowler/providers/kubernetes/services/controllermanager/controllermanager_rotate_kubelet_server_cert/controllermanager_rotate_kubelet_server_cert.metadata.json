@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "controllermanager_rotate_kubelet_server_cert",
-  "CheckTitle": "Ensure that the RotateKubeletServerCertificate argument is set to true",
+  "CheckTitle": "Controller Manager pod has RotateKubeletServerCertificate set to true",
   "CheckType": [],
   "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesControllerManager",
-  "Description": "This check ensures that the Kubernetes Controller Manager is configured with the RotateKubeletServerCertificate argument set to true, enabling automated rotation of kubelet server certificates.",
-  "Risk": "Not enabling kubelet server certificate rotation could lead to downtime due to expired certificates.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes controller manager** configuration includes the `RotateKubeletServerCertificate=true` feature gate for automatic rotation of **kubelet server certificates**",
+  "Risk": "Without **certificate rotation**, kubelet HTTPS endpoints can use expired or long-lived certs, triggering TLS failures and operational gaps. Teams may bypass verification, enabling **MitM** and tampering. This harms **availability** and **integrity**, and extends exposure if a private key is compromised.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration",
+    "https://kubernetes.io/docs/tasks/tls/certificate-rotation/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--feature-gates='RotateKubeletServerCertificate=true'",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to a control-plane node and open the controller manager static pod manifest:\n   - /etc/kubernetes/manifests/kube-controller-manager.yaml\n2. In spec.containers[0].command, add or update this flag:\n   ```\n   --feature-gates=RotateKubeletServerCertificate=true\n   ```\n3. Save the file; the kubelet will automatically restart the pod with the updated setting.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable kubelet server certificate rotation in the Controller Manager for automated certificate management.",
-      "Url": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration"
+      "Text": "Enable `RotateKubeletServerCertificate=true` on the controller manager and ensure kubelets participate in rotation.\n\nUse short-lived certs, automated renewal, and strict TLS validation to maintain **availability**, protect **integrity**, and uphold **cryptographic hygiene**. Avoid insecure fallbacks.",
+      "Url": "https://hub.prowler.com/check/controllermanager_rotate_kubelet_server_cert"
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
