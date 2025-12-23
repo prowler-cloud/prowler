@@ -1,30 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_guest_users_access_restrictions",
-  "CheckTitle": "Ensure That 'Guest users access restrictions' is set to 'Guest user access is restricted to properties and memberships of their own directory objects'",
+  "CheckTitle": "Entra authorization policy restricts guest user access to properties and memberships of their own directory objects",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Authorization Policy",
-  "Description": "Limit guest user permissions.",
-  "Risk": "Limiting guest access ensures that guest accounts do not have permission for certain directory tasks, such as enumerating users, groups or other directory resources, and cannot be assigned to administrative roles in your directory. Guest access has three levels of restriction. 1. Guest users have the same access as members (most inclusive), 2. Guest users have limited access to properties and memberships of directory objects (default value), 3. Guest user access is restricted to properties and memberships of their own directory objects (most restrictive). The recommended option is the 3rd, most restrictive: 'Guest user access is restricted to their own directory object'.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra** authorization policy evaluates **guest user access restrictions** being set to the most restrictive level, where guests can view only their own directory object and related memberships (`Guest user access is restricted to properties and memberships of their own directory objects`).",
+  "Risk": "Without this restriction, guests can read broader directory metadata and group memberships, enabling reconnaissance that harms **confidentiality**. A compromised guest gains context for phishing and privilege escalation, risking unauthorized changes (**integrity**) and disruption of collaboration spaces (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users",
+    "https://www.manageengine.com/microsoft-365-management-reporting/kb/how-to-restrict-guest-access-permissions-in-entra-id.html",
+    "https://entra.microsoft.com/.",
+    "https://blog.admindroid.com/guest-user-access-restrictions-in-microsoft-entra-id/",
+    "https://pizagame.com/api/game-proxy?url=https://learn.microsoft.com/en-us/microsoftteams/guest-experience",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/restrict-guest-user-access.html",
+    "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
+    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/fundamentals/users-default-permissions.md?context=/active-directory/roles/context/ugr-context"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Update-MgPolicyAuthorizationPolicy -GuestUserRoleId <GUEST_ROLE_ID>",
+      "CLI": "Update-MgPolicyAuthorizationPolicy -GuestUserRoleId '2af84b1e-32c8-42b7-82bc-daa82404023b'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Expand Identity > External Identities and select External collaboration settings. 3. Under Guest user access, set 'Guest user access restrictions' to either 'Guest users have limited access to properties and memberships of directory objects' or 'Guest user access is restricted to properties and memberships of their own directory objects (most restrictive)'.",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > External Identities > External collaboration settings\n3. Under Guest user access, select: \"Guest user access is restricted to properties and memberships of their own directory objects\"\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  guest_user_role_id = \"2af84b1e-32c8-42b7-82bc-daa82404023b\" # Critical: sets guests to the most restrictive role (own objects only)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict guest user access in Microsoft Entra to limit the exposure of directory objects and reduce security risks.",
-      "Url": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users"
+      "Text": "Set guest access to the most restrictive level (`Guest user access is restricted...`) to enforce **least privilege**.\n- Avoid assigning admin roles to guests\n- Use time-bound access with approvals\n- Apply **Conditional Access** and limit group visibility\n- Run periodic **access reviews** for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/entra_policy_guest_users_access_restrictions"
     }
   },
   "Categories": [
-    "e3"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

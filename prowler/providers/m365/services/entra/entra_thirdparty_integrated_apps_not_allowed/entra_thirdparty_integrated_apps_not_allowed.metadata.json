@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "entra_thirdparty_integrated_apps_not_allowed",
-  "CheckTitle": "Ensure third party integrated applications are not allowed",
+  "CheckTitle": "Authorization policy disallows app creation by non-admin users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "User settings",
-  "Description": "Require administrators or appropriately delegated users to register third-party applications.",
-  "Risk": "It is recommended to only allow an administrator to register custom-developed applications. This ensures that the application undergoes a formal security review and approval process prior to exposing Azure Active Directory data. Certain users like developers or other high-request users may also be delegated permissions to prevent them from waiting on an administrative user. Your organization should review your policies and decide your needs.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity-platform/how-applications-are-added#who-has-permission-to-add-applications-to-my-microsoft-entra-instance",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra authorization policy** restricts registration of **third-party applications**, verifying that **non-admin users** cannot create app registrations and that only administrators or explicitly delegated roles can add integrated apps.",
+  "Risk": "Allowing users to create apps enables **consent phishing** and uncontrolled **service principals** with long-lived secrets, risking **data exfiltration** via over-privileged API access, **privilege escalation** through abused app permissions, and tenant **persistence**. This degrades confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications",
+    "https://learn.microsoft.com/en-us/entra/identity-platform/how-applications-are-added#who-has-permission-to-add-applications-to-my-microsoft-entra-instance"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Invoke-MgGraphRequest -Method PATCH -Uri 'https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy' -Body '{\"defaultUserRolePermissions\":{\"allowedToCreateApps\":false}}' -ContentType 'application/json'",
       "NativeIaC": "",
-      "Other": "1. From Entra select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select User settings 5. Ensure that Users can register applications is set to No",
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Identity > Users > User settings\n3. Set \"Users can register applications\" to \"No\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable third-party integrated application permissions unless explicitly required. If third-party applications are necessary, implement strict approval processes and security controls to mitigate risks associated with external integrations.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications"
+      "Text": "Restrict app registration to administrators or narrowly scoped delegated roles, following **least privilege** and **separation of duties**. Require **admin consent** and formal review for external integrations, disable broad user consent, and audit app creations and permissions to enforce **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/entra_thirdparty_integrated_apps_not_allowed"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

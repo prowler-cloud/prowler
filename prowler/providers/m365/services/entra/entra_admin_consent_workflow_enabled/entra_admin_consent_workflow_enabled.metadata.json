@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_consent_workflow_enabled",
-  "CheckTitle": "Ensure the admin consent workflow is enabled.",
+  "CheckTitle": "Microsoft Entra admin consent workflow is enabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Organization Settings",
-  "Description": "Ensure that the admin consent workflow is enabled in Microsoft Entra to allow users to request admin approval for applications requiring consent.",
-  "Risk": "If the admin consent workflow is not enabled, users may be blocked from accessing applications that require admin consent, leading to potential work disruptions or unauthorized workarounds.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow",
+  "ResourceType": "",
+  "Description": "Microsoft Entra **admin consent workflow** is evaluated to confirm an approval path exists for app permission requests. The check looks for the workflow being enabled and, when present, whether **reviewer notifications** are configured.",
+  "Risk": "Without an approval workflow, app access decisions lack controlled review. This can force permissive settings or push users to shadow IT, enabling **consent phishing** and excessive Graph permissions that jeopardize **confidentiality** and **integrity**, or block required apps, affecting **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.plexhosted.com/post/complete-setup-how-to-enable-admin-consent-workflow-and-stop-unapproved-app-access-in-microsoft-ent",
+    "https://learn.microsoft.com/en-NZ/entra/identity/enterprise-apps/user-admin-consent-overview",
+    "https://entra.microsoft.com/.",
+    "https://www.cloudcoffee.ch/microsoft-azure/microsoft-entra-id-admin-consent-workflow/",
+    "https://support.atlassian.com/jira/kb/need-admin-approval-message-when-trying-to-connect-email-accounts-in-jsm-cloud/",
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow",
+    "https://global-sharepoint.com/sharepoint/admin-consent-approval-workflow/",
+    "https://www.linkedin.com/pulse/how-manage-users-consent-applications-within-azure-ad-entra-id-alcpf"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Update-MgPolicyAdminConsentRequestPolicy -IsEnabled:$true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com/. 2. Click to expand Identity > Applications and select Enterprise applications. 3. Under Security, select Consent and permissions. 4. Under Manage, select Admin consent settings. 5. Set 'Users can request admin consent to apps they are unable to consent to' to 'Yes'. 6. Configure the reviewers and email notifications settings. 7. Click Save.",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com) as a Global Administrator\n2. Go to Entra ID > Enterprise applications > Consent and permissions > Admin consent settings\n3. Set \"Users can request admin consent to apps they are unable to consent to\" to Yes\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the admin consent workflow in Microsoft Entra to securely manage application consent requests.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow"
+      "Text": "Enable the **admin consent workflow** (`Users can request admin consent to apps they are unable to consent to`) and assign least-privileged reviewers; enable notifications and expiry. Combine with restrictive **user consent** policies, permission classifications, and periodic reviews. Apply **least privilege** and **separation of duties**.",
+      "Url": "https://hub.prowler.com/check/entra_admin_consent_workflow_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_identity_protection_sign_in_risk_enabled",
-  "CheckTitle": "Ensure that Identity Protection sign-in risk policies are enabled",
+  "CheckTitle": "At least one Conditional Access Identity Protection sign-in risk policy protects against high and medium risk sign-ins",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that Identity Protection sign-in risk policies are enabled to detect and respond to suspicious high and medium risk login attempts in real time.",
-  "Risk": "Without Identity Protection sign-in risk policies enabled, suspicious sign-in attempts may go unnoticed, allowing attackers to access accounts using stolen or compromised credentials. This increases the risk of unauthorized access, data breaches, and privilege escalation.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra Conditional Access** has a sign-in risk-based Identity Protection policy that targets `All users` and `All cloud apps`, evaluates `Medium` and `High` sign-in risk, requires **MFA**, sets `sign-in frequency: every time`, and is actively enforced *not report-only*.",
+  "Risk": "Without this policy, risky authentications using stolen or replayed credentials may proceed without step-up verification, enabling account takeover. Attackers can establish persistent sessions, exfiltrate data, change configurations, and move laterally-eroding confidentiality and integrity and potentially impacting availability through privilege abuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.sikich.com/insight/how-to-use-microsoft-entra-to-identify-risky-user-sign-ins/",
+    "https://www.plexhosted.com/post/how-to-configure-microsoft-entra-id-protection-risk-based-access-policies",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://azure.microsofts.workers.dev/en-us/entra/identity/authentication/tutorial-risk-based-sspr-mfa",
+    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies",
+    "https://blog.admindroid.com/risk-based-conditional-access-policies-in-microsoft-entra-id/",
+    "https://redcanary.com/blog/security-operations/getting-started-with-conditional-access/",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "New-MgIdentityConditionalAccessPolicy -BodyParameter @{displayName='<example_resource_name>';state='enabled';conditions=@{users=@{includeUsers=@('All')};applications=@{includeApplications=@('All')};signInRiskLevels=@('medium','high')};grantControls=@{operator='OR';builtInControls=@('mfa')};sessionControls=@{signInFrequency=@{isEnabled=$true;frequencyInterval='everyTime'}}}",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. 4. Set the following conditions within the policy. Under Users or workload identities choose All users. Under Cloud apps or actions choose All cloud apps. Under Conditions choose Sign-in risk then Yes and check the risk level boxes High and Medium. Under Access Controls select Grant then in the right pane click Grant access then select Require multifactor authentication. Under Session select Sign-in Frequency and set to Every time. Click Select. 5. Under Enable policy set it to Report Only until the organization is ready to enable it. 6. Click Create.",
-      "Terraform": ""
+      "Other": "1. Sign in to Microsoft Entra admin center (entra.microsoft.com)\n2. Go to Entra ID > Protection > Conditional Access > Policies > New policy\n3. Users: select All users\n4. Target resources: select All resources (All cloud apps)\n5. Conditions > Sign-in risk: set to Yes, select Medium and High\n6. Grant > Grant access: select Require multifactor authentication\n7. Session > Sign-in frequency: set to Every time\n8. Enable policy: On\n9. Create the policy",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\" # Critical: enforce policy\n\n  conditions {\n    users {\n      include_users = [\"All\"] # Critical: apply to all users\n    }\n    applications {\n      include_applications = [\"All\"] # Critical: apply to all apps\n    }\n    sign_in_risk_levels = [\"medium\", \"high\"] # Critical: protect Medium and High sign-in risks\n    client_app_types    = [\"all\"]\n  }\n\n  grant_controls {\n    operator          = \"OR\"\n    built_in_controls = [\"mfa\"] # Critical: require MFA\n  }\n\n  session_controls {\n    sign_in_frequency_interval = \"everyTime\" # Critical: require reauth every time\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Identity Protection sign-in risk policies to detect and respond to suspicious login attempts in real time. Configure Conditional Access to require MFA for risky sign-ins and ensure all users are enrolled in MFA to prevent account lockouts. Regularly review sign-in risk reports to identify and mitigate potential security threats.",
-      "Url": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
+      "Text": "Adopt a **risk-based Conditional Access** policy for sign-in risk that applies broadly and enforces **MFA** with `every-time` reauthentication for `Medium` and `High` risk. Align with **Zero Trust** and **least privilege**: ensure MFA enrollment, exclude emergency accounts, validate in report-only, then enforce and regularly review risky sign-in reports.",
+      "Url": "https://hub.prowler.com/check/entra_identity_protection_sign_in_risk_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e5"
   ],
   "DependsOn": [],

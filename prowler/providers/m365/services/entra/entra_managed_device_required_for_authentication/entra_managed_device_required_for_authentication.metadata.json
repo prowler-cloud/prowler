@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "entra_managed_device_required_for_authentication",
-  "CheckTitle": "Ensure that only managed devices are required for authentication",
+  "CheckTitle": "Conditional Access policies require authentication from a managed device for all users and applications",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that only managed devices are required for authentication to reduce the risk of unauthorized access from unsecured or unmanaged devices.",
-  "Risk": "Allowing authentication from unmanaged devices increases the attack surface, as these devices may lack security controls, endpoint detection, and compliance policies. Attackers could leverage compromised credentials from unsecured devices to gain unauthorized access to corporate resources.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra Conditional Access** evaluates whether an enabled policy targeting `all users` and `all applications` includes grant controls that require a **managed device** (hybrid domain-joined) with **multifactor authentication** during sign-in.",
+  "Risk": "Sign-ins from **unmanaged devices** erode confidentiality and integrity: compromised hosts can steal tokens, hijack sessions, and exfiltrate data. With leaked credentials, attackers bypass endpoint controls, gain persistent access, and move laterally to alter resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://learn.microsoft.com/en-us/mem/intune/protect/create-conditional-access-intune",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "New-MgIdentityConditionalAccessPolicy -DisplayName \"<example_resource_name>\" -State \"enabled\" -Conditions @{ Users=@{ IncludeUsers=@(\"All\") }; Applications=@{ IncludeApplications=@(\"All\") } } -GrantControls @{ Operator=\"OR\"; BuiltInControls=@(\"mfa\",\"domainJoinedDevice\") }",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. Under Users include All users. Under Target resources include All cloud apps. Under Grant select Grant access. Check Require multifactor authentication and Require Microsoft Entra hybrid joined device. Choose Require one of the selected controls and click Select at the bottom. 4. Under Enable policy set it to Report Only until the organization is ready to enable it. 5. Click Create.",
-      "Terraform": ""
+      "Other": "1. In Microsoft Entra admin center, go to Entra ID > Security > Conditional Access > Policies\n2. Select New policy\n3. Users: Include > All users\n4. Target resources: Include > All cloud apps\n5. Grant: Select Grant access, check Require multifactor authentication and Require Microsoft Entra hybrid joined device, then choose Require one of the selected controls\n6. Enable policy: On\n7. Create to save",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"example\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\" # Critical: must be enabled (not report-only) to enforce\n\n  conditions {\n    users {\n      include_users = [\"All\"] # Critical: target all users\n    }\n    applications {\n      include_applications = [\"All\"] # Critical: target all cloud apps\n    }\n  }\n\n  grant_controls {\n    operator          = \"OR\" # Critical: require one of the selected controls\n    built_in_controls = [\"mfa\", \"domainJoinedDevice\"] # Critical: MFA or Microsoft Entra hybrid joined device\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enforce Conditional Access policies requiring authentication only from managed devices. Configure policies to allow access only from Entra hybrid joined or Intune-compliant devices. This ensures that only secure, policy-enforced endpoints can access corporate resources, reducing the risk of credential theft and unauthorized access.",
-      "Url": "https://learn.microsoft.com/en-us/mem/intune/protect/create-conditional-access-intune"
+      "Text": "Enforce **Conditional Access** to allow only **managed devices** (Entra hybrid joined or Intune-compliant) and require **MFA**, aligning with **Zero Trust** and **least privilege**. Apply to all users and apps, limit exclusions to break-glass accounts, and regularly review device compliance to prevent access from unknown endpoints.",
+      "Url": "https://hub.prowler.com/check/entra_managed_device_required_for_authentication"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

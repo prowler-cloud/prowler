@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_ensure_default_user_cannot_create_tenants",
-  "CheckTitle": "Ensure that 'Restrict non-admin users from creating tenants' is set to 'Yes'",
+  "CheckTitle": "Tenant restricts non-admin users from creating tenants",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Authorization Policy",
-  "Description": "Require administrators or appropriately delegated users to create new tenants.",
-  "Risk": "It is recommended to only allow an administrator to create new tenants. This prevent users from creating new Azure AD or Azure AD B2C tenants and ensures that only authorized users are able to do so.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "Microsoft Entra authorization policy defines default user permissions, including whether **non-admin users** are `allowed_to_create_tenants`. This evaluates if tenant creation is disabled for default users via `default_user_role_permissions`.",
+  "Risk": "Allowing default users to create tenants spawns unmanaged shadow tenants. Creators become **Global Administrator**, enabling escalation from compromised accounts and sidestepping governance. This degrades **confidentiality** and **integrity**, widens the **attack surface**, and introduces hidden costs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://entra.microsoft.com",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{ AllowedToCreateTenants = $false }",
+      "CLI": "Update-MgPolicyAuthorizationPolicy -AuthorizationPolicyId authorizationPolicy -DefaultUserRolePermissions @{ AllowedToCreateTenants = $false }",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com 2. Click to expand Identity > Users > User settings 3. Set 'Restrict non-admin users from creating tenants' to 'Yes' then 'Save'",
+      "Other": "1. Go to Microsoft Entra admin center: https://entra.microsoft.com\n2. Navigate to Identity > Users > User settings\n3. Set \"Restrict non-admin users from creating tenants\" to Yes\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enforcing this setting will ensure that only authorized users are able to create new tenants.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
+      "Text": "Enforce **least privilege**: set `allowed_to_create_tenants=false` so only authorized staff-or those with the **Tenant Creator** role-may create tenants. Use **separation of duties** and **PIM** for just-in-time access, and routinely review audit events (e.g., *Create Company*) to deter and detect misuse.",
+      "Url": "https://hub.prowler.com/check/entra_policy_ensure_default_user_cannot_create_tenants"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_identity_protection_user_risk_enabled",
-  "CheckTitle": "Ensure that Identity Protection user risk policies are enabled",
+  "CheckTitle": "At least one Conditional Access policy enforces Identity Protection user risk for high-risk users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that Identity Protection user risk policies are enabled to detect and respond to high risk potential account compromises.",
-  "Risk": "Without Identity Protection user risk policies enabled, compromised accounts may go undetected, allowing attackers to exploit breached credentials and gain unauthorized access. The absence of automated responses to user risk levels increases the likelihood of security incidents, such as data breaches or privilege escalation.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra Conditional Access** has a **user risk-based policy** that targets `All` users and `All` applications, evaluates `High` user risk, and actively enforces controls requiring both **multifactor authentication** and a **secure password change** with an `AND` condition.",
+  "Risk": "Without an active `High` user-risk policy that forces **MFA** and secure password reset, compromised identities can persist, enabling data exfiltration, tampering, and privilege escalation. Report-only mode or narrow scope leaves gaps, undermining confidentiality and integrity across resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-risk-based-sspr-mfa?WT.mc_id=M365-MVP-6771",
+    "https://derkvanderwoude.medium.com/microsoft-managed-risk-remediation-93dc55c9fa47",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://www.linkedin.com/pulse/safeguarding-your-digital-identity-mitigating-risky-users-nosrati-1j1rf",
+    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies",
+    "https://github.com/MicrosoftLearning/AZ500-AzureSecurityTechnologies/blob/master/Instructions/Archived_Labs/LAB_02_MFAConditionalAccessandMicrosoftEntraIDProtection.md",
+    "https://blog.admindroid.com/top-5-microsoft-entra-id-secure-score-recommendations-to-boost-your-security/",
+    "https://entra.microsoft.com."
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Create a new policy by selecting New policy. 4. Set the following conditions within the policy: Under Users or workload identities choose All users. Under Cloud apps or actions choose All cloud apps. Under Conditions choose User risk then Yes and select the user risk level High. Under Access Controls select Grant then in the right pane click Grant access then select Require multifactor authentication and Require password change. Under Session ensure Sign-in frequency is set to Every time. Click Select. 5. Under Enable policy set it to Report Only until the organization is ready to enable it. 6. Click Create.",
-      "Terraform": ""
+      "Other": "1. Sign in to the Microsoft Entra admin center and go to Protection > Conditional Access > Policies\n2. Click New policy\n3. Users or workload identities: select All users\n4. Target resources (Cloud apps): select All cloud apps\n5. Conditions > User risk: set Configure to Yes and select High\n6. Access controls > Grant: select Grant access, then check Require multifactor authentication and Require password change; set Require all selected controls\n7. Enable policy: On, then click Create",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\"\n\n  conditions {\n    client_app_types = [\"all\"]\n    users {\n      include_users = [\"All\"] # Critical: targets all users\n    }\n    applications {\n      included_applications = [\"All\"] # Critical: applies to all cloud apps\n    }\n    user_risk_levels = [\"high\"] # Critical: enforces on high user risk\n  }\n\n  grant_controls {\n    operator          = \"AND\" # Critical: require all selected controls\n    built_in_controls = [\"mfa\", \"passwordChange\"] # Critical: require MFA and password change\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Identity Protection user risk policies to detect and respond to potential account compromises. Configure Conditional Access policies to enforce MFA or password resets when a high user risk level is detected. Regularly review the Risky Users section to assess potential threats before enforcing strict access controls.",
-      "Url": "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
+      "Text": "Adopt **least privilege** by enabling an active user-risk policy that:\n- covers `All` users and apps (exclude only break-glass)\n- triggers on `High` user risk\n- requires **MFA** and a **secure password change** together\n- reauthenticates risky sessions\n\nPair with sign-in risk policies, ensure MFA registration, and review risky-user reports to validate effectiveness.",
+      "Url": "https://hub.prowler.com/check/entra_identity_protection_user_risk_enabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e5"
   ],
   "DependsOn": [],

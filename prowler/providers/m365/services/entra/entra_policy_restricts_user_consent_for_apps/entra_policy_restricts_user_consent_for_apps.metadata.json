@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_restricts_user_consent_for_apps",
-  "CheckTitle": "Ensure 'User consent for applications' is set to 'Do not allow user consent'",
+  "CheckTitle": "'User consent for applications' is set to 'Do not allow user consent'",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Authorization Policy",
-  "Description": "Require administrators to provide consent for applications before use.",
-  "Risk": "If Microsoft Entra ID is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
-  "RelatedUrl": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
+  "ResourceType": "",
+  "Description": "**Microsoft Entra** tenant settings restrict **user consent to applications**, preventing end users from granting delegated permissions to apps on their behalf. Only **administrator-approved** or policy-allowed consents are permitted.",
+  "Risk": "Allowing end users to grant consent enables **consent phishing** and stealth access to mail, files, and directory data, impacting **confidentiality** and **integrity**. Attackers can obtain long-lived refresh tokens via `offline_access`, persist, and act as the user, evading detection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
+    "https://help.otter.ai/hc/en-us/articles/25641965784343-Microsoft-Need-admin-approval-sign-in-issue",
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent",
+    "https://stackoverflow.com/questions/78023687/azure-entra-id-authentication-requiring-admin-consent",
+    "https://www.codetwo.com/kb/resolving-need-admin-approval-error/",
+    "https://entra.microsoft.com/);",
+    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/enterprise-apps/user-admin-consent-overview.md",
+    "https://www.linkedin.com/pulse/how-manage-users-consent-applications-within-azure-ad-entra-id-alcpf"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az rest --method patch --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --body \"{\\\"defaultUserRolePermissions\\\":{\\\"permissionGrantPoliciesAssigned\\\":[\\\"ManagePermissionGrantsForOwnedResource.DeveloperConsent\\\"]}}\"",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com/); 2. Click to expand Identity > Applications and select Enterprise applications; 3. Under Security select Consent and permissions > User consent settings; 4. Under User consent for applications select Do not allow user consent; 5. Click the Save option at the top of the window.",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > Applications > Enterprise applications\n3. Select Consent and permissions > User consent settings\n4. Under User consent for applications, select Do not allow user consent\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable user consent for applications in the Microsoft Entra admin center. This ensures that end users and group owners cannot grant consent to applications, requiring administrator approval for all future consent operations, thereby reducing the risk of unauthorized access to company data.",
-      "Url": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal"
+      "Text": "Disable broad user consent and require **admin approval** for app permissions. If consent is needed, allow only **verified publishers** and low-impact scopes via app consent policies, and enable the **admin consent workflow**. Apply **least privilege**, review grants, and revoke unused consents regularly.",
+      "Url": "https://hub.prowler.com/check/entra_policy_restricts_user_consent_for_apps"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

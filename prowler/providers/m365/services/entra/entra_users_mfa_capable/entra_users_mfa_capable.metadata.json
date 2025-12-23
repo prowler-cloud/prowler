@@ -1,29 +1,36 @@
 {
   "Provider": "m365",
   "CheckID": "entra_users_mfa_capable",
-  "CheckTitle": "Ensure all users are MFA capable",
+  "CheckTitle": "Entra user is MFA capable",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure all users are being registered and enabled for multifactor authentication.",
-  "Risk": "Users who are not MFA capable are more vulnerable to account compromise, as they may rely solely on single-factor authentication (typically a password), which can be easily phished or cracked.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Microsoft Entra users have a registered and enabled **multifactor authentication** method (`MFA capable`). The evaluation targets enabled accounts and identifies those lacking any usable second factor.",
+  "Risk": "Without **MFA**, accounts are vulnerable to **phishing**, **password spraying**, and credential reuse, enabling takeover. Attackers can access mail and files, change settings, and move laterally, harming **confidentiality**, **integrity**, and **availability** of M365 resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userdevicesettings",
+    "https://www.cisa.gov/resources-tools/services/m365-entra-id",
+    "https://azure.microsofts.workers.dev/en-us/entra/identity/authentication/howto-mfa-userstates",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "New-MgUserAuthenticationPhoneMethod -UserId <USER_UPN> -PhoneType mobile -PhoneNumber \"+15555550100\"",
       "NativeIaC": "",
-      "Other": "Remediation steps will depend on the status of the personnel in question or configuration of Conditional Access policies. Administrators should review each user identified on a case-by-case basis.",
+      "Other": "1. In the Microsoft Entra admin center, go to Entra ID > Users\n2. Select the user marked as not MFA capable\n3. Select Authentication methods > + Add authentication method\n4. Choose Phone number, enter the number in E.164 format (e.g., +15555550100), and select Add\n5. Repeat for each failing user",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure all member users are MFA capable by registering and enabling a strong authentication method that complies with the organization's authentication policy. Regularly review user status to detect gaps in MFA deployment and correct misconfigurations.",
-      "Url": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
+      "Text": "Enforce **MFA** for all enabled users, prioritizing **phishing-resistant** methods (`FIDO2`/`passkeys`/`CBA`) and limiting `SMS`/`voice`. Apply least privilege and require MFA for privileged roles. Require registration during onboarding and routinely review coverage to sustain defense-in-depth.",
+      "Url": "https://hub.prowler.com/check/entra_users_mfa_capable"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],
