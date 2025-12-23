@@ -1,29 +1,35 @@
 {
   "Provider": "gcp",
   "CheckID": "apikeys_key_rotated_in_90_days",
-  "CheckTitle": "Ensure API Keys Are Rotated Every 90 Days",
+  "CheckTitle": "API key was created within the last 90 days",
   "CheckType": [],
   "ServiceName": "apikeys",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "API Key",
-  "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. If they are in use it is recommended to rotate API keys every 90 days.",
-  "Risk": "Once a Google Cloud API key is compromised, it can be used indefinitely unless the project owner revokes or regenerates that key.",
+  "ResourceType": "apikeys.googleapis.com/Key",
+  "Description": "**Google Cloud API keys** are evaluated for **rotation age** using their `creation_time`. Keys created within the last `90` days are treated as recently rotated; keys older than `90` days are treated as overdue.",
+  "Risk": "Stale, long-lived **API keys** are **bearer tokens** without IAM context. If exposed, attackers can invoke allowed APIs, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and quota/billing abuse or disruption (**availability**). Lack of rotation prolongs misuse.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/docs/authentication/api-keys",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudAPI/rotate-api-keys.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudAPI/rotate-api-keys.html",
+      "Other": "1. In the Google Cloud Console, go to APIs & Services > Credentials\n2. Under API keys, click the key older than 90 days\n3. Click Rotate key, then click Create to generate the new key\n4. Copy the new key string and update your applications to use it\n5. In the Previous key section, click Delete the previous key\n6. Repeat for any remaining API keys older than 90 days until only keys created within 90 days remain",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that all your Google Cloud API keys are regularly regenerated (rotated) in order to meet security and compliance requirements. By default, it is recommended to rotate keys every 90 days. Google Cloud Platform (GCP) API keys are simple, encrypted strings that can be used when calling specific APIs that don't need to access private user data. API keys are typically used to track API requests associated with your GCP project for quota and billing. Rotating GCP API keys will substantially reduce the window of opportunity for exploits and ensure that data can't be accessed with an outdated key that might have been lost, cracked, or stolen.",
-      "Url": "https://cloud.google.com/docs/authentication/api-keys"
+      "Text": "Rotate API keys at least every `90` days. Prefer **service accounts** or OAuth with short-lived credentials. Enforce **API** and **application/IP restrictions**. Store keys in a **secrets manager**, avoid client-side embedding, and monitor usage. Apply **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apikeys_key_rotated_in_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
