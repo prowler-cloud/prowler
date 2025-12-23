@@ -1,31 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "controllermanager_root_ca_file_set",
-  "CheckTitle": "Ensure that the --root-ca-file argument is set as appropriate",
+  "CheckTitle": "Controller Manager pod has --root-ca-file argument set",
   "CheckType": [],
   "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesControllerManager",
-  "Description": "This check verifies that the Kubernetes Controller Manager is configured with the --root-ca-file argument set to a certificate bundle file, allowing pods to verify the API server's serving certificate.",
-  "Risk": "Not setting the root CA file can expose pods to man-in-the-middle attacks due to unverified TLS connections to the API server.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Controller Manager** uses `--root-ca-file` to reference a certificate bundle so pods get a `ca.crt` for validating the API server's TLS certificate.",
+  "Risk": "Without a configured root CA, pods cannot reliably verify the API server, enabling on-path spoofing. This exposes API traffic and service account tokens, allowing session hijack, data exfiltration, and malicious config changes-compromising confidentiality and integrity, and potentially disrupting availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/setup/best-practices/certificates/",
+    "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--root-ca-file=/path/to/ca-file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to a control-plane node with sudo privileges\n2. Edit the static Pod manifest: /etc/kubernetes/manifests/kube-controller-manager.yaml\n3. In the kube-controller-manager container command list, add this flag:\n   - --root-ca-file=/etc/kubernetes/pki/ca.crt\n4. Save the file; kubelet will automatically restart the Pod",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the Controller Manager with a root CA file to enhance security for pods communicating with the API server.",
-      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+      "Text": "Set a trusted CA bundle via `--root-ca-file` on the controller manager to ensure verified TLS for in-cluster API calls. Use a cluster-controlled CA, rotate and monitor certificates, and keep the bundle aligned with the API server chain. Apply **defense in depth** and **least privilege** for service accounts.",
+      "Url": "https://hub.prowler.com/check/controllermanager_root_ca_file_set"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,30 +1,38 @@
 {
   "Provider": "kubernetes",
   "CheckID": "controllermanager_disable_profiling",
-  "CheckTitle": "Ensure that the --profiling argument is set to false",
+  "CheckTitle": "Controller Manager pod has --profiling=false configured",
   "CheckType": [],
   "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesControllerManager",
-  "Description": "This check ensures that profiling is disabled in the Kubernetes Controller Manager, reducing the potential attack surface.",
-  "Risk": "Enabling profiling can expose detailed system and program information, which could be exploited if accessed by unauthorized users.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Controller Manager** is evaluated for the `--profiling` argument. `--profiling=false` disables runtime profiling; absence or a different value means profiling is enabled.",
+  "Risk": "With profiling enabled, debug endpoints expose **runtime internals** (stacks, memory, file paths), weakening confidentiality. Abusing profiling can raise CPU/memory use and degrade **availability**. Detailed insights accelerate reconnaissance and can aid escalation when combined with RBAC gaps.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://hub.armosec.io/docs/c-0145",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options",
+    "https://docs.kics.io/1.7.2/queries/kubernetes-queries/2f491173-6375-4a84-b28e-a4e2b9a58a69/",
+    "https://www.nbtechsupport.co.in/2024/05/kodekloud-kubernetes-security-cks-lab.html",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
+    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control plane node\n2. Open /etc/kubernetes/manifests/kube-controller-manager.yaml\n3. Under spec.containers[0].command add the line: - --profiling=false\n4. Save the file; kubelet will automatically restart the static Pod\n5. Verify on the node: ps -ef | grep kube-controller-manager | grep -- --profiling=false",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable profiling in the Kubernetes Controller Manager for enhanced security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options"
+      "Text": "Set `--profiling=false` on the **controller manager** to remove debug endpoints.\n\n*If profiling is needed temporarily*:\n- Limit access using **least privilege** and network controls\n- Use isolated environments and monitor closely\n- Disable promptly to uphold **defense in depth**",
+      "Url": "https://hub.prowler.com/check/controllermanager_disable_profiling"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
