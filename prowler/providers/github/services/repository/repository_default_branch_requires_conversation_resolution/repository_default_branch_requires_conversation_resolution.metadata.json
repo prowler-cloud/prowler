@@ -1,29 +1,40 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_requires_conversation_resolution",
-  "CheckTitle": "Check if repository requires conversation resolution before merging",
+  "CheckTitle": "Repository default branch requires conversation resolution before merging",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that the repository requires conversation resolution before merging.",
-  "Risk": "Leaving comments unresolved before merging code can lead to overlooked issues, including potential bugs or security vulnerabilities, that might affect the quality and security of the codebase. Unaddressed concerns could result in a lower quality of code, increasing the risk of production failures or breaches.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-conversation-resolution-before-merging",
+  "ResourceType": "",
+  "Description": "Repository default branch uses branch protection to require **conversation resolution** on pull requests (`Require conversation resolution before merging`).",
+  "Risk": "Unresolved threads let code with known concerns reach default, weakening **integrity** and **confidentiality**. Insecure changes or secrets may ship, enabling injection, auth bypass, or data exposure. **Availability** can suffer from regressions; review accountability is reduced.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://medium.com/@techeazy.consulting/github-branch-protection-rules-why-and-how-to-use-them-07ecfdb003cf",
+    "https://www.graphite.com/guides/how-to-set-up-branch-protection-rules-github",
+    "https://best.openssf.org/SCM-BestPractices/github/repository/no_conversation_resolution.html",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+    "https://github.com/orgs/community/discussions/127070",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-conversation-resolution-before-merging"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PUT repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection/required_conversation_resolution -f enabled=true",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, go to the repository > Settings\n2. Click Branches\n3. Edit the branch protection rule for the default branch (e.g., main)\n4. Check \"Require conversation resolution before merging\"\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"github_branch_protection\" \"<example_resource_name>\" {\n  repository_id = \"<example_resource_name>\"\n  pattern       = \"<default_branch_name>\"\n\n  require_conversation_resolution = true # Critical: require all PR conversations to be resolved before merge\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that all comments in a code change proposal are resolved before merging. This guarantees that every reviewer’s concern is addressed, improving code quality and security by preventing issues from being ignored or overlooked.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+      "Text": "Enable `Require conversation resolution before merging` on the default branch.\n\nAlso enforce:\n- Required approvals and CI checks\n- **CODEOWNERS** on critical paths\n- **Least privilege** for merge rights\n- Apply rules to admins to prevent bypass",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_requires_conversation_resolution"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

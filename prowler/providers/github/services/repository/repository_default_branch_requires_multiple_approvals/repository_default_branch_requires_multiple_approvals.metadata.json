@@ -1,29 +1,36 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_requires_multiple_approvals",
-  "CheckTitle": "Check if repositories require at least 2 code changes approvals",
+  "CheckTitle": "Repository default branch requires at least 2 approvals for code changes",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
-  "Severity": "high",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that repositories require at least 2 code changes approvals before merging a pull request.",
-  "Risk": "If repositories do not require at least 2 code changes approvals before merging a pull request, it is possible that code changes are not being reviewed by multiple people, which could lead to the introduction of bugs or security vulnerabilities.",
-  "RelatedUrl": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/approving-a-pull-request-with-required-reviews",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "Repository default branch enforces **required reviews** with a minimum of `2` approving reviews before a pull request can be merged.\n\nAssesses whether an approval threshold of at least `2` is configured for code changes targeting the default branch.",
+  "Risk": "Without multi-review approval on the default branch, a single actor can merge changes, degrading **integrity** and **accountability**. This enables:\n- supply-chain tampering or backdoors\n- introduction of exploitable bugs\n- bypass of change control via compromised accounts",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/approving-a-pull-request-with-required-reviews",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PUT repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection -F required_status_checks=null -F enforce_admins=false -F restrictions=null -F required_pull_request_reviews.required_approving_review_count=2",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and go to Settings > Branches\n2. Under Branch protection rules, click Add rule (or Edit for the default branch rule)\n3. Set Branch name pattern to the default branch (e.g., main)\n4. Check Require a pull request before merging\n5. Set Require approvals to 2\n6. Click Create/Save to apply",
+      "Terraform": "```hcl\nresource \"github_branch_protection\" \"<example_resource_name>\" {\n  repository_id = \"<example_resource_name>\"\n  pattern       = \"<DEFAULT_BRANCH>\"\n\n  required_pull_request_reviews {\n    required_approving_review_count = 2 # Enforces at least 2 approvals before merging into the default branch\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To require at least 2 code changes approvals before merging a pull request, navigate to the repository settings, click on 'Branches', and then 'Add rule'.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging"
+      "Text": "Enforce the **four-eyes principle** by requiring at least `2` approvals for merges to the default branch.\n\nStrengthen with **separation of duties** using code owner reviews, dismiss stale approvals, apply protections to admins, and pair with required status checks for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_requires_multiple_approvals"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "ci-cd",
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

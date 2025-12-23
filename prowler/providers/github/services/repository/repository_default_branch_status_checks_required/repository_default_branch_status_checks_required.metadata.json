@@ -1,29 +1,40 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_status_checks_required",
-  "CheckTitle": "Check if repository enforces status checks to pass",
+  "CheckTitle": "Repository default branch requires status checks",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "GithubRepository",
-  "Description": "Ensure that the repository enforces status checks to pass before merging code into the main branch.",
-  "Risk": "Merging code without requiring all checks to pass increases the risk of introducing bugs, vulnerabilities, or unstable changes into the codebase. This can compromise the quality, security, and functionality of the application.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
+  "ResourceType": "",
+  "Description": "**GitHub repository default branch** uses **required status checks**, indicating whether merges are gated by successful check results on pull requests",
+  "Risk": "Without required checks, unvetted commits can be merged, degrading code **integrity** and **availability**. Skipped or failing validations may introduce vulnerable dependencies, break builds, or allow malicious code, enabling supply-chain compromise and rapid propagation to production.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
+    "https://dev.to/bobbyg603/github-status-checks-and-branch-protection-made-easy-2cnf",
+    "https://medium.com/picus-security-engineering/how-to-handle-cancelable-github-actions-which-require-status-checks-to-pass-before-merging-63545083da4e",
+    "https://stackoverflow.com/questions/76948223/github-require-specific-checks-to-pass-before-merging",
+    "https://docs.gearset.com/en/articles/2437757-managing-status-check-rules-in-github",
+    "https://graphite.com/guides/mandatory-pull-request-checks-and-requirements-in-github"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PATCH repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection/required_status_checks -f strict=false -F contexts[]=<CHECK_NAME>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, go to the repository > Settings > Branches\n2. Next to Branch protection rules, click Add rule (or Edit for the default branch rule)\n3. Set Branch name pattern to your default branch (e.g., main)\n4. Check Require status checks to pass before merging\n5. In the list, select at least one check (e.g., your CI workflow)\n6. Click Create (or Save changes)",
+      "Terraform": "```hcl\nresource \"github_branch_protection_v3\" \"<example_resource_name>\" {\n  repository_id = \"<example_repository_id>\"\n  pattern       = \"<DEFAULT_BRANCH>\"\n\n  required_status_checks {\n    strict   = false\n    contexts = [\"<CHECK_NAME>\"] # Critical: requires this status check to pass before merging\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Require all predefined status checks to pass successfully before allowing code changes to be merged. This ensures that all quality, stability, and security conditions are met, reducing the likelihood of errors or vulnerabilities being introduced into the project.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+      "Text": "Enforce branch protection to require **status checks** on the default branch.\n- Gate merges on build, tests, and security scans\n- Use `require up-to-date` behavior to reduce integration risk\n- Apply to admins and limit bypasses\n- Combine with **least privilege** and required reviews for defense in depth",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_status_checks_required"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "ci-cd"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

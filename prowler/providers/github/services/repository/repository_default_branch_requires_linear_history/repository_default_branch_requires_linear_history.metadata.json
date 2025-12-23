@@ -1,29 +1,35 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_requires_linear_history",
-  "CheckTitle": "Check if repository default branch requires linear history",
+  "CheckTitle": "Repository default branch requires linear history",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "GithubRepository",
-  "Description": "Ensure that the repository default branch requires linear history.",
-  "Risk": "Allowing non-linear history can result in a cluttered and difficult-to-trace Git history, making it harder to identify specific changes, debug issues, and understand the sequence of development. This increases the risk of errors, inconsistencies, and bugs, especially in production environments.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-linear-history",
+  "Severity": "low",
+  "ResourceType": "",
+  "Description": "**Repository default branch** enforces `Require linear history`, blocking merge commits and allowing only `squash` or `rebase` merges",
+  "Risk": "Without a **linear history**, commit provenance is harder to verify, weakening **integrity** and **accountability**.\n\nMerge commits can obscure diffs entering the default branch, hindering audits and rollbacks, enabling unnoticed **malicious or unreviewed code**, and delaying incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-linear-history",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -X PUT -H \"Authorization: Bearer <TOKEN>\" -H \"Accept: application/vnd.github+json\" -H \"Content-Type: application/json\" https://api.github.com/repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection -d '{\"required_status_checks\":null,\"enforce_admins\":false,\"required_pull_request_reviews\":null,\"restrictions\":null,\"required_linear_history\":true}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, go to the repository > Settings > Branches\n2. If a rule exists for the default branch, click Edit; otherwise click Add rule and set Branch name pattern to the default branch (e.g., main)\n3. Check Require linear history\n4. Click Create (or Save changes)",
+      "Terraform": "```hcl\nresource \"github_branch_protection\" \"<example_resource_name>\" {\n  repository_id          = \"<example_repository_id>\"\n  pattern                = \"<DEFAULT_BRANCH>\"\n  require_linear_history = true # Critical: enforces linear history on the default branch\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enforce a linear history by requiring rebase or squash merges for pull requests. This will create a clean, chronological commit history, making it easier to track changes, revert modifications, and troubleshoot any issues that arise.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+      "Text": "Enable `Require linear history` on the default branch and allow only `squash` or `rebase` merges.\n\nReinforce with **branch protection**: require pull requests and reviews, **status checks**, and **signed commits**. Limit bypass to trusted roles (least privilege) to preserve **traceability** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_requires_linear_history"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,29 +1,35 @@
 {
   "Provider": "github",
   "CheckID": "repository_public_has_securitymd_file",
-  "CheckTitle": "Check if public repositories have a SECURITY.md file",
+  "CheckTitle": "Public repository has a SECURITY.md file",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "GitHubRepository",
-  "Description": "Ensure that public repositories have a SECURITY.md file",
-  "Risk": "Not having a SECURITY.md file in a public repository may lead to security vulnerabilities being overlooked by users and contributors.",
-  "RelatedUrl": "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository",
+  "ResourceType": "",
+  "Description": "**Public repositories** include a `SECURITY.md` policy file that tells researchers how to report vulnerabilities. The evaluation focuses on the presence of this file in public repositories.",
+  "Risk": "Without **SECURITY.md**, reporters may use public issues or ad-hoc channels, causing premature disclosure or missed reports. This widens the exploit window and impacts **confidentiality** (leaked details), **integrity** (unauthorized changes), and **availability** (DoS from unpatched flaws).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository",
+    "https://github.blog/changelog/2019-05-23-security-policy/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gh api -X PUT repos/<OWNER>/<REPO>/contents/.github/SECURITY.md -f message='Add SECURITY.md' -f content='UmVwb3J0IHZ1bG5lcmFiaWxpdGllcyB0byBzZWN1cml0eUBleGFtcGxlLmNvbQo='",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the target repository\n2. Click Security > Policy (under Reporting)\n3. Click Start setup\n4. Add minimal instructions (e.g., how to report vulnerabilities)\n5. Click Commit changes to create SECURITY.md",
+      "Terraform": "```hcl\nresource \"github_repository_file\" \"security_md\" {\n  repository = \"<example_resource_name>\"\n  file       = \".github/SECURITY.md\"  # Critical: ensures SECURITY.md exists in a recognized location\n  content    = \"Report vulnerabilities to security@example.com\"  # Critical: creates the file so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Add a SECURITY.md file to the root of the repository. The file should contain information on how to report a security vulnerability, the security policy of the repository, and any other relevant information.",
-      "Url": "https://github.blog/changelog/2019-05-23-security-policy/"
+      "Text": "Publish a clear `SECURITY.md` for each public repo or an org default. Include private reporting channels, optional encryption keys, scope/supported versions, disclosure timelines, and safe-harbor terms. Link to any bounty program and review regularly. Align with **accountability** and **defense in depth** principles.",
+      "Url": "https://hub.prowler.com/check/repository_public_has_securitymd_file"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

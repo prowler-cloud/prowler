@@ -1,29 +1,35 @@
 {
   "Provider": "github",
   "CheckID": "repository_default_branch_disallows_force_push",
-  "CheckTitle": "Check if repository denies force push",
+  "CheckTitle": "Repository default branch denies force pushes",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "GithubRepository",
-  "Description": "Ensure that the repository denies force push to protected branches.",
-  "Risk": "Permitting force pushes to branches can lead to accidental or intentional overwrites of the commit history, resulting in potential data loss, code inconsistencies, or the introduction of malicious changes. This compromises the stability and security of the repository.",
-  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-force-pushes",
+  "ResourceType": "",
+  "Description": "**GitHub repository default branch** blocks **force pushes** through branch protection.\n\nEvaluates whether the default branch permits force pushes.",
+  "Risk": "Allowing **force pushes on the default branch** erodes **integrity** and **auditability** by enabling history rewrites and deletion of commits. Attackers or insiders can inject unreviewed code, bypass reviews and status checks, and corrupt PRs, risking supply-chain compromise and reduced **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-force-pushes"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In GitHub, open the repository and go to Settings\n2. In the sidebar, click Branches\n3. Edit the protection rule for the default branch (or Add rule with the default branch name)\n4. Ensure Allow force pushes is unchecked/disabled\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"github_branch_protection_v3\" \"<example_resource_name>\" {\n  repository_id       = \"<example_resource_id>\"\n  pattern             = \"<default_branch_name>\"\n\n  allows_force_pushes = false # Critical: disallows force pushes on the default branch\n}\n```"
     },
     "Recommendation": {
-      "Text": "Disable force pushes on protected branches to preserve the commit history and ensure the integrity of the repository. This measure helps prevent unintentional data loss and protects the repository from malicious changes.",
-      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+      "Text": "Disable `Allow force pushes` on the default branch. Enforce PR-based changes with required reviews and status checks, require signed commits and linear history, and restrict bypass to minimal actors. Apply protections to admins too to uphold **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_disallows_force_push"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
