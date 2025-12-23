@@ -1,29 +1,36 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "clusters_tls_enabled",
-  "CheckTitle": "Ensure MongoDB Atlas clusters have TLS authentication required",
+  "CheckTitle": "MongoDB Atlas cluster has TLS authentication enabled",
   "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "MongoDBAtlasCluster",
-  "Description": "Ensure MongoDB Atlas clusters have TLS authentication required to secure data in transit",
-  "Risk": "Without TLS enabled, MongoDB Atlas clusters are vulnerable to man-in-the-middle attacks and data interception during transmission",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas clusters** require **TLS/SSL** for client connections to encrypt data in transit (`sslEnabled=true`).",
+  "Risk": "Without enforced **TLS**, traffic can be intercepted or altered, degrading **confidentiality** and **integrity**.\n\nAttackers can run **man-in-the-middle** attacks, steal credentials or session tokens, and inject/replay queries, leading to unauthorized data access.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mongodb.com/docs/atlas/setup-cluster-security/#encryption-in-transit",
+    "https://www.mongodb.com/docs/compass/connect/advanced-connection-options/tls-ssl-connection/",
+    "https://www.mongodb.com/docs/manual/tutorial/configure-ssl-clients/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -u \"<PUBLIC_KEY>:<PRIVATE_KEY>\" --digest -H \"Content-Type: application/json\" -X PATCH \"https://cloud.mongodb.com/api/atlas/v1.5/groups/<PROJECT_ID>/clusters/<CLUSTER_NAME>\" --data '{\"sslEnabled\": true}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to MongoDB Atlas and open the target project\n2. Go to Project Settings > Security\n3. Set Minimum TLS Protocol Version to TLS 1.2 (or higher)\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable TLS for MongoDB Atlas clusters by setting sslEnabled to true in the cluster configuration.",
-      "Url": "https://www.mongodb.com/docs/atlas/setup-cluster-security/#encryption-in-transit"
+      "Text": "Enforce **TLS 1.2+** for all connections and keep it mandatory (`sslEnabled=true`).\n\nApply **zero trust** and **defense in depth**: use CA-signed certificates, disable `tlsInsecure` and similar bypasses, rotate certificates, and restrict access via private networking or trusted IP ranges.",
+      "Url": "https://hub.prowler.com/check/clusters_tls_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

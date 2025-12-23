@@ -1,29 +1,40 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "clusters_backup_enabled",
-  "CheckTitle": "Ensure MongoDB Atlas clusters have backup enabled",
+  "CheckTitle": "MongoDB Atlas cluster has backup enabled",
   "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "MongoDBAtlasCluster",
-  "Description": "Ensure MongoDB Atlas clusters have backup enabled to protect against data loss",
-  "Risk": "Without backup enabled, MongoDB Atlas clusters are vulnerable to data loss in case of failures, corruption, or accidental deletion",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas clusters** have **automated backups** enabled (`cloudBackup`/`backup_enabled`) to generate snapshots and support restore operations",
+  "Risk": "Without **backups**, deleted or corrupted records are irrecoverable, undermining **integrity**. Failures or bad deployments can cause prolonged **unavailability** with no restore path. Lacking **point-in-time recovery** prevents precise rollbacks, amplifying the blast radius of mistakes or ransomware.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://mongodb.prakticum-team.ru/docs/atlas/recover-pit-continuous-cloud-backup/",
+    "https://studio3t.com/knowledge-base/articles/mongodb-atlas-pricing/",
+    "https://www.pulumi.com/registry/packages/mongodbatlas/api-docs/cluster/",
+    "https://mongodb.prakticum-team.ru/docs/atlas/backup/cloud-backup/dedicated-cluster-backup/",
+    "https://www.wenjiangs.com/wiki/mongodb/en-US/atlas/backup/legacy-backup/overview",
+    "https://www.mongodb.com/docs/atlas/cli/v1.38/command/atlas-backups-compliancepolicy-pointintimerestores-enable/",
+    "https://www.mongodb.com/docs/atlas/backup-restore-cluster/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "curl -sS -u \"<PUBLIC_KEY>:<PRIVATE_KEY>\" --digest -H \"Content-Type: application/json\" -X PATCH \"https://cloud.mongodb.com/api/atlas/v1.0/groups/<PROJECT_ID>/clusters/<CLUSTER_NAME>\" --data '{\"cloudBackup\":true}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Sign in to MongoDB Atlas and open your project\n2. Go to Database > Clusters\n3. For the target cluster, click the three dots (...) > Edit Configuration\n4. Under Additional Settings, toggle Cloud Backup to On\n5. Click Save Changes",
+      "Terraform": "```hcl\nresource \"mongodbatlas_cluster\" \"<example_resource_name>\" {\n  project_id = \"<example_resource_id>\"\n  name       = \"<example_resource_name>\"\n\n  cloud_backup = true  # Critical: enables Cloud Backups so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable backup for MongoDB Atlas clusters by setting backupEnabled to true in the cluster configuration.",
-      "Url": "https://www.mongodb.com/docs/atlas/backup-restore-cluster/"
+      "Text": "Enable **Cloud Backups** on all production clusters and define backup schedules and retention that meet business **RPO/RTO**. For critical data, enable **point-in-time recovery**. Apply **least privilege** and **separation of duties** to backup access, protect against deletion with policy, monitor backup health, and perform regular test restores.",
+      "Url": "https://hub.prowler.com/check/clusters_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

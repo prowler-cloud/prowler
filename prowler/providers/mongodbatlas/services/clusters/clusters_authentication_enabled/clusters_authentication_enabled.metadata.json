@@ -1,29 +1,39 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "clusters_authentication_enabled",
-  "CheckTitle": "Ensure MongoDB Atlas clusters have authentication enabled",
+  "CheckTitle": "MongoDB Atlas cluster has authentication enabled",
   "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "MongoDBAtlasCluster",
-  "Description": "Ensure MongoDB Atlas clusters have authentication enabled to prevent unauthorized access",
-  "Risk": "Without authentication enabled, MongoDB Atlas clusters may be vulnerable to unauthorized access, potentially exposing sensitive data or allowing malicious actions",
+  "Severity": "critical",
+  "ResourceType": "",
+  "Description": "**MongoDB Atlas clusters** enforce **database authentication** for client connections (`authEnabled`).\n\nIdentifies clusters where authentication is not required for access.",
+  "Risk": "Without authentication, anyone with network reach can access the database, compromising **confidentiality** and **integrity**. Attackers can exfiltrate data, modify or delete records, and create backdoor users, leading to outages and data loss that impact **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://makerpgs.com/how-do-you-configure-a-secure-mongodb-atlas-cluster-for-production-use.php",
+    "https://www.mongodb.com/docs/atlas/security/quick-start/",
+    "https://www.mongodb.com/docs/atlas/security-ldaps-okta/",
+    "https://www.mongodb.com/docs/atlas/security/config-db-auth/",
+    "https://www.mongodb.com/docs/atlas/security-ldaps-onelogin/",
+    "https://www.mongodb.com/docs/atlas/security-ldaps-azure/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.mongodb.com/docs/atlas/security/config-db-auth/",
-      "Terraform": ""
+      "CLI": "atlas dbusers create --username <USERNAME> --password <PASSWORD> --role readWriteAnyDatabase@admin --projectId <PROJECT_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: create a Database User to enable authentication\nResources:\n  ExampleDatabaseUser:\n    Type: MongoDB::Atlas::DatabaseUser  # Critical: creating a DB user enables auth for the cluster\n    Properties:\n      ProjectId: <example_resource_id>\n      Username: <example_resource_name>\n      Password: <PASSWORD>\n      DatabaseName: admin\n      Roles:\n        - RoleName: readWriteAnyDatabase\n          DatabaseName: admin\n# The DatabaseUser resource is the minimal change required to pass the check\n```",
+      "Other": "1. In the Atlas UI, open your project and go to Security > Database Access\n2. Click Add New Database User\n3. Select Username/Password, enter a username and password\n4. Assign a role (e.g., readWriteAnyDatabase on admin)\n5. Click Add User to save\n\nThis creates a database user, enabling authentication for the cluster",
+      "Terraform": "```hcl\n# Create a MongoDB Atlas database user to enable authentication\nresource \"mongodbatlas_database_user\" \"example_resource_name\" {\n  project_id         = \"<example_resource_id>\"\n  username           = \"<example_resource_name>\"\n  password           = \"<PASSWORD>\"\n  auth_database_name = \"admin\"  # Critical: SCRAM user on admin enables DB auth\n\n  roles {                         # Minimal role assignment required to create the user\n    role_name     = \"readWriteAnyDatabase\"\n    database_name = \"admin\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable authentication for MongoDB Atlas clusters by setting authEnabled to true in the cluster configuration.",
-      "Url": "https://www.mongodb.com/docs/atlas/security/config-db-auth/"
+      "Text": "Enable and enforce **database authentication** on all clusters.\n- Prefer strong methods (X.509, OIDC, AWS IAM) over static passwords\n- Grant **least privilege** roles and avoid shared accounts\n- Rotate credentials/keys\n- Combine with IP access lists or private endpoints for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/clusters_authentication_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
