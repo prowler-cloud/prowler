@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [5.17.0] (Prowler UNRELEASED)
 
 ### Added
@@ -28,7 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> be759216c (fix(compliance): handle ZeroDivision error from Prowler ThreatScore (#9653))
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
