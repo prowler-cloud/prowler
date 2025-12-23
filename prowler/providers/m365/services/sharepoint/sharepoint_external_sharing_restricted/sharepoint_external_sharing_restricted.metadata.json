@@ -1,29 +1,36 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_external_sharing_restricted",
-  "CheckTitle": "Ensure external content sharing is restricted.",
+  "CheckTitle": "SharePoint organization external sharing is set to Existing guests only, New and existing guests, or Disabled",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Sharepoint Settings",
-  "Description": "Ensure that external sharing settings in SharePoint are restricted to 'New and existing guests' or a less permissive level to enforce authentication and control over shared content.",
-  "Risk": "If external sharing is not restricted, unauthorized users may gain access to sensitive information, increasing the risk of data breaches and compliance violations.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+  "ResourceType": "",
+  "Description": "**SharePoint Online** org-wide external sharing is evaluated to ensure it excludes anonymous 'Anyone' links and is restricted to **authenticated guests** via `ExternalUserSharingOnly`, `ExistingExternalUserSharingOnly`, or fully `Disabled`.",
+  "Risk": "Anonymous or overly permissive sharing enables uncontrolled link access, eroding **confidentiality** and accountability. With edit links, **integrity** can be altered by unknown parties. Forwarded links and caching complicate revocation, increasing **data exfiltration** and long-lived exposure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps",
+    "https://admin.microsoft.com/sharepoint."
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-SPOTenant -SharingCapability ExternalUserSharingOnly",
       "NativeIaC": "",
-      "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint. 2. Click to expand Policies > Sharing. 3. Locate the External sharing section. 4. Under SharePoint, move the slider bar to 'New and existing guests' or a less permissive level.",
+      "Other": "1. Go to the Microsoft 365 admin center > Admin centers > SharePoint\n2. Navigate to Policies > Sharing\n3. Under External sharing for SharePoint, select New and existing guests (or a more restrictive option: Existing guests only or Only people in your organization)\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict external sharing in SharePoint to 'New and existing guests' or a more restrictive setting to enhance security.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
+      "Text": "Set org-level sharing to `ExternalUserSharingOnly` or stricter (`ExistingExternalUserSharingOnly`/`Disabled`). Apply **least privilege** with default links scoped to `SpecificPeople`, enforce Microsoft Entra B2B guest authentication, limit domains, require link expiration, block guest resharing, and monitor via audit logs.",
+      "Url": "https://hub.prowler.com/check/sharepoint_external_sharing_restricted"
     }
   },
   "Categories": [
+    "internet-exposed",
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],
