@@ -55,16 +55,9 @@ class Bedrock(AWSService):
     def _list_guardrails(self, regional_client):
         logger.info("Bedrock - Listing Guardrails...")
         try:
-            next_token = None
-            # Pagination loop: iterate while there is a nextToken to retrieve all guardrails across pages
-            while True:
-                kwargs = {}
-                if next_token:
-                    kwargs["nextToken"] = next_token
-
-                # List guardrails with current token (if textToken is None, it fetches the first page)
-                response = regional_client.list_guardrails(**kwargs)
-                for guardrail in response.get("guardrails", []):
+            paginator = regional_client.get_paginator('list_guardrails')
+            for page in paginator.paginate():
+                for guardrail in page.get("guardrails", []):
                     if not self.audit_resources or (
                         is_resource_filtered(guardrail["arn"], self.audit_resources)
                     ):
@@ -74,11 +67,6 @@ class Bedrock(AWSService):
                             arn=guardrail["arn"],
                             region=regional_client.region,
                         )
-                # Get next token for subsequent page
-                next_token = response.get("nextToken")
-                # Break if no more pages are available
-                if not next_token:
-                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -144,16 +132,9 @@ class BedrockAgent(AWSService):
     def _list_agents(self, regional_client):
         logger.info("Bedrock Agent - Listing Agents...")
         try:
-            next_token = None
-            # Pagination loop: iterate while there is a nextToken to retrieve all agents across pages
-            while True:
-                kwargs = {}
-                if next_token:
-                    kwargs["nextToken"] = next_token
-
-                # List agents with current token (if textToken is None, it fetches the first page)
-                response = regional_client.list_agents(**kwargs)
-                for agent in response.get("agentSummaries", []):
+            paginator = regional_client.get_paginator('list_agents')
+            for page in paginator.paginate():
+                for agent in page.get("agentSummaries", []):
                     agent_arn = f"arn:aws:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(agent_arn, self.audit_resources)
@@ -167,11 +148,6 @@ class BedrockAgent(AWSService):
                             ),
                             region=regional_client.region,
                         )
-                # Get next token for subsequent page
-                next_token = response.get("nextToken")
-                # Break if no more pages are available
-                if not next_token:
-                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
