@@ -1,26 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_maxsize_set",
-  "CheckTitle": "Ensure that the --audit-log-maxsize argument is set to 100 or as appropriate",
+  "CheckTitle": "API server pod has --audit-log-maxsize set to 100 MB or the configured value",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with an appropriate audit log file size limit. Setting --audit-log-maxsize to 100 MB or as per business requirements helps manage the size of log files and prevents them from growing excessively large.",
-  "Risk": "Without an appropriate audit log file size limit, log files can grow excessively large, potentially leading to storage issues and difficulty in log analysis.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** uses `--audit-log-maxsize` to cap audit log files. The check expects `100 MB` or a policy-approved value, indicating rotation occurs when a log reaches that size.",
+  "Risk": "Absent a proper cap, audit logs can grow unchecked, exhausting disk and degrading API server **availability**. Oversized or unbounded logs impede **forensics** and may overwrite recent events during rotation, undermining **integrity** and accountability of audit evidence.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/sherwinwangs/kubernetes-cis-audit",
+    "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+    "https://habr.com/ru/companies/slurm/articles/711868/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://docs.rke2.io/security/cis_self_assessment124",
+    "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-maxsize=100",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxsize-argument-is-set-to-100-or-as-appropriate#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Edit the API server static pod manifest: sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command add (or set) this flag:\n   - --audit-log-maxsize=100\n4. Save and exit; the kubelet will restart the API server automatically\n5. Verify: ps aux | grep kube-apiserver | grep -- \"--audit-log-maxsize=100\"",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the API server audit log file size limit to 100 MB or as per your organization's requirements.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Set `--audit-log-maxsize` to `100 MB` or your approved baseline to ensure predictable rotation.\n\nPair with sensible retention (`--audit-log-maxage`, `--audit-log-maxbackup`), forward to a central store, and monitor capacity. This enforces **defense in depth** and preserves reliable auditability.",
+      "Url": "https://hub.prowler.com/check/apiserver_audit_log_maxsize_set"
     }
   },
   "Categories": [

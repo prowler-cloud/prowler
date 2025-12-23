@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_request_timeout_set",
-  "CheckTitle": "Ensure that the --request-timeout argument is set as appropriate",
+  "CheckTitle": "Kubernetes API server pod has --request-timeout configured",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies that the Kubernetes API server is configured with an appropriate global request timeout. Setting a suitable --request-timeout value ensures the API server can handle requests efficiently without exhausting resources, especially in cases of slower connections or high-volume data requests.",
-  "Risk": "An inadequately set request timeout may lead to inefficient handling of API requests, either by timing out too quickly on slow connections or by allowing requests to consume excessive resources, leading to potential Denial-of-Service attacks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** has a global request timeout configured via `--request-timeout`.\n\nThe presence of that flag on API server containers is assessed.",
+  "Risk": "Without a defined, appropriate timeout, requests can linger and tie up handlers, reducing **availability**. Attackers can perform slowloris-style holds or heavy reads to cause **resource exhaustion** and backlog growth. Overly short timeouts can cut valid calls, disrupting controllers and clients.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--request-timeout=300s",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-request-timeout-argument-is-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control-plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In the kube-apiserver container's command list, add:\n   ```yaml\n   - --request-timeout=300s\n   ```\n4. Save the file; the kubelet will automatically restart the API server\n5. Repeat on all control-plane nodes",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Set the API server request timeout to a value that balances resource usage efficiency and the needs of your environment, considering connection speeds and data volumes.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
+      "Text": "Set `--request-timeout` to a bounded value aligned to typical non-watch calls; *when needed*, tune `--min-request-timeout` for watches. Combine with **priority and fairness**, rate limiting, and load testing to prevent starvation. Monitor latency and errors to adjust. Apply **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_request_timeout_set"
     }
   },
   "Categories": [
-    "cluster-security"
+    "cluster-security",
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

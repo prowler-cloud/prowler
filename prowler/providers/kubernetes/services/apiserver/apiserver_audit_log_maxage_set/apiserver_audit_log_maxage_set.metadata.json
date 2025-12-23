@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_maxage_set",
-  "CheckTitle": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
+  "CheckTitle": "API server pod has --audit-log-maxage set to 30 (or the cluster-configured value)",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with an appropriate audit log retention period. Setting --audit-log-maxage to 30 or as per business requirements helps in maintaining logs for sufficient time to investigate past events.",
-  "Risk": "Without an adequate log retention period, there may be insufficient audit history to investigate and analyze past events or security incidents.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** audit logging retention is governed by `--audit-log-maxage`. This evaluates whether the configured value (e.g., `30` days) is set consistently across API server containers to retain audit events for a sufficient period.",
+  "Risk": "**Short audit retention** limits visibility into historical API actions. Credential abuse, privilege escalation, or cluster tampering may evade detection, and investigations lack evidence for timeline reconstruction-degrading data **integrity** and confidentiality through undetected unauthorized changes and exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://rke.docs.rancher.com/config-options/audit-log",
+    "https://paper.bobylive.com/Security/CIS/CIS_Kubernetes_Benchmark_v1_1_0.pdf",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+    "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+    "https://docs.k3s.io/security/hardening-guide",
+    "https://docs.rke2.io/security/cis_self_assessment124"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-maxage=30",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxage-argument-is-set-to-30-or-as-appropriate#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to a control plane node\n2. Edit the API server static pod manifest: /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under spec.containers[0].command add:\n   - --audit-log-maxage=30\n   (Use your cluster-required value instead of 30 if different.)\n4. Save the file; the kubelet will restart the API server automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the API server audit log retention period to retain logs for at least 30 days or as per your organization's requirements.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Set `--audit-log-maxage` to at least `30` days (or your policy) to support **forensics**. Align rotation with `--audit-log-maxbackup` and `--audit-log-maxsize`. Forward logs to a tamper-resistant central store, enforce **least privilege** on access, and periodically validate retention coverage.",
+      "Url": "https://hub.prowler.com/check/apiserver_audit_log_maxage_set"
     }
   },
   "Categories": [
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],

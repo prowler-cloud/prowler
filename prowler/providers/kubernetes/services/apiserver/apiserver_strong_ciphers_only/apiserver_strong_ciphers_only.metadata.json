@@ -1,31 +1,39 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_strong_ciphers_only",
-  "CheckTitle": "Ensure that the API Server only makes use of Strong Cryptographic Ciphers",
+  "CheckTitle": "API Server pod uses only strong cryptographic TLS cipher suites",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured to only use strong cryptographic ciphers, minimizing the risk of vulnerabilities associated with weaker ciphers. Strong ciphers enhance the security of TLS connections to the API server.",
-  "Risk": "Using weak ciphers can leave the API server vulnerable to cryptographic attacks, compromising the security of data in transit.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+  "Severity": "medium",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** restricts TLS to **strong cipher suites** by configuring `--tls-cipher-suites` to only modern values such as `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384`, and `TLS_CHACHA20_POLY1305_SHA256`",
+  "Risk": "Permitting weak or mixed cipher suites enables TLS downgrades and cryptanalytic attacks, undermining **confidentiality** and **integrity** of API traffic.\n\nAttackers could intercept or alter requests, steal tokens, and pivot to compromise the control plane.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://shantanudeyanik.medium.com/configure-kubernetes-with-strong-cipher-suites-0053ca0accba",
+    "https://habr.com/ru/companies/slurm/articles/712736/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options",
+    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-api-server-only-makes-use-of-strong-cryptographic-ciphers/",
+    "https://stackoverflow.com/questions/62983207/kubernetes-change-cipher-for-certificates"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--tls-cipher-suites=TLS_AES_128_GCM_SHA256,...",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "```yaml\n# Minimal kube-apiserver manifest snippet enforcing only strong TLS ciphers\napiVersion: v1\nkind: Pod\nmetadata:\n  name: kube-apiserver\n  namespace: kube-system\nspec:\n  containers:\n  - name: kube-apiserver\n    command:\n    - kube-apiserver\n    - --tls-cipher-suites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256  # FIX: restricts ciphers to strong TLS 1.3 suites only\n```",
+      "Other": "1. SSH to each control plane node\n2. Open /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[].command, add or replace the flag:\n   - --tls-cipher-suites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256\n4. Save the file; the kubelet will automatically restart the API server\n5. Repeat on all control plane nodes\n6. Verify the flag is present on the running pod's command args",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict the API server to only use strong cryptographic ciphers for enhanced security.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
+      "Text": "Limit ciphers to modern AEAD suites and remove legacy entries in `--tls-cipher-suites`.\n- Enforce a high `--tls-min-version` (prefer `VersionTLS13`).\n- Periodically review crypto policy and rotate keys.\n- Apply **defense in depth**: restrict API exposure and require strong client auth.",
+      "Url": "https://hub.prowler.com/check/apiserver_strong_ciphers_only"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

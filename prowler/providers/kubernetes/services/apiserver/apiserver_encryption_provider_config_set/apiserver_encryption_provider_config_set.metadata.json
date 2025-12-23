@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_encryption_provider_config_set",
-  "CheckTitle": "Ensure that the --encryption-provider-config argument is set as appropriate",
+  "CheckTitle": "API server pod has the --encryption-provider-config argument set",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with the --encryption-provider-config argument to encrypt sensitive data at rest in the etcd key-value store. Encrypting data at rest prevents potential unauthorized disclosures and ensures that the sensitive data is secure.",
-  "Risk": "Without proper configuration of the encryption provider, sensitive data stored in etcd might not be encrypted, posing a risk of data breaches.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** pods include `--encryption-provider-config`, supplying an EncryptionConfiguration to apply **encryption at rest** to selected API resources stored in etcd.",
+  "Risk": "Absent an encryption provider, **Secrets and credentials** are stored in plaintext in etcd and backups. Access to etcd, control plane disks, or snapshots can expose keys and tokens, enabling unauthorized API calls and lateral movement, compromising **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#determining-whether-encryption-at-rest-is-already-enabled"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--encryption-provider-config=/path/to/EncryptionConfig/File",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH to each control-plane node\n2. Create the encryption config file at /etc/kubernetes/enc/enc.yaml:\n   ```yaml\n   apiVersion: apiserver.config.k8s.io/v1\n   kind: EncryptionConfiguration\n   resources:\n   - resources: [\"secrets\"]\n     providers:\n     - aescbc:\n         keys:\n         - name: key1\n           secret: <BASE64_32_BYTE_KEY>\n     - identity: {}\n   ```\n3. Edit /etc/kubernetes/manifests/kube-apiserver.yaml and:\n   - Add the flag under the kube-apiserver container command:\n     ```\n     - --encryption-provider-config=/etc/kubernetes/enc/enc.yaml\n     ```\n   - Mount the config path:\n     ```yaml\n     volumeMounts:\n     - name: enc\n       mountPath: /etc/kubernetes/enc\n       readOnly: true\n     ...\n     volumes:\n     - name: enc\n       hostPath:\n         path: /etc/kubernetes/enc\n         type: DirectoryOrCreate\n     ```\n   Save the file; the kubelet will restart the API server.\n4. Repeat on all control-plane nodes.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure and enable encryption for data at rest in etcd using a suitable EncryptionConfig file.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#determining-whether-encryption-at-rest-is-already-enabled"
+      "Text": "Enable **encryption at rest** with an `EncryptionConfiguration` and run with `--encryption-provider-config` using a non-`identity` provider (prefer `kms v2`). Apply **least privilege** to key/KMS access, rotate keys, restrict config file access, keep settings consistent across API servers, and re-encrypt existing objects.",
+      "Url": "https://hub.prowler.com/check/apiserver_encryption_provider_config_set"
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

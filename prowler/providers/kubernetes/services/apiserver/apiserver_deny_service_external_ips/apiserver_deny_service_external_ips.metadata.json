@@ -1,31 +1,41 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_deny_service_external_ips",
-  "CheckTitle": "Ensure that the DenyServiceExternalIPs is set",
+  "CheckTitle": "Kubernetes API server pod has DenyServiceExternalIPs admission controller enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures the DenyServiceExternalIPs admission controller is enabled, which rejects all new usage of the Service field externalIPs. Enabling this controller enhances security by preventing the misuse of the externalIPs field.",
-  "Risk": "Not setting the DenyServiceExternalIPs admission controller could allow users to create Services with external IPs, potentially exposing services to security risks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#denyserviceexternalips",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** with **DenyServiceExternalIPs** rejects net-new use of `Service.spec.externalIPs` and additions to that field on existing Services; existing values can only be removed.",
+  "Risk": "Without **DenyServiceExternalIPs**, users with Service create/patch rights can reroute traffic via arbitrary external IPs, enabling **man-in-the-middle**, traffic hijacking, and data exfiltration, degrading **confidentiality** and **integrity**. Attackers may also abuse `status.loadBalancer.ingress.ip` to similar effect.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/aquasecurity/kube-bench/issues/1606",
+    "https://hub.armosec.io/docs/c-0283",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#denyserviceexternalips",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://docs.w3cub.com/kubernetes/reference/access-authn-authz/admission-controllers.html",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#how-do-i-turn-off-an-admission-controller",
+    "https://kodekloud.com/community/t/admission-plugins-how-to-view-enabled-plugins/418410"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--disable-admission-plugins=DenyServiceExternalIPs",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. SSH to the control plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In the kube-apiserver command/args list, add: --disable-admission-plugins=DenyServiceExternalIPs\n4. Save the file; the kubelet will restart the API server automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the DenyServiceExternalIPs admission controller by setting the '--disable-admission-plugins' argument in the kube-apiserver configuration.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#how-do-i-turn-off-an-admission-controller"
+      "Text": "Enable **DenyServiceExternalIPs** to block net-new `externalIPs` usage.\n\nApply **least privilege** RBAC on Services (including status updates), require change control for exposure, and favor controlled **Ingress/LoadBalancer** patterns. Use admission policies to tightly allow approved exceptions as **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_deny_service_external_ips"
     }
   },
   "Categories": [
-    "internet-exposed",
-    "trustboundaries"
+    "cluster-security",
+    "trust-boundaries",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

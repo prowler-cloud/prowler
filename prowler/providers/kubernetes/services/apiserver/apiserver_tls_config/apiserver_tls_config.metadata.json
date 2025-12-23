@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_tls_config",
-  "CheckTitle": "Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate",
+  "CheckTitle": "API server pod has --tls-cert-file and --tls-private-key-file configured",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check ensures that the Kubernetes API server is configured with TLS for secure communication. The --tls-cert-file and --tls-private-key-file arguments should be set to enable TLS encryption, thereby securing sensitive data transmitted to and from the API server.",
-  "Risk": "If TLS is not properly configured, the API server communication could be unencrypted, leading to potential data breaches.",
-  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** configuration is checked for explicit TLS settings via `--tls-cert-file` and `--tls-private-key-file`. The presence of both flags indicates HTTPS is configured with a specified certificate and private key for client connections.",
+  "Risk": "Improper or unmanaged TLS on the API endpoint can cause untrusted certs and verification bypass, enabling MITM to capture admin credentials or tokens and modify requests. This compromises **confidentiality** and **integrity**, and unexpected certificate expiry can affect **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/setup/best-practices/certificates/",
+    "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control-plane node\n2. Edit the API server static pod manifest:\n   sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command, add both flags:\n   ```\n   - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt\n   - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key\n   ```\n4. Save the file; the kubelet will automatically restart the API server",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure TLS is enabled and properly configured for the API server to secure communications.",
-      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+      "Text": "Configure the API server to use **TLS** with a valid certificate and key via `--tls-cert-file` and `--tls-private-key-file`.\n\nUse a trusted CA with correct SANs, restrict network access to the endpoint, and automate certificate rotation and expiry monitoring to uphold **defense in depth** and **least privilege**.",
+      "Url": "https://hub.prowler.com/check/apiserver_tls_config"
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

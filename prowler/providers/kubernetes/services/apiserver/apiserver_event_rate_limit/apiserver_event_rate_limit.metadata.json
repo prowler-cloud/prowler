@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_event_rate_limit",
-  "CheckTitle": "Ensure that the admission control plugin EventRateLimit is set",
+  "CheckTitle": "Kubernetes API server pod has the EventRateLimit admission control plugin enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies if the Kubernetes API server is configured with the EventRateLimit admission control plugin. This plugin limits the rate of events accepted by the API Server, preventing potential DoS attacks by misbehaving workloads.",
-  "Risk": "Without EventRateLimit, the API server could be overwhelmed by a high number of events, leading to DoS and performance issues.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** includes `EventRateLimit` among its enabled admission plugins, applying rate controls to Kubernetes `Event` objects during admission",
+  "Risk": "Without **event rate limiting**, bursts of Event writes from noisy or hostile workloads can overwhelm the API server, degrading **availability**. This leads to API timeouts, slow or stalled controller reconciliations, and amplifies **DoS** against control-plane endpoints.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/62856246/where-are-the-logs-for-kubernetes-static-pods",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#eventratelimit",
+    "https://static.opendev.org/project/starlingx.io/www/system_configuration/kubernetes/kubernetes-custom-configuration-31c1fd41857d.html",
+    "https://qinlj.github.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://kodekloud.com/community/t/kubernetes-admission-plugins/479194/4",
+    "https://ro.site24x7.com/learn/kubernetes/kubernetes-security-monitoring.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control-plane node and edit the API server static pod manifest:\n   - File: /etc/kubernetes/manifests/kube-apiserver.yaml\n2. In the kube-apiserver container args/command list, ensure EventRateLimit is enabled:\n   - If the flag exists, append EventRateLimit to the list:\n     --enable-admission-plugins=... ,EventRateLimit\n   - If missing, add it:\n     --enable-admission-plugins=EventRateLimit\n3. Save the file. The kubelet will restart the API server automatically and the check will pass.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure EventRateLimit as an admission control plugin for the API server to manage the rate of incoming events effectively.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#eventratelimit"
+      "Text": "Use the `EventRateLimit` admission plugin with conservative, workload-aware thresholds (global, per-namespace, per-user) to cap Event throughput.\n\nApply **defense in depth**: monitor Event volume, alert on spikes, tame noisy emitters, and uphold **least privilege** to preserve API capacity.",
+      "Url": "https://hub.prowler.com/check/apiserver_event_rate_limit"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

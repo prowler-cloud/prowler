@@ -1,26 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_always_pull_images_plugin",
-  "CheckTitle": "Ensure that the admission control plugin AlwaysPullImages is set",
+  "CheckTitle": "Kubernetes API server pod has AlwaysPullImages admission control plugin enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies that the AlwaysPullImages admission control plugin is enabled in the Kubernetes API server. This plugin ensures that every new pod always pulls the required images, enforcing image access control and preventing the use of possibly outdated or altered images.",
-  "Risk": "Without AlwaysPullImages, once an image is pulled to a node, any pod can use it without any authorization check, potentially leading to security risks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** admission configuration includes **AlwaysPullImages**, which mutates new Pods to set `imagePullPolicy=Always` so container images are fetched from the registry at startup using the pod's credentials.",
+  "Risk": "Without **AlwaysPullImages**, nodes can run cached images without a fresh registry pull, bypassing credential checks.\n- Unauthorized use of private images (confidentiality)\n- Stale or tampered images deployed (integrity)\n- Vulnerable images persist, widening attack surface (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cjyabraham.gitlab.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
+    "https://stackoverflow.com/questions/56542351/how-to-access-kube-apiserver-on-command-line",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://docs.kics.io/latest/queries/kubernetes-queries/a77f4d07-c6e0-4a48-8b35-0eeb51576f4f/",
+    "https://blog.codefarm.me/2021/12/15/kubernetes-admission-controllers/",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
+    "https://pradeepl.com/blog/kubernetes/introduction-to-kubernetes-admission-controllers/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,AlwaysPullImages,...",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to a control-plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[0].command or args, ensure the flag includes AlwaysPullImages, e.g.: --enable-admission-plugins=<existing>,AlwaysPullImages\n4. Save the file; the kubelet will automatically restart the API server with the updated flag",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the API server to use the AlwaysPullImages admission control plugin to ensure image security and integrity.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers"
+      "Text": "Enable `AlwaysPullImages` on the API server.\n\nApply defense in depth: restrict pulls to trusted registries, enforce least-privilege image pull secrets, sign and scan images, and prefer immutable digests to prevent drift and ensure verified content.",
+      "Url": "https://hub.prowler.com/check/apiserver_always_pull_images_plugin"
     }
   },
   "Categories": [

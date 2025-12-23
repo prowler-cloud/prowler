@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_path_set",
-  "CheckTitle": "Ensure that the --audit-log-path argument is set",
+  "CheckTitle": "Kubernetes API server pod has --audit-log-path set",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies that the Kubernetes API server is configured with an audit log path. Enabling audit logs helps in maintaining a chronological record of all activities and operations which can be critical for security analysis and troubleshooting.",
-  "Risk": "Without audit logs, it becomes difficult to track changes and activities within the cluster, potentially obscuring the detection of malicious activities or operational issues.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** uses an **audit log path** configured via `--audit-log-path` on its containers to persist API request events",
+  "Risk": "Without a configured audit log path, API requests may not be recorded, weakening **accountability**. Gaps in logs hinder detection of unauthorized changes (**integrity**) and data access (**confidentiality**), and impede **forensics** and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
+    "https://kubernetes.io/docs/concepts/cluster-administration/audit/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-path=/var/log/apiserver/audit.log",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. Under the kube-apiserver container command args, add this line:\n   ```\n   - --audit-log-path=/var/log/apiserver/audit.log\n   ```\n4. Save the file; the kubelet will automatically restart the API server",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable audit logging in the API server by specifying a valid path for --audit-log-path to ensure comprehensive activity logging within the cluster.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Enable and harden **audit logging** by setting `--audit-log-path`. *If centralizing*, use a webhook backend. Define a focused audit policy, enforce **least privilege** to logs, rotate/retain them, forward to centralized monitoring, and regularly review events for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_audit_log_path_set"
     }
   },
   "Categories": [
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],

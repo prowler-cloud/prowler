@@ -1,30 +1,39 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_no_always_admit_plugin",
-  "CheckTitle": "Ensure that the admission control plugin AlwaysAdmit is not set",
+  "CheckTitle": "API server pod does not have the AlwaysAdmit admission control plugin enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies that the Kubernetes API server is not configured with the AlwaysAdmit admission control plugin. The AlwaysAdmit plugin allows all requests without any filtering, which is a security risk and is deprecated.",
-  "Risk": "Enabling AlwaysAdmit permits all requests by default, bypassing other admission control checks, which can lead to unauthorized access.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+  "Severity": "critical",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** configuration is inspected for the `AlwaysAdmit` admission plugin in `--enable-admission-plugins`.\n\nIf `AlwaysAdmit` is configured, the server accepts all admission requests without running other admission controllers.",
+  "Risk": "With **AlwaysAdmit**, admission policies don't run after authN/Z, weakening CIA:\n- Bypass of controls enables privileged or unsafe workloads (confidentiality, integrity)\n- Quotas/limits can be ignored, causing resource exhaustion (availability)\n- Misconfigurations persist, enabling escalation and lateral movement",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kodekloud.com/community/t/kubernetes-admission-plugins/479194",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit",
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+    "https://faun.pub/kubernetes-admission-controller-2913a5b3d0c1",
+    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set/",
+    "https://github.com/kubernetes/kubernetes/issues/66979",
+    "https://stackoverflow.com/questions/51489955/how-to-obtain-the-enable-admission-controller-list-in-kubernetes"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--disable-admission-plugins=...,AlwaysAdmit,...",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to a control plane node\n2. Edit the static pod manifest: sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[].command, locate the flag --enable-admission-plugins=...\n4. Remove \"AlwaysAdmit\" from the comma-separated list (if it is the only value, remove the entire flag)\n5. Save the file; the kubelet will restart the API server automatically\n6. Verify it's gone: kubectl -n kube-system describe pod <example_apiserver_pod> | grep -- --enable-admission-plugins (ensure AlwaysAdmit is not present)",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure the API server does not use the AlwaysAdmit admission control plugin to maintain proper security checks for all requests.",
-      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit"
+      "Text": "Exclude `AlwaysAdmit` from API server settings. Use a **deny-by-default** admission posture and enable only necessary controllers to enforce policy and limits (e.g., PodSecurity, ResourceQuota, LimitRanger).\n\nApply **least privilege**, regularly review admission configuration, and audit API activity to detect drift.",
+      "Url": "https://hub.prowler.com/check/apiserver_no_always_admit_plugin"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

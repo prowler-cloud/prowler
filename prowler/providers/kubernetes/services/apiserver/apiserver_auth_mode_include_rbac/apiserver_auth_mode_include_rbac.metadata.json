@@ -1,30 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_auth_mode_include_rbac",
-  "CheckTitle": "Ensure that the --authorization-mode argument includes RBAC",
+  "CheckTitle": "API server pod authorization mode includes RBAC",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesAPIServer",
-  "Description": "This check verifies that Role Based Access Control (RBAC) is enabled in the Kubernetes API server's authorization mode. RBAC allows for fine-grained control over cluster operations and is recommended for secure and manageable access control.",
-  "Risk": "If RBAC is not included in the API server's authorization mode, the cluster may not be leveraging fine-grained access controls, leading to potential security risks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes API server** authorization configuration includes the **RBAC authorizer** in the enabled modes, i.e., `RBAC` appears in the authorizer chain.",
+  "Risk": "Absence of **RBAC** removes fine-grained, role-scoped control. Identities may gain broad or unintended access, enabling:\n- Secret disclosure (confidentiality)\n- Unauthorized changes to workloads/policies (integrity)\n- Destructive API calls causing outages (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=Node,RBAC",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-rbac",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to each control-plane node\n2. Edit /etc/kubernetes/manifests/kube-apiserver.yaml\n3. In spec.containers[].command, add or update the flag to include RBAC, for example:\n   - --authorization-mode=Node,RBAC\n   (If --authorization-mode already exists, append ,RBAC to its value)\n4. Save the file; the kubelet will restart the API server automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that the API server is configured with RBAC authorization mode for enhanced security and access control.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      "Text": "Adopt **RBAC** as the primary authorizer and avoid permissive modes like `AlwaysAllow` or legacy `ABAC`.\n\nEnforce **least privilege** with narrowly scoped roles and bindings, apply **separation of duties**, and monitor authorization activity for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/apiserver_auth_mode_include_rbac"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],
