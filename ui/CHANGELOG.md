@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.17.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
+
+---
+
 ## [1.16.1] (Prowler v5.16.1)
 
 ### 🔄 Changed
@@ -50,6 +58,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation progress bar for page transitions using Next.js `onRouterTransitionStart` [(#9465)](https://github.com/prowler-cloud/prowler/pull/9465)
 - Findings Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+- Add Alibaba Cloud provider [(#9501)](https://github.com/prowler-cloud/prowler/pull/9501)
 
 ### 🔄 Changed
 
