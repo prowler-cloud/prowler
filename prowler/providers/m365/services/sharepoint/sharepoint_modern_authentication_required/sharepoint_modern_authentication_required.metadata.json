@@ -1,30 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_modern_authentication_required",
-  "CheckTitle": "Ensure modern authentication for SharePoint applications is required.",
+  "CheckTitle": "Microsoft 365 SharePoint requires modern authentication for applications",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Sharepoint Settings",
-  "Description": "Ensure that modern authentication is required for SharePoint applications in Microsoft 365, preventing the use of legacy authentication protocols and blocking access to apps that don't use modern authentication.",
-  "Risk": "If modern authentication is not enforced, SharePoint applications may rely on basic authentication, which lacks strong security measures like MFA and increases the risk of credential theft.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "SharePoint Online tenant settings require **modern authentication** for applications and block access for apps using legacy protocols.\n\nThe assessment determines whether legacy authentication is disabled so only OAuth-based sign-ins with advanced controls are allowed.",
+  "Risk": "Without modern authentication, SharePoint is exposed to:\n- Password spraying and credential stuffing (no MFA)\n- Session/token capture and replay from basic auth\n- Unauthorized access leading to data exfiltration and tampering\n\nThis undermines data **confidentiality** and **integrity**, enabling lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
+    "https://admin.microsoft.com/sharepoint.",
+    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-SPOTenant -LegacyAuthProtocolsEnabled $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint. 2. Click to expand Policies select Access control. 3. Select Apps that don't use modern authentication. 4. Select the radio button for Block access. 5. Click Save.",
+      "Other": "1. Open the SharePoint admin center (admin.microsoft.com/sharepoint)\n2. Go to Policies > Access control > Apps that don't use modern authentication\n3. Select Block access and click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Block access for SharePoint applications that don't use modern authentication to ensure secure authentication mechanisms.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
+      "Text": "Enforce **modern authentication** tenant-wide and disable legacy protocols. Require **MFA** and apply **conditional access** to all SharePoint apps. Migrate or block legacy clients, adhere to **least privilege** for app permissions, and monitor sign-ins to eradicate legacy auth usage.",
+      "Url": "https://hub.prowler.com/check/sharepoint_modern_authentication_required"
     }
   },
   "Categories": [
-    "e3"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

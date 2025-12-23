@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_guest_sharing_restricted",
-  "CheckTitle": "Ensure that SharePoint guest users cannot share items they don't own.",
+  "CheckTitle": "SharePoint guest users cannot share items they do not own",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Sharepoint Settings",
-  "Description": "Ensure that guest users in SharePoint cannot share items they do not own, preventing unauthorized disclosure of shared content.",
-  "Risk": "If guest users are allowed to share items they don't own, there is a higher risk of unauthorized data exposure, as external users could share content beyond intended recipients.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**SharePoint** tenant sharing settings evaluate whether **guest resharing** is disabled (`resharingEnabled=false`).\n\nFocus is the org-level option that blocks guests from sharing items they don't own.",
+  "Risk": "Allowing **guest resharing** threatens confidentiality and integrity:\n- External users can extend access beyond oversight\n- Edit permissions enable unauthorized changes or deletion\n- Link sprawl reduces accountability and control\n\nSensitive data can spread across sites, hindering revocation and response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+    "https://admin.microsoft.com/sharepoint.",
+    "https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-SPOTenant -PreventExternalUsersFromResharing $True",
+      "CLI": "Set-SPOTenant -PreventExternalUsersFromResharing $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint. 2. Click to expand Policies then select Sharing. 3. Expand More external sharing settings and uncheck 'Allow guests to share items they don't own'. 4. Click Save.",
+      "Other": "1. Go to the SharePoint admin center: https://admin.microsoft.com/sharepoint\n2. Navigate to Policies > Sharing\n3. Expand More external sharing settings and uncheck \"Allow guests to share items they don't own\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict guest users from sharing items they don't own to enhance security and prevent unauthorized access.",
-      "Url": "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off"
+      "Text": "Disable **guest resharing** and apply **least privilege** so only owners or designated roles can share.\n\nLimit external sharing scope, require authenticated `Specific people` links with expirations, review guest access regularly, and monitor sharing activity to enforce **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/sharepoint_guest_sharing_restricted"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

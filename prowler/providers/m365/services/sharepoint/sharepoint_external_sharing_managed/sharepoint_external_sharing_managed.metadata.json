@@ -1,29 +1,42 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_external_sharing_managed",
-  "CheckTitle": "Ensure SharePoint external sharing is managed through domain whitelists/blacklists.",
+  "CheckTitle": "SharePoint external sharing is restricted using a non-empty domain allowlist or blocklist",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Sharepoint Settings",
-  "Description": "Control the sharing of documents to external domains by either blocking specific domains or only allowing sharing with named trusted domains.",
-  "Risk": "If domain-based sharing restrictions are not enforced, users may share documents with untrusted external entities, increasing the risk of data exfiltration or unauthorized access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+  "ResourceType": "",
+  "Description": "**SharePoint external sharing** uses **domain-based restrictions** via `AllowList` or `BlockList`. The evaluation inspects `sharingDomainRestrictionMode` and whether the corresponding domain list is populated, flagging when domain controls are missing or the selected list is empty.",
+  "Risk": "Without enforced domain limits, users may share with personal or rogue domains, enabling data exfiltration and unauthorized persistence.\n- Confidentiality: leaks of files and sites\n- Integrity: unvetted collaborators can alter content\n- Availability: takeovers can disrupt shared sites",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://sharepoint.stackexchange.com/questions/291169/sharepoint-admin-why-cant-i-add-new-allowed-domains-to-more-external-sharing",
+    "https://learn.microsoft.com/en-us/sharepoint/restricted-domains-sharing",
+    "https://www.mrsharepoint.com/external-sharing-in-sharepoint-online/",
+    "https://admin.microsoft.com/sharepoint.",
+    "https://www.sharepointdiary.com/2019/07/sharepoint-online-limit-external-sharing-by-domain.html",
+    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps",
+    "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+    "https://sharepointmaven.com/how-to-limit-external-sharing-by-domain-in-sharepoint-online/",
+    "https://blog.admindroid.com/restrict-domain-sharing-in-sharepoint-online-and-onedrive/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-SPOTenant -SharingDomainRestrictionMode AllowList -SharingAllowedDomainList 'domain1.com domain2.com'",
+      "CLI": "Set-SPOTenant -SharingDomainRestrictionMode AllowList -SharingAllowedDomainList 'contoso.com'",
       "NativeIaC": "",
-      "Other": "1. Navigate to SharePoint admin center https://admin.microsoft.com/sharepoint. 2. Expand Policies then click Sharing. 3. Expand More external sharing settings and check 'Limit external sharing by domain'. 4. Select 'Add domains' to configure a list of approved domains. 5. Click Save.",
+      "Other": "1. In the SharePoint admin center, go to Policies > Sharing\n2. Expand More external sharing settings and check Limit external sharing by domain\n3. Click Add domains, select Allow only specific domains (or Block specific domains)\n4. Enter at least one domain (e.g., contoso.com) and click Save\n5. On the Sharing page, click Save to apply",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enforce domain-based restrictions for SharePoint external sharing to control document sharing with trusted domains.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
+      "Text": "Apply **least privilege** by enforcing domain-based sharing with a curated `AllowList` of trusted partners; use `BlockList` only to complement gaps.\n- Review and attest lists regularly\n- Use **defense in depth**: prefer authenticated, scoped links over public links and align with B2B governance and oversight.",
+      "Url": "https://hub.prowler.com/check/sharepoint_external_sharing_managed"
     }
   },
   "Categories": [
+    "internet-exposed",
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],
