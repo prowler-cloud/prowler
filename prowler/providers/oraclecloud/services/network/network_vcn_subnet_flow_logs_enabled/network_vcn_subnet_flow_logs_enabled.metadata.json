@@ -1,34 +1,40 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_vcn_subnet_flow_logs_enabled",
-  "CheckTitle": "Ensure VCN flow logging is enabled for all subnets",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Subnet has VCN flow logging enabled",
+  "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:network:subnet",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciSubnet",
-  "Description": "VCN flow logging should be enabled for all subnets.",
-  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "ResourceType": "Subnet",
+  "Description": "OCI subnets in a VCN have **network flow logging** configured. Evaluation considers an active `flowlogs` configuration targeting the `VCN` or the specific `subnet` in the same region and associated with a log group.",
+  "Risk": "Without flow logs, east-west and ingress/egress traffic is opaque, weakening detection and forensics. Scans, data exfiltration, and lateral movement can go unnoticed, undermining confidentiality and integrity, and delaying response to availability threats like DDoS.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.ateam-oracle.com/post/enable-oci-flow-logs-for-all-subnets-and-stream-logs-to-object-storage-via-service-connector-hub",
+    "https://mdrkb.atlassian.net/wiki/spaces/AAMDARCQSG/pages/541589518/OCI+VCN+Flow",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/enable-flow-logging.html",
+    "https://docs.oracle-java.com/en-us/iaas/Content/Logging/Reference/details_for_vcn_flow_logs.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+    "https://docs.netflowlogic.com/next/nfo_administration_guide/inputs/public-cloud-flow-logs-inputs/oracle-vcn-flow-logs-input-configuration/",
+    "https://docs.oracle.com/en-us/iaas/Content/Network/Tasks/vcn-flow-logs-enable.htm"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/enable-flow-logging.html",
-      "Terraform": ""
+      "Other": "1. In OCI Console, go to Networking > Flow logs\n2. Click Enable flow logs\n3. Select a Log group (or create one) and a Capture filter (or create one)\n4. Click Next, then Add enablement points\n5. Choose Virtual cloud network and select your VCN (or choose Subnet and select the subnet)\n6. Click Add enablement points, then Next, then Enable flow logs",
+      "Terraform": "```hcl\n# Enable VCN flow logs (covers all subnets in the VCN)\nresource \"oci_logging_log\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  log_group_id = \"<example_resource_id>\"          # Existing Log Group OCID\n  log_type     = \"SERVICE\"\n  is_enabled   = true\n\n  configuration {\n    source {\n      source_type = \"OCISERVICE\"\n      service     = \"flowlogs\"                     # CRITICAL: enables VCN/Subnet flow logging\n      resource    = \"<example_resource_id>\"       # CRITICAL: VCN OCID (use subnet OCID if enabling per-subnet)\n      category    = \"vcn\"                          # CRITICAL: set to \"vcn\" (or \"subnet\" for subnet-level)\n      parameters  = { capture_filter = \"<example_resource_id>\" }  # Capture Filter OCID\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure VCN flow logging is enabled for all subnets",
-      "Url": "https://hub.prowler.com/check/oci/network_vcn_subnet_flow_logs_enabled"
+      "Text": "Enable **VCN flow logs** for all subnets-prefer VCN-wide enablement for complete coverage-and route to centralized log groups. Enforce least privilege on log access, set retention, and integrate with a SIEM. Use `capture filters` and `sampling` to control volume. Review logs to support defense-in-depth.",
+      "Url": "https://hub.prowler.com/check/network_vcn_subnet_flow_logs_enabled"
     }
   },
   "Categories": [
-    "network-security"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],
