@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** are associated with **AWS Shield Advanced** as protected resources.\n\nThe assessment identifies distributions that lack this protection mapping.",
   "Risk": "Missing **Shield Advanced** leaves distributions exposed to large **DDoS** that degrade **availability** via L3/L4 floods and L7 request surges. Effects include edge saturation, latency, and outages, plus loss of **cost protection** and expert support, causing unexpected spend and longer recovery.",
   "RelatedUrl": "",

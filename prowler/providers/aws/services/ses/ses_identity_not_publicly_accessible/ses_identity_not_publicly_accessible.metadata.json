@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:ses:region:account-id:identity/<IDENTITY-NAME>",
   "Severity": "high",
   "ResourceType": "AwsSesIdentity",
+  "ResourceGroup": "messaging",
   "Description": "This control checks whether SES identities are not publicly accessible via resource policies.",
   "Risk": "Publicly accessible SES identities can allow unauthorized email sending or receiving, leading to potential abuse or phishing attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/ses/latest/dg/identity-authorization-policies.html",
