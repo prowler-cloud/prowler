@@ -1,29 +1,37 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_external_email_tagging_enabled",
-  "CheckTitle": "Ensure email from external senders is identified.",
+  "CheckTitle": "Exchange identity has external sender tagging enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Exchange External Mail Tagging",
-  "Description": "Ensure that emails from external senders are identified using the native External tag experience in Outlook clients, which helps users recognize messages originating outside the organization.",
-  "Risk": "If external email tagging is not enabled, users may be unable to quickly identify emails coming from outside the organization, increasing the risk of phishing or social engineering attacks.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-externalinoutlook?view=exchange-ps",
+  "ResourceType": "",
+  "Description": "**Exchange Online** uses native external sender identification so supported Outlook clients display an `External` tag on messages originating outside the organization.",
+  "Risk": "Without the native tag, users lose a clear signal that a message is from outside the tenant, increasing susceptibility to **phishing**, **BEC**, and credential theft. This raises risks to **confidentiality** (exfiltration) and **integrity** (fraudulent approvals) via social engineering and reply-chain attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.vansurksum.com/2021/03/12/enable-external-sender-identification-in-exchange-online/",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-externalinoutlook?view=exchange-ps",
+    "https://www.meetingroom365.com/blog/set-externaiinoutlook-powershell/",
+    "https://techcommunity.microsoft.com/t5/exchange-team-blog/native-external-sender-callouts-on-email-in-outlook/ba-p/2250098",
+    "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-externalinoutlook?view=exchange-ps"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-ExternalInOutlook -Enabled $true",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the Exchange admin center: https://admin.exchange.microsoft.com\n2. Navigate to Mail flow > External tagging\n3. Turn on Enable external tagging in Outlook\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable the External tag for Outlook to help users visually identify emails from outside the organization.",
-      "Url": "https://techcommunity.microsoft.com/t5/exchange-team-blog/native-external-sender-callouts-on-email-in-outlook/ba-p/2250098"
+      "Text": "Enable native external sender identification and prefer it over subject-line modifications. Apply **defense in depth**: enforce **anti-phishing** protections, validate senders with SPF/DKIM/DMARC, and deliver user training. *Use exceptions sparingly* for trusted domains to reduce noise while preserving **least privilege** in communication paths.",
+      "Url": "https://hub.prowler.com/check/exchange_external_email_tagging_enabled"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

@@ -1,30 +1,36 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_organization_modern_authentication_enabled",
-  "CheckTitle": "Ensure Modern Authentication for Exchange Online is enabled.",
+  "CheckTitle": "Exchange Online organization has Modern Authentication enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Exchange Organization Configuration",
-  "Description": "Ensure that modern authentication is enabled for Exchange Online, requiring exchange and mailboxes clients to use strong authentication mechanisms instead of basic authentication.",
-  "Risk": "If modern authentication is not enabled, Exchange Online email clients may fall back to basic authentication, making it easier for attackers to bypass multifactor authentication and compromise user credentials.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/enable-or-disable-modern-authentication-in-exchange-online",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Exchange Online** organization setting determines if **Modern Authentication** (`OAuth 2.0`) is enabled for client connections.\n\nThis evaluates whether clients use token-based sign-in rather than `Basic` credentials.",
+  "Risk": "Without **Modern Authentication**, clients may fall back to `Basic`, disabling **MFA** and enabling **password spraying** and **credential stuffing**. Account takeover can expose mailboxes, alter rules, and send fraudulent emails, harming confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.thewindowsclub.com/how-to-configure-exchange-server-authentication-in-outlook",
+    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/enable-or-disable-modern-authentication-in-exchange-online",
+    "https://profadmins.com/2020/03/27/enabling-modern-authentication-and-mfa/",
+    "https://jumpcloud.com/support/enable-modern-authentication-for-m365"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-OrganizationConfig -OAuth2ClientProfileEnabled $True",
+      "CLI": "Set-OrganizationConfig -OAuth2ClientProfileEnabled $true",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the Microsoft 365 admin center\n2. Go to Settings > Org settings > Modern authentication\n3. Enable \"Turn on modern authentication for Outlook 2013 for Windows and later\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable modern authentication in Exchange Online to enforce secure authentication methods for email clients.",
-      "Url": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/enable-or-disable-modern-authentication-in-exchange-online"
+      "Text": "Enable **Modern Authentication** org-wide and phase out `Basic` to enforce token-based access. Require **MFA** with conditional access, block legacy mail protocols where feasible, and apply **least privilege** on mailbox permissions. Monitor sign-ins for legacy usage to maintain **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/exchange_organization_modern_authentication_enabled"
     }
   },
   "Categories": [
-    "e3"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

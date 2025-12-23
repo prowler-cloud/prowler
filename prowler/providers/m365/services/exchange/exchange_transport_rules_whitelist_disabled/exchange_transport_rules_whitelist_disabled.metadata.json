@@ -1,29 +1,41 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_transport_rules_whitelist_disabled",
-  "CheckTitle": "Ensure mail transport rules do not whitelist specific domains",
+  "CheckTitle": "Exchange transport rule does not whitelist any domains",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Transport Rules",
-  "Description": "Mail flow rules (transport rules) in Exchange Online are used to identify and take action on messages that flow through the organization.",
-  "Risk": "Whitelisting domains in transport rules bypasses regular malware and phishing scanning, which can enable an attacker to launch attacks against your users from a safe haven domain.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
+  "ResourceType": "",
+  "Description": "**Exchange Online mail flow rules** that whitelist specific sender domains by forcing `SCL` to `-1` (skip spam filtering) on matching messages",
+  "Risk": "**Domain-based whitelisting** skips **anti-spam/phish** analysis, allowing spoofed or compromised senders to reach the Inbox. This increases targeted phishing, BEC, and credential theft, enabling unauthorized access and data exfiltration, degrading **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/use-rules-to-set-scl",
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
+    "https://admin.exchange.microsoft.com..",
+    "https://theinformationstore.com.au/transport-rules-spam-bypass/",
+    "https://video2.skills-academy.com/en-us/answers/questions/1330347/how-to-handle-email-campaign-to-not-tag-as-spam-or",
+    "https://cheapwindowsvps.com/blog/step-by-step-guide-how-to-whitelist-a-domain-in-microsoft-365/",
+    "https://adamtheautomator.com/office-365-whitelist-domain/",
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules",
+    "https://office365concepts.com/whitelist-a-domain-in-office-365/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Remove-TransportRule -Identity <RuleName>",
+      "CLI": "Set-TransportRule -Identity <RuleName> -SetSCL 0",
       "NativeIaC": "",
-      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com.. 2. Click to expand Mail Flow and then select Rules. 3. For each rule that whitelists specific domains, select the rule and click the 'Delete' icon.",
+      "Other": "1. Open the Exchange admin center: https://admin.exchange.microsoft.com\n2. Go to Mail flow > Rules\n3. Edit any rule that has: condition \"The sender domain is\" AND action \"Set the spam confidence level (SCL) = Bypass spam filtering\"\n4. In Do the following, change \"Set the spam confidence level (SCL)\" from Bypass spam filtering to 0 (or remove the action)\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove transport rules that whitelist specific domains to ensure proper scanning.",
-      "Url": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules"
+      "Text": "Avoid blanket whitelisting. Do not set `SCL` to `-1` based solely on `sender domain`.\n\n- Prefer controlled allow mechanisms with review/expiry; keep **anti-spam/phish** active\n- If exceptions are unavoidable, apply **least privilege**: add strong conditions (auth results, known source IPs), narrow scope, time-bound, and monitor",
+      "Url": "https://hub.prowler.com/check/exchange_transport_rules_whitelist_disabled"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

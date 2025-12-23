@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_mailbox_audit_bypass_disabled",
-  "CheckTitle": "Ensure 'AuditBypassEnabled' is not enabled on any mailbox in the organization.",
+  "CheckTitle": "Exchange mailbox has AuditBypassEnabled disabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Mailboxes",
-  "Description": "Ensure that no mailboxes in the organization have 'AuditBypassEnabled' set to true. This setting prevents mailbox audit logging and can allow unauthorized access without traceability.",
-  "Risk": "If 'AuditBypassEnabled' is set to true for any mailbox, access to those mailboxes won't be logged, creating a blind spot in forensic analysis and increasing the risk of undetected malicious activity.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailboxauditbypassassociation?view=exchange-ps",
+  "ResourceType": "",
+  "Description": "**Exchange mailboxes** are evaluated for **audit logging bypass** by reviewing the `AuditBypassEnabled` setting and identifying mailboxes where auditing can be circumvented.",
+  "Risk": "**Bypassed mailbox auditing** removes visibility into access and actions, weakening detective controls. Covert data exfiltration, inbox-rule abuse, and persistence become harder to spot, harming **confidentiality** and **integrity** and impeding **forensics**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailboxauditbypassassociation?view=exchange-ps",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-mailboxauditbypassassociation?view=exchange-ps"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "$MBXAudit = Get-MailboxAuditBypassAssociation -ResultSize unlimited | Where-Object { $_.AuditBypassEnabled -eq $true }; foreach ($mailbox in $MBXAudit) { $mailboxName = $mailbox.Name; Set-MailboxAuditBypassAssociation -Identity $mailboxName -AuditBypassEnabled $false; Write-Host \"Audit Bypass disabled for mailbox Identity: $mailboxName\" -ForegroundColor Green }",
+      "CLI": "Get-MailboxAuditBypassAssociation -ResultSize unlimited | Where-Object {$_.AuditBypassEnabled} | ForEach-Object { Set-MailboxAuditBypassAssociation -Identity $_.Identity -AuditBypassEnabled $false }",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Open PowerShell and connect to Exchange Online: Connect-ExchangeOnline\n2. Run:\n```\nGet-MailboxAuditBypassAssociation -ResultSize unlimited | Where-Object {$_.AuditBypassEnabled} | ForEach-Object { Set-MailboxAuditBypassAssociation -Identity $_.Identity -AuditBypassEnabled $false }\n```",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that no mailboxes have 'AuditBypassEnabled' enabled to guarantee full audit logging for all mailbox activities.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-mailboxauditbypassassociation?view=exchange-ps"
+      "Text": "Disable audit bypass by keeping `AuditBypassEnabled` set to `false` for all accounts. Apply **least privilege** to service identities, use dedicated accounts for automation, and monitor for bypass associations with alerts. Enforce **separation of duties** and preserve tamper-resistant audit logs.",
+      "Url": "https://hub.prowler.com/check/exchange_mailbox_audit_bypass_disabled"
     }
   },
   "Categories": [
+    "logging",
+    "forensics-ready",
     "e3"
   ],
   "DependsOn": [],

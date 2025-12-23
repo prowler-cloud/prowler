@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_organization_mailbox_auditing_enabled",
-  "CheckTitle": "Ensure AuditDisabled organizationally is set to False.",
+  "CheckTitle": "Exchange organization has mailbox auditing enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Organization Configuration",
-  "Description": "Ensure that the AuditDisabled property is set to False at the organizational level in Exchange Online. This enables mailbox auditing by default for all mailboxes and overrides individual mailbox settings.",
-  "Risk": "If mailbox auditing is disabled at the organization level, no mailbox actions are audited, limiting forensic investigation capabilities and exposing the organization to undetected malicious activity.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+  "ResourceType": "",
+  "Description": "Exchange Online organization setting `AuditDisabled` controls tenant-wide **mailbox auditing**. This evaluates whether it is `False` so default audit events are recorded for owner, delegate, and admin across all mailboxes, taking precedence over per-mailbox settings.",
+  "Risk": "Disabling tenant-wide auditing lets mailbox activity go unrecorded. Adversaries or insiders could exfiltrate data, alter or delete messages, or send as users without trace, undermining **confidentiality**, **integrity**, and effective **incident response**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://superuser.com/questions/1400521/office365-mailbox-auditing-by-default",
+    "https://o365reports.com/2020/01/21/enable-mailbox-auditing-in-office-365-powershell/",
+    "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps#-auditdisabled",
+    "https://community.spiceworks.com/t/enable-mailbox-auditing-by-default-exchange-2016-on-prem/745347",
+    "https://techcommunity.microsoft.com/blog/microsoft-security-blog/exchange-online-mailbox-auditing-enabled-by-default/361324",
+    "https://petri.com/mailbox-auditing-exchange-online/",
+    "https://blog.hametbenoit.info/2018/07/16/exchange-online-mailbox-auditing-will-be-enabled-by-default/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-OrganizationConfig -AuditDisabled $false",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Open PowerShell and connect to Exchange Online: Connect-ExchangeOnline\n2. Run: Set-OrganizationConfig -AuditDisabled $false\n3. Verify: Get-OrganizationConfig | Select-Object AuditDisabled  (should be False)",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Set AuditDisabled to False at the organization level to ensure mailbox auditing is always enforced.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps#-auditdisabled"
+      "Text": "Ensure `AuditDisabled`=`False` to keep **mailbox auditing** on by default.\n\n- Apply **least privilege** and minimize audit bypass\n- Define retention and review audit logs\n- Alert on risky actions (e.g., hard delete, rule changes)\n- Layer with **defense in depth** for email access",
+      "Url": "https://hub.prowler.com/check/exchange_organization_mailbox_auditing_enabled"
     }
   },
   "Categories": [
+    "logging",
     "e3"
   ],
   "DependsOn": [],

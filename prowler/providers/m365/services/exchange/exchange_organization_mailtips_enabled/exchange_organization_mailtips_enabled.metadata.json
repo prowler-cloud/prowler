@@ -1,29 +1,38 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_organization_mailtips_enabled",
-  "CheckTitle": "Ensure MailTips are enabled for end users.",
+  "CheckTitle": "Exchange Online organization has MailTips fully enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Exchange Organization Configuration",
-  "Description": "Ensure that MailTips are enabled in Exchange Online to provide users with informative messages while composing emails, helping to avoid issues such as sending to large groups or external recipients unintentionally.",
-  "Risk": "Without MailTips, users may inadvertently send sensitive information externally or generate non-delivery reports, leading to communication errors and potential data exposure.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips",
+  "ResourceType": "",
+  "Description": "**Exchange Online** organization has **MailTips** fully configured: `MailTipsAllTipsEnabled`, `MailTipsExternalRecipientsTipsEnabled`, `MailTipsGroupMetricsEnabled`, and `MailTipsLargeAudienceThreshold`  `25`.",
+  "Risk": "Absent or lax **MailTips** reduces user cues, increasing unintended external sends and large-audience blasts, harming **confidentiality**. Missing group metrics or high thresholds hide risky recipient counts; no OOF/full-mailbox tips cause misdelivery that enables phishing loops and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloudrun.co.uk/office365/enabling-the-external-recipient-mailtip-in-office-365/",
+    "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-organizationconfig?view=exchange-ps",
+    "https://blog.securesky.com/part-3-configuration-of-office-365-to-protect-against-bec-attacks",
+    "https://ezcloudinfo.com/2014/07/23/overview-and-troubleshooting-mailtips-in-exchange-2010-2013/",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps",
+    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "$TipsParams = @{ MailTipsAllTipsEnabled = $true; MailTipsExternalRecipientsTipsEnabled = $true; MailTipsGroupMetricsEnabled = $true; MailTipsLargeAudienceThreshold = '25' }; Set-OrganizationConfig @TipsParams",
+      "CLI": "Set-OrganizationConfig -MailTipsAllTipsEnabled $true -MailTipsExternalRecipientsTipsEnabled $true -MailTipsGroupMetricsEnabled $true -MailTipsLargeAudienceThreshold 25",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the Exchange admin center (admin.exchange.microsoft.com)\n2. Open Classic Exchange admin center > Organization > MailTips\n3. Enable: \"Enable MailTips\" (All tips)\n4. Enable: \"External recipients MailTip\"\n5. Enable: \"Turn on group metrics for MailTips\"\n6. Set \"Large audience threshold\" to 25 (or less)\n7. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable MailTips features in Exchange Online and configure the large audience threshold appropriately to assist users when composing emails.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps"
+      "Text": "Apply **defense in depth** with consistent **MailTips**:\n- Enable external-recipient and group-metrics tips\n- Keep `MailTipsLargeAudienceThreshold` conservative (`25`)\n- Train users to heed tips before sending\nPair with **DLP** and restricted forwarding to prevent accidental disclosure.",
+      "Url": "https://hub.prowler.com/check/exchange_organization_mailtips_enabled"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

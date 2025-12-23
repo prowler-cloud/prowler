@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_transport_rules_mail_forwarding_disabled",
-  "CheckTitle": "Ensure mail transport rules are set to disable mail forwarding.",
+  "CheckTitle": "Exchange transport rule does not allow forwarding mail to external domains",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Transport Rules",
-  "Description": "Ensure mail transport rules are set to disable mail forwarding.",
-  "Risk": "Enabling email auto-forwarding can be exploited by attackers or malicious insiders to exfiltrate sensitive data outside the organization, often without detection.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
+  "ResourceType": "",
+  "Description": "**Exchange Online mail flow rules** are assessed for actions that **forward or redirect messages to external domains**. The finding highlights rules that add external recipients during transport.",
+  "Risk": "External auto-forwarding enables silent **data exfiltration**, bypassing **DLP** and retention, reducing **confidentiality**.\n\nA compromised mailbox can use forwarding for **persistence** and **lateral movement**, leaking sensitive content to untrusted domains and undermining communication **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules",
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Remove-TransportRule -Identity <RuleName>",
+      "CLI": "Remove-TransportRule -Identity <example_rule_name>",
       "NativeIaC": "",
-      "Other": "1. Select Exchange to open the Exchange admin center. 2. Select Mail Flow then Rules. 3. For each rule that redirects email to external domains, select the rule and click the 'Delete' icon.",
+      "Other": "1. In the Microsoft 365 admin center, go to Admin centers > Exchange\n2. Navigate to Mail flow > Rules\n3. For each rule that has the action \"Redirect the message to\", select the rule, click Edit\n4. Under \"Do the following\", remove the action \"Redirect the message to\"\n5. Click Save\n6. Repeat for any other rules with this action",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Block all forms of mail forwarding using Transport rules in Exchange Online. Apply exclusions only where justified by organizational policy.",
-      "Url": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules"
+      "Text": "Block external auto-forwarding at the organization level and prefer internal controls for sharing. Apply **least privilege** with narrowly scoped, time-bound exceptions only when justified.\n\nAdopt **defense in depth**: pair with DLP, outbound filtering, and alerts on new forwarding rules. Review and attest rules regularly.",
+      "Url": "https://hub.prowler.com/check/exchange_transport_rules_mail_forwarding_disabled"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

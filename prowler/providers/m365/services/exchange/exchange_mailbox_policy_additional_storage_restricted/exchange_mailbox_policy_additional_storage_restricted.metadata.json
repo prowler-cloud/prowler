@@ -1,30 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_mailbox_policy_additional_storage_restricted",
-  "CheckTitle": "Ensure additional storage providers are restricted in Outlook on the web.",
+  "CheckTitle": "Exchange mailbox policy has additional storage providers disabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Exchange Mailboxes Policy",
-  "Description": "Restrict the availability of additional storage providers (e.g., Box, Dropbox, Google Drive) in Outlook on the web to prevent users from accessing external storage services through the OWA interface.",
-  "Risk": "Allowing users to access third-party storage providers from Outlook on the web increases the risk of data exfiltration and exposure to untrusted content or malware.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-owamailboxpolicy?view=exchange-ps",
+  "ResourceType": "",
+  "Description": "**Outlook on the web mailbox policy** governs access to **additional storage providers** (e.g., Box, Dropbox, Google Drive, personal OneDrive). The finding evaluates whether these third-party file integrations are disabled via `AdditionalStorageProvidersAvailable=false`.",
+  "Risk": "Enabling third-party storage in OWA weakens:\n- **Confidentiality**: data can leave the tenant to unmanaged clouds\n- **Integrity**: external links can deliver or reference malicious/tampered files\n- **Visibility/Compliance**: M365 DLP and audit may not fully apply, enabling undetected exfiltration",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-owamailboxpolicy?view=exchange-ps"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -AdditionalStorageProvidersAvailable $false",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the Exchange admin center (https://admin.exchange.microsoft.com)\n2. Open Classic Exchange admin center (left pane)\n3. Go to Permissions > Outlook Web App policies\n4. Edit OwaMailboxPolicy-Default\n5. In Features, set \"Additional storage providers\" to Off\n6. Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable access to additional storage providers in Outlook on the web to reduce the risk of data leakage.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-owamailboxpolicy?view=exchange-ps"
+      "Text": "Block third-party storage integrations in the OWA mailbox policy (`AdditionalStorageProvidersAvailable=false`). Prefer **enterprise-managed repositories**, enforce **least privilege**, and apply **DLP** and **Conditional Access** to control egress. *If required*, permit only vetted providers under **governed exceptions** with monitoring.",
+      "Url": "https://hub.prowler.com/check/exchange_mailbox_policy_additional_storage_restricted"
     }
   },
   "Categories": [
-    "e3"
+    "e3",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
