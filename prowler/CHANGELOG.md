@@ -19,15 +19,20 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.16.1] (Prowler UNRELEASED)
+
+### Fixed
+- Fix ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
+
+---
+
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
-
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
-
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
 - Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 - Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
