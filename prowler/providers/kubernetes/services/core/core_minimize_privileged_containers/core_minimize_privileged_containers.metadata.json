@@ -1,26 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_privileged_containers",
-  "CheckTitle": "Minimize the admission of privileged containers",
+  "CheckTitle": "Pod does not contain a privileged container",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of privileged containers, which have access to all Linux Kernel capabilities and devices. The use of privileged containers should be controlled and restricted to specific use-cases.",
-  "Risk": "Permitting privileged containers by default can lead to security vulnerabilities as these containers have elevated privileges equivalent to the host.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "**Pods** are evaluated for containers configured with `securityContext.privileged: true`, indicating execution in **privileged mode**.",
+  "Risk": "**Privileged containers** can control the host and bypass isolation, enabling:\n- Secret theft (confidentiality)\n- Workload/node tampering (integrity)\n- Service disruption (availability)\nCompromise of one pod can drive lateral movement across the cluster.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://v1-32.docs.kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/",
+    "https://kubernetes.io/docs/setup/best-practices/enforcing-pod-security-standards/",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+    "https://kubernetes.io/docs/concepts/security/pod-security-admission/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_2#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes UI (e.g., cloud provider console or Dashboard)\n2. Navigate to the failing workload (Deployment/StatefulSet/DaemonSet) or Pod and choose Edit YAML/Manifest\n3. Set securityContext.privileged: false for each affected container:\n   - For controllers: spec.template.spec.containers[].securityContext.privileged: false\n   - For standalone Pods: spec.containers[].securityContext.privileged: false\n4. Save changes (controllers will roll out new Pods). If it is a standalone Pod, delete and recreate it to apply the change",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      security_context {\n        privileged = false # Critical: disables privileged mode to pass the check\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of privileged containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Block `privileged: true` using **Pod Security Admission** at `restricted`. Apply **least privilege**:\n- Run unprivileged; set `allowPrivilegeEscalation: false`\n- Drop capabilities; avoid host access\n- Restrict who can deploy privileged pods with **RBAC**\n- Use short-lived, audited exceptions only when strictly required",
+      "Url": "https://hub.prowler.com/check/core_minimize_privileged_containers"
     }
   },
   "Categories": [

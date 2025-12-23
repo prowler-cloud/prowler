@@ -1,26 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_net_raw_capability_admission",
-  "CheckTitle": "Minimize the admission of containers with the NET_RAW capability",
+  "CheckTitle": "Pod containers do not have the NET_RAW capability",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with the potentially dangerous NET_RAW capability, which can be exploited by malicious containers.",
-  "Risk": "Allowing containers with NET_RAW capability increases the risk of network attacks and privilege escalation.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes pods** where any container's security context adds the `NET_RAW` Linux capability are identified.\n\nThe inspection evaluates container `securityContext.capabilities.add` entries to detect explicit requests for `NET_RAW`.",
+  "Risk": "Granting **NET_RAW** enables raw sockets for packet crafting and sniffing, undermining **confidentiality** and **integrity**. Attackers can run ARP/DNS spoofing, pivot or scan inside the cluster, bypass service isolation, exfiltrate data, and impact **availability** through network abuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000234711-minimize-the-admission-of-containers-with-the-net-raw-capability",
+    "https://medium.com/@benson.philemon/pod-security-standards-baseline-profile-essential-knowledge-for-cks-exam-1bcfeef94959",
+    "https://dev.to/castai/kubernetes-security-10-best-practices-from-the-industry-and-community-1bp6?comments_sort=latest",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-capabilities-for-a-container",
+    "https://istio.io/latest/docs/setup/additional-setup/pod-security-admission/",
+    "https://github.com/aws-samples/k8s-psa-pss-testing",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/security-context",
+    "https://kubernetes.io/docs/concepts/security/pod-security-admission/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_6#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Identify the affected workload (Deployment/StatefulSet/Pod) and open its spec for edit (e.g., kubectl edit deployment <example_resource_name>)\n2. In each container under: spec.template.spec.containers[].securityContext.capabilities.add, remove the entry NET_RAW (or remove the entire add field if it only contains NET_RAW)\n3. Save the changes to trigger a rollout (for Pod manifests, kubectl apply -f <file.yaml>)\n4. Recreate any standalone Pods if needed so the updated spec takes effect",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n      security_context {\n        capabilities {\n          drop = [\"NET_RAW\"] # Critical: ensures the container is not granted NET_RAW\n        }\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of NET_RAW capability through admission control policies.",
-      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-capabilities-for-a-container"
+      "Text": "Apply **least privilege**: avoid adding `NET_RAW` and drop unnecessary Linux capabilities by default. Use cluster-wide **admission policies** to block requests for `NET_RAW`. When strictly required, isolate the workload, restrict egress with network controls, and audit capability use as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/core_minimize_net_raw_capability_admission"
     }
   },
   "Categories": [

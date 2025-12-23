@@ -1,26 +1,29 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_containers_added_capabilities",
-  "CheckTitle": "Minimize the admission of containers with added capabilities",
+  "CheckTitle": "Pod has no containers with added capabilities",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with capabilities assigned beyond the default set, mitigating the risks of container breakout attacks.",
-  "Risk": "Allowing containers with additional capabilities increases the risk of security breaches and container breakout attacks.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "Kubernetes Pods and containers are evaluated for **added Linux capabilities** via `capabilities.add` in their security context; presence of added entries indicates elevated privileges beyond defaults.",
+  "Risk": "Extra capabilities expand the container's kernel-level permissions, enabling actions like raw socket use, file ownership changes, and mount operations. Compromise could enable node access, lateral movement, or tampering with workloads, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl patch deployment <example_resource_name> -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"<example_resource_name>\",\"securityContext\":{\"capabilities\":{\"add\":[]}}}]}}}}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Open the manifest for the workload creating the Pod (e.g., Deployment/StatefulSet/DaemonSet)\n2. In spec.template.spec.containers[*].securityContext.capabilities, delete all 'add' entries (remove the entire 'add' list)\n3. Save and apply the change (kubectl apply or use your GitOps pipeline); the controller will roll out updated Pods\n4. If it is a standalone Pod, delete and recreate it without the capabilities.add field",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n      # Critical: do not set security_context.capabilities.add\n      # This ensures no added Linux capabilities, making the check PASS.\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the addition of extra capabilities to containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Apply **least privilege**: require containers to `drop: ALL` and avoid `capabilities.add` except when strictly justified (e.g., `NET_BIND_SERVICE`). Enforce with **admission policies** and separation of duties. Combine with **seccomp/AppArmor** and non-root execution for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/core_minimize_containers_added_capabilities"
     }
   },
   "Categories": [

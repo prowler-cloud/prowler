@@ -1,26 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_root_containers_admission",
-  "CheckTitle": "Minimize the admission of root containers",
+  "CheckTitle": "Pod does not run any container as the root user",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers running as the root user. Running containers as root increases the risk of container breakout and should be restricted.",
-  "Risk": "Allowing containers to run as root can lead to elevated risk of security breaches and container breakout.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Pods** are assessed for containers configured to run as the **root user**. The evaluation identifies containers whose security context sets `runAsUser: 0`.",
+  "Risk": "Containers running as **root (UID 0)** enable **privilege escalation** and **container breakout**. Attackers can modify workloads (**integrity**), read sensitive data on mounted volumes (**confidentiality**), and disrupt nodes or services via kernel/daemon abuse (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1229",
+    "https://kubernetes.io/docs/tutorials/security/cluster-level-pss/",
+    "https://sdk.operatorframework.io/docs/best-practices/pod-security-standards/",
+    "https://bobcares.com/blog/container-has-runasnonroot-image-non-numeric-user/",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+    "https://kyverno.io/policies/pod-security/restricted/require-run-as-nonroot/require-run-as-nonroot/",
+    "https://support.icompaas.com/support/solutions/articles/62000234712-minimize-the-admission-of-root-containers"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_5#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl patch pod <POD_NAME> -n <NAMESPACE> --type=strategic -p '{\"spec\":{\"containers\":[{\"name\":\"<CONTAINER_NAME>\",\"securityContext\":{\"runAsUser\":1000}}]}}'",
+      "NativeIaC": "",
+      "Other": "1. In your Kubernetes dashboard or kubectl editor, open the workload (Deployment/StatefulSet/DaemonSet) that created the failing Pod.\n2. Edit the YAML and set a non-root UID for the specific container:\n   ```yaml\n   spec:\n     template:\n       spec:\n         containers:\n         - name: <CONTAINER_NAME>\n           securityContext:\n             runAsUser: 1000  # Critical: non-zero UID\n   ```\n3. Save and apply. Wait for the new Pod to start and verify the finding is resolved.",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      security_context {\n        run_as_user = 1000  # Critical: set a non-zero UID so the container is not root\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of root containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Require non-root execution and enforce **least privilege**:\n- Set `runAsNonRoot: true` and a non-zero `runAsUser`\n- Use images with a defined non-root UID\n- Apply **Pod Security Standards - restricted** or policies to block UID `0`\n- Use `allowPrivilegeEscalation: false` and drop unnecessary capabilities",
+      "Url": "https://hub.prowler.com/check/core_minimize_root_containers_admission"
     }
   },
   "Categories": [

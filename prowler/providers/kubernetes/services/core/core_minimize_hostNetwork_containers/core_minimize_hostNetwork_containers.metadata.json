@@ -1,30 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_hostNetwork_containers",
-  "CheckTitle": "Minimize the admission of containers wishing to share the host network namespace",
+  "CheckTitle": "Pod does not use hostNetwork",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's network namespace. Containers with hostNetwork can access local network traffic and other pods, potentially leading to security risks.",
-  "Risk": "Allowing containers to share the host's network namespace without strict control can lead to security risks and potential network breaches.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "Pods configured with `hostNetwork: true` are identified, meaning they share the node's network namespace and use the host's IP stack, interfaces, and ports.",
+  "Risk": "Using the **host network namespace** exposes node-local interfaces and traffic to the pod. A compromise can enable packet capture and request spoofing (**C/I**), access to node services (e.g., kubelet), and port binding conflicts, causing outages (**A**) and enabling **lateral movement** across the cluster.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_4#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Open Kubernetes Dashboard\n2. For controller-managed workloads (Deployment/DaemonSet/StatefulSet):\n   - Go to Workloads > select the workload > Edit\n   - In the Pod template, set spec.template.spec.hostNetwork to false or remove the field\n   - Save to roll out new Pods\n3. For standalone Pods:\n   - Go to Workloads > Pods > select the Pod > Delete\n   - Click Create > upload the Pod YAML without hostNetwork (or with hostNetwork: false) and create the Pod",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    host_network = false # Critical: disables hostNetwork so the Pod passes the check\n    container {\n      name  = \"ct\"\n      image = \"nginx\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of hostNetwork in containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Disallow `hostNetwork` by default. Enforce **least privilege** with admission policies that block it, allowing narrowly scoped exceptions only for trusted system workloads. Prefer standard pod networking with **NetworkPolicies**, and isolate node services for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/core_minimize_hostNetwork_containers"
     }
   },
   "Categories": [
-    "container-security"
+    "container-security",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
