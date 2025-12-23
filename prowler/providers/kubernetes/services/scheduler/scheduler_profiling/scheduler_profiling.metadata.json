@@ -1,30 +1,37 @@
 {
   "Provider": "kubernetes",
   "CheckID": "scheduler_profiling",
-  "CheckTitle": "Ensure that the --profiling argument is set to false",
+  "CheckTitle": "Kubernetes scheduler pod has profiling disabled",
   "CheckType": [],
   "ServiceName": "scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "KubernetesScheduler",
-  "Description": "Disable profiling in the Kubernetes Scheduler unless it is needed for troubleshooting. Profiling can reveal detailed system and application performance data, which might be exploited if exposed. Turning off profiling reduces the potential attack surface and performance overhead.",
-  "Risk": "While profiling is useful for identifying performance issues, it generates detailed data that could potentially expose sensitive information about the system and its performance characteristics.",
-  "RelatedUrl": "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Scheduler** profiling configuration, specifically whether scheduler containers run with `--profiling=false` to keep the profiling API disabled.",
+  "Risk": "With **profiling enabled**, the pprof endpoints can expose **runtime internals** (stack traces, memory, goroutines), aiding reconnaissance and credential discovery, harming **confidentiality**.\n\nExtra CPU/heap usage can be abused for **DoS**, impacting **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/freach/kubernetes-security-best-practice",
+    "https://docs.datadoghq.com/security/default_rules/z7x-m3r-pb8/",
+    "https://kubernetes.io/docs/admin/kube-scheduler/",
+    "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
+    "https://paper.bobylive.com/Security/CIS/CIS_Kubernetes_Benchmark_v1_3_0.pdf"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false-2",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control-plane node\n2. Edit the scheduler manifest: `sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml`\n3. In `spec.containers[].command`, add this flag (or change existing to false):\n   ```\n   --profiling=false\n   ```\n4. Save the file; kubelet will automatically restart the scheduler with profiling disabled",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To minimize exposure to performance data and potential vulnerabilities, ensure the --profiling argument in the Kubernetes Scheduler is set to false.",
-      "Url": "https://kubernetes.io/docs/admin/kube-scheduler/"
+      "Text": "Disable by default: set `--profiling=false` on the Scheduler.\n\nIf profiling is required, enable it only temporarily, restrict access with **network policies**, bind to loopback, and log/monitor usage. Apply **least privilege** and **defense in depth** to limit exposure.",
+      "Url": "https://hub.prowler.com/check/scheduler_profiling"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
