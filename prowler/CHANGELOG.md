@@ -21,10 +21,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.16.1] (Prowler UNRELEASED)
+## [5.16.1] (Prowler v5.16.1)
 
 ### Fixed
-- Fix ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
+- ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
 
 ---
 
