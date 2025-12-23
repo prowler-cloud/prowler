@@ -45,6 +45,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_CHINA_PARTITION,
     AWS_COMMERCIAL_PARTITION,
+    AWS_EUSC_PARTITION,
     AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
     AWS_ISO_PARTITION,
@@ -52,6 +53,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_CN_NORTHWEST_1,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_WEST_1,
+    AWS_REGION_EUSC_DE_EAST_1,
     AWS_REGION_GOV_CLOUD_US_EAST_1,
     AWS_REGION_ISO_GLOBAL,
     AWS_REGION_US_EAST_1,
@@ -957,6 +959,13 @@ aws:
         assert aws_provider.get_global_region() == AWS_REGION_ISO_GLOBAL
 
     @mock_aws
+    def test_aws_eusc_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_EUSC_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_EUSC_DE_EAST_1
+
+    @mock_aws
     def test_get_available_aws_service_regions_with_us_east_1_audited(self):
         region = [AWS_REGION_US_EAST_1]
         aws_provider = AwsProvider(
@@ -1507,6 +1516,17 @@ aws:
         )
 
     @mock_aws
+    def test_create_sts_session_eusc(self):
+        current_session = session.Session()
+        aws_region = AWS_REGION_EUSC_DE_EAST_1
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.eu"
+
+    @mock_aws
     @patch(
         "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,
@@ -1760,7 +1780,7 @@ aws:
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
-        assert len(AwsProvider.get_regions(partition="aws")) == 35
+        assert len(AwsProvider.get_regions(partition="aws")) == 34
 
     def test_get_all_regions(self):
         with patch(
