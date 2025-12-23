@@ -7,7 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
-- Support eusc partition for AWS [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
+- Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
 - Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
 
 ### Changed
