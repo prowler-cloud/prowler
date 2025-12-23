@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_connection_filter_policy_empty_ip_allowlist",
-  "CheckTitle": "Ensure the Anti-Spam Connection Filter Policy IP Allowlist is empty or undefined.",
+  "CheckTitle": "Defender Antispam Connection Filter Policy IP Allowlist is empty or undefined",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Defender Anti-Spam Policy",
-  "Description": "This check focuses on Microsoft 365 organizations with Exchange Online mailboxes or standalone Exchange Online Protection (EOP) organizations. It ensures that the connection filter policy's IP Allowlist is empty or undefined to prevent bypassing spam filtering and sender authentication checks, which could lead to successful delivery of malicious emails.",
-  "Risk": "Using the IP Allowlist without additional verification like mail flow rules poses a risk, as emails from these sources skip essential security checks (SPF, DKIM, DMARC). This could allow attackers to deliver harmful emails directly to the Inbox.",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft Defender connection filter policy** is evaluated to determine whether the **IP Allowlist** (`IPAllowList`) is configured. The finding indicates if any IP addresses are present in the policy's allow list for Exchange Online or standalone EOP environments.",
+  "Risk": "Allowlisted IPs bypass **SPF**, **DKIM**, **DMARC** and antispam, enabling **phishing** and **spoofing** that steal credentials (confidentiality), deliver **malware** or fraudulent mail (integrity), and cause **inbox flooding** (availability). Attackers can abuse compromised or shared relays on those IPs to deliver malicious mail.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://security.microsoft.com.",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-hostedconnectionfilterpolicy?view=exchange-ps"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-HostedConnectionFilterPolicy -Identity Default -IPAllowList @{}",
+      "CLI": "Set-HostedConnectionFilterPolicy -Identity Default -IPAllowList $null",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender https://security.microsoft.com. 2. Click to expand Email & collaboration and select Policies & rules. 3. On the Policies & rules page select Threat policies. 4. Under Policies, select Anti-spam and click on the Connection filter policy (Default). 5. Remove IP entries from the allow list. 6. Click Save.",
+      "Other": "1. Go to https://security.microsoft.com and sign in\n2. Email & collaboration > Policies & rules > Threat policies\n3. Open Anti-spam > Connection filter policy (Default)\n4. Edit the IP allow list and remove all entries\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that the IP Allowlist in your connection filter policy is empty or undefined to prevent bypassing essential security checks.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-hostedconnectionfilterpolicy?view=exchange-ps"
+      "Text": "Keep the **IP Allowlist** empty. Rely on layered controls: **SPF**, **DKIM**, **DMARC**, connection filtering, and content scanning. *If an exception is unavoidable*, apply **defense in depth** (sender auth, TLS, reputation checks, and tight scope/time limits) and prefer domain- or certificate-based trust over static IPs. Monitor delivery logs for abuse.",
+      "Url": "https://hub.prowler.com/check/defender_antispam_connection_filter_policy_empty_ip_allowlist"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

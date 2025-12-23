@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_outbound_policy_forwarding_disabled",
-  "CheckTitle": "Ensure Defender Outbound Spam Policies are set to disable mail forwarding.",
+  "CheckTitle": "Defender Outbound Spam policy disables mail forwarding",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Defender Anti-Spam Outbound Policy",
-  "Description": "Ensure Defender Outbound Spam Policies are set to disable mail forwarding.",
-  "Risk": "Enabling email auto-forwarding can be exploited by attackers or malicious insiders to exfiltrate sensitive data outside the organization, often without detection.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
+  "ResourceType": "",
+  "Description": "**Defender outbound spam policies** are evaluated to confirm that automatic mail forwarding is disabled in the default policy and in any custom policies applied to users, groups, or domains.",
+  "Risk": "Allowing **automatic forwarding** enables covert **data exfiltration**, eroding **confidentiality**. Attackers or insiders can auto-route mail to external inboxes, persist access, evade monitoring, and harvest sensitive content (tickets, approvals, MFA codes), enabling **lateral movement** and fraud while reducing auditability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
+    "https://security.microsoft.com/."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-HostedOutboundSpamFilterPolicy -Identity {policyName} -AutoForwardingMode Off",
+      "CLI": "Set-HostedOutboundSpamFilterPolicy -Identity <policyName> -AutoForwardingMode Off",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender https://security.microsoft.com/. 2. Expand E-mail & collaboration then select Policies & rules. 3. Select Threat policies > Anti-spam. 4. Select Anti-spam outbound policy (default). 5. Click Edit protection settings. 6. Set Automatic forwarding rules dropdown to Off - Forwarding is disabled and click Save. 7. Repeat steps 4-6 for any additional higher priority, custom policies.",
+      "Other": "1. Sign in to https://security.microsoft.com\n2. Go to Email & collaboration > Policies & rules > Threat policies > Anti-spam\n3. Open Anti-spam outbound policy (Default) or the target custom policy\n4. Click Edit protection settings and set Automatic forwarding rules to Off - Forwarding is disabled, then Save\n5. For custom policies, ensure the policy Status is On (enabled); repeat for any additional policies",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Block all forms of mail forwarding using Anti-spam outbound policies in Exchange Online. Apply exclusions only where justified by organizational policy.",
-      "Url": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about"
+      "Text": "Disable **automatic forwarding** globally in outbound spam policies to enforce **least privilege** on data flows. *If exceptions are required*, restrict to named senders or domains, document approvals, and review regularly. Add **DLP**, alerts on new forwarding rules, and mailbox auditing for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/defender_antispam_outbound_policy_forwarding_disabled"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

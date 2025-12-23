@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_outbound_policy_configured",
-  "CheckTitle": "Ensure Defender Outbound Spam Policies are set to notify administrators.",
+  "CheckTitle": "Defender outbound spam policy is configured to notify recipients when senders are blocked or exceed sending limits",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "low",
-  "ResourceType": "Defender Anti-Spam Outbound Policy",
-  "Description": "Ensure that outbound anti-spam policies are configured to notify administrators and copy suspicious outbound messages to designated recipients when a sender is blocked for sending spam emails.",
-  "Risk": "Without outbound spam notifications and message copies, compromised accounts may go undetected, increasing the risk of reputation damage or data leakage through unauthorized email activity.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Defender outbound spam policies** must send **administrator alerts** and Bcc **suspicious outbound messages** when a sender exceeds limits or is blocked. The assessment checks for `notify limit exceeded` and `notify sender blocked` with recipient addresses in the default policy and any applicable custom policies.",
+  "Risk": "Absent alerts and copies, **compromised mailboxes** can exfiltrate data and send phishing undetected. This harms **email deliverability** through blocklisting and throttling (**availability**), undermines domain **integrity**, and impedes **forensics** by removing evidence needed to triage abusive outbound traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.nakivo.com/blog/configuring-office-365-spam-filter/",
+    "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
+    "https://www.duocircle.com/content/outbound-spam-filtering/outbound-spam-office-365",
+    "https://learn.microsoft.com/is-is/defender-office-365/outbound-spam-policies-configure",
+    "https://security.microsoft.com.",
+    "https://www.thatlazyadmin.com/2019/04/01/configure-outbound-spam-notification-office-365-exchange-online/",
+    "https://blog.admindroid.com/configure-outbound-spam-policy-in-microsoft-365/",
+    "https://www.linkedin.com/pulse/set-up-outbound-spam-notifications-exchange-online-ankit-sharma-eqspf"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "$BccEmailAddress = @(\"<INSERT-EMAIL>\")\n$NotifyEmailAddress = @(\"<INSERT-EMAIL>\")\nSet-HostedOutboundSpamFilterPolicy -Identity Default -BccSuspiciousOutboundAdditionalRecipients $BccEmailAddress -BccSuspiciousOutboundMail $true -NotifyOutboundSpam $true -NotifyOutboundSpamRecipients $NotifyEmailAddress",
+      "CLI": "Set-HostedOutboundSpamFilterPolicy -Identity Default -BccSuspiciousOutboundMail $true -BccSuspiciousOutboundAdditionalRecipients \"<INSERT-EMAIL>\" -NotifyOutboundSpam $true -NotifyOutboundSpamRecipients \"<INSERT-EMAIL>\"",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender https://security.microsoft.com. 2. Click to expand Email & collaboration and select Policies & rules > Threat policies. 3. Under Policies, select Anti-spam. 4. Click on the Anti-spam outbound policy (default). 5. Select Edit protection settings then under Notifications: 6. Check 'Send a copy of suspicious outbound messages or message that exceed these limits to these users and groups' and enter the email addresses. 7. Check 'Notify these users and groups if a sender is blocked due to sending outbound spam' and enter the desired email addresses. 8. Click Save.",
+      "Other": "1. Sign in to Microsoft 365 Defender: https://security.microsoft.com\n2. Go to Email & collaboration > Policies & rules > Threat policies > Anti-spam\n3. Open Anti-spam outbound policy (Default) and select Edit protection settings\n4. Under Notifications:\n   - Check \"Send a copy of suspicious outbound messages or messages that exceed these limits to these users and groups\" and add <EMAIL>\n   - Check \"Notify these users and groups if a sender is blocked due to sending outbound spam\" and add <EMAIL>\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure Defender outbound spam filter policies to notify administrators and copy suspicious outbound messages when users are blocked for sending spam.",
-      "Url": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about"
+      "Text": "Enable outbound spam notifications and Bcc suspicious messages to a monitored mailbox, applying them consistently to default and scoped policies. Set prudent sending limits and block actions, disable unnecessary external forwarding, and monitor alerts-aligning with **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/defender_antispam_outbound_policy_configured"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

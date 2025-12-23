@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "defender_chat_report_policy_configured",
-  "CheckTitle": "Ensure chat report submission policy is properly configured in Defender",
+  "CheckTitle": "Defender report submission policy uses customized addresses for junk, not junk and phish, and chat reports are sent only to a customized address",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Defender Report Submission Policy",
-  "Description": "Ensure Defender report submission policy is properly configured to use customized addresses and enable chat message reporting to customized addresses, while disabling report chat message to Microsoft.",
-  "Risk": "If Defender report submission policy is not properly configured, reported messages from Teams may not be handled or routed correctly, reducing the organization's ability to respond to threats.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
+  "ResourceType": "",
+  "Description": "**Defender for Office 365** user-reported settings ensure `junk`, `not-junk`, and `phish` reports are sent to **customized addresses** with valid destinations, and that **Teams chat reports** route to customized addresses while direct chat reporting to Microsoft is disabled.",
+  "Risk": "Misrouted or disabled user reports reduce **visibility** into Teams threats, delaying containment. Attackers can keep distributing **phishing links** or **malicious files**, causing credential theft (**confidentiality**), message manipulation (**integrity**), and channel disruption from ongoing spam (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
+    "https://security.microsoft.com/)."
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy -EnableReportToMicrosoft $false -ReportChatMessageEnabled $false -ReportChatMessageToCustomizedAddressEnabled $true -ReportJunkToCustomizedAddress $true -ReportNotJunkToCustomizedAddress $true -ReportPhishToCustomizedAddress $true -ReportJunkAddresses $usersub -ReportNotJunkAddresses $usersub -ReportPhishAddresses $usersub",
+      "CLI": "Set-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy -ReportJunkToCustomizedAddress $true -ReportNotJunkToCustomizedAddress $true -ReportPhishToCustomizedAddress $true -ReportJunkAddresses <EMAIL_ADDRESS> -ReportNotJunkAddresses <EMAIL_ADDRESS> -ReportPhishAddresses <EMAIL_ADDRESS> -ReportChatMessageEnabled $false -ReportChatMessageToCustomizedAddressEnabled $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender (https://security.microsoft.com/). 2. Click on Settings > Email & collaboration > User reported settings. 3. Scroll to Microsoft Teams section. 4. Ensure Monitor reported messages in Microsoft Teams is checked. 5. Ensure Send reported messages to: is set to My reporting mailbox only with report email addresses defined for authorized staff.",
+      "Other": "1. Go to Microsoft 365 Defender: https://security.microsoft.com\n2. Navigate to Settings > Email & collaboration > User reported settings\n3. In Reported message destinations (Outlook):\n   - Turn on Send Junk to a customized address and enter <EMAIL_ADDRESS>\n   - Turn on Send Not junk to a customized address and enter <EMAIL_ADDRESS>\n   - Turn on Send Phish to a customized address and enter <EMAIL_ADDRESS>\n4. In Microsoft Teams section:\n   - Turn off Monitor reported messages in Microsoft Teams\n   - Turn on Send reported Teams messages to a customized address",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure Defender report submission policy to use customized addresses and enable chat message reporting to customized addresses, while disabling report chat message to Microsoft.",
-      "Url": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
+      "Text": "Send all user-reported `junk`, `not-junk`, and `phish` to monitored **custom mailboxes** and enable **Teams chat reporting** to those addresses, keeping direct chat submissions to Microsoft disabled. Apply **least privilege** to reviewer access, establish a **triage workflow**, and integrate alerts for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/defender_chat_report_policy_configured"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],

@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "defender_antispam_connection_filter_policy_safe_list_off",
-  "CheckTitle": "Ensure the default connection filter policy has the SafeList setting disabled",
+  "CheckTitle": "Defender Antispam Connection Filter Policy has Safe List disabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Defender Anti-Spam Policy",
-  "Description": "This check ensures that the EnableSafeList setting in the default connection filter policy is set to False. The safe list, managed dynamically by Microsoft, allows emails from listed IPs to bypass spam filtering and sender authentication checks, posing a security risk.",
-  "Risk": "If the safe list is enabled, emails from IPs on this list can bypass essential security checks (SPF, DKIM, DMARC), potentially allowing malicious emails to be delivered directly to users' inboxes.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/connection-filter-policies-configure",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Defender connection filter policy** safe list setting is evaluated. When enabled, mail from Microsoft-managed IPs skips spam filtering and some sender authentication. The finding indicates whether this implicit bypass is turned off.",
+  "Risk": "With the safe list on, inbound mail can bypass SPF/DKIM/DMARC and spam heuristics, allowing spoofed or phishing messages to reach inboxes. This risks credential theft (confidentiality), enables account takeover and tampering (integrity), and may lead to malware-driven outages (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://security.microsoft.com.",
+    "https://learn.microsoft.com/en-us/defender-office-365/connection-filter-policies-configure",
+    "https://learn.microsoft.com/en-us/defender-office-365/create-safe-sender-lists-in-office-365#use-the-ip-allow-list"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-HostedConnectionFilterPolicy -Identity Default -EnableSafeList $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender https://security.microsoft.com. 2. Click to expand Email & collaboration and select Policies & rules. 3. On the Policies & rules page select Threat policies. 4. Under Policies, select Anti-spam and click on the Connection filter policy (Default). 5. Disable the safe list option. 6. Click Save.",
+      "Other": "1. Go to https://security.microsoft.com/antispam\n2. Select Connection filter policy (Default)\n3. Click Edit connection filter policy\n4. Uncheck Turn on safe list\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that the EnableSafeList setting in your connection filter policy is set to False to prevent bypassing essential security checks.",
-      "Url": "https://learn.microsoft.com/en-us/defender-office-365/create-safe-sender-lists-in-office-365#use-the-ip-allow-list"
+      "Text": "Disable the **safe list** (`EnableSafeList=false`). Favor **allow-by-exception**: use the **Tenant Allow/Block List** or tightly scoped IPs only when necessary and validated by strong **email authentication**. Apply **least privilege**, review exceptions regularly, and layer **defense in depth** with anti-phishing and monitoring.",
+      "Url": "https://hub.prowler.com/check/defender_antispam_connection_filter_policy_safe_list_off"
     }
   },
   "Categories": [
+    "email-security",
     "e3"
   ],
   "DependsOn": [],
