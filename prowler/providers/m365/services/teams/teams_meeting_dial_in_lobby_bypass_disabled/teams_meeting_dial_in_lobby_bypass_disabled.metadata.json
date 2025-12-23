@@ -1,29 +1,40 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_dial_in_lobby_bypass_disabled",
-  "CheckTitle": "Ensure that dial-in users cannot bypass the lobby in Teams meetings",
+  "CheckTitle": "Teams Meetings global policy does not allow dial-in users to bypass the lobby",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Teams Global Meeting Policy",
-  "Description": "Ensure that dial-in users cannot bypass the lobby in Teams meetings",
-  "Risk": "Allowing dial-in users to bypass the lobby may result in unauthorized or unauthenticated individuals joining sensitive meetings without prior validation, increasing the risk of information leakage or meeting disruptions.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Teams meeting policies** prevent **PSTN dial-in callers** from bypassing the lobby (`AllowPSTNUsersToBypassLobby=false`), requiring admission by organizers or presenters.",
+  "Risk": "Direct admission of dial-in callers enables unauthenticated access, caller-ID spoofing, and meeting hijacking. Sensitive content can be overheard or recorded (**confidentiality**), discussions manipulated (**integrity**), and sessions disrupted (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://admin.teams.microsoft.com.",
+    "https://learn.microsoft.com/en-us/microsoftteams/who-can-bypass-meeting-lobby",
+    "https://gencarenow.com/blog/b/microsoft-teams-pstn-conferencing-and-bypassing-the-lobby",
+    "https://github.com/MicrosoftDocs/office-docs-powershell/blob/main/teams/teams-ps/teams/Set-CsTeamsMeetingPolicy.md",
+    "https://alyaconsulting.ch/Solutions/MicrosoftTeams/Set-CsTeamsMeetingPolicy",
+    "https://blog.hametbenoit.info/2020/01/06/teams-a-new-meeting-policy-setting-is-available-to-control-dial-in-user-to-bypass-the-lobby/",
+    "https://blog.admindroid.com/major-microsoft-teams-meeting-configurations-to-boost-secure-score-by-8-points/",
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowPSTNUsersToBypassLobby $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting join & lobby set People dialing in can bypass the lobby to Off.",
+      "Other": "1. Sign in to the Microsoft Teams admin center: https://admin.teams.microsoft.com\n2. Go to Meetings > Meeting policies\n3. Select Global (Org-wide default)\n4. In Meeting join & lobby, set \"People dialing in can bypass the lobby\" to Off\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Require all users dialing in by phone to wait in the lobby until admitted by the meeting organizer, co-organizer, or presenter. This ensures proper vetting before granting access to potentially sensitive discussions.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+      "Text": "Enforce the lobby for all **PSTN dial-in callers**. Restrict admission to organizers or presenters, and allow only authenticated or explicitly invited users to bypass. Standardize via org-wide meeting policies or templates to uphold **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/teams_meeting_dial_in_lobby_bypass_disabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

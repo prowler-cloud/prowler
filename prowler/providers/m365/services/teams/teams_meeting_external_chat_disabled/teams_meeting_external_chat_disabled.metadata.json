@@ -1,29 +1,38 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_external_chat_disabled",
-  "CheckTitle": "Ensure external meeting chat is off",
+  "CheckTitle": "External meeting chat for untrusted organizations is disabled",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Teams Global Meeting Policy",
-  "Description": "Ensure users can't read or write messages in external meeting chats with untrusted organizations.",
-  "Risk": "Allowing chat in external meetings increases the risk of exploits like GIFShell or DarkGate malware being delivered to users through untrusted organizations.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "ResourceType": "",
+  "Description": "**Teams meeting policy** setting `AllowExternalNonTrustedMeetingChat` governs whether users can read or send chat messages in meetings hosted by **untrusted organizations**.\n\nThis assesses the org-wide default policy to confirm external meeting chat with non-trusted tenants is blocked.",
+  "Risk": "Permitting chat in external meetings with **untrusted tenants** risks:\n- Confidential data exposure via messages/files\n- **Malware delivery** through links or media (e.g., GIF-based techniques)\n- **Social engineering** enabling account compromise and **lateral movement**, degrading confidentiality and integrity",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/microsoftteams/set-csteamsmeetingpolicy?view=teams-ps",
+    "https://admin.teams.microsoft.com.",
+    "https://github.com/MicrosoftDocs/office-docs-powershell/blob/main/teams/teams-ps/teams/Set-CsTeamsMeetingPolicy.md",
+    "https://video2.skills-academy.com/en-us/microsoftteams/manage-meeting-chat",
+    "https://office365itpros.com/2023/10/23/block-meeting-chat-untrusted/",
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalNonTrustedMeetingChat $false",
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalNonTrustedMeetingChat $False",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting engagement set External meeting chat to Off.",
+      "Other": "1. Sign in to the Teams admin center: https://admin.teams.microsoft.com\n2. Go to Meetings > Meeting policies\n3. Select Global (Org-wide default)\n4. Under Meeting engagement, set External meeting chat (untrusted organizations) to Off\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable external meeting chat to prevent potential security risks from untrusted organizations. This helps protect against exploits like GIFShell or DarkGate malware.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+      "Text": "Block chat for meetings hosted by **non-trusted organizations** and restrict collaboration to a vetted allowlist.\n\nAdopt **defense in depth**: limit content sharing, enable link/file scanning, enforce **DLP**, and user training. Review external trust relationships regularly per **least privilege**.",
+      "Url": "https://hub.prowler.com/check/teams_meeting_external_chat_disabled"
     }
   },
   "Categories": [
+    "trust-boundaries",
     "e3"
   ],
   "DependsOn": [],

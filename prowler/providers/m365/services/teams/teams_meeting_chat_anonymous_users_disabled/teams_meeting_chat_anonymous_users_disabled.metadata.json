@@ -1,29 +1,34 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_chat_anonymous_users_disabled",
-  "CheckTitle": "Ensure meeting chat does not allow anonymous users",
+  "CheckTitle": "Teams Meetings global policy does not allow anonymous users in meeting chat",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Teams Global Meeting Policy",
-  "Description": "Ensure meeting chat does not allow anonymous users.",
-  "Risk": "Allowing anonymous users to participate in meeting chat can expose sensitive information and increase the risk of inappropriate content being shared by unverified participants.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "**Microsoft Teams meeting policies** restrict chat so **anonymous participants** cannot send or read messages.\n\nAccepted configurations include `EnabledExceptAnonymous` or `EnabledInMeetingOnlyForAllExceptAnonymous`.",
+  "Risk": "**Anonymous chat** enables unverified users to leak sensitive content, post **phishing/malware links**, and impersonate others.\n\nThis undermines **confidentiality** and accountability, and can disrupt meetings through spam, affecting **availability** and auditability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://admin.teams.microsoft.com.",
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -MeetingChatEnabledType 'EnabledExceptAnonymous'",
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -MeetingChatEnabledType EnabledExceptAnonymous",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting engagement verify that Meeting chat is set to On for everyone but anonymous users.",
+      "Other": "1. Sign in to the Microsoft Teams admin center: https://admin.teams.microsoft.com\n2. Go to Meetings > Meeting policies\n3. Open Global (Org-wide default)\n4. Under Meeting engagement, set Meeting chat to \"On for everyone but anonymous users\"\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict chat access during meetings to only authenticated and authorized users. Disable chat capabilities for anonymous users to maintain confidentiality and prevent misuse.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+      "Text": "Enforce chat for **authenticated users only** following **least privilege**.\n- Block chat for anonymous users\n- Use guest access with identity verification and lobby controls\n- Apply DLP and link/file protection to chat\n- Monitor audit logs and set retention to ensure traceability",
+      "Url": "https://hub.prowler.com/check/teams_meeting_chat_anonymous_users_disabled"
     }
   },
   "Categories": [
+    "identity-access",
     "e3"
   ],
   "DependsOn": [],

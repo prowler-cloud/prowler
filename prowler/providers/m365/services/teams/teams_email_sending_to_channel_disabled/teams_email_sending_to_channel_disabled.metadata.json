@@ -1,30 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "teams_email_sending_to_channel_disabled",
-  "CheckTitle": "Ensure users are not be able to email the channel directly.",
+  "CheckTitle": "Email to Teams channel addresses is disabled",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Teams Settings",
-  "Description": "Ensure users can not send emails to channel email addresses.",
-  "Risk": "Allowing users to send emails to Teams channel email addresses introduces a security risk, as these addresses are outside the tenant’s domain and lack proper security controls. This creates a potential attack vector where threat actors could exploit the channel email to deliver malicious content or spam.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps",
+  "ResourceType": "",
+  "Description": "Microsoft Teams tenant configuration for **channel email addresses** determines if channels can receive messages via email. This evaluates the `allow_email_into_channel` setting.",
+  "Risk": "Allowing email into channels lets outsiders inject content, links, and attachments into Teams. Leaked addresses enable **phishing**, **malware delivery**, and spam, undermining **confidentiality** and **integrity**, and adding noise that affects **availability**; posts may bypass user-authenticated context.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://admin.teams.microsoft.com.",
+    "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-CsTeamsClientConfiguration -Identity Global -AllowEmailIntoChannel $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Teams select Teams settings. 3. Under email integration set Users can send emails to a channel email address to Off.",
+      "Other": "1. Sign in to the Microsoft Teams admin center: https://admin.teams.microsoft.com\n2. Go to Teams > Teams settings\n3. Under Email integration, set \"Users can send emails to a channel email address\" to Off\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable the ability for users to send emails to Teams channel email addresses to reduce the risk of external abuse and enhance control over organizational communications.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps"
+      "Text": "Disable email into channels by default. If needed, limit senders to approved domains, apply anti-phishing/malware filtering, enforce DLP and retention on inbound mail, monitor postings, rotate channel addresses, and prefer authenticated connectors-applying **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/teams_email_sending_to_channel_disabled"
     }
   },
   "Categories": [
-    "e3"
+    "email-security",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

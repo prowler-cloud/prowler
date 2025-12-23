@@ -1,29 +1,39 @@
 {
   "Provider": "m365",
   "CheckID": "teams_external_domains_restricted",
-  "CheckTitle": "Ensure external domains are restricted.",
+  "CheckTitle": "External domain access is disabled for Teams users",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Teams Settings",
-  "Description": "Ensure external domains are restricted from being used in Teams admin center.",
-  "Risk": "Allowing unrestricted communication with external domains in Microsoft Teams increases the risk of exposure to social engineering attacks, phishing, malware delivery (e.g., DarkGate), and exploitation tactics such as GIFShell or username enumeration.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+  "ResourceType": "",
+  "Description": "**Microsoft Teams** tenant external access configuration is assessed. The expected posture is **federation with external domains** disabled, so users cannot chat, call, or meet with accounts in other domains.",
+  "Risk": "**Unrestricted external federation** enables delivery of phishing links and malware via chats/calls, user enumeration, and data leakage through messages or file shares. This directly threatens **confidentiality** and **integrity**, and can aid social engineering-driven lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+    "https://admin.teams.microsoft.com/.",
+    "https://learn.microsoft.com/ar-sa/entra/architecture/5-secure-access-b2b",
+    "https://vmwaretroubleshooter.com/breaking-down-information-barriers-for-external-users-in-teams-microsoft-community-hub/",
+    "https://www.solutions2share.com/microsoft-teams-security-collaboration/",
+    "https://www.thatlazyadmin.com/2019/03/28/microsoft-teams-cant-chat-external-domains/",
+    "https://cybersecuritynews.com/microsoft-teams-defender-portal/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-CsTenantFederationConfiguration -AllowFederatedUsers $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com/. 2. Click to expand Users select External access. 3. Under Teams and Skype for Business users in external organizations set Choose which external domains your users have access to to one of the following: Allow only specific external domains or Block all external domains. 4. Click Save.",
+      "Other": "1. Sign in to the Teams admin center: https://admin.teams.microsoft.com/\n2. Go to Org-wide settings (or Users) > External access\n3. Turn off \"Users can communicate with other Skype for Business and Teams users\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict external collaboration by configuring Teams to either Block all external domains or Allow only specific, trusted external domains. This ensures users can only interact with vetted organizations, significantly reducing the attack surface.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps"
+      "Text": "Adopt a **default-deny** stance: disable external access. *If collaboration is required*, allowlist only trusted domains and apply **least privilege** with cross-tenant policies. Prefer **B2B guest/shared channels**, require **MFA** and compliant devices, and review logs and domain lists regularly.",
+      "Url": "https://hub.prowler.com/check/teams_external_domains_restricted"
     }
   },
   "Categories": [
+    "trust-boundaries",
     "e3"
   ],
   "DependsOn": [],
