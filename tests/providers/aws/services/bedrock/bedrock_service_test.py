@@ -276,7 +276,7 @@ class TestBedrockPagination:
         )
 
         # Verify paginator was used
-        regional_client.get_paginator.assert_called_once_with('list_guardrails')
+        regional_client.get_paginator.assert_called_once_with("list_guardrails")
         paginator.paginate.assert_called_once()
 
 
@@ -339,5 +339,5 @@ class TestBedrockAgentPagination:
         )
 
         # Verify paginator was used
-        regional_client.get_paginator.assert_called_once_with('list_agents')
+        regional_client.get_paginator.assert_called_once_with("list_agents")
         paginator.paginate.assert_called_once()
