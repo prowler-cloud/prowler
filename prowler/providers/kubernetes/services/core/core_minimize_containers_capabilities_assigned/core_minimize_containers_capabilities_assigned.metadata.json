@@ -1,26 +1,29 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_containers_capabilities_assigned",
-  "CheckTitle": "Minimize the admission of containers with capabilities assigned",
+  "CheckTitle": "Pod containers have no added Linux capabilities and include capability drops when capabilities are defined",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with Linux capabilities assigned, adhering to the principle of least privilege and reducing the risk of privilege escalation.",
-  "Risk": "Assigning unnecessary Linux capabilities to containers increases the risk of privilege escalation and security breaches.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "Pods are inspected for container **Linux capabilities**. A finding occurs when any container sets capabilities in `add` or does not fully `drop` them (e.g., missing `ALL`), indicating capabilities are assigned instead of removed.",
+  "Risk": "Retained or added **Linux capabilities** enable privilege escalation and container escape.\n- Confidentiality: packet capture and secret access\n- Integrity: filesystem mounts or process tampering\n- Availability: killing services or altering networking",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_34#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl patch deployment <DEPLOYMENT_NAME> -n <NAMESPACE> --type=merge -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"<CONTAINER_NAME>\",\"securityContext\":{\"capabilities\":{\"drop\":[\"ALL\"],\"add\":[]}}}]}}}}'",
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes UI (e.g., Kubernetes Dashboard or your cloud provider's console)\n2. Navigate to the workload (Deployment/StatefulSet/DaemonSet) that runs the failing Pod\n3. Click Edit YAML (or equivalent)\n4. For each affected container, set:\n   - spec.template.spec.containers[].securityContext.capabilities.drop: [\"ALL\"]\n   - Ensure spec.template.spec.containers[].securityContext.capabilities.add is removed or set to an empty list\n5. Save to apply and trigger a rollout",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"nginx:stable-alpine\"\n      security_context {\n        capabilities {\n          drop = [\"ALL\"] # Critical: drop all Linux capabilities to satisfy the check\n          # No 'add' specified to ensure no capabilities are added\n        }\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the assignment of Linux capabilities to containers unless essential for their operation.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Apply **least privilege**: drop `ALL` capabilities and avoid using `add`.\n\nOnly reintroduce a minimal capability when absolutely required, and isolate such pods via defense-in-depth: strict RBAC, `seccomp` RuntimeDefault, AppArmor, network policies, dedicated namespaces/nodes, and admission controls to enforce policy.",
+      "Url": "https://hub.prowler.com/check/core_minimize_containers_capabilities_assigned"
     }
   },
   "Categories": [

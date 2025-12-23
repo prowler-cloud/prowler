@@ -1,30 +1,40 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_admission_hostport_containers",
-  "CheckTitle": "Minimize the admission of containers which use HostPorts",
+  "CheckTitle": "Pod does not use HostPorts",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that require the use of HostPorts. This helps maintain network policy controls and reduce security risks.",
-  "Risk": "Permitting containers with HostPorts can bypass network policy controls, increasing the risk of unauthorized network access.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Pods** are inspected for any container declaring `ports[].hostPort`. The finding highlights workloads that bind container ports directly to the node's network stack via **HostPorts**.",
+  "Risk": "Using **HostPorts** exposes Pods on node IPs outside centralized Service/Ingress controls. Attackers can directly probe and access workloads (**confidentiality/integrity**). Port conflicts or saturation on nodes can disrupt traffic (**availability**). Network segmentation and some policies may be less effective.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://artifacthub.io/packages/kyverno/kyverno-policies/disallow-host-ports",
+    "https://kyverno.io/policies/pod-security/baseline/disallow-host-ports/disallow-host-ports/",
+    "https://developer.squareup.com/blog/kubernetes-pod-security-policies/",
+    "https://github.com/chipzoller/kyverno-pss",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+    "https://www.armosec.io/glossary/pod-security-standards/",
+    "https://praneethreddybilakanti.medium.com/kubernetes-security-8af03eb1d11d"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_25#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes Dashboard and go to Workloads\n2. Select the affected Deployment/DaemonSet/StatefulSet (or Pod) and click Edit\n3. In the YAML, remove every `hostPort` field under `spec.template.spec.containers[].ports[]` (or `spec.containers[]` for a standalone Pod)\n4. Save the changes; allow the workload to restart\n5. Verify the new Pods have no `hostPort` defined",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n      # Critical: do NOT set host_port; omitting it ensures no host port is used\n      port { container_port = 80 }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Limit the use of HostPorts in Kubernetes containers to maintain network security.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Avoid `hostPort`; publish services via **ClusterIP** with **Ingress/LoadBalancer**. Enforce admission policies to deny `hostPort` by default, permitting only a narrowly justified allowlist. Apply **least privilege** network rules, segment nodes, and monitor for unexpected host port bindings as **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/core_minimize_admission_hostport_containers"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

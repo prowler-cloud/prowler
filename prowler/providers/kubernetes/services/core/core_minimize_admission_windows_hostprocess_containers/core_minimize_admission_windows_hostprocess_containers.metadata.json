@@ -1,26 +1,33 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_admission_windows_hostprocess_containers",
-  "CheckTitle": "Minimize the admission of Windows HostProcess Containers",
+  "CheckTitle": "Pod does not allow Windows HostProcess containers",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of Windows containers with the hostProcess flag set to true, thus reducing the risk of privilege escalation and security breaches.",
-  "Risk": "Allowing Windows containers with hostProcess can lead to increased security risks due to privileged access to Windows nodes.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+  "ResourceType": "Pod",
+  "Description": "Pods are evaluated for Windows settings where `securityContext.windowsOptions.hostProcess` is set to `true`, indicating they can run **Windows HostProcess containers**.",
+  "Risk": "Enabling **HostProcess** grants containers direct access to the Windows node, eroding isolation. Attackers can read node data, tamper with services, capture credentials, and pivot across the cluster, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kyverno.io/policies/pod-security/baseline/disallow-host-process/disallow-host-process/",
+    "https://github.com/kubernetes/enhancements/issues/2579",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+    "https://hub.armosec.io/docs/c-0202",
+    "https://learn.microsoft.com/en-us/azure/aks/cis-kubernetes"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_1#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes GUI (for example, Kubernetes Dashboard)\n2. Go to Workloads > Deployments/DaemonSets/StatefulSets (edit the owner of the Pod, not the Pod itself)\n3. Select the workload that creates the failing Pod and click Edit\n4. For each affected container, set: securityContext.windowsOptions.hostProcess to false (or remove the hostProcess field)\n5. Save the change to trigger a rollout; new Pods will be created without HostProcess\n6. Verify new Pods no longer contain securityContext.windowsOptions.hostProcess: true",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_container_name>\"\n      image = \"busybox\"\n      security_context {\n        windows_options {\n          host_process = false  # critical: disables Windows HostProcess for this container\n        }\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of Windows HostProcess containers unless essential for their operation.",
-      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/"
+      "Text": "Disallow `hostProcess:true` by default using policy-based admission aligned with **Pod Security Standards**. Permit only in tightly controlled contexts; apply **least privilege**, dedicated namespaces, and restricted service accounts; enforce **separation of duties** and monitor usage.",
+      "Url": "https://hub.prowler.com/check/core_minimize_admission_windows_hostprocess_containers"
     }
   },
   "Categories": [

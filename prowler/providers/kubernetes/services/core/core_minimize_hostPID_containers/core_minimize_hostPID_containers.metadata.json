@@ -1,30 +1,34 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_hostPID_containers",
-  "CheckTitle": "Minimize the admission of containers wishing to share the host process ID namespace",
+  "CheckTitle": "Pod does not use the host PID namespace",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's process ID namespace. Containers with hostPID can inspect and interact with processes outside of the container, potentially leading to privilege escalation.",
-  "Risk": "Allowing containers to share the host's PID namespace without strict control can lead to security risks and potential privilege escalations.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Pods** configured with `hostPID: true` are identified, indicating the container shares the node's **host PID namespace**.",
+  "Risk": "Sharing the **host PID namespace** erodes isolation: containers can list host processes and read `/proc` metadata, enabling **credential exposure**, **privilege escalation**, and **lateral movement**. Limited process interaction can also threaten **integrity** and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_1#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Identify the workload that owns the failing Pod (Deployment/DaemonSet/StatefulSet/Job) or confirm it is a standalone Pod\n2. Edit the manifest of the owning workload (or the Pod) and set/remove the field so it is not true:\n   - In Pod spec: set `hostPID: false` or delete the `hostPID` line\n   - For controllers: set `spec.template.spec.hostPID: false` or delete the line\n3. Apply the change (kubectl apply) and allow the workload to restart Pods so they no longer use hostPID",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    host_pid = false  # Critical: disables host PID namespace to pass the check\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of hostPID in containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Disallow `hostPID` for application Pods via **admission policies** aligned to **Pod Security Standards (Baseline/Restricted)**. Allow only for tightly controlled system workloads. Apply **least privilege**, isolate such Pods on dedicated nodes, and favor debug/observability methods that avoid host namespace sharing.",
+      "Url": "https://hub.prowler.com/check/core_minimize_hostPID_containers"
     }
   },
   "Categories": [
-    "container-security"
+    "container-security",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

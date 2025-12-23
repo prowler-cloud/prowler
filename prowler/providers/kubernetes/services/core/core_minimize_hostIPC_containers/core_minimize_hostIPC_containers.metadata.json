@@ -1,30 +1,39 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_minimize_hostIPC_containers",
-  "CheckTitle": "Minimize the admission of containers wishing to share the host IPC namespace",
+  "CheckTitle": "Pod does not use the host IPC namespace",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's IPC namespace. Containers with hostIPC can interact with processes outside of the container, potentially leading to security risks.",
-  "Risk": "Allowing containers to share the host's IPC namespace without strict control can lead to security risks and potential privilege escalations.",
-  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes pods** are evaluated for use of the host's IPC namespace via the `hostIPC` setting. Workloads declaring `hostIPC: true` share node IPC resources (shared memory, semaphores, message queues) instead of isolated container IPC.",
+  "Risk": "Sharing the host IPC namespace erodes isolation, exposing host shared memory and semaphores. A compromised pod could snoop or tamper with IPC objects, leading to data disclosure, integrity violations, privilege escalation, and lateral movement across workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://medium.com/@benson.philemon/pod-security-standards-restricted-profile-the-fort-knox-of-kubernetes-security-essential-c2ba15dd5250",
+    "https://blog.techiescamp.com/kubernetes-pod-security-standards/",
+    "https://support.icompaas.com/support/solutions/articles/62000234627-minimize-the-admission-of-containers-wishing-to-share-the-host-ipc-namespace",
+    "https://k8s-security.geek-kb.com/docs/best_practices/cluster_setup_and_hardening/pod_security/container_escape_mitigation/",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+    "https://avd.aquasec.com/compliance/kubernetes/rke-cis-1.24/rke-cis-1.24-policies/5.2/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_3#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "",
+      "Other": "1. Open your cluster UI (Kubernetes Dashboard or cloud provider console) and locate the failing workload (Pod/Deployment/StatefulSet)\n2. Click Edit YAML/Manifest\n3. Set the field to disable host IPC:\n   - For a Pod: spec.hostIPC: false (or remove hostIPC if present)\n   - For controllers: spec.template.spec.hostIPC: false (or remove hostIPC if present)\n4. Save the change to trigger a rollout\n5. If it is a standalone Pod (not managed by a controller), delete and recreate the Pod so the new spec takes effect",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    host_ipc = false # Critical: disables host IPC namespace to pass the check\n\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict the use of hostIPC in containers through admission control policies.",
-      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+      "Text": "Disallow `hostIPC` with **Pod Security Admission** enforcing **Pod Security Standards** (Baseline/Restricted) or equivalent policy engines. Apply **least privilege** and defense in depth: keep IPC namespaces isolated, grant tightly scoped exceptions only, and prefer app-level messaging or Services over host IPC.",
+      "Url": "https://hub.prowler.com/check/core_minimize_hostIPC_containers"
     }
   },
   "Categories": [
-    "container-security"
+    "container-security",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

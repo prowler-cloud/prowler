@@ -1,26 +1,30 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_seccomp_profile_docker_default",
-  "CheckTitle": "Ensure that the seccomp profile is set to docker/default in your pod definitions",
+  "CheckTitle": "Pod has the docker/default (RuntimeDefault) seccomp profile at pod level or for all containers",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "KubernetesPod",
-  "Description": "This check verifies that the docker/default seccomp profile is enabled in pod definitions. Enabling seccomp profiles helps restrict the set of system calls applications can make, enhancing the security of workloads in the cluster.",
-  "Risk": "Not using or incorrectly configuring seccomp profiles can leave containers with broader permissions, increasing the risk of malicious actions.",
-  "RelatedUrl": "https://kubernetes.io/docs/tutorials/clusters/seccomp/",
+  "ResourceType": "Pod",
+  "Description": "**Kubernetes Pods** and their containers specify the runtime default seccomp profile using `seccompProfile.type: RuntimeDefault` in the security context.\n\nThe evaluation looks for this setting at the Pod level or per container.",
+  "Risk": "Without **seccomp RuntimeDefault**, containers may run unconfined and invoke risky syscalls, expanding the kernel attack surface.\n- Container escape, privilege escalation (integrity)\n- Data access or exfiltration (confidentiality)\n- Node or workload disruption (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tutorials/clusters/seccomp/",
+    "https://docs.docker.com/engine/security/seccomp/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_30#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "kubectl patch deployment <example_resource_name> --type=merge -p '{\"spec\":{\"template\":{\"spec\":{\"securityContext\":{\"seccompProfile\":{\"type\":\"RuntimeDefault\"}}}}}}'",
+      "NativeIaC": "",
+      "Other": "1. Open the manifest of your workload (Deployment/StatefulSet/Pod)\n2. Under the Pod spec, add:\n   \n   spec:\n     securityContext:\n       seccompProfile:\n         type: RuntimeDefault  \n   \n   - For controllers (e.g., Deployment), place this under spec.template.spec\n3. Apply the change: kubectl apply -f <your_manifest.yaml>\n4. Wait for pods to restart and confirm the setting on new pods",
+      "Terraform": "```hcl\nresource \"kubernetes_pod_v1\" \"example\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    security_context {\n      seccomp_profile {\n        type = \"RuntimeDefault\" # Critical: enforces the runtime default (docker/default) seccomp profile at pod level\n      }\n    }\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Implement the docker/default seccomp profile in pod definitions for enhanced container security.",
-      "Url": "https://docs.docker.com/engine/security/seccomp/"
+      "Text": "Enforce **least privilege** for syscalls:\n- Set `seccompProfile.type: RuntimeDefault` on Pods/containers\n- Use tailored profiles for sensitive workloads\n- Avoid privileged or unconfined containers; drop unused capabilities\n- Combine with AppArmor/SELinux and policy guardrails to enforce and audit",
+      "Url": "https://hub.prowler.com/check/core_seccomp_profile_docker_default"
     }
   },
   "Categories": [
