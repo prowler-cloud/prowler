@@ -5,7 +5,7 @@ import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
@@ -66,6 +66,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       return {
         label: "Organization ID",
         placeholder: "e.g. 5f43a8c4e1234567890abcde",
+      };
+    case "alibabacloud":
+      return {
+        label: "Account ID",
+        placeholder: "e.g. 1234567890123456",
       };
     default:
       return {
@@ -151,13 +156,16 @@ export const ConnectAccountForm = () => {
 
         router.push(`/providers/add-credentials?type=${providerType}&id=${id}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // eslint-disable-next-line no-console
       console.error("Error during submission:", error);
       toast({
         variant: "destructive",
         title: "Submission Error",
-        description: error.message || "Something went wrong. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
       });
     }
   };
