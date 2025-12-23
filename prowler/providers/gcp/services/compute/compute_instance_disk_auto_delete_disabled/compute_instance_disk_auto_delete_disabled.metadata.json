@@ -31,8 +31,6 @@
     "resilience"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "compute_instance_deletion_protection_enabled"
-  ],
+  "RelatedTo": [],
   "Notes": ""
 }
