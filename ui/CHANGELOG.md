@@ -2,14 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.17.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
-
----
-
 ## [1.16.1] (Prowler v5.16.1)
 
 ### 🔄 Changed
