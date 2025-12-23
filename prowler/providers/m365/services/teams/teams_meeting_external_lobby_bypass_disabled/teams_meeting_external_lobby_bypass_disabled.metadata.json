@@ -1,29 +1,35 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_external_lobby_bypass_disabled",
-  "CheckTitle": "Ensure only people in the organization can bypass the lobby.",
+  "CheckTitle": "Teams Meetings global policy allows only people in the organization to bypass the lobby",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Teams Global Meeting Policy",
-  "Description": "Ensure only people in the organization can bypass the lobby.",
-  "Risk": "Allowing external users or unauthenticated participants to bypass the lobby increases the risk of unauthorized access to sensitive meetings and potential disruptions. It may also lead to unscheduled meetings being initiated by external parties.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Teams Meetings global policy restricts **lobby bypass** so only `EveryoneInCompanyExcludingGuests`, `OrganizerOnly`, or `InvitedUsers` are auto-admitted; all others wait in the lobby.",
+  "Risk": "Auto-admitting external or anonymous users undermines **confidentiality** via covert listening and access to chat/files, and **integrity** through meeting hijacks, malicious screen sharing, and phishing. It also impacts **availability** by enabling disruptions and unsanctioned sessions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://admin.teams.microsoft.com.",
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers 'EveryoneInCompanyExcludingGuests' ",
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers 'EveryoneInCompanyExcludingGuests'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under meeting join & lobby set Who can bypass the lobby to People in my org.",
+      "Other": "1. Sign in to the Microsoft Teams admin center (https://admin.teams.microsoft.com)\n2. Go to Meetings > Meeting policies\n3. Select Global (Org-wide default)\n4. Under Meeting join & lobby, set Who can bypass the lobby to People in my org\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that only people within the organization can bypass the lobby, requiring external users and dial-in participants to wait for approval from an organizer, co-organizer, or presenter. This helps secure sensitive meetings and prevents unauthorized access.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+      "Text": "Apply **least privilege** to lobby admission: set auto-admit to internal-only or to organizer/invitees, and require approval for guests, federated, anonymous, and PSTN. Enforce **authentication** and **conditional access**, and default to limited presenters for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/teams_meeting_external_lobby_bypass_disabled"
     }
   },
   "Categories": [
+    "identity-access",
+    "trust-boundaries",
     "e3"
   ],
   "DependsOn": [],

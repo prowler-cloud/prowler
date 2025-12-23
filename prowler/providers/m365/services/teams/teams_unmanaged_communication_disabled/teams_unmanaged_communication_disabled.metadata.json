@@ -1,30 +1,41 @@
 {
   "Provider": "m365",
   "CheckID": "teams_unmanaged_communication_disabled",
-  "CheckTitle": "Ensure unmanaged communication is disabled.",
+  "CheckTitle": "Teams users cannot communicate with unmanaged users",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
-  "ResourceType": "Teams Settings",
-  "Description": "Ensure unmanaged communication is disabled in Teams admin center.",
-  "Risk": "Allowing communication with unmanaged Microsoft Teams users increases the risk of targeted attacks such as phishing, malware distribution (e.g., DarkGate), and exploitation techniques like GIFShell and username enumeration. Unmanaged accounts are easier for threat actors to create and use as attack vectors.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Teams external access configuration for **unmanaged Teams accounts** is reviewed, expecting the \"Teams accounts not managed by an organization\" option to be `Off`, preventing chats with personal Microsoft accounts.",
+  "Risk": "Allowing unmanaged accounts enables unsolicited contact that undermines **confidentiality** and **integrity**: attackers can enumerate users, deliver phishing or malware links, and run social-engineering leading to data exfiltration and unauthorized changes. It also fuels spam and alert fatigue.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
+    "https://admin.teams.microsoft.com/.",
+    "https://www.edtechirl.com/p/teams-security-baselines-unmanaged",
+    "https://github.com/microsoftgraph/msgraph-sdk-go/issues/935",
+    "https://bhargavs.com/index.php/2024/03/29/combat-spam-in-microsoft-teams/",
+    "https://learn.microsoft.com/en-us/microsoftteams/trusted-organizations-external-meetings-chat",
+    "https://helpdesk.sherweb.com/en-us/knowledge-base/articles/KA-02943",
+    "https://docs.tminus365.com/security/teams/unmanaged-user-access-shall-be-restricted"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-CsTenantFederationConfiguration -AllowTeamsConsumer $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com/. 2. Click to expand Users select External access. 3. Scroll to Teams accounts not managed by an organization. 4. Set People in my organization can communicate with Teams users whose accounts aren't managed by an organization to Off. 5. Click Save.",
+      "Other": "1. Sign in to the Microsoft Teams admin center\n2. Go to Users > External access\n3. Under \"Teams accounts not managed by an organization\", turn OFF \"People in my organization can communicate with Teams users whose accounts aren't managed by an organization\"\n4. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable communication with Teams users whose accounts aren't managed by an organization by setting 'People in my organization can communicate with Teams users whose accounts aren't managed by an organization' to Off. This helps prevent unauthorized or risky external interactions.",
-      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps"
+      "Text": "Disable communication with **unmanaged Teams accounts** to enforce **least privilege** and reduce attack surface.\n\nIf collaboration is needed, allow only outbound initiation, prefer **guest access** or trusted domains, apply **defense in depth** with DLP/link protection, and monitor external interactions.",
+      "Url": "https://hub.prowler.com/check/teams_unmanaged_communication_disabled"
     }
   },
   "Categories": [
-    "e3"
+    "e3",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
