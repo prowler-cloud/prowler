@@ -126,7 +126,7 @@ jobs:
   # Create and push multi-architecture manifest
   create-manifest:
     needs: [setup, container-build-push]
-    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    if: always() && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
@@ -204,8 +204,8 @@ jobs:
           update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
 
   trigger-deployment:
-    if: github.event_name == 'push'
     needs: [setup, container-build-push]
+    if: always() && github.event_name == 'push' && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
