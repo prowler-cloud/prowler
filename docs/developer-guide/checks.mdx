@@ -237,6 +237,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
   "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
   "RelatedUrl": "",
@@ -314,6 +315,31 @@ The type of resource being audited. This field helps categorize and organize fin
 - **Kubernetes**: Use types shown under `KIND` from `kubectl api-resources`.
 - **Oracle Cloud Infrastructure**: Use types from [Oracle Cloud Infrastructure documentation](https://docs.public.oneportal.content.oci.oraclecloud.com/en-us/iaas/Content/Search/Tasks/queryingresources_topic-Listing_Supported_Resource_Types.htm).
 - **M365 / GitHub / MongoDB Atlas**: Leave empty due to lack of standardized types.
+
+#### ResourceGroup
+
+A high-level classification that groups checks by the type of cloud resource they audit. This field enables filtering and organizing findings by resource category across all providers. The value must be one of the following predefined groups:
+
+| Group | Description |
+|-------|-------------|
+| `compute` | Virtual machines, instances, auto-scaling groups, workspaces, streaming |
+| `container` | Container orchestration, Kubernetes, registries, pods |
+| `serverless` | Functions, step functions, event-driven compute |
+| `database` | Relational, NoSQL, caches, search engines, data warehouses, graph databases |
+| `storage` | Object storage, block storage, file systems, backups, archives |
+| `network` | VPCs, subnets, load balancers, DNS, VPN, firewalls, CDN |
+| `IAM` | IAM users, roles, policies, access keys, service accounts, directories |
+| `messaging` | Queues, topics, event buses, streaming, email services |
+| `security` | WAF, secrets, KMS, certificates, security tools, defenders, DDoS protection |
+| `monitoring` | Logs, metrics, alerts, audit trails, observability, config tracking |
+| `api_gateway` | API management, REST APIs, GraphQL endpoints |
+| `ai_ml` | Machine learning, AI services, notebooks, training, LLM |
+| `governance` | Accounts, organizations, projects, policies, settings, compliance tools |
+| `collaboration` | Productivity SaaS apps (Exchange, Teams, SharePoint) |
+| `devops` | CI/CD, infrastructure as code, automation, code repositories, version control |
+| `analytics` | Data warehouses, query engines, ETL pipelines, BI tools, data lakes |
+
+The group is determined by the resource type being audited, not the service. For example, an EC2 security group check would use `network` (not `compute`), while an EC2 instance check would use `compute`.
 
 #### Description
 

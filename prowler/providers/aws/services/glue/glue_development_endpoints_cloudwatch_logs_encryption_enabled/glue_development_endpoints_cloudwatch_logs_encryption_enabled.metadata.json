@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue development endpoints** are assessed for an associated **security configuration** that enables **CloudWatch Logs encryption**. It confirms the endpoint references a configuration and that log encryption is not `DISABLED`.",
   "Risk": "Unencrypted Glue logs erode **confidentiality**: credentials, connection strings, and data samples may be readable to unintended principals, enabling **lateral movement**.\nLack of KMS-backed encryption weakens **auditability** and **separation of duties**.",
   "RelatedUrl": "",

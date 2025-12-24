@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "This control checks whether Amazon Redshift clusters have Multi-AZ enabled.",
   "Risk": "Amazon Redshift supports multiple Availability Zones (Multi-AZ) deployments for provisioned RA3 clusters. By using Multi-AZ deployments, your Amazon Redshift data warehouse can continue operating in failure scenarios when an unexpected event happens in an Availability Zone.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-multi-az.html",

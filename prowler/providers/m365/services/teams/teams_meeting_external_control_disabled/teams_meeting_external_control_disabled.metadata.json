@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure external participants can't give or request control in Teams meetings.",
   "Risk": "Allowing external participants to give or request control during meetings could lead to unauthorized content sharing or malicious actions by external users.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "arn:partition:iam:region:account-id:user/{user-name}/credential/{api-key-id}",
   "Severity": "high",
   "ResourceType": "AwsIamServiceSpecificCredential",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that Amazon Bedrock API keys do not have administrative privileges or privilege escalation capabilities. API keys with administrative privileges can perform any action on any resource in your AWS environment, while privilege escalation allows users to grant themselves additional permissions, both posing significant security risks.",
   "Risk": "Amazon Bedrock API keys with administrative privileges can perform any action on any resource in your AWS environment. Privilege escalation capabilities allow users to grant themselves additional permissions beyond their intended scope. Both violations of the principle of least privilege can lead to security vulnerabilities, data leaks, data loss, or unexpected charges if the API key is compromised or misused.",
   "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html",

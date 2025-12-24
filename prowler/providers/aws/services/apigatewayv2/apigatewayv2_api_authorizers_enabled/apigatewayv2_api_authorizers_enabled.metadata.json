@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Api",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway v2 APIs** use **authorizers** (JWT/Cognito or Lambda) to authenticate requests. This evaluates whether an API has an authorizer configured to control access to its routes.",
   "Risk": "Without an authorizer, anyone can invoke routes.\n- Confidentiality: exposure of data and metadata\n- Integrity: unauthorized state changes or actions\n- Availability/Cost: automated abuse of backends, traffic spikes, and unexpected spend",
   "RelatedUrl": "",

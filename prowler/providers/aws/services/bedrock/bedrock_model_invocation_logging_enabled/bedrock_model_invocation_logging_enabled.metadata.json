@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:model/resource-id",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Ensure that model invocation logging is enabled for Amazon Bedrock service in order to collect metadata, requests, and responses for all model invocations in your AWS cloud account.",
   "Risk": "In Amazon Bedrock, model invocation logging enables you to collect the invocation request and response data, along with metadata, for all 'Converse', 'ConverseStream', 'InvokeModel', and 'InvokeModelWithResponseStream' API calls in your AWS account. Each log entry includes important details such as the timestamp, request ID, model ID, and token usage. Invocation logs can be utilized for troubleshooting, performance enhancements, abuse detection, and security auditing. By default, model invocation logging is disabled.",
   "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html",

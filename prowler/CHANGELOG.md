@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
 - `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
 - Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
+- `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)

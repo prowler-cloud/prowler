@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:wellarchitected:region:account-id:workload/workload-id",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "The Well-Architected Tool uses the AWS Well-Architected Framework to compare your cloud workloads against best practices across five architectural pillars: security, reliability, performance efficiency, operational excellence, and cost optimization",
   "Risk": "A given workload can have medium and/or high risks that have been identified based on answers provided to the questions in the Well-Architected Tool. These issues are architectural and operational choices that are not aligned with the best practices from the Well-Architected Framework",
   "RelatedUrl": "https://aws.amazon.com/architecture/well-architected/",

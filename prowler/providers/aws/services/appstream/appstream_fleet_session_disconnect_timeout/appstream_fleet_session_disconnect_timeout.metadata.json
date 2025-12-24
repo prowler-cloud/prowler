@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**AppStream fleets** are evaluated for `DisconnectTimeoutInSeconds` being at or below `300` seconds (5 minutes), which defines how long a streaming session remains active after a user disconnects.",
   "Risk": "Long disconnect times keep sessions active, enabling **session hijacking** or unintended reconnection on lost/stolen devices. This raises data exposure (confidentiality), permits unauthorized actions (integrity), and ties up capacity and costs (availability/operations).",
   "RelatedUrl": "",
