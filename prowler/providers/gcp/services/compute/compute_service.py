@@ -368,7 +368,6 @@ class Compute(GCPService):
                     )
 
     def _get_regional_instance_groups(self, region: str) -> None:
-        """Fetch regional managed instance groups for all projects."""
         for project_id in self.project_ids:
             try:
                 request = self.client.regionInstanceGroupManagers().list(
@@ -389,6 +388,18 @@ class Compute(GCPService):
                             if zone_info.get("zone")
                         ]
 
+                        auto_healing_policies = [
+                            AutoHealingPolicy(
+                                health_check=(
+                                    policy.get("healthCheck", "").split("/")[-1]
+                                    if policy.get("healthCheck")
+                                    else None
+                                ),
+                                initial_delay_sec=policy.get("initialDelaySec"),
+                            )
+                            for policy in mig.get("autoHealingPolicies", [])
+                        ]
+
                         self.instance_groups.append(
                             ManagedInstanceGroup(
                                 name=mig.get("name", ""),
@@ -399,6 +410,7 @@ class Compute(GCPService):
                                 is_regional=True,
                                 target_size=mig.get("targetSize", 0),
                                 project_id=project_id,
+                                auto_healing_policies=auto_healing_policies,
                             )
                         )
 
@@ -411,7 +423,6 @@ class Compute(GCPService):
                 )
 
     def _get_zonal_instance_groups(self, zone: str) -> None:
-        """Fetch zonal managed instance groups for all projects."""
         for project_id in self.project_ids:
             try:
                 request = self.client.instanceGroupManagers().list(
@@ -427,6 +438,18 @@ class Compute(GCPService):
                         mig_zone = mig.get("zone", zone).split("/")[-1]
                         mig_region = mig_zone.rsplit("-", 1)[0]
 
+                        auto_healing_policies = [
+                            AutoHealingPolicy(
+                                health_check=(
+                                    policy.get("healthCheck", "").split("/")[-1]
+                                    if policy.get("healthCheck")
+                                    else None
+                                ),
+                                initial_delay_sec=policy.get("initialDelaySec"),
+                            )
+                            for policy in mig.get("autoHealingPolicies", [])
+                        ]
+
                         self.instance_groups.append(
                             ManagedInstanceGroup(
                                 name=mig.get("name", ""),
@@ -437,6 +460,7 @@ class Compute(GCPService):
                                 is_regional=False,
                                 target_size=mig.get("targetSize", 0),
                                 project_id=project_id,
+                                auto_healing_policies=auto_healing_policies,
                             )
                         )
 
@@ -516,6 +540,11 @@ class LoadBalancer(BaseModel):
     project_id: str
 
 
+class AutoHealingPolicy(BaseModel):
+    health_check: Optional[str] = None
+    initial_delay_sec: Optional[int] = None
+
+
 class ManagedInstanceGroup(BaseModel):
     name: str
     id: str
@@ -525,3 +554,4 @@ class ManagedInstanceGroup(BaseModel):
     is_regional: bool
     target_size: int
     project_id: str
+    auto_healing_policies: list[AutoHealingPolicy] = []
