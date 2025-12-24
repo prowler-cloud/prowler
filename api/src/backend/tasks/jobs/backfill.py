@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
-from tasks.jobs.scan import aggregate_category_counts
+from tasks.jobs.scan import aggregate_category_counts, aggregate_resource_group_counts
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
@@ -17,6 +17,7 @@ from api.models import (
     ResourceScanSummary,
     Scan,
     ScanCategorySummary,
+    ScanResourceGroupSummary,
     ScanSummary,
     StateChoices,
 )
@@ -341,3 +342,71 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         )
 
     return {"status": "backfilled", "categories_count": len(category_counts)}
+
+
+def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanResourceGroupSummary for a completed scan.
+
+    Aggregates resource group counts from all findings in the scan and creates
+    one ScanResourceGroupSummary row per (resource_group, severity) combination.
+
+    Args:
+        tenant_id: Target tenant UUID
+        scan_id: Scan UUID to backfill
+
+    Returns:
+        dict: Status indicating whether backfill was performed
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if ScanResourceGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists():
+            return {"status": "already backfilled"}
+
+        if not Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state__in=(StateChoices.COMPLETED, StateChoices.FAILED),
+        ).exists():
+            return {"status": "scan is not completed"}
+
+        resource_group_counts: dict[tuple[str, str], dict[str, int | set]] = {}
+        for finding in Finding.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).values(
+            "resource_group", "severity", "status", "delta", "muted", "resource_uid"
+        ):
+            aggregate_resource_group_counts(
+                resource_group=finding.get("resource_group"),
+                severity=finding.get("severity"),
+                status=finding.get("status"),
+                delta=finding.get("delta"),
+                muted=finding.get("muted", False),
+                resource_uid=finding.get("resource_uid") or "",
+                cache=resource_group_counts,
+            )
+
+        if not resource_group_counts:
+            return {"status": "no resource groups to backfill"}
+
+    resource_group_summaries = [
+        ScanResourceGroupSummary(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_group=resource_group,
+            severity=severity,
+            total_findings=counts["total"],
+            failed_findings=counts["failed"],
+            new_failed_findings=counts["new_failed"],
+            resources_count=len(counts["resources"]),
+        )
+        for (resource_group, severity), counts in resource_group_counts.items()
+    ]
+
+    with rls_transaction(tenant_id):
+        ScanResourceGroupSummary.objects.bulk_create(
+            resource_group_summaries, batch_size=500, ignore_conflicts=True
+        )
+
+    return {"status": "backfilled", "resource_groups_count": len(resource_group_counts)}

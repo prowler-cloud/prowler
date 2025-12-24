@@ -14,6 +14,7 @@ from rest_framework.test import APIClient
 from tasks.jobs.backfill import (
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
 )
 
 from api.db_utils import rls_transaction
@@ -1381,11 +1382,13 @@ def latest_scan_finding_with_categories(
         check_id="genai_iam_check",
         check_metadata={"CheckId": "genai_iam_check"},
         categories=["gen-ai", "iam"],
+        resource_group="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
     backfill_scan_category_summaries(tenant_id, str(scan.id))
+    backfill_scan_resource_group_summaries(tenant_id, str(scan.id))
     return finding
 
 
