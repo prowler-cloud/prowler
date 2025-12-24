@@ -2425,6 +2425,144 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="export_dump",
+        url_name="export_dump",
+    )
+    def export_dump(self, request, pk=None):
+        from api.attack_paths import database as graph_database
+
+        attack_paths_scan = self.get_object()
+
+        # The right query, but it can fail with large graphs
+        # query = """
+        #     MATCH (rn:AWSAccount {id: '552455647653'})
+        #     CALL apoc.path.subgraphAll(rn, {})
+        #     YIELD nodes, relationships
+        #     CALL apoc.export.json.data(nodes, relationships, null, {stream: true, batchSize: 20})
+        #     YIELD data
+        #     RETURN data
+        # """
+
+        # So, let's do manual chungs, as `batchSize` is "ignored"
+        query = """
+            CALL {
+                MATCH (rn:AWSAccount {id: '552455647653'})
+                CALL apoc.path.subgraphAll(rn, {}) YIELD nodes, relationships
+                RETURN nodes, relationships
+            }
+            WITH nodes, relationships
+
+            CALL {
+                // Chunk nodes
+                WITH nodes
+                UNWIND range(0, size(nodes) - 1, 5000) AS offset
+                UNWIND nodes[offset..offset + 5000] AS n
+                RETURN apoc.convert.toJson({
+                        type:'node',
+                        id:id(n),
+                        labels:labels(n),
+                        properties:properties(n)
+                }) AS line
+
+                UNION ALL
+
+                // Chunk relationships
+                WITH relationships
+                UNWIND range(0, size(relationships) - 1, 5000) AS offset
+                UNWIND relationships[offset..offset + 5000] AS r
+                RETURN apoc.convert.toJson({
+                    type:'relationship',
+                    id:id(r),
+                    label:type(r),
+                    start:id(startNode(r)),
+                    end:id(endNode(r)),
+                    properties:properties(r)
+                }) AS line
+            }
+            RETURN line
+        """
+
+        filepath = "/home/prowler/backend/dump.json"
+        with graph_database.get_session(attack_paths_scan.graph_database) as neo4j_session:
+            with open(filepath, "w", encoding="utf-8") as f:
+                for record in neo4j_session.run(query):
+                    f.write(record["line"])
+                    f.write("\n")
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="import_dump",
+        url_name="import_dump",
+    )
+    def import_dump(self, request, pk=None):
+        from itertools import islice
+
+        from cartography.intel import create_indexes as cartography_create_indexes
+
+        from api.attack_paths import database as graph_database
+
+        from tasks.jobs.attack_paths import prowler as attack_paths_prowler
+
+        BATCH_SIZE = 1000
+
+        database_name = "db-tmp-import-dump"
+
+        graph_database.drop_database(database_name)
+        graph_database.create_database(database_name)
+
+        filepath = "/home/prowler/backend/dump.json"
+
+        query = """
+            // Read the batch
+            WITH [line IN $lines | apoc.convert.fromJsonMap(line)] AS rows
+
+            // Create nodes from the batch
+            CALL {
+                WITH rows
+                UNWIND rows AS row
+                WITH row
+                WHERE row.type = 'node'
+                MERGE (n {piid: row.id})
+                SET n += COALESCE(row.properties, {})
+                FOREACH (l IN COALESCE(row.labels, []) | SET n:$(l))
+            }
+
+            // Create relationships from the batch
+            CALL {
+                WITH rows
+                UNWIND rows AS row
+                WITH row
+                WHERE row.type = 'relationship'
+                MATCH (s {piid: row.start}), (t {piid: row.end})
+                CREATE (s)-[r:$(row.label)]->(t)
+                SET r += COALESCE(row.properties, {})
+            };
+        """
+
+        def chunks(iterable, size):
+            it = iter(iterable)
+            while True:
+                batch = list(islice(it, size))
+                if not batch:
+                    break
+                yield batch
+
+        with graph_database.get_session(database_name) as neo4j_session:
+            with open(filepath, "r", encoding="utf-8") as f:
+                for batch in chunks(f, BATCH_SIZE):
+                    neo4j_session.run(query, {"lines": batch}).consume()
+
+            cartography_create_indexes.run(neo4j_session, None)
+            attack_paths_prowler.create_indexes(neo4j_session)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @extend_schema_view(
     list=extend_schema(

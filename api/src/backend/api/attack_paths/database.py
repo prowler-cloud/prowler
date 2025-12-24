@@ -101,8 +101,8 @@ def drop_database(database: str) -> None:
 
 def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int:
     query = """
-        MATCH (a:__ROOT_NODE_LABEL__ {id: $root_node_id})
-        CALL apoc.path.subgraphNodes(a, {})
+        MATCH (rn:__ROOT_NODE_LABEL__ {id: $root_node_id})
+        CALL apoc.path.subgraphNodes(rn, {})
         YIELD node
         DETACH DELETE node
         RETURN COUNT(node) AS deleted_nodes_count
