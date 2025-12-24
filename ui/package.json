@@ -75,7 +75,7 @@
     "jose": "5.10.0",
     "js-yaml": "4.1.1",
     "jwt-decode": "4.0.0",
-    "langchain": "1.1.5",
+    "langchain": "1.2.3",
     "lucide-react": "0.543.0",
     "marked": "15.0.12",
     "nanoid": "5.1.6",
