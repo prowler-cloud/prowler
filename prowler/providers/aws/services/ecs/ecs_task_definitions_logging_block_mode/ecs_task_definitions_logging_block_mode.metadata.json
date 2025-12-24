@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEcsTaskDefinition",
+  "ResourceGroup": "container",
   "Description": "**ECS task definition containers** use **non-blocking logging mode** via the `logConfiguration.mode` option on the latest active revision",
   "Risk": "**Blocking log mode** can stall writes to stdout/stderr, making containers unresponsive, failing health checks, and causing task restarts or startup failures if log groups/streams can't be created. This reduces **availability** and may trigger cascading instability across dependent services.",
   "RelatedUrl": "",

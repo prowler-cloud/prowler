@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:es:region:account-id:domain/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "OpenSearch Service uses dedicated master nodes to increase cluster stability. A minimum of three dedicated master nodes is recommended to ensure high availability.",
   "Risk": "If a master node fails, the cluster may become unavailable.",
   "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "**Amazon GuardDuty** detector existence and health are evaluated per Region. It identifies where GuardDuty isn't enabled for the account, where a detector has no status, or where a detector is configured but `suspended`.",
   "Risk": "Without active **GuardDuty**, threats in CloudTrail, VPC Flow Logs, DNS, S3, EKS, EBS, and Lambda can go unnoticed. Attackers can exfiltrate data, move laterally, and mine crypto, degrading confidentiality, integrity, and availability-especially in unmonitored Regions.",
   "RelatedUrl": "",

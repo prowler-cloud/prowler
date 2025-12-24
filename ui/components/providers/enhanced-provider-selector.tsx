@@ -2,9 +2,10 @@
 
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
+import { SharedSelection } from "@heroui/system";
 import { CheckSquare, Search, Square } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Control } from "react-hook-form";
+import { useState } from "react";
+import { Control, FieldValues, Path } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
@@ -20,11 +21,12 @@ const providerTypeLabels: Record<ProviderType, string> = {
   iac: "Infrastructure as Code",
   oraclecloud: "Oracle Cloud Infrastructure",
   mongodbatlas: "MongoDB Atlas",
+  alibabacloud: "Alibaba Cloud",
 };
 
-interface EnhancedProviderSelectorProps {
-  control: Control<any>;
-  name: string;
+interface EnhancedProviderSelectorProps<T extends FieldValues> {
+  control: Control<T>;
+  name: Path<T>;
   providers: ProviderProps[];
   label?: string;
   placeholder?: string;
@@ -36,7 +38,7 @@ interface EnhancedProviderSelectorProps {
   disabledProviderIds?: string[];
 }
 
-export const EnhancedProviderSelector = ({
+export const EnhancedProviderSelector = <T extends FieldValues>({
   control,
   name,
   providers,
@@ -48,10 +50,10 @@ export const EnhancedProviderSelector = ({
   providerType,
   enableSearch = false,
   disabledProviderIds = [],
-}: EnhancedProviderSelectorProps) => {
+}: EnhancedProviderSelectorProps<T>) => {
   const [searchValue, setSearchValue] = useState("");
 
-  const filteredProviders = useMemo(() => {
+  const filteredProviders = (() => {
     let filtered = providers;
 
     // Filter by provider type if specified
@@ -83,7 +85,7 @@ export const EnhancedProviderSelector = ({
       const nameB = b.attributes.alias || b.attributes.uid;
       return nameA.localeCompare(nameB);
     });
-  }, [providers, providerType, searchValue, enableSearch]);
+  })();
 
   return (
     <FormField
@@ -91,7 +93,11 @@ export const EnhancedProviderSelector = ({
       name={name}
       render={({ field: { onChange, value, onBlur } }) => {
         const isMultiple = selectionMode === "multiple";
-        const selectedIds = isMultiple ? value || [] : value ? [value] : [];
+        const selectedIds: string[] = isMultiple
+          ? (value as string[] | undefined) || []
+          : value
+            ? [value as string]
+            : [];
         const allProviderIds = filteredProviders
           .filter((p) => !disabledProviderIds.includes(p.id))
           .map((p) => p.id);
@@ -108,13 +114,17 @@ export const EnhancedProviderSelector = ({
           }
         };
 
-        const handleSelectionChange = (keys: any) => {
+        const handleSelectionChange = (keys: SharedSelection) => {
+          if (keys === "all") {
+            onChange(allProviderIds);
+            return;
+          }
           if (isMultiple) {
-            const selectedArray = Array.from(keys);
+            const selectedArray = Array.from(keys).map(String);
             onChange(selectedArray);
           } else {
             const selectedValue = Array.from(keys)[0];
-            onChange(selectedValue || "");
+            onChange(selectedValue ? String(selectedValue) : "");
           }
         };
 

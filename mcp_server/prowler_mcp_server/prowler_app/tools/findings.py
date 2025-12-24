@@ -6,22 +6,23 @@ across all cloud providers.
 
 from typing import Any, Literal
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.findings import (
     DetailedFinding,
     FindingsListResponse,
     FindingsOverview,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class FindingsTools(BaseTool):
     """Tools for security findings operations.
 
     Provides tools for:
-    - Searching and filtering security findings
-    - Getting detailed finding information
-    - Viewing findings overview/statistics
+    - search_security_findings: Fast and lightweight searching across findings
+    - get_finding_details: Get complete details for a specific finding
+    - get_findings_overview: Get aggregate statistics and trends across all findings
     """
 
     async def search_security_findings(
@@ -90,27 +91,27 @@ class FindingsTools(BaseTool):
     ) -> dict[str, Any]:
         """Search and filter security findings across all cloud providers with rich filtering capabilities.
 
-        This is the primary tool for browsing and filtering security findings. Returns lightweight findings
-        optimized for searching across large result sets. For detailed information about a specific finding,
-        use get_finding_details.
+        IMPORTANT: This tool returns LIGHTWEIGHT findings. Use this for fast searching and filtering across many findings.
+        For complete details use prowler_app_get_finding_details on specific findings.
 
         Default behavior:
         - Returns latest findings from most recent scans (no date parameters needed)
         - Filters to FAIL status only (security issues found)
-        - Returns 100 results per page
+        - Returns 50 results per page
 
         Date filtering:
-        - Without dates: queries findings from the most recent completed scan across all providers (most efficient). This returns the latest snapshot of findings, not a time-based query.
-        - With dates: queries historical findings (2-day maximum range)
+        - Without dates: queries findings from the most recent completed scan across all providers (most efficient)
+        - With dates: queries historical findings (2-day maximum range between date_from and date_to)
 
         Each finding includes:
-        - Core identification: id, uid, check_id
-        - Security context: status, severity, check_metadata (title, description, remediation)
-        - State tracking: delta (new/changed), muted status
-        - Extended details: status_extended for additional context
+        - Core identification: id (UUID for get_finding_details), uid, check_id
+        - Security context: status (FAIL/PASS/MANUAL), severity (critical/high/medium/low/informational)
+        - State tracking: delta (new/changed/unchanged), muted (boolean), muted_reason
+        - Extended details: status_extended with additional context
 
-        Returns:
-            Paginated list of simplified findings with total count and pagination metadata
+        Workflow:
+        1. Use this tool to search and filter findings by severity, status, provider, service, region, etc.
+        2. Use prowler_app_get_finding_details with the finding 'id' to get complete information about the finding
         """
         # Validate page_size parameter
         self.api_client.validate_page_size(page_size)
@@ -122,11 +123,11 @@ class FindingsTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest findings endpoint
-            endpoint = "/api/v1/findings/latest"
+            endpoint = "/findings/latest"
             params = {}
         else:
             # Dates provided - use historical findings endpoint
-            endpoint = "/api/v1/findings"
+            endpoint = "/findings"
             params = {
                 "filter[inserted_at__gte]": date_range[0],
                 "filter[inserted_at__lte]": date_range[1],
@@ -185,21 +186,39 @@ class FindingsTools(BaseTool):
     ) -> dict[str, Any]:
         """Retrieve comprehensive details about a specific security finding by its ID.
 
-        This tool provides MORE detailed information than search_security_findings. Use this when you need
-        to deeply analyze a specific finding or understand its complete context and history.
+        IMPORTANT: This tool returns COMPLETE finding details.
+        Use this after finding a specific finding via prowler_app_search_security_findings
 
-        Additional information compared to search_security_findings:
-        - Temporal metadata: when the finding was first seen, inserted, and last updated
-        - Scan relationship: ID of the scan that generated this finding
-        - Resource relationships: IDs of all cloud resources associated with this finding
+        This tool provides ALL information that prowler_app_search_security_findings returns PLUS:
+
+        1. Check Metadata (information about the check script that generated the finding):
+           - title: Human-readable phrase used to summarize the check
+           - description: Detailed explanation of what the check validates and why it is important
+           - risk: What could happen if this check fails
+           - remediation: Complete remediation guidance including step-by-step instructions and code snippets with best practices to fix the issue:
+             * cli: Command-line commands to fix the issue
+             * terraform: Terraform code snippets with best practices
+             * nativeiac: Provider native Infrastructure as Code code snippets with best practices to fix the issue
+             * other: Other remediation code snippets with best practices, usually used for web interfaces or other tools
+             * recommendation: Text description with general best recommended practices to avoid the issue
+           - provider: Cloud provider (aws/azure/gcp/etc)
+           - service: Service name (s3/ec2/keyvault/etc)
+           - resource_type: Resource type being evaluated
+           - categories: Security categories this check belongs to
+           - additional_urls: List of additional URLs related to the check
+
+        2. Temporal Metadata:
+           - inserted_at: When this finding was first inserted into database
+           - updated_at: When this finding was last updated
+           - first_seen_at: When this finding was first detected across all scans
+
+        3. Relationships:
+           - scan_id: UUID of the scan that generated this finding
+           - resource_ids: List of UUIDs for cloud resources associated with this finding
 
         Workflow:
-        1. Use search_security_findings to browse and filter across many findings
-        2. Use get_finding_details to drill down into specific findings of interest
-
-        Returns:
-            dict containing detailed finding with comprehensive security metadata, temporal information,
-            and relationships to scans and resources
+        1. Use prowler_app_search_security_findings to browse and filter findings
+        2. Use this tool with the finding 'id' to get remediation guidance and complete context
         """
         params = {
             # Return comprehensive fields including temporal metadata
@@ -210,7 +229,7 @@ class FindingsTools(BaseTool):
 
         # Get API response and transform to detailed format
         api_response = await self.api_client.get(
-            f"/api/v1/findings/{finding_id}", params=params
+            f"/findings/{finding_id}", params=params
         )
         detailed_finding = DetailedFinding.from_api_response(
             api_response.get("data", {})
@@ -225,26 +244,31 @@ class FindingsTools(BaseTool):
             description="Filter statistics by cloud provider. Multiple values allowed. If empty, all providers are returned. For valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.",
         ),
     ) -> dict[str, Any]:
-        """Get high-level statistics about security findings formatted as a human-readable markdown report.
+        """Get aggregate statistics and trends about security findings as a markdown report.
 
-        Use this tool to get a quick overview of your security posture without retrieving individual findings.
-        Perfect for understanding trends, identifying areas of concern, and tracking improvements over time.
+        This tool provides a HIGH-LEVEL OVERVIEW without retrieving individual findings. Use this when you
+        need to understand the overall security posture, trends, or remediation progress across all findings.
 
-        The report includes:
-        - Summary statistics: total findings, fail/pass/muted counts with percentages
-        - Delta analysis: breakdown of new vs changed findings
-        - Trending information: how findings are evolving over time
+        The markdown report includes:
 
-        Output format: Markdown-formatted report ready to present to users or include in documentation.
+        1. Summary Statistics:
+           - Total number of findings
+           - Failed checks (security issues) with percentage
+           - Passed checks (no issues) with percentage
+           - Muted findings (user-suppressed) with percentage
 
-        Use cases:
-        - Quick security posture assessment
-        - Tracking remediation progress over time
-        - Identifying which providers have most issues
-        - Understanding finding trends (improving or degrading)
+        2. Delta Analysis (Change Tracking):
+           - New findings: never seen before in previous scans
+             * Broken down by: new failures, new passes, new muted
+           - Changed findings: status changed since last scan
+             * Broken down by: changed to fail, changed to pass, changed to muted
+           - Unchanged findings: same status as previous scan
 
-        Returns:
-            Dictionary with 'report' key containing markdown-formatted summary statistics
+        This helps answer questions like:
+        - "What's my overall security posture?"
+        - "How many critical security issues do I have?"
+        - "Are we improving or getting worse over time?"
+        - "How many new security issues appeared since last scan?"
         """
         params = {
             # Return only LLM-relevant aggregate statistics
@@ -258,7 +282,7 @@ class FindingsTools(BaseTool):
 
         # Get API response and transform to simplified format
         api_response = await self.api_client.get(
-            "/api/v1/overviews/findings", params=clean_params
+            "/overviews/findings", params=clean_params
         )
         overview = FindingsOverview.from_api_response(api_response)
 

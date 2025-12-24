@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Well-Architected workloads** are assessed for the presence and count of risks labeled `HIGH` or `MEDIUM` across the framework pillars. The result indicates whether any such risks remain recorded for the workload.",
   "Risk": "`HIGH`/`MEDIUM` risks indicate gaps that can drive:\n- **Confidentiality** loss (public data, excessive access)\n- **Integrity** issues (weak controls, unmonitored changes)\n- **Availability** failures (fragile resilience, poor recovery)\nAdversaries can exploit open endpoints and broad privileges to escalate, exfiltrate, and disrupt.",
   "RelatedUrl": "",
