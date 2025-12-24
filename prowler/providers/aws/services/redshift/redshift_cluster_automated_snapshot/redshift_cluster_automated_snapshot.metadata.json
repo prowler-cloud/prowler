@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** are evaluated for **automated snapshots** being enabled with a retention period `> 0`, confirming that periodic backups are created and retained.",
   "Risk": "Without **automated snapshots**, clusters lack recent recovery points, degrading **availability** and **integrity**.\n\nAccidental deletion, malicious changes, or failed ETL can cause data loss and prolonged recovery, increasing RPO/RTO and limiting effective forensic analysis.",
   "RelatedUrl": "",

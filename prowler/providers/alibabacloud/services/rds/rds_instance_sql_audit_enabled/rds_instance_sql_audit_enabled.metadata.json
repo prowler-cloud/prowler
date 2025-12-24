@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_sql_audit_enabled",
+  "CheckTitle": "Auditing is set to On for applicable database instances",
+  "CheckType": [
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Enable **SQL auditing** on all RDS instances (except SQL Server 2012/2016/2017 and MariaDB TX). Auditing tracks database events and writes them to an audit log.\n\nIt helps to maintain **regulatory compliance**, understand database activity, and gain insight into discrepancies and anomalies that could indicate business concerns or suspected security violations.",
+  "Risk": "Without **SQL auditing**, it's difficult to detect **unauthorized access**, **data breaches**, or **malicious activity** within the database.\n\nIt also hinders **forensic investigations** and compliance reporting.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96123.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-audit-logs.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifySQLCollectorPolicy --DBInstanceId <instance_id> --SQLCollectorStatus Enable --StoragePeriod <days>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. In the left-side navigation pane, select **SQL Explorer**\n3. Click **Activate Now**\n4. Specify the SQL log storage duration\n5. Click **Activate**",
+      "Url": "https://hub.prowler.com/check/rds_instance_sql_audit_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

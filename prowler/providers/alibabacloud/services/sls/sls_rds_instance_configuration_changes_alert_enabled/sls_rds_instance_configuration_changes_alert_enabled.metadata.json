@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_rds_instance_configuration_changes_alert_enabled",
+  "CheckTitle": "Log monitoring and alerts are set up for RDS instance configuration changes",
+  "CheckType": [
+    "Intrusion into applications",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
+  "Description": "It is recommended that a **metric filter and alarm** be established for **RDS Instance** configuration changes.",
+  "Risk": "Monitoring changes to **RDS Instance configuration** may reduce time to detect and correct **misconfigurations** done on database servers.\n\nThis helps prevent security gaps in database deployments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/rds-instance-config-changes-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for RDS instance configuration changes",
+      "Url": "https://hub.prowler.com/check/sls_rds_instance_configuration_changes_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

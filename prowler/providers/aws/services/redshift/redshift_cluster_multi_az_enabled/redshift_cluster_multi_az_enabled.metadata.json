@@ -10,16 +10,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** are evaluated for **Multi-AZ deployment** on provisioned `RA3` clusters, confirming compute spans two Availability Zones and is served via a single endpoint.",
   "Risk": "Absent **Multi-AZ**, a single-AZ cluster is exposed to AZ or node failures, leading to dropped connections, aborted queries, and stalled ETL/BI jobs. This reduces **availability**, increases RTO, delays analytics, and risks SLA breaches with cascading pipeline backlogs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-multi-az.html",
-    "https://zephyrnet.com/enable-multi-az-deployments-for-your-amazon-redshift-data-warehouse/",
-    "https://docs.aws.amazon.com/redshift/latest/mgmt/overview-multi-az.html",
-    "https://aws.amazon.com/blogs/big-data/enable-multi-az-deployments-for-your-amazon-redshift-data-warehouse/",
-    "https://stackoverflow.com/questions/59395195/achieving-high-availability-for-redshift",
-    "https://www.redshift-demos.sa.aws.dev/dataengineer/multaz.html"
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/overview-multi-az.html"
   ],
   "Remediation": {
     "Code": {

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "This control checks whether the AWS Organizations opt-out of AI services policy is enabled and whether child-accounts are disallowed to overwrite this policy. The control fails if the policy is not enabled or if child-accounts are not disallowed to overwrite this policy.",
   "Risk": "By default, AWS may be using your data to train its AI models. This may include data from your AWS CloudTrail logs, AWS Config rules, and AWS GuardDuty findings. If you opt out of AI services, AWS will not use your data to train its AI models.",
   "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out_all.html",

@@ -984,6 +984,8 @@ class AwsProvider(Provider):
         global_region = "us-east-1"
         if self._identity.partition == "aws-cn":
             global_region = "cn-north-1"
+        elif self._identity.partition == "aws-eusc":
+            global_region = "eusc-de-east-1"
         elif self._identity.partition == "aws-us-gov":
             global_region = "us-gov-east-1"
         elif "aws-iso" in self._identity.partition:
@@ -1473,11 +1475,12 @@ class AwsProvider(Provider):
             sts_client = create_sts_session(session, 'us-west-2')
         """
         try:
-            sts_endpoint_url = (
-                f"https://sts.{aws_region}.amazonaws.com"
-                if not aws_region.startswith("cn-")
-                else f"https://sts.{aws_region}.amazonaws.com.cn"
-            )
+            if aws_region.startswith("cn-"):
+                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com.cn"
+            elif aws_region.startswith("eusc-"):
+                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
+            else:
+                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com"
             return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
         except Exception as error:
             logger.critical(

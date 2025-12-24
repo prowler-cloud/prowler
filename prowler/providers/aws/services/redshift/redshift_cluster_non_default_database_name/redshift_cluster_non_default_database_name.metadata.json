@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** are identified when the database name equals the default `dev`, rather than a custom name.",
   "Risk": "Using the predictable `dev` name weakens **confidentiality** and **integrity**. Mis-scoped IAM or network rules may unintentionally match the database, and known names aid enumeration and targeted connection attempts, increasing the likelihood of unauthorized queries and data exposure.",
   "RelatedUrl": "",

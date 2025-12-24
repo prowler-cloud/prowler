@@ -11,17 +11,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** have automatic major engine upgrades allowed via `AllowVersionUpgrade` so updates are applied during the maintenance window.",
   "Risk": "Without automatic upgrades, clusters can run **vulnerable engine versions**, enabling exploits against known flaws.\n\nAttackers may read or tamper data (**confidentiality/integrity**), and unresolved bugs can cause downtime (**availability**). Delayed patching increases exposure window and operational risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/redshift/latest/APIReference/API_CreateCluster.html",
-    "https://docs.aws.amazon.com/redshift/latest/APIReference/API_Cluster.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/redshift/modify-cluster.html",
-    "https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/redshift/model/ModifyClusterRequest.html",
     "https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-aws-modify-redshift-maintenance.html",
-    "https://docs.aws.amazon.com/redshift/latest/APIReference/API_ModifyCluster.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-redshift-clusters-allow-version-upgrade-by-default#terraform",
     "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-operations.html"
   ],
   "Remediation": {

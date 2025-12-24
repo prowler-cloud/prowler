@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** are assessed for use of a **non-default admin username**; clusters using the known default `awsuser` are identified.",
   "Risk": "Default admin names make accounts predictable, enabling username enumeration, password spraying, and brute-force attempts. A takeover can expose warehouse data (**confidentiality**), enable unauthorized queries or schema changes (**integrity**), and disrupt analytics workloads (**availability**).",
   "RelatedUrl": "",

@@ -1,6 +1,8 @@
-from typing import Any, List
+from typing import Any
 
 from fastmcp import FastMCP
+from pydantic import Field
+
 from prowler_mcp_server.prowler_documentation.search_engine import (
     ProwlerDocsSearchEngine,
 )
@@ -12,46 +14,44 @@ prowler_docs_search_engine = ProwlerDocsSearchEngine()
 
 @docs_mcp_server.tool()
 def search(
-    query: str,
-    page_size: int = 5,
-) -> List[dict[str, Any]]:
-    """
-    Search in Prowler documentation.
+    term: str = Field(description="The term to search for in the documentation"),
+    page_size: int = Field(
+        5,
+        description="Number of top results to return to return. It must be between 1 and 20.",
+        gt=1,
+        lt=20,
+    ),
+) -> list[dict[str, Any]]:
+    """Search in Prowler documentation.
 
     This tool searches through the official Prowler documentation
-    to find relevant information about security checks, cloud providers,
-    compliance frameworks, and usage instructions.
+    to find relevant information about everything related to Prowler.
 
     Uses fulltext search to find the most relevant documentation pages
     based on your query.
 
-    Args:
-        query: The search query
-        page_size: Number of top results to return (default: 5)
-
     Returns:
         List of search results with highlights showing matched terms (in <mark><b> tags)
     """
-    return prowler_docs_search_engine.search(query, page_size)
+    return prowler_docs_search_engine.search(term, page_size)  # type: ignore In the hint we cannot put SearchResult type because JSON API MCP Generator cannot handle Pydantic models yet
 
 
 @docs_mcp_server.tool()
 def get_document(
-    doc_path: str,
-) -> str:
-    """
-    Retrieve the full content of a Prowler documentation file.
+    doc_path: str = Field(
+        description="Path to the documentation file to retrieve. It is the same as the 'path' field of the search results. Use `prowler_docs_search` to find the path first."
+    ),
+) -> dict[str, str]:
+    """Retrieve the full content of a Prowler documentation file.
 
     Use this after searching to get the complete content of a specific
     documentation file.
 
-    Args:
-        doc_path: Path to the documentation file. It is the same as the "path" field of the search results.
-
     Returns:
-        Full content of the documentation file
+        Full content of the documentation file in markdown format.
     """
-    content = prowler_docs_search_engine.get_document(doc_path)
+    content: str | None = prowler_docs_search_engine.get_document(doc_path)
     if content is None:
-        raise ValueError(f"Document not found: {doc_path}")
-    return content
+        return {"error": f"Document '{doc_path}' not found."}
+    else:
+        return {"content": content}

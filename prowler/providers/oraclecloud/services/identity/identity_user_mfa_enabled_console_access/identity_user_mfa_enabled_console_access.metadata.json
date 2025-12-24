@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "high",
   "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
   "Description": "Ensure MFA is enabled for all users with a console password. Multi-factor authentication is a method of authentication that requires the use of more than one factor to verify a user's identity.",
   "Risk": "Enabling MFA provides increased security by requiring two methods of verification at sign-in. With MFA enabled, a user must possess a device that emits a time-sensitive key and have knowledge of a username and password.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/usingmfa.htm",

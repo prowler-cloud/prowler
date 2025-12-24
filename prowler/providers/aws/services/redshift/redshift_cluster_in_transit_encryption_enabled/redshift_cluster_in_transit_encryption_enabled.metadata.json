@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** enforce **encryption in transit** by requiring **TLS** for client connections when `require_ssl` is enabled.\n\nThis evaluation identifies clusters where connections are not forced to use TLS.",
   "Risk": "Allowing plaintext or optional TLS exposes SQL sessions to:\n- **Confidentiality** loss: credentials, queries, and results can be intercepted.\n- **Integrity** compromise: statements or data may be modified in transit.\n- **Availability** impact: session hijacking can disrupt workloads.",
   "RelatedUrl": "",

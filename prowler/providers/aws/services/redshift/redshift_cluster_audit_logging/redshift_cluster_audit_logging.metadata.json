@@ -9,15 +9,14 @@
   "ServiceName": "redshift",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "Amazon Redshift clusters are evaluated for **database audit logging** that exports connection, user, and user-activity events to Amazon S3 or CloudWatch.",
   "Risk": "Without audit logs, malicious logins and queries can evade detection, impacting **confidentiality** (data exfiltration), **integrity** (unauthorized user/role changes), and **availability** of investigations due to missing evidence for forensics and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12",
-    "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#terraform"
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html"
   ],
   "Remediation": {
     "Code": {

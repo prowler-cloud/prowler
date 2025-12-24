@@ -35,6 +35,7 @@ from dashboard.config import (
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
+    create_category_dropdown,
     create_date_dropdown,
     create_provider_dropdown,
     create_region_dropdown,
@@ -78,6 +79,9 @@ ks8_provider_logo = html.Img(
 )
 m365_provider_logo = html.Img(
     src="assets/images/providers/m365_provider.png", alt="m365 provider"
+)
+alibabacloud_provider_logo = html.Img(
+    src="assets/images/providers/alibabacloud_provider.png", alt="alibabacloud provider"
 )
 
 
@@ -253,6 +257,8 @@ else:
                 accounts.append(account + " - AWS")
             if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 accounts.append(account + " - K8S")
+            if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - ALIBABACLOUD")
 
     account_dropdown = create_account_dropdown(accounts)
 
@@ -298,6 +304,8 @@ else:
             services.append(service + " - GCP")
         if "m365" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
             services.append(service + " - M365")
+        if "alibabacloud" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - ALIBABACLOUD")
 
     services = ["All"] + services
     services = [
@@ -336,6 +344,18 @@ else:
     status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
 
     status_dropdown = create_status_dropdown(status)
+
+    # Create the category dropdown
+    categories = []
+    if "CATEGORIES" in data.columns:
+        for cat_list in data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in categories:
+                        categories.append(cat)
+    categories = ["All"] + sorted(categories)
+    category_dropdown = create_category_dropdown(categories)
     table_div_header = []
     table_div_header.append(
         html.Div(
@@ -497,6 +517,7 @@ else:
         provider_dropdown,
         table_row_dropdown,
         status_dropdown,
+        category_dropdown,
         table_div_header,
         len(data["PROVIDER"].unique()),
     )
@@ -520,6 +541,7 @@ else:
         Output("gcp_card", "children"),
         Output("k8s_card", "children"),
         Output("m365_card", "children"),
+        Output("alibabacloud_card", "children"),
         Output("subscribe_card", "children"),
         Output("info-file-over", "title"),
         Output("severity-filter", "value"),
@@ -532,11 +554,14 @@ else:
         Output("table-rows", "options"),
         Output("status-filter", "value"),
         Output("status-filter", "options"),
+        Output("category-filter", "value"),
+        Output("category-filter", "options"),
         Output("aws_card", "n_clicks"),
         Output("azure_card", "n_clicks"),
         Output("gcp_card", "n_clicks"),
         Output("k8s_card", "n_clicks"),
         Output("m365_card", "n_clicks"),
+        Output("alibabacloud_card", "n_clicks"),
     ],
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
@@ -548,6 +573,7 @@ else:
     Input("provider-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("category-filter", "value"),
     Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
@@ -560,6 +586,7 @@ else:
     Input("sort_button_region", "n_clicks"),
     Input("sort_button_service", "n_clicks"),
     Input("sort_button_account", "n_clicks"),
+    Input("alibabacloud_card", "n_clicks"),
 )
 def filter_data(
     cloud_account_values,
@@ -572,6 +599,7 @@ def filter_data(
     provider_values,
     table_row_values,
     status_values,
+    category_values,
     search_value,
     aws_clicks,
     azure_clicks,
@@ -584,6 +612,7 @@ def filter_data(
     sort_button_region,
     sort_button_service,
     sort_button_account,
+    alibabacloud_clicks,
 ):
     # Use n_clicks for vulture
     n_clicks_csv = n_clicks_csv
@@ -599,6 +628,7 @@ def filter_data(
             gcp_clicks = 0
             k8s_clicks = 0
             m365_clicks = 0
+            alibabacloud_clicks = 0
     if azure_clicks > 0:
         filtered_data = data.copy()
         if azure_clicks % 2 != 0 and "azure" in list(data["PROVIDER"]):
@@ -607,6 +637,7 @@ def filter_data(
             gcp_clicks = 0
             k8s_clicks = 0
             m365_clicks = 0
+            alibabacloud_clicks = 0
     if gcp_clicks > 0:
         filtered_data = data.copy()
         if gcp_clicks % 2 != 0 and "gcp" in list(data["PROVIDER"]):
@@ -615,6 +646,7 @@ def filter_data(
             azure_clicks = 0
             k8s_clicks = 0
             m365_clicks = 0
+            alibabacloud_clicks = 0
     if k8s_clicks > 0:
         filtered_data = data.copy()
         if k8s_clicks % 2 != 0 and "kubernetes" in list(data["PROVIDER"]):
@@ -623,6 +655,7 @@ def filter_data(
             azure_clicks = 0
             gcp_clicks = 0
             m365_clicks = 0
+            alibabacloud_clicks = 0
     if m365_clicks > 0:
         filtered_data = data.copy()
         if m365_clicks % 2 != 0 and "m365" in list(data["PROVIDER"]):
@@ -631,7 +664,16 @@ def filter_data(
             azure_clicks = 0
             gcp_clicks = 0
             k8s_clicks = 0
-
+            alibabacloud_clicks = 0
+    if alibabacloud_clicks > 0:
+        filtered_data = data.copy()
+        if alibabacloud_clicks % 2 != 0 and "alibabacloud" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "alibabacloud"]
+            aws_clicks = 0
+            azure_clicks = 0
+            gcp_clicks = 0
+            k8s_clicks = 0
+            m365_clicks = 0
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
         filtered_data["STATUS"] = filtered_data.apply(
@@ -723,6 +765,8 @@ def filter_data(
                 all_account_ids.append(account)
             if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 all_account_ids.append(account)
+            if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
 
     all_account_names = []
     if "ACCOUNT_NAME" in filtered_data.columns:
@@ -745,6 +789,10 @@ def filter_data(
                     cloud_accounts_options.append(item + " - AWS")
                 if "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - K8S")
+                if "alibabacloud" in list(
+                    data[data["ACCOUNT_UID"] == item]["PROVIDER"]
+                ):
+                    cloud_accounts_options.append(item + " - ALIBABACLOUD")
             if "ACCOUNT_NAME" in filtered_data.columns:
                 if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - AZURE")
@@ -873,6 +921,10 @@ def filter_data(
                 filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
             ):
                 service_filter_options.append(item + " - M365")
+            if "alibabacloud" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - ALIBABACLOUD")
 
     # Filter Service
     if service_values == ["All"]:
@@ -930,6 +982,41 @@ def filter_data(
     filtered_data = filtered_data[filtered_data["STATUS"].isin(updated_status_values)]
 
     status_filter_options = ["All"] + list(filtered_data["STATUS"].unique())
+
+    # Filter Category
+    if "CATEGORIES" in filtered_data.columns:
+        if category_values == ["All"]:
+            updated_category_values = None
+        elif "All" in category_values and len(category_values) > 1:
+            category_values.remove("All")
+            updated_category_values = category_values
+        elif len(category_values) == 0:
+            updated_category_values = None
+            category_values = ["All"]
+        else:
+            updated_category_values = category_values
+
+        if updated_category_values:
+            filtered_data = filtered_data[
+                filtered_data["CATEGORIES"].apply(
+                    lambda x: any(
+                        cat.strip() in updated_category_values
+                        for cat in str(x).split(",")
+                        if str(x) != "nan"
+                    )
+                )
+            ]
+
+        category_filter_options = ["All"]
+        for cat_list in filtered_data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in category_filter_options:
+                        category_filter_options.append(cat)
+        category_filter_options = sorted(category_filter_options)
+    else:
+        category_filter_options = ["All"]
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -1324,6 +1411,12 @@ def filter_data(
                     filtered_data.loc[
                         filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
                     ] = (account + " - M365")
+                if "alibabacloud" in list(
+                    data[data["ACCOUNT_UID"] == account]["PROVIDER"]
+                ):
+                    filtered_data.loc[
+                        filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
+                    ] = (account + " - ALIBABACLOUD")
 
         table_collapsible = []
         for item in filtered_data.to_dict("records"):
@@ -1410,6 +1503,13 @@ def filter_data(
     else:
         m365_card = None
 
+    if "alibabacloud" in list(data["PROVIDER"].unique()):
+        alibabacloud_card = create_provider_card(
+            "alibabacloud", alibabacloud_provider_logo, "Accounts", full_filtered_data
+        )
+    else:
+        alibabacloud_card = None
+
     # Subscribe to Prowler Cloud card
     subscribe_card = [
         html.Div(
@@ -1454,6 +1554,7 @@ def filter_data(
             gcp_card,
             k8s_card,
             m365_card,
+            alibabacloud_card,
             subscribe_card,
             list_files,
             severity_values,
@@ -1464,11 +1565,14 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,
             k8s_clicks,
             m365_clicks,
+            alibabacloud_clicks,
         )
     else:
         return (
@@ -1487,6 +1591,7 @@ def filter_data(
             gcp_card,
             k8s_card,
             m365_card,
+            alibabacloud_card,
             subscribe_card,
             list_files,
             severity_values,
@@ -1499,11 +1604,14 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,
             k8s_clicks,
             m365_clicks,
+            alibabacloud_clicks,
         )
 
 

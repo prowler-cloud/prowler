@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** use **encryption at rest**. The evaluation inspects the cluster's encryption setting to determine if on-disk data and snapshots are protected with a managed key.",
   "Risk": "Without **encryption at rest**, data blocks and snapshots can be read if storage media or backups are accessed by unauthorized parties. This compromises **confidentiality**, enabling bulk **data exfiltration** and exposure of sensitive analytics, which can facilitate further compromise.",
   "RelatedUrl": "",

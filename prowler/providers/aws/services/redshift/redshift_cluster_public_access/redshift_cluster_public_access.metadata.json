@@ -11,16 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "Amazon Redshift clusters with `publicly accessible` endpoints in **public subnets** and security groups allowing TCP from `0.0.0.0/0` or `::/0` are identified as internet-exposed.\n\nPublic endpoints without internet reachability due to private subnets or restrictive rules are recognized separately.",
   "Risk": "Internet-exposed Redshift endpoints allow direct DB access from any host, impacting:\n- **Confidentiality**: credential brute force, unauthorized queries, data exfiltration\n- **Integrity**: unauthorized writes or schema changes\n- **Availability**: scanning/abuse leading to connection exhaustion or disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/de_de/redshift/latest/mgmt/rs-ra3-VPC-public-private.html",
-    "https://docs.prowler.com/checks/aws/public-policies/public_9#terraform",
-    "https://docs.prowler.com/checks/aws/public-policies/public_9",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-publicly-accessible.html",
-    "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html",
-    "https://stackoverflow.com/questions/46162487/how-to-connect-to-amazon-redshift-cluster-from-within-my-amazon-ec2-instance"
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html"
   ],
   "Remediation": {
     "Code": {

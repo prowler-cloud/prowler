@@ -11,18 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "**Amazon Redshift clusters** are assessed for the `EnhancedVpcRouting` setting, which routes all `COPY` and `UNLOAD` traffic between the cluster and data repositories through the VPC, enabling use of VPC security controls and logging.",
   "Risk": "**Without enhanced VPC routing**, `COPY`/`UNLOAD` transfers can leave VPC oversight, reducing control and visibility.\n- VPC egress filtering and endpoint policies can be bypassed (confidentiality)\n- Limited flow-log telemetry (visibility)\n- Higher risk of unauthorized exfiltration or tampering (confidentiality, integrity)",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.datadoghq.com/security/default_rules/def-000-4ix/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-7",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html",
-    "https://repost.aws/knowledge-center/redshift-enhanced-vpc-routing",
-    "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-enabling-cluster.html",
-    "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html",
-    "https://jayendrapatil.com/tag/enhanced-vpc-routing/",
-    "https://www.educba.com/redshift-enhanced-vpc-routing/"
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html"
   ],
   "Remediation": {
     "Code": {
