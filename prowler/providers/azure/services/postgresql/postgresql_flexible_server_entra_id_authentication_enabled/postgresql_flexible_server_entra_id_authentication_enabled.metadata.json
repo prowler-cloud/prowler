@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "PostgreSQL",
+  "ResourceGroup": "database",
   "Description": "**PostgreSQL Flexible Servers** must set `authConfig.activeDirectoryAuth` to `Enabled` and keep at least one **Microsoft Entra administrator** assigned so database sessions inherit centrally governed identities instead of unmanaged PostgreSQL accounts.",
   "Risk": "Without Entra ID authentication, stolen local passwords bypass **MFA** and conditional access, enabling persistent database logins. Missing administrators leaves the feature unusable, blocking security teams from rotating duties and allowing unauthorized access or **privilege escalation**.",
   "RelatedUrl": "",

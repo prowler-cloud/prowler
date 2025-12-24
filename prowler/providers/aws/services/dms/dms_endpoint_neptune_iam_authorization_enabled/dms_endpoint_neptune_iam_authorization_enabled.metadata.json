@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsEndpoint",
+  "ResourceGroup": "database",
   "Description": "**DMS Neptune endpoints** have **IAM authorization** enabled via the endpoint setting `IamAuthEnabled`.",
   "Risk": "Without **IAM authorization**, migration components can interact with Neptune using broad trust, enabling unauthorized data loads, reads, or alterations.\n\nThis degrades **confidentiality** and **integrity** and increases the chance of privilege abuse and data exfiltration.",
   "RelatedUrl": "",

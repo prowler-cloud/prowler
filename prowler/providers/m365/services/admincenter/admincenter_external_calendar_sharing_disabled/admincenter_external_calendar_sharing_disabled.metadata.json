@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Sharing Policy",
+  "ResourceGroup": "governance",
   "Description": "Restrict the ability for users to share their calendars externally in Microsoft 365. This prevents users from sending calendar sharing links to external recipients, reducing information exposure.",
   "Risk": "Allowing calendar sharing outside the organization can help attackers build knowledge of personnel availability, relationships, and activity patterns, aiding social engineering or targeted attacks.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/share-calendars-with-external-users?view=o365-worldwide",

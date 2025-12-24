@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service directories** are evaluated for **RADIUS-backed multi-factor authentication**, confirming that MFA is configured and the RADIUS integration is active.",
   "Risk": "Without **RADIUS MFA**, directory-based sign-ins to AWS-integrated services rely on a single factor, enabling credential stuffing and phishing to succeed. Compromised passwords can grant unauthorized access, drive data exfiltration, and enable privilege escalation, undermining confidentiality and integrity.",
   "RelatedUrl": "",

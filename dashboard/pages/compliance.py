@@ -76,8 +76,10 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
-            if "M365" in result:
-                result = result.replace("_M365", " - M365")
+            if "M65" in result:
+                result = result.replace("_M65", " - M65")
+            if "ALIBABACLOUD" in result:
+                result = result.replace("_ALIBABACLOUD", " - ALIBABACLOUD")
             results.append(result)
 
     unique_results = set(results)
@@ -278,6 +280,10 @@ def display_data(
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
             ].apply(lambda x: x.split(" - ")[0])
+
+    # Rename the column LOCATION to REGION for Alibaba Cloud
+    if "alibabacloud" in analytics_input:
+        data = data.rename(columns={"LOCATION": "REGION"})
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
@@ -401,9 +407,11 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
-            data = data.drop_duplicates(
-                subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
-            )
+            # Build subset list based on available columns
+            dedup_columns = ["CHECKID", "STATUS", "RESOURCEID", "STATUSEXTENDED"]
+            if "MUTED" in data.columns:
+                dedup_columns.insert(2, "MUTED")
+            data = data.drop_duplicates(subset=dedup_columns)
 
             if "threatscore" in analytics_input:
                 data = get_threatscore_mean_by_pillar(data)
@@ -646,6 +654,7 @@ def get_table(current_compliance, table):
 def get_threatscore_mean_by_pillar(df):
     score_per_pillar = {}
     max_score_per_pillar = {}
+    counted_findings_per_pillar = {}
 
     for _, row in df.iterrows():
         pillar = (
@@ -657,6 +666,18 @@ def get_threatscore_mean_by_pillar(df):
         if pillar not in score_per_pillar:
             score_per_pillar[pillar] = 0
             max_score_per_pillar[pillar] = 0
+            counted_findings_per_pillar[pillar] = set()
+
+        # Skip muted findings for score calculation
+        is_muted = "MUTED" in df.columns and row.get("MUTED") == "True"
+        if is_muted:
+            continue
+
+        # Create unique finding identifier to avoid counting duplicates
+        finding_id = f"{row.get('CHECKID', '')}_{row.get('RESOURCEID', '')}"
+        if finding_id in counted_findings_per_pillar[pillar]:
+            continue
+        counted_findings_per_pillar[pillar].add(finding_id)
 
         level_of_risk = pd.to_numeric(
             row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
@@ -700,6 +721,10 @@ def get_table_prowler_threatscore(df):
     score_per_pillar = {}
     max_score_per_pillar = {}
     pillars = {}
+    counted_findings_per_pillar = {}
+    counted_pass = set()
+    counted_fail = set()
+    counted_muted = set()
 
     df_copy = df.copy()
 
@@ -714,6 +739,24 @@ def get_table_prowler_threatscore(df):
             pillars[pillar] = {"FAIL": 0, "PASS": 0, "MUTED": 0}
             score_per_pillar[pillar] = 0
             max_score_per_pillar[pillar] = 0
+            counted_findings_per_pillar[pillar] = set()
+
+        # Create unique finding identifier
+        finding_id = f"{row.get('CHECKID', '')}_{row.get('RESOURCEID', '')}"
+
+        # Check if muted
+        is_muted = "MUTED" in df_copy.columns and row.get("MUTED") == "True"
+
+        # Count muted findings (separate from score calculation)
+        if is_muted and finding_id not in counted_muted:
+            counted_muted.add(finding_id)
+            pillars[pillar]["MUTED"] += 1
+            continue  # Skip muted findings for score calculation
+
+        # Skip if already counted for this pillar
+        if finding_id in counted_findings_per_pillar[pillar]:
+            continue
+        counted_findings_per_pillar[pillar].add(finding_id)
 
         level_of_risk = pd.to_numeric(
             row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
@@ -732,13 +775,14 @@ def get_table_prowler_threatscore(df):
         max_score_per_pillar[pillar] += level_of_risk * weight
 
         if row["STATUS"] == "PASS":
-            pillars[pillar]["PASS"] += 1
+            if finding_id not in counted_pass:
+                counted_pass.add(finding_id)
+                pillars[pillar]["PASS"] += 1
             score_per_pillar[pillar] += level_of_risk * weight
         elif row["STATUS"] == "FAIL":
-            pillars[pillar]["FAIL"] += 1
-
-        if "MUTED" in row and row["MUTED"] == "True":
-            pillars[pillar]["MUTED"] += 1
+            if finding_id not in counted_fail:
+                counted_fail.add(finding_id)
+                pillars[pillar]["FAIL"] += 1
 
     result_df = []
 

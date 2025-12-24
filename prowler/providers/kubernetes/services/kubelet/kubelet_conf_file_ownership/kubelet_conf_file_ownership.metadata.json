@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesWorkerNode",
+  "ResourceGroup": "container",
   "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has its file ownership set to root:root. This check verifies the proper ownership settings to maintain the security and integrity of the node's configuration.",
   "Risk": "Incorrect file ownership settings on kubelet.conf can lead to unauthorized access and potential security vulnerabilities.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",

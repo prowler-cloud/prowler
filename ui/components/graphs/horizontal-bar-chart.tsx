@@ -61,6 +61,17 @@ export function HorizontalBarChart({
               "var(--bg-neutral-tertiary)";
 
           const isClickable = !isEmpty && onBarClick;
+          const maxValue =
+            data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0;
+          const calculatedWidth = isEmpty
+            ? item.percentage
+            : (item.percentage ??
+              (maxValue > 0 ? (item.value / maxValue) * 100 : 0));
+          // Calculate display percentage (value / total * 100)
+          const displayPercentage = isEmpty
+            ? 0
+            : (item.percentage ??
+              (total > 0 ? Math.round((item.value / total) * 100) : 0));
           return (
             <div
               key={item.name}
@@ -105,15 +116,13 @@ export function HorizontalBarChart({
               </div>
 
               {/* Bar - flexible */}
-              <div className="relative flex-1">
+              <div className="relative h-[22px] flex-1">
                 <div className="bg-bg-neutral-tertiary absolute inset-0 h-[22px] w-full rounded-sm" />
                 {(item.value > 0 || isEmpty) && (
                   <div
                     className="relative h-[22px] rounded-sm border border-black/10 transition-all duration-300"
                     style={{
-                      width: isEmpty
-                        ? `${item.percentage}%`
-                        : `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
+                      width: `${calculatedWidth}%`,
                       backgroundColor: barColor,
                       opacity: isFaded ? 0.5 : 1,
                     }}
@@ -132,7 +141,9 @@ export function HorizontalBarChart({
                         <p className="text-text-neutral-primary text-xs leading-5 font-medium">
                           {item.value.toLocaleString()}{" "}
                           {item.name === "Informational" ? "Info" : item.name}{" "}
-                          Risk
+                          {item.name === "Fail" || item.name === "Pass"
+                            ? "Findings"
+                            : "Risk"}
                         </p>
                       </div>
 
@@ -172,7 +183,7 @@ export function HorizontalBarChart({
                 }}
               >
                 <span className="min-w-[26px] text-right font-medium">
-                  {isEmpty ? "0" : item.percentage}%
+                  {displayPercentage}%
                 </span>
                 <span className="shrink-0 font-medium">•</span>
                 <span className="font-bold whitespace-nowrap">

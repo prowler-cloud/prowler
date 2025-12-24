@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "Check if S3 buckets have server access logging enabled",
   "Risk": "Server access logs can assist you in security and access audits, help you learn about your customer base, and understand your Amazon S3 bill.",
   "RelatedUrl": "",

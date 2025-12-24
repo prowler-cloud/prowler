@@ -11,14 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "AWS Storage Gateway hosted on an **EC2 instance** is flagged by assessing each gateway's hosting environment, distinguishing **single-instance EC2** deployments from **non-EC2** platforms that can leverage platform-level high availability.",
   "Risk": "A **single EC2-hosted gateway** concentrates failure risk. Instance or AZ disruption, reboots, or network faults can halt file access, causing downtime and stalled writes. This degrades **availability** and can affect **integrity** via partial operations or cache desynchronization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://aws.amazon.com/blogs/storage/author/sekhrip/",
     "https://docs.aws.amazon.com/filegateway/latest/files3/resource-vm-setup.html",
-    "https://docs.aws.amazon.com/filegateway/latest/files3/disaster-recovery-resiliency.html",
-    "https://repost.aws/questions/QU7uSNAm4qR1C1VKircva_NQ/questions/QU7uSNAm4qR1C1VKircva_NQ/aws-storage-gateway-ec2-high-availability"
+    "https://docs.aws.amazon.com/filegateway/latest/files3/disaster-recovery-resiliency.html"
   ],
   "Remediation": {
     "Code": {
