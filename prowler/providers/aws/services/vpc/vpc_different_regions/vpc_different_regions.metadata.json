@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
+  "ResourceGroup": "network",
   "Description": "Ensure there are VPCs in more than one region",
   "Risk": "",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",

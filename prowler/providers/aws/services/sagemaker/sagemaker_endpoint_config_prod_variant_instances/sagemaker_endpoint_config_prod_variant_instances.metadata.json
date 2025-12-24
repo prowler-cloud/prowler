@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:endpoint-config/resource-id",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "This control checks whether production variants of an Amazon SageMaker endpoint have an initial instance count greater than 1. A single instance creates a single point of failure and reduces availability.",
   "Risk": "Having only one instance for a SageMaker endpoint production variant can lead to reduced availability, single points of failure, and slow recovery during incidents, especially if the instance becomes unavailable due to failure or security incidents.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/sagemaker-endpoint-config-prod-instance-count.html",

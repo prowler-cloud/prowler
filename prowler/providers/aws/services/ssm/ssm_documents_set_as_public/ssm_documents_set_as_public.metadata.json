@@ -11,11 +11,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSsmPatchCompliance",
+  "ResourceGroup": "devops",
   "Description": "**SSM documents** are evaluated for **public sharing** (`all`) and for shares with AWS accounts outside a defined trusted list. Documents that remain private or are shared only with trusted accounts indicate restricted distribution.",
   "Risk": "Public or non-trusted sharing exposes document content, eroding **confidentiality** of scripts, parameters, and embedded secrets. Adversaries can study runbooks to craft targeted attacks and reuse logic, causing credential leakage and downstream **integrity** and **availability** impacts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/ssm/ssm-doc-block",
     "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-before-you-share.html"
   ],
   "Remediation": {
@@ -32,7 +32,7 @@
   },
   "Categories": [
     "identity-access",
-    "trust-boundaries"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

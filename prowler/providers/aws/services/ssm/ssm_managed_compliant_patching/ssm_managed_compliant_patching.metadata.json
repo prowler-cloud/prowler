@@ -11,17 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSsmPatchCompliance",
+  "ResourceGroup": "devops",
   "Description": "**SSM-managed EC2 instances** report **patch compliance** against defined baselines. This evaluates each managed node's compliance status from Patch Manager to determine whether required security updates are applied according to policy.",
   "Risk": "**Unpatched instances** expose known `CVE` vulnerabilities, enabling **remote code execution**, **privilege escalation**, and **lateral movement**.\n\nThis threatens **confidentiality** (data exfiltration), **integrity** (unauthorized changes), and **availability** (ransomware, crypto-mining, outages).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/es/questions/QUqVOX8V_hS0eOttF0HT9Uew/cve-remediation-on-fleet-of-ec2-instances",
     "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-compliance-identify.html",
     "https://support.icompaas.com/support/solutions/articles/62000233554-ensure-ec2-instances-managed-by-systems-manager-are-compliant-with-patching-requirements",
-    "https://www.linkedin.com/learning/aws-monitoring-logging-and-remediation-26180788/automated-operations-with-systems-manager",
-    "https://medium.com/@yoboy907/developing-self-healing-and-auto-maintaining-ec2-instances-like-a-chill-guy-65d8959576b2",
-    "https://docs.aws.amazon.com/systems-manager/latest/userguide/compliance-fixing.html",
-    "https://dev.to/kingkonsole/introducing-vulne-soldier-a-modern-aws-ec2-vulnerability-remediation-tool-3j7a"
+    "https://docs.aws.amazon.com/systems-manager/latest/userguide/compliance-fixing.html"
   ],
   "Remediation": {
     "Code": {

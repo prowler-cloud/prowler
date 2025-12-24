@@ -99,7 +99,14 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-mute-findings",
+              {
+                "group": "Mutelist",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-simple-mutelist",
+                  "user-guide/tutorials/prowler-app-mute-findings"
+                ]
+              },
               {
                 "group": "Integrations",
                 "expanded": true,
@@ -199,6 +206,13 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",
@@ -270,7 +284,8 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse"
+              "developer-guide/lighthouse",
+              "developer-guide/mcp-server"
             ]
           },
           {
@@ -293,7 +308,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",

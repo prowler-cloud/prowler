@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the Kubernetes API server is configured with an audit log path. Enabling audit logs helps in maintaining a chronological record of all activities and operations which can be critical for security analysis and troubleshooting.",
   "Risk": "Without audit logs, it becomes difficult to track changes and activities within the cluster, potentially obscuring the detection of malicious activities or operational issues.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",

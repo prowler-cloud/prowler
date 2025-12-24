@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Network Load Balancers** with listeners using the `TLS` protocol indicate **TLS termination** at the load balancer. The evaluation identifies NLBs that have at least one `TLS` listener versus those using plain `TCP`/`UDP` or deferring encryption to targets.",
   "Risk": "Lack of NLB-level TLS termination can leave transit data unencrypted or managed inconsistently on instances, undermining **confidentiality** and **integrity**. It also shifts handshake CPU cost to targets, reducing **availability** and making them more susceptible to connection floods and downgrade or weak-cipher exposures.",
   "RelatedUrl": "",

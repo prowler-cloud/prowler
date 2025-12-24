@@ -27,13 +27,13 @@ jobs:
       pull-requests: write
     steps:
     - name: Checkout repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         fetch-depth: 0
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
 
     - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: '3.12'
 
@@ -163,54 +163,53 @@ jobs:
 
           # Remove --- separators
           sed -i '/^---$/d' "$output_file"
-
-          # Remove only trailing empty lines (not all empty lines)
-          sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
         }
 
         # Determine if components have changes for this specific release
-        # A component has changes if we found a version for it in the changelog
-
-        # SDK has changes if we found a version
         if [ -n "$SDK_VERSION" ]; then
           echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          HAS_SDK_CHANGES="true"
           echo "✓ SDK changes detected - version: $SDK_VERSION"
           extract_changelog "prowler/CHANGELOG.md" "$SDK_VERSION" "prowler_changelog.md"
         else
           echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          HAS_SDK_CHANGES="false"
           echo "ℹ No SDK changes for this release"
           touch "prowler_changelog.md"
         fi
 
-        # API has changes if we found a version
         if [ -n "$API_VERSION" ]; then
           echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          HAS_API_CHANGES="true"
           echo "✓ API changes detected - version: $API_VERSION"
           extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
         else
           echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          HAS_API_CHANGES="false"
           echo "ℹ No API changes for this release"
           touch "api_changelog.md"
         fi
 
-        # UI has changes if we found a version
         if [ -n "$UI_VERSION" ]; then
           echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          HAS_UI_CHANGES="true"
           echo "✓ UI changes detected - version: $UI_VERSION"
           extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
         else
           echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          HAS_UI_CHANGES="false"
           echo "ℹ No UI changes for this release"
           touch "ui_changelog.md"
         fi
 
-        # MCP has changes if we found a version
         if [ -n "$MCP_VERSION" ]; then
           echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+          HAS_MCP_CHANGES="true"
           echo "✓ MCP changes detected - version: $MCP_VERSION"
           extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
         else
           echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+          HAS_MCP_CHANGES="false"
           echo "ℹ No MCP changes for this release"
           touch "mcp_changelog.md"
         fi
