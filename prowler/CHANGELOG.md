@@ -8,6 +8,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
 - `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
+- Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
+- `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
+- Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
+- `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
@@ -15,18 +19,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
 - Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
 - Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
+- Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
+
+---
+
+## [5.16.1] (Prowler v5.16.1)
+
+### Fixed
+- ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
 
 ---
 
 ## [5.16.0] (Prowler v5.16.0)
 
 ### Added
-
 - `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
 - Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
 
 ### Changed
-
 - Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
 - Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
 - Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)

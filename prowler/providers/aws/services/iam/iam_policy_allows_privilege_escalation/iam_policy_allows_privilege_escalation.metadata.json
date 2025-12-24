@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure no Customer Managed IAM policies allow actions that may lead into Privilege Escalation",
   "Risk": "Users with some IAM permissions are allowed to elevate their privileges up to administrator rights.",
   "RelatedUrl": "",

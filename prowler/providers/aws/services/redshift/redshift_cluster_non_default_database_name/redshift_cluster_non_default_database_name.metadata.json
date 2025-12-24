@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "This control checks whether an Amazon Redshift cluster has changed the database name from its default value. The control fails if the database name is set to 'dev'.",
   "Risk": "Using the default database name 'dev' increases the risk of unintended access, as it is publicly known and could be used in IAM policy conditions to inadvertently allow access.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/gsg/getting-started.html",

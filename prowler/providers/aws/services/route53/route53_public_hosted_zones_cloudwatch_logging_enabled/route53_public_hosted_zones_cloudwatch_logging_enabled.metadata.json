@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRoute53HostedZone",
+  "ResourceGroup": "network",
   "Description": "**Route 53 public hosted zones** have **DNS query logging** enabled to **CloudWatch Logs**, recording resolver requests for the zone and writing events to an associated log group.",
   "Risk": "Missing **DNS query logs** removes visibility into domain use, weakening detection of:\n- **Data exfiltration** via DNS\n- **Malware C2/DGA** patterns\n- **Hijacking or misconfigurations**\nThis degrades **incident response**, threatens data **confidentiality** and **integrity**, and slows **availability** troubleshooting.",
   "RelatedUrl": "",

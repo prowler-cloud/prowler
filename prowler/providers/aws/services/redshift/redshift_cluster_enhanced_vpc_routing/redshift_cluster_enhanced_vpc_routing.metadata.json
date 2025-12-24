@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
+  "ResourceGroup": "analytics",
   "Description": "This control checks whether an Amazon Redshift cluster has EnhancedVpcRouting enabled. Enhanced VPC routing forces all COPY and UNLOAD traffic between the cluster and data repositories to go through your VPC, allowing you to use VPC security features such as security groups and network access control lists.",
   "Risk": "Without enhanced VPC routing, network traffic between the Redshift cluster and data repositories might bypass VPC-level security controls, increasing the risk of unauthorized access or data exfiltration.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-enabling-cluster.html",

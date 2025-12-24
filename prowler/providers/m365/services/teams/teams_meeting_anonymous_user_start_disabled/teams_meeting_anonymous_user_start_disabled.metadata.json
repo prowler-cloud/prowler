@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure anonymous users and dial-in callers are not able to start meetings.",
   "Risk": "Allowing anonymous users and dial-in callers to start meetings without an authenticated participant present can lead to meeting spamming, unauthorized activity, and potential misuse of organizational resources.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",

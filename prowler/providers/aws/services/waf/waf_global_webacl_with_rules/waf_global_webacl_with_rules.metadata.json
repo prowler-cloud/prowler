@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafWebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic global web ACLs** are evaluated for the presence of at least one **rule** or **rule group** that inspects HTTP(S) requests",
   "Risk": "With no rules, the web ACL relies solely on its default action. If `allow`, hostile traffic reaches origins uninspected; if `block`, legitimate traffic can be denied.\n- SQLi/XSS can expose data (confidentiality)\n- Malicious requests can alter state (integrity)\n- Bots and scraping can drain resources (availability)",
   "RelatedUrl": "",
