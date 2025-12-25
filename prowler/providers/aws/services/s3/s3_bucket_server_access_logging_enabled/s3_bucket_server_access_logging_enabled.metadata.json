@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that S3 buckets have Logging enabled. CloudTrail data events can be used in place of S3 bucket logging. If that is the case, this finding can be considered a false positive.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html"
     }
   },
   "Categories": [
