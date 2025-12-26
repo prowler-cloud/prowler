@@ -890,8 +890,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         null=True,
         help_text="Categories from check metadata for efficient filtering",
     )
-    resource_group = models.CharField(
-        max_length=50,
+    resource_group = models.TextField(
         blank=True,
         null=True,
         help_text="Resource group from check metadata for efficient filtering",

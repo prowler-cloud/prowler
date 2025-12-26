@@ -16,10 +16,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="finding",
             name="resource_group",
-            field=models.CharField(
+            field=models.TextField(
                 blank=True,
                 help_text="Resource group from check metadata for efficient filtering",
-                max_length=50,
                 null=True,
             ),
         ),
