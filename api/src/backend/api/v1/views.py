@@ -3029,20 +3029,6 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_group")
         )
 
-        # Fallback to finding aggregation if no ScanResourceGroupSummary exists
-        if not resource_groups:
-            filtered_queryset = self.filter_queryset(self.get_queryset()).filter(
-                tenant_id=tenant_id,
-                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
-            )
-            resource_groups = list(
-                filtered_queryset.exclude(resource_group__isnull=True)
-                .exclude(resource_group__exact="")
-                .values_list("resource_group", flat=True)
-                .distinct()
-                .order_by("resource_group")
-            )
-
         result = {
             "services": services,
             "regions": regions,
