@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:compute:instance",
   "Severity": "medium",
   "ResourceType": "OciComputeInstance",
+  "ResourceGroup": "compute",
   "Description": "Secure Boot helps ensure that the instance boots using only software that is trusted by the platform firmware. This prevents rootkits and bootkits from loading during the boot process.",
   "Risk": "Without Secure Boot enabled, instances are vulnerable to boot-level malware that can compromise the entire system before the operating system loads.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Compute/References/shielded-instances.htm",

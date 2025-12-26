@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -18,6 +20,7 @@ class Compute(GCPService):
         self.firewalls = []
         self.compute_projects = []
         self.load_balancers = []
+        self.instance_groups = []
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -28,6 +31,8 @@ class Compute(GCPService):
         self.__threading_call__(self._get_subnetworks, self.regions)
         self._get_firewalls()
         self.__threading_call__(self._get_addresses, self.regions)
+        self.__threading_call__(self._get_regional_instance_groups, self.regions)
+        self.__threading_call__(self._get_zonal_instance_groups, self.zones)
 
     def _get_regions(self):
         for project_id in self.project_ids:
@@ -129,6 +134,19 @@ class Compute(GCPService):
                                                 "sha256"
                                             )
                                             else False
+                                        ),
+                                    )
+                                    for disk in instance.get("disks", [])
+                                ],
+                                disks=[
+                                    Disk(
+                                        name=disk["deviceName"],
+                                        auto_delete=disk.get("autoDelete", False),
+                                        boot=disk.get("boot", False),
+                                        encryption=bool(
+                                            disk.get("diskEncryptionKey", {}).get(
+                                                "sha256"
+                                            )
                                         ),
                                     )
                                     for disk in instance.get("disks", [])
@@ -362,6 +380,94 @@ class Compute(GCPService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
+    def _get_regional_instance_groups(self, region: str) -> None:
+        """Fetch regional managed instance groups for all projects."""
+        for project_id in self.project_ids:
+            try:
+                request = self.client.regionInstanceGroupManagers().list(
+                    project=project_id, region=region
+                )
+                while request is not None:
+                    response = request.execute(
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
+                    )
+
+                    for mig in response.get("items", []):
+                        zones = [
+                            zone_info["zone"].split("/")[-1]
+                            for zone_info in mig.get("distributionPolicy", {}).get(
+                                "zones", []
+                            )
+                            if zone_info.get("zone")
+                        ]
+
+                        self.instance_groups.append(
+                            ManagedInstanceGroup(
+                                name=mig.get("name", ""),
+                                id=mig.get("id", ""),
+                                region=region,
+                                zone=None,
+                                zones=zones,
+                                is_regional=True,
+                                target_size=mig.get("targetSize", 0),
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = self.client.regionInstanceGroupManagers().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zonal_instance_groups(self, zone: str) -> None:
+        """Fetch zonal managed instance groups for all projects."""
+        for project_id in self.project_ids:
+            try:
+                request = self.client.instanceGroupManagers().list(
+                    project=project_id, zone=zone
+                )
+                while request is not None:
+                    response = request.execute(
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
+                    )
+
+                    for mig in response.get("items", []):
+                        mig_zone = mig.get("zone", zone).split("/")[-1]
+                        mig_region = mig_zone.rsplit("-", 1)[0]
+
+                        self.instance_groups.append(
+                            ManagedInstanceGroup(
+                                name=mig.get("name", ""),
+                                id=mig.get("id", ""),
+                                region=mig_region,
+                                zone=mig_zone,
+                                zones=[mig_zone],
+                                is_regional=False,
+                                target_size=mig.get("targetSize", 0),
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = self.client.instanceGroupManagers().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class Disk(BaseModel):
+    name: str
+    auto_delete: bool = False
+    boot: bool
+    encryption: bool = False
+
 
 class Instance(BaseModel):
     name: str
@@ -377,6 +483,7 @@ class Instance(BaseModel):
     service_accounts: list
     ip_forward: bool
     disks_encryption: list
+    disks: list[Disk] = []
     automatic_restart: bool = False
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
@@ -427,4 +534,15 @@ class LoadBalancer(BaseModel):
     id: str
     service: str
     logging: bool = False
+    project_id: str
+
+
+class ManagedInstanceGroup(BaseModel):
+    name: str
+    id: str
+    region: str
+    zone: Optional[str]
+    zones: list
+    is_regional: bool
+    target_size: int
     project_id: str

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that profiling is disabled in the Kubernetes API server. Profiling generates extensive data about the system's performance and operations, which, if not needed, should be disabled to reduce the attack surface.",
   "Risk": "Enabled profiling can potentially expose detailed system and program data, which might be exploited for malicious purposes.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",

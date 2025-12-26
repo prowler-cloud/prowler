@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "**GuardDuty detectors** are evaluated for the presence of **High-severity findings**. This surfaces whether any detector currently has findings labeled `High` by GuardDuty.",
   "Risk": "Unresolved **High findings** often signal active compromise, enabling:\n- Data exfiltration and unauthorized access (confidentiality)\n- Privilege escalation and tampering (integrity)\n- Disruption via malware/crypto-mining (availability)\n\nAttackers can pivot laterally and persist if not contained.",
   "RelatedUrl": "",

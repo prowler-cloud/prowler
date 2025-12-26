@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**Glacier vault** access policy is evaluated for exposure to **public principals**. The finding highlights `Allow` statements that grant access to `Principal: '*'` (including wildcard forms), and notes when a vault lacks a policy.",
   "Risk": "Publicly grantable vault access undermines **confidentiality** and **integrity**. Anyone could list, retrieve, or delete archives, leading to data exposure or loss. Attackers may also trigger large retrieval operations, degrading **availability** and driving unexpected costs.",
   "RelatedUrl": "",

@@ -12,15 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Volume",
+  "ResourceGroup": "compute",
   "Description": "**Amazon WorkSpaces** evaluates **encryption at rest** on each workspace's EBS volumes. It checks whether the **root** and **user** volumes are encrypted with a KMS key and identifies workspaces where either volume is unencrypted.",
   "Risk": "Unencrypted volumes allow offline access to files, cached credentials, and profile data from snapshots or underlying storage, harming **confidentiality**. Storage-level access can enable data tampering, impacting **integrity**, and facilitate token reuse for lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-workspace-root-volumes-are-encrypted#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html",
-    "https://medium.com/@craig.kilpatrick/unlocking-the-ability-to-work-from-home-with-amazon-workspaces-897b15704895",
-    "https://cloud-kb.sentinelone.com/workspaces-user-volume-encryption-disabled"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html"
   ],
   "Remediation": {
     "Code": {

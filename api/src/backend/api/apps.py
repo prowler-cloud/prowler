@@ -40,7 +40,6 @@ class ApiConfig(AppConfig):
             self._ensure_crypto_keys()
 
         load_prowler_compliance()
-        self._initialize_attack_surface_mapping()
 
     def _ensure_crypto_keys(self):
         """
@@ -168,13 +167,3 @@ class ApiConfig(AppConfig):
                 f"Error generating JWT keys: {e}. Please set '{SIGNING_KEY_ENV}' and '{VERIFYING_KEY_ENV}' manually."
             )
             raise e
-
-    def _initialize_attack_surface_mapping(self):
-        from tasks.jobs.scan import (  # noqa: F401
-            _get_attack_surface_mapping_from_provider,
-        )
-
-        from api.models import Provider  # noqa: F401
-
-        for provider_type, _label in Provider.ProviderChoices.choices:
-            _get_attack_surface_mapping_from_provider(provider_type)

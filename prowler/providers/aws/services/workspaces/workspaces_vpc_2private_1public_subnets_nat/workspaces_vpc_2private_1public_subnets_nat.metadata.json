@@ -10,16 +10,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "Amazon WorkSpaces reside in a VPC that includes **2 private subnets** and **1 public subnet**, with the WorkSpace launched in a **private subnet** and the VPC providing **NAT Gateway** egress.",
   "Risk": "Placing WorkSpaces in public subnets or lacking a NAT Gateway exposes desktops to direct Internet reachability, enabling credential attacks and session hijacking, harming **confidentiality** and **integrity**. Without controlled egress, updates and directory connectivity can fail, impacting **availability** and pushing teams to unsafe workarounds.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html",
-    "https://stackoverflow.com/questions/59525573/can-a-single-nat-gateway-span-across-multiple-az/59525729",
-    "https://jasonwatmore.com/post/2021/05/30/aws-create-a-vpc-with-public-and-private-subnets-and-a-nat-gateway",
-    "https://d1.awsstatic.com/product-marketing/WorkSpaces/workspaces-ag-wsp-beta-2-21.pdf",
-    "https://quileswest.medium.com/create-a-vpc-in-aws-with-public-and-private-subnets-nat-gateway-8c45ca371a82",
-    "https://devops.stackexchange.com/questions/11665/one-nat-attachment-for-two-private-subnets/11713"
+    "https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-vpc.html"
   ],
   "Remediation": {
     "Code": {
