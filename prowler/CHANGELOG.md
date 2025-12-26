@@ -23,6 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Storage Gateway service metadata to new format [(#9433)](https://github.com/prowler-cloud/prowler/pull/9433)
 - Update AWS Well-Architected service metadata to new format [(#9482)](https://github.com/prowler-cloud/prowler/pull/9482)
 - Update AWS SSM service metadata to new format [(#9430)](https://github.com/prowler-cloud/prowler/pull/9430)
+- Update AWS Organizations service metadata to new format [(#9384)](https://github.com/prowler-cloud/prowler/pull/9384)
 
 ---
 
