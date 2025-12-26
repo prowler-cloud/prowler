@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Security Hub service metadata to new format [(#9409)](https://github.com/prowler-cloud/prowler/pull/9409)
 - Update AWS SES service metadata to new format [(#9411)](https://github.com/prowler-cloud/prowler/pull/9411)
 - Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
+- Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
 
 ---
 
