@@ -33,6 +33,7 @@ class Compute(GCPService):
         self.__threading_call__(self._get_addresses, self.regions)
         self.__threading_call__(self._get_regional_instance_groups, self.regions)
         self.__threading_call__(self._get_zonal_instance_groups, self.zones)
+        self._associate_migs_with_load_balancers()
 
     def _get_regions(self):
         for project_id in self.project_ids:
@@ -461,6 +462,53 @@ class Compute(GCPService):
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _associate_migs_with_load_balancers(self) -> None:
+        load_balanced_groups = set()
+
+        for project_id in self.project_ids:
+            try:
+                request = self.client.backendServices().list(project=project_id)
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    for backend_service in response.get("items", []):
+                        for backend in backend_service.get("backends", []):
+                            group_url = backend.get("group", "")
+                            if group_url:
+                                group_name = group_url.split("/")[-1]
+                                load_balanced_groups.add((project_id, group_name))
+                    request = self.client.backendServices().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+            for region in self.regions:
+                try:
+                    request = self.client.regionBackendServices().list(
+                        project=project_id, region=region
+                    )
+                    while request is not None:
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                        for backend_service in response.get("items", []):
+                            for backend in backend_service.get("backends", []):
+                                group_url = backend.get("group", "")
+                                if group_url:
+                                    group_name = group_url.split("/")[-1]
+                                    load_balanced_groups.add((project_id, group_name))
+                        request = self.client.regionBackendServices().list_next(
+                            previous_request=request, previous_response=response
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        for mig in self.instance_groups:
+            if (mig.project_id, mig.name) in load_balanced_groups:
+                mig.load_balanced = True
+
 
 class Disk(BaseModel):
     name: str
@@ -546,3 +594,4 @@ class ManagedInstanceGroup(BaseModel):
     is_regional: bool
     target_size: int
     project_id: str
+    load_balanced: bool = False
