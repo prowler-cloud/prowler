@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Organizations service metadata to new format [(#9384)](https://github.com/prowler-cloud/prowler/pull/9384)
 - Update AWS Resource Explorer v2 service metadata to new format [(#9386)](https://github.com/prowler-cloud/prowler/pull/9386)
 - Update AWS SageMaker service metadata to new format [(#9407)](https://github.com/prowler-cloud/prowler/pull/9407)
+- Update AWS Security Hub service metadata to new format [(#9409)](https://github.com/prowler-cloud/prowler/pull/9409)
 
 ---
 
