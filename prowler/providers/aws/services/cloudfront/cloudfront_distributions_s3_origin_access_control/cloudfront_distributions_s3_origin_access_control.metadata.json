@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** with **Amazon S3 origins** are expected to use **Origin Access Control** (`OAC`) on each S3 origin.\n\nThe evaluation inspects distributions that include `s3_origin_config` and identifies S3 origins that lack an associated OAC.",
   "Risk": "Without **OAC**, S3 objects can be reached outside CloudFront, bypassing edge controls and weakening **confidentiality** and **integrity**.\n- Direct access enables data exfiltration\n- Loss of WAF, rate-limiting, and detailed logging; cost abuse\n- Limited support for signed writes and **SSE-KMS**, increasing tampering risk",
   "RelatedUrl": "",

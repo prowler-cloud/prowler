@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Teams Settings",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure external users cannot initiate conversations.",
   "Risk": "Allowing unmanaged external Teams users to initiate conversations increases the risk of phishing, malware distribution such as DarkGate, social engineering attacks like those by Midnight Blizzard, GIFShell exploitation, and username enumeration.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",

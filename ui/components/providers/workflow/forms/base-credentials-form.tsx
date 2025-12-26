@@ -2,7 +2,7 @@
 
 import { Divider } from "@heroui/divider";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
 import { Form } from "@/components/ui/form";
@@ -11,6 +11,9 @@ import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { requiresBackButton } from "@/lib/provider-helpers";
 import {
+  AlibabaCloudCredentials,
+  AlibabaCloudCredentialsRole,
+  ApiResponse,
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
@@ -26,6 +29,10 @@ import {
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
+import {
+  AlibabaCloudRoleCredentialsForm,
+  AlibabaCloudStaticCredentialsForm,
+} from "./select-credentials-type/alibabacloud/credentials-type";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
@@ -45,7 +52,7 @@ type BaseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
   providerUid?: string;
-  onSubmit: (formData: FormData) => Promise<any>;
+  onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
   submitButtonText?: string;
   showBackButton?: boolean;
@@ -108,7 +115,9 @@ export const BaseCredentialsForm = ({
         {providerType === "aws" && searchParamsObj.get("via") === "role" && (
           <AWSRoleCredentialsForm
             control={form.control as unknown as Control<AWSCredentialsRole>}
-            setValue={form.setValue as any}
+            setValue={
+              form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
+            }
             externalId={externalId}
             templateLinks={templateLinks}
           />
@@ -181,6 +190,22 @@ export const BaseCredentialsForm = ({
             }
           />
         )}
+        {providerType === "alibabacloud" &&
+          searchParamsObj.get("via") === "role" && (
+            <AlibabaCloudRoleCredentialsForm
+              control={
+                form.control as unknown as Control<AlibabaCloudCredentialsRole>
+              }
+            />
+          )}
+        {providerType === "alibabacloud" &&
+          searchParamsObj.get("via") !== "role" && (
+            <AlibabaCloudStaticCredentialsForm
+              control={
+                form.control as unknown as Control<AlibabaCloudCredentials>
+              }
+            />
+          )}
 
         <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (

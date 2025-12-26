@@ -11,15 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**AWS Security Hub** is `ACTIVE` in the Region and has at least one enabled **security standard** or connected **integration**. Otherwise, it is either not enabled or enabled without standards/integrations.",
   "Risk": "Absent **Security Hub coverage** or standards, security signals are fragmented and **control checks** don't run. High-risk findings can be missed or delayed, enabling data exfiltration, persistence, and lateral movement. This reduces **visibility** and undermines **confidentiality, integrity, and availability** across accounts/Regions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-settingup.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/securityhub.html",
-    "https://www.rdocumentation.org/packages/paws.security.identity/versions/0.1.12/topics/securityhub_enable_security_hub",
-    "https://dev.to/bianca/building-a-devsecops-pipeline-on-aws-from-security-audit-to-daily-deployments-3io8"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-enable-disable.html"
   ],
   "Remediation": {
     "Code": {
@@ -33,10 +31,7 @@
       "Url": "https://hub.prowler.com/check/securityhub_enabled"
     }
   },
-  "Categories": [
-    "threat-detection",
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

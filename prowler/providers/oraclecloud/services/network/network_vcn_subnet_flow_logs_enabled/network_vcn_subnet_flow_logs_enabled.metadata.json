@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:network:subnet",
   "Severity": "medium",
   "ResourceType": "OciSubnet",
+  "ResourceGroup": "network",
   "Description": "VCN flow logging should be enabled for all subnets.",
   "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",

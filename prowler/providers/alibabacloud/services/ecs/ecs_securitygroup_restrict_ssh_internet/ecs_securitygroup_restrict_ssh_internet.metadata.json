@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_ssh_internet",
+  "CheckTitle": "SSH access is restricted from the internet",
+  "CheckType": [
+    "Unusual logon",
+    "Suspicious network connection"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ecs:region:account-id:security-group/{security-group-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudECSSecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "**Security groups** provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources.\n\nIt is recommended that no security group allows unrestricted ingress access to port **22 (SSH)**.",
+  "Risk": "Removing unfettered connectivity to remote console services, such as **SSH**, reduces a server's exposure to risk.\n\nUnrestricted SSH access from the internet (`0.0.0.0/0`) exposes systems to **brute force attacks**, **credential stuffing**, and **exploitation of SSH vulnerabilities**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/25387.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/unrestricted-ssh-access.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs RevokeSecurityGroup --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 22/22 --SourceCidrIp 0.0.0.0/0",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_security_group_rule\" \"deny_ssh_internet\" {\n  type              = \"ingress\"\n  ip_protocol       = \"tcp\"\n  port_range        = \"22/22\"\n  security_group_id = alicloud_security_group.example.id\n  cidr_ip           = \"10.0.0.0/8\"  # Restrict to internal network\n  policy            = \"accept\"\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ECS Console**\n2. In the left-side navigation pane, choose **Network & Security** > **Security Groups**\n3. Find the Security Group you want to modify\n4. Modify Source IP range to specific IP instead of `0.0.0.0/0`\n5. Click **Save**",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_ssh_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
