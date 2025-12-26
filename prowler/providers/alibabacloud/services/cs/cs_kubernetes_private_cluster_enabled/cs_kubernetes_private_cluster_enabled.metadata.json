@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_private_cluster_enabled",
+  "CheckTitle": "Kubernetes Cluster is created with Private cluster enabled",
+  "CheckType": [
+    "Threat detection during container runtime",
+    "Unusual logon"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "A **private cluster** is a cluster that makes your master inaccessible from the public internet.\n\nIn a private cluster, nodes do not have public IP addresses, so your workloads run in an environment that is isolated from the internet. Nodes and masters communicate with each other privately using **VPC peering**.",
+  "Risk": "Exposing the **API server endpoint** to the public internet increases the attack surface of your cluster. Attackers can attempt to probe for vulnerabilities, perform **brute force attacks**, or exploit misconfigurations if the API server is publicly accessible.\n\nUsing a private cluster significantly reduces network security risks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/100380.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/private-cluster.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Public access settings cannot be easily changed for existing clusters. Ensure Public Access is disabled during creation.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ACK Console**\n2. Select the target cluster name and go to the cluster detail page\n3. Check if there is no `API Server Public Network Endpoint` under Cluster Information\n4. When creating a new cluster, make sure **Public Access** is not enabled",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_private_cluster_enabled"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

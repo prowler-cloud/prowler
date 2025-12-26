@@ -28,7 +28,7 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
       className={cn(
         "group tap-highlight-transparent inline-flex flex-row-reverse items-center justify-between hover:opacity-70 active:opacity-50",
         "border-default max-w-full cursor-pointer gap-4 rounded-lg border-2 p-4",
-        "hover:border-action data-[selected=true]:border-action w-full",
+        "hover:border-button-primary data-[selected=true]:border-button-primary w-full",
       )}
     >
       <VisuallyHidden>

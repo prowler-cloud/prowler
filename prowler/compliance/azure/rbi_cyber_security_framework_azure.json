@@ -1,0 +1,248 @@
+{
+  "Framework": "RBI-Cyber-Security-Framework",
+  "Name": "Reserve Bank of India (RBI) Cyber Security Framework",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "The Reserve Bank had prescribed a set of baseline cyber security controls for primary (Urban) cooperative banks (UCBs) in October 2018. On further examination, it has been decided to prescribe a comprehensive cyber security framework for the UCBs, as a graded approach, based on their digital depth and interconnectedness with the payment systems landscape, digital products offered by them and assessment of cyber security risk. The framework would mandate implementation of progressively stronger security measures based on the nature, variety and scale of digital product offerings of banks.",
+  "Requirements": [
+    {
+      "Id": "annex_i_1_1",
+      "Name": "Annex I (1.1)",
+      "Description": "UCBs should maintain an up-to-date business IT Asset Inventory Register containing the following fields, as a minimum: a) Details of the IT Asset (viz., hardware/software/network devices, key personnel, services, etc.), b. Details of systems where customer data are stored, c. Associated business applications, if any, d. Criticality of the IT asset (For example, High/Medium/Low).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_1",
+          "Service": "vm"
+        }
+      ],
+      "Checks": [
+        "vm_ensure_using_approved_images",
+        "vm_ensure_using_managed_disks",
+        "vm_trusted_launch_enabled",
+        "aks_cluster_rbac_enabled",
+        "aks_clusters_created_with_private_nodes",
+        "appinsights_ensure_is_configured",
+        "containerregistry_admin_user_disabled"
+      ]
+    },
+    {
+      "Id": "annex_i_1_3",
+      "Name": "Annex I (1.3)",
+      "Description": "Appropriately manage and provide protection within and outside UCB/network, keeping in mind how the data/information is stored, transmitted, processed, accessed and put to use within/outside the UCB's network, and level of risk they are exposed to depending on the sensitivity of the data/information.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_3",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "app_function_not_publicly_accessible",
+        "app_ensure_http_is_redirected_to_https",
+        "app_minimum_tls_version_12",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_secure_transfer_required_is_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "network_ssh_internet_access_restricted",
+        "sqlserver_unrestricted_inbound_access",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "cosmosdb_account_use_private_endpoints",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "aks_clusters_public_access_disabled",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "aisearch_service_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "annex_i_5_1",
+      "Name": "Annex I (5.1)",
+      "Description": "The firewall configurations should be set to the highest security level and evaluation of critical device (such as firewall, network switches, security devices, etc.) configurations should be done periodically.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_5_1",
+          "Service": "network"
+        }
+      ],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_http_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_watcher_enabled",
+        "network_bastion_host_exists",
+        "aks_network_policy_enabled",
+        "storage_default_network_access_rule_is_denied"
+      ]
+    },
+    {
+      "Id": "annex_i_6",
+      "Name": "Annex I (6)",
+      "Description": "Put in place systems and processes to identify, track, manage and monitor the status of patches to servers, operating system and application software running at the systems used by the UCB officials (end-users). Implement and update antivirus protection for all servers and applicable end points preferably through a centralised system.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_6",
+          "Service": "defender"
+        }
+      ],
+      "Checks": [
+        "defender_ensure_system_updates_are_applied",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_container_images_scan_enabled",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "vm_backup_enabled",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest"
+      ]
+    },
+    {
+      "Id": "annex_i_7_1",
+      "Name": "Annex I (7.1)",
+      "Description": "Disallow administrative rights on end-user workstations/PCs/laptops and provide access rights on a 'need to know' and 'need to do' basis.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_1",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "app_function_identity_without_admin_privileges"
+      ]
+    },
+    {
+      "Id": "annex_i_7_2",
+      "Name": "Annex I (7.2)",
+      "Description": "Passwords should be set as complex and lengthy and users should not use same passwords for all the applications/systems/devices.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_2",
+          "Service": "entra"
+        }
+      ],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_trusted_named_locations_exists",
+        "sqlserver_azuread_administrator_enabled",
+        "postgresql_flexible_server_entra_id_authentication_enabled",
+        "cosmosdb_account_use_aad_and_rbac"
+      ]
+    },
+    {
+      "Id": "annex_i_7_3",
+      "Name": "Annex I (7.3)",
+      "Description": "Remote Desktop Protocol (RDP) which allows others to access the computer remotely over a network or over the internet should be always disabled and should be enabled only with the approval of the authorised officer of the UCB. Logs for such remote access shall be enabled and monitored for suspicious activities.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_3",
+          "Service": "network"
+        }
+      ],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "vm_jit_access_enabled",
+        "network_bastion_host_exists",
+        "vm_linux_enforce_ssh_authentication"
+      ]
+    },
+    {
+      "Id": "annex_i_7_4",
+      "Name": "Annex I (7.4)",
+      "Description": "Implement appropriate (e.g. centralised) systems and controls to allow, manage, log and monitor privileged/super user/administrative access to critical systems (servers/databases, applications, network devices etc.)",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_4",
+          "Service": "monitor"
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_delete_nsg",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_service_health_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "keyvault_logging_enabled",
+        "sqlserver_auditing_enabled",
+        "sqlserver_auditing_retention_90_days",
+        "app_http_logs_enabled",
+        "app_function_application_insights_enabled",
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_wdatp_is_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_12",
+      "Name": "Annex I (12)",
+      "Description": "Take periodic back up of the important data and store this data 'off line' (i.e., transferring important files to a storage device that can be detached from a computer/system after copying all the files).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_12",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period",
+        "storage_ensure_file_shares_soft_delete_is_enabled",
+        "storage_blob_versioning_is_enabled",
+        "storage_ensure_soft_delete_is_enabled",
+        "storage_geo_redundant_enabled",
+        "keyvault_recoverable",
+        "sqlserver_vulnerability_assessment_enabled",
+        "sqlserver_va_periodic_recurring_scans_enabled"
+      ]
+    }
+  ]
+}

@@ -13,7 +13,6 @@ import {
 
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
-import { CHART_COLORS } from "./shared/constants";
 import { getSeverityColorByRiskScore } from "./shared/utils";
 import type { ScatterDataPoint } from "./types";
 
@@ -27,12 +26,18 @@ interface ScatterPlotProps {
 }
 
 const PROVIDER_COLORS = {
-  AWS: "var(--chart-provider-aws)",
-  Azure: "var(--chart-provider-azure)",
-  Google: "var(--chart-provider-google)",
+  AWS: "var(--color-bg-data-aws)",
+  Azure: "var(--color-bg-data-azure)",
+  Google: "var(--color-bg-data-gcp)",
+  Default: "var(--color-text-neutral-tertiary)",
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface ScatterTooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload: ScatterDataPoint }>;
+}
+
+const CustomTooltip = ({ active, payload }: ScatterTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     const severityColor = getSeverityColorByRiskScore(data.x);
@@ -41,19 +46,19 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div
         className="rounded-lg border p-3 shadow-lg"
         style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
+          borderColor: "var(--color-border-neutral-tertiary)",
+          backgroundColor: "var(--color-bg-neutral-secondary)",
         }}
       >
         <p
           className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
+          style={{ color: "var(--color-text-neutral-primary)" }}
         >
           {data.name}
         </p>
         <p
           className="mt-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
+          style={{ color: "var(--color-text-neutral-secondary)" }}
         >
           <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>
@@ -66,19 +71,27 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+interface ScatterDotProps {
+  cx: number;
+  cy: number;
+  payload: ScatterDataPoint;
+  selectedPoint?: ScatterDataPoint | null;
+  onSelectPoint?: (point: ScatterDataPoint) => void;
+}
+
 const CustomScatterDot = ({
   cx,
   cy,
   payload,
   selectedPoint,
   onSelectPoint,
-}: any) => {
+}: ScatterDotProps) => {
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
   const fill = isSelected
     ? "#86DA26"
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
-      CHART_COLORS.defaultColor;
+      "var(--color-text-neutral-tertiary)";
 
   return (
     <circle
@@ -95,8 +108,17 @@ const CustomScatterDot = ({
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const items = payload.map((entry: any) => ({
+interface LegendPayloadItem {
+  value: string;
+  color: string;
+}
+
+interface LegendProps {
+  payload?: LegendPayloadItem[];
+}
+
+const CustomLegend = ({ payload }: LegendProps) => {
+  const items = (payload || []).map((entry) => ({
     label: entry.value,
     color: entry.color,
   }));
@@ -136,19 +158,22 @@ export function ScatterPlot({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
+      <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="var(--color-border-neutral-tertiary)"
+        />
         <XAxis
           type="number"
           dataKey="x"
           name={xLabel}
           label={{
             value: xLabel,
-            position: "insideBottom",
-            offset: -10,
-            fill: CHART_COLORS.textSecondary,
+            position: "bottom",
+            offset: 10,
+            fill: "var(--color-text-neutral-secondary)",
           }}
-          tick={{ fill: CHART_COLORS.textSecondary }}
+          tick={{ fill: "var(--color-text-neutral-secondary)" }}
           domain={[0, 10]}
         />
         <YAxis
@@ -158,10 +183,11 @@ export function ScatterPlot({
           label={{
             value: yLabel,
             angle: -90,
-            position: "insideLeft",
-            fill: CHART_COLORS.textSecondary,
+            position: "left",
+            offset: 10,
+            fill: "var(--color-text-neutral-secondary)",
           }}
-          tick={{ fill: CHART_COLORS.textSecondary }}
+          tick={{ fill: "var(--color-text-neutral-secondary)" }}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend content={<CustomLegend />} />
@@ -172,15 +198,18 @@ export function ScatterPlot({
             data={points}
             fill={
               PROVIDER_COLORS[provider as keyof typeof PROVIDER_COLORS] ||
-              CHART_COLORS.defaultColor
+              PROVIDER_COLORS.Default
             }
-            shape={(props: any) => (
-              <CustomScatterDot
-                {...props}
-                selectedPoint={selectedPoint}
-                onSelectPoint={handlePointClick}
-              />
-            )}
+            shape={(props: unknown) => {
+              const dotProps = props as ScatterDotProps;
+              return (
+                <CustomScatterDot
+                  {...dotProps}
+                  selectedPoint={selectedPoint}
+                  onSelectPoint={handlePointClick}
+                />
+              );
+            }}
           />
         ))}
       </ScatterChart>

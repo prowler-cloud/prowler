@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "Check if S3 buckets have object versioning enabled",
   "Risk": "With versioning, you can easily recover from both unintended user actions and application failures.",
   "RelatedUrl": "",
@@ -22,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frequently, and backup may not be enough to capture all the changes.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
     }
   },
   "Categories": [],

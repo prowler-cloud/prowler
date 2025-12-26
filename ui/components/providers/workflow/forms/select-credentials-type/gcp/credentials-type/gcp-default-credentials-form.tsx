@@ -27,7 +27,6 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
       <CustomInput
         control={control}
@@ -38,7 +37,6 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
       />
       <CustomInput
         control={control}
@@ -49,7 +47,6 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Refresh Token"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.refresh_token}
       />
     </>
   );

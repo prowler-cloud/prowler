@@ -25,9 +25,6 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
         placeholder="Enter your GitHub App ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_ID]
-        }
       />
       <CustomTextarea
         control={control}
@@ -38,9 +35,6 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
         variant="bordered"
         isRequired
         minRows={4}
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_KEY]
-        }
       />
     </>
   );

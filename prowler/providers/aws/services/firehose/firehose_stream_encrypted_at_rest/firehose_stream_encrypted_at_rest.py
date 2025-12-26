@@ -26,23 +26,27 @@ class firehose_stream_encrypted_at_rest(Check):
         for stream in firehose_client.delivery_streams.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=stream)
             report.status = "FAIL"
-            report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled or the source stream is not encrypted."
+            report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled."
 
-            # Encrypted Kinesis Stream source
-            if stream.delivery_stream_type == "KinesisStreamAsSource":
-                source_stream = kinesis_client.streams.get(
-                    stream.source.kinesis_stream.kinesis_stream_arn
-                )
+            if stream.kms_encryption == EncryptionStatus.ENABLED:
+                report.status = "PASS"
+                report.status_extended = f"Firehose Stream {stream.name} does have at rest encryption enabled."
+
+            elif stream.delivery_stream_type == "KinesisStreamAsSource":
+                source_stream_arn = stream.source.kinesis_stream.kinesis_stream_arn
+                source_stream = kinesis_client.streams.get(source_stream_arn, None)
                 if source_stream:
-                    if source_stream.encrypted_at_rest != EncryptionType.NONE:
-                        report.status = "PASS"
-                        report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled but the source stream {source_stream.name} has at rest encryption enabled."
+                    if source_stream.encrypted_at_rest == EncryptionType.KMS:
+                        report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled even though source stream {source_stream.name} has at rest encryption enabled."
+                    else:
+                        report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled and the source stream {source_stream.name} is not encrypted at rest."
+                else:
+                    report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled and the referenced source stream could not be found."
 
-            # MSK source - check if the MSK cluster has encryption at rest with CMK
             elif stream.delivery_stream_type == "MSKAsSource":
                 msk_cluster_arn = stream.source.msk.msk_cluster_arn
+                msk_cluster = None
                 if msk_cluster_arn:
-                    msk_cluster = None
                     for cluster in kafka_client.clusters.values():
                         if cluster.arn == msk_cluster_arn:
                             msk_cluster = cluster
@@ -58,11 +62,6 @@ class firehose_stream_encrypted_at_rest(Check):
                             report.status_extended = f"Firehose Stream {stream.name} uses MSK provisioned source which always has encryption at rest enabled by AWS (either with AWS managed keys or CMK)."
                     else:
                         report.status_extended = f"Firehose Stream {stream.name} uses MSK source which always has encryption at rest enabled by AWS."
-
-            # Check if the stream has encryption enabled directly (DirectPut or DatabaseAsSource cases)
-            elif stream.kms_encryption == EncryptionStatus.ENABLED:
-                report.status = "PASS"
-                report.status_extended = f"Firehose Stream {stream.name} does have at rest encryption enabled."
 
             findings.append(report)
 

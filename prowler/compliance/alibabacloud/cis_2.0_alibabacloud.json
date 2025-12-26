@@ -1,0 +1,1833 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Alibaba Cloud Foundations Benchmark v2.0.0",
+  "Version": "2.0",
+  "Provider": "alibabacloud",
+  "Description": "The CIS Alibaba Cloud Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Alibaba Cloud services with an emphasis on foundational, testable, and architecture agnostic settings.",
+  "Requirements": [
+    {
+      "Id": "1.1",
+      "Description": "Avoid the use of the root account",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "An Alibaba Cloud account can be viewed as a “root” account. The root account has full control permissions to all cloud products and resources under such account. It is highly recommended that the use of this account should be avoided.",
+          "RationaleStatement": "The root account is the owner of the resources under an Alibaba Cloud account. This account pays for and has full control permissions to resources. Minimizing the use of such account and adopting the principle of least privilege for access management can reduce the risk of accidental or unauthorized changes and disclosure of highly privileged credentials.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "All users should operate resources at the RAM user level and follow the principle of least privilege. Follow the remediation instructions of the Ensure RAM policies are attached only to groups or roles recommendation. For more information about RAM user, see terms of RAM user.",
+          "AuditProcedure": "You can enable ActionTrail for your account, and create a trail to deliver all action logs to Alibaba Cloud Log Service. Then, you can enable an alarm to discover the usage of root account and receive notifications on those conditions. Implement the Ensure a log metric filter and alarm exist for usage of root account recommendation in the Logging and Monitoring section to receive notifications of root account usage. Note: There are a few conditions under which the use of the root account is required, such as requesting account security report or configuring multi-factor authentication (MFA) for the root account.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "1.2",
+      "Description": "Ensure no root account access key exists",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Access keys provide programmatic access to a given Alibaba Cloud account. It is recommended that all access keys associated with the root account be removed.",
+          "RationaleStatement": "An Alibaba Cloud account can be viewed as a “root” account. The root account has the highest privilege of an Alibaba Cloud account. Removing access keys associated with the root account limits the opportunity that the account can be compromised.",
+          "ImpactStatement": "Programs that already use root account access keys may stop working if you disable or delete the access keys without replacing them with other RAM user access keys in your program.",
+          "RemediationProcedure": "Perform the following to delete or disable active root access keys: Using the management console 1. Logon to RAM console by using your Alibaba Cloud account (root account). 2. Move the pointer over the account icon in the upper-right corner and click AccessKey. 3. Click Continue to manage AccessKey. 4. On the Security Management page, find the target access keys and perform the following operations: o Click Disable to disable the target access keys temporarily. o Click Delete to delete the target access keys permanently.",
+          "AuditProcedure": "Perform the following to determine if the root account has access keys: Using the management console: 1. Logon to Resource Access Management (RAM) console https://ram.console.aliyun.com/overview by using your Alibaba Cloud account (root account). 2. In the left-side navigation pane, click Overview. 3. In the Security Check section, make sure that No AK for Root Account is marked as Finished.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+          "DefaultValue": "By default, no access key is created for the root account."
+        }
+      ],
+      "Checks": [
+        "ram_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "1.3",
+      "Description": "Ensure MFA is enabled for the root account",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "With MFA enabled, anytime the “root” account logs on to Alibaba Cloud, it will be prompted for username and password followed by an authentication code from the virtual MFA device. It is recommended that MFA be enabled for the “root” user.",
+          "RationaleStatement": "It is important to prevent “root” account from being compromised. Enabling MFA requires the “root” account holder to provide additional information on top of username and password. When MFA is enabled, an attacker faces at least two different authentication mechanisms. The additional security makes it harder for an attacker to gain access to protected resources or data.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to enable MFA for “root” account Using the management console: 1. Logon to RAM console by using your Alibaba Cloud account (root account). 2. Move the pointer over the account icon in the upper-right corner and click Security Settings. 3. In the Account Protection section, Click Edit. 4. On the displayed page, select a scenario and select TOTP. 5. Click Submit. 6. On the displayed page, click Verify now. 7. Enter the verification code and click Submit. 8. Download and install a mobile application that supports TOTP MFA, such as Google Authenticator, on your mobile phone. Note: If you already installed Google Authenticator, click Next. o For iOS: Install Google Authenticator from the App Store. o For Android: Install Google Authenticator from the Google Play Store. Note: You need to install a QR code scanner from the Google Play Store for Google Authenticator to identify QR codes. 9. After you install Google Authenticator, go back to the Identity Verification page and click Next. 10. Open Google Authenticator and tap BEGIN SETUP. o Tap Scan barcode and scan the QR code on the Identity Verification page. o Tap Manual entry, enter the username and key, and then tap the check mark (√) icon. Note: You can obtain the username and key by moving the pointer over Scan failed on the Identity Verification page. 11. On the Identity Verification page, enter the 6-digit verification code obtained from Google Authenticator and click Next. Note: The verification code is refreshed at an interval of 30 seconds.",
+          "AuditProcedure": "Perform the following to determine if an MFA device is enabled for the “root” account: Using the management console: 1. Logon to RAM console by using your Alibaba Cloud account (root account). 2. In the left-side navigation pane, click Overview. 3. In the Security Check section, make sure that Enable MFA for Root Account is marked as Finished.",
+          "AdditionalInformation": "",
+          "References": "http://tools.ietf.org/html/rfc6238 https://www.alibabacloud.com/help/doc-detail/28635.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "1.4",
+      "Description": "Ensure that multi-factor authentication is enabled for all RAM users that have a console password",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Multi-Factor Authentication (MFA) adds an extra layer of protection on top of a username and password. With MFA enabled, when a user logs on to Alibaba Cloud, they will be prompted for their user name and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all users that have a console password.",
+          "RationaleStatement": "MFA requires users to verify their identities by entering two authentication factors. When MFA is enabled, an attacker faces at least two different authentication mechanisms. The additional security makes it harder for an attacker to gain access to protected resources or data.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to determine if an MFA device is enabled for all RAM users having a console password: Using the management console: 1. Logon to RAM console. 2. Choose Identities > Users. 3. In the User Logon Name/Display Name column, click the username of each RAM user. 4. In the Console Logon Management section, click Modify Logon Settings. 5. Select Enabled for Console Password Logon, and Required for Enable MFA. Note: After you select Enabled for Console Password Logon, and Required for Enable MFA when modifying the logon settings of a RAM user, the user can go to step 7 when logging on to the RAM console for the first time. 6. In the MFA Device section, click Enable the device. 7. Download and install Google Authenticator on your mobile phone. o For iOS: Install Google Authenticator from the App Store. o For Android: Install Google Authenticator from the Google Play Store. Note: You need to install a QR code scanner from the Google Play Store for Google Authenticator to identify QR codes. 8. Open Google Authenticator and tap BEGIN SETUP. o Tap Scan barcode and scan the QR code displayed on the Scan the code tab in the console. o Tap Manual entry, enter the username and key, and then tap the check mark (√) icon. Note: You can obtain the username and key from the Retrieval manually enter information tab in the console. 9. On the Scan the code tab, enter the two consecutive security codes obtained from Google Authenticator and click Enable. Note: The security code is refreshed at an interval of 30 seconds. For more information, see Enable an MFA device for a RAM user.",
+          "AuditProcedure": "Perform the following to determine if an MFA device is enabled for all RAM users having a console password: Using the management console: 1. Logon to RAM console. 2. Choose Identities > Users. 3. In the User Logon Name/Display Name column, click the username of each RAM user. 4. In the Console Logon Management section, if Console Access is set to Enabled, make sure that Required to Enable MFA is set to Yes. Using the CLI Run the following command to determine if an MFA device is enabled for a RAM user: aliyun ram GetUserMFAInfo --UserName <ram_user> Note: If an error is reported, no MFA device is enabled for the RAM user.",
+          "AdditionalInformation": "",
+          "References": "http://tools.ietf.org/html/rfc6238 https://www.alibabacloud.com/help/doc-detail/93720.htm https://www.alibabacloud.com/help/doc-detail/119555.htm https://www.alibabacloud.com/help/en/ram/user-guide/bind-an-mfa-device-to-a-",
+          "DefaultValue": "MFA is enabled by default for RAM users"
+        }
+      ],
+      "Checks": [
+        "ram_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "1.5",
+      "Description": "Ensure users not logged on for 90 days or longer are disabled for console logon",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Alibaba Cloud RAM users can logon to Alibaba Cloud console by using their user name and password. If a user has not logged on for 90 days or longer, it is recommended to disable the console access of the user.",
+          "RationaleStatement": "Disabling users from having unnecessary logon privileges will reduce the opportunity that an abandoned user or a user with compromised password to be used.",
+          "ImpactStatement": "RAM users who still need to log on to the management console or other Alibaba Cloud sites may encounter logon failure.",
+          "RemediationProcedure": "Perform the following to disable console logon for a user: Using the management console: 1. Logon to RAM console. 2. Choose Identities > Users. 3. In the User Logon Name/Display Name column, click the username of the target RAM user. 4. In the Console Logon Management section, click Modify Logon Settings. 5. In the Console Password Logon section, select Disabled. 6. Click OK. Using the CLI aliyun ram DeleteLoginProfile --UserName <ram_user>",
+          "AuditProcedure": "Perform the following to determine if a user has not logged on for 90 days or longer: Using the management console: 1. Logon RAM console. 2. Choose Identities > Users. 3. In the User Logon Name/Display Name column, click the username of each RAM user. 4. In the Console Logon Management section, check the latest logon time of each user in the Last Console Logon field. 5. Make sure that each user does not have a last console logon time dated earlier than 90 days ago.",
+          "AdditionalInformation": "",
+          "References": "",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": [
+        "ram_user_console_access_unused"
+      ]
+    },
+    {
+      "Id": "1.6",
+      "Description": "Ensure access keys are rotated every 90 days or less",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "An access key consists of an access key ID and a secret, which are used to sign programmatic requests that you make to Alibaba Cloud. RAM users need their own access keys to make programmatic calls to Alibaba Cloud from the Alibaba Cloud SDKs, CLIs, or direct HTTP/HTTPS calls using the APIs for individual Alibaba Cloud services. It is recommended that all access keys be regularly rotated.",
+          "RationaleStatement": "Access keys might be compromised by leaving them in codes, configuration files, on premise and cloud storages, and then stolen by attackers. Rotating access keys will reduce the window of opportunity that a compromised access key to be used.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to disable and delete access keys: Using the management console: 1. Logon to RAM console. 2. In the left-side navigation pane, click Users under Identities. 3. In the User Logon Name/Display Name column, click the username of the target RAM user. 4. In the User AccessKeys section, click Create AccessKey. 5. Click OK to create a new AccessKy pair for rotation. 6. Update all applications and systems to use the new AccessKey pair. 7. Disable the original AccessKey pair by following below steps: a) Log on to RAM console. b) In the left-side navigation pane, click Users under Identities. c) On the Users page, click username of the target RAM user in the User Logon Name/Display Name column. d) In the User AccessKeys section, find the target AccessKey pair and click Disable. 8. Confirm that your applications and systems are working. 9. Delete the original AccessKey pair by following below steps: a) Log on to RAM console. b) In the left-side navigation pane, click Users under Identities. c) In the User Logon Name/Display Name column, click the username of the target RAM user. d) In the User AccessKeys section, find the target access keys and Click Delete. e) In the dialog box that appears, select I am aware of the risk and confirm the deletion. 10. Click OK. Using the CLI: • Run the following command to delete an access key: aliyun ram DeleteAccessKey --UserAccessKeyId <access_key_ID> --UserName <ram_user > • Run the following command to disable an active access key: aliyun ram UpdateAccessKey --UserAccessKeyId <access_key_ID> --Status Inactive --UserName <ram_user> • Run the following command to delete an access key: aliyun ram DeleteAccessKey --UserAccessKeyId <access_key_ID> --UserName <ram_user > Your programs that use access keys may stop working if you rotate the access keys without replacing them in your program prior to the rotation.",
+          "AuditProcedure": "Perform the following to determine if access keys are rotated within 90 days: Using the management console: 1. Logon to RAM console. 2. Choose Identities > Groups. 3. In the User Logon Name/Display Name column, click the username of each RAM user. 4. In the User AccessKeys section, check the date and time that an access key was created. 5. Make sure that no user has an access key created earlier than 90 days ago. Using the CLI: Run the following command to obtain a list of access keys of a RAM user, and then determine if the access keys are rotated within 90 days according to the CreateDate parameter:  aliyun ram ListAccessKeys --UserName <ram_user> Note: In the output, if the AccessKey parameter is empty, no access key exists.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116806.htm https://www.alibabacloud.com/help/doc-detail/116808.htm https://www.alibabacloud.com/help/doc-detail/152682.htm https://www.alibabacloud.com/help/doc-detail/116401.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": [
+        "ram_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "1.7",
+      "Description": "Ensure RAM password policy requires at least one uppercase letter",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require at least one uppercase letter.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Charset section, select Upper case. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --RequireUppercaseCharacters true",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Charset contains Upper case. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the RequireUppercaseCharacters parameter is set to true.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not enforce any charset in a password."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "1.8",
+      "Description": "Ensure RAM password policy requires at least one lowercase letter",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require at least one lowercase letter.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Charset section, select Upper case. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --RequireLowercaseCharacters true",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Charset contains Lower case. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the RequireLowercaseCharacters parameter is set to true.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not enforce any Charset in a password."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_lowercase"
+      ]
+    },
+    {
+      "Id": "1.9",
+      "Description": "Ensure RAM password policy require at least one symbol",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require at least one symbol.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Charset section, select Symbol. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --RequireSymbols true",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Charset contains Symbol. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the RequireSymbols parameter is set to true.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not enforce any Charset in a password."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_symbol"
+      ]
+    },
+    {
+      "Id": "1.10",
+      "Description": "Ensure RAM password policy require at least one number",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require at least one number.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Charset section, select Number. 5. Click OK. Using the CLI aliyun ram SetPasswordPolicy --RequireNumbers true",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Charset contains Number. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the RequireNumbers parameter is set to true.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not enforce any charset in a password."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "1.11",
+      "Description": "Ensure RAM password policy requires minimum length of 14 or greater",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require a minimum of 14 or greater characters for any password.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Length section, enter 14 or a greater number. 5. Click OK. Using the CLI aliyun ram SetPasswordPolicy --MinimumPasswordLength 14",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Length is a value of 14 to 32. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the MinimumPasswordLength parameter is set to 14 or a greater number.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy requires a minimum of 8 characters for a password."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_minimum_length"
+      ]
+    },
+    {
+      "Id": "1.12",
+      "Description": "Ensure RAM password policy prevents password reuse",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "It is recommended that the password policy prevent the reuse of passwords.",
+          "RationaleStatement": "Preventing password reuse increases account resiliency against brute force logon attempt.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click Modify. 4. In the Do Not repeat History section field, enter '5'. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --PasswordReusePrevention 5",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Do Not Repeat History is set to 5. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the PasswordReusePrevention parameter is set to 5.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not prevent password reuse."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_password_reuse_prevention"
+      ]
+    },
+    {
+      "Id": "1.13",
+      "Description": "Ensure RAM password policy expires passwords in 365 days or greater",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can require passwords to be expired after a given number of days. It is recommended that the password policy expire passwords after 365 days or greater.",
+          "RationaleStatement": "To frequent password changes are more harmful than beneficial. They offer no containment benefits and enforce bad habits—since they encourage users to choose variants of older passwords. In an effort to scale back, the CIS now recommends an annual password reset. Users inevitably share credentials between accounts, and this measure causes minimal burden. This compliments other industry best practices that call for password to be changed only when there's a confirmed or suspected breach.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Setting. 3. In the Password section, click Modify. 4. check the box under Max Age, enter 365 or a greater number up to 1095. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --MaxPasswordAge 365",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Max Age is either disabled or greater than 365. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the MaxPasswordAge parameter is set to <365> or a greater number.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not define max age."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_max_password_age"
+      ]
+    },
+    {
+      "Id": "1.14",
+      "Description": "Ensure RAM password policy temporarily blocks logon after 5 incorrect logon attempts within an hour",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can temporarily block logon after several incorrect logon attempts within an hour. It is recommended that the password policy is set to temporarily block logon after 5 incorrect logon attempts within an hour.",
+          "RationaleStatement": "Temporarily blocking logon for incorrect password input increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to set the password policy as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, click MOdify. 4. In the Max Attempts field, Check the box next to Enable and enter 5 in the field. 5. Click OK. Using the CLI: aliyun ram SetPasswordPolicy --MaxLoginAttemps 5",
+          "AuditProcedure": "Perform the following to ensure the password policy is configured as expected: Using the management console: 1. Logon to RAM console. 2. Choose Settings. 3. In the Password section, make sure that the value of Max Attempts is 5. Using the CLI: aliyun ram GetPasswordPolicy In the output, make sure that the MaxLoginAttemps parameter is set to <5>.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm",
+          "DefaultValue": "The default password policy does not define Max Attempts."
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_max_login_attempts"
+      ]
+    },
+    {
+      "Id": "1.15",
+      "Description": "Ensure RAM policies that allow full *:* administrative privileges are not created",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM policies represent permissions that can be granted to users, groups, or roles. It is recommended and considered a standard security advice to grant least privilege—that is, granting only the permissions required to perform tasks. Determine what users need to do and then create policies with permissions only fits those tasks, instead of allowing full administrative privileges.",
+          "RationaleStatement": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that exceed the necessity and then trying to tighten them later. Providing full administrative privileges exposes your resources on Alibaba Cloud to potentially unwanted actions. RAM policies that have a statement with Effect: Allow, Action: *, and Resource: * should be prohibited.",
+          "ImpactStatement": "If you edit the policy document, or remove all references from the policy, the identities using this policy may encounter access denied errors for the actions and resources that are not covered by their current permissions.",
+          "RemediationProcedure": "Perform the following to detach the policy that has full administrative privileges and remove them: Using the management console: 1. Logon to RAM console. 2. Choose Permissions > Policies. 3. From the Policy Type drop-down list, select Custom Policy. 4. In the Policy Name column, click the name of the target policy. 5. In the Policy Document section, check whether the policy has a statement that includes Effect: Allow, Action: , and Resource: . o If it does not, skip this section. o If it does, edit the policy to remove such statement or remove the policy from any RAM users, user groups, or roles that have this policy attached. - To edit the policy: a. On the Policy Document tab, click Modify Policy Document. b. Remove the entire “Statement” element which contains the full : administrative privilege, or modify it to a smaller permission. - To remove all references from the policy: a. Go to the References tab, review if there is any reference of the custom policy. b. For each reference, click Revoke Permission. 6. Click OK. Using the CLI: 1. Run the following command to list all RAM users, groups, and roles to which the specified policy (i.e. policy with .) is attached: aliyun ram ListEntitiesForPolicy --PolicyName <policy_name> --PolicyType Custom 2. Run the following command to detach the policy from all RAM users: aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType Custom --UserName <ram_user > 3. Run the following command to detach the policy from all RAM user groups: aliyun ram DetachPolicyFromGroup --PolicyName <policy_name> --PolicyType Custom --GroupName <ram_group> 4. Run the following command to detach the policy from all RAM roles: aliyun ram DetachPolicyFromRole --PolicyName <policy_name> --PolicyType Custom --RoleName <ram_role>",
+          "AuditProcedure": "Perform the following to check what permissions are allowed inside a policy: Using the management console: 1. Logon to RAM console. 2. Choose Permissions > Policies. 3. From the Policy Type drop-down list, select Custom Policy. 4. In the Policy Name column, click the name of each policy. 5. In the Policy Document section, make sure that no policy has a statement that includes Effect: Allow, Action: *, and Resource: *, or any policy with such statement is not attached to any RAM identities (including RAM user, group, or role). Using the CLI: 1. Run the following command to obtain a list of policies aliyun ram ListPolicies --PolicyType Custom 2. For each policy returned, run the following command to determine if any policies allow full administrative privileges: aliyun ram GetPolicy --PolicyName <policy_name> --PolicyType Custom Note: In the preceding command, policy_name is the value of the PolicyName parameter in each policy the ListPolicies command returned. In the output, check the value of PolicyDocument under DefaultPolicyVersion to make sure that no policy has a statement that includes Effect: Allow, Action: *, and Resource: *, or make sure that the value of AttachmentCount under Policy is set to 0 for such policies.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/93733.htm https://www.alibabacloud.com/help/doc-detail/116803.htm https://www.alibabacloud.com/help/doc-detail/116818.htm",
+          "DefaultValue": "By default, no custom policy is created."
+        }
+      ],
+      "Checks": [
+        "ram_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "1.16",
+      "Description": "Ensure RAM policies are attached only to groups or roles",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "By default, RAM users, groups, and roles have no access to Alibaba Cloud resources. RAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended that RAM policies be applied directly to groups and roles but not users.",
+          "RationaleStatement": "Assigning privileges at the group or role level reduces the complexity of access management as the number of users grows. Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.",
+          "ImpactStatement": "There may be cases that a user needs to have permissions that cannot be covered by the groups it joins or roles it can assume. It may still be needed to attach specific policies to RAM users for certain operation that cannot be grouped with other permission under role or group.",
+          "RemediationProcedure": "Perform the following to create a RAM user group and assign a policy to it: Using the management console: 1. Log on to RAM console. 2. Choose Identities > Users. 3. Click Create Group, and enter the group name, display name, and description. 4. Click OK. 5. In the Group Name/Display Name column, find the target RAM user group and click Add Permissions. 6. In the Select Policy section, select the target policy or policies and click OK. Using the CLI: 1. Run the following command to create a RAM user group: aliyun ram CreateGroup –GroupName <ram_user_group> 2. Run the following command to attach a policy to the group: aliyun ram AttachPolicyToGroup --GroupName <ram_user_group> --PolicyName <policy_name> --PolicyType <System|Custom> Perform the following to add a user to a given group: Using the management console: 1. Log on to RAM console. 2. Choose Identities > Groups. 3. In the Group Name/Display Name column, find the target RAM user group and click Add Group Members. 4. In the User section, select the target RAM user and click OK. Using the CLI: Run the following command to add a RAM user to a user group: aliyun ram AddUserToGroup --GroupName <ram_user_group> --UserName <ram_user > Perform the following to remove a direct association between a user and policy: Using the management console: 1. Logon to RAM console. 2. Choose Permissions > Grants. 3. In the Principal column, find the target RAM user and click Revoke Permission. 4. Click OK. Using the CLI: Run the following command to remove a policy from a RAM user: aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType <System|Custom> --UserName <ram_user >",
+          "AuditProcedure": "Perform the following to determine if policies are attached directly to users: Using the management console: 1. Logon to RAM console. 2. Choose Identities > Users. 3. In the User Logon Name/Display Name column, click the username of each RAM user. 4. Click the Permissions tab. 5. On the Individual tab, make sure that no policy exists. Using the CLI: 1. Run the following command to obtain a list of RAM users: aliyun ram ListUsers  2. For each user returned, run the following command to determine if any policies are attached to the user: aliyun ram ListPoliciesForUser --UserName <ram_user> If any polices are returned, the user has a direct policy attached.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116809.htm https://www.alibabacloud.com/help/doc-detail/116815.htm https://www.alibabacloud.com/help/doc-detail/116147.htm https://www.alibabacloud.com/help/doc-detail/116820.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": [
+        "ram_policy_attached_only_to_group_or_roles"
+      ]
+    },
+    {
+      "Id": "2.1",
+      "Description": "Ensure that ActionTrail are configured to export copies of all Log entries",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "ActionTrail is a web service that records API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the Alibaba Cloud service. ActionTrail provides a history of API calls for an account, including API calls made via the Management Console, SDKs, command line tools.",
+          "RationaleStatement": "The API call history produced by ActionTrail enables security analysis, resource change tracking, and compliance auditing. Moreover, ensuring that a multi-regions trail exists will ensure that any unexpected activities occurring in otherwise unused regions are detected. Global Service Logging should be enabled by default to capture recording of events generated on Alibaba Cloud global services for a multi-regions trail, therefore, ensuring the recording of management operations that are performed on all resources in an Alibaba Cloud account.",
+          "ImpactStatement": "OSS lifecycle features can be used to manage the accumulation and management of logs over time. See the following resource for more information on these features: http://help.aliyun.com/document_detail/31863.html",
+          "RemediationProcedure": "Perform the following to enable global (Multi-region) ActionTrail logging: Using the management Console: 1. Logon to ActionTrail Console. 2. Click on Trails on the left navigation pane. 3. Click Add new trail. a. Enter a trail name in the Trail name box. b. Set Yes for Apply Trail to All Regions. c. Specify an OSS bucket name in the OSS bucket box. d. Specify an SLS project name in the SLS project box. e. Click Create. Using CLI: aliyun actiontrail CreateTrail --Name <trail_name> --OssBucketName <oss_bucket_for_actiontrail> --RoleName aliyunactiontraildefaultrole --SlsProjectArn <sls_project_arn_for_actiontrail> --SlsWriteRoleArn <sls_role_arn_for_actiontrail> --EventRW <api_type_for_actiontrail>  aliyun actiontrail UpdateTrail --Name <trail_name> --OssBucketName <oss_bucket_for_actiontrail> --RoleName aliyunactiontraildefaultrole --SlsProjectArn <sls_project_arn_for_actiontrail> --SlsWriteRoleArn <sls_role_arn_for_actiontrail> --EventRW <api_type_for_actiontrail>",
+          "AuditProcedure": "Perform the following to determine if ActionTrail is enabled for all regions: Using the management Console: 1. Logon to ActionTrail Console. 2. Click on Trails on the left navigation pane, you will be presented with a list of trails across all regions. 3. Ensure at least one Trail has All specified in the Region column. 4. Click on a trail via the link in the Name column. 5. Ensure Logging is set to Enable to export log copies to OSS for storage. 6. Ensure Yes is selected for Apply Trail to All Regions. Using CLI: Ensure Trail is set to enable and Trail Region is set to All aliyun actiontrail DescribeTrails",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/28829.htm",
+          "DefaultValue": "By default, there are no trails configured. Once the trail is enabled, it applies to all regions by default."
+        }
+      ],
+      "Checks": [
+        "actiontrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "2.2",
+      "Description": "Ensure the OSS used to store ActionTrail logs is not publicly accessible",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "ActionTrail logs a record of every API call made in your Alibaba Cloud account. These logs file are stored in an OSS bucket. It is recommended that the access control list (ACL) of the OSS bucket, which ActionTrail logs to, shall prevent public access to the ActionTrail logs.",
+          "RationaleStatement": "Allowing public access to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to remove any public access that has been granted to the bucket via an ACL: Using the Management Console: 1. Logon to OSS Console. 2. Right on the bucket and click Basic Settings. 3. In the Access Control List pane, click the Configure. 4. The Bucket ACL tab shows three kind of grants. Like Private, Public Read, Public Read/Write. 5. Ensure Private be set to the bucket. 6. Click Save to save the ACL.",
+          "AuditProcedure": "Perform the following to determine if any public access is granted to an OSS bucket via an ACL: Using the Management Console: 1. Logon to ActionTrail Console. 2. In the API activity history pane on the left, click Trails. 3. In the Trails pane, note the bucket names in the OSS bucket column. 4. Log on to OSS Console. 5. For each bucket noted in step 3, click on the bucket and click Basic Settings. 6. In the Access Control List pane, click the Configure. 7. The Bucket ACL tab shows three kind of grants, Private Public Read, Public Read/Write. 8. Ensure Private be set to the bucket. Using CLI: 1. Get the name of the OSS bucket that ActionTrail is logging to: aliyuncli actiontrail DescribeTrails 2. Ensure the Bucket ACL is to be set private: ossutil set-acl oss://<bucketName> private -b",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/31954.html",
+          "DefaultValue": "By default, OSS buckets are not publicly accessible."
+        }
+      ],
+      "Checks": [
+        "actiontrail_oss_bucket_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "2.3",
+      "Description": "Ensure audit logs for multiple cloud resources are integrated with Log Service",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Log Service provides functions of log collection and analysis in real time across multiple cloud resources under the authorized resource owners. This enable the large-scale corporate for security governance over all resources owned by multiple accounts by integrating the log from different sources and monitoring. For example, Log Service supports the integration to collect logs from the following sources: • ActionTrail is a cloud service that records API calls made in a given Alibaba Cloud account. • ApsaraDB RDS and DRDS audit records all data manipulation language (DML) and data definition language (DDL) operations through network protocol analysis and only consumes a small amount of CPU resources. The Trial Edition of SQL Explorer retains SQL log data generated within up to one day free of charge. • Object Storage Service (OSS) support recording every changes to its resources including bucket, ACL, replications, and files, as well as file access logs. • The access log feature of SLB can be applied to HTTP- and HTTPS-based Layer 7 load balancing. Access logs can contain about 30 fields such as the time when a request is received, the IP address of the client, processing latency, request URI, backend server (ECS instance) address, and returned status code. As an Internet access point, SLB needs to distribute a large number of access requests. • Alibaba Cloud API Gateway provides API hosting service to facilitate micro- service aggregation, frontend and backend isolation, and system integration. Each API request corresponds to an access record, which contains information such as the IP address of the API caller, requested URL, response latency, returned status code, and number of bytes for each request and response. With the preceding information, you can understand the operating status of your web services. • NAS audit and access log support to record each request to Network File System (NFS) file system including file changes and access, details of the access request, such as the operation type, target object, and response status of the current user. Log Service also provides rich functions such as real-time query and analysis, and dashboard presentation for this part of logs.",
+          "RationaleStatement": "Sending the audit logs to Log Service will facilitate real-time and historic activity logging based on user, API, resource, and IP address, and provides benefits to collect logs under multiple accounts, store logs centrally, establish alarms and notifications for anomalous or sensitivity account activity, and extend the default log retention period to 180 days.",
+          "ImpactStatement": "RDS Audit Log integration requires to enable SQL Explorer feature on RDS side, which may introduce extra charge.",
+          "RemediationProcedure": "Perform the following to ensure the logs are integrated with Log Services: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the appropriate product logging selection, such as Action Trail, RDS SQL Audit Logs, OSS Access Logs, SLB Access Log, NAS Access Log, API Gateway Access log and configure a proper storage period (in days). c. Click Save to save the changes. 4. Go to Multi-Account Configurations > Global Configuration page. a. Modify it to input the other resource owner account ID. b. Click Save to save the changes. 5. Go to Access to Cloud Products > Status Dashboard page to ensure the Status is Green.",
+          "AuditProcedure": "Perform the following to ensure the logs are integrated with Log Services: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail, RDS SQL Audit Logs, OSS Access Logs, SLB Access Log, NAS Access Log, API Gateway Access log are Enabled under the Access to Cloud Products > Global Configuration page. 4. Ensure all resource owners account are tracked under the Multi-Account Configurations > Global Configuration page. 5. Ensure the Status is Green under the Access to Cloud Products > Status Dashboard page.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/84920.htm",
+          "DefaultValue": "Not enabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.4",
+      "Description": "Ensure Log Service is enabled for Container Service for Kubernetes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Log Service shall be connected with Kubernetes clusters of Alibaba Cloud Container Service to collect the audit log for central monitoring and analysis. You can simply enable Log Service when creating a cluster for log collection.",
+          "RationaleStatement": "By enabling Log Service Audit Log function to integrate audit log of Kubernetes, it is possible to capture all events on container to improve the security of serverless cluster. Central log collection and monitoring allows access to all log information on one dashboard which can be useful in security and incident response workflows.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following ensure the Log Service for Kubernetes clusters is enabled: 1. Logon to ACK Console. 2. Click Clusters in the left-side navigation pane and click Create Kubernetes Cluster in the upper-right corner. 3. Scroll to the bottom of the page and select the Using Log Service check box. The log plug-in will be installed in the newly created Kubernetes cluster. 4. When you select the Using Log Service check box, project options are displayed. A project is the unit in Log Service to manage logs. 5. After you complete the configuration, click Create in the upper-right corner. 6. In the displayed dialog box, click OK.",
+          "AuditProcedure": "Perform the following to ensure the Kubernetes logs are integrated with Log Services: 1. Logon to ACK Console. 2. Click Cluster > Clusters in the left-side navigation pane and select a cluster to click Action > Manage. 3. Ensure the Cluster Auditing page is available.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/87540.htm https://www.alibabacloud.com/help/doc-detail/87540.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.5",
+      "Description": "Ensure virtual network flow log service is enabled",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "The flow log can be used to capture the traffic of an Elastic Network Interface (ENI), Virtual Private Cloud (VPC) or Virtual Switch (VSwitch). The flow log of a VPC or VSwitch shall be integrated with Log Service to capture the traffic of all ENIs in the VPC or VSwtich including the ENIs created after the flow log function is enabled. The traffic data captured by flow logs is stored in Log Service for real-time monitoring and analysis. A capture window is about 10 minutes, during which the traffic data is aggregated and then released to flow log record.",
+          "RationaleStatement": "By integrating virtual network flow log to Log Service, the inbound and outbound traffic over the ENI in your VPC is captured for monitoring and analysis which can be useful in monitoring network traffic and access control rules as well as network trouble shooting.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following ensure the virtual network flow log is enabled: 1. Logon to VPC console. 2. In the left-side navigation pane, click FlowLog. 3. Select the region to which the flow log is to be created. 4. On the FlowLog page, click Create FlowLog. 5. On the Create FlowLog page, set the required parameters by following the instruction, and then click OK.",
+          "AuditProcedure": "Perform the following ensure the virtual network flow log is enabled: 1. Logon to VPC console. 2. In the left-side navigation pane, click FlowLog. 3. Select the region to which the target flow log belongs. 4. On the FlowLog page, ensure the target flow log and logstore is configured.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/90628.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.6",
+      "Description": "Ensure Anti-DDoS access and security log service is enabled",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Alibaba Cloud Anti-DDoS Pro supports integration with Log Service for website access log (including HTTP flood attack logs) to enable the real-time analysis and reporting center features. The log collected can be monitored on a central dashboard on Log Service.",
+          "RationaleStatement": "By integrating Anti-DDoS access and security log to Log Service, the website access log and flood attack logs can be collected and monitored to enable real-time query and improve the network security.",
+          "ImpactStatement": "Extra charge will incur.",
+          "RemediationProcedure": "Perform the following ensure the Anti-DDoS access and security log is enabled: 1. Logon to Anti-DDoS Pro Console, and go to the Log > Full Log page. 2. Select the specific website for which you want to enable the Full Log service and click to turn on the Status switch.",
+          "AuditProcedure": "Perform the following ensure the Anti-DDoS access and security log is enabled: 1. Logon to Anti-DDoS Pro Console, and go to the Log > Full Log page. 2. Select the specific website. 3. Ensure the Log Collection is turned on. 4. Ensure the log volume usage indicator is sufficient for log storage.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/85007.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.7",
+      "Description": "Ensure Web Application Firewall access and security log service is enabled",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Log Service collects log entries that record visits to and attacks on websites that are protected by Alibaba Cloud Web Application Firewall (WAF), and supports real-time log query and analysis. The query results are centrally displayed in dashboards.",
+          "RationaleStatement": "The WAF access and security log shall be enabled to enable timely analytical investigation on visits to and attacks on your websites and help security engineers to develop protection strategies.",
+          "ImpactStatement": "Extra charge will incur by enabling the log.",
+          "RemediationProcedure": "Perform the following ensure the Anti-DDoS access and security log is enabled: 1. Logon to WAF Console. 2. Choose App Market > App Management. 3. Select the region where your WAF instance is located. 4. Click Upgrade in Real-time Log Query and Analysis Service. 5. Enable Log Service. 6. Select the log storage period and the log storage size, and click Buy Now. 7. Return to the WAF Console and choose App Market > App Management, and then click Authorize in Real-time Log Query and Analysis Service. 8. Click Agree to authorize WAF to write log entries to your exclusive logstore. 9. Return to the WAF Console and choose App Market > App Management and then, click Configure in Real-time Log Query and Analysis Service. 10. On the Log Service page, select the domain name of your website that is protected by WAF, and turn on the Status switch on the right to enable WAF Log Service. These log entries can be queried and analyzed in real time.",
+          "AuditProcedure": "Perform the following ensure the WAF access and security log is enabled: 1. Logon to WAF Console. 2. Choose App Market > App Management. 3. Click Configure in Real-time Log Query and Analysis Service. 4. On Log Service page, select the specific domain name of your website. 5. Ensure the Status switch on the right is turned on. 6. Ensure the log volume usage indicator is sufficient for log storage.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/95267",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.8",
+      "Description": "Ensure Cloud Firewall access and security log analysis is enabled",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Log Service collects log entries of internet traffic that are protected by Cloud Firewall, and supports real-time log query and analysis. The query results are centrally displayed in dashboards.",
+          "RationaleStatement": "The Cloud Firewall log shall be enabled with the Log Service to collect and store real- time log of both inbound and outbound traffic for timely analysis, reports, alarms and downstream computing interconnection and provides the detailed results displaying centrally on dashboard to monitor and improve network security.",
+          "ImpactStatement": "Extra charge will incur by enabling the log.",
+          "RemediationProcedure": "Perform the following ensure the Cloud Firewall access and security log is enabled: 1. Logon to Cloud Firewall Console. 2. In the left-side navigation pane, select Advanced Features > Log Analysis. 3. Click Active Now on the Log Analysis page. 4. Select your log storage capacity, and then click Pay to complete the payment. 5. Go back to Log Analysis page on Cloud Firewall console. 6. Click the Status on the right side to enable the Log Analysis service.",
+          "AuditProcedure": "Perform the following ensure the Cloud Firewall access and security log is enabled: 1. Logon to Cloud Firewall Console. 2. In the left-side navigation pane, select Advanced Features > Log Analysis. 3. Ensure the Status switch on the right side is enabled. 4. Ensure the log volume usage indicator is not exhausted.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/113184.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.9",
+      "Description": "Ensure Security Center Network, Host and Security log analysis is enabled",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Log Service collects log entries of Security Center for security logs, network logs, and host logs, with 14 subtypes, including 1. Security logs a. Vulnerability logs b. Baseline logs c. Security alerting logs 2. Security logs a. Vulnerability logs b. Baseline logs c. Security alerting logs 3. Network logs a. DNS logs b. Local DNS logs c. Network session logs d. Web logs 4. Server logs a. Process initiation logs b. Network connection logs c. System logon logs d. Brute-force cracking logs e. Process snapshots f. Account snapshots g. Port listening snapshots The Log Service supports real-time log query and analysis over the logs mentioned above. The query results are centrally displayed in dashboards.",
+          "RationaleStatement": "The Security Center log shall be enabled to collect and store real-time security log, network log and server log to better protect your assets in real time.",
+          "ImpactStatement": "Extra charge will incur by enabling the log.",
+          "RemediationProcedure": "Perform the following ensure the Cloud Firewall access and security log is enabled: 1. Logon to Security Center Console. 2. In the left-side navigation pane, select Investigation > Log Analysis to enter the Activate Log Analysis page. 3. Click Active Now on the Activate log Analysis page. 4. On the Purchase page, check Full Log and configure some other settings as needed. 5. Click Purchase Now. 6. In the Activate log Analysis click Activate log Analysis to complete the authorization. 7. In the log type menu, check the log types to enable the log collection.",
+          "AuditProcedure": "Perform the following ensure the Cloud Firewall access and security log is enabled: 1. Logon to Security Center Console. 2. In the left-side navigation pane, select Investigation > Log Analysis to enter the Activate Log Analysis page. 3. In the Activate Log Analysis page, ensure the switch for the specific log type are turned on. 4. Ensure the log volume usage indicator is not exhausted.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/93065.htm https://www.alibabacloud.com/help/doc-detail/93117.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "2.10",
+      "Description": "Ensure log monitoring and alerts are set up for RAM Role changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm should be established for RAM Role creation, deletion and updating activities.",
+          "RationaleStatement": "Alibaba Cloud Resource Access Management (RAM) provides predefined roles that give granular access to specific resources and prevent unwanted access to other resources. Log Service provides ability to create custom monitoring query: monitoring role creation, deletion and updating activities will help in identifying any potential malicious actions at early stage.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for RAM Role Changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query (event.serviceName: ResourceManager or event.serviceName: Ram) and (event.eventName: CreatePolicy or event.eventName: DeletePolicy or event.eventName: CreatePolicyVersion or event.eventName: UpdatePolicyVersion or event.eventName: SetDefaultPolicyVersion or event.eventName: DeletePolicyVersion) | select count(1) as c  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following to ensure the log monitoring and alerts are set up for RAM Role Changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log (event.serviceName: ResourceManager or event.serviceName: Ram) and (event.eventName: CreatePolicy or event.eventName: DeletePolicy or event.eventName: CreatePolicyVersion or event.eventName: UpdatePolicyVersion or event.eventName: SetDefaultPolicyVersion or event.eventName: DeletePolicyVersion) | select count(1) as c",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default"
+        }
+      ],
+      "Checks": [
+        "sls_ram_role_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.11",
+      "Description": "Ensure log monitoring and alerts are set up for Cloud Firewall changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for Cloud Firewall rule changes.",
+          "RationaleStatement": "Monitoring for Create or Update firewall rule events gives insight network access changes and may reduce the time it takes to detect suspicious activity.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up Cloud Firewall Changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.serviceName: Cloudfw and (event.eventName: CreateVpcFirewallControlPolicy or event.eventName: DeleteVpcFirewallControlPolicy or event.eventName: ModifyVpcFirewallControlPolicy) | select count(1) as c  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following to ensure the log monitoring and alerts are set up for Cloud Firewall Changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.serviceName: Cloudfw and (event.eventName: CreateVpcFirewallControlPolicy or event.eventName: DeleteVpcFirewallControlPolicy or event.eventName: ModifyVpcFirewallControlPolicy) | select count(1) as c",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default"
+        }
+      ],
+      "Checks": [
+        "sls_cloud_firewall_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.12",
+      "Description": "Ensure log monitoring and alerts are set up for VPC network route changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for VPC network route changes.",
+          "RationaleStatement": "Routes define the paths network traffic takes from a VM instance to another destinations. The other destination can be inside your VPC network (such as another VM) or outside of it. Every route consists of a destination and a next hop. Traffic whose destination IP is within the destination range is sent to the next hop for delivery. Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for VPC network route changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query (event.serviceName: Ecs or event.serviceName: Vpc) and (event.eventName: CreateRouteEntry or event.eventName: DeleteRouteEntry or event.eventName: ModifyRouteEntry or event.eventName: AssociateRouteTable or event.eventName: UnassociateRouteTable) | select count(1) as c  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for VPC network route changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log (event.serviceName: Ecs or event.serviceName: Vpc) and (event.eventName: CreateRouteEntry or event.eventName: DeleteRouteEntry or event.eventName: ModifyRouteEntry or event.eventName: AssociateRouteTable or event.eventName: UnassociateRouteTable) | select count(1) as c",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_vpc_network_route_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.13",
+      "Description": "Ensure log monitoring and alerts are set up for VPC changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a log search/analysis query and alarm be established for VPC changes.",
+          "RationaleStatement": "Monitoring changes to VPC will help ensure VPC traffic flow is not getting impacted.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for VPC changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query (event.serviceName: Ecs or event.serviceName: Vpc) and (event.eventName: CreateVpc or event.eventName: DeleteVpc or event.eventName: DisableVpcClassicLink or event.eventName: EnableVpcClassicLink or event.eventName: DeletionProtection or event.eventName: AssociateVpcCidrBlock or event.eventName: UnassociateVpcCidrBlock or event.eventName: RevokeInstanceFromCen or event.eventName: CreateVSwitch or event.eventName: DeleteVSwitch or event.eventName: CreateVSwitch) | select count(1) as c  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for VPC changes. 1. Logon to the SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log (event.serviceName: Ecs or event.serviceName: Vpc) and (event.eventName: CreateVpc or event.eventName: DeleteVpc or event.eventName: DisableVpcClassicLink or event.eventName: EnableVpcClassicLink or event.eventName: DeletionProtection or event.eventName: AssociateVpcCidrBlock or event.eventName: UnassociateVpcCidrBlock or event.eventName: RevokeInstanceFromCen or event.eventName: CreateVSwitch or event.eventName: DeleteVSwitch or event.eventName: CreateVSwitch) | select count(1) as c",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_vpc_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.14",
+      "Description": "Ensure log monitoring and alerts are set up for OSS permission changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for OSS Bucket RAM changes.",
+          "RationaleStatement": "Monitoring changes to OSS permissions may reduce time to detect and correct permissions on sensitive OSS bucket and objects inside the bucket.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for OSS permission changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the OSS and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > OSS Log. 6. In the search/analytics console, input below query (operation: PutBucket and request_uri: acl) or operation: PutObjectAcl| select bucket, count (1) as c group by bucket 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for OSS permission changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the OSS are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target oss_log (operation: PutBucket and request_uri: acl) or operation: PutObjectAcl| select bucket, count (1) as c group by bucket",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_oss_permission_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.15",
+      "Description": "Ensure log monitoring and alerts are set up for RDS instance configuration changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for RDS Instance configuration changes.",
+          "RationaleStatement": "Monitoring changes to RDS Instance configuration changes may reduce time to detect and correct misconfigurations done on database server. Below are the few of configurable Options which may impact security posture of a RDS Instance: 1. Enable auto backups and high availability: Misconfiguration may adversely impact Business continuity, Disaster Recovery and High Availability. 2. Authorize networks : Misconfiguration may increase exposure to the untrusted networks.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for RDS instance configuration changes: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.serviceName: rds and (event.eventName: ModifyHASwitchConfig or event.eventName: ModifyDBInstanceHAConfig or event.eventName: SwitchDBInstanceHA or event.eventName: ModifyDBInstanceSpec or event.eventName: MigrateSecurityIPMode or event.eventName: ModifySecurityIps or event.eventName: ModifyDBInstanceSSL or event.eventName: MigrateToOtherZone or event.eventName: UpgradeDBInstanceKernelVersion or event.eventName: UpgradeDBInstanceEngineVersion or event.eventName: ModifyDBInstanceMaintainTime or event.eventName: ModifyDBInstanceAutoUpgradeMinorVersion or event.eventName: AllocateInstancePublicConnection or event.eventName: ModifyDBInstanceConnectionString or event.eventName: ModifyDBInstanceNetworkExpireTime or event.eventName: ReleaseInstancePublicConnection or event.eventName: SwitchDBInstanceNetType or event.eventName: ModifyDBInstanceNetworkType or event.eventName: ModifyDBInstanceSSL or event.eventName: ModifyDTCSecurityIpHostsForSQLServer or event.eventName: ModifySecurityGroupConfiguration or event.eventName: CreateBackup or event.eventName: ModifyBackupPolicy or event.eventName: DeleteBackup or event.eventName: CreateDdrInstance or event.eventName: ModifyInstanceCrossBackupPolicy) | select count(1) as cnt  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for SQL instance configuration changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.serviceName: rds and (event.eventName: ModifyHASwitchConfig or event.eventName: ModifyDBInstanceHAConfig or event.eventName: SwitchDBInstanceHA or event.eventName: ModifyDBInstanceSpec or event.eventName: MigrateSecurityIPMode or event.eventName: ModifySecurityIps or event.eventName: ModifyDBInstanceSSL or event.eventName: MigrateToOtherZone or event.eventName: UpgradeDBInstanceKernelVersion or event.eventName: UpgradeDBInstanceEngineVersion or event.eventName: ModifyDBInstanceMaintainTime or event.eventName: ModifyDBInstanceAutoUpgradeMinorVersion or event.eventName: AllocateInstancePublicConnection or event.eventName: ModifyDBInstanceConnectionString or event.eventName: ModifyDBInstanceNetworkExpireTime or event.eventName: ReleaseInstancePublicConnection or event.eventName: SwitchDBInstanceNetType or event.eventName: ModifyDBInstanceNetworkType or event.eventName: ModifyDBInstanceSSL or event.eventName: ModifyDTCSecurityIpHostsForSQLServer or event.eventName: ModifySecurityGroupConfiguration or event.eventName: CreateBackup or event.eventName: ModifyBackupPolicy or event.eventName: DeleteBackup or event.eventName: CreateDdrInstance or event.eventName: ModifyInstanceCrossBackupPolicy) | select count(1) as cnt",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_rds_instance_configuration_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.16",
+      "Description": "Ensure a log monitoring and alerts are set up for unauthorized API calls",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to LogService and establishing corresponding query and alarms. It is recommended that a query and alarm be established for unauthorized API calls.",
+          "RationaleStatement": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for unauthorized API calls: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.eventType: ApiCall and (event.errorCode: NoPermission or event.errorCode: NoPermission.* or event.errorCode: Forbidden or event.errorCode: Forbbiden or event.errorCode: Forbidden.* or event.errorCode: InvalidAccessKeyId or event.errorCode: InvalidAccessKeyId.* or event.errorCode: InvalidSecurityToken or event.errorCode: InvalidSecurityToken.* or event.errorCode: SignatureDoesNotMatch or event.errorCode: InvalidAuthorization or event.errorCode: AccessForbidden or event.errorCode: NotAuthorized) | select count(1) as cnt 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for unauthorized API calls. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.eventType: ApiCall and (event.errorCode: NoPermission or event.errorCode: NoPermission.* or event.errorCode: Forbidden or event.errorCode: Forbbiden or event.errorCode: Forbidden.* or event.errorCode: InvalidAccessKeyId or event.errorCode: InvalidAccessKeyId.* or event.errorCode: InvalidSecurityToken or event.errorCode: InvalidSecurityToken.* or event.errorCode: SignatureDoesNotMatch or event.errorCode: InvalidAuthorization or event.errorCode: AccessForbidden or event.errorCode: “NotAuthorized) | select count(1) as cnt",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_unauthorized_api_calls_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.17",
+      "Description": "Ensure a log monitoring and alerts are set up for Management Console sign-in without MFA",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for console logins that are not protected by multi-factor authentication (MFA).",
+          "RationaleStatement": "Monitoring for single-factor console logins will increase visibility into accounts that are not protected by MFA.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for Management Console sign-in without MFA: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.eventName: ConsoleSignin and addionalEventData.loginAccount: false 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for Management Console sign-in without MFA. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.eventName: ConsoleSignin and addionalEventData.loginAccount: false",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_management_console_signin_without_mfa_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.18",
+      "Description": "Ensure a log monitoring and alerts are set up for usage of root account",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for console logins that are not protected by root login attempts.",
+          "RationaleStatement": "Monitoring for root account logins will provide visibility into the use of a fully privileged account and an opportunity to reduce the use of it.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for usage of “root” account: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.eventName: ConsoleSignin and event.userIdentity.type : root-account  7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for usage of “root” account. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.eventName: ConsoleSignin and event.userIdentity.type : root-account",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_root_account_usage_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.19",
+      "Description": "Ensure a log monitoring and alerts are set up for Management Console authentication failures",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for failed console authentication attempts.",
+          "RationaleStatement": "Monitoring failed console logins may decrease lead time to detect an attempt to brute force a credential, which may provide an indicator, such as source IP, that can be used in other event correlation.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for Management Console authentication failures: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query event.eventName: ConsoleSignin and event.errorCode : * and not event.errorCode :  | select count(1) as cnt 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for Management Console authentication failures. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.eventName: ConsoleSignin and event.errorCode : * and not event.errorCode :  | select count(1) as cnt",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/28810.htm https://www.alibabacloud.com/help/en/doc-detail/91784.htm https://www.alibabacloud.com/help/en/doc-detail/93517.html",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_management_console_authentication_failures_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.20",
+      "Description": "Ensure a log monitoring and alerts are set up for disabling or deletion of customer created CMKs",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for customer created KMSs which have changed state to disabled or deletion.",
+          "RationaleStatement": "Data encrypted with disabled or deleted keys will no longer be accessible.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for disabling or scheduled deletion of customer created CMKs: 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query. event.serviceName: Kms and (event.eventName: DisableKey or event.eventName: ScheduleKeyDeletion or event.eventName: DeleteKeyMaterial 7. Create a dashboard and set alert for the query result",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for disabling or deletion of customer created CMKs. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.serviceName: Kms and (event.eventName: DisableKey or event.eventName: ScheduleKeyDeletion or event.eventName: DeleteKeyMaterial",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_customer_created_cmk_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.21",
+      "Description": "Ensure a log monitoring and alerts are set up for OSS bucket policy changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for changes to OSS bucket policies.",
+          "RationaleStatement": "Monitoring changes to OSS bucket policies may reduce time to detect and correct permissive policies on sensitive OSS buckets.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for OSS bucket policy changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query. event.eventName: PutBucketLifecycle or event.eventName: PutBucketPolicy or event.eventName: PutBucketCors or event.eventName: PutBucketEncryption or event.eventName: PutBucketReplication or event.eventName: DeleteBucketPolicy or event.eventName: DeleteBucketCors or event.eventName: DeleteBucketLifecycle or event.eventName: DeleteBucketEncryption or event.eventName: DeleteBucketReplication) | select bucket, count(1) as cnt 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for OSS bucket policy changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log event.eventName: PutBucketLifecycle or event.eventName: PutBucketPolicy or event.eventName: PutBucketCors or event.eventName: PutBucketEncryption or event.eventName: PutBucketReplication or event.eventName: DeleteBucketPolicy or event.eventName: DeleteBucketCors or event.eventName: DeleteBucketLifecycle or event.eventName: DeleteBucketEncryption or event.eventName: DeleteBucketReplication) | select bucket, count(1) as cnt",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_oss_bucket_policy_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.22",
+      "Description": "Ensure a log monitoring and alerts are set up for security group changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. Security Groups are a stateful packet filter that controls ingress and egress traffic within a VPC. It is recommended that a query and alarm be established changes to Security Groups.",
+          "RationaleStatement": "Monitoring changes to security group will help ensure that resources and services are not unintentionally exposed.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform the following to ensure the log monitoring and alerts are set up for security group changes。 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane. 3. Go to Access to Cloud Products > Global Configuration page. a. Select a location of project for logs. b. Check the Action Trail and configure a proper days. c. Click Save to save the changes. 4. Go to Access to Cloud Products > Global Configurations click Central Project. 5. Select Log Management > Actiontrail Log. 6. In the search/analytics console, input below query. (event_name: CreateSecurityGroup or event_name: AuthorizeSecurityGroup or event_name: AuthorizeSecurityGroupEgress or event_name: RevokeSecurityGroup or event_name: RevokeSecurityGroupEgress or event_name: JoinSecurityGroup or event_name: LeaveSecurityGroup or event_name: DeleteSecurityGroup or event_name: ModifySecurityGroupPolicy) | select count(1) as cnt 7. Create a dashboard and set alert for the query result.",
+          "AuditProcedure": "Perform the following steps to ensure log monitoring and alerts are set for security group changes. 1. Logon to SLS Console. 2. Click Log Service Audit Service in the navigation pane to go to the Log Service Audit Service page. 3. Ensure the Action Trail are Enabled under the Access to Cloud Products > Global Configuration page, and click Central Project. 4. Select Alerts. 5. Ensure below alert rule has been enabled and saved in the target actiontrail_log (event_name: CreateSecurityGroup or event_name: AuthorizeSecurityGroup or event_name: AuthorizeSecurityGroupEgress or event_name: RevokeSecurityGroup or event_name: RevokeSecurityGroupEgress or event_name: JoinSecurityGroup or event_name: LeaveSecurityGroup or event_name: DeleteSecurityGroup or event_name: ModifySecurityGroupPolicy) | select count(1) as cnt",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+          "DefaultValue": "The monitoring dashboard and alert is not set by default."
+        }
+      ],
+      "Checks": [
+        "sls_security_group_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.23",
+      "Description": "Ensure that Logstore data retention period is set 365 days or greater",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure Activity Log Retention is set for 365 days or greater",
+          "RationaleStatement": "Logstore life cycle controls how your activity log is exported and retained. It is recommended to retain your activity log for 365 days or more in order to have time to respond to any incidents.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Perform below steps to ensure the log retention is set to 365 days or greater. 1. Logon to SLS Console. 2. Find the project in the Projects section, and then click the target project name. 3. On the page that appears, click Modify a Logstore icon next to the Logstore, and then choose Modify. 4. On the page that appears, click Modify, modify the Data Retention Period, to 365 or greater and then click Save.",
+          "AuditProcedure": "Perform below steps to ensure the log retention is set to 365 days or greater. 1. Logon to SLS Console. 2. In the Projects section, click the target project name. On the page that appears, click the plus sign (+) next to the search box. 3. In the dialog box that appears, check whether the Permanent Storage is turned on, which means the log data will be stored permanently, or else 4. Ensure the Data Retention Period is set to 365 or greater.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/48990.htm",
+          "DefaultValue": "The Permanent Storage is turned off by default."
+        }
+      ],
+      "Checks": [
+        "sls_logstore_retention_period"
+      ]
+    },
+    {
+      "Id": "3.1",
+      "Description": "Ensure legacy networks does not exist",
+      "Attributes": [
+        {
+          "Section": "3. Networking",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "In order to prevent use of legacy networks, ECS instances should not have a legacy network configured.",
+          "RationaleStatement": "Legacy networks have a single network IPv4 prefix range and a single gateway IP address for the whole network. With legacy networks, you cannot create subnetworks or switch from legacy to auto or custom subnet networks. Legacy networks can thus have an impact for high network traffic ECS instance and subject to the single point of failure.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Logon to ECS Console 2. In the left-side navigation pane, choose Instance & Image > Instances. 3. Click Create Instance. 4. Specify the basic instance information required by following the instruction and click Next: Networking. 5. Select the Network Type of VPC.",
+          "AuditProcedure": "1. Logon to ECS Console 2. In the left-side navigation pane, choose Instance & Image > Instances. 3. Check all ECS instances to ensure the Network Type is not classic",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/87190.htm",
+          "DefaultValue": "By default the ECS are created with VPC Network Type."
+        }
+      ],
+      "Checks": [
+        "ecs_instance_no_legacy_network"
+      ]
+    },
+    {
+      "Id": "3.2",
+      "Description": "Ensure that SSH access is restricted from the internet",
+      "Attributes": [
+        {
+          "Section": "3. Networking",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that no security group allows unrestricted ingress access to port 22 or port 3389.",
+          "RationaleStatement": "Removing unfettered connectivity to remote console services, such as SSH or RDP, reduces a server's exposure to risk.",
+          "ImpactStatement": "All SSH or RDP connections from outside of the network to the concerned VPC(s) will be blocked. There could be a business need where ssh access is required from outside of the network to access resources associated with the VPC. In that case, specific source IP(s) should be mentioned in firewall rules to white-list access to SSH or RDP port for the concerned VPC(s).",
+          "RemediationProcedure": "1. Logon to ECS Console 2. Go to Security Group 3. Find the Security Group you want to modify 4. Modify Source IP range to specific IP 5. Save",
+          "AuditProcedure": "1. Logon to ECS Console 2. In the left-side navigation pane, choose Network & Security > Security Groups. 3. Ensure Port is not equal to 22 or 3389 and Action is not Allow. 4. Ensure IP Ranges is not equal to 0.0.0.0 under Source filters.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/25475.htm https://www.alibabacloud.com/help/doc-detail/100380.htm",
+          "DefaultValue": "SSH connection is allowed by default."
+        }
+      ],
+      "Checks": [
+        "ecs_securitygroup_restrict_ssh_internet"
+      ]
+    },
+    {
+      "Id": "3.3",
+      "Description": "Ensure VPC flow logging is enabled in all VPCs",
+      "Attributes": [
+        {
+          "Section": "3. Networking",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "You can use the flow log function to monitor the IP traffic information for an ENI, a VSwitch or a VPC. If you create a flow log for a VSwitch or a VPC, all the Elastic Network Interfaces, including the newly created Elastic Network Interfaces, are monitored. Such flow log data is stored in Log Service, where you can view and analyze IP traffic information. It is recommended that VPC Flow Logs be enabled for packet Rejects for VPCs.",
+          "RationaleStatement": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.",
+          "ImpactStatement": "Currently, the flow log function is available for free. However, corresponding storage and indexing fees associated with the use of Log Service are billed. Before you activate the flow log function, note the following: • The object where a flow log is created can only be ENI. • Only the following resource types support the creation of flow logs: VPC, VSwitch, and ENI. • The maximum number of flow log instances that can be created in each region is 10. If you need to create more flow log instances, open a ticket.",
+          "RemediationProcedure": "1. Logon to VPC console. 2. In the left-side navigation pane, click FlowLog. 3. Follow the instruction to create FlowLog for each of your VPCs",
+          "AuditProcedure": "1. Logon to VPC console. 2. In the left-side navigation pane, click FlowLog. 3. Check for every existing VPC to ensure that there is an associated VPC ID on the FlowLog tab.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/90628.html",
+          "DefaultValue": "By default, Flow Logs is not enabled when you create a new VPC"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "3.4",
+      "Description": "Ensure routing tables for VPC peering are least access",
+      "Attributes": [
+        {
+          "Section": "3. Networking",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Once a VPC peering connection is established, routing tables must be updated to establish any connections between the peered VPCs. These routes can be as specific as desired, even peering a VPC to only a single host on the other side of the connection.",
+          "RationaleStatement": "Although the routing table is empty by default upon creation for any newly created routing table, hence it denies any default access, it is recommended that the table entry is only added based on the least access principle. Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Logon to VPC console. 2. Open the routing table 3. Remove and add route table entries to ensure that the least number of subnets or hosts as is required to accomplish the purpose for peering are routable.",
+          "AuditProcedure": "1. Logon to VPC console. 2. Open the routing table 3. Review routing tables of peered VPCs for whether they route all subnets of each VPC and whether that is necessary to accomplish the intended purposes for peering the VPCs.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/97766.htm",
+          "DefaultValue": "Routing table is empty by default upon creation for any newly created routing table, hence it denies any default access"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "3.5",
+      "Description": "Ensure the security group are configured with fine grained rules",
+      "Attributes": [
+        {
+          "Section": "3. Networking",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that all security group configured with fine grained rules.",
+          "RationaleStatement": "Configure fine grained security group rules is a very effective way of minimizing the impact of breach as resources outside of these rules are inaccessible to the ECS instance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Logon to ECS Console. 2. In the left-side navigation pane, choose Network & Security > Security Groups. 3. Remove any unnecessary rules in all security groups.",
+          "AuditProcedure": "1. Logon to ECS Console. 2. In the left-side navigation pane, choose Network & Security > Security Groups. 3. Ensure the rules in each of your security groups are all necessary for your operation.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/25475.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "4.1",
+      "Description": "Ensure that 'Unattached disks' are encrypted",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that unattached disks in a subscription are encrypted.",
+          "RationaleStatement": "Cloud disk encryption protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when the data is read from disks.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Logon to ECS Console 2. In the left-side navigation pane, choose Storage & Snapshots > Disk. 3. In the upper-right corner of the Disks page, click Create Disk. 4. In the Disk section, check the Disk Encryption box and then select a key from the drop-down list.",
+          "AuditProcedure": "1. Logon to ECS Console 2. In the left pane, click to expand Storage and Snapshots, click Disks 3. Select each Disk 4. Ensure that each disk has Disks Encryption has Encryption checked with the value of key tag is true",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+          "DefaultValue": "By default, data disks are not encrypted."
+        }
+      ],
+      "Checks": [
+        "ecs_unattached_disk_encrypted"
+      ]
+    },
+    {
+      "Id": "4.2",
+      "Description": "Ensure that Virtual Machines disk are encrypted",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that disk are encrypted when it is created with the creation of VM instance.",
+          "RationaleStatement": "ECS cloud disk encryption protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when the data is read from disks.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Encrypt a system disk when copying an image in the ECS console by following the below steps: 1. Logon to ECS Console 2. In the left-side navigation pane, choose Instances & Images > Instances 3. In the top navigation bar, select a region. 4. On the Images page, click the Custom Image tab. 5. Select the target image and click copy Image in the Actions column. 6. In the Copy Image dialog box, check the Encrypt box and then select a key from the drop-down list. 7. Click OK. You can encrypt a data disk when creating an instance by following the below steps: 1. Logon to ECS Console 2. In the left-side navigation pane, choose Instances & Images > Instances 3. On the Instances page, click Create Instance 4. On the Basic Configurations page, find the Storage section and perform the following steps a) Click Add Disk b) Specify the disk category and capacity of data disk c) Select Disk Encryption and then select a key from the drop-down list.",
+          "AuditProcedure": "1. Logon to ECS Console 2. In the left pane, click to expand Storage and Snapshots, click Disks 3. Select each Data disk 4. Ensure that each disk under Data disks has encryption",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+          "DefaultValue": "Not checked"
+        }
+      ],
+      "Checks": [
+        "ecs_attached_disk_encrypted"
+      ]
+    },
+    {
+      "Id": "4.3",
+      "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that no security group allows unrestricted ingress access to port 22.",
+          "RationaleStatement": "Rationale: Removing unfettered connectivity to remote console services, such as SSH, reduces a server's exposure to risk.",
+          "ImpactStatement": "For valid operation needs, such as updating an existing environment, care should be taken to ensure that administrators currently relying on an existing ingress from 0.0.0.0/0 have access to ports 22 through another security group.",
+          "RemediationProcedure": "1. Logon to ECS Console . 2. In the left pane, click to expand Network* and Security, click Security Groups 3. For each security group, perform the following: a)Select the security group b)Click Add Rules c)Click the Inbound tab d)Identify the rules to be removed f)Click Delete in the Remove column g)Click OK",
+          "AuditProcedure": "1. Logon to ECS Console . 2. In the left pane, click to expand Network and Security, click Security Groups 3. For each security group, perform the following: 4. Select the security group 5. Click Add Rules 6. Click the Inbound tab 7. Ensure no rule exists that has a port range that includes port 22 and has an Authorization Object of 0.0.0.0/0 Note: A Port value of ALL or a port range such as 0-1024 also includes port 22.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/51170.htm",
+          "DefaultValue": "By default, Authorization Object and port range are not set."
+        }
+      ],
+      "Checks": [
+        "ecs_securitygroup_restrict_ssh_internet"
+      ]
+    },
+    {
+      "Id": "4.4",
+      "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Security groups provide filtering of ingress/egress network traffic to Aliyun resources. It is recommended that no security group allows unrestricted ingress access to port 3389.",
+          "RationaleStatement": "Removing unfettered connectivity to remote console services, such as RDP, reduces a server's exposure to risk.",
+          "ImpactStatement": "For valid operation needs, such as updating an existing environment, care should be taken to ensure that administrators currently relying on an existing ingress from 0.0.0.0/0 have access to ports 3389 through another security group.",
+          "RemediationProcedure": "1. Logon to ECS Console . 2. In the left pane, click to expand Network and Security, click Security Groups For each security group, perform the following: 1. Select the security group 2. Click Add Rules 3. Click the Inbound tab 4. Identify the rules to be removed 5. Click Delete in the Remove column 6. Click OK",
+          "AuditProcedure": "1. Logon to ECS Console . 2. In the left pane, click to expand Network and Security, click Security Groups 3. For each security group, perform the following: 4. Select the security group 5. Click Add Rules 6. Click the Inbound tab 7. Ensure no rule exists that has a port range that includes port 3389 and has an Authorization Object of 0.0.0.0/0 Note: A Port value of ALL or a port range such as 0-1024 also includes port 3389.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/51170.htm",
+          "DefaultValue": "By default, Authorization Object and port range are not set."
+        }
+      ],
+      "Checks": [
+        "ecs_securitygroup_restrict_rdp_internet"
+      ]
+    },
+    {
+      "Id": "4.5",
+      "Description": "Ensure that the latest OS Patches for all Virtual Machines are applied",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that the latest OS patches for all virtual machines are applied.",
+          "RationaleStatement": "Windows and Linux virtual machines should be kept updated to: • Address a specific bug or flaw • Improve an OS or applications general stability • Fix a security vulnerability The Alibaba Cloud Security Center checks for the latest updates in Linux and Windows systems. If an ECS instance is missing a system update, the Security Center will recommend system updates be applied.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Logon to Security Center Console 2. Select Vulnerabilities 3. Apply all patches for vulnerabilities",
+          "AuditProcedure": "1. Logon to Security Center Console 2. Select Vulnerabilities 3. Ensure all vulnerabilities are fixed",
+          "AdditionalInformation": "",
+          "References": "",
+          "DefaultValue": "By default, patches are not automatically deployed."
+        }
+      ],
+      "Checks": [
+        "ecs_instance_latest_os_patches_applied"
+      ]
+    },
+    {
+      "Id": "4.6",
+      "Description": "Ensure that the endpoint protection for all Virtual Machines is installed",
+      "Attributes": [
+        {
+          "Section": "4. Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Install endpoint protection for all virtual machines.",
+          "RationaleStatement": "Installing endpoint protection systems (like Security Center for Alibaba Cloud) provides for real-time protection capability that helps identify and remove viruses, spyware, and other malicious software, with configurable alerts when known malicious software attempts to install itself or run on ECS.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the Alibaba Cloud Management Console: 1. Logon to Security Center Console 2. Select Settings 3. Click Agent 4. On the Agent tab, select the virtual machines without Security Center agent installed 5. Click Install",
+          "AuditProcedure": "Using the Alibaba Cloud Management Console: 1. Logon to Security Center Console 2. Select Overview 3. Ensure all ECS are installed with Security Center agent",
+          "AdditionalInformation": "",
+          "References": "",
+          "DefaultValue": "Not installed"
+        }
+      ],
+      "Checks": [
+        "ecs_instance_endpoint_protection_installed"
+      ]
+    },
+    {
+      "Id": "5.1",
+      "Description": "Ensure that OSS bucket is not anonymously or publicly accessible",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "A bucket is a container used to store objects in Object Storage Service (OSS). All objects in OSS are stored in buckets. It is recommended that the access policy on OSS bucket does not allows anonymous and/or public access.",
+          "RationaleStatement": "Allowing anonymous and/or public access grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data. Hence, ensure that anonymous and/or public access to a bucket is not allowed.",
+          "ImpactStatement": "Customers may set ACL to public due to the business needs.",
+          "RemediationProcedure": "The anonymous or public access to OSS bucket can be restricted through both Bucket ACL and Bucket Policy. Using the Bucket ACL: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Basic Setting in top middle of the console 4. Under ACL section, click on configure 5. Click Private 6. Click Save Using Bucket Policy: 1. Logon to OSS console. 2. Click Bucket, and then click the name of target bucket. 3. Click the Files tab. On the page that appears, click Authorize. 4. In the Authorize dialog box that appears, click Authorize. 5. In the Authorize dialog box that appears, choose the Anonymous Accounts (*) for Accounts and choose None for Authorized Operation`. 6. Click OK.",
+          "AuditProcedure": "The anonymous or public access to OSS bucket can be restricted through both Bucket Access Control List (ACL) and Bucket Policy. Using the Bucket ACL: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Basic Setting in top middle of the console 4. Under ACL section, ensure the Bucket ACL is set to `Private. Using Bucket Policy: 1. Logon to OSS console. 2. Click Bucket, and then click the name of target bucket. 3. Click the Files tab. On the page that appears, click Authorize. 4. In the Authorize dialog box that appears, click Authorize. 5. In the Authorize dialog box that appears, ensure the Anonymous Accounts (*) is selected under Accounts and None is selected under Authorized Operation.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/31896.htm",
+          "DefaultValue": "Private"
+        }
+      ],
+      "Checks": [
+        "oss_bucket_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "5.2",
+      "Description": "Ensure that there are no publicly accessible objects in storage buckets",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "A bucket is a container used to store objects in Object Storage Service (OSS). All objects in OSS are stored in buckets. It is recommended that storage object ACL should not grant public access.",
+          "RationaleStatement": "Allowing public access to objects allows anyone with an internet connection to access sensitive data that is important to your business. Also note that even if a bucket ACL applied on storage does not allow public access, there could be object specific ACLs that allows public access to the specific access to the specific objects inside the buckets. Hence it is important to check object ACLs at individual object level.",
+          "ImpactStatement": "Customers may set ACL to public due to the business needs.",
+          "RemediationProcedure": "Using the Management Console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Hover on More in the right column on a target object 5. Click Set ACL 6. Click Private 7. Click Save",
+          "AuditProcedure": "Using the Management Console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on View details in the right column on a target object 5. Ensure File ACL is set to private",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/31909.htm",
+          "DefaultValue": "By Default, object ACLs is inherited from corresponding bucket ACL."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.3",
+      "Description": "Ensure that logging is enabled for OSS buckets",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "OSS Bucket Access Logging generates a log that contains access records for each request made to your OSS bucket. An access log record contains details about the request, such as the request type, the resources specified in the request worked, and the time and date the request was processed. It is recommended that bucket access logging be enabled on the OSS bucket.",
+          "RationaleStatement": "By enabling OSS bucket logging on target OSS buckets, it is possible to capture all events which may affect objects within an target buckets. Configuring logs to be placed in a separate bucket allows access to log information which can be useful in security and incident response workflows.",
+          "ImpactStatement": "Extra cost for log storage may incur.",
+          "RemediationProcedure": "Perform the following to enable OSS bucket logging: Through the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Under Log, click configure 4. Configure bucket logging 5. Click the Enabled checkbox 6. Select Target Bucket from list 7. Enter a Target Prefix 8. Click Save",
+          "AuditProcedure": "Perform the following ensure the OSS bucket has access logging is enabled: Through the management console: 1. Logon to the OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Under Log, ensure Enabled is checked.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/31900.htm",
+          "DefaultValue": "Logging is disabled."
+        }
+      ],
+      "Checks": [
+        "oss_bucket_logging_enabled"
+      ]
+    },
+    {
+      "Id": "5.4",
+      "Description": "Ensure that 'Secure transfer required' is set to 'Enabled'",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable the data encryption in transit.",
+          "RationaleStatement": "The secure transfer enhances the security of OSS bucket by only allowing requests to the storage account by a secure connection. For example, when calling REST APIs to access storage accounts, the connection must use HTTPS. Any requests using HTTP will be rejected.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "USing the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on Authorize 5. Click on Whole Bucket,*, None (Authorized Operation) and http (Conditions:Access Method) 6. Click on Save",
+          "AuditProcedure": "Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on Authorize 5. Ensure a policy is set to None (Authorized Operation) and http (Conditions:Access Method)",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+          "DefaultValue": ""
+        }
+      ],
+      "Checks": [
+        "oss_bucket_secure_transport_enabled"
+      ]
+    },
+    {
+      "Id": "5.5",
+      "Description": "Ensure that the shared URL signature expires within an hour",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Expire the shared URL signature within an hour.",
+          "RationaleStatement": "URL signature is a URL that grants access rights to OSS. You can add signature information to a URL so that you can forward the URL to the third party for authorized access. A URL signature can be provided to the third party for authorized access. Providing a URL signature to these clients allows them access to a resource for a specified period of time. This time should be set as low as possible, and preferably no longer than an hour.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Through the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on View Details in the right column on a target object 5. Set Validity Period to a value less than 3600",
+          "AuditProcedure": "Through the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click Files in top middle of the console 4. Click View Details in the right column on a target object 5. Ensure Validity Period is set to less than 3600",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/31912.htm",
+          "DefaultValue": "300 seconds."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.6",
+      "Description": "Ensure that URL signature is allowed only over https",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "URL signature is a URL that grants access rights to OSS. You can add signature information to a URL so that you can forward the URL to the third party for authorized access.A URL signature can be provided to the third party for authorized access.",
+          "RationaleStatement": "It is recommended to allow such access requests over HTTPS protocol only. URL signature should be allowed only over HTTPS protocol.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on View Details in the right column on a target object 5. Set HTTPS to Enabled",
+          "AuditProcedure": "Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on View Details in the right column on a target object 5. Ensure HTTPS is set to Enabled",
+          "AdditionalInformation": "",
+          "References": "",
+          "DefaultValue": "Enabled"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.7",
+      "Description": "Ensure network access rule for storage bucket is not set to publicly accessible",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Restricting default network access helps to provide a new layer of security, since OSS accept connections from clients on any network. To limit access to selected networks, the default action must be changed.",
+          "RationaleStatement": "Access can be granted to public internet IP address ranges, to enable connections from specific internet or on-premises clients. When network rules are configured, only applications from allowed networks can access OSS bucket.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on Authorize 5. Click on Whole Bucket,*,None, Condition IP = specified IP address or IP address segment 6. Click on Save",
+          "AuditProcedure": "Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on a target OSS bucket 3. Click on Files in top middle of the console 4. Click on Authorize 5. Ensure a policy is set to be granted to public internet IP address ranges",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+          "DefaultValue": "Not set."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.8",
+      "Description": "Ensure server-side encryption is set to Encrypt with Service Key",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable server-side encryption (Encrypt with Service Key) for objects.",
+          "RationaleStatement": "Server-side encryption protects your data at rest.",
+          "ImpactStatement": "Service key incurs an additional cost from accessing the KMS service.",
+          "RemediationProcedure": "Using the management console: Perform the following to configure the OSS bucket to use SSE-KMS: 1. Logon to OSS console. 2. In the bucket-list pane, click on the target OSS bucket 3. Click Basic Setting in top middle of the console 4. Under the Server-side Encryption section, click on configure 5. Click KMS and select KMS service key(alias/acs/oss)",
+          "AuditProcedure": "Perform the following to determine if the OSS bucket is configured to use SSE-KMS: Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on the target OSS bucket 3. Click on Basic Setting in top middle of the console 4. Under the Server-side Encryption section, ensure the target OSS Bucket Encryption is set to KMS and the Encryption Method of KMS and the service key (alias/acs/oss) is selected.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/108880.htm",
+          "DefaultValue": "Not encrypted."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.9",
+      "Description": "Ensure server-side encryption is set to Encrypt with BYOK",
+      "Attributes": [
+        {
+          "Section": "5. Storage",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable server-side encryption (Encrypt with BYOK) for objects.",
+          "RationaleStatement": "Server-side encryption protects your data at rest.",
+          "ImpactStatement": "Service key incurs an additional cost from accessing the KMS service.",
+          "RemediationProcedure": "Perform the following to configure the OSS bucket to use SSE-KMS: Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on the target OSS bucket 3. Click on Basic Setting in top middle of the console 4. Under the Server-side Encryption section, click on configure 5. Click on KMS and select an existing CMK from the KMS key Id drop-down menu 6. Click save",
+          "AuditProcedure": "Perform the following to determine if the OSS bucket is configured to use SSE-KMS: Using the management console: 1. Logon to OSS console. 2. In the bucket-list pane, click on the target OSS bucket 3. Click on Basic Setting in top middle of the console 4. Under the Server-side Encryption section, ensure the target OSS Bucket Encryption is set to KMS and a customer created KMS key ID is specified in the KMS Key Id field.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/108880.htm",
+          "DefaultValue": "By default, Buckets are not set to be encrypted."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.1",
+      "Description": "Ensure that RDS instance requires all incoming connections to use SSL",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "It is recommended to enforce all incoming connections to SQL database instance to use SSL.",
+          "RationaleStatement": "SQL database connections if successfully trapped (MITM); can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance. This recommendation is applicable for PostgreSQL and MySQL Instances.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. Select the region where the target instance is located. 3. Click the ID of the target instance to enter the Basic Information page. 4. In the left-side navigation pane, click Data Security. 5. Click the SSL Encryption tab. 6. Click the switch next to Disabled in the SSL Encryption parameter. 7. In the Configure SSL dialog box, select the endpoint for which you want to enable SSL encryption and then click OK. 8. Click Download CA Certificate to download an SSL certificate. 9. The downloaded SSL certificate is a package including the following files: p7b file: is used to import the CA certificate on Windows OS. PEM file: is used to import the CA certificate on other systems or for other applications. JKS file: is a Java truststore certificate file used for importing CA certificate chains in Java programs. The password is apsaradb.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. Select the region where the target instance is located. 3. Click the ID of the target instance to enter the Basic Information page. 4. In the left-side navigation pane, click Data Security to go to the Security page. 5. Click the SSL Encryption tab. 6. Check the button SSL Encryption is Enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/32474.htm",
+          "DefaultValue": "Encryption is off by default."
+        }
+      ],
+      "Checks": [
+        "rds_instance_ssl_enabled"
+      ]
+    },
+    {
+      "Id": "6.2",
+      "Description": "Ensure that RDS Instances are not open to the world",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Database Server should accept connections only from trusted Network(s)/IP(s) and restrict access from the world.",
+          "RationaleStatement": "To minimize attack surface on a Database server Instance, only trusted/known and required IP(s) should be white-listed to connect to it. Authorized network should not have IPs/networks configured to 0.0.0.0 or /0 which will allow access to the instance from anywhere in the world.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper left corner, select the region where the target instance is located. 3. Locate the target instance and click its ID. 4. In the left-side navigation pane, click Data Security to visit the Security page. 5. On the Whitelist Settings tab page, follow below instructions based on your scenario: • To access the RDS instance from an ECS instance located within a VPC, click Edit for the default VPC whitelist. • To access the RDS instance from an ECS instance located within a classic network, click Edit for the default Classic Network whitelist. • To access the RDS instance from a server or computer located in a public network, click Edit for the default Classic Network whitelist. 6. In the displayed Edit Whitelist dialog box, remove any 0.0.0.0 or /0 entries, and only add the IP addresses that need to access the instance, and then click OK. • If you add an IP address range, such as 10.10.10.0/24, any IP address in 10.10.10.X format can access the RDS instance. • If you add multiple IP addresses or IP address ranges, separate them with a comma (without spaces), for example, 192.168.0.1,172.16.213.9. • You can click Add Internal IP Addresses of ECS Instance to display the IP addresses of all the ECS instances under your Alibaba Cloud account and add to the whitelist.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper left corner, select the region where the target instance is located. 3. Locate the target instance and click its ID. 4. In the left-side navigation pane, click Data Security to visit the Security page. 5. On the Whitelist Settings tab, check if the authorized servers IPs have been configured, and it is not configured as 0.0.0.0 or /0. Note: You can also click Add a Whitelist Group to create a new group.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/26198.htm",
+          "DefaultValue": "By default, the whitelist setting is 127.0.0.1 that is not allowing any connection from any server."
+        }
+      ],
+      "Checks": [
+        "rds_instance_no_public_access_whitelist"
+      ]
+    },
+    {
+      "Id": "6.3",
+      "Description": "Ensure that 'Auditing' is set to 'On' for applicable database instances",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable SQL auditing on all RDS except SQL Server 2012/2016/2017 and MariaDB TX.",
+          "RationaleStatement": "The Alibaba Cloud allows MySQL instance to be created as a service. Enabling auditing at the server level ensures that all existing and newly created databases on the MySQL instance are audited. Auditing policy applied on the MySQL database does not override auditing policy and settings applied on the particular MySQL server where the database is hosted. Auditing tracks database events and writes them to an audit log in the Alibaba Cloud MySQL account. It also helps to maintain regulatory compliance, understand database activity, and gain insight into discrepancies and anomalies that could indicate business concerns or suspected security violations.",
+          "ImpactStatement": "By activating Auditing, the system then automatically starts charging an hourly fee of US$ 0.0018 per GB.",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, select SQL Explorer. 5. Click Activate Now. 6. Specify the SQL log storage duration (for how long you want to keep the SQL log), and click Activate.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, select SQL Explorer. 5. Check if there is a “Welcome to Use SQL Explore” page, as such a page indicates that the auditing is not yet enabled. If the auditing is enabled, then the SQL Explorer should show the SQL Explore dashboard directly.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96123",
+          "DefaultValue": "Disable"
+        }
+      ],
+      "Checks": [
+        "rds_instance_sql_audit_enabled"
+      ]
+    },
+    {
+      "Id": "6.4",
+      "Description": "Ensure that 'Auditing' Retention is 'greater than 6 months'",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Database SQL Audit Retention should be configured to be greater than 90 days.",
+          "RationaleStatement": "Audit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, select SQL Explore. 5. Click Service Setting button on the top right corner. 6. In the service setting page, enable Activate SQL Explore, set the storage duration as 6 months or longer.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, select SQL Explore. 5. Click Service Setting button on the top right corner. 6. In the service setting page, assure the storage duration is set as 6 months or longer.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96123.htm",
+          "DefaultValue": "Active SQL Explorer is disabled."
+        }
+      ],
+      "Checks": [
+        "rds_instance_sql_audit_retention"
+      ]
+    },
+    {
+      "Id": "6.5",
+      "Description": "Ensure that 'TDE' is set to 'Enabled' on for applicable database instance",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable Transparent Data Encryption on every RDS instance.",
+          "RationaleStatement": "RDS Database transparent data encryption helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and log files at rest without requiring changes to the application.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, click Data Security to go to the Security page. 5. Click the TDE tab. 6. On the TDE tab, find TDE Status and click the switch next to Disabled. 7. In the displayed dialog box, choose automatically generated key or custom key, click Confirm. • Encrypt a table a. For RDS for MySQL, connect to the instance and run the following command to encrypt tables. alter table <tablename> engine=innodb, block_format=encrypted b. For RDS for SQL Server, click Configure TDE, select the databases to encrypt, add them to the right, and click OK. • Decrypt data a. To decrypt a MySQL table encrypted by TDE, run the following command: alter table <tablename> engine=innodb, block_format=default b. To decrypt a SQL Server table encrypted by TDE, click Configure TDE and move the database to the left.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, click Data Security to go to the Security page. 5. Click the TDE tab. 6. Check the button TDE Status is Enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/33510.html",
+          "DefaultValue": "Disabled"
+        }
+      ],
+      "Checks": [
+        "rds_instance_tde_enabled"
+      ]
+    },
+    {
+      "Id": "6.6",
+      "Description": "Ensure RDS instance TDE protector is encrypted with BYOK (Use your own key)",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "TDE with BYOK support provides increased transparency and control, increased security with an HSM-backed KMS service, and promotion of separation of duties. With TDE, data is encrypted at rest with a symmetric key (called the database encryption key). With BYOK support for TDE, the DEK can be protected with an asymmetric key that is stored in the KMS. Based on business needs or criticality of data, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (BYOK).",
+          "RationaleStatement": "Bring Your Own Key (BYOK) support for Transparent Data Encryption (TDE) allows user control of TDE encryption keys and restricts who can access them and when. Alibaba Cloud KMS, a cloud-based key management system is the service where TDE has integrated support for BYOK. With BYOK, the database encryption key is protected by an asymmetric key stored in the KMS.",
+          "ImpactStatement": "Additional investment in administration time is needed to produce, maintain, store, etc. customer provided keys.",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, click Data Security to go to the Security page. 5. Click the TDE tab. 6. On the TDE tab, find TDE Status and click the switch next to Disabled. 7. In the displayed dialog box, choose custom key, click Confirm.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID. 4. In the left-side navigation pane, click Data Security to go to the Security page. 5. Click the TDE tab. 6. Check the button TDE Status is Enabled and a custom key ID is shown for the Key field and the status is Valid.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96121.htm",
+          "DefaultValue": "Disabled"
+        }
+      ],
+      "Checks": [
+        "rds_instance_tde_key_custom"
+      ]
+    },
+    {
+      "Id": "6.7",
+      "Description": "Ensure parameter 'log_connections' is set to 'ON' for PostgreSQL Database",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable log_connections on PostgreSQL Servers.",
+          "RationaleStatement": "Enabling log_connections helps PostgreSQL Database to log attempted connection to the server, as well as successful completion of client authentication. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters. 5. Click the Edit icon of log_connection parameter next the Actual Value column. 6. Enter On as the Actual Value and click Confirm. 7. Click Apply Changes. 8. In the message that appears, click Confirm.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters and ensure the log_connection is set as On in the Actual Value column.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+          "DefaultValue": "Off"
+        }
+      ],
+      "Checks": [
+        "rds_instance_postgresql_log_connections_enabled"
+      ]
+    },
+    {
+      "Id": "6.8",
+      "Description": "Ensure server parameter 'log_disconnections' is set to 'ON' for PostgreSQL Database Server",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable log_disconnections on PostgreSQL Servers.",
+          "RationaleStatement": "Enabling log_disconnections helps PostgreSQL Database to log session terminations of the server, as well as duration of the session. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Login to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters. 5. Click the Edit icon of log_disconnections parameter next the Actual Value column. 6. Enter On as the Actual Value and click Confirm. 7. Click Apply Changes. 8. In the message that appears, click Confirm.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters and ensure the log_disconnections is set as On in the Actual Value column.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+          "DefaultValue": "Off"
+        }
+      ],
+      "Checks": [
+        "rds_instance_postgresql_log_disconnections_enabled"
+      ]
+    },
+    {
+      "Id": "6.9",
+      "Description": "Ensure server parameter 'log_duration is set to 'ON' for PostgreSQL Database Server",
+      "Attributes": [
+        {
+          "Section": "6. Relational Database Services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable log_duration on PostgreSQL Servers.",
+          "RationaleStatement": "Enabling log_duration helps PostgreSQL Database to Logs the duration of each completed SQL statement which in turn generates query and error logs. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub- optimal performance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters. 5. Click the Edit icon of log_durantion parameter next the Actual Value column. 6. Enter On as the Actual Value and click Confirm. 7. Click Apply Changes. 8. In the message that appears, click Confirm.",
+          "AuditProcedure": "Using the management console: 1. Logon to RDS Console. 2. In the upper-left corner, select the region of the target instance. 3. Locate the target instance, and click the instance ID to enter the Basic Information page. 4. In the left-side navigation pane, select Parameters and ensure the log_durantion is set as On in the Actual Value column.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+          "DefaultValue": "Off"
+        }
+      ],
+      "Checks": [
+        "rds_instance_postgresql_log_duration_enabled"
+      ]
+    },
+    {
+      "Id": "7.1",
+      "Description": "Ensure Log Service is set to Enabled on Kubernetes Engine Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Log Service is a complete real-time data logging service on Alibaba Cloud to support collection, shipping, search, storage and analysis for logs. It includes a user interface to call the Log Viewer and an API to management logs pragmatically. Log Service could automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers. Audit logs are collected from the kube-apiserver or the deployed ingress. Events are logs about activity in the cluster, such as the deleting of Pods or Secrets.",
+          "RationaleStatement": "By enabling you will have container and system logs, Kubernetes Engine deploys a per- node logging agent that reads container logs, adds helpful metadata, and then stores them. The logging agent would help to collecting the following sources: • kube-apiserver audit logs • ingress visiting logs • Standard output and standard error logs from containerized processes For events, Kubernetes Engine uses a Deployment in the kube-system namespace which automatically collects events and sends them to Log Service. Log Service is compatible with JSON formats.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Click Create Kubernetes Cluster and set Enable Log Service to Enabled when creating cluster",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and click its name into cluster detail page 3. Select Cluster Auditing on the left column and check if audit page shown",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/91406.html https://help.aliyun.com/document_detail/86532.html",
+          "DefaultValue": "By default, logging service is disabled when you create a new cluster using console."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_log_service_enabled"
+      ]
+    },
+    {
+      "Id": "7.2",
+      "Description": "Ensure CloudMonitor is set to Enabled on Kubernetes Engine Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "The monitoring service in Kubernetes Engine clusters depends on the Alibaba Cloud CloudMonitor agent to access additional system resources and application services in virtual machine instances. The monitor can access metrics about CPU utilization, some disk traffic metrics, network traffic, and disk IO information, which help to monitor signals and build operations in your Kubernetes Engine clusters.",
+          "RationaleStatement": "By Enabling CloudMonitor installation you will have system metrics and custom metrics. System metrics are measurements of the cluster's infrastructure, such as CPU or memory usage. For system metrics, a monitor controller would be created and periodically connects to each node and collects metrics about its Pods and containers, then sends the metrics to CloudMonitor server. Metrics for usage of system resources are collected from the CPU, Memory, Evictable memory, Non-evictable memory, and Disk sources.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Click the Create Kubernetes Cluster button and set CloudMonitor Agent to Enabled under creation options.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and click its name into cluster detail page 3. Select the Nodes on the left column and click the Monitor link on the Actions column of the selected node 4. Check if OS Metrics data existing in the CloudMonitor page of the selected ECS node",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/125508.html https://help.aliyun.com/document_detail/102337.html",
+          "DefaultValue": "By default, CloudMonitor Agent installation is disenabled when you create a new cluster using console."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_cloudmonitor_enabled"
+      ]
+    },
+    {
+      "Id": "7.3",
+      "Description": "Ensure role-based access control (RBAC) authorization is Enabled on Kubernetes Engine Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "In Kubernetes, authorizers interact by granting a permission if any authorizer grants the permission. The legacy authorizer in Kubernetes Engine grants broad, statically defined permissions. To ensure that RBAC limits permissions correctly, you must disable the legacy authorizer. RBAC has significant security advantages, can help you ensure that users only have access to specific cluster resources within their own namespace and is now stable in Kubernetes.",
+          "RationaleStatement": "In Kubernetes, RBAC is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions, and the subaccounts who bind the roles could only have the permissions to access the specific resources in the cluster or namespaces defined in RBAC policies.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target RAM sub-account and configure the RBAC roles on specific clusters or namespaces.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target RAM sub-account in the Clusters -> Authorizations page 3. After RAM user/role is selected, configure the RBAC roles on specific clusters or namespaces",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/87656.html https://help.aliyun.com/document_detail/119596.html",
+          "DefaultValue": "By default, RBAC authorization is enabled on ACK clusters, and the legacy authorizations as ABAC is disenable. Besides, the RAM sub-users have no permissions to access any resources in ACK clusters by default."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_rbac_enabled"
+      ]
+    },
+    {
+      "Id": "7.4",
+      "Description": "Ensure Cluster Check triggered at least once per week for Kubernetes Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Kubernetes Engine's cluster check feature helps you verify the system nodes and components healthy status. When you trigger the checking, the process would check on the health state of each node in your cluster and also the cluster configuration as kubelet\\docker daemon\\kernel and network iptables configuration, if there are fails consecutive health checks, the diagnose would report to admin for further repair.",
+          "RationaleStatement": "Kubernetes Engine uses the node's health status to determine if a node needs to be repaired. A node reporting a Ready status is considered healthy. The cluster administrator could choose to trigger the cluster check periodically. An cluster healthy checking including: • The cloud resource healthy status, including the VPC/VSwitch SLB and every ECS node status in cluster. • The kubelet, docker daemon, kernel, iptables configurations on every node in cluster. Kubernetes Engine generates the diagnose report when checking finish. You can check the diagnose suggestion on ACK console.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and open the More pop-menu for advance options on cluster 3. Select Global Check and click the Start button to trigger the checking",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and open the More pop-menu for advance options on cluster. 3. Select Overview page on left column and check if the Last check status is Normal. 4. Verify the checking time and details in Global Check.",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/114882.html",
+          "DefaultValue": "By default, the cluster checking process is not auto triggered, the cluster administrator could start it in ACK console."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_cluster_check_recent"
+      ]
+    },
+    {
+      "Id": "7.5",
+      "Description": "Ensure Kubernetes web UI / Dashboard is not enabled",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Dashboard is a web-based Kubernetes user interface. It can be used to deploy containerized applications to a Kubernetes cluster, troubleshoot your containerized application, and manage the cluster itself along with its attendant resources. You can use Dashboard to get an overview of applications running on your cluster, as well as for creating or modifying individual Kubernetes resources (such as Deployments, Jobs, DaemonSets, etc). For example, you can scale a Deployment, initiate a rolling update, restart a pod or deploy new applications using a deploy wizard.",
+          "RationaleStatement": "You should disable the Kubernetes Web UI (Dashboard) when running on Kubernetes Engine. The Kubernetes Web UI (Dashboard) is backed by a highly privileged Kubernetes Service Account. It is recommended to use ACK User Console instead of Dashboard to avoid any privileged escalation via compromise the dashboard.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and select the kube-system namespace in the Namespace pop-menu 3. Input dashboard in the deploy filter bar, make sure there is no result exist after the filter, delete the dashboard deployment by selecting the Delete in More pop- menu.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster and select the kube-system namespace in the Namespace pop-menu 3. Input dashboard in the deploy filter bar, and make sure there is no result exist after the filter.",
+          "AdditionalInformation": "",
+          "References": "",
+          "DefaultValue": "By default, the kube-dashboard would not install in cluster, and the overview console use the managed dashboard which controlled by ACK service."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_dashboard_disabled"
+      ]
+    },
+    {
+      "Id": "7.6",
+      "Description": "Ensure Basic Authentication is not enabled on Kubernetes Engine Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Basic authentication allows a user to authenticate to the cluster with a username and password and it is stored in plain text without any encryption. Disabling Basic authentication will prevent attacks like brute force. Its recommended to use either client certificate or RAM for authentication.",
+          "RationaleStatement": "When disabled, you will still be able to authenticate to the cluster with client certificate or RAM. A client certificate is a base 64-encoded public certificate used by clients to authenticate to the cluster endpoint, and ACK cluster would auto generate the client certificate for each logging RAM user.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. ssh into any master node in cluster 2. Make sure the basic-auth-file not exist in apiserver manifest with below command: cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep basic-auth-file 3. If you found basic-auth-file existing in apiserver manitfest, please override the manifest file with new manifest content to not include the basic-auth-file and then restart the apiserver, you need repeat the action on all of the master nodes",
+          "AuditProcedure": "1. ssh into any master node in cluster 2. Make sure the basic-auth-file not exist in apiserver manifest with below command: cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep basic-auth-file",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/86494.html https://help.aliyun.com/document_detail/123848.html https://github.com/AliyunContainerService/ack-ram-authenticator",
+          "DefaultValue": "By default, Basic authentication is not enabled when you create a new cluster."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.7",
+      "Description": "Ensure Network policy is enabled on Kubernetes Engine Clusters",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "A network policy is a specification of how groups of pods are allowed to communicate with each other and other network endpoints. NetworkPolicy resources use labels to select pods and define rules which specify what traffic is allowed to the selected pods. The Kubernetes Network Policy API allows the cluster administrator to specify what pods are allowed to communicate with each other.",
+          "RationaleStatement": "By default, pods are non-isolated; they accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them. Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. (Other pods in the namespace that are not selected by any NetworkPolicy will continue to accept all traffic.)",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Only the Terway network plugin support the Network Policy feature, so please make sure not choose Flannel as network plugin when creating cluster. Using the management console: 1. Logon to ACK console 2. Click the Create Kubernetes Cluster button and select Terway in Network Plugin option.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Click the Create Kubernetes Cluster button and make sure Terway is selected in Network Plugin option.",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/97621.html https://help.aliyun.com/document_detail/86949.html",
+          "DefaultValue": "By default, Network Policy is disabled when you create a new cluster, and you should choose the Terway as the cluster network plugin when creating the cluster."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_network_policy_enabled"
+      ]
+    },
+    {
+      "Id": "7.8",
+      "Description": "Ensure ENI multiple IP mode support for Kubernetes Cluster",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Alibaba Cloud ENI (Elastic Network Interface) has supported assign ranges of internal IP addresses as aliases to a single virtual machine's ENI network interfaces. This is useful if you have lots of services running on a VM and you want to assign each service a different IP address without quota limitation.",
+          "RationaleStatement": "With the feature of ENI multiple IP mode, Kubernetes Engine clusters can allocate IP addresses from a CIDR block known to Terway network plugin. This makes your cluster more scalable and allows your cluster to better interact with other Alibaba Cloud products and entities. Using ENI multiple IPs has several benefits: • Pod IPs are reserved within the network ahead of time, which prevents conflict with other compute resources. • Firewall controls for Pods can be applied separately from their nodes. • Alias IPs allow Pods to directly access hosted services without using a NAT gateway.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Only the Terway network plugin support the Network Policy feature, so please make sure not choose Flannel as network plugin when creating cluster. Using the management console: 1. Logon to ACK console 2. Click the Create Kubernetes Cluster button and select Terway in Network Plugin option.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster name and go into the cluster detail page 3. Check if the meta of Network Plugin in Cluster Information is Terway",
+          "AdditionalInformation": "",
+          "References": "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni- https://help.aliyun.com/document_detail/97467.html",
+          "DefaultValue": "By default, ENI multiple IP mode is not support in Flannel network plugin which is the default plugin when creating the cluster, and you should choose the Terway as the cluster network plugin when creating the cluster."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_eni_multiple_ip_enabled"
+      ]
+    },
+    {
+      "Id": "7.9",
+      "Description": "Ensure Kubernetes Cluster is created with Private cluster enabled",
+      "Attributes": [
+        {
+          "Section": "7. Kubernetes Engine",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "A private cluster is a cluster that makes your master inaccessible from the public internet. In a private cluster, nodes do not have public IP addresses, so your workloads run in an environment that is isolated from the internet. Nodes have addresses only in the private address space. Nodes and masters communicate with each other privately using VPC peering.",
+          "RationaleStatement": "With a Private cluster enabled, VPC network peering gives you several advantages over using external IP addresses or VPNs to connect networks, including: • Network Latency: Public IP networking suffers higher latency than private networking. • Network Security: Service owners do not need to have their services exposed to the public Internet to reduce any associated risks. • Network Cost: Alibaba Cloud charges egress bandwidth pricing for networks using external IPs to communicate even if the traffic is within the same zone. If, however, the networks are peered they can use internal IPs to communicate and save on those egress costs. Regular network pricing still applies to all traffic.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to ACK console 2. Click the Create Kubernetes Cluster button and make sure Public Access is not enabled.",
+          "AuditProcedure": "Using the management console: 1. Logon to ACK console 2. Select the target cluster name and go into the cluster detail page 3. Check if there is no meta of API Server Public Network Endpoint under Cluster Information",
+          "AdditionalInformation": "",
+          "References": "https://help.aliyun.com/document_detail/100380.html",
+          "DefaultValue": "By default, public access is not enabled when creating new cluster."
+        }
+      ],
+      "Checks": [
+        "cs_kubernetes_private_cluster_enabled"
+      ]
+    },
+    {
+      "Id": "8.1",
+      "Description": "Ensure that Security Center is Advanced or Enterprise Edition",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "The Advanced or Enterprise Edition enables threat detection for network and endpoints, providing malware detection, webshell detection and anomaly detection in Security Center.",
+          "RationaleStatement": "The Advanced or Enterprise Edition allows for full protection to defend cloud threats.",
+          "ImpactStatement": "Additional cost will be incurred by enabling other versions of Security Center",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Overview. 3. Click Upgrade. 4. Select Advanced or Enterprise Edition. 5. Finish order placement.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console 2. Select Overview 3. Ensure Current Edition is Advanced or Enterprise Edition",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/product/28498.htm",
+          "DefaultValue": "Not installed."
+        }
+      ],
+      "Checks": [
+        "securitycenter_advanced_or_enterprise_edition"
+      ]
+    },
+    {
+      "Id": "8.2",
+      "Description": "Ensure that all assets are installed with security agent",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable protection on all endpoints.",
+          "RationaleStatement": "The endpoint protection of Security requires an agent to be installed on the endpoint to work. Such an agent-based approach allows the security center to provide a set of more comprehensive endpoint intrusion detection and protection capabilities, such as includes remote logon detection, webshell detection and removal, anomaly detection (detection of abnormal process behaviors and abnormal network connections), and detection of changes in key files and suspicious accounts in systems and applications.",
+          "ImpactStatement": "Additional cost may be incurred by enabling Security Center and install the agent",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click Agent. 4. On Client to be installed tab, select all items on the list. 5. Click On-click installation to install the agent all asset.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Overview. 3. Ensure Unprotected Assets is 0.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/111650.htm",
+          "DefaultValue": "Not installed."
+        }
+      ],
+      "Checks": [
+        "securitycenter_all_assets_agent_installed"
+      ]
+    },
+    {
+      "Id": "8.3",
+      "Description": "Ensure that Automatic Quarantine is enabled",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable automatic quarantine in Security Center may 1ncure additional cost.",
+          "RationaleStatement": "Once a virus is detected, the automatic quarantine feature prevents the virus from being executed.",
+          "ImpactStatement": "Enabling Automatic Quarantine in security center may incur additional cost",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click General. 4. Enable Virus Blocking.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click General. 4. Ensure Virus Blocking is enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/111847.htm",
+          "DefaultValue": "Not enabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.4",
+      "Description": "Ensure that Webshell detection is enabled on all web servers",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable webshell detection on all web servers to scans periodically the Web directories for detecting webshells on servers.",
+          "RationaleStatement": "Web servers are exposed to the Internet and they are commonly attacked through injected webshell by attackers.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click General. 4. Click Manage in Webshell Detection. 5. Add all web servers.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click General. 4. Click Manage in Webshell Detection. 5. Ensure all web servers are included.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/111847.htm",
+          "DefaultValue": "Not enabled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.5",
+      "Description": "Ensure that notification is enabled on all high risk items",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Enable all risk item notification in Vulnerability, Baseline Risks, Alerts and Accesskey Leak event detection categories.",
+          "RationaleStatement": "To make sure that relevant security operators would receive notifications as soon as security events happens.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click Notification. 4. Enable all high-risk items on Notification setting.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Settings. 3. Click Notification. 4. Review notification settings and ensure all high-risk items are enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/111648.htm",
+          "DefaultValue": "Not enabled."
+        }
+      ],
+      "Checks": [
+        "securitycenter_notification_enabled_high_risk"
+      ]
+    },
+    {
+      "Id": "8.6",
+      "Description": "Ensure that Config Assessment is granted with privilege",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Grant Security Centers Cloud Platform Configuration Assessment the privilege to access other cloud product.",
+          "RationaleStatement": "Prior to using Cloud Platform Configuration Assessment, it requires privilege to assess other cloud products settings.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Config Assessment. 3. Click Authorize.",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console. 2. Select Config Assessment. 3. Ensure that the prompt of asking privilege is not shown.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/42302.htm",
+          "DefaultValue": "No privilege is authorized by default."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.7",
+      "Description": "Ensure that scheduled vulnerability scan is enabled on all servers",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure that scheduled vulnerability scan is enabled on all servers.",
+          "RationaleStatement": "Be sure that vulnerability scan is performed periodically to discover system vulnerabilities in time.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Login to Security Center Console. 2. Select Vulnerabilities. 3. Click Settings. 4. Apply all type of vulnerabilities. 5. Enable High and Medium vulnerabilities scan level.",
+          "AuditProcedure": "1. Logon to Security Center Console. 2. Select Vulnerabilities. 3. Click Settings. 4. Ensure that all type of vulnerabilities is enabled. 5. Ensure that High and Medium vulnerabilities scan level are enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/109076.htm",
+          "DefaultValue": "Not enabled."
+        }
+      ],
+      "Checks": [
+        "securitycenter_vulnerability_scan_enabled"
+      ]
+    },
+    {
+      "Id": "8.8",
+      "Description": "Ensure that Asset Fingerprint automatically collects asset fingerprint data",
+      "Attributes": [
+        {
+          "Section": "8. Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "The Enterprise Edition enables asset fingerprint collection for endpoints providing a collection of port, software, processes, scheduled tasks and middleware in Security Center.",
+          "RationaleStatement": "The Enterprise Edition allows for enhanced investigation collection of artifacts to identify root cause in a more timely manner of single or multiple server instances hosted within the cloud.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using the management console: 1. Logon to Security Center Console 2. Select Investigation> Asset Fingerprints 3. Click Setting and set the Refresh Frequencies 4. Set refresh frequency Automatic collection to Collected once a day",
+          "AuditProcedure": "Using the management console: 1. Logon to Security Center Console 2. Select Investigation > Asset Fingerprints 3. Click Settings 4. Ensure the Refresh Frequencies are all set to Collected once a day",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/146565.htm",
+          "DefaultValue": "Not Enabled"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}

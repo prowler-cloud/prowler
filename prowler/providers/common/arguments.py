@@ -1,6 +1,7 @@
 import sys
 from argparse import Namespace
 from importlib import import_module
+from typing import Optional, Sequence
 
 from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider, providers_path
@@ -16,15 +17,9 @@ def init_providers_parser(self):
     providers = Provider.get_available_providers()
     for provider in providers:
         try:
-            # Map CLI provider names to directory names (for cases where they differ)
-            provider_directory_map = {
-                "oci": "oraclecloud",  # OCI SDK conflict avoidance
-            }
-            provider_directory = provider_directory_map.get(provider, provider)
-
             getattr(
                 import_module(
-                    f"{providers_path}.{provider_directory}.{provider_arguments_lib_path}"
+                    f"{providers_path}.{provider}.{provider_arguments_lib_path}"
                 ),
                 init_provider_arguments_function,
             )(self)
@@ -38,18 +33,10 @@ def init_providers_parser(self):
 def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
     """validate_provider_arguments returns {True, "} if the provider arguments passed are valid and can be used together"""
     try:
-        # Map CLI provider names to directory names (for cases where they differ)
-        provider_directory_map = {
-            "oci": "oraclecloud",  # OCI SDK conflict avoidance
-        }
-        provider_directory = provider_directory_map.get(
-            arguments.provider, arguments.provider
-        )
-
         # Provider function must be located at prowler.providers.<provider>.lib.arguments.arguments.validate_arguments
         return getattr(
             import_module(
-                f"{providers_path}.{provider_directory}.{provider_arguments_lib_path}"
+                f"{providers_path}.{arguments.provider}.{provider_arguments_lib_path}"
             ),
             validate_provider_arguments_function,
         )(arguments)
@@ -67,3 +54,19 @@ def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         sys.exit(1)
+
+
+def validate_asff_usage(
+    provider: Optional[str], output_formats: Optional[Sequence[str]]
+) -> tuple[bool, str]:
+    """Ensure json-asff output is only requested for the AWS provider."""
+    if not output_formats or "json-asff" not in output_formats:
+        return (True, "")
+
+    if provider == "aws":
+        return (True, "")
+
+    return (
+        False,
+        f"json-asff output format is only available for the aws provider, but {provider} was selected",
+    )

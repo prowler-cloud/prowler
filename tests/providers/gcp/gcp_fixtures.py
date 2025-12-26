@@ -56,6 +56,8 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_policies_calls(client)
     mock_api_sink_calls(client)
     mock_api_services_calls(client)
+    mock_api_access_policies_calls(client)
+    mock_api_instance_group_managers_calls(client)
 
     return client
 
@@ -85,7 +87,15 @@ def mock_api_projects_calls(client: MagicMock):
     client.projects().locations().keys().list_next.return_value = None
     # Mocking policy
     client.projects().getIamPolicy().execute.return_value = {
-        "auditConfigs": [MagicMock()],
+        "auditConfigs": [
+            {
+                "service": "allServices",
+                "auditLogConfigs": [
+                    {"logType": "ADMIN_READ"},
+                    {"logType": "DATA_WRITE"},
+                ],
+            }
+        ],
         "bindings": [
             {
                 "role": "roles/resourcemanager.organizationAdmin",
@@ -109,8 +119,9 @@ def mock_api_projects_calls(client: MagicMock):
         "etag": "BwWWja0YfJA=",
         "version": 3,
     }
-    # Used by compute client
+    # Used by compute client and cloudresourcemanager
     client.projects().get().execute.return_value = {
+        "projectNumber": "123456789012",
         "commonInstanceMetadata": {
             "items": [
                 {
@@ -126,7 +137,7 @@ def mock_api_projects_calls(client: MagicMock):
                     "value": "TRUE",
                 },
             ]
-        }
+        },
     }
     client.projects().list_next.return_value = None
     # Used by dataproc client
@@ -246,7 +257,15 @@ def mock_api_projects_calls(client: MagicMock):
             == "projects/123/locations/eu-west1/keyRings/keyring1/cryptoKeys/key1"
         ):
             return_value.execute.return_value = {
-                "auditConfigs": [MagicMock()],
+                "auditConfigs": [
+                    {
+                        "service": "allServices",
+                        "auditLogConfigs": [
+                            {"logType": "ADMIN_READ"},
+                            {"logType": "DATA_WRITE"},
+                        ],
+                    }
+                ],
                 "bindings": [
                     {
                         "role": "roles/resourcemanager.organizationAdmin",
@@ -274,7 +293,15 @@ def mock_api_projects_calls(client: MagicMock):
             == "projects/123/locations/eu-west1/keyRings/keyring2/cryptoKeys/key2"
         ):
             return_value.execute.return_value = {
-                "auditConfigs": [MagicMock()],
+                "auditConfigs": [
+                    {
+                        "service": "allServices",
+                        "auditLogConfigs": [
+                            {"logType": "ADMIN_READ"},
+                            {"logType": "DATA_WRITE"},
+                        ],
+                    }
+                ],
                 "bindings": [
                     {
                         "role": "roles/resourcemanager.organizationAdmin",
@@ -733,6 +760,11 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                             "diskType": "disk_type",
                         }
                     ],
+                    "scheduling": {
+                        "automaticRestart": False,
+                        "preemptible": False,
+                        "provisioningModel": "STANDARD",
+                    },
                 },
                 {
                     "name": "instance2",
@@ -759,6 +791,11 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                             "diskType": "disk_type",
                         }
                     ],
+                    "scheduling": {
+                        "automaticRestart": False,
+                        "preemptible": False,
+                        "provisioningModel": "STANDARD",
+                    },
                 },
             ]
         }
@@ -1076,3 +1113,131 @@ def mock_api_services_calls(client: MagicMock):
         ]
     }
     client.services().list_next.return_value = None
+
+
+def mock_api_access_policies_calls(client: MagicMock):
+    # Mock access policies list based on parent organization
+    def mock_list_access_policies(parent):
+        return_value = MagicMock()
+        # Only return policies for the first organization (123456789)
+        if parent == "organizations/123456789":
+            return_value.execute.return_value = {
+                "accessPolicies": [
+                    {
+                        "name": "accessPolicies/123456",
+                        "title": "Test Access Policy 1",
+                    },
+                    {
+                        "name": "accessPolicies/789012",
+                        "title": "Test Access Policy 2",
+                    },
+                ]
+            }
+        elif parent == "organizations/987654321":
+            # No policies for the second organization
+            return_value.execute.return_value = {"accessPolicies": []}
+        else:
+            return_value.execute.return_value = {"accessPolicies": []}
+        return return_value
+
+    client.accessPolicies().list = mock_list_access_policies
+    client.accessPolicies().list_next.return_value = None
+
+    # Mock service perimeters list based on parent access policy
+    def mock_list_service_perimeters(parent):
+        return_value = MagicMock()
+        if parent == "accessPolicies/123456":
+            return_value.execute.return_value = {
+                "servicePerimeters": [
+                    {
+                        "name": "accessPolicies/123456/servicePerimeters/perimeter1",
+                        "title": "Test Perimeter 1",
+                        "perimeterType": "PERIMETER_TYPE_REGULAR",
+                        "status": {
+                            "resources": [
+                                f"projects/{GCP_PROJECT_ID}",
+                            ],
+                            "restrictedServices": [
+                                "storage.googleapis.com",
+                                "bigquery.googleapis.com",
+                            ],
+                        },
+                    },
+                    {
+                        "name": "accessPolicies/123456/servicePerimeters/perimeter2",
+                        "title": "Test Perimeter 2",
+                        "perimeterType": "PERIMETER_TYPE_BRIDGE",
+                        "spec": {
+                            "resources": [],
+                            "restrictedServices": [
+                                "compute.googleapis.com",
+                            ],
+                        },
+                    },
+                ]
+            }
+        elif parent == "accessPolicies/789012":
+            # No perimeters for the second policy
+            return_value.execute.return_value = {"servicePerimeters": []}
+        else:
+            return_value.execute.return_value = {"servicePerimeters": []}
+        return return_value
+
+    client.accessPolicies().servicePerimeters().list = mock_list_service_perimeters
+    client.accessPolicies().servicePerimeters().list_next.return_value = None
+
+
+def mock_api_instance_group_managers_calls(client: MagicMock):
+    """Mock API calls for Managed Instance Groups (both regional and zonal)."""
+    regional_mig1_id = str(uuid4())
+    regional_mig2_id = str(uuid4())
+    zonal_mig1_id = str(uuid4())
+
+    # Mock regional instance group managers
+    client.regionInstanceGroupManagers().list().execute.return_value = {
+        "items": [
+            {
+                "name": "regional-mig-1",
+                "id": regional_mig1_id,
+                "targetSize": 3,
+                "distributionPolicy": {
+                    "zones": [
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-b"
+                        },
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-c"
+                        },
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-d"
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "regional-mig-single-zone",
+                "id": regional_mig2_id,
+                "targetSize": 1,
+                "distributionPolicy": {
+                    "zones": [
+                        {
+                            "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/europe-west1-b"
+                        }
+                    ]
+                },
+            },
+        ]
+    }
+    client.regionInstanceGroupManagers().list_next.return_value = None
+
+    # Mock zonal instance group managers
+    client.instanceGroupManagers().list().execute.return_value = {
+        "items": [
+            {
+                "name": "zonal-mig-1",
+                "id": zonal_mig1_id,
+                "targetSize": 2,
+            },
+        ]
+    }
+    client.instanceGroupManagers().list_next.return_value = None

@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_policy_no_administrative_privileges",
+  "CheckTitle": "RAM policies that allow full \"*:*\" administrative privileges are not created",
+  "CheckType": [
+    "Abnormal account",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:policy/{policy-name}",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudRAMPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "**RAM policies** represent permissions that can be granted to users, groups, or roles. It is recommended to grant **least privilege**—that is, granting only the permissions required to perform tasks.\n\nDetermine what users need to do and then create policies with permissions that only fit those tasks, instead of allowing full administrative privileges.",
+  "Risk": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary. Providing **full administrative privileges** exposes your resources to potentially unwanted actions.\n\nRAM policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be prohibited.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/93733.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/policies-with-full-administrative-privileges.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType Custom --UserName <ram_user>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RAM Console**\n2. Choose **Permissions** > **Policies**\n3. From the Policy Type drop-down list, select **Custom Policy**\n4. In the Policy Name column, click the name of the target policy\n5. In the Policy Document section, edit the policy to remove the statement with full administrative privileges, or remove the policy from any RAM users, user groups, or roles that have this policy attached",
+      "Url": "https://hub.prowler.com/check/ram_policy_no_administrative_privileges"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

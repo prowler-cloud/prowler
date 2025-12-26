@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "ResourceGroup": "compute",
   "Description": "EC2 Auto Scaling groups attached to a load balancer are evaluated for **ELB-based health checks** that use the load balancer's target health instead of instance-only checks.",
   "Risk": "Without **ELB health checks**, the group may keep instances that fail load balancer probes, causing:\n- Reduced **availability** from routing to bad targets\n- Higher error rates impacting transaction **integrity**\n- Inefficient scaling and increased **costs**",
   "RelatedUrl": "",

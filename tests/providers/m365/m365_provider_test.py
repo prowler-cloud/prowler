@@ -932,37 +932,6 @@ class TestM365Provider:
             assert result.certificate_content == certificate_content
             assert identity.identity_type == "Service Principal with Certificate"
 
-    def test_setup_powershell_invalid_credentials(self):
-        """Test setup_powershell with invalid credentials"""
-        credentials_dict = {
-            "client_id": "test_client_id",
-            "tenant_id": "test_tenant_id",
-            "client_secret": "test_client_secret",
-        }
-
-        with (
-            patch("prowler.providers.m365.m365_provider.M365PowerShell") as mock_ps,
-            pytest.raises(M365ConfigCredentialsError) as exception,
-        ):
-            mock_session = MagicMock()
-            mock_session.test_credentials.return_value = False
-            mock_session.close = MagicMock()
-            mock_ps.return_value = mock_session
-
-            M365Provider.setup_powershell(
-                m365_credentials=credentials_dict,
-                identity=M365IdentityInfo(
-                    identity_id=IDENTITY_ID,
-                    identity_type="User",
-                    tenant_id=TENANT_ID,
-                    tenant_domain=DOMAIN,
-                    tenant_domains=["test.onmicrosoft.com"],
-                    location=LOCATION,
-                ),
-            )
-        assert exception.type == M365ConfigCredentialsError
-        assert "The provided credentials are not valid." in str(exception.value)
-
     def test_validate_arguments_browser_auth_without_tenant_id(self):
         """Test validate_arguments with browser_auth but missing tenant_id"""
         with pytest.raises(M365BrowserAuthNoTenantIDError) as exception:

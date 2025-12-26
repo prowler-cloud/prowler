@@ -338,3 +338,55 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
+
+    @mock_aws
+    def test_iam_service_role_with_cross_service_confused_deputy_prevention_service_list(
+        self,
+    ):
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_document = {
+            "Version": "2008-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": ["scheduler.amazonaws.com", "events.amazonaws.com"]
+                    },
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        response = iam_client.create_role(
+            RoleName="test",
+            AssumeRolePolicyDocument=dumps(policy_document),
+        )
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
+                iam_role_cross_service_confused_deputy_prevention,
+            )
+
+            check = iam_role_cross_service_confused_deputy_prevention()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "IAM Service Role test does not prevent against a cross-service confused deputy attack."
+            )
+            assert result[0].resource_id == "test"
+            assert result[0].resource_arn == response["Role"]["Arn"]

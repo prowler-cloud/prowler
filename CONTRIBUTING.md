@@ -10,4 +10,4 @@
 Want some swag as appreciation for your contribution?
 
 # Prowler Developer Guide
-https://docs.prowler.com/projects/prowler-open-source/en/latest/developer-guide/introduction/
+https://goto.prowler.com/devguide

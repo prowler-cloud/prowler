@@ -40,7 +40,7 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
           return {
             card: "border-danger-300",
             iconWrapper: "bg-danger-50 border-danger-100",
-            icon: "text-danger",
+            icon: "text-text-error",
           };
 
         default:

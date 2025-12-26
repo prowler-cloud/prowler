@@ -7,8 +7,6 @@ on:
     types:
       - 'labeled'
       - 'closed'
-    paths:
-      - '.github/workflows/backport.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -40,7 +38,7 @@ jobs:
 
       - name: Backport PR
         if: steps.label_check.outputs.label_check == 'success'
-        uses: sorenlouv/backport-github-action@ad888e978060bc1b2798690dd9d03c4036560947 # v9.5.1
+        uses: sorenlouv/backport-github-action@516854e7c9f962b9939085c9a92ea28411d1ae90 # v10.2.0
         with:
           github_token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           auto_backport_label_prefix: ${{ env.BACKPORT_LABEL_PREFIX }}

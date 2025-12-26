@@ -1,12 +1,14 @@
-import React from "react";
-
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
@@ -24,6 +26,14 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <M365ProviderBadge width={35} height={35} />;
     case "github":
       return <GitHubProviderBadge width={35} height={35} />;
+    case "iac":
+      return <IacProviderBadge width={35} height={35} />;
+    case "oraclecloud":
+      return <OracleCloudProviderBadge width={35} height={35} />;
+    case "mongodbatlas":
+      return <MongoDBAtlasProviderBadge width={35} height={35} />;
+    case "alibabacloud":
+      return <AlibabaCloudProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -43,6 +53,14 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Microsoft 365";
     case "github":
       return "GitHub";
+    case "iac":
+      return "Infrastructure as Code";
+    case "oraclecloud":
+      return "Oracle Cloud Infrastructure";
+    case "mongodbatlas":
+      return "MongoDB Atlas";
+    case "alibabacloud":
+      return "Alibaba Cloud";
     default:
       return "Unknown Provider";
   }

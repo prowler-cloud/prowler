@@ -36,9 +36,14 @@ class CosmosDB(AzureService):
                                     name=private_endpoint_connection.name,
                                     type=private_endpoint_connection.type,
                                 )
-                                for private_endpoint_connection in account.private_endpoint_connections
+                                for private_endpoint_connection in getattr(
+                                    account, "private_endpoint_connections", []
+                                )
+                                if private_endpoint_connection
                             ],
-                            disable_local_auth=account.disable_local_auth,
+                            disable_local_auth=getattr(
+                                account, "disable_local_auth", False
+                            ),
                         )
                     )
             except Exception as error:

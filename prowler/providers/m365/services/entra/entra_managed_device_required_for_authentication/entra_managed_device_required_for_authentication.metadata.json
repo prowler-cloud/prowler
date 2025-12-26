@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that only managed devices are required for authentication to reduce the risk of unauthorized access from unsecured or unmanaged devices.",
   "Risk": "Allowing authentication from unmanaged devices increases the attack surface, as these devices may lack security controls, endpoint detection, and compliance policies. Attackers could leverage compromised credentials from unsecured devices to gain unauthorized access to corporate resources.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
