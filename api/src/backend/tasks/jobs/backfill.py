@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Sum
+from django.db.models import OuterRef, Subquery, Sum
 from django.utils import timezone
 from tasks.jobs.scan import aggregate_category_counts, aggregate_resource_group_counts
 
@@ -372,10 +372,17 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
             return {"status": "scan is not completed"}
 
         resource_group_counts: dict[tuple[str, str], dict[str, int | set]] = {}
-        for finding in Finding.all_objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
-        ).values(
-            "resource_group", "severity", "status", "delta", "muted", "resource_uid"
+        # Get findings with their first resource UID via annotation
+        resource_uid_subquery = ResourceFindingMapping.objects.filter(
+            finding_id=OuterRef("id"), tenant_id=tenant_id
+        ).values("resource__uid")[:1]
+
+        for finding in (
+            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .annotate(resource_uid=Subquery(resource_uid_subquery))
+            .values(
+                "resource_group", "severity", "status", "delta", "muted", "resource_uid"
+            )
         ):
             aggregate_resource_group_counts(
                 resource_group=finding.get("resource_group"),

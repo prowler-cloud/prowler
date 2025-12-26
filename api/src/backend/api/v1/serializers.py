@@ -1360,7 +1360,7 @@ class FindingMetadataSerializer(BaseSerializerV1):
     )
     categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     resource_groups = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True
+        child=serializers.CharField(), allow_empty=True, required=False, default=list
     )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")

@@ -3036,9 +3036,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
             resource_groups = list(
-                filtered_queryset.values_list("resource_group", flat=True)
-                .exclude(resource_group__isnull=True)
+                filtered_queryset.exclude(resource_group__isnull=True)
                 .exclude(resource_group__exact="")
+                .values_list("resource_group", flat=True)
                 .distinct()
                 .order_by("resource_group")
             )

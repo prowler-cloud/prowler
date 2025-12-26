@@ -4364,6 +4364,17 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "iam"}
 
+    def test_findings_metadata_latest_resource_groups(
+        self, authenticated_client, latest_scan_finding_with_categories
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert "resource_groups" in attributes
+        assert "ai_ml" in attributes["resource_groups"]
+
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
     ):
@@ -4404,6 +4415,49 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[category]": "nonexistent",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_findings_filter_by_resource_group(
+        self, authenticated_client, findings_with_resource_group
+    ):
+        finding = findings_with_resource_group
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_group]": "storage",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["resource_group"] == "storage"
+
+    def test_findings_filter_by_resource_group_in(
+        self, authenticated_client, findings_with_multiple_resource_groups
+    ):
+        finding1, _ = findings_with_multiple_resource_groups
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_group__in]": "storage,security",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_resource_group_no_match(
+        self, authenticated_client, findings_with_resource_group
+    ):
+        finding = findings_with_resource_group
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_group]": "nonexistent",
                 "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -7955,6 +8009,225 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["total_findings"] == 25
         assert data[0]["attributes"]["failed_findings"] == 13
         assert data[0]["attributes"]["new_failed_findings"] == 5
+
+    def test_overview_resource_groups_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-resource_groups"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_overview_resource_groups_aggregates_by_resource_group_with_severity(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="resource-groups-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "storage",
+            "high",
+            total_findings=20,
+            failed_findings=10,
+            new_failed_findings=5,
+            resources_count=8,
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "storage",
+            "medium",
+            total_findings=15,
+            failed_findings=7,
+            new_failed_findings=3,
+            resources_count=5,
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "security",
+            "critical",
+            total_findings=10,
+            failed_findings=8,
+            new_failed_findings=2,
+            resources_count=4,
+        )
+
+        response = authenticated_client.get(reverse("overview-resource_groups"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+        storage_data = next(d for d in data if d["id"] == "storage")
+        security_data = next(d for d in data if d["id"] == "security")
+
+        assert storage_data["attributes"]["total_findings"] == 35
+        assert storage_data["attributes"]["failed_findings"] == 17
+        assert storage_data["attributes"]["new_failed_findings"] == 8
+        assert storage_data["attributes"]["resources_count"] == 13
+        assert security_data["attributes"]["total_findings"] == 10
+        assert security_data["attributes"]["failed_findings"] == 8
+        assert security_data["attributes"]["resources_count"] == 4
+
+    @pytest.mark.parametrize(
+        "filter_key,filter_value_fn,expected_total,expected_failed",
+        [
+            ("filter[provider_id]", lambda p1, p2: str(p1.id), 10, 5),
+            ("filter[provider_id__in]", lambda p1, p2: f"{p1.id},{p2.id}", 25, 12),
+            ("filter[provider_type]", lambda p1, p2: "aws", 10, 5),
+            ("filter[provider_type__in]", lambda p1, p2: "aws,gcp", 25, 12),
+        ],
+    )
+    def test_overview_resource_groups_provider_filters(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+        filter_key,
+        filter_value_fn,
+        expected_total,
+        expected_failed,
+    ):
+        tenant = tenants_fixture[0]
+        provider1 = providers_fixture[0]  # AWS
+        gcp_provider = providers_fixture[2]  # GCP
+
+        scan1 = Scan.objects.create(
+            name="aws-rg-scan",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="gcp-rg-scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant, scan1, "storage", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_resource_group_summary(
+            tenant, scan2, "storage", "high", total_findings=15, failed_findings=7
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-resource_groups"),
+            {filter_key: filter_value_fn(provider1, gcp_provider)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["total_findings"] == expected_total
+        assert data[0]["attributes"]["failed_findings"] == expected_failed
+
+    def test_overview_resource_groups_resource_group_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="rg-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant, scan, "storage", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_resource_group_summary(
+            tenant, scan, "compute", "medium", total_findings=20, failed_findings=8
+        )
+        create_scan_resource_group_summary(
+            tenant, scan, "security", "low", total_findings=15, failed_findings=3
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-resource_groups"),
+            {"filter[resource_group__in]": "storage,compute"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        resource_group_ids = {item["id"] for item in data}
+        assert resource_group_ids == {"storage", "compute"}
+
+    def test_overview_resource_groups_aggregates_multiple_providers(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="multi-provider-rg-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="multi-provider-rg-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant,
+            scan1,
+            "storage",
+            "high",
+            total_findings=10,
+            failed_findings=5,
+            new_failed_findings=2,
+            resources_count=4,
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan2,
+            "storage",
+            "high",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+            resources_count=6,
+        )
+
+        response = authenticated_client.get(reverse("overview-resource_groups"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "storage"
+        assert data[0]["attributes"]["total_findings"] == 25
+        assert data[0]["attributes"]["failed_findings"] == 13
+        assert data[0]["attributes"]["new_failed_findings"] == 5
+        assert data[0]["attributes"]["resources_count"] == 10
 
 
 @pytest.mark.django_db
