@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Organizations delegated administrators** are compared against a predefined **trusted list** to identify delegations that are not explicitly approved. The evaluation also notes when no delegated administrators exist.",
   "Risk": "Unapproved delegated administrators can alter **SCPs**, invite/move accounts, and create privileged roles, enabling **privilege escalation**. This undermines guardrails, risking loss of **integrity**, exposure of **confidentiality** across accounts, and impacts **availability** through organization-wide policy changes.",
   "RelatedUrl": "",

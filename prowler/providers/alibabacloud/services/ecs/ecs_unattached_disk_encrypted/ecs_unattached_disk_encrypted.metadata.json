@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_unattached_disk_encrypted",
+  "CheckTitle": "Unattached disks are encrypted",
+  "CheckType": [
+    "Sensitive file tampering"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ecs:region:account-id:disk/{disk-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudECSDisk",
+  "ResourceGroup": "storage",
+  "Description": "**Cloud disk encryption** protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when read from disks.",
+  "Risk": "**Unencrypted unattached disks** pose a security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties.\n\nUnattached disks are especially vulnerable as they may be forgotten or not monitored, increasing the risk of **unauthorized access**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/encrypt-unattached-disks.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs CreateDisk --DiskName <disk_name> --Size <size> --Encrypted true --KmsKeyId <kms_key_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_ecs_disk\" \"encrypted\" {\n  zone_id   = \"cn-hangzhou-a\"\n  disk_name = \"encrypted-disk\"\n  category  = \"cloud_efficiency\"\n  size      = 20\n  encrypted = true\n  kms_key_id = alicloud_kms_key.example.id\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ECS Console**\n2. In the left-side navigation pane, choose **Storage & Snapshots** > **Disk**\n3. In the upper-right corner of the Disks page, click **Create Disk**\n4. In the Disk section, check the **Disk Encryption** box and select a key from the drop-down list\n\n**Note:** After a data disk is created, you can only encrypt the data disk by manually copying data from the unencrypted disk to a new encrypted disk.",
+      "Url": "https://hub.prowler.com/check/ecs_unattached_disk_encrypted"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

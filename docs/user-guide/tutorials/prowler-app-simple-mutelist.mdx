@@ -1,0 +1,180 @@
+---
+title: "Simple Mutelist"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx";
+
+<VersionBadge version="5.16.0" />
+
+Prowler App provides Simple Mutelist, an intuitive way to mute findings directly from the Findings page without writing YAML configuration. This feature streamlines the muting workflow by allowing individual or bulk muting with just a few clicks.
+
+## What Is Simple Mutelist?
+
+Simple Mutelist enables users to:
+
+- **Mute findings directly from the Findings table** using checkbox selection
+- **Perform bulk muting** of multiple findings at once
+- **Manage mute rules** through a dedicated interface
+- **Toggle mute rules on and off** without deleting them
+- **Edit mute rule justifications** after creation
+
+<Note>
+Simple Mutelist creates rules based on the finding's unique identifier (UID). For complex muting patterns based on checks, regions, tags, or regular expressions, use [Advanced Mutelist](/user-guide/tutorials/prowler-app-mute-findings) with YAML configuration.
+
+</Note>
+
+## Accessing the Mutelist Page
+
+To access the Mutelist page:
+
+1. Click "Mutelist" in the left navigation menu
+
+The Mutelist page contains two tabs:
+
+- **Simple:** Displays a table of mute rules created through Simple Mutelist
+- **Advanced:** Provides YAML-based configuration for complex muting patterns
+
+## Muting Findings from the Findings Page
+
+### Muting Individual Findings
+
+To mute a single finding:
+
+1. Navigate to the Findings page
+2. Locate the finding to mute
+3. Click the actions menu (three dots) on the finding row
+4. Select "Mute"
+5. Enter a justification for muting this finding
+6. Click "Confirm" to create the mute rule
+
+### Muting Multiple Findings (Bulk Muting)
+
+To mute multiple findings at once:
+
+1. Navigate to the Findings page
+2. Select findings using the checkboxes in the leftmost column
+3. Click the floating "Mute" button that appears at the bottom of the screen
+4. Enter a justification that applies to all selected findings
+5. Click "Confirm" to create mute rules for all selected findings
+
+<Note>
+Findings that are already muted display a muted icon instead of a checkbox. These findings cannot be selected for bulk operations.
+
+</Note>
+
+## Managing Mute Rules
+
+### Viewing Mute Rules
+
+To view all mute rules:
+
+1. Navigate to the Mutelist page
+2. Select the "Simple" tab
+3. The table displays all mute rules with the following information:
+   - **Finding UID:** The unique identifier of the muted finding
+   - **Justification:** The reason provided for muting
+   - **Enabled:** Whether the rule is currently active
+   - **Created:** When the rule was created
+
+### Enabling and Disabling Mute Rules
+
+To toggle a mute rule without deleting it:
+
+1. Navigate to the Mutelist page
+2. Select the "Simple" tab
+3. Locate the mute rule
+4. Use the toggle switch in the "Enabled" column to enable or disable the rule
+
+<Note>
+Disabled mute rules remain in the system but do not affect findings. Findings associated with disabled rules will appear as unmuted in subsequent scans.
+
+</Note>
+
+### Editing Mute Rules
+
+To edit a mute rule's justification:
+
+1. Navigate to the Mutelist page
+2. Select the "Simple" tab
+3. Click the actions menu (three dots) on the mute rule row
+4. Select "Edit"
+5. Update the justification
+6. Click "Save" to apply changes
+
+### Deleting Mute Rules
+
+To permanently remove a mute rule:
+
+1. Navigate to the Mutelist page
+2. Select the "Simple" tab
+3. Click the actions menu (three dots) on the mute rule row
+4. Select "Delete"
+5. Confirm the deletion
+
+<Warning>
+Deleting a mute rule is permanent. The finding will appear as unmuted in subsequent scans. To temporarily unmute a finding without losing the rule, disable the rule instead of deleting it.
+
+</Warning>
+
+## How Simple Mutelist Works
+
+Simple Mutelist creates mute rules based on a finding's unique identifier (UID). When a mute rule is created:
+
+- **Existing findings** matching the UID are immediately marked as muted
+- **Historical findings** with the same UID are also muted
+- **Future findings** from subsequent scans are automatically muted if they match the UID
+
+### Uniqueness Constraint
+
+Each finding UID can only have one mute rule. Attempting to create a duplicate mute rule for the same finding displays an error message indicating the rule already exists.
+
+## Simple Mutelist vs. Advanced Mutelist
+
+| Feature                  | Simple Mutelist                           | Advanced Mutelist                                      |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------ |
+| **Configuration method** | Point-and-click interface                 | YAML configuration file                                |
+| **Muting scope**         | Individual finding UIDs                   | Patterns based on checks, regions, resources, and tags |
+| **Regular expressions**  | Not supported                             | Fully supported                                        |
+| **Bulk operations**      | Checkbox selection in Findings table      | YAML wildcards and patterns                            |
+| **Best for**             | Quick, ad-hoc muting of specific findings | Complex, policy-driven muting rules                    |
+
+### When to Use Simple Mutelist
+
+- Muting specific findings identified during review
+- Quick suppression of known false positives
+- Ad-hoc muting without YAML knowledge
+
+### When to Use Advanced Mutelist
+
+- Muting all findings for a specific check across regions
+- Pattern-based muting using regular expressions
+- Tag-based muting for environment-specific resources
+- Complex rules with exceptions
+
+## Best Practices
+
+1. **Provide meaningful justifications:** Document why each finding is muted for audit trails and team communication
+2. **Review muted findings regularly:** Periodically audit mute rules to ensure they remain valid
+3. **Use disable instead of delete:** When temporarily unmuting findings, disable rules rather than deleting them
+4. **Combine with Advanced Mutelist:** Use Simple Mutelist for specific findings and Advanced Mutelist for broad patterns
+5. **Limit bulk muting:** Review findings individually when possible to ensure appropriate justification for each
+
+## Troubleshooting
+
+### Duplicate Rule Error
+
+If an error indicates a mute rule already exists for a finding:
+
+1. Navigate to the Mutelist page
+2. Search for the existing rule in the Simple tab
+3. Edit the existing rule's justification if needed, or
+4. Delete the existing rule and create a new one
+
+### Finding Still Appears Unmuted
+
+If a muted finding still appears unmuted:
+
+1. Verify the mute rule exists in the Mutelist page
+2. Ensure the mute rule is enabled (toggle is on)
+3. Check that the finding UID matches the mute rule
+4. Wait for the next scan to see updated muting status on historical findings

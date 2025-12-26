@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Organizations SCPs** limit account actions to approved regions using conditions on `aws:RequestedRegion`.\n\nThis evaluates whether policies exist and fully restrict access to the configured allowlist, rather than only some regions.",
   "Risk": "Without comprehensive Region limits, users or attackers can deploy resources in ungoverned locations, bypassing monitoring and guardrails.\n\nImpacts:\n- Data outside approved jurisdictions (confidentiality)\n- Policy gaps and drift (integrity)\n- IR blind spots and unexpected cost (availability)",
   "RelatedUrl": "",

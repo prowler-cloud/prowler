@@ -10,16 +10,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS account** membership in **AWS Organizations** with organization status `ACTIVE`.\n\nAssesses if the account is associated with an organization and that the organization state is `ACTIVE`.",
   "Risk": "Absence of **AWS Organizations** weakens governance across accounts. Without **SCP guardrails** and centralized policy, excessive permissions, unsafe network settings, or risky services may be enabled, threatening **confidentiality** and **integrity**. Fragmented logging and response slow containment, impacting **availability** and increasing cost exposure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html",
-    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_view_org.html",
-    "https://github.com/awslabs/landing-zone-accelerator-on-aws/issues/894",
-    "https://kb.wisc.edu/129991",
-    "https://hexdocs.pm/aws/0.5.0/AWS.Organizations.html",
-    "https://library.tf/modules/SevenPico/organizations/aws/latest"
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_view_org.html"
   ],
   "Remediation": {
     "Code": {

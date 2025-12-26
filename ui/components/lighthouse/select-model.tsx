@@ -18,7 +18,7 @@ import {
 
 // Recommended models per provider
 const RECOMMENDED_MODELS: Record<LighthouseProvider, Set<string>> = {
-  openai: new Set(["gpt-5"]),
+  openai: new Set(["gpt-5.2"]),
   bedrock: new Set([]),
   openai_compatible: new Set([]),
 };
@@ -241,7 +241,7 @@ export const SelectModel = ({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{model.name}</span>
                   {isRecommended(model.id) && (
-                    <span className="bg-bg-data-info text-text-success-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
+                    <span className="bg-bg-pass-secondary text-text-success-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
                       <Icon icon="heroicons:star-solid" className="h-3 w-3" />
                       Recommended
                     </span>

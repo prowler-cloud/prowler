@@ -380,11 +380,9 @@ export function MultiSelectSeparator({
 export function MultiSelectSelectAll({
   className,
   children = "Select All",
-  allValues = [],
   ...props
-}: Omit<ComponentPropsWithoutRef<"div">, "children"> & {
+}: Omit<ComponentPropsWithoutRef<"button">, "children"> & {
   children?: ReactNode;
-  allValues?: string[];
 }) {
   const { selectedValues, onValuesChange } = useMultiSelectContext();
 
@@ -392,49 +390,28 @@ export function MultiSelectSelectAll({
     return null;
   }
 
-  const selectedArray = Array.from(selectedValues);
-  const allSelected =
-    allValues.length > 0 && selectedArray.length === allValues.length;
+  const hasSelections = selectedValues.size > 0;
 
-  const handleSelectAll = () => {
-    if (allSelected) {
-      // Deselect all
-      onValuesChange?.([]);
-    } else {
-      // Select all
-      onValuesChange?.(allValues);
-    }
+  const handleClearAll = () => {
+    // Clear all selections
+    onValuesChange?.([]);
   };
 
   return (
-    <div
-      role="option"
-      aria-selected={allSelected}
+    <button
+      type="button"
       data-slot="multiselect-select-all"
       className={cn(
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
-        allSelected && "bg-slate-100 dark:bg-slate-800/50",
+        hasSelections && "text-destructive hover:text-destructive",
         "font-semibold",
         className,
       )}
-      onClick={handleSelectAll}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleSelectAll();
-        }
-      }}
-      tabIndex={0}
+      onClick={handleClearAll}
       {...props}
     >
       <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
-      <CheckIcon
-        className={cn(
-          "text-bg-button-secondary size-5 shrink-0",
-          allSelected ? "opacity-100" : "opacity-0",
-        )}
-      />
-    </div>
+    </button>
   );
 }
 

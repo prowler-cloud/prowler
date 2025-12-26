@@ -11,17 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Organizations** is assessed for an AI services opt-out policy that sets `services.default.opt_out_policy` to `optOut` and blocks child overrides via `@@operators_allowed_for_child_policies` set to `@@none`.",
   "Risk": "Without an enforced opt-out, AI services may store and use your content for model training, weakening **confidentiality** and **data sovereignty**. If child accounts can override, they can re-enable data use, risking unintended cross-Region retention and exposure of logs, documents, or code processed by these services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://gist.github.com/christophetd/a36dfc89323513ad1c61048a3c2dd8a6",
     "https://docs.aws.amazon.com/organizations/latest/userguide/disable-policy-type.html",
     "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out_all.html",
-    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out_syntax.html",
-    "https://spaces.at.internet2.edu/pages/viewpage.action?pageId=310248120",
-    "https://www.orbitcloudsolutions.at/de/blog/opt-out-policy",
-    "https://www.lastweekinaws.com/blog/how-to-stop-feeding-awss-ai-with-your-data/"
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out_syntax.html"
   ],
   "Remediation": {
     "Code": {

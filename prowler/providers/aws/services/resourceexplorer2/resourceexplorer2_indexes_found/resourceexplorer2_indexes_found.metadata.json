@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:resource-explorer-2:region:account-id:index/index-id",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "Resource Explorer Indexes Found",
   "Risk": "Not having Resource Explorer indexes can result in increased complexity and overhead in managing your resources, as well as increased risk of security and compliance issues.",
   "RelatedUrl": "",

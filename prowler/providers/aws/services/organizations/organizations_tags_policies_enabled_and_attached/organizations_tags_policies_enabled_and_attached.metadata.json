@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Organizations** tag policies are evaluated for their presence and attachment to organization targets (accounts or OUs), distinguishing between no policies, policies defined but not attached, and policies attached to at least one target.",
   "Risk": "Absent or unattached tag policies cause inconsistent or missing tags, undermining:\n- **Confidentiality** via bypassed tag-based access conditions\n- **Integrity** through misclassified resources and drift\n- **Availability** when automation, cost routing, or incident scoping that rely on tags break",
   "RelatedUrl": "",
