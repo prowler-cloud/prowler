@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_no_public_access_whitelist",
+  "CheckTitle": "RDS Instances are not open to the world",
+  "CheckType": [
+    "Intrusion into applications",
+    "Suspicious network connection"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Database Server should accept connections only from trusted **Network(s)/IP(s)** and restrict access from the world.\n\nTo minimize attack surface on a Database server Instance, only trusted/known and required IPs should be whitelisted. Authorized network should not have IPs/networks configured to `0.0.0.0` or `/0` which would allow access from anywhere in the world.",
+  "Risk": "Allowing **public access** (`0.0.0.0/0`) to the database significantly increases the risk of **brute-force attacks**, **unauthorized access**, and **data exfiltration**.\n\nDatabases exposed to the internet are prime targets for attackers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/26198.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/disable-network-public-access.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifySecurityIps --DBInstanceId <instance_id> --SecurityIps <ip_list>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Go to **Data Security** > **Whitelist Settings** tab\n3. Remove any `0.0.0.0` or `/0` entries\n4. Only add the IP addresses that need to access the instance",
+      "Url": "https://hub.prowler.com/check/rds_instance_no_public_access_whitelist"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

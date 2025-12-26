@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_console_access_unused",
+  "CheckTitle": "Users not logged on for 90 days or longer are disabled for console logon",
+  "CheckType": [
+    "Unusual logon",
+    "Abnormal account"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRAMUser",
+  "ResourceGroup": "IAM",
+  "Description": "Alibaba Cloud **RAM users** can log on to the Alibaba Cloud console by using their username and password.\n\nIf a user has not logged on for **90 days or longer**, it is recommended to disable the console access of the user.",
+  "Risk": "Disabling users from having unnecessary logon privileges will reduce the opportunity that an **abandoned user** or a user with **compromised password** to be exploited.\n\nInactive accounts are common targets for attackers attempting account takeover.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/inactive-ram-user.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram DeleteLoginProfile --UserName <ram_user>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RAM Console**\n2. Choose **Identities** > **Users**\n3. In the User Logon Name/Display Name column, click the username of the target RAM user\n4. In the Console Logon Management section, click **Modify Logon Settings**\n5. In the Console Password Logon section, select **Disabled**\n6. Click **OK**",
+      "Url": "https://hub.prowler.com/check/ram_user_console_access_unused"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

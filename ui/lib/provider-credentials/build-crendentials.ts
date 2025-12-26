@@ -211,6 +211,45 @@ export const buildMongoDBAtlasSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildAlibabaCloudSecret = (
+  formData: FormData,
+  isRole: boolean,
+) => {
+  if (isRole) {
+    const secret = {
+      [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: getFormValue(
+        formData,
+        ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN,
+      ),
+      [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: getFormValue(
+        formData,
+        ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID,
+      ),
+      [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: getFormValue(
+        formData,
+        ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET,
+      ),
+      [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: getFormValue(
+        formData,
+        ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME,
+      ),
+    };
+    return filterEmptyValues(secret);
+  }
+
+  const secret = {
+    [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: getFormValue(
+      formData,
+      ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID,
+    ),
+    [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: getFormValue(
+      formData,
+      ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -326,6 +365,14 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildMongoDBAtlasSecret(formData),
     }),
+    alibabacloud: () => {
+      const isRole =
+        formData.get(ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN) !== null;
+      return {
+        secretType: isRole ? "role" : "static",
+        secret: buildAlibabaCloudSecret(formData, isRole),
+      };
+    },
   };
 
   const builder = secretBuilders[providerType];

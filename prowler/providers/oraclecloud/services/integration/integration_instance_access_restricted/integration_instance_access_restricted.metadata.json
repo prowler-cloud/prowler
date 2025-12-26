@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:integration:instance",
   "Severity": "high",
   "ResourceType": "IntegrationInstance",
+  "ResourceGroup": "compute",
   "Description": "Oracle Integration Cloud access should be restricted to allowed sources.",
   "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",

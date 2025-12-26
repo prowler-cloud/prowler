@@ -12,15 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Amazon SageMaker training jobs have **inter-container traffic encryption** configured for container-to-container communications during training.\n\nThe evaluation inspects the `EnableInterContainerTrafficEncryption` setting on training jobs.",
   "Risk": "Without inter-container encryption, in-node traffic may be plaintext, enabling capture by a compromised host or co-resident workload. This threatens **confidentiality** (training data, model parameters, credentials) and **integrity** (tampering with gradients/results), and can facilitate **lateral movement** via token or session theft.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/awslabs/aws-config-rules/issues/262",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/enable-inter-container-traffic-encryption.html",
-    "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",
-    "https://www.examtopics.com/discussions/amazon/view/103024-exam-aws-certified-machine-learning-specialty-topic-1/",
-    "https://runebook.dev/en/aws/sagemaker/NetworkConfig"
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
   ],
   "Remediation": {
     "Code": {
@@ -35,7 +33,8 @@
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

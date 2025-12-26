@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSageMakerNotebookInstance",
+  "ResourceGroup": "ai_ml",
   "Description": "**SageMaker notebook instances** are evaluated for **VPC attachment**. Instances configured with a VPC (via a `subnet_id` and security groups) use private networking; those without VPC settings rely on public networking.",
   "Risk": "Without a VPC, notebooks lose **network isolation**. Traffic to AWS services may traverse the public internet, limiting **egress control** and **private endpoints**, enabling data exfiltration and interception, and easing lateral movement-impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
@@ -31,7 +32,8 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "internet-exposed",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

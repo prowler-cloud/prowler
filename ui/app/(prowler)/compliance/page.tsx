@@ -235,6 +235,9 @@ const SSRComplianceGrid = async ({
           // Filter out ProwlerThreatScore from the grid
           return compliance.attributes.framework !== "ProwlerThreatScore";
         })
+        .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
+          a.attributes.framework.localeCompare(b.attributes.framework),
+        )
         .map((compliance: ComplianceOverviewData) => {
           const { attributes, id } = compliance;
           const {

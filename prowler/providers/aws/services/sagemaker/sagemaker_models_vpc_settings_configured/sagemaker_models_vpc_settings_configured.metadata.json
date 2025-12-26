@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "**SageMaker models** use **VPC settings** (`VpcConfig` with subnets and security groups) so inference containers communicate through a selected VPC rather than the public internet.\n\nThis evaluates whether a model defines VPC subnets for its network path.",
   "Risk": "Without **VPC isolation**, model traffic and data access can traverse public paths, weakening **confidentiality** and **integrity** through interception or misrouting.\n\nMissing security groups and private endpoints reduce **access control**, enabling excessive egress, data exfiltration, or command-and-control from compromised containers.",
   "RelatedUrl": "",
@@ -30,7 +31,8 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "trust-boundaries", 
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

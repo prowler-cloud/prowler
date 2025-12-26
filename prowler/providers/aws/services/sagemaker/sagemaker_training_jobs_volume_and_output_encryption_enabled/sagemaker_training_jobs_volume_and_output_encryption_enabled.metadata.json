@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "**Amazon SageMaker training jobs** use **KMS encryption** for their attached ML storage volumes via `VolumeKmsKeyId`.\n\nThe finding identifies training jobs where the volume encryption key is not configured.",
   "Risk": "Missing **CMEK** leaves training data, checkpoints, and logs on the volume without tenant-controlled encryption. This reduces **confidentiality**, enables data exposure via snapshots or privileged access, and limits control over key policies, rotation, and emergency revocation.",
   "RelatedUrl": "",
@@ -31,7 +32,8 @@
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

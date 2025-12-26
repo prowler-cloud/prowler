@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "**SageMaker training jobs** are evaluated for **VPC configuration** by detecting defined `subnets` in the job settings. With VPC settings, ENIs place the job in your VPC so traffic for training volumes and outputs uses private networking.",
   "Risk": "Without VPC settings, training containers rely on public networking and broad egress. This weakens **confidentiality** and **integrity**, enabling data exfiltration of datasets or model artifacts, malware downloads, and bypass of granular security group controls and VPC-based monitoring.",
   "RelatedUrl": "",
@@ -31,7 +32,8 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "trust-boundaries",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

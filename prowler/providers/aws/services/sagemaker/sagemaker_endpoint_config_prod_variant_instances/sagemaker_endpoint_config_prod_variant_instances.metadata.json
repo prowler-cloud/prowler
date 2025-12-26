@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Amazon SageMaker endpoint configurations are evaluated to ensure each production variant uses an **initial instance count** of at least two. Variants with `InitialInstanceCount` less than two in instance-based endpoints are identified, indicating no built-in multi-AZ redundancy.",
   "Risk": "A **single-instance variant** is a **single point of failure**. If the instance or its Availability Zone fails, inference becomes unavailable, leading to **service outages**, **SLA breaches**, and **cascading failures** in dependent systems. This primarily degrades **availability** and reliability.",
   "RelatedUrl": "",
@@ -32,7 +33,8 @@
     }
   },
   "Categories": [
-    "resilience"
+    "resilience",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

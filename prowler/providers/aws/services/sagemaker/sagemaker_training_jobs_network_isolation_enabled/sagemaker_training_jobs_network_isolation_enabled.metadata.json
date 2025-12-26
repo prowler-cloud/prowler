@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "**SageMaker training jobs** have **network isolation** enabled, preventing the training container from making any inbound or outbound network calls during execution",
   "Risk": "Without `network isolation`, training code can reach the internet or internal services, enabling:\n- **Data exfiltration** of datasets and model artifacts\n- **Supply-chain compromise** via untrusted downloads\n- **C2 beacons** and resource abuse\nThis harms **confidentiality** and **integrity**, and may impact **availability**.",
   "RelatedUrl": "",

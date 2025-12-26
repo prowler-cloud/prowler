@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsSageMakerNotebookInstance",
+  "ResourceGroup": "ai_ml",
   "Description": "**Amazon SageMaker notebook instances** with user **root access disabled**. The evaluation checks whether interactive users can obtain root privileges on the instance, highlighting notebooks where `RootAccess` is not set to `Disabled`.",
   "Risk": "Allowing user **root access** enables full system control, risking **integrity** (tampering with code, packages, and kernels), **confidentiality** (reading secrets, credentials, data copies), and **availability** (disabling agents or breaking environments). Compromise of a notebook can lead to lateral movement via the instance role.",
   "RelatedUrl": "",
@@ -31,7 +32,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

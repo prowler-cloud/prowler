@@ -13,11 +13,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSageMakerNotebookInstance",
+  "ResourceGroup": "ai_ml",
   "Description": "Amazon SageMaker notebook instances are evaluated for the `DirectInternetAccess` setting.\n\nInstances with it disabled use only VPC connectivity; instances with it enabled permit direct outbound internet access.",
   "Risk": "Direct internet access from notebooks weakens **egress control**, risking **confidentiality** and **integrity**.\n\nAdversaries or unvetted code can exfiltrate data, download malware, or run command-and-control. Public package installs bypass inspection, enabling supply-chain tampering and **lateral movement** from compromised sessions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
     "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
   ],
@@ -35,7 +35,8 @@
   },
   "Categories": [
     "internet-exposed",
-    "trust-boundaries"
+    "trust-boundaries",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],
