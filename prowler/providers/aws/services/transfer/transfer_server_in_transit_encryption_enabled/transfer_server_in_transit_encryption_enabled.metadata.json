@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:transfer:region:account-id:server/server-id",
   "Severity": "medium",
   "ResourceType": "AwsTransferServer",
+  "ResourceGroup": "storage",
   "Description": "Ensure that your Transfer Family servers have encryption in transit enabled.",
   "Risk": "Using FTP for endpoint connections leaves data in transit unencrypted, making it susceptible to interception by attackers. FTP lacks encryption, which exposes your data to person-in-the-middle and other interception risks. Adopting encrypted protocols such as SFTP, FTPS, or AS2 provides a layer of protection that helps secure sensitive data during transfer.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/transfer-family-server-no-ftp.html",

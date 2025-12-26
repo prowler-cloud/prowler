@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**CodeBuild projects** with **S3 log delivery** are evaluated for **encryption at rest** on their S3 log objects. Only projects that write logs to S3 are in scope.",
   "Risk": "Unencrypted build logs jeopardize **confidentiality**. Logs can include secrets, environment data, and error traces. If the bucket is misconfigured or storage is accessed, attackers can harvest credentials and map the pipeline, enabling **lateral movement** and build tampering that impacts **integrity**.",
   "RelatedUrl": "",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon SES identities** are evaluated for **publicly accessible resource policies**-for example, statements with `Principal:\"*\"` or broadly trusted principals that permit actions against the identity.",
   "Risk": "Public SES identity policies allow unauthorized email sending or configuration changes.\n- Integrity: spoofed emails and brand impersonation\n- Confidentiality: exposure of identity details\n- Availability: reputation loss causing throttling or suspension",
   "RelatedUrl": "",

@@ -25,6 +25,9 @@ export const SEVERITY_COLORS: Record<SeverityLevel, string> = {
   informational: "var(--color-bg-data-info)",
 };
 
+// Muted color for charts - uses CSS var() for Recharts inline style compatibility (same pattern as SEVERITY_COLORS)
+export const MUTED_COLOR = "var(--color-bg-data-muted)";
+
 export const SEVERITY_FILTER_MAP: Record<string, SeverityLevel> = {
   Critical: "critical",
   High: "high",

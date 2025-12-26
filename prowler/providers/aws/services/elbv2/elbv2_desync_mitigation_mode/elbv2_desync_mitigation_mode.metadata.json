@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Application Load Balancer** settings are reviewed for **HTTP desync protections**. It evaluates `routing.http.desync_mitigation_mode` for `strictest` or `defensive`; when neither is configured, it checks `routing.http.drop_invalid_header_fields.enabled` is `true` as a compensating control.",
   "Risk": "Lacking robust desync mitigation enables inconsistent HTTP parsing and **request smuggling**:\n- **Confidentiality**: token theft, data exfiltration\n- **Integrity**: cache/queue poisoning, unauthorized actions\n- **Availability**: backend exhaustion and outages\n\nOnly dropping invalid headers reduces but does not eliminate this exposure.",
   "RelatedUrl": "",

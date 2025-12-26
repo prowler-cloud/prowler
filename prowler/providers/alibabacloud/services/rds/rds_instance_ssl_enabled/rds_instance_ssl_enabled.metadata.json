@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_ssl_enabled",
+  "CheckTitle": "RDS instance requires all incoming connections to use SSL",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "It is recommended to enforce all incoming connections to SQL database instances to use **SSL**.\n\nSQL database connections if successfully intercepted (MITM) can reveal sensitive data like credentials, database queries, and query outputs. For security, it is recommended to always use SSL encryption when connecting to your instance.",
+  "Risk": "If **SSL is not enabled**, data in transit (including credentials and query results) can be intercepted by attackers performing **Man-in-the-Middle (MITM) attacks**.\n\nThis compromises data confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/32474.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-encryption-in-transit.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyDBInstanceSSL --DBInstanceId <instance_id> --SSLEnabled 1",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_db_instance\" \"example\" {\n  engine           = \"MySQL\"\n  engine_version   = \"8.0\"\n  instance_type    = \"rds.mysql.s1.small\"\n  instance_storage = 20\n  ssl_action       = \"Open\"\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Select the region and target instance\n3. In the left-side navigation pane, click **Data Security**\n4. Click the **SSL Encryption** tab\n5. Click the switch next to **Disabled** in the SSL Encryption parameter to enable it",
+      "Url": "https://hub.prowler.com/check/rds_instance_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
