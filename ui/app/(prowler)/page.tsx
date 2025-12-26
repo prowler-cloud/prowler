@@ -4,28 +4,29 @@ import { getProviders } from "@/actions/providers";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
-import { AccountsSelector } from "./_new-overview/components/accounts-selector";
+import { AccountsSelector } from "./_overview/_components/accounts-selector";
+import { ProviderTypeSelector } from "./_overview/_components/provider-type-selector";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
-} from "./_new-overview/components/attack-surface";
-import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
-import { GraphsTabsWrapper } from "./_new-overview/components/graphs-tabs/graphs-tabs-wrapper";
-import { RiskPipelineViewSkeleton } from "./_new-overview/components/graphs-tabs/risk-pipeline-view";
-import { ProviderTypeSelector } from "./_new-overview/components/provider-type-selector";
+} from "./_overview/attack-surface";
+import { CheckFindingsSSR } from "./_overview/check-findings";
+import { GraphsTabsWrapper } from "./_overview/graphs-tabs/graphs-tabs-wrapper";
+import { RiskPipelineViewSkeleton } from "./_overview/graphs-tabs/risk-pipeline-view";
 import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
-} from "./_new-overview/components/risk-severity-chart";
-import { StatusChartSkeleton } from "./_new-overview/components/status-chart";
+} from "./_overview/risk-severity";
 import {
-  ThreatScoreSkeleton,
-  ThreatScoreSSR,
-} from "./_new-overview/components/threat-score";
+  FindingSeverityOverTimeSkeleton,
+  FindingSeverityOverTimeSSR,
+} from "./_overview/severity-over-time/finding-severity-over-time.ssr";
+import { StatusChartSkeleton } from "./_overview/status-chart";
+import { ThreatScoreSkeleton, ThreatScoreSSR } from "./_overview/threat-score";
 import {
   ServiceWatchlistSSR,
   WatchlistCardSkeleton,
-} from "./_new-overview/components/watchlist";
+} from "./_overview/watchlist";
 
 export default async function Home({
   searchParams,
@@ -42,7 +43,7 @@ export default async function Home({
         <AccountsSelector providers={providersData?.data ?? []} />
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+      <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -62,9 +63,12 @@ export default async function Home({
         </Suspense>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+      <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         <Suspense fallback={<WatchlistCardSkeleton />}>
           <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+        <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
+          <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
 

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Exchange Organization Configuration",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that modern authentication is enabled for Exchange Online, requiring exchange and mailboxes clients to use strong authentication mechanisms instead of basic authentication.",
   "Risk": "If modern authentication is not enabled, Exchange Online email clients may fall back to basic authentication, making it easier for attackers to bypass multifactor authentication and compromise user credentials.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/enable-or-disable-modern-authentication-in-exchange-online",

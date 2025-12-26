@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "Check for EC2 Instances with Public IP.",
   "Risk": "Exposing an EC2 directly to internet increases the attack surface and therefore the risk of compromise.",
   "RelatedUrl": "",

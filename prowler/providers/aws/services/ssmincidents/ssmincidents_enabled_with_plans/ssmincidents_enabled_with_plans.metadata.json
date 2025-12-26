@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
   "Description": "**Incident Manager** uses a **replication set** and **response plans**. This evaluates whether a replication set exists and is `ACTIVE`, and that at least one response plan is configured for coordinated incident handling.",
   "Risk": "Without an `ACTIVE` replication set or response plans, incidents lack coordinated engagement and automation, raising MTTR and impacting availability and integrity.\n\nThreats include prolonged outages, lateral movement, and data exfiltration from delayed containment and misrouted escalation.",
   "RelatedUrl": "",

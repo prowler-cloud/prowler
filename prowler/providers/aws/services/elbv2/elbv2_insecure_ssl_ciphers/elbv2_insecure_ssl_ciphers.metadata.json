@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**ELBv2 HTTPS listeners** are assessed for use of **strong TLS policies**. Listeners whose `ssl_policy` is not in the approved set (TLS 1.2/1.3-focused policies) may include weak protocols or ciphers.",
   "Risk": "Legacy or weak ciphers enable **downgrade** and **man-in-the-middle** attacks, allowing decryption of sessions, credential theft, and request tampering. This undermines **confidentiality** and **integrity** of data in transit and can expose cookies or tokens for **account takeover**.",
   "RelatedUrl": "",

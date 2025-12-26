@@ -10,7 +10,9 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_daily_severity_summaries,
     backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -38,6 +40,7 @@ from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
     aggregate_attack_surface,
+    aggregate_daily_severity,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -58,6 +61,58 @@ from prowler.lib.outputs.finding import Finding as FindingOutput
 logger = get_task_logger(__name__)
 
 
+def _cleanup_orphan_scheduled_scans(
+    tenant_id: str,
+    provider_id: str,
+    scheduler_task_id: int,
+) -> int:
+    """
+    TEMPORARY WORKAROUND: Clean up orphan AVAILABLE scans.
+
+    Detects and removes AVAILABLE scans that were never used due to an
+    issue during the first scheduled scan setup.
+
+    An AVAILABLE scan is considered orphan if there's also a SCHEDULED scan for
+    the same provider with the same scheduler_task_id. This situation indicates
+    that the first scan execution didn't find the AVAILABLE scan (because it
+    wasn't committed yet, probably) and created a new one, leaving the AVAILABLE orphaned.
+
+    Args:
+        tenant_id: The tenant ID.
+        provider_id: The provider ID.
+        scheduler_task_id: The PeriodicTask ID that triggers these scans.
+
+    Returns:
+        Number of orphan scans deleted (0 if none found).
+    """
+    orphan_available_scans = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.AVAILABLE,
+        scheduler_task_id=scheduler_task_id,
+    )
+
+    scheduled_scan_exists = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.SCHEDULED,
+        scheduler_task_id=scheduler_task_id,
+    ).exists()
+
+    if scheduled_scan_exists and orphan_available_scans.exists():
+        orphan_count = orphan_available_scans.count()
+        logger.warning(
+            f"[WORKAROUND] Found {orphan_count} orphan AVAILABLE scan(s) for "
+            f"provider {provider_id} alongside a SCHEDULED scan. Cleaning up orphans..."
+        )
+        orphan_available_scans.delete()
+        return orphan_count
+
+    return 0
+
+
 def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str):
     """
     Helper function to perform tasks after a scan is completed.
@@ -75,8 +130,11 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        generate_outputs_task.si(
-            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        group(
+            aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            generate_outputs_task.si(
+                scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
         ),
         group(
             # Use optimized task that generates both reports with shared queries
@@ -241,6 +299,14 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             return serializer.data
 
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+
+        # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
+        _cleanup_orphan_scheduled_scans(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scheduler_task_id=periodic_task_instance.id,
+        )
+
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
             provider_id=provider_id,
@@ -523,6 +589,27 @@ def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
     return backfill_compliance_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(name="backfill-daily-severity-summaries", queue="backfill")
+def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
+    """Backfill DailySeveritySummary from historical scans. Use days param to limit scope."""
+    return backfill_daily_severity_summaries(tenant_id=tenant_id, days=days)
+
+
+@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates unique categories from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 @handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
@@ -554,6 +641,13 @@ def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-daily-severity", queue="overview")
+@handle_provider_deletion
+def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
+    """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
+    return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "Amazon DocumentDB clusters are evaluated for exporting `audit` and `profiler` logs to **CloudWatch Logs**.\nClusters missing one or both log types are identified as lacking complete log export configuration.",
   "Risk": "Missing **audit** and/or **profiler** exports reduces observability of authentication, authorization, and data definition activity.\nAttacks like brute-force logins, privilege abuse, or destructive schema changes can go unnoticed, degrading **confidentiality** and **integrity** and delaying incident response.",
   "RelatedUrl": "",
