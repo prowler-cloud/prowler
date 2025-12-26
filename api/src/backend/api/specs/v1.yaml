@@ -12117,7 +12117,6 @@ components:
             - regions
             - resource_types
             - categories
-            - resource_groups
     FindingMetadataResponse:
       type: object
       properties:

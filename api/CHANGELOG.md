@@ -6,6 +6,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+- New endpoint to retrieve an overview of the resource groups based on finding severities [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
+- Endpoints `GET /findings` and `GET /findings/metadata/latest` now support the resource_group filter [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
 
 ---
 
