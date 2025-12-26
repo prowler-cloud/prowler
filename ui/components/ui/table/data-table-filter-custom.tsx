@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
+import { ActiveFilterBadges } from "@/components/filters/active-filter-badge";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import {
   MultiSelect,
@@ -116,16 +117,25 @@ export const DataTableFilterCustom = ({
     updateFilter(filter.key, values.length > 0 ? values : null);
   };
 
-  const getSelectedValues = (key: string): string[] => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+  const getSelectedValues = (filter: FilterOption): string[] => {
+    const filterKey = filter.key.startsWith("filter[")
+      ? filter.key
+      : `filter[${filter.key}]`;
     const paramValue = searchParams.get(filterKey);
+
+    // If defaultToSelectAll is true and no filter param exists,
+    // treat it as "all selected" by returning all values
+    if (!paramValue && filter.defaultToSelectAll) {
+      return filter.values;
+    }
+
     return paramValue ? paramValue.split(",") : [];
   };
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {sortedFilters().map((filter) => {
-        const selectedValues = getSelectedValues(filter.key);
+        const selectedValues = getSelectedValues(filter);
 
         return (
           <MultiSelect
@@ -137,19 +147,20 @@ export const DataTableFilterCustom = ({
               <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
             </MultiSelectTrigger>
             <MultiSelectContent search={false}>
-              <MultiSelectSelectAll allValues={filter.values}>
-                Select All
-              </MultiSelectSelectAll>
+              <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
               <MultiSelectSeparator />
               {filter.values.map((value) => {
                 const entity = getEntityForValue(filter, value);
+                const displayLabel = filter.labelFormatter
+                  ? filter.labelFormatter(value)
+                  : value;
                 return (
                   <MultiSelectItem
                     key={value}
                     value={value}
-                    badgeLabel={getBadgeLabel(entity, value)}
+                    badgeLabel={getBadgeLabel(entity, displayLabel)}
                   >
-                    {entity ? renderEntityContent(entity) : value}
+                    {entity ? renderEntityContent(entity) : displayLabel}
                   </MultiSelectItem>
                 );
               })}
@@ -157,7 +168,8 @@ export const DataTableFilterCustom = ({
           </MultiSelect>
         );
       })}
-      <div className="flex items-center justify-start">
+      <div className="flex items-center justify-start gap-2">
+        <ActiveFilterBadges />
         <ClearFiltersButton />
       </div>
     </div>

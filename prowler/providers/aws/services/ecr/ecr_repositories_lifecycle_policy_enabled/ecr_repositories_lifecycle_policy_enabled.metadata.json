@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
   "Description": "Amazon ECR repositories have a **lifecycle policy** configured to automatically expire container images based on age, count, or tags.",
   "Risk": "Without **lifecycle policies**, images accumulate indefinitely, leading to:\n- **Availability** issues when quotas block pushes and CI/CD\n- **Integrity** risk from redeploying outdated, vulnerable images\n- **Cost** growth from unnecessary storage",
   "RelatedUrl": "",

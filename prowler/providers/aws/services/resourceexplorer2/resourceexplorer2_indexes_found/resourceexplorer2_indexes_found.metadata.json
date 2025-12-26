@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS Resource Explorer** has user-owned **indexes** present in the account. The assessment determines whether at least one index exists in any enabled Region for resource cataloging and search.",
   "Risk": "Absent indexes reduce asset visibility, creating blind spots where misconfigured or orphaned resources go unnoticed. This degrades **confidentiality** (unseen public exposure), **integrity** (unauthorized changes undetected), and **availability** (slower containment and recovery), prolonging incident response and enabling lateral movement.",
   "RelatedUrl": "",

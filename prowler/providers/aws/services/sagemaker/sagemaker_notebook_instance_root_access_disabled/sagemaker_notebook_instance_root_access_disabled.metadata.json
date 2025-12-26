@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
   "Severity": "medium",
   "ResourceType": "AwsSageMakerNotebookInstance",
+  "ResourceGroup": "ai_ml",
   "Description": "Check if Amazon SageMaker Notebook instances have root access disabled",
   "Risk": "Users with root access have administrator privileges, users can access and edit all files on a notebook instance with root access enabled",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-root-access.html",
@@ -23,7 +24,9 @@
       "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-root-access.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

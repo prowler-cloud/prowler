@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_network_policy_enabled",
+  "CheckTitle": "Network policy is enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Threat detection during container runtime",
+    "Suspicious network connection"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "A **Network Policy** is a specification of how groups of pods are allowed to communicate with each other and other network endpoints.\n\n`NetworkPolicy` resources use labels to select pods and define rules which specify what traffic is allowed. By default, pods are non-isolated and accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them.",
+  "Risk": "Without **Network Policies**, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move **laterally** within the cluster and access sensitive services or data.\n\nNetwork Policies are essential for implementing **defense in depth** and **least privilege** networking.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/97621.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-network-policy-support.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Network Policy support (Terway) must be selected during cluster creation.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Only the **Terway** network plugin supports the Network Policy feature. When creating a new cluster, select **Terway** in the `Network Plugin` option.\n\n**Note:** Existing clusters using Flannel cannot be migrated to Terway.",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_network_policy_enabled"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

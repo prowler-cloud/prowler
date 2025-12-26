@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**CodeBuild projects** sourcing from **GitHub/GitHub Enterprise** with a service role that trusts CodeBuild are evaluated by deriving the repository's organization from its URL and comparing it to an **allowed organizations** list.",
   "Risk": "Using repos from **untrusted GitHub orgs** can let external workflows assume the project role and obtain AWS credentials.\n- Confidentiality: data/secrets exfiltration\n- Integrity: unauthorized changes\n- Availability: build abuse or service disruption",
   "RelatedUrl": "",

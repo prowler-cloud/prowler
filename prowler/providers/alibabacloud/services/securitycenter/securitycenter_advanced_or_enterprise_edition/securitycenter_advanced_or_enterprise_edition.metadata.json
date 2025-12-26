@@ -1,0 +1,44 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "securitycenter_advanced_or_enterprise_edition",
+  "CheckTitle": "Security Center is Advanced or Enterprise Edition",
+  "CheckType": [
+    "Suspicious process",
+    "Webshell",
+    "Unusual logon",
+    "Sensitive file tampering",
+    "Malicious software",
+    "Precision defense"
+  ],
+  "ServiceName": "securitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:sas::account-id:security-center",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSecurityCenter",
+  "ResourceGroup": "security",
+  "Description": "The **Advanced or Enterprise Edition** enables threat detection for network and endpoints, providing **malware detection**, **webshell detection**, and **anomaly detection** in Security Center.",
+  "Risk": "Using **Basic or Free Edition** of Security Center may not provide comprehensive protection against cloud threats.\n\n**Advanced or Enterprise Edition** allows for full protection to defend against cloud threats.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/product/28498.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/security-center-plan.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Logon to Security Center Console > Select Overview > Click Upgrade > Select Advanced or Enterprise Edition > Finish order placement",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **Security Center Console**\n2. Select **Overview**\n3. Click **Upgrade**\n4. Select **Advanced** or **Enterprise Edition**\n5. Finish order placement",
+      "Url": "https://hub.prowler.com/check/securitycenter_advanced_or_enterprise_edition"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

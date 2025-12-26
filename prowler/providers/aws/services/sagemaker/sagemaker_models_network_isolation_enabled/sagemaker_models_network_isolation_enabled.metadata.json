@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:model",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Check if Amazon SageMaker Models have network isolation enabled",
   "Risk": "This could provide an avenue for unauthorized access to your data.",
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html",
@@ -23,7 +24,9 @@
       "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
