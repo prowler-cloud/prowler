@@ -21,7 +21,6 @@ class compute_configuration_changes(Check):
             audit_entries = logging_client.compute_audit_entries.get(project_id, [])
 
             if not audit_entries:
-                # No changes detected - PASS
                 project_obj = logging_client.projects.get(project_id)
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
@@ -35,7 +34,6 @@ class compute_configuration_changes(Check):
                 report.status_extended = f"No Compute Engine configuration changes detected in project {project_id}."
                 findings.append(report)
             else:
-                # Changes detected - generate one FAIL finding per change
                 for entry in audit_entries:
                     report = Check_Report_GCP(
                         metadata=self.metadata(),
@@ -47,7 +45,6 @@ class compute_configuration_changes(Check):
                     )
                     report.status = "FAIL"
 
-                    # Build detailed status message
                     actor = entry.principal_email or "unknown actor"
                     timestamp = entry.timestamp
                     method = entry.method_name
