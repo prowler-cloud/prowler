@@ -3,16 +3,16 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-import { ResourcesInventoryOverviewResponse } from "./types";
+import { ResourceGroupOverviewResponse } from "./types";
 
-export const getResourcesInventoryOverview = async ({
+export const getResourceGroupOverview = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-} = {}): Promise<ResourcesInventoryOverviewResponse | undefined> => {
+} = {}): Promise<ResourceGroupOverviewResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/resources-types`);
+  const url = new URL(`${apiBaseUrl}/overviews/resource_groups`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {
@@ -28,7 +28,7 @@ export const getResourcesInventoryOverview = async ({
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching resources inventory overview:", error);
+    console.error("Error fetching resource group overview:", error);
     return undefined;
   }
 };

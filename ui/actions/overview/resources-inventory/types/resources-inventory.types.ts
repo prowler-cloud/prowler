@@ -1,23 +1,33 @@
-// /overviews/resources-types endpoint
+// GET /api/v1/overviews/resource_groups endpoint
 
 interface OverviewResponseMeta {
   version: string;
 }
 
-export interface ResourcesInventoryOverviewAttributes {
-  total_resources: number;
-  failed_findings: number;
-  new_findings: number;
-  misconfigurations: number;
+export interface SeverityBreakdown {
+  informational: number;
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
 }
 
-export interface ResourcesInventoryOverview {
-  type: "resources-inventory-overviews";
+export interface ResourceGroupOverviewAttributes {
   id: string;
-  attributes: ResourcesInventoryOverviewAttributes;
+  total_findings: number;
+  failed_findings: number;
+  new_failed_findings: number;
+  resources_count: number;
+  severity: SeverityBreakdown;
 }
 
-export interface ResourcesInventoryOverviewResponse {
-  data: ResourcesInventoryOverview[];
+export interface ResourceGroupOverview {
+  type: "resource-group-overview";
+  id: string;
+  attributes: ResourceGroupOverviewAttributes;
+}
+
+export interface ResourceGroupOverviewResponse {
+  data: ResourceGroupOverview[];
   meta: OverviewResponseMeta;
 }

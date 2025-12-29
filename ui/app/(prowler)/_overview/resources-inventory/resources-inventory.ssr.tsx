@@ -1,6 +1,6 @@
 import {
-  adaptResourcesInventoryOverview,
-  getResourcesInventoryOverview,
+  adaptResourceGroupOverview,
+  getResourceGroupOverview,
 } from "@/actions/overview";
 
 import { pickFilterParams } from "../_lib/filter-params";
@@ -12,9 +12,9 @@ export const ResourcesInventorySSR = async ({
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
-  const response = await getResourcesInventoryOverview({ filters });
+  const response = await getResourceGroupOverview({ filters });
 
-  const items = adaptResourcesInventoryOverview(response);
+  const items = adaptResourceGroupOverview(response);
 
   return <ResourcesInventory items={items} filters={filters} />;
 };

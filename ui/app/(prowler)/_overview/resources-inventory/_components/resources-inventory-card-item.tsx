@@ -1,4 +1,4 @@
-import { Bell, Settings, TriangleAlert } from "lucide-react";
+import { Bell, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 
 import { ResourceInventoryItem } from "@/actions/overview";
@@ -14,17 +14,17 @@ export function ResourcesInventoryCardItem({
   item,
   filters = {},
 }: ResourcesInventoryCardItemProps) {
-  const hasFindings = item.failedFindings > 0;
+  const hasFailedFindings = item.failedFindings > 0;
   const hasResources = item.totalResources > 0;
 
-  // Build URL with current filters + resource type specific filters
+  // Build URL with current filters + resource group specific filters
   const buildFindingsUrl = () => {
-    if (!hasFindings) return null;
+    if (!hasFailedFindings) return null;
 
     const params = new URLSearchParams();
 
-    // Add resource type specific filters
-    params.set("filter[resource_type]", item.id);
+    // Add resource group specific filters
+    params.set("filter[resource_group]", item.id);
     params.set("filter[status__in]", "FAIL");
     params.set("filter[muted]", "false");
 
@@ -45,18 +45,14 @@ export function ResourcesInventoryCardItem({
 
   // Build stats array for the card content
   const stats: StatItem[] = [];
-  if (hasFindings) {
+  if (hasFailedFindings && item.newFailedFindings > 0) {
     stats.push({
       icon: Bell,
-      label: `${item.newFindings} New`,
-    });
-    stats.push({
-      icon: Settings,
-      label: `${item.misconfigurations} Misconfigurations`,
+      label: `${item.newFailedFindings} New`,
     });
   }
 
-  // Empty state when no resources or no findings
+  // Empty state when no resources
   if (!hasResources) {
     const cardContent = (
       <ResourceStatsCard
@@ -90,9 +86,9 @@ export function ResourcesInventoryCardItem({
       }}
       label="Fail Findings"
       stats={stats}
-      variant={hasFindings ? CardVariant.fail : CardVariant.default}
+      variant={hasFailedFindings ? CardVariant.fail : CardVariant.default}
       className={
-        hasFindings
+        hasFailedFindings
           ? "flex-1 cursor-pointer transition-all hover:border-rose-500/60"
           : "flex-1"
       }

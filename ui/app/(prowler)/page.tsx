@@ -16,7 +16,7 @@ import { RiskPipelineViewSkeleton } from "./_overview/graphs-tabs/risk-pipeline-
 import {
   ResourcesInventorySkeleton,
   ResourcesInventorySSR,
-} from "./_new-overview/resources-inventory";
+} from "./_overview/resources-inventory";
 import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
