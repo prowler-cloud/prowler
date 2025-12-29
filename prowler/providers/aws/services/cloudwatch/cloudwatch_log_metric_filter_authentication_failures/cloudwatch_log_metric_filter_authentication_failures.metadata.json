@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "CloudWatch Logs metric filter and alarm for **AWS Management Console authentication failures**, sourced from CloudTrail (`eventName=ConsoleLogin`, `errorMessage=\"Failed authentication\"`).\n\nIdentifies whether these failures are converted into a metric and actively monitored by an alarm.",
   "Risk": "Absent visibility into failed console logins enables undetected **brute-force** and **credential-stuffing** attempts, extending attacker dwell time.\n\nSuccessful guesses can grant console access, risking data confidentiality, configuration integrity, and availability through destructive changes.",
   "RelatedUrl": "",

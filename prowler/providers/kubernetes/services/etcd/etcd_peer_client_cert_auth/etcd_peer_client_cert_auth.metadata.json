@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd** requires **peer client certificate authentication** for inter-member traffic via `--peer-client-cert-auth=true` set in the etcd container command",
   "Risk": "Without peer authentication, a rogue host can impersonate a member, eavesdrop on or alter Raft traffic, inject state, and disrupt elections-compromising **confidentiality** (state leakage), **integrity** (malicious writes), and **availability** (cluster instability/outage).",
   "RelatedUrl": "",

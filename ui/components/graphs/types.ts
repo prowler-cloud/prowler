@@ -32,16 +32,26 @@ export interface LineDataPoint {
 
 export interface RadarDataPoint {
   category: string;
+  categoryId: string;
   value: number;
   change?: number;
   severityData?: BarDataPoint[];
 }
 
 export interface ScatterDataPoint {
+  /** X-axis value (e.g., ThreatScore 0-100) */
   x: number;
+  /** Y-axis value (e.g., Failed Findings count) */
   y: number;
+  /** Provider type display name (AWS, Azure, Google Cloud, etc.) */
   provider: string;
+  /** Display name (provider alias or identifier) */
   name: string;
+  /** Optional provider ID for navigation/filtering */
+  providerId?: string;
+  /** Optional severity breakdown data for detail panel */
+  severityData?: BarDataPoint[];
+  /** Optional size for bubble chart variant */
   size?: number;
 }
 

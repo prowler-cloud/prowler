@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayStage",
+  "ResourceGroup": "api_gateway",
   "Description": "API Gateway REST API stages with caching have **cache data encrypted at rest**. The evaluation targets stages where caching is enabled and verifies that stored responses are protected via the `Encrypt cache data` setting.",
   "Risk": "Unencrypted cache contents can expose response payloads, tokens, or PII if cache storage, backups, or admin tooling are accessed outside normal controls, harming **confidentiality** and enabling replay or session hijacking.\n\nDisclosure also reveals API patterns, aiding **lateral movement** and targeted abuse.",
   "RelatedUrl": "",
