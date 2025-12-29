@@ -413,6 +413,9 @@ gcp:
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
+  # gcp.compute_configuration_changes
+  # Number of days to look back for Compute Engine configuration changes in audit logs
+  compute_audit_log_lookback_days: 1
   max_unused_account_days: 30
 
 # Kubernetes Configuration
