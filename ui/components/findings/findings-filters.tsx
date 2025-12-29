@@ -42,6 +42,7 @@ export const FindingsFilters = ({
         search
         date
         mutedFindings
+        showToggle
         customFilters={[
           ...filterFindings,
           {

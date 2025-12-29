@@ -1,8 +1,10 @@
 "use client";
 
 import { Spacer } from "@heroui/spacer";
-import React from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
+import { Button } from "@/components/shadcn";
 import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
@@ -21,9 +23,13 @@ export interface FilterControlsProps {
   accounts?: boolean;
   mutedFindings?: boolean;
   customFilters?: FilterOption[];
+  /** Whether to show the toggle button for expanding/collapsing custom filters */
+  showToggle?: boolean;
+  /** Initial expanded state for custom filters (default: false) */
+  defaultExpanded?: boolean;
 }
 
-export const FilterControls: React.FC<FilterControlsProps> = ({
+export const FilterControls = ({
   search = false,
   providers = false,
   date = false,
@@ -31,7 +37,15 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   accounts = false,
   mutedFindings = false,
   customFilters,
-}) => {
+  showToggle = false,
+  defaultExpanded = false,
+}: FilterControlsProps) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  const hasCustomFilters = customFilters && customFilters.length > 0;
+  const shouldShowCustomFilters =
+    hasCustomFilters && (!showToggle || isExpanded);
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
@@ -43,9 +57,27 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           {accounts && <CustomAccountSelection />}
           {mutedFindings && <CustomCheckboxMutedFindings />}
         </div>
+        {showToggle && hasCustomFilters && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? "Less Filters" : "More Filters"}
+            {isExpanded ? (
+              <ChevronUp className="size-4" />
+            ) : (
+              <ChevronDown className="size-4" />
+            )}
+          </Button>
+        )}
       </div>
-      <Spacer y={8} />
-      {customFilters && <DataTableFilterCustom filters={customFilters} />}
+      {shouldShowCustomFilters && (
+        <>
+          <Spacer y={8} />
+          <DataTableFilterCustom filters={customFilters} />
+        </>
+      )}
     </div>
   );
 };
