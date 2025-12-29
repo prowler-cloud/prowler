@@ -1108,39 +1108,33 @@ def mock_api_sink_calls(client: MagicMock):
     }
     client.sinks().list_next.return_value = None
 
-    client.entries().list().execute.side_effect = [
-        {
-            "entries": [
-                {
-                    "insertId": "audit-log-entry-1",
-                    "timestamp": "2024-01-15T10:30:00Z",
-                    "receiveTimestamp": "2024-01-15T10:30:01Z",
-                    "resource": {
-                        "type": "gce_instance",
-                        "labels": {
-                            "instance_id": "test-instance-1",
-                            "project_id": GCP_PROJECT_ID,
-                        },
-                    },
-                    "protoPayload": {
-                        "serviceName": "compute.googleapis.com",
-                        "methodName": "v1.compute.instances.insert",
-                        "resourceName": "projects/test-project/zones/us-central1-a/instances/test-instance-1",
-                        "authenticationInfo": {
-                            "principalEmail": "user@example.com",
-                        },
-                        "requestMetadata": {
-                            "callerIp": "192.168.1.1",
-                        },
+    client.entries().list().execute.return_value = {
+        "entries": [
+            {
+                "insertId": "audit-log-entry-1",
+                "timestamp": "2024-01-15T10:30:00Z",
+                "receiveTimestamp": "2024-01-15T10:30:01Z",
+                "resource": {
+                    "type": "gce_instance",
+                    "labels": {
+                        "instance_id": "test-instance-1",
+                        "project_id": GCP_PROJECT_ID,
                     },
                 },
-            ],
-            "nextPageToken": "test-page-token",
-        },
-        {
-            "entries": [],
-        },
-    ]
+                "protoPayload": {
+                    "serviceName": "compute.googleapis.com",
+                    "methodName": "v1.compute.instances.insert",
+                    "resourceName": "projects/test-project/zones/us-central1-a/instances/test-instance-1",
+                    "authenticationInfo": {
+                        "principalEmail": "user@example.com",
+                    },
+                    "requestMetadata": {
+                        "callerIp": "192.168.1.1",
+                    },
+                },
+            },
+        ]
+    }
 
 
 def mock_api_services_calls(client: MagicMock):
