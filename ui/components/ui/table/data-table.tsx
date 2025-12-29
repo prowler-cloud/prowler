@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { FilterOption, MetaDataProps } from "@/types";
 
 interface DataTableProviderProps<TData, TValue> {
@@ -38,6 +39,8 @@ interface DataTableProviderProps<TData, TValue> {
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   /** Function to determine if a row can be selected */
   getRowCanSelect?: (row: Row<TData>) => boolean;
+  /** Show search bar in the table toolbar */
+  showSearch?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -49,6 +52,7 @@ export function DataTable<TData, TValue>({
   rowSelection,
   onRowSelectionChange,
   getRowCanSelect,
+  showSearch = false,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -79,8 +83,23 @@ export function DataTable<TData, TValue>({
     ? Object.keys(rowSelection).filter((k) => rowSelection[k]).length
     : 0;
 
+  // Format total entries count
+  const totalEntries = metadata?.pagination?.count ?? 0;
+  const formattedTotal = totalEntries.toLocaleString();
+
   return (
     <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
+      {/* Table Toolbar */}
+      {(showSearch || metadata) && (
+        <div className="flex items-center justify-between">
+          <div>{showSearch && <DataTableSearch />}</div>
+          {metadata && (
+            <span className="text-text-neutral-secondary text-sm">
+              {formattedTotal} Total Entries
+            </span>
+          )}
+        </div>
+      )}
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
