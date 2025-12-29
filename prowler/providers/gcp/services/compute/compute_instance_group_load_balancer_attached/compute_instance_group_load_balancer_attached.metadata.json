@@ -6,7 +6,7 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "compute.googleapis.com/InstanceGroupManager",
   "ResourceGroup": "compute",
   "Description": "Managed Instance Groups (MIGs) should be attached to load balancers via backend services to enable traffic distribution across instances. Load balancers provide health checking, autoscaling integration, and high availability features that are essential for production workloads.",
@@ -33,9 +33,6 @@
     "resilience"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "compute_instance_group_multiple_zones",
-    "compute_loadbalancer_logging_enabled"
-  ],
+  "RelatedTo": [],
   "Notes": ""
 }
