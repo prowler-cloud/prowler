@@ -85,6 +85,7 @@ export default async function Findings({
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
       <FindingsFilters
+        providers={providersData?.data || []}
         providerIds={providerIds}
         providerDetails={providerDetails}
         completedScans={completedScans || []}

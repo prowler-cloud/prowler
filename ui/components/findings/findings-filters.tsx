@@ -1,12 +1,24 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+
+import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
+import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
+import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
+import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { CustomDatePicker } from "@/components/filters/custom-date-picker";
 import { filterFindings } from "@/components/filters/data-filters";
-import { FilterControls } from "@/components/filters/filter-controls";
+import { Button } from "@/components/shadcn";
+import { DataTableFilterCustom } from "@/components/ui/table";
 import { useRelatedFilters } from "@/hooks";
 import { getCategoryLabel } from "@/lib/categories";
 import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
+import { ProviderProps } from "@/types/providers";
 
 interface FindingsFiltersProps {
+  /** Provider data for ProviderTypeSelector and AccountsSelector */
+  providers: ProviderProps[];
   providerIds: string[];
   providerDetails: { [id: string]: FilterEntity }[];
   completedScans: ScanProps[];
@@ -19,6 +31,7 @@ interface FindingsFiltersProps {
 }
 
 export const FindingsFilters = ({
+  providers,
   providerIds,
   providerDetails,
   completedScanIds,
@@ -28,7 +41,9 @@ export const FindingsFilters = ({
   uniqueResourceTypes,
   uniqueCategories,
 }: FindingsFiltersProps) => {
-  const { availableProviderIds, availableScans } = useRelatedFilters({
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const { availableScans } = useRelatedFilters({
     providerIds,
     providerDetails,
     completedScanIds,
@@ -36,56 +51,79 @@ export const FindingsFilters = ({
     enableScanRelation: true,
   });
 
+  // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
+  const customFilters = [
+    ...filterFindings,
+    {
+      key: FilterType.REGION,
+      labelCheckboxGroup: "Regions",
+      values: uniqueRegions,
+      index: 3,
+    },
+    {
+      key: FilterType.SERVICE,
+      labelCheckboxGroup: "Services",
+      values: uniqueServices,
+      index: 4,
+    },
+    {
+      key: FilterType.RESOURCE_TYPE,
+      labelCheckboxGroup: "Resource Type",
+      values: uniqueResourceTypes,
+      index: 8,
+    },
+    {
+      key: FilterType.CATEGORY,
+      labelCheckboxGroup: "Category",
+      values: uniqueCategories,
+      labelFormatter: getCategoryLabel,
+      index: 5,
+    },
+    {
+      key: FilterType.SCAN,
+      labelCheckboxGroup: "Scan ID",
+      values: availableScans,
+      valueLabelMapping: scanDetails,
+      index: 7,
+    },
+  ];
+
+  const hasCustomFilters = customFilters.length > 0;
+
   return (
-    <>
-      <FilterControls
-        search
-        date
-        mutedFindings
-        showToggle
-        customFilters={[
-          ...filterFindings,
-          {
-            key: FilterType.PROVIDER,
-            labelCheckboxGroup: "Provider",
-            values: availableProviderIds,
-            valueLabelMapping: providerDetails,
-            index: 6,
-          },
-          {
-            key: FilterType.REGION,
-            labelCheckboxGroup: "Regions",
-            values: uniqueRegions,
-            index: 3,
-          },
-          {
-            key: FilterType.SERVICE,
-            labelCheckboxGroup: "Services",
-            values: uniqueServices,
-            index: 4,
-          },
-          {
-            key: FilterType.RESOURCE_TYPE,
-            labelCheckboxGroup: "Resource Type",
-            values: uniqueResourceTypes,
-            index: 8,
-          },
-          {
-            key: FilterType.CATEGORY,
-            labelCheckboxGroup: "Category",
-            values: uniqueCategories,
-            labelFormatter: getCategoryLabel,
-            index: 5,
-          },
-          {
-            key: FilterType.SCAN,
-            labelCheckboxGroup: "Scan ID",
-            values: availableScans,
-            valueLabelMapping: scanDetails,
-            index: 7,
-          },
-        ]}
-      />
-    </>
+    <div className="flex flex-col gap-4">
+      {/* First row: Provider selectors + Muted checkbox + More Filters button + Clear Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <ProviderTypeSelector providers={providers} />
+        </div>
+        <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <AccountsSelector providers={providers} />
+        </div>
+        <CustomCheckboxMutedFindings />
+        {hasCustomFilters && (
+          <Button variant="outline" onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? "Less Filters" : "More Filters"}
+            {isExpanded ? (
+              <ChevronUp className="size-4" />
+            ) : (
+              <ChevronDown className="size-4" />
+            )}
+          </Button>
+        )}
+        <ClearFiltersButton showCount />
+      </div>
+
+      {/* Expandable filters section */}
+      {isExpanded && hasCustomFilters && (
+        <>
+          <DataTableFilterCustom
+            filters={customFilters}
+            prependElement={<CustomDatePicker />}
+            hideClearButton
+          />
+        </>
+      )}
+    </div>
   );
 };

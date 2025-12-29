@@ -61,7 +61,7 @@ export const filterScans = [
   // Add more filter categories as needed
 ];
 
-//Static filters for findings
+//Static filters for findings (Cloud Provider removed - now uses ProviderTypeSelector)
 export const filterFindings = [
   {
     key: FilterType.SEVERITY,
@@ -74,13 +74,6 @@ export const filterFindings = [
     labelCheckboxGroup: "Status",
     values: ["PASS", "FAIL", "MANUAL"],
     index: 1,
-  },
-  {
-    key: FilterType.PROVIDER_TYPE,
-    labelCheckboxGroup: "Cloud Provider",
-    values: [...PROVIDER_TYPES],
-    valueLabelMapping: PROVIDER_TYPE_MAPPING,
-    index: 5,
   },
   {
     key: FilterType.DELTA,
