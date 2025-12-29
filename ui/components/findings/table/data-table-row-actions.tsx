@@ -16,7 +16,6 @@ import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
-import { Button } from "@/components/shadcn";
 import type { FindingProps } from "@/types/components";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
