@@ -8,8 +8,9 @@ class compute_instance_multiple_network_interfaces(Check):
 
     This check evaluates whether Compute Engine instances are configured with only
     one network interface to minimize network complexity and reduce attack surface.
-    - PASS: The VM instance has a single network interface.
-    - FAIL: The VM instance has multiple network interfaces.
+    - PASS: The VM instance has a single network interface, or is a GKE-managed instance
+            (which may legitimately require multiple interfaces).
+    - FAIL: The VM instance has multiple network interfaces (excluding GKE instances).
     """
 
     def execute(self) -> list[Check_Report_GCP]:
@@ -21,8 +22,13 @@ class compute_instance_multiple_network_interfaces(Check):
                 f"VM Instance {instance.name} has a single network interface."
             )
             if instance.network_interfaces_count > 1:
-                report.status = "FAIL"
-                report.status_extended = f"VM Instance {instance.name} has {instance.network_interfaces_count} network interfaces."
+                # GKE instances may legitimately require multiple network interfaces
+                if instance.name.startswith("gke-"):
+                    report.status = "PASS"
+                    report.status_extended = f"VM Instance {instance.name} has {instance.network_interfaces_count} network interfaces. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"VM Instance {instance.name} has {instance.network_interfaces_count} network interfaces."
             findings.append(report)
 
         return findings

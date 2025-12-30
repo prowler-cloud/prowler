@@ -263,3 +263,55 @@ class Test_compute_instance_multiple_network_interfaces:
             )
             assert result[1].resource_id == "2222222222"
             assert result[1].resource_name == "multi-nic-instance"
+
+    def test_gke_instance_multiple_network_interfaces(self):
+        from prowler.providers.gcp.services.compute.compute_service import Instance
+
+        instance = Instance(
+            name="gke-cluster-default-pool-12345678-abcd",
+            id="9999999999",
+            zone="us-central1-a",
+            region="us-central1",
+            public_ip=False,
+            metadata={},
+            shielded_enabled_vtpm=True,
+            shielded_enabled_integrity_monitoring=True,
+            confidential_computing=False,
+            service_accounts=[],
+            ip_forward=False,
+            disks_encryption=[],
+            project_id=GCP_PROJECT_ID,
+            network_interfaces_count=2,
+        )
+
+        compute_client = mock.MagicMock()
+        compute_client.project_ids = [GCP_PROJECT_ID]
+        compute_client.instances = [instance]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
+                compute_instance_multiple_network_interfaces,
+            )
+
+            check = compute_instance_multiple_network_interfaces()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "VM Instance gke-cluster-default-pool-12345678-abcd has 2 network interfaces. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
+            )
+            assert result[0].resource_id == "9999999999"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].resource_name == "gke-cluster-default-pool-12345678-abcd"
+            assert result[0].location == "us-central1"
