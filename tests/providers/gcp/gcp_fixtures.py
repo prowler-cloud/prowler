@@ -1027,6 +1027,12 @@ def mock_api_urlMaps_calls(client: MagicMock):
             "logConfig": {"enable": False},
         },
     ]
+    # Mock backendServices().list() for _associate_migs_with_load_balancers()
+    client.backendServices().list().execute.return_value = {"items": []}
+    client.backendServices().list_next.return_value = None
+    # Mock regionBackendServices().list() for _associate_migs_with_load_balancers()
+    client.regionBackendServices().list().execute.return_value = {"items": []}
+    client.regionBackendServices().list_next.return_value = None
 
 
 def mock_api_managedZones_calls(client: MagicMock):
