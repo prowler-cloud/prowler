@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Input } from "@/components/shadcn/input/input";
-import { cn } from "@/lib/utils";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { cn } from "@/lib/utils";
 
 export const DataTableSearch = () => {
   const searchParams = useSearchParams();
