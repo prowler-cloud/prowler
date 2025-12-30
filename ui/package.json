@@ -84,6 +84,7 @@
     "next-themes": "0.2.1",
     "radix-ui": "1.4.2",
     "react": "19.2.2",
+    "react-day-picker": "9.13.0",
     "react-dom": "19.2.2",
     "react-hook-form": "7.62.0",
     "react-markdown": "10.1.0",

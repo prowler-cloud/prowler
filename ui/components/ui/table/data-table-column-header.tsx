@@ -65,12 +65,12 @@ export const DataTableColumnHeader = <TData, TValue>({
       currentSortParam === "" ||
       (currentSortParam !== param && currentSortParam !== `-${param}`)
     ) {
-      return <ChevronsLeftRightIcon size={14} className="ml-2 rotate-90" />;
+      return <ChevronsLeftRightIcon size={14} className="ml-1 rotate-90" />;
     }
     return currentSortParam === `-${param}` ? (
-      <ArrowDownIcon size={12} className="ml-2" />
+      <ArrowDownIcon size={12} className="ml-1" />
     ) : (
-      <ArrowUpIcon size={12} className="ml-2" />
+      <ArrowUpIcon size={12} className="ml-1" />
     );
   };
 

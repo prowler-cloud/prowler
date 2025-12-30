@@ -1,7 +1,6 @@
 "use client";
 
 import { Spacer } from "@heroui/spacer";
-import React from "react";
 
 import { FilterOption } from "@/types";
 
@@ -23,7 +22,7 @@ export interface FilterControlsProps {
   customFilters?: FilterOption[];
 }
 
-export const FilterControls: React.FC<FilterControlsProps> = ({
+export const FilterControls = ({
   search = false,
   providers = false,
   date = false,
@@ -31,7 +30,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   accounts = false,
   mutedFindings = false,
   customFilters,
-}) => {
+}: FilterControlsProps) => {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
@@ -44,8 +43,12 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           {mutedFindings && <CustomCheckboxMutedFindings />}
         </div>
       </div>
-      <Spacer y={8} />
-      {customFilters && <DataTableFilterCustom filters={customFilters} />}
+      {customFilters && customFilters.length > 0 && (
+        <>
+          <Spacer y={8} />
+          <DataTableFilterCustom filters={customFilters} />
+        </>
+      )}
     </div>
   );
 };
