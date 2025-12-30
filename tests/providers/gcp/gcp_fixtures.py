@@ -1253,6 +1253,12 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         },
                     ]
                 },
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/http-health-check",
+                        "initialDelaySec": 300,
+                    }
+                ],
             },
             {
                 "name": "regional-mig-single-zone",
@@ -1265,6 +1271,7 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         }
                     ]
                 },
+                # No autoHealingPolicies - testing missing autohealing
             },
         ]
     }
@@ -1277,6 +1284,12 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                 "name": "zonal-mig-1",
                 "id": zonal_mig1_id,
                 "targetSize": 2,
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/tcp-health-check",
+                        "initialDelaySec": 120,
+                    }
+                ],
             },
         ]
     }
