@@ -60,7 +60,7 @@ export const FindingSeverityOverTime = ({
 
     // Preserve provider filters from overview
     const providerType = searchParams.get("filter[provider_type__in]");
-    const providerId = searchParams.get("filter[provider_id__in]");
+    const providerId = searchParams.get("filter[provider__in]");
 
     if (providerType) {
       params.set("filter[provider_type__in]", providerType);

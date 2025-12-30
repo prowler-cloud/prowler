@@ -18,7 +18,7 @@ export async function RiskPlotSSR({
   const filters = pickFilterParams(searchParams);
 
   const providerTypeFilter = filters["filter[provider_type__in]"];
-  const providerIdFilter = filters["filter[provider_id__in]"];
+  const providerIdFilter = filters["filter[provider__in]"];
 
   // Fetch all providers
   const providersListResponse = await getProviders({ pageSize: 200 });
