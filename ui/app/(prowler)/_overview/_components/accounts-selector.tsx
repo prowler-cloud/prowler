@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
@@ -43,9 +43,21 @@ interface AccountsSelectorProps {
 
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const current = searchParams.get("filter[provider_id__in]") || "";
+  // Determine which filter key to use based on the current page
+  // - /findings uses provider__in (API expects this)
+  // - /overview and others use provider_id__in
+  const isFindingsPage = pathname?.startsWith("/findings");
+  const filterKey = isFindingsPage
+    ? "filter[provider__in]"
+    : "filter[provider_id__in]";
+
+  // Read from both keys to support navigation between pages
+  const providerIn = searchParams.get("filter[provider__in]") || "";
+  const providerIdIn = searchParams.get("filter[provider_id__in]") || "";
+  const current = providerIn || providerIdIn;
   const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypesList = selectedTypes
     ? selectedTypes.split(",").filter(Boolean)
@@ -61,10 +73,14 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
 
   const handleMultiValueChange = (ids: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
+
+    // Clean up both potential provider filter keys first
+    params.delete("filter[provider_id__in]");
+    params.delete("filter[provider__in]");
+
     if (ids.length > 0) {
-      params.set("filter[provider_id__in]", ids.join(","));
-    } else {
-      params.delete("filter[provider_id__in]");
+      // Use the appropriate filter key for the current page
+      params.set(filterKey, ids.join(","));
     }
 
     // Auto-deselect provider types that no longer have any selected accounts
