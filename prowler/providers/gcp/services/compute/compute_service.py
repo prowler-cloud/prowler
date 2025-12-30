@@ -103,7 +103,8 @@ class Compute(GCPService):
 
                     for instance in response.get("items", []):
                         public_ip = False
-                        for interface in instance.get("networkInterfaces", []):
+                        network_interfaces = instance.get("networkInterfaces", [])
+                        for interface in network_interfaces:
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
@@ -165,6 +166,7 @@ class Compute(GCPService):
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
                                 ),
+                                network_interfaces_count=len(network_interfaces),
                             )
                         )
 
@@ -536,6 +538,7 @@ class Instance(BaseModel):
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
+    network_interfaces_count: int = 0
 
 
 class Network(BaseModel):
