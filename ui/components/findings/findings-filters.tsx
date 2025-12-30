@@ -103,7 +103,11 @@ export const FindingsFilters = ({
         </div>
         <CustomCheckboxMutedFindings />
         {hasCustomFilters && (
-          <Button variant="outline" onClick={() => setIsExpanded(!isExpanded)}>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
             {isExpanded ? "Less Filters" : "More Filters"}
             <ChevronDown
               className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}

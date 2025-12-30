@@ -1,10 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Spacer } from "@heroui/spacer";
 
-import { Button } from "@/components/shadcn";
-import { ExpandableSection } from "@/components/ui/expandable-section";
 import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
@@ -23,10 +20,6 @@ export interface FilterControlsProps {
   accounts?: boolean;
   mutedFindings?: boolean;
   customFilters?: FilterOption[];
-  /** Whether to show the toggle button for expanding/collapsing custom filters */
-  showToggle?: boolean;
-  /** Initial expanded state for custom filters (default: false) */
-  defaultExpanded?: boolean;
 }
 
 export const FilterControls = ({
@@ -37,15 +30,7 @@ export const FilterControls = ({
   accounts = false,
   mutedFindings = false,
   customFilters,
-  showToggle = false,
-  defaultExpanded = false,
 }: FilterControlsProps) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  const hasCustomFilters = customFilters && customFilters.length > 0;
-  const shouldShowCustomFilters =
-    hasCustomFilters && (!showToggle || isExpanded);
-
   return (
     <div className="flex flex-col">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
@@ -57,23 +42,12 @@ export const FilterControls = ({
           {accounts && <CustomAccountSelection />}
           {mutedFindings && <CustomCheckboxMutedFindings />}
         </div>
-        {showToggle && hasCustomFilters && (
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? "Less Filters" : "More Filters"}
-            <ChevronDown
-              className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
-            />
-          </Button>
-        )}
       </div>
-      {hasCustomFilters && (
-        <ExpandableSection isExpanded={!!shouldShowCustomFilters}>
+      {customFilters && customFilters.length > 0 && (
+        <>
+          <Spacer y={8} />
           <DataTableFilterCustom filters={customFilters} />
-        </ExpandableSection>
+        </>
       )}
     </div>
   );

@@ -8,6 +8,8 @@ import { Input } from "@/components/shadcn/input/input";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { cn } from "@/lib/utils";
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const DataTableSearch = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
@@ -45,7 +47,7 @@ export const DataTableSearch = () => {
       debounceTimeoutRef.current = setTimeout(() => {
         updateFilter("search", newValue);
         setIsLoading(false);
-      }, 300);
+      }, SEARCH_DEBOUNCE_MS);
     } else {
       setIsLoading(false);
       updateFilter("search", null);
