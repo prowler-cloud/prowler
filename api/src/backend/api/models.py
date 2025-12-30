@@ -67,9 +67,15 @@ logger = logging.getLogger(BackendLogger.API)
 
 class StatusChoices(models.TextChoices):
     """
-    This list is based on the finding status in the Prowler CLI.
+    Enumeration of possible finding statuses.
 
+    This list is based on the finding status in the Prowler CLI.
     However, it adds another state, MUTED, which is not in the CLI.
+
+    Attributes:
+        FAIL: The security check failed, indicating a potential vulnerability.
+        PASS: The security check passed successfully.
+        MANUAL: The check requires manual verification.
     """
 
     FAIL = "FAIL", _("Fail")
@@ -80,6 +86,13 @@ class StatusChoices(models.TextChoices):
 class OverviewStatusChoices(models.TextChoices):
     """
     Status filters allowed in overview/severity endpoints.
+
+    A subset of StatusChoices used specifically for filtering in
+    overview and severity aggregation endpoints.
+
+    Attributes:
+        FAIL: Filter for failed findings only.
+        PASS: Filter for passed findings only.
     """
 
     FAIL = "FAIL", _("Fail")
@@ -87,6 +100,21 @@ class OverviewStatusChoices(models.TextChoices):
 
 
 class StateChoices(models.TextChoices):
+    """
+    Enumeration of scan execution states.
+
+    Represents the lifecycle states of a security scan from creation
+    through completion or failure.
+
+    Attributes:
+        AVAILABLE: Scan is created and ready to be scheduled or executed.
+        SCHEDULED: Scan is scheduled for future execution.
+        EXECUTING: Scan is currently running.
+        COMPLETED: Scan finished successfully.
+        FAILED: Scan encountered an error and did not complete.
+        CANCELLED: Scan was cancelled before completion.
+    """
+
     AVAILABLE = "available", _("Available")
     SCHEDULED = "scheduled", _("Scheduled")
     EXECUTING = "executing", _("Executing")
@@ -111,6 +139,23 @@ class PermissionChoices(models.TextChoices):
 
 
 class ActiveProviderManager(models.Manager):
+    """
+    Custom manager that filters out soft-deleted providers.
+
+    This manager automatically excludes providers marked as deleted
+    (is_deleted=True) from querysets. It handles different model types
+    by applying the appropriate filter based on the relationship path.
+
+    Usage:
+        Provider.objects.all()  # Returns only active providers
+        Provider.all_objects.all()  # Returns all providers including deleted
+
+    Supported Models:
+        - Provider: Filters on is_deleted field directly
+        - Finding, ComplianceOverview, ScanSummary: Filters via scan__provider
+        - Other models: Filters via provider foreign key
+    """
+
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
 
@@ -124,14 +169,45 @@ class ActiveProviderManager(models.Manager):
 
 
 class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
+    """
+    Combined manager for partitioned models with active provider filtering.
+
+    Inherits from both PostgresManager (for partition support) and
+    ActiveProviderManager (for soft-delete filtering). Used by models
+    like Finding that are both partitioned and need provider filtering.
+    """
+
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
 
 
 class TenantAPIKeyManager(AbstractAPIKeyManager):
+    """
+    Custom manager for tenant-scoped API keys.
+
+    Handles API key generation with a custom separator and prefix format.
+    Keys are generated using cryptographic functions and include an
+    expiry date in the payload.
+
+    Attributes:
+        separator: Character used to separate prefix from key (default: ".")
+
+    Methods:
+        assign_api_key: Generates and returns a prefixed API key string.
+    """
+
     separator = "."
 
     def assign_api_key(self, obj) -> str:
+        """
+        Generate and assign an API key to the given object.
+
+        Args:
+            obj: TenantAPIKey instance to generate key for.
+
+        Returns:
+            str: The complete API key in format "{prefix}.{key}".
+        """
         payload = {"_pk": str(obj.pk), "_exp": obj.expiry_date.timestamp()}
         key = get_crypto().generate(payload)
 
@@ -140,6 +216,31 @@ class TenantAPIKeyManager(AbstractAPIKeyManager):
 
 
 class User(AbstractBaseUser):
+    """
+    Custom user model for Prowler API authentication.
+
+    Extends Django's AbstractBaseUser to provide email-based authentication
+    instead of username-based. Users can belong to multiple tenants through
+    the Membership model.
+
+    Attributes:
+        id: UUID primary key.
+        name: User's display name (3-150 characters).
+        email: Unique email address (case-insensitive).
+        company_name: Optional company affiliation.
+        is_active: Whether the user account is active.
+        date_joined: Timestamp of account creation.
+
+    Example:
+        >>> user = User.objects.create(
+        ...     name="John Doe",
+        ...     email="john@example.com",
+        ...     company_name="Acme Corp"
+        ... )
+        >>> user.is_member_of_tenant(tenant_id)
+        True
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
     email = models.EmailField(
@@ -157,7 +258,16 @@ class User(AbstractBaseUser):
 
     objects = CustomUserManager()
 
-    def is_member_of_tenant(self, tenant_id):
+    def is_member_of_tenant(self, tenant_id: str) -> bool:
+        """
+        Check if user belongs to a specific tenant.
+
+        Args:
+            tenant_id: UUID of the tenant to check membership for.
+
+        Returns:
+            bool: True if user has a membership in the tenant.
+        """
         return self.memberships.filter(tenant_id=tenant_id).exists()
 
     def save(self, *args, **kwargs):
@@ -180,7 +290,33 @@ class User(AbstractBaseUser):
 
 
 class Membership(models.Model):
+    """
+    Associates users with tenants and defines their role within each tenant.
+
+    A user can have multiple memberships across different tenants, but only
+    one membership per tenant. The role determines the user's permissions
+    within that tenant context.
+
+    Attributes:
+        id: UUID primary key.
+        user: Foreign key to the User model.
+        tenant: Foreign key to the Tenant model.
+        role: User's role within the tenant (owner or member).
+        date_joined: Timestamp when user joined the tenant.
+
+    Constraints:
+        - Unique constraint on (user, tenant) combination.
+    """
+
     class RoleChoices(models.TextChoices):
+        """
+        Available roles for tenant membership.
+
+        Attributes:
+            OWNER: Full administrative access to the tenant.
+            MEMBER: Standard access with limited administrative capabilities.
+        """
+
         OWNER = "owner", _("Owner")
         MEMBER = "member", _("Member")
 
@@ -219,6 +355,28 @@ class Membership(models.Model):
 
 
 class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
+    """
+    API key model for programmatic access to tenant resources.
+
+    Provides secure, tenant-scoped API keys with automatic prefix generation
+    and usage tracking. Keys are protected by row-level security.
+
+    Attributes:
+        id: UUID primary key.
+        name: Human-readable key name (3-100 characters).
+        created: Timestamp of key creation.
+        prefix: Unique 11-character prefix for key identification.
+        last_used_at: Timestamp of last authentication with this key.
+        entity: Optional user who owns this key.
+
+    Example:
+        >>> api_key = TenantAPIKey.objects.create(
+        ...     name="CI/CD Pipeline Key",
+        ...     tenant=tenant
+        ... )
+        >>> key_string = TenantAPIKey.objects.assign_api_key(api_key)
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
     created = models.DateTimeField(auto_now_add=True, editable=False)
@@ -274,10 +432,52 @@ class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
 
 
 class Provider(RowLevelSecurityProtectedModel):
+    """
+    Represents a cloud provider account connected to Prowler for security scanning.
+
+    Providers are the primary entities that scans are executed against. Each provider
+    represents a single cloud account (AWS account, Azure subscription, GCP project, etc.)
+    and stores connection metadata, credentials reference, and scan configuration.
+
+    Supports soft deletion via is_deleted flag to preserve historical scan data.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        is_deleted: Soft delete flag (filtered by default manager).
+        provider: Cloud provider type (aws, azure, gcp, etc.).
+        uid: Provider-specific unique identifier (e.g., AWS account ID).
+        alias: Optional human-readable name.
+        connected: Connection status (True/False/None for unknown).
+        connection_last_checked_at: Timestamp of last connection check.
+        metadata: Provider-specific metadata as JSON.
+        scanner_args: Custom scanner arguments as JSON.
+
+    Managers:
+        objects: Returns only active (non-deleted) providers.
+        all_objects: Returns all providers including deleted.
+
+    Example:
+        >>> provider = Provider.objects.create(
+        ...     tenant=tenant,
+        ...     provider=Provider.ProviderChoices.AWS,
+        ...     uid="123456789012",
+        ...     alias="Production Account"
+        ... )
+    """
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
     class ProviderChoices(models.TextChoices):
+        """
+        Supported cloud provider types.
+
+        Each provider type has specific UID validation rules enforced
+        by the corresponding validate_*_uid static methods.
+        """
+
         AWS = "aws", _("AWS")
         AZURE = "azure", _("Azure")
         GCP = "gcp", _("GCP")
@@ -451,6 +651,28 @@ class Provider(RowLevelSecurityProtectedModel):
 
 
 class ProviderGroup(RowLevelSecurityProtectedModel):
+    """
+    Logical grouping of providers for organizational purposes.
+
+    Provider groups allow tenants to organize their cloud accounts into
+    logical units (e.g., by environment, team, or business unit). Groups
+    can be used for role-based access control and bulk operations.
+
+    Attributes:
+        id: UUID primary key.
+        name: Group name (unique per tenant).
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        providers: Many-to-many relationship with Provider model.
+
+    Example:
+        >>> group = ProviderGroup.objects.create(
+        ...     tenant=tenant,
+        ...     name="Production Accounts"
+        ... )
+        >>> group.providers.add(aws_provider, azure_provider)
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=255)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -478,6 +700,18 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
+    """
+    Through model for Provider-ProviderGroup many-to-many relationship.
+
+    Tracks which providers belong to which groups with tenant isolation.
+
+    Attributes:
+        id: UUID primary key.
+        provider_group: Foreign key to ProviderGroup.
+        provider: Foreign key to Provider.
+        inserted_at: Timestamp when provider was added to group.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     provider_group = models.ForeignKey(ProviderGroup, on_delete=models.CASCADE)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
@@ -502,6 +736,18 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
 
 
 class Task(RowLevelSecurityProtectedModel):
+    """
+    Tracks background task execution for scans and other async operations.
+
+    Links Prowler's internal task tracking with Celery's TaskResult model
+    to provide unified task status and result access.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of task creation.
+        task_runner_task: One-to-one link to Celery TaskResult.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     task_runner_task = models.OneToOneField(
@@ -536,12 +782,30 @@ class Task(RowLevelSecurityProtectedModel):
 
 
 class Scan(RowLevelSecurityProtectedModel):
+    """
+    Represents a security scan execution against a cloud provider.
+
+    A scan captures the state of security findings at a point in time,
+    tracking progress, duration, and results. Scans can be triggered
+    manually, scheduled automatically, or created via data import.
+    """
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
     class TriggerChoices(models.TextChoices):
+        """
+        Defines how a scan was initiated.
+
+        Attributes:
+            SCHEDULED: Scan triggered by an automated schedule (e.g., daily scan).
+            MANUAL: Scan triggered by user action through the UI or API.
+            IMPORTED: Scan created from imported external data (e.g., CLI output).
+        """
+
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
+        IMPORTED = "imported", _("Imported")
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(
@@ -627,6 +891,23 @@ class Scan(RowLevelSecurityProtectedModel):
 
 
 class ResourceTag(RowLevelSecurityProtectedModel):
+    """
+    Stores key-value tag pairs associated with cloud resources.
+
+    Tags are deduplicated at the tenant level - the same key-value pair
+    is stored once and referenced by multiple resources via ResourceTagMapping.
+
+    Includes full-text search support for efficient tag-based filtering.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        key: Tag key (e.g., "Environment", "Owner").
+        value: Tag value (e.g., "Production", "DevOps Team").
+        text_search: Generated field for full-text search.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -664,6 +945,46 @@ class ResourceTag(RowLevelSecurityProtectedModel):
 
 
 class Resource(RowLevelSecurityProtectedModel):
+    """
+    Represents a cloud resource discovered during security scans.
+
+    Resources are unique per provider and identified by their provider-assigned UID.
+    They store metadata about the resource and track associated findings.
+
+    Includes full-text search support across uid, name, region, service, and type.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        provider: Foreign key to the Provider that owns this resource.
+        uid: Provider-assigned unique identifier (e.g., ARN for AWS).
+        name: Human-readable resource name.
+        region: Geographic region/location of the resource.
+        service: Cloud service the resource belongs to (e.g., "ec2", "s3").
+        type: Resource type within the service (e.g., "instance", "bucket").
+        metadata: Additional resource metadata as text.
+        details: Extended resource details as text.
+        partition: Cloud partition (e.g., "aws", "aws-cn", "aws-us-gov").
+        failed_findings_count: Denormalized count of failed findings.
+        tags: Many-to-many relationship with ResourceTag.
+
+    Managers:
+        objects: Returns resources from active (non-deleted) providers.
+        all_objects: Returns all resources.
+
+    Example:
+        >>> resource = Resource.objects.create(
+        ...     tenant=tenant,
+        ...     provider=aws_provider,
+        ...     uid="arn:aws:s3:::my-bucket",
+        ...     name="my-bucket",
+        ...     region="us-east-1",
+        ...     service="s3",
+        ...     type="bucket"
+        ... )
+    """
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
@@ -781,6 +1102,18 @@ class Resource(RowLevelSecurityProtectedModel):
 
 
 class ResourceTagMapping(RowLevelSecurityProtectedModel):
+    """
+    Through model for Resource-ResourceTag many-to-many relationship.
+
+    Enables efficient tag association while maintaining tenant isolation.
+    Note: Primary key is included for Django ORM compatibility.
+
+    Attributes:
+        id: UUID primary key.
+        resource: Foreign key to Resource.
+        tag: Foreign key to ResourceTag.
+    """
+
     # NOTE that we don't really need a primary key here,
     #      but everything is easier with django if we do
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -817,11 +1150,53 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
 
 class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     """
-    Defines the Finding model.
+    Security finding from a Prowler scan.
 
-    Findings uses a partitioned table to store findings. The partitions are created based on the UUIDv7 `id` field.
+    Findings represent individual security check results against cloud resources.
+    Uses PostgreSQL table partitioning based on UUIDv7 id for efficient querying
+    of large datasets.
 
-    Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
+    The model tracks finding status, severity, associated resources, and supports
+    muting for acknowledged issues. Full-text search is available on impact and
+    status extended fields.
+
+    Attributes:
+        id: UUIDv7 primary key (time-ordered for partitioning).
+        inserted_at: Timestamp of finding creation.
+        updated_at: Timestamp of last modification.
+        first_seen_at: When this finding was first detected.
+        uid: Unique identifier for the finding within a scan.
+        delta: Change status (new, changed, or None for unchanged).
+        status: Finding result (PASS, FAIL, MANUAL).
+        status_extended: Detailed status explanation.
+        severity: Finding severity level.
+        impact: Impact severity level.
+        impact_extended: Detailed impact description.
+        raw_result: Original Prowler check output as JSON.
+        tags: Resource tags as JSON.
+        check_id: Prowler check identifier (e.g., "s3_bucket_public_access").
+        check_metadata: Check configuration and metadata as JSON.
+        muted: Whether finding is muted/acknowledged.
+        muted_reason: Explanation for muting (3-500 characters).
+        muted_at: Timestamp when finding was muted.
+        compliance: Compliance framework mappings as JSON.
+        scan: Foreign key to the parent Scan.
+        resources: Many-to-many relationship with Resource.
+
+    Managers:
+        objects: Returns findings from active providers only.
+        all_objects: Returns all findings.
+
+    Note:
+        When creating migrations, use `python manage.py pgmakemigrations`
+        to properly handle partitioned table changes.
+
+    Example:
+        >>> findings = Finding.objects.filter(
+        ...     scan=scan,
+        ...     status=StatusChoices.FAIL,
+        ...     severity__in=["critical", "high"]
+        ... )
     """
 
     objects = ActiveProviderPartitionedManager()
@@ -832,6 +1207,14 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         key = ["id"]
 
     class DeltaChoices(models.TextChoices):
+        """
+        Change status for findings between scans.
+
+        Attributes:
+            NEW: Finding detected for the first time.
+            CHANGED: Finding status changed from previous scan.
+        """
+
         NEW = "new", _("New")
         CHANGED = "changed", _("Changed")
 
@@ -1045,10 +1428,55 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
 
 
 class ProviderSecret(RowLevelSecurityProtectedModel):
+    """
+    Encrypted credentials for cloud provider authentication.
+
+    Stores provider-specific authentication credentials with Fernet encryption.
+    Each provider can have at most one associated secret. The secret property
+    handles transparent encryption/decryption.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        name: Optional human-readable name.
+        secret_type: Type of credential (static, role, service_account).
+        provider: One-to-one relationship with Provider.
+
+    Secret Types:
+        - static: Key-value pairs (e.g., AWS access keys)
+        - role: IAM role assumption configuration
+        - service_account: GCP service account JSON key
+
+    Example:
+        >>> secret = ProviderSecret.objects.create(
+        ...     tenant=tenant,
+        ...     provider=aws_provider,
+        ...     secret_type=ProviderSecret.TypeChoices.STATIC,
+        ...     name="AWS Credentials"
+        ... )
+        >>> secret.secret = {
+        ...     'aws_access_key_id': 'AKIA...',
+        ...     'aws_secret_access_key': '...'
+        ... }
+        >>> secret.save()
+        >>> # Decryption is automatic
+        >>> creds = secret.secret  # Returns decrypted dict
+    """
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
     class TypeChoices(models.TextChoices):
+        """
+        Credential type options.
+
+        Attributes:
+            STATIC: Static key-value credentials (access keys, tokens).
+            ROLE: IAM role assumption (AWS AssumeRole, Azure managed identity).
+            SERVICE_ACCOUNT: GCP service account JSON key file.
+        """
+
         STATIC = "static", _("Key-value pairs")
         ROLE = "role", _("Role assumption")
         SERVICE_ACCOUNT = "service_account", _("GCP Service Account Key")
@@ -1100,7 +1528,48 @@ class ProviderSecret(RowLevelSecurityProtectedModel):
 
 
 class Invitation(RowLevelSecurityProtectedModel):
+    """
+    Tenant membership invitation for new users.
+
+    Manages the invitation workflow for adding users to a tenant. Invitations
+    have a unique token, expiration date, and state tracking. Email addresses
+    are normalized to lowercase.
+
+    Attributes:
+        id: UUID primary key.
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        email: Invitee's email address.
+        state: Current invitation state.
+        token: Unique 14-character invitation token.
+        expires_at: Expiration timestamp (default: 1 week).
+        inviter: User who created the invitation.
+
+    State Lifecycle:
+        PENDING → ACCEPTED (user accepts)
+                → EXPIRED (time expires)
+                → REVOKED (admin revokes)
+
+    Example:
+        >>> invitation = Invitation.objects.create(
+        ...     tenant=tenant,
+        ...     email="newuser@example.com",
+        ...     inviter=current_user
+        ... )
+        >>> # Send invitation.token to user via email
+    """
+
     class State(models.TextChoices):
+        """
+        Invitation state options.
+
+        Attributes:
+            PENDING: Awaiting user action.
+            ACCEPTED: User accepted and joined tenant.
+            EXPIRED: Invitation expired without action.
+            REVOKED: Admin cancelled the invitation.
+        """
+
         PENDING = "pending", _("Invitation is pending")
         ACCEPTED = "accepted", _("Invitation was accepted by a user")
         EXPIRED = "expired", _("Invitation expired after the configured time")
@@ -1154,6 +1623,43 @@ class Invitation(RowLevelSecurityProtectedModel):
 
 
 class Role(RowLevelSecurityProtectedModel):
+    """
+    RBAC role with granular permission flags and provider group scoping.
+
+    Roles define what actions users can perform within a tenant. Permissions
+    are boolean flags for each capability. Provider group associations limit
+    visibility to specific provider subsets.
+
+    Attributes:
+        id: UUID primary key.
+        name: Role name (unique per tenant).
+        manage_users: Can manage tenant users.
+        manage_account: Can modify account settings.
+        manage_billing: Can access billing information.
+        manage_providers: Can add/modify providers.
+        manage_integrations: Can configure integrations.
+        manage_scans: Can execute and manage scans.
+        unlimited_visibility: Can see all providers (ignores group scoping).
+        inserted_at: Timestamp of creation.
+        updated_at: Timestamp of last modification.
+        provider_groups: Scoped provider groups for limited visibility.
+        users: Users assigned to this role.
+        invitations: Pending invitations with this role.
+
+    Properties:
+        permission_state: Returns UNLIMITED, LIMITED, or NONE based on flags.
+
+    Example:
+        >>> role = Role.objects.create(
+        ...     tenant=tenant,
+        ...     name="Security Analyst",
+        ...     manage_scans=True,
+        ...     unlimited_visibility=False
+        ... )
+        >>> role.provider_groups.add(production_group)
+        >>> role.users.add(analyst_user)
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=255)
     manage_users = models.BooleanField(default=False)
