@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "compute.googleapis.com/InstanceGroupManager",
+  "ResourceGroup": "compute",
   "Description": "Managed Instance Groups (MIGs) should have **autohealing** enabled with a valid health check configured. Autohealing automatically recreates unhealthy instances based on application-level health checks, ensuring continuous availability.",
   "Risk": "Without autohealing, MIGs cannot detect application-level failures such as crashes, freezes, or memory issues. Instances that are technically running but experiencing problems will remain undetected and unreplaced, leading to:\n\n- **Service degradation** from unhealthy instances\n- **Extended downtime** during application failures\n- **Manual intervention** required to detect and replace failed instances",
   "RelatedUrl": "",
