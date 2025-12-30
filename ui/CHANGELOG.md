@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
+- New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 
 ---
 
