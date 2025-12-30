@@ -26,7 +26,7 @@ export function ExpandableSection({
       )}
     >
       <div className="overflow-hidden">
-        <div className={cn(!isExpanded && "invisible")}>{children}</div>
+        <div className={cn("pt-4", !isExpanded && "invisible")}>{children}</div>
       </div>
     </div>
   );

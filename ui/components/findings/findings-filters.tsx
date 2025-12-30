@@ -92,7 +92,7 @@ export const FindingsFilters = ({
   const hasCustomFilters = customFilters.length > 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       {/* First row: Provider selectors + Muted checkbox + More Filters button + Clear Filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-[200px] flex-1 md:max-w-[280px]">
