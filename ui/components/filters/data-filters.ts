@@ -61,7 +61,7 @@ export const filterScans = [
   // Add more filter categories as needed
 ];
 
-//Static filters for findings (Cloud Provider removed - now uses ProviderTypeSelector)
+//Static filters for findings
 export const filterFindings = [
   {
     key: FilterType.SEVERITY,

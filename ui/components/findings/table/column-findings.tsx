@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
 
-// import { ImpactedResourcesCell } from "./impacted-resources-cell"; // Hidden until backend feature is developed
+// TODO: PROWLER-379 - Enable ImpactedResourcesCell when backend supports grouped findings
+// import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
@@ -262,15 +263,13 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
-    // Impacted Resources column - Hidden until backend feature is developed
+    // TODO: PROWLER-379 - Enable Impacted Resources column when backend supports grouped findings
     // {
     //   accessorKey: "impactedResources",
     //   header: ({ column }) => (
     //     <DataTableColumnHeader column={column} title="Impacted Resources" />
     //   ),
     //   cell: () => {
-    // Note: These values would come from the API when the grouped findings feature is implemented
-    // For now, showing placeholder values since the current data structure is per-finding
     //     return <ImpactedResourcesCell impacted={1} total={1} />;
     //   },
     //   enableSorting: false,
