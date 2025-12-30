@@ -1,10 +1,10 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
+import { ExpandableSection } from "@/components/ui/expandable-section";
 import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
@@ -64,19 +64,16 @@ export const FilterControls = ({
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? "Less Filters" : "More Filters"}
-            {isExpanded ? (
-              <ChevronUp className="size-4" />
-            ) : (
-              <ChevronDown className="size-4" />
-            )}
+            <ChevronDown
+              className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+            />
           </Button>
         )}
       </div>
-      {shouldShowCustomFilters && (
-        <>
-          <Spacer y={8} />
+      {hasCustomFilters && (
+        <ExpandableSection isExpanded={!!shouldShowCustomFilters}>
           <DataTableFilterCustom filters={customFilters} />
-        </>
+        </ExpandableSection>
       )}
     </div>
   );

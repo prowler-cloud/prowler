@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MutedIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import {
   Tooltip,
   TooltipContent,
@@ -51,12 +52,45 @@ export const NotificationIndicator = ({
     );
   }
 
-  // Show pink dot for new or changed findings
+  // Show dot with tooltip for new or changed findings
   if (delta === DeltaValues.NEW || delta === DeltaValues.CHANGED) {
     return (
-      <div
-        className={cn("ml-1 size-1.5 rounded-full", "bg-bg-data-critical")}
-      />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "ml-1 size-1.5 cursor-pointer rounded-full",
+              delta === DeltaValues.NEW
+                ? "bg-system-severity-high"
+                : "bg-system-severity-low",
+            )}
+          />
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="flex items-center gap-1 text-xs">
+            <span>
+              {delta === DeltaValues.NEW
+                ? "New finding."
+                : "Status changed since the previous scan."}
+            </span>
+            <Button
+              aria-label="Learn more about findings"
+              variant="link"
+              size="default"
+              className="text-button-primary h-auto min-w-0 p-0 text-xs"
+              asChild
+            >
+              <a
+                href="https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Learn more
+              </a>
+            </Button>
+          </div>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

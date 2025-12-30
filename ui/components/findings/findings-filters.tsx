@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
@@ -10,6 +10,7 @@ import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbo
 import { CustomDatePicker } from "@/components/filters/custom-date-picker";
 import { filterFindings } from "@/components/filters/data-filters";
 import { Button } from "@/components/shadcn";
+import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useRelatedFilters } from "@/hooks";
 import { getCategoryLabel } from "@/lib/categories";
@@ -104,25 +105,23 @@ export const FindingsFilters = ({
         {hasCustomFilters && (
           <Button variant="outline" onClick={() => setIsExpanded(!isExpanded)}>
             {isExpanded ? "Less Filters" : "More Filters"}
-            {isExpanded ? (
-              <ChevronUp className="size-4" />
-            ) : (
-              <ChevronDown className="size-4" />
-            )}
+            <ChevronDown
+              className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+            />
           </Button>
         )}
         <ClearFiltersButton showCount />
       </div>
 
       {/* Expandable filters section */}
-      {isExpanded && hasCustomFilters && (
-        <>
+      {hasCustomFilters && (
+        <ExpandableSection isExpanded={isExpanded}>
           <DataTableFilterCustom
             filters={customFilters}
             prependElement={<CustomDatePicker />}
             hideClearButton
           />
-        </>
+        </ExpandableSection>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -8,7 +9,7 @@ import {
   DataTableRowDetails,
 } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
@@ -27,6 +28,16 @@ const getFindingsData = (row: { original: FindingProps }) => {
 
 const getFindingsMetadata = (row: { original: FindingProps }) => {
   return row.original.attributes.check_metadata;
+};
+
+const getResourceData = (
+  row: { original: FindingProps },
+  field: keyof FindingProps["relationships"]["resource"]["attributes"],
+) => {
+  return (
+    row.original.relationships?.resource?.attributes?.[field] ||
+    `No ${field} found in resource`
+  );
 };
 
 const getProviderData = (
@@ -185,6 +196,25 @@ export function getColumnFindings(
         />
       ),
       cell: ({ row }) => <FindingTitleCell row={row} />,
+    },
+    // Resource name column
+    {
+      accessorKey: "resourceName",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Resource name" />
+      ),
+      cell: ({ row }) => {
+        const resourceName = getResourceData(row, "name");
+
+        return (
+          <SnippetChip
+            value={resourceName as string}
+            formatter={(value: string) => `...${value.slice(-10)}`}
+            icon={<Database size={16} />}
+          />
+        );
+      },
+      enableSorting: false,
     },
     // Severity column
     {
