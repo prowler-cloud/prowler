@@ -191,7 +191,6 @@ class TestComputeService:
             # We expect 3 MIGs: 2 regional (from region europe-west1-b) and 1 zonal (from zone1)
             assert len(compute_client.instance_groups) == 3
 
-            # First regional MIG - multiple zones
             regional_mig_1 = next(
                 (
                     mig
@@ -211,8 +210,13 @@ class TestComputeService:
             assert regional_mig_1.is_regional
             assert regional_mig_1.target_size == 3
             assert regional_mig_1.project_id == GCP_PROJECT_ID
+            assert len(regional_mig_1.auto_healing_policies) == 1
+            assert (
+                regional_mig_1.auto_healing_policies[0].health_check
+                == "http-health-check"
+            )
+            assert regional_mig_1.auto_healing_policies[0].initial_delay_sec == 300
 
-            # Second regional MIG - single zone
             regional_mig_2 = next(
                 (
                     mig
@@ -230,8 +234,8 @@ class TestComputeService:
             assert regional_mig_2.is_regional
             assert regional_mig_2.target_size == 1
             assert regional_mig_2.project_id == GCP_PROJECT_ID
+            assert len(regional_mig_2.auto_healing_policies) == 0
 
-            # Zonal MIG
             zonal_mig = next(
                 (
                     mig
@@ -251,3 +255,6 @@ class TestComputeService:
             assert not zonal_mig.is_regional
             assert zonal_mig.target_size == 2
             assert zonal_mig.project_id == GCP_PROJECT_ID
+            assert len(zonal_mig.auto_healing_policies) == 1
+            assert zonal_mig.auto_healing_policies[0].health_check == "tcp-health-check"
+            assert zonal_mig.auto_healing_policies[0].initial_delay_sec == 120
