@@ -31,8 +31,6 @@
     "resilience"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "compute_instance_group_multiple_zones"
-  ],
-  "Notes": "This check verifies that autohealing policies are configured and include a valid health check reference. MIGs without autohealing or with missing health checks will be flagged."
+  "RelatedTo": [],
+  "Notes": ""
 }
