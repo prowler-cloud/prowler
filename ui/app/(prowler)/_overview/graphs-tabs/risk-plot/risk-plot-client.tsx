@@ -8,7 +8,6 @@ import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { ScatterPlot } from "@/components/graphs/scatter-plot";
 import { AlertPill } from "@/components/graphs/shared/alert-pill";
 import type { BarDataPoint } from "@/components/graphs/types";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 // Score color thresholds (0-100 scale, higher = better)
@@ -41,9 +40,6 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
 
     // Build the URL with current filters
     const params = new URLSearchParams(searchParams.toString());
-
-    // Transform provider filters (provider_id__in -> provider__in)
-    mapProviderFiltersForFindings(params);
 
     // Add severity filter
     const severity = SEVERITY_FILTER_MAP[dataPoint.name];

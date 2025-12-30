@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
@@ -43,21 +43,11 @@ interface AccountsSelectorProps {
 
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Determine which filter key to use based on the current page
-  // - /findings uses provider__in (API expects this)
-  // - /overview and others use provider_id__in
-  const isFindingsPage = pathname?.startsWith("/findings");
-  const filterKey = isFindingsPage
-    ? "filter[provider__in]"
-    : "filter[provider_id__in]";
-
-  // Read from both keys to support navigation between pages
-  const providerIn = searchParams.get("filter[provider__in]") || "";
-  const providerIdIn = searchParams.get("filter[provider_id__in]") || "";
-  const current = providerIn || providerIdIn;
+  // All endpoints now use the unified filter[provider__in] parameter
+  const filterKey = "filter[provider__in]";
+  const current = searchParams.get(filterKey) || "";
   const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypesList = selectedTypes
     ? selectedTypes.split(",").filter(Boolean)
@@ -73,13 +63,9 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
 
   const handleMultiValueChange = (ids: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
-
-    // Clean up both potential provider filter keys first
-    params.delete("filter[provider_id__in]");
-    params.delete("filter[provider__in]");
+    params.delete(filterKey);
 
     if (ids.length > 0) {
-      // Use the appropriate filter key for the current page
       params.set(filterKey, ids.join(","));
     }
 

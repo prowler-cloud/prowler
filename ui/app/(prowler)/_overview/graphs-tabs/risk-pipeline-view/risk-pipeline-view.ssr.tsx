@@ -17,7 +17,7 @@ export async function RiskPipelineViewSSR({
   const filters = pickFilterParams(searchParams);
 
   const providerTypeFilter = filters["filter[provider_type__in]"];
-  const providerIdFilter = filters["filter[provider_id__in]"];
+  const providerIdFilter = filters["filter[provider__in]"];
 
   // Fetch providers list to know account types
   const providersListResponse = await getProviders({ pageSize: 200 });
@@ -53,7 +53,7 @@ export async function RiskPipelineViewSSR({
       async ([providerType, accountIds]) => {
         const response = await getFindingsBySeverity({
           filters: {
-            "filter[provider_id__in]": accountIds.join(","),
+            "filter[provider__in]": accountIds.join(","),
             "filter[status]": "FAIL", // Only count failed findings
           },
         });
