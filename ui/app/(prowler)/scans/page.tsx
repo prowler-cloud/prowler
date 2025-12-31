@@ -1,3 +1,4 @@
+import { Divider } from "@heroui/divider";
 import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
@@ -12,6 +13,7 @@ import {
   ScansFilters,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
+import { ScanImportSection } from "@/components/scans/scan-import";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
@@ -50,6 +52,15 @@ export default async function Scans({
         uid: provider.attributes.uid,
         connected: provider.attributes.connection.connected,
       })) || [];
+
+  // Provider info formatted for ScanImportSection
+  const importProviders =
+    providersData?.data?.map((provider: ProviderProps) => ({
+      id: provider.id,
+      provider: provider.attributes.provider,
+      uid: provider.attributes.uid,
+      alias: provider.attributes.alias,
+    })) || [];
 
   const thereIsNoProviders =
     !providersData?.data || providersData.data.length === 0;
@@ -100,6 +111,16 @@ export default async function Scans({
           </>
         ) : (
           <LaunchScanWorkflow providers={providerInfo} />
+        )}
+
+        {/* Scan Import Section */}
+        {hasManageScansPermission && (
+          <>
+            <Spacer y={4} />
+            <Divider className="my-4" />
+            <Spacer y={4} />
+            <ScanImportSection providers={importProviders} />
+          </>
         )}
 
         <ScansFilters
