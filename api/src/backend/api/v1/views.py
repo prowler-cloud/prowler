@@ -118,7 +118,6 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
-    ResourceGroupOverviewFilter,
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
@@ -159,7 +158,6 @@ from api.models import (
     SAMLToken,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -231,7 +229,6 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
-    ResourceGroupOverviewSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
     RoleCreateSerializer,
@@ -3018,23 +3015,11 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     categories_set.update(categories_list)
             categories = sorted(categories_set)
 
-        # Get resource_groups from ScanResourceGroupSummary for latest scans
-        resource_groups = list(
-            ScanResourceGroupSummary.objects.filter(
-                tenant_id=tenant_id,
-                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
-            )
-            .values_list("resource_group", flat=True)
-            .distinct()
-            .order_by("resource_group")
-        )
-
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
             "categories": categories,
-            "resource_groups": resource_groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -4108,18 +4093,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         filters=True,
         responses={200: CategoryOverviewSerializer(many=True)},
     ),
-    resource_groups=extend_schema(
-        summary="Get resource group overview",
-        description=(
-            "Retrieve aggregated resource group metrics from latest completed scans per provider. "
-            "Returns one row per resource group with total, failed, and new failed findings counts, "
-            "plus a severity breakdown showing failed findings per severity level, "
-            "and a count of distinct resources evaluated per group."
-        ),
-        tags=["Overview"],
-        filters=True,
-        responses={200: ResourceGroupOverviewSerializer(many=True)},
-    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4169,8 +4142,6 @@ class OverviewViewSet(BaseRLSViewSet):
             return AttackSurfaceOverviewSerializer
         elif self.action == "categories":
             return CategoryOverviewSerializer
-        elif self.action == "resource_groups":
-            return ResourceGroupOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4184,8 +4155,6 @@ class OverviewViewSet(BaseRLSViewSet):
             return DailySeveritySummaryFilter
         elif self.action == "categories":
             return CategoryOverviewFilter
-        elif self.action == "resource_groups":
-            return ResourceGroupOverviewFilter
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewFilter
         return None
@@ -5008,76 +4977,6 @@ class OverviewViewSet(BaseRLSViewSet):
 
         response_data = [
             {"category": cat, **data} for cat, data in sorted(category_data.items())
-        ]
-
-        return Response(
-            self.get_serializer(response_data, many=True).data,
-            status=status.HTTP_200_OK,
-        )
-
-    @action(detail=False, methods=["get"], url_name="resource_groups")
-    def resource_groups(self, request):
-        tenant_id = request.tenant_id
-        provider_filters = self._extract_provider_filters_from_params()
-        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(
-            tenant_id, provider_filters
-        )
-
-        base_queryset = ScanResourceGroupSummary.objects.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
-        provider_filter_keys = {
-            "provider_id",
-            "provider_id__in",
-            "provider_type",
-            "provider_type__in",
-        }
-        filtered_queryset = self._apply_filterset(
-            base_queryset,
-            ResourceGroupOverviewFilter,
-            exclude_keys=provider_filter_keys,
-        )
-
-        aggregation = (
-            filtered_queryset.values("resource_group", "severity")
-            .annotate(
-                total=Coalesce(Sum("total_findings"), 0),
-                failed=Coalesce(Sum("failed_findings"), 0),
-                new_failed=Coalesce(Sum("new_failed_findings"), 0),
-                resources=Coalesce(Sum("resources_count"), 0),
-            )
-            .order_by("resource_group", "severity")
-        )
-
-        resource_group_data = defaultdict(
-            lambda: {
-                "total_findings": 0,
-                "failed_findings": 0,
-                "new_failed_findings": 0,
-                "resources_count": 0,
-                "severity": {
-                    "informational": 0,
-                    "low": 0,
-                    "medium": 0,
-                    "high": 0,
-                    "critical": 0,
-                },
-            }
-        )
-
-        for row in aggregation:
-            rg = row["resource_group"]
-            sev = row["severity"]
-            resource_group_data[rg]["total_findings"] += row["total"]
-            resource_group_data[rg]["failed_findings"] += row["failed"]
-            resource_group_data[rg]["new_failed_findings"] += row["new_failed"]
-            resource_group_data[rg]["resources_count"] += row["resources"]
-            if sev in resource_group_data[rg]["severity"]:
-                resource_group_data[rg]["severity"][sev] = row["failed"]
-
-        response_data = [
-            {"resource_group": rg, **data}
-            for rg, data in sorted(resource_group_data.items())
         ]
 
         return Response(

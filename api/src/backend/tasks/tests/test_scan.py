@@ -1379,7 +1379,6 @@ class TestProcessFindingMicroBatch:
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
         scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1398,7 +1397,6 @@ class TestProcessFindingMicroBatch:
                 scan_resource_cache,
                 mute_rules_cache,
                 scan_categories_cache,
-                scan_resource_groups_cache,
             )
 
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1492,7 +1490,6 @@ class TestProcessFindingMicroBatch:
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
         scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1511,7 +1508,6 @@ class TestProcessFindingMicroBatch:
                 scan_resource_cache,
                 mute_rules_cache,
                 scan_categories_cache,
-                scan_resource_groups_cache,
             )
 
         existing_resource.refresh_from_db()
@@ -1620,7 +1616,6 @@ class TestProcessFindingMicroBatch:
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
         scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1640,7 +1635,6 @@ class TestProcessFindingMicroBatch:
                 scan_resource_cache,
                 mute_rules_cache,
                 scan_categories_cache,
-                scan_resource_groups_cache,
             )
 
         # Verify the long UID finding was NOT created
@@ -1718,7 +1712,6 @@ class TestProcessFindingMicroBatch:
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
         scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1737,7 +1730,6 @@ class TestProcessFindingMicroBatch:
                 scan_resource_cache,
                 mute_rules_cache,
                 scan_categories_cache,
-                scan_resource_groups_cache,
             )
 
         # finding1: PASS, severity=low, categories=["gen-ai", "security"]

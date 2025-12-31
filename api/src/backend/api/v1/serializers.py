@@ -1175,7 +1175,6 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
-            "resource_group",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1184,7 +1183,6 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
-            "resource_group": {"read_only": True},
         }
 
     included_serializers = {
@@ -1304,7 +1302,6 @@ class FindingSerializer(RLSSerializer):
             "check_id",
             "check_metadata",
             "categories",
-            "resource_group",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1361,9 +1358,6 @@ class FindingMetadataSerializer(BaseSerializerV1):
         child=serializers.CharField(), allow_empty=True
     )
     categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-    resource_groups = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True, required=False, default=list
-    )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -2307,22 +2301,6 @@ class CategoryOverviewSerializer(BaseSerializerV1):
 
     class JSONAPIMeta:
         resource_name = "category-overviews"
-
-
-class ResourceGroupOverviewSerializer(BaseSerializerV1):
-    """Serializer for resource group overview aggregations."""
-
-    id = serializers.CharField(source="resource_group")
-    total_findings = serializers.IntegerField()
-    failed_findings = serializers.IntegerField()
-    new_failed_findings = serializers.IntegerField()
-    resources_count = serializers.IntegerField()
-    severity = serializers.JSONField(
-        help_text="Severity breakdown: {informational, low, medium, high, critical}"
-    )
-
-    class JSONAPIMeta:
-        resource_name = "resource-group-overview"
 
 
 class OverviewRegionSerializer(serializers.Serializer):
