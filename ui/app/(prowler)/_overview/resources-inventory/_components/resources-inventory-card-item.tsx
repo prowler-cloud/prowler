@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { ResourceInventoryItem } from "@/actions/overview";
 import { CardVariant, ResourceStatsCard, StatItem } from "@/components/shadcn";
-import { mapProviderFiltersForFindings } from "@/lib";
 
 interface ResourcesInventoryCardItemProps {
   item: ResourceInventoryItem;
@@ -18,15 +17,13 @@ export function ResourcesInventoryCardItem({
   const hasResources = item.totalResources > 0;
 
   // Build URL with current filters + resource group specific filters
-  const buildFindingsUrl = () => {
-    if (!hasFailedFindings) return null;
+  const buildResourcesUrl = () => {
+    if (!hasResources) return null;
 
     const params = new URLSearchParams();
 
-    // Add resource group specific filters
+    // Add resource group specific filter
     params.set("filter[resource_group]", item.id);
-    params.set("filter[status__in]", "FAIL");
-    params.set("filter[muted]", "false");
 
     // Add current page filters (provider, account, etc.)
     Object.entries(filters).forEach(([key, value]) => {
@@ -35,13 +32,10 @@ export function ResourcesInventoryCardItem({
       }
     });
 
-    // Map provider filters for findings page compatibility
-    mapProviderFiltersForFindings(params);
-
-    return `/findings?${params.toString()}`;
+    return `/resources?${params.toString()}`;
   };
 
-  const findingsUrl = buildFindingsUrl();
+  const resourcesUrl = buildResourcesUrl();
 
   // Build stats array for the card content
   const stats: StatItem[] = [];
@@ -95,9 +89,9 @@ export function ResourcesInventoryCardItem({
     />
   );
 
-  if (findingsUrl) {
+  if (resourcesUrl) {
     return (
-      <Link href={findingsUrl} className="flex flex-1">
+      <Link href={resourcesUrl} className="flex flex-1">
         {cardContent}
       </Link>
     );
