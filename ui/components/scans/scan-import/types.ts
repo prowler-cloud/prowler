@@ -85,7 +85,7 @@ export interface ScanImportDropzoneProps {
   disabled?: boolean;
   /** Accepted file types */
   acceptedTypes?: string[];
-  /** Maximum file size in bytes (default: 50MB) */
+  /** Maximum file size in bytes (default: 1GB) */
   maxSize?: number;
 }
 
@@ -193,9 +193,9 @@ export interface ScanImportApiErrorResponse {
 }
 
 /**
- * Maximum file size for scan import (50MB).
+ * Maximum file size for scan import (1GB).
  */
-export const MAX_IMPORT_FILE_SIZE = 50 * 1024 * 1024;
+export const MAX_IMPORT_FILE_SIZE = 1024 * 1024 * 1024;
 
 /**
  * Accepted file extensions for scan import.

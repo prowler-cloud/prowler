@@ -5,16 +5,57 @@ This module provides the ScanImportService class for importing external scan
 results (JSON/OCSF and CSV formats) into the Prowler platform.
 
 The service handles:
-- Format detection and parsing
+- Format detection and parsing (JSON/OCSF and CSV)
 - Provider resolution or creation
 - Bulk creation of resources, findings, and mappings
 - Atomic transactions for data integrity
 
+Classes:
+    ScanImportService: Main service class for importing scan results.
+    ScanImportResult: Dataclass containing import operation results.
+    ScanImportError: Exception raised when import fails.
+
+Constants:
+    BULK_CREATE_BATCH_SIZE: Batch size for bulk database operations (500).
+    MAX_FILE_SIZE: Maximum allowed file size for imports (1GB).
+
+Type Aliases:
+    ParsedFinding: Union of OCSFFinding | CSVFinding.
+
 Example:
-    >>> from api.services.scan_import import ScanImportService
-    >>> service = ScanImportService(tenant_id="...")
-    >>> result = service.import_scan(file_content, provider_id=None, create_provider=True)
-    >>> print(f"Imported {result.findings_count} findings")
+    Basic usage::
+
+        from api.services.scan_import import ScanImportService
+
+        service = ScanImportService(tenant_id="550e8400-...")
+        result = service.import_scan(
+            file_content=json_bytes,
+            provider_id=None,
+            create_provider=True
+        )
+        print(f"Imported {result.findings_count} findings")
+
+    With existing provider::
+
+        result = service.import_scan(
+            file_content=csv_bytes,
+            provider_id="123e4567-e89b-12d3-a456-426614174000",
+            create_provider=False
+        )
+
+    Error handling::
+
+        from api.services.scan_import import ScanImportService, ScanImportError
+
+        try:
+            result = service.import_scan(file_content=content)
+        except ScanImportError as e:
+            print(f"Import failed: {e.message} (code: {e.code})")
+
+See Also:
+    - api.parsers: OCSF and CSV parsing functionality
+    - api.models: Database models (Scan, Finding, Resource, Provider)
+    - README.md in this directory for full API documentation
 """
 
 import logging
@@ -51,8 +92,11 @@ logger = logging.getLogger(__name__)
 # Batch size for bulk operations
 BULK_CREATE_BATCH_SIZE = 500
 
-# Maximum file size (50MB)
-MAX_FILE_SIZE = 50 * 1024 * 1024
+# Maximum file size for scan imports (1GB).
+# This limit accommodates large scan result files from enterprise environments
+# with thousands of resources and findings. The limit should be kept in sync
+# with the Next.js server actions body size limit in ui/next.config.js.
+MAX_FILE_SIZE = 1024 * 1024 * 1024
 
 
 class ScanImportError(Exception):

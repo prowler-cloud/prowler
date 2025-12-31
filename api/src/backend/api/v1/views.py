@@ -5846,7 +5846,7 @@ class MuteRuleViewSet(BaseRLSViewSet):
         401: OpenApiResponse(description="Authentication required"),
         403: OpenApiResponse(description="Permission denied - requires MANAGE_SCANS"),
         413: OpenApiResponse(
-            description="File size exceeds maximum of 50MB",
+            description="File size exceeds maximum of 1GB",
             examples=[
                 OpenApiExample(
                     name="File Too Large",
@@ -5857,7 +5857,7 @@ class MuteRuleViewSet(BaseRLSViewSet):
                                 "status": "413",
                                 "code": "file_too_large",
                                 "title": "File too large",
-                                "detail": "File size exceeds maximum of 50MB.",
+                                "detail": "File size exceeds maximum of 1GB.",
                             }
                         ]
                     },

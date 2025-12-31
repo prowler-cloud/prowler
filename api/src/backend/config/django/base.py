@@ -286,6 +286,13 @@ DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
 DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
 DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")
 
+# File Upload Settings
+# These limits support large scan result imports (JSON/CSV files from Prowler CLI).
+# DATA_UPLOAD_MAX_MEMORY_SIZE: Max size for request body parsing (forms, JSON payloads)
+# FILE_UPLOAD_MAX_MEMORY_SIZE: Max size for in-memory file uploads before streaming to disk
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+
 # HTTP Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"

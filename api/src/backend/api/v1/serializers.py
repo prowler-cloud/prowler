@@ -3847,8 +3847,13 @@ class ScanImportSerializer(BaseSerializerV1):
     scan results in JSON/OCSF or CSV format.
     """
 
-    # Maximum file size: 50MB
-    MAX_FILE_SIZE = 50 * 1024 * 1024
+    # Maximum file size: 1GB (1,073,741,824 bytes)
+    # This limit accommodates large enterprise scan imports that may contain
+    # thousands of findings. Must match the Django settings:
+    # - DATA_UPLOAD_MAX_MEMORY_SIZE
+    # - FILE_UPLOAD_MAX_MEMORY_SIZE
+    # See: api/docs/configuration.md for related configuration details.
+    MAX_FILE_SIZE = 1024 * 1024 * 1024
 
     file = serializers.FileField(
         required=False,

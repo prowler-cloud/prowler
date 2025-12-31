@@ -156,11 +156,12 @@ class TestScanImportViewValidation:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_file_too_large_returns_400(self, authenticated_client):
-        """Test that file exceeding 50MB returns validation error."""
+        """Test that file exceeding 1GB returns validation error."""
         url = reverse("scan-import")
 
-        # Create a file larger than 50MB
-        large_content = b"x" * (51 * 1024 * 1024)
+        # Create a file larger than 1GB (we use a smaller size for test efficiency)
+        # The actual validation happens at 1GB, but we test with a slightly larger file
+        large_content = b"x" * (1024 * 1024 * 1024 + 1)
         file_obj = io.BytesIO(large_content)
         file_obj.name = "large_file.json"
 

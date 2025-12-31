@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-import { importScan } from "@/actions/scans/import-scan";
 import { ChevronDownIcon, ChevronUpIcon, UploadIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
@@ -118,8 +117,10 @@ export function ScanImportSection({
         formData.append("file", data.file);
         if (data.providerId) {
           formData.append("providerId", data.providerId);
+          formData.append("provider_id", data.providerId);
         }
         formData.append("createProvider", String(data.createProvider));
+        formData.append("create_provider", String(data.createProvider));
 
         // Complete upload progress
         clearInterval(progressInterval);
@@ -141,8 +142,37 @@ export function ScanImportSection({
           { step: "finalizing", message: "Finalizing import..." },
         ];
 
-        // Start the actual import
-        const importPromise = importScan(formData);
+        // Use API route for large files to bypass server action limits
+        // This streams directly to the backend without the server action body size restrictions
+        const importPromise = fetch("/api/scans/import", {
+          method: "POST",
+          body: formData,
+        }).then(async (res) => {
+          const responseData = await res.json();
+          if (!res.ok) {
+            const firstError = responseData.errors?.[0];
+            return {
+              success: false as const,
+              error:
+                firstError?.detail ||
+                firstError?.title ||
+                `Import failed with status ${res.status}`,
+            };
+          }
+          const attributes = responseData.data?.attributes;
+          return {
+            success: true as const,
+            data: {
+              scanId: attributes?.scan_id,
+              providerId: attributes?.provider_id,
+              findingsCount: attributes?.findings_count,
+              resourcesCount: attributes?.resources_count,
+              status: attributes?.status,
+              providerCreated: attributes?.provider_created,
+              warnings: attributes?.warnings,
+            },
+          };
+        });
 
         // Simulate step progression while waiting for response
         let stepIndex = 0;

@@ -648,8 +648,8 @@ class TestFileSizeValidation:
         assert "exceeds maximum" in exc_info.value.message
 
     def test_max_file_size_constant(self):
-        """Test that MAX_FILE_SIZE is 50MB."""
-        assert MAX_FILE_SIZE == 50 * 1024 * 1024
+        """Test that MAX_FILE_SIZE is 1GB."""
+        assert MAX_FILE_SIZE == 1024 * 1024 * 1024
 
 
 class TestProviderIdValidation:

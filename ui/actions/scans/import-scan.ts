@@ -110,13 +110,22 @@ export async function importScan(
 
     apiFormData.append("create_provider", String(validatedData.createProvider));
 
-    // Make API request
+    // Make API request with extended timeout for large files (5 minutes)
     const url = new URL(`${apiBaseUrl}/scans/import`);
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-      body: apiFormData,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+    let response: Response;
+    try {
+      response = await fetch(url.toString(), {
+        method: "POST",
+        headers,
+        body: apiFormData,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     // Handle response
     if (!response.ok) {

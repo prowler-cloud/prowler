@@ -11,7 +11,7 @@
  *
  * - **Security Headers**: Content Security Policy (CSP), X-Content-Type-Options, Referrer-Policy
  * - **Sentry Integration**: Error tracking and monitoring with source map uploads
- * - **Server Actions**: Extended body size limit (50MB) for scan file imports
+ * - **Server Actions**: Extended body size limit (1GB) for scan file imports
  * - **Standalone Output**: Production builds use standalone mode for containerized deployments
  * - **React Compiler**: Experimental React compiler for optimized builds
  * - **Turbopack**: Fast bundler configuration for development
@@ -145,15 +145,15 @@ const nextConfig = {
      *
      * The default Next.js body size limit for server actions is 1MB, which is
      * insufficient for importing scan result files (OCSF JSON or CSV format).
-     * This limit is increased to 50MB to match the backend API's file size
+     * This limit is increased to 1GB to match the backend API's file size
      * validation limit, allowing users to import large scan files containing
      * thousands of findings.
      *
      * @see ui/actions/scans/import-scan.ts - Server action that handles scan imports
-     * @see api/src/backend/api/v1/serializers.py - Backend validation (max 50MB)
+     * @see api/src/backend/api/v1/serializers.py - Backend validation (max 1GB)
      */
     serverActions: {
-      bodySizeLimit: "50mb",
+      bodySizeLimit: "1gb",
     },
   },
   turbopack: {
