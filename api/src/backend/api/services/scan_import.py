@@ -18,6 +18,7 @@ Example:
 """
 
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -161,19 +162,66 @@ class ScanImportService:
         Raises:
             ScanImportError: If import fails due to validation or processing errors.
         """
+        import_start_time = time.time()
+        file_size = len(file_content)
+
+        logger.info(
+            f"Starting scan import for tenant {self.tenant_id}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "file_size": file_size,
+                "provider_id": str(provider_id) if provider_id else None,
+                "create_provider": create_provider,
+            },
+        )
+
         # Validate file size
-        if len(file_content) > MAX_FILE_SIZE:
+        if file_size > MAX_FILE_SIZE:
+            logger.warning(
+                f"File size {file_size} exceeds maximum {MAX_FILE_SIZE}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "file_size": file_size,
+                    "max_size": MAX_FILE_SIZE,
+                },
+            )
             raise ScanImportError(
                 message=f"File size exceeds maximum of {MAX_FILE_SIZE // (1024 * 1024)}MB",
                 code="file_too_large",
-                details={"size": len(file_content), "max_size": MAX_FILE_SIZE},
+                details={"size": file_size, "max_size": MAX_FILE_SIZE},
             )
 
         # Detect format and parse
+        format_start_time = time.time()
         file_format = self._detect_format(file_content)
+        logger.debug(
+            f"Detected file format: {file_format}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "file_format": file_format,
+                "detection_time_ms": int((time.time() - format_start_time) * 1000),
+            },
+        )
+
+        parse_start_time = time.time()
         findings = self._parse_content(file_content, file_format)
+        parse_time_ms = int((time.time() - parse_start_time) * 1000)
+
+        logger.info(
+            f"Parsed {len(findings)} findings from {file_format} file",
+            extra={
+                "tenant_id": self.tenant_id,
+                "findings_count": len(findings),
+                "file_format": file_format,
+                "parse_time_ms": parse_time_ms,
+            },
+        )
 
         if not findings:
+            logger.warning(
+                "No findings found in imported file",
+                extra={"tenant_id": self.tenant_id, "file_format": file_format},
+            )
             raise ScanImportError(
                 message="No findings found in the imported file",
                 code="no_findings",
@@ -184,6 +232,10 @@ class ScanImportService:
             try:
                 provider_id = UUID(provider_id)
             except ValueError:
+                logger.warning(
+                    f"Invalid provider_id format: {provider_id}",
+                    extra={"tenant_id": self.tenant_id, "provider_id": provider_id},
+                )
                 raise ScanImportError(
                     message="Invalid provider_id format",
                     code="invalid_provider_id",
@@ -191,6 +243,7 @@ class ScanImportService:
                 )
 
         # Perform import within RLS transaction
+        db_start_time = time.time()
         with rls_transaction(value=self.tenant_id, parameter=POSTGRES_TENANT_VAR):
             with transaction.atomic():
                 # Resolve or create provider
@@ -200,18 +253,70 @@ class ScanImportService:
                     create_provider=create_provider,
                 )
 
+                logger.debug(
+                    f"Provider resolved: {provider.id} (created={provider_created})",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "provider_id": str(provider.id),
+                        "provider_created": provider_created,
+                        "provider_type": provider.provider,
+                    },
+                )
+
                 # Create scan record
                 scan = self._create_scan(findings, provider)
 
                 # Bulk create resources
+                resources_start_time = time.time()
                 resources_map = self._bulk_create_resources(findings, provider)
+                resources_time_ms = int((time.time() - resources_start_time) * 1000)
+
+                logger.debug(
+                    f"Created/resolved {len(resources_map)} resources",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "scan_id": str(scan.id),
+                        "resources_count": len(resources_map),
+                        "resources_time_ms": resources_time_ms,
+                    },
+                )
 
                 # Bulk create findings
+                findings_start_time = time.time()
                 findings_count = self._bulk_create_findings(findings, scan, resources_map)
+                findings_time_ms = int((time.time() - findings_start_time) * 1000)
+
+                logger.debug(
+                    f"Created {findings_count} findings",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "scan_id": str(scan.id),
+                        "findings_count": findings_count,
+                        "findings_time_ms": findings_time_ms,
+                    },
+                )
 
                 # Update scan with resource count
                 scan.unique_resource_count = len(resources_map)
                 scan.save(update_fields=["unique_resource_count"])
+
+        db_time_ms = int((time.time() - db_start_time) * 1000)
+        total_time_ms = int((time.time() - import_start_time) * 1000)
+
+        logger.info(
+            f"Scan import completed successfully for tenant {self.tenant_id}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "scan_id": str(scan.id),
+                "provider_id": str(provider.id),
+                "findings_count": findings_count,
+                "resources_count": len(resources_map),
+                "provider_created": provider_created,
+                "total_time_ms": total_time_ms,
+                "db_time_ms": db_time_ms,
+                "parse_time_ms": parse_time_ms,
+            },
+        )
 
         return ScanImportResult(
             scan_id=scan.id,
@@ -236,17 +341,38 @@ class ScanImportService:
         Raises:
             ScanImportError: If format cannot be determined.
         """
+        logger.debug(
+            "Detecting file format",
+            extra={"tenant_id": self.tenant_id, "content_size": len(content)},
+        )
+
         # Try JSON/OCSF first
         is_valid_json, json_error = validate_ocsf_structure(content)
         if is_valid_json:
+            logger.debug(
+                "File format detected as JSON/OCSF",
+                extra={"tenant_id": self.tenant_id},
+            )
             return "json"
 
         # Try CSV
         is_valid_csv, csv_error = validate_csv_structure(content)
         if is_valid_csv:
+            logger.debug(
+                "File format detected as CSV",
+                extra={"tenant_id": self.tenant_id},
+            )
             return "csv"
 
         # Neither format is valid
+        logger.warning(
+            "File format not recognized",
+            extra={
+                "tenant_id": self.tenant_id,
+                "json_error": json_error,
+                "csv_error": csv_error,
+            },
+        )
         raise ScanImportError(
             message="File format not recognized. Must be valid JSON/OCSF or CSV.",
             code="invalid_format",
@@ -272,23 +398,70 @@ class ScanImportService:
         Raises:
             ScanImportError: If parsing fails.
         """
+        logger.debug(
+            f"Parsing content as {file_format}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "file_format": file_format,
+                "content_size": len(content),
+            },
+        )
+
         try:
             if file_format == "json":
-                return parse_ocsf_json(content)
+                findings = parse_ocsf_json(content)
+                logger.debug(
+                    f"Successfully parsed {len(findings)} findings from JSON/OCSF",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "findings_count": len(findings),
+                    },
+                )
+                return findings
             elif file_format == "csv":
-                return parse_csv(content)
+                findings = parse_csv(content)
+                logger.debug(
+                    f"Successfully parsed {len(findings)} findings from CSV",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "findings_count": len(findings),
+                    },
+                )
+                return findings
             else:
+                logger.error(
+                    f"Unsupported format: {file_format}",
+                    extra={"tenant_id": self.tenant_id, "file_format": file_format},
+                )
                 raise ScanImportError(
                     message=f"Unsupported format: {file_format}",
                     code="unsupported_format",
                 )
         except OCSFParseError as e:
+            logger.warning(
+                f"Failed to parse JSON/OCSF: {e.message}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "error_message": e.message,
+                    "error_index": e.index,
+                    "error_field": e.field,
+                },
+            )
             raise ScanImportError(
                 message=f"Failed to parse JSON/OCSF: {e.message}",
                 code="json_parse_error",
                 details={"index": e.index, "field": e.field},
             )
         except CSVParseError as e:
+            logger.warning(
+                f"Failed to parse CSV: {e.message}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "error_message": e.message,
+                    "error_row": e.row,
+                    "error_column": e.column,
+                },
+            )
             raise ScanImportError(
                 message=f"Failed to parse CSV: {e.message}",
                 code="csv_parse_error",
@@ -323,13 +496,32 @@ class ScanImportService:
         """
         # If provider_id is specified, use it
         if provider_id:
+            logger.debug(
+                f"Looking up provider by ID: {provider_id}",
+                extra={"tenant_id": self.tenant_id, "provider_id": str(provider_id)},
+            )
             try:
                 provider = Provider.objects.get(
                     id=provider_id,
                     tenant_id=self.tenant_id,
                 )
+                logger.debug(
+                    f"Found provider by ID: {provider.id}",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "provider_id": str(provider.id),
+                        "provider_type": provider.provider,
+                    },
+                )
                 return provider, False
             except Provider.DoesNotExist:
+                logger.warning(
+                    f"Provider with ID {provider_id} not found",
+                    extra={
+                        "tenant_id": self.tenant_id,
+                        "provider_id": str(provider_id),
+                    },
+                )
                 raise ScanImportError(
                     message=f"Provider with ID {provider_id} not found",
                     code="provider_not_found",
@@ -348,9 +540,27 @@ class ScanImportService:
         elif isinstance(first_finding, CSVFinding):
             account_name = first_finding.account_name
 
+        logger.debug(
+            f"Extracted provider info from findings: type={provider_type}, uid={account_uid}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_type": provider_type,
+                "account_uid": account_uid,
+                "account_name": account_name,
+            },
+        )
+
         # Validate provider type
         valid_provider_types = [choice[0] for choice in Provider.ProviderChoices.choices]
         if provider_type not in valid_provider_types:
+            logger.warning(
+                f"Unsupported provider type: {provider_type}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "provider_type": provider_type,
+                    "supported_types": valid_provider_types,
+                },
+            )
             raise ScanImportError(
                 message=f"Unsupported provider type: {provider_type}",
                 code="invalid_provider_type",
@@ -361,18 +571,49 @@ class ScanImportService:
             )
 
         # Try to find existing provider
+        logger.debug(
+            f"Looking up existing provider: type={provider_type}, uid={account_uid}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_type": provider_type,
+                "account_uid": account_uid,
+            },
+        )
         try:
             provider = Provider.objects.get(
                 tenant_id=self.tenant_id,
                 provider=provider_type,
                 uid=account_uid,
             )
+            logger.debug(
+                f"Found existing provider: {provider.id}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "provider_id": str(provider.id),
+                    "provider_type": provider_type,
+                },
+            )
             return provider, False
         except Provider.DoesNotExist:
-            pass
+            logger.debug(
+                f"No existing provider found for type={provider_type}, uid={account_uid}",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "provider_type": provider_type,
+                    "account_uid": account_uid,
+                },
+            )
 
         # Create new provider if allowed
         if not create_provider:
+            logger.warning(
+                f"Provider not found and create_provider=False",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "provider_type": provider_type,
+                    "account_uid": account_uid,
+                },
+            )
             raise ScanImportError(
                 message=f"No provider found for {provider_type} account {account_uid}",
                 code="provider_not_found",
@@ -391,7 +632,14 @@ class ScanImportService:
             connected=None,  # Unknown connection status for imported providers
         )
         logger.info(
-            f"Created new provider {provider.id} for {provider_type}/{account_uid}"
+            f"Created new provider {provider.id} for {provider_type}/{account_uid}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_id": str(provider.id),
+                "provider_type": provider_type,
+                "account_uid": account_uid,
+                "account_name": account_name,
+            },
         )
         return provider, True
 
@@ -424,6 +672,19 @@ class ScanImportService:
         # Calculate duration in seconds
         duration = int((completed_at - started_at).total_seconds())
 
+        logger.debug(
+            f"Creating scan record with {len(findings)} findings",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_id": str(provider.id),
+                "findings_count": len(findings),
+                "timestamps_found": len(timestamps),
+                "started_at": started_at.isoformat(),
+                "completed_at": completed_at.isoformat(),
+                "duration_seconds": duration,
+            },
+        )
+
         scan = Scan.objects.create(
             tenant_id=self.tenant_id,
             provider=provider,
@@ -435,7 +696,15 @@ class ScanImportService:
             unique_resource_count=0,  # Will be updated after resource creation
             progress=100,
         )
-        logger.info(f"Created scan {scan.id} for import")
+        logger.info(
+            f"Created scan {scan.id} for import",
+            extra={
+                "tenant_id": self.tenant_id,
+                "scan_id": str(scan.id),
+                "provider_id": str(provider.id),
+                "trigger": "imported",
+            },
+        )
         return scan
 
     def _bulk_create_resources(
@@ -484,7 +753,20 @@ class ScanImportService:
                     }
 
         if not resources_data:
+            logger.debug(
+                "No resources found in findings",
+                extra={"tenant_id": self.tenant_id, "provider_id": str(provider.id)},
+            )
             return {}
+
+        logger.debug(
+            f"Extracted {len(resources_data)} unique resources from findings",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_id": str(provider.id),
+                "unique_resources": len(resources_data),
+            },
+        )
 
         # Get existing resources
         existing_resources = {
@@ -495,6 +777,15 @@ class ScanImportService:
                 uid__in=resources_data.keys(),
             )
         }
+
+        logger.debug(
+            f"Found {len(existing_resources)} existing resources",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_id": str(provider.id),
+                "existing_resources": len(existing_resources),
+            },
+        )
 
         # Prepare resources to create
         resources_to_create = []
@@ -514,6 +805,14 @@ class ScanImportService:
 
         # Bulk create new resources
         if resources_to_create:
+            logger.debug(
+                f"Creating {len(resources_to_create)} new resources",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "provider_id": str(provider.id),
+                    "new_resources": len(resources_to_create),
+                },
+            )
             created_resources = Resource.objects.bulk_create(
                 resources_to_create,
                 batch_size=BULK_CREATE_BATCH_SIZE,
@@ -523,7 +822,14 @@ class ScanImportService:
 
         logger.info(
             f"Created {len(resources_to_create)} new resources, "
-            f"reused {len(existing_resources) - len(resources_to_create)} existing"
+            f"reused {len(existing_resources) - len(resources_to_create)} existing",
+            extra={
+                "tenant_id": self.tenant_id,
+                "provider_id": str(provider.id),
+                "new_resources": len(resources_to_create),
+                "reused_resources": len(existing_resources) - len(resources_to_create),
+                "total_resources": len(existing_resources),
+            },
         )
         return existing_resources
 
@@ -544,6 +850,16 @@ class ScanImportService:
         Returns:
             Number of findings created.
         """
+        logger.debug(
+            f"Creating {len(findings)} findings for scan {scan.id}",
+            extra={
+                "tenant_id": self.tenant_id,
+                "scan_id": str(scan.id),
+                "findings_count": len(findings),
+                "resources_count": len(resources_map),
+            },
+        )
+
         finding_objects = []
         finding_resource_pairs: list[tuple[int, list[str]]] = []  # (finding_index, resource_uids)
 
@@ -590,6 +906,14 @@ class ScanImportService:
             finding_resource_pairs.append((idx, resource_uids))
 
         # Bulk create findings
+        logger.debug(
+            f"Bulk creating {len(finding_objects)} finding objects",
+            extra={
+                "tenant_id": self.tenant_id,
+                "scan_id": str(scan.id),
+                "batch_size": BULK_CREATE_BATCH_SIZE,
+            },
+        )
         created_findings = Finding.objects.bulk_create(
             finding_objects,
             batch_size=BULK_CREATE_BATCH_SIZE,
@@ -600,7 +924,14 @@ class ScanImportService:
             created_findings, finding_resource_pairs, resources_map
         )
 
-        logger.info(f"Created {len(created_findings)} findings")
+        logger.info(
+            f"Created {len(created_findings)} findings",
+            extra={
+                "tenant_id": self.tenant_id,
+                "scan_id": str(scan.id),
+                "findings_created": len(created_findings),
+            },
+        )
         return len(created_findings)
 
     def _create_resource_finding_mappings(
@@ -632,12 +963,31 @@ class ScanImportService:
                     )
 
         if mappings:
+            logger.debug(
+                f"Creating {len(mappings)} resource-finding mappings",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "mappings_count": len(mappings),
+                    "batch_size": BULK_CREATE_BATCH_SIZE,
+                },
+            )
             ResourceFindingMapping.objects.bulk_create(
                 mappings,
                 batch_size=BULK_CREATE_BATCH_SIZE,
                 ignore_conflicts=True,  # Handle potential duplicates
             )
-            logger.info(f"Created {len(mappings)} resource-finding mappings")
+            logger.info(
+                f"Created {len(mappings)} resource-finding mappings",
+                extra={
+                    "tenant_id": self.tenant_id,
+                    "mappings_created": len(mappings),
+                },
+            )
+        else:
+            logger.debug(
+                "No resource-finding mappings to create",
+                extra={"tenant_id": self.tenant_id},
+            )
 
     def _build_check_metadata(self, finding: ParsedFinding) -> dict[str, Any]:
         """

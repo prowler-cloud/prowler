@@ -34,6 +34,7 @@ from api.v1.views import (
     SAMLConfigurationViewSet,
     SAMLInitiateAPIView,
     SAMLTokenValidateView,
+    ScanImportView,
     ScanViewSet,
     ScheduleViewSet,
     SchemaView,
@@ -191,6 +192,12 @@ urlpatterns = [
     path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
+    # Scan import endpoint - must be before router.urls to take precedence over /scans/<pk>
+    path(
+        "scans/import",
+        ScanImportView.as_view({"post": "create"}),
+        name="scan-import",
+    ),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),
     path("", include(users_router.urls)),

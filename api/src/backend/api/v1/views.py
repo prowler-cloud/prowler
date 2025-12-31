@@ -69,6 +69,7 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
@@ -170,6 +171,7 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
+from api.services.scan_import import ScanImportError, ScanImportService
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
@@ -247,6 +249,8 @@ from api.v1.serializers import (
     TenantApiKeyCreateSerializer,
     TenantApiKeySerializer,
     TenantApiKeyUpdateSerializer,
+    ScanImportResponseSerializer,
+    ScanImportSerializer,
     TenantSerializer,
     ThreatScoreSnapshotSerializer,
     TokenRefreshSerializer,
@@ -5764,3 +5768,223 @@ class MuteRuleViewSet(BaseRLSViewSet):
             data=serializer.data,
             status=status.HTTP_201_CREATED,
         )
+
+
+@extend_schema(
+    tags=["Scan"],
+    summary="Import scan results",
+    description=(
+        "Import Prowler CLI scan results from JSON/OCSF or CSV format. "
+        "Supports file upload via multipart/form-data or inline JSON data. "
+        "Creates a new scan record with trigger type 'imported' and bulk creates "
+        "all findings and resources from the imported data."
+    ),
+    request=ScanImportSerializer,
+    responses={
+        201: OpenApiResponse(
+            response=ScanImportResponseSerializer,
+            description="Scan imported successfully",
+        ),
+        400: OpenApiResponse(
+            description="Invalid request - missing file/data or invalid format"
+        ),
+        401: OpenApiResponse(description="Authentication required"),
+        403: OpenApiResponse(description="Permission denied - requires MANAGE_SCANS"),
+        413: OpenApiResponse(description="File size exceeds maximum of 50MB"),
+        422: OpenApiResponse(
+            description="Validation error - invalid file format or schema"
+        ),
+    },
+)
+class ScanImportView(BaseRLSViewSet):
+    """
+    ViewSet for importing Prowler CLI scan results.
+
+    Supports JSON/OCSF and CSV formats via file upload or inline JSON data.
+    Creates a new scan with trigger type 'imported' and bulk creates all
+    findings and resources from the imported data.
+
+    Permissions:
+        Requires MANAGE_SCANS permission.
+
+    Request formats:
+        - multipart/form-data with 'file' field containing JSON or CSV file
+        - application/json with 'data' field containing inline OCSF JSON
+
+    Optional parameters:
+        - provider_id: UUID of existing provider to associate with import
+        - create_provider: If True (default), create provider if not found
+    """
+
+    serializer_class = ScanImportSerializer
+    required_permissions = [Permissions.MANAGE_SCANS]
+    http_method_names = ["post"]
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def get_queryset(self):
+        """Return empty queryset - this view only supports POST."""
+        return Scan.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        """
+        Import scan results from file or inline JSON data.
+
+        Handles both file upload (multipart/form-data) and inline JSON
+        (application/json) requests. Validates input, detects format,
+        parses content, and creates scan with findings and resources.
+
+        Returns:
+            Response with scan import results including scan_id, counts,
+            and provider information.
+        """
+        tenant_id = str(request.tenant_id)
+        logger.info(
+            f"Scan import request received for tenant {tenant_id}",
+            extra={
+                "tenant_id": tenant_id,
+                "content_type": request.content_type,
+                "user_id": str(request.user.id) if request.user else None,
+            },
+        )
+
+        # Validate request data
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            logger.warning(
+                f"Scan import validation failed for tenant {tenant_id}: {e.detail}",
+                extra={"tenant_id": tenant_id, "validation_errors": str(e.detail)},
+            )
+            raise
+
+        # Get file content from serializer
+        file_content = serializer.get_file_content()
+        file_size = len(file_content)
+
+        # Determine input source for logging
+        input_source = "file" if serializer.validated_data.get("file") else "inline_json"
+        logger.debug(
+            f"Processing scan import: source={input_source}, size={file_size} bytes",
+            extra={
+                "tenant_id": tenant_id,
+                "input_source": input_source,
+                "file_size": file_size,
+            },
+        )
+
+        # Get optional parameters
+        provider_id = serializer.validated_data.get("provider_id")
+        create_provider = serializer.validated_data.get("create_provider", True)
+
+        if provider_id:
+            logger.debug(
+                f"Import will use specified provider: {provider_id}",
+                extra={"tenant_id": tenant_id, "provider_id": str(provider_id)},
+            )
+
+        # Initialize import service
+        service = ScanImportService(tenant_id=tenant_id)
+
+        try:
+            # Perform import
+            result = service.import_scan(
+                file_content=file_content,
+                provider_id=provider_id,
+                create_provider=create_provider,
+            )
+
+            # Build response data
+            response_data = {
+                "type": "scan-imports",
+                "id": str(result.scan_id),
+                "attributes": {
+                    "scan_id": str(result.scan_id),
+                    "provider_id": str(result.provider_id),
+                    "findings_count": result.findings_count,
+                    "resources_count": result.resources_count,
+                    "status": "completed",
+                    "provider_created": result.provider_created,
+                },
+            }
+
+            if result.warnings:
+                response_data["attributes"]["warnings"] = result.warnings
+                logger.info(
+                    f"Scan import completed with warnings: {result.warnings}",
+                    extra={
+                        "tenant_id": tenant_id,
+                        "scan_id": str(result.scan_id),
+                        "warnings": result.warnings,
+                    },
+                )
+
+            logger.info(
+                f"Successfully imported scan {result.scan_id} with "
+                f"{result.findings_count} findings and {result.resources_count} resources",
+                extra={
+                    "tenant_id": tenant_id,
+                    "scan_id": str(result.scan_id),
+                    "provider_id": str(result.provider_id),
+                    "findings_count": result.findings_count,
+                    "resources_count": result.resources_count,
+                    "provider_created": result.provider_created,
+                },
+            )
+
+            return Response(
+                data=response_data,
+                status=status.HTTP_201_CREATED,
+            )
+
+        except ScanImportError as e:
+            logger.warning(
+                f"Scan import failed for tenant {tenant_id}: {e.message}",
+                extra={
+                    "tenant_id": tenant_id,
+                    "error_code": e.code,
+                    "error_message": e.message,
+                    "error_details": e.details,
+                },
+            )
+            error_response = {
+                "errors": [
+                    {
+                        "status": "422",
+                        "code": e.code,
+                        "title": "Import failed",
+                        "detail": e.message,
+                    }
+                ]
+            }
+            if e.details:
+                error_response["errors"][0]["source"] = e.details
+
+            return Response(
+                data=error_response,
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        except Exception as e:
+            logger.exception(
+                f"Unexpected error during scan import for tenant {tenant_id}: {e}",
+                extra={
+                    "tenant_id": tenant_id,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                },
+            )
+            sentry_sdk.capture_exception(e)
+            return Response(
+                data={
+                    "errors": [
+                        {
+                            "status": "500",
+                            "code": "internal_error",
+                            "title": "Import failed",
+                            "detail": "An unexpected error occurred during import. Please try again.",
+                        }
+                    ]
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
