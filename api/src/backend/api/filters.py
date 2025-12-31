@@ -479,6 +479,7 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
+            "resource_group": ["exact", "in"],
         }
 
     def filter_tag_key(self, queryset, name, value):

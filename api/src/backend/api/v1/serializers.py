@@ -1278,6 +1278,9 @@ class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    resource_groups = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True
+    )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
