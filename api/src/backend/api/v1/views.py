@@ -53,6 +53,7 @@ from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
+    OpenApiExample,
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
@@ -5784,17 +5785,223 @@ class MuteRuleViewSet(BaseRLSViewSet):
         201: OpenApiResponse(
             response=ScanImportResponseSerializer,
             description="Scan imported successfully",
+            examples=[
+                OpenApiExample(
+                    name="Successful Import",
+                    summary="Scan imported successfully with findings and resources",
+                    value={
+                        "data": {
+                            "type": "scan-imports",
+                            "id": "550e8400-e29b-41d4-a716-446655440001",
+                            "attributes": {
+                                "scan_id": "550e8400-e29b-41d4-a716-446655440001",
+                                "provider_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "findings_count": 1523,
+                                "resources_count": 245,
+                                "status": "completed",
+                                "provider_created": False,
+                            },
+                        }
+                    },
+                ),
+                OpenApiExample(
+                    name="Import with New Provider",
+                    summary="Scan imported with a newly created provider",
+                    value={
+                        "data": {
+                            "type": "scan-imports",
+                            "id": "660e8400-e29b-41d4-a716-446655440002",
+                            "attributes": {
+                                "scan_id": "660e8400-e29b-41d4-a716-446655440002",
+                                "provider_id": "770e8400-e29b-41d4-a716-446655440003",
+                                "findings_count": 856,
+                                "resources_count": 120,
+                                "status": "completed",
+                                "provider_created": True,
+                            },
+                        }
+                    },
+                ),
+            ],
         ),
         400: OpenApiResponse(
-            description="Invalid request - missing file/data or invalid format"
+            description="Invalid request - missing file/data or invalid format",
+            examples=[
+                OpenApiExample(
+                    name="Missing Input",
+                    summary="Neither file nor data provided",
+                    value={
+                        "errors": [
+                            {
+                                "status": "400",
+                                "code": "validation_error",
+                                "title": "Invalid request",
+                                "detail": "Either 'file' or 'data' must be provided.",
+                            }
+                        ]
+                    },
+                ),
+            ],
         ),
         401: OpenApiResponse(description="Authentication required"),
         403: OpenApiResponse(description="Permission denied - requires MANAGE_SCANS"),
-        413: OpenApiResponse(description="File size exceeds maximum of 50MB"),
+        413: OpenApiResponse(
+            description="File size exceeds maximum of 50MB",
+            examples=[
+                OpenApiExample(
+                    name="File Too Large",
+                    summary="Uploaded file exceeds size limit",
+                    value={
+                        "errors": [
+                            {
+                                "status": "413",
+                                "code": "file_too_large",
+                                "title": "File too large",
+                                "detail": "File size exceeds maximum of 50MB.",
+                            }
+                        ]
+                    },
+                ),
+            ],
+        ),
         422: OpenApiResponse(
-            description="Validation error - invalid file format or schema"
+            description="Validation error - invalid file format or schema",
+            examples=[
+                OpenApiExample(
+                    name="Invalid OCSF Format",
+                    summary="JSON does not match OCSF schema",
+                    value={
+                        "errors": [
+                            {
+                                "status": "422",
+                                "code": "invalid_ocsf_format",
+                                "title": "Import failed",
+                                "detail": "Missing required field 'metadata.event_code' at index 5",
+                                "source": {
+                                    "pointer": "/data/findings/5/metadata/event_code"
+                                },
+                            }
+                        ]
+                    },
+                ),
+                OpenApiExample(
+                    name="Invalid CSV Format",
+                    summary="CSV missing required columns",
+                    value={
+                        "errors": [
+                            {
+                                "status": "422",
+                                "code": "invalid_csv_format",
+                                "title": "Import failed",
+                                "detail": "Missing required CSV columns: CHECK_ID, STATUS",
+                            }
+                        ]
+                    },
+                ),
+                OpenApiExample(
+                    name="Provider Not Found",
+                    summary="Specified provider does not exist",
+                    value={
+                        "errors": [
+                            {
+                                "status": "422",
+                                "code": "provider_not_found",
+                                "title": "Import failed",
+                                "detail": "Provider with ID 550e8400-e29b-41d4-a716-446655440000 not found",
+                            }
+                        ]
+                    },
+                ),
+            ],
         ),
     },
+    examples=[
+        OpenApiExample(
+            name="JSON/OCSF File Upload",
+            summary="Import OCSF JSON file via multipart upload",
+            description=(
+                "Upload a Prowler JSON/OCSF output file. The file should contain "
+                "an array of OCSF-formatted findings from a Prowler CLI scan."
+            ),
+            value={
+                "file": "(binary file content)",
+                "provider_id": "550e8400-e29b-41d4-a716-446655440000",
+                "create_provider": True,
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            name="Inline OCSF JSON Data",
+            summary="Import OCSF data directly in request body",
+            description=(
+                "Send OCSF JSON data directly in the request body instead of "
+                "uploading a file. Useful for programmatic imports."
+            ),
+            value={
+                "data": [
+                    {
+                        "metadata": {
+                            "event_code": "iam_user_mfa_enabled",
+                            "product": {"name": "Prowler", "version": "4.0.0"},
+                        },
+                        "finding_info": {
+                            "uid": "prowler-aws-iam_user_mfa_enabled-123456789012-us-east-1-user123",
+                            "title": "IAM User MFA Enabled",
+                            "desc": "Ensure MFA is enabled for all IAM users.",
+                        },
+                        "severity": "high",
+                        "status_code": "FAIL",
+                        "status_detail": "MFA is not enabled for IAM user 'user123'",
+                        "message": "IAM user user123 does not have MFA enabled",
+                        "cloud": {
+                            "provider": "aws",
+                            "account": {
+                                "uid": "123456789012",
+                                "name": "production-account",
+                            },
+                            "region": "us-east-1",
+                        },
+                        "resources": [
+                            {
+                                "uid": "arn:aws:iam::123456789012:user/user123",
+                                "name": "user123",
+                                "type": "AwsIamUser",
+                                "region": "us-east-1",
+                                "group": {"name": "iam"},
+                            }
+                        ],
+                        "remediation": {
+                            "desc": "Enable MFA for the IAM user.",
+                            "references": [
+                                "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html"
+                            ],
+                        },
+                        "unmapped": {
+                            "compliance": {
+                                "CIS-AWS-1.4": ["1.10"],
+                                "AWS-Foundational-Security": ["IAM.6"],
+                            }
+                        },
+                    }
+                ],
+                "create_provider": True,
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            name="CSV File Upload",
+            summary="Import Prowler CSV output file",
+            description=(
+                "Upload a Prowler CSV output file. The CSV should use semicolon "
+                "delimiters (Prowler default) and include standard Prowler columns."
+            ),
+            value={
+                "file": "(binary CSV file content)",
+                "create_provider": True,
+            },
+            request_only=True,
+        ),
+    ],
 )
 class ScanImportView(BaseRLSViewSet):
     """

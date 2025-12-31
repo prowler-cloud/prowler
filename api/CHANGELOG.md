@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+- New endpoint `POST /api/v1/scans/import` to import Prowler CLI scan results (JSON/OCSF and CSV formats) [(#8972)](https://github.com/prowler-cloud/prowler/issues/8972)
 
 ---
 
