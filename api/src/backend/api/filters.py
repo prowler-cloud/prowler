@@ -44,6 +44,7 @@ from api.models import (
     Role,
     Scan,
     ScanCategorySummary,
+    ScanResourceGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -160,6 +161,9 @@ class CommonFindingFilters(FilterSet):
 
     category = CharFilter(method="filter_category")
     category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
+
+    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
+    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
 
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
@@ -396,6 +400,7 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
+            "resource_group": ["exact", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
@@ -1121,4 +1126,23 @@ class CategoryOverviewFilter(FilterSet):
 
     class Meta:
         model = ScanCategorySummary
+        fields = {}
+
+
+class ResourceGroupOverviewFilter(FilterSet):
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
+    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
+
+    class Meta:
+        model = ScanResourceGroupSummary
         fields = {}
