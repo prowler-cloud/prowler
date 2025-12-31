@@ -131,9 +131,18 @@ def compute_threatscore_metrics(
             continue
 
         m = metadata[0]
-        risk_level = getattr(m, "LevelOfRisk", 0)
-        weight = getattr(m, "Weight", 0)
+        risk_level_raw = getattr(m, "LevelOfRisk", 0)
+        weight_raw = getattr(m, "Weight", 0)
         section = getattr(m, "Section", "Unknown")
+        # Ensure numeric types for calculations (compliance data may have str)
+        try:
+            risk_level = int(risk_level_raw) if risk_level_raw else 0
+        except (ValueError, TypeError):
+            risk_level = 0
+        try:
+            weight = int(weight_raw) if weight_raw else 0
+        except (ValueError, TypeError):
+            weight = 0
 
         # Calculate ThreatScore components using formula from UI
         rate_i = req_passed_findings / req_total_findings

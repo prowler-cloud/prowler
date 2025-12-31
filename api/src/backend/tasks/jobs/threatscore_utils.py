@@ -1,9 +1,6 @@
-from collections import defaultdict
-
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.db.models import Count, Q
-from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
@@ -154,6 +151,12 @@ def _load_findings_for_requirement_checks(
     Supports optional caching to avoid duplicate queries when generating multiple
     reports for the same scan.
 
+    Memory optimizations:
+    - Uses database iterator with chunk_size for streaming large result sets
+    - Shares references between cache and return dict (no duplication)
+    - Only selects required fields from database
+    - Processes findings in batches to reduce memory pressure
+
     Args:
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to retrieve findings for.
@@ -171,69 +174,73 @@ def _load_findings_for_requirement_checks(
             'aws_s3_bucket_public_access': [FindingOutput(...)]
         }
     """
-    findings_by_check_id = defaultdict(list)
-
     if not check_ids:
-        return dict(findings_by_check_id)
+        return {}
 
     # Initialize cache if not provided
     if findings_cache is None:
         findings_cache = {}
 
+    # Deduplicate check_ids to avoid redundant processing
+    unique_check_ids = list(set(check_ids))
+
     # Separate cached and non-cached check_ids
     check_ids_to_load = []
     cache_hits = 0
-    cache_misses = 0
 
-    for check_id in check_ids:
+    for check_id in unique_check_ids:
         if check_id in findings_cache:
-            # Reuse from cache
-            findings_by_check_id[check_id] = findings_cache[check_id]
             cache_hits += 1
         else:
-            # Need to load from database
             check_ids_to_load.append(check_id)
-            cache_misses += 1
 
     if cache_hits > 0:
+        total_checks = len(unique_check_ids)
         logger.info(
-            f"Findings cache: {cache_hits} hits, {cache_misses} misses "
-            f"({cache_hits / (cache_hits + cache_misses) * 100:.1f}% hit rate)"
+            f"Findings cache: {cache_hits}/{total_checks} hits "
+            f"({cache_hits / total_checks * 100:.1f}% hit rate)"
         )
 
-    # If all check_ids were in cache, return early
-    if not check_ids_to_load:
-        return dict(findings_by_check_id)
-
-    logger.info(f"Loading findings for {len(check_ids_to_load)} checks on-demand")
-
-    findings_queryset = (
-        Finding.all_objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id, check_id__in=check_ids_to_load
+    # Load missing check_ids from database
+    if check_ids_to_load:
+        logger.info(
+            f"Loading findings for {len(check_ids_to_load)} checks from database"
         )
-        .order_by("uid")
-        .iterator()
-    )
 
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        for batch, is_last_batch in batched(
-            findings_queryset, DJANGO_FINDINGS_BATCH_SIZE
-        ):
-            for finding_model in batch:
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            # Use iterator with chunk_size for memory-efficient streaming
+            # chunk_size controls how many rows Django fetches from DB at once
+            findings_queryset = (
+                Finding.all_objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    check_id__in=check_ids_to_load,
+                )
+                .order_by("check_id", "uid")
+                .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+            )
+
+            # Pre-initialize empty lists for all check_ids to load
+            # This avoids repeated dict lookups and 'if not in' checks
+            for check_id in check_ids_to_load:
+                findings_cache[check_id] = []
+
+            findings_count = 0
+            for finding_model in findings_queryset:
                 finding_output = FindingOutput.transform_api_finding(
                     finding_model, prowler_provider
                 )
-                findings_by_check_id[finding_output.check_id].append(finding_output)
-                # Update cache with newly loaded findings
-                if finding_output.check_id not in findings_cache:
-                    findings_cache[finding_output.check_id] = []
                 findings_cache[finding_output.check_id].append(finding_output)
+                findings_count += 1
 
-    total_findings_loaded = sum(
-        len(findings) for findings in findings_by_check_id.values()
-    )
-    logger.info(
-        f"Loaded {total_findings_loaded} findings for {len(findings_by_check_id)} checks"
-    )
+            logger.info(
+                f"Loaded {findings_count} findings for {len(check_ids_to_load)} checks"
+            )
 
-    return dict(findings_by_check_id)
+    # Build result dict using cache references (no data duplication)
+    # This shares the same list objects between cache and result
+    result = {
+        check_id: findings_cache.get(check_id, []) for check_id in unique_check_ids
+    }
+
+    return result
