@@ -43,10 +43,12 @@ export default async function Resources({
     sort: encodedSort,
   });
 
-  // Extract unique regions, services, types, and names from the metadata endpoint
+  // Extract unique regions, services, types, resource_groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
+  const uniqueResourceGroups =
+    metadataInfoData?.data?.attributes?.resource_groups || [];
 
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
@@ -67,6 +69,11 @@ export default async function Resources({
             key: "service",
             labelCheckboxGroup: "Service",
             values: uniqueServices,
+          },
+          {
+            key: "resource_group",
+            labelCheckboxGroup: "Resource Group",
+            values: uniqueResourceGroups,
           },
         ]}
       />
