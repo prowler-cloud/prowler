@@ -9,46 +9,54 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Supported provider types for validation
-SUPPORTED_PROVIDER_TYPES = frozenset({
-    "aws",
-    "azure",
-    "gcp",
-    "kubernetes",
-    "github",
-    "m365",
-    "alibabacloud",
-    "nhn",
-    "oraclecloud",
-    "mongodbatlas",
-})
+SUPPORTED_PROVIDER_TYPES = frozenset(
+    {
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "github",
+        "m365",
+        "alibabacloud",
+        "nhn",
+        "oraclecloud",
+        "mongodbatlas",
+    }
+)
 
 # Valid severity levels (normalized to lowercase)
-VALID_SEVERITY_LEVELS = frozenset({
-    "critical",
-    "high",
-    "medium",
-    "low",
-    "informational",
-})
+VALID_SEVERITY_LEVELS = frozenset(
+    {
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "informational",
+    }
+)
 
 # Valid status codes (normalized to uppercase)
-VALID_STATUS_CODES = frozenset({
-    "PASS",
-    "FAIL",
-    "MANUAL",
-})
+VALID_STATUS_CODES = frozenset(
+    {
+        "PASS",
+        "FAIL",
+        "MANUAL",
+    }
+)
 
 # Required top-level OCSF fields
-REQUIRED_OCSF_TOP_LEVEL_FIELDS = frozenset({
-    "metadata",
-    "finding_info",
-    "cloud",
-})
+REQUIRED_OCSF_TOP_LEVEL_FIELDS = frozenset(
+    {
+        "metadata",
+        "finding_info",
+        "cloud",
+    }
+)
 
 # Required nested OCSF fields (path -> description)
 REQUIRED_OCSF_NESTED_FIELDS = {
@@ -128,7 +136,9 @@ class OCSFValidationResult:
 class OCSFParseError(Exception):
     """Exception raised when OCSF parsing fails."""
 
-    def __init__(self, message: str, index: int | None = None, field: str | None = None):
+    def __init__(
+        self, message: str, index: int | None = None, field: str | None = None
+    ):
         self.message = message
         self.index = index
         self.field = field
@@ -173,7 +183,9 @@ class OCSFResource:
         """
         uid = data.get("uid")
         if not uid:
-            raise OCSFParseError("Missing required field 'uid' in resource", index, "resources[].uid")
+            raise OCSFParseError(
+                "Missing required field 'uid' in resource", index, "resources[].uid"
+            )
 
         return cls(
             uid=str(uid),
@@ -198,7 +210,6 @@ class OCSFCheckMetadata:
     remediation_references: list[str] = field(default_factory=list)
     categories: list[str] = field(default_factory=list)
     related_url: str = ""
-
 
 
 @dataclass
@@ -258,7 +269,9 @@ class OCSFFinding:
         check_id = metadata.get("event_code")
         if not check_id:
             raise OCSFParseError(
-                "Missing required field 'metadata.event_code'", index, "metadata.event_code"
+                "Missing required field 'metadata.event_code'",
+                index,
+                "metadata.event_code",
             )
 
         finding_info = data.get("finding_info", {})
@@ -389,7 +402,6 @@ class OCSFFinding:
         )
 
 
-
 def parse_ocsf_json(content: bytes) -> list[OCSFFinding]:
     """
     Parse OCSF JSON content into a list of OCSFFinding objects.
@@ -418,9 +430,7 @@ def parse_ocsf_json(content: bytes) -> list[OCSFFinding]:
 
     # Validate structure - must be a list
     if not isinstance(data, list):
-        raise OCSFParseError(
-            "Invalid OCSF format: expected a JSON array of findings"
-        )
+        raise OCSFParseError("Invalid OCSF format: expected a JSON array of findings")
 
     if len(data) == 0:
         logger.warning("OCSF JSON contains no findings")
@@ -600,9 +610,13 @@ def validate_ocsf_finding(
                 f"Supported: {', '.join(sorted(SUPPORTED_PROVIDER_TYPES))}"
             )
             if strict:
-                result.add_error(msg, "cloud.provider", index=index, value=provider_type)
+                result.add_error(
+                    msg, "cloud.provider", index=index, value=provider_type
+                )
             else:
-                result.add_warning(msg, "cloud.provider", index=index, value=provider_type)
+                result.add_warning(
+                    msg, "cloud.provider", index=index, value=provider_type
+                )
 
     # Validate severity if present
     severity = data.get("severity")

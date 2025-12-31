@@ -2,11 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import {
-  FileIcon,
-  UploadCloudIcon,
-  XIcon,
-} from "@/components/icons";
+import { FileIcon, UploadCloudIcon, XIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +27,10 @@ function formatFileSize(bytes: number): string {
 /**
  * Validates if a file is acceptable for import.
  */
-function isValidFile(file: File, maxSize: number): { valid: boolean; error?: string } {
+function isValidFile(
+  file: File,
+  maxSize: number,
+): { valid: boolean; error?: string } {
   // Check file size
   if (file.size > maxSize) {
     return {
@@ -43,12 +42,12 @@ function isValidFile(file: File, maxSize: number): { valid: boolean; error?: str
   // Check file type by extension or MIME type
   const fileName = file.name.toLowerCase();
   const mimeType = file.type || "";
-  
+
   const hasValidExtension = ACCEPTED_FILE_EXTENSIONS.some((ext) =>
-    fileName.endsWith(ext)
+    fileName.endsWith(ext),
   );
   const hasValidMimeType = ACCEPTED_MIME_TYPES.includes(
-    mimeType as (typeof ACCEPTED_MIME_TYPES)[number]
+    mimeType as (typeof ACCEPTED_MIME_TYPES)[number],
   );
 
   if (!hasValidExtension && !hasValidMimeType) {
@@ -84,7 +83,7 @@ export function ScanImportDropzone({
         setIsDragOver(true);
       }
     },
-    [disabled]
+    [disabled],
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -113,7 +112,7 @@ export function ScanImportDropzone({
       setError(null);
       onFileSelect(droppedFile);
     },
-    [disabled, maxSize, onFileSelect]
+    [disabled, maxSize, onFileSelect],
   );
 
   const handleFileChange = useCallback(
@@ -134,7 +133,7 @@ export function ScanImportDropzone({
       setError(null);
       onFileSelect(selectedFile);
     },
-    [maxSize, onFileSelect]
+    [maxSize, onFileSelect],
   );
 
   const handleClick = useCallback(() => {
@@ -152,7 +151,7 @@ export function ScanImportDropzone({
         inputRef.current.value = "";
       }
     },
-    [onFileSelect]
+    [onFileSelect],
   );
 
   const handleKeyDown = useCallback(
@@ -162,7 +161,7 @@ export function ScanImportDropzone({
         handleClick();
       }
     },
-    [handleClick]
+    [handleClick],
   );
 
   return (
@@ -184,18 +183,18 @@ export function ScanImportDropzone({
             "flex items-center justify-between gap-3 rounded-lg border border-solid",
             "border-border-neutral-secondary bg-bg-neutral-secondary p-4",
             "transition-all duration-200 ease-in-out",
-            disabled && "opacity-50 cursor-not-allowed"
+            disabled && "cursor-not-allowed opacity-50",
           )}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-neutral-tertiary">
-              <FileIcon className="h-5 w-5 text-text-neutral-secondary" />
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="bg-bg-neutral-tertiary flex h-10 w-10 shrink-0 items-center justify-center rounded-md">
+              <FileIcon className="text-text-neutral-secondary h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-text-neutral-primary">
+              <p className="text-text-neutral-primary truncate text-sm font-medium">
                 {file.name}
               </p>
-              <p className="text-xs text-text-neutral-secondary">
+              <p className="text-text-neutral-secondary text-xs">
                 {formatFileSize(file.size)}
               </p>
             </div>
@@ -236,13 +235,13 @@ export function ScanImportDropzone({
             isDragOver && "border-button-primary bg-button-primary/5 shadow-md",
             // Disabled state: reduced opacity, no hover effects
             disabled && [
-              "opacity-50 cursor-not-allowed",
+              "cursor-not-allowed opacity-50",
               "hover:border-border-neutral-secondary hover:bg-bg-neutral-secondary hover:shadow-none",
             ],
             // Error state: red border
             error && "border-bg-fail hover:border-bg-fail",
             // Focus state: visible ring for accessibility
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-button-primary/50 focus-visible:ring-offset-2"
+            "focus-visible:ring-button-primary/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
           )}
         >
           <div
@@ -250,33 +249,33 @@ export function ScanImportDropzone({
               "flex h-12 w-12 items-center justify-center rounded-full",
               "bg-bg-neutral-tertiary",
               "transition-all duration-200 ease-in-out",
-              isDragOver && "bg-button-primary/10 scale-110"
+              isDragOver && "bg-button-primary/10 scale-110",
             )}
           >
             <UploadCloudIcon
               className={cn(
-                "h-6 w-6 text-text-neutral-secondary",
+                "text-text-neutral-secondary h-6 w-6",
                 "transition-colors duration-200 ease-in-out",
-                isDragOver && "text-button-primary"
+                isDragOver && "text-button-primary",
               )}
             />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-text-neutral-primary">
+            <p className="text-text-neutral-primary text-sm font-medium">
               {isDragOver ? "Drop file here" : "Drag and drop your scan file"}
             </p>
-            <p className="mt-1 text-xs text-text-neutral-secondary">
+            <p className="text-text-neutral-secondary mt-1 text-xs">
               or click to browse
             </p>
           </div>
-          <p className="text-xs text-text-neutral-tertiary">
+          <p className="text-text-neutral-tertiary text-xs">
             Supports JSON and CSV formats (max {formatFileSize(maxSize)})
           </p>
         </div>
       )}
 
       {error && (
-        <p className="mt-2 text-xs text-bg-fail" role="alert">
+        <p className="text-bg-fail mt-2 text-xs" role="alert">
           {error}
         </p>
       )}

@@ -3,9 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
-import { handleApiError } from "@/lib/server-actions-helper";
-
 import type {
   ImportScanResult,
   ScanImportApiErrorResponse,
@@ -15,6 +12,8 @@ import {
   ACCEPTED_MIME_TYPES,
   MAX_IMPORT_FILE_SIZE,
 } from "@/components/scans/scan-import/types";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError } from "@/lib/server-actions-helper";
 
 /**
  * Zod schema for validating scan import form data.
@@ -34,14 +33,16 @@ const importScanSchema = z.object({
         const fileName = file.name.toLowerCase();
         // Check MIME type or file extension
         return (
-          ACCEPTED_MIME_TYPES.includes(mimeType as (typeof ACCEPTED_MIME_TYPES)[number]) ||
+          ACCEPTED_MIME_TYPES.includes(
+            mimeType as (typeof ACCEPTED_MIME_TYPES)[number],
+          ) ||
           fileName.endsWith(".json") ||
           fileName.endsWith(".csv")
         );
       },
       {
         message: "File must be JSON or CSV format",
-      }
+      },
     ),
   providerId: z.string().uuid().optional().or(z.literal("")),
   createProvider: z.coerce.boolean().default(true),
@@ -66,7 +67,7 @@ export type ImportScanActionResult =
  * @returns Promise with the import result or error
  */
 export async function importScan(
-  formData: FormData
+  formData: FormData,
 ): Promise<ImportScanActionResult> {
   try {
     // Extract form data
@@ -107,10 +108,7 @@ export async function importScan(
       apiFormData.append("provider_id", validatedData.providerId);
     }
 
-    apiFormData.append(
-      "create_provider",
-      String(validatedData.createProvider)
-    );
+    apiFormData.append("create_provider", String(validatedData.createProvider));
 
     // Make API request
     const url = new URL(`${apiBaseUrl}/scans/import`);

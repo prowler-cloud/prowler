@@ -142,10 +142,16 @@ class TestOCSFFinding:
         assert finding.account_uid == "123456789012"
         assert finding.account_name == "Production"
         assert len(finding.resources) == 1
-        assert finding.resources[0].uid == "arn:aws:accessanalyzer:us-east-1:123456789012:analyzer"
+        assert (
+            finding.resources[0].uid
+            == "arn:aws:accessanalyzer:us-east-1:123456789012:analyzer"
+        )
         assert finding.compliance == {"CIS-1.4": ["1.20"], "CIS-1.5": ["1.20"]}
         assert finding.check_metadata.title == "Check if IAM Access Analyzer is enabled"
-        assert finding.check_metadata.risk == "IAM Access Analyzer helps identify resources."
+        assert (
+            finding.check_metadata.risk
+            == "IAM Access Analyzer helps identify resources."
+        )
 
     def test_from_dict_missing_event_code_raises_error(self, valid_finding_data):
         """Test that missing event_code raises OCSFParseError."""
@@ -227,7 +233,6 @@ class TestOCSFFinding:
         assert finding.compliance == {}
 
 
-
 class TestParseOCSFJson:
     """Tests for parse_ocsf_json function."""
 
@@ -241,7 +246,11 @@ class TestParseOCSFJson:
                 "severity": "Low",
                 "status_code": "FAIL",
                 "status_detail": "Finding 1 detail",
-                "finding_info": {"uid": "finding-1", "title": "Check 1", "desc": "Desc 1"},
+                "finding_info": {
+                    "uid": "finding-1",
+                    "title": "Check 1",
+                    "desc": "Desc 1",
+                },
                 "cloud": {
                     "provider": "aws",
                     "account": {"uid": "123456789012", "name": "Test"},
@@ -254,7 +263,11 @@ class TestParseOCSFJson:
                 "severity": "High",
                 "status_code": "PASS",
                 "status_detail": "Finding 2 detail",
-                "finding_info": {"uid": "finding-2", "title": "Check 2", "desc": "Desc 2"},
+                "finding_info": {
+                    "uid": "finding-2",
+                    "title": "Check 2",
+                    "desc": "Desc 2",
+                },
                 "cloud": {
                     "provider": "aws",
                     "account": {"uid": "123456789012", "name": "Test"},
@@ -317,7 +330,11 @@ class TestParseOCSFJson:
                 "metadata": {"event_code": "check_1"},
                 "severity": "Low",
                 "status_code": "FAIL",
-                "finding_info": {"uid": "finding-1", "title": "Check 1", "desc": "Desc"},
+                "finding_info": {
+                    "uid": "finding-1",
+                    "title": "Check 1",
+                    "desc": "Desc",
+                },
                 "cloud": {
                     "provider": "aws",
                     "account": {"uid": "123456789012"},

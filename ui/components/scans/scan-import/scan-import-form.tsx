@@ -6,13 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui";
 import {
   Form,
   FormControl,
@@ -22,16 +16,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Label } from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getProviderDisplayName, ProviderType } from "@/types/providers";
 
 import { ScanImportDropzone } from "./scan-import-dropzone";
 import type { ScanImportFormData, ScanImportFormProps } from "./types";
-import {
-  ACCEPTED_MIME_TYPES,
-  MAX_IMPORT_FILE_SIZE,
-} from "./types";
+import { ACCEPTED_MIME_TYPES, MAX_IMPORT_FILE_SIZE } from "./types";
 
 /**
  * Zod schema for the scan import form.
@@ -55,7 +52,7 @@ export const scanImportFormSchema = z.object({
       },
       {
         message: `File size exceeds maximum of ${MAX_IMPORT_FILE_SIZE / (1024 * 1024)}MB`,
-      }
+      },
     )
     .refine(
       (file) => {
@@ -65,7 +62,7 @@ export const scanImportFormSchema = z.object({
         // Check MIME type or file extension
         return (
           ACCEPTED_MIME_TYPES.includes(
-            mimeType as (typeof ACCEPTED_MIME_TYPES)[number]
+            mimeType as (typeof ACCEPTED_MIME_TYPES)[number],
           ) ||
           fileName.endsWith(".json") ||
           fileName.endsWith(".csv")
@@ -73,7 +70,7 @@ export const scanImportFormSchema = z.object({
       },
       {
         message: "File must be JSON or CSV format",
-      }
+      },
     ),
   providerId: z.string().optional(),
   createProvider: z.boolean(),
@@ -113,7 +110,7 @@ export function ScanImportForm({
       setSelectedFile(file);
       form.setValue("file", file, { shouldValidate: true });
     },
-    [form]
+    [form],
   );
 
   const handleSubmit = useCallback(
@@ -125,7 +122,7 @@ export function ScanImportForm({
       };
       onSubmit(formData);
     },
-    [onSubmit]
+    [onSubmit],
   );
 
   // Group providers by type for better organization
@@ -138,10 +135,12 @@ export function ScanImportForm({
       acc[type].push(provider);
       return acc;
     },
-    {} as Record<ProviderType, typeof providers>
+    {} as Record<ProviderType, typeof providers>,
   );
 
-  const sortedProviderTypes = Object.keys(groupedProviders).sort() as ProviderType[];
+  const sortedProviderTypes = Object.keys(
+    groupedProviders,
+  ).sort() as ProviderType[];
 
   return (
     <Form {...form}>
@@ -155,7 +154,7 @@ export function ScanImportForm({
           name="file"
           render={({ fieldState }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-text-neutral-primary">
+              <FormLabel className="text-text-neutral-primary text-sm font-medium">
                 Scan Results File
               </FormLabel>
               <FormControl>
@@ -178,10 +177,10 @@ export function ScanImportForm({
           name="providerId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-text-neutral-primary">
+              <FormLabel className="text-text-neutral-primary text-sm font-medium">
                 Provider (Optional)
               </FormLabel>
-              <FormDescription className="text-xs text-text-neutral-secondary">
+              <FormDescription className="text-text-neutral-secondary text-xs">
                 Associate the import with an existing provider, or leave empty
                 to auto-detect from the scan data.
               </FormDescription>
@@ -196,7 +195,7 @@ export function ScanImportForm({
                       "w-full",
                       "border-border-neutral-secondary bg-bg-neutral-secondary",
                       "hover:border-border-neutral-tertiary",
-                      "focus:ring-button-primary/50"
+                      "focus:ring-button-primary/50",
                     )}
                   >
                     <SelectValue placeholder="Auto-detect from scan data" />
@@ -213,7 +212,7 @@ export function ScanImportForm({
                   {/* Grouped providers by type */}
                   {sortedProviderTypes.map((providerType) => (
                     <div key={providerType}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-text-neutral-tertiary">
+                      <div className="text-text-neutral-tertiary px-2 py-1.5 text-xs font-semibold">
                         {getProviderDisplayName(providerType)}
                       </div>
                       {groupedProviders[providerType].map((provider) => (
@@ -223,7 +222,7 @@ export function ScanImportForm({
                               {provider.alias || provider.uid}
                             </span>
                             {!provider.alias && (
-                              <span className="text-xs text-text-neutral-tertiary">
+                              <span className="text-text-neutral-tertiary text-xs">
                                 ({provider.uid})
                               </span>
                             )}
@@ -234,7 +233,7 @@ export function ScanImportForm({
                   ))}
 
                   {providers.length === 0 && (
-                    <div className="px-2 py-4 text-center text-sm text-text-neutral-secondary">
+                    <div className="text-text-neutral-secondary px-2 py-4 text-center text-sm">
                       No providers available
                     </div>
                   )}
@@ -250,7 +249,7 @@ export function ScanImportForm({
           control={form.control}
           name="createProvider"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+            <FormItem className="flex flex-row items-start space-y-0 space-x-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -263,13 +262,13 @@ export function ScanImportForm({
                 <Label
                   htmlFor="createProvider"
                   className={cn(
-                    "text-sm font-medium cursor-pointer",
-                    isSubmitting && "cursor-not-allowed opacity-50"
+                    "cursor-pointer text-sm font-medium",
+                    isSubmitting && "cursor-not-allowed opacity-50",
                   )}
                 >
                   Create provider if not found
                 </Label>
-                <p className="text-xs text-text-neutral-secondary">
+                <p className="text-text-neutral-secondary text-xs">
                   If the provider from the scan data doesn&apos;t exist, create
                   it automatically.
                 </p>
@@ -286,9 +285,9 @@ export function ScanImportForm({
             "w-full rounded-lg px-4 py-2.5 text-sm font-medium",
             "bg-button-primary text-white",
             "hover:bg-button-primary/90",
-            "focus:outline-none focus:ring-2 focus:ring-button-primary/50 focus:ring-offset-2",
+            "focus:ring-button-primary/50 focus:ring-2 focus:ring-offset-2 focus:outline-none",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            "transition-all duration-200 ease-in-out"
+            "transition-all duration-200 ease-in-out",
           )}
         >
           {isSubmitting ? "Importing..." : "Import Scan Results"}

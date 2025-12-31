@@ -61,8 +61,7 @@ Run with coverage::
 """
 
 import json
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -663,13 +662,15 @@ class TestProviderIdValidation:
 
     def test_invalid_provider_id_format_raises_error(self, service):
         """Test that invalid provider_id format raises error."""
-        valid_content = json.dumps([
-            {
-                "metadata": {"event_code": "check_1"},
-                "finding_info": {"uid": "finding-1"},
-                "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
-            }
-        ]).encode("utf-8")
+        valid_content = json.dumps(
+            [
+                {
+                    "metadata": {"event_code": "check_1"},
+                    "finding_info": {"uid": "finding-1"},
+                    "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
+                }
+            ]
+        ).encode("utf-8")
 
         with pytest.raises(ScanImportError) as exc_info:
             service.import_scan(valid_content, provider_id="not-a-uuid")
@@ -694,7 +695,6 @@ class TestNoFindingsValidation:
 
         assert exc_info.value.code == "no_findings"
         assert "No findings found" in exc_info.value.message
-
 
 
 class TestGetRawResult:
@@ -967,6 +967,7 @@ class TestDetectFormatEdgeCases:
         assert exc_info.value.code == "invalid_format"
 
 
+@pytest.mark.django_db
 class TestImportScanValidation:
     """Tests for validation in import_scan method."""
 
@@ -977,19 +978,20 @@ class TestImportScanValidation:
 
     def test_import_scan_with_valid_uuid_string_provider_id(self, service):
         """Test that valid UUID string provider_id is accepted."""
-        valid_content = json.dumps([
-            {
-                "metadata": {"event_code": "check_1"},
-                "finding_info": {"uid": "finding-1"},
-                "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
-            }
-        ]).encode("utf-8")
+        valid_content = json.dumps(
+            [
+                {
+                    "metadata": {"event_code": "check_1"},
+                    "finding_info": {"uid": "finding-1"},
+                    "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
+                }
+            ]
+        ).encode("utf-8")
 
         # This should fail at provider resolution, not at UUID parsing
         with pytest.raises(ScanImportError) as exc_info:
             service.import_scan(
-                valid_content,
-                provider_id="550e8400-e29b-41d4-a716-446655440000"
+                valid_content, provider_id="550e8400-e29b-41d4-a716-446655440000"
             )
 
         # Should fail at provider resolution, not UUID parsing
@@ -997,13 +999,15 @@ class TestImportScanValidation:
 
     def test_import_scan_with_uuid_object_provider_id(self, service):
         """Test that UUID object provider_id is accepted."""
-        valid_content = json.dumps([
-            {
-                "metadata": {"event_code": "check_1"},
-                "finding_info": {"uid": "finding-1"},
-                "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
-            }
-        ]).encode("utf-8")
+        valid_content = json.dumps(
+            [
+                {
+                    "metadata": {"event_code": "check_1"},
+                    "finding_info": {"uid": "finding-1"},
+                    "cloud": {"provider": "aws", "account": {"uid": "123456789012"}},
+                }
+            ]
+        ).encode("utf-8")
 
         provider_uuid = uuid4()
 

@@ -283,7 +283,9 @@ class ScanImportService:
 
                 # Bulk create findings
                 findings_start_time = time.time()
-                findings_count = self._bulk_create_findings(findings, scan, resources_map)
+                findings_count = self._bulk_create_findings(
+                    findings, scan, resources_map
+                )
                 findings_time_ms = int((time.time() - findings_start_time) * 1000)
 
                 logger.debug(
@@ -382,9 +384,7 @@ class ScanImportService:
             },
         )
 
-    def _parse_content(
-        self, content: bytes, file_format: str
-    ) -> list[ParsedFinding]:
+    def _parse_content(self, content: bytes, file_format: str) -> list[ParsedFinding]:
         """
         Parse file content based on detected format.
 
@@ -551,7 +551,9 @@ class ScanImportService:
         )
 
         # Validate provider type
-        valid_provider_types = [choice[0] for choice in Provider.ProviderChoices.choices]
+        valid_provider_types = [
+            choice[0] for choice in Provider.ProviderChoices.choices
+        ]
         if provider_type not in valid_provider_types:
             logger.warning(
                 f"Unsupported provider type: {provider_type}",
@@ -607,7 +609,7 @@ class ScanImportService:
         # Create new provider if allowed
         if not create_provider:
             logger.warning(
-                f"Provider not found and create_provider=False",
+                "Provider not found and create_provider=False",
                 extra={
                     "tenant_id": self.tenant_id,
                     "provider_type": provider_type,
@@ -861,7 +863,9 @@ class ScanImportService:
         )
 
         finding_objects = []
-        finding_resource_pairs: list[tuple[int, list[str]]] = []  # (finding_index, resource_uids)
+        finding_resource_pairs: list[tuple[int, list[str]]] = (
+            []
+        )  # (finding_index, resource_uids)
 
         for idx, parsed_finding in enumerate(findings):
             # Build check metadata
@@ -891,10 +895,16 @@ class ScanImportService:
 
             # Set denormalized resource fields
             if resource_uids:
-                resources = [resources_map[uid] for uid in resource_uids if uid in resources_map]
+                resources = [
+                    resources_map[uid] for uid in resource_uids if uid in resources_map
+                ]
                 if resources:
-                    finding.resource_regions = list({r.region for r in resources if r.region})
-                    finding.resource_services = list({r.service for r in resources if r.service})
+                    finding.resource_regions = list(
+                        {r.region for r in resources if r.region}
+                    )
+                    finding.resource_services = list(
+                        {r.service for r in resources if r.service}
+                    )
                     finding.resource_types = list({r.type for r in resources if r.type})
 
             # Set categories from check metadata

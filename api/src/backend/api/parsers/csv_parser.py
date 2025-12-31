@@ -15,89 +15,99 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Supported provider types for validation (same as OCSF parser)
-SUPPORTED_PROVIDER_TYPES = frozenset({
-    "aws",
-    "azure",
-    "gcp",
-    "kubernetes",
-    "github",
-    "m365",
-    "alibabacloud",
-    "nhn",
-    "oraclecloud",
-    "mongodbatlas",
-})
+SUPPORTED_PROVIDER_TYPES = frozenset(
+    {
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "github",
+        "m365",
+        "alibabacloud",
+        "nhn",
+        "oraclecloud",
+        "mongodbatlas",
+    }
+)
 
 # Valid severity levels (normalized to lowercase)
-VALID_SEVERITY_LEVELS = frozenset({
-    "critical",
-    "high",
-    "medium",
-    "low",
-    "informational",
-})
+VALID_SEVERITY_LEVELS = frozenset(
+    {
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "informational",
+    }
+)
 
 # Valid status codes (normalized to uppercase)
-VALID_STATUS_CODES = frozenset({
-    "PASS",
-    "FAIL",
-    "MANUAL",
-})
+VALID_STATUS_CODES = frozenset(
+    {
+        "PASS",
+        "FAIL",
+        "MANUAL",
+    }
+)
 
 # Required CSV columns for validation
-REQUIRED_CSV_COLUMNS = frozenset({
-    "FINDING_UID",
-    "PROVIDER",
-    "CHECK_ID",
-    "STATUS",
-    "ACCOUNT_UID",
-})
+REQUIRED_CSV_COLUMNS = frozenset(
+    {
+        "FINDING_UID",
+        "PROVIDER",
+        "CHECK_ID",
+        "STATUS",
+        "ACCOUNT_UID",
+    }
+)
 
 # All expected CSV columns (for reference and validation)
-EXPECTED_CSV_COLUMNS = frozenset({
-    "AUTH_METHOD",
-    "TIMESTAMP",
-    "ACCOUNT_UID",
-    "ACCOUNT_NAME",
-    "ACCOUNT_EMAIL",
-    "ACCOUNT_ORGANIZATION_UID",
-    "ACCOUNT_ORGANIZATION_NAME",
-    "ACCOUNT_TAGS",
-    "FINDING_UID",
-    "PROVIDER",
-    "CHECK_ID",
-    "CHECK_TITLE",
-    "CHECK_TYPE",
-    "STATUS",
-    "STATUS_EXTENDED",
-    "MUTED",
-    "SERVICE_NAME",
-    "SUBSERVICE_NAME",
-    "SEVERITY",
-    "RESOURCE_TYPE",
-    "RESOURCE_UID",
-    "RESOURCE_NAME",
-    "RESOURCE_DETAILS",
-    "RESOURCE_TAGS",
-    "PARTITION",
-    "REGION",
-    "DESCRIPTION",
-    "RISK",
-    "RELATED_URL",
-    "REMEDIATION_RECOMMENDATION_TEXT",
-    "REMEDIATION_RECOMMENDATION_URL",
-    "REMEDIATION_CODE_NATIVEIAC",
-    "REMEDIATION_CODE_TERRAFORM",
-    "REMEDIATION_CODE_CLI",
-    "REMEDIATION_CODE_OTHER",
-    "COMPLIANCE",
-    "CATEGORIES",
-    "DEPENDS_ON",
-    "RELATED_TO",
-    "NOTES",
-    "PROWLER_VERSION",
-    "ADDITIONAL_URLS",
-})
+EXPECTED_CSV_COLUMNS = frozenset(
+    {
+        "AUTH_METHOD",
+        "TIMESTAMP",
+        "ACCOUNT_UID",
+        "ACCOUNT_NAME",
+        "ACCOUNT_EMAIL",
+        "ACCOUNT_ORGANIZATION_UID",
+        "ACCOUNT_ORGANIZATION_NAME",
+        "ACCOUNT_TAGS",
+        "FINDING_UID",
+        "PROVIDER",
+        "CHECK_ID",
+        "CHECK_TITLE",
+        "CHECK_TYPE",
+        "STATUS",
+        "STATUS_EXTENDED",
+        "MUTED",
+        "SERVICE_NAME",
+        "SUBSERVICE_NAME",
+        "SEVERITY",
+        "RESOURCE_TYPE",
+        "RESOURCE_UID",
+        "RESOURCE_NAME",
+        "RESOURCE_DETAILS",
+        "RESOURCE_TAGS",
+        "PARTITION",
+        "REGION",
+        "DESCRIPTION",
+        "RISK",
+        "RELATED_URL",
+        "REMEDIATION_RECOMMENDATION_TEXT",
+        "REMEDIATION_RECOMMENDATION_URL",
+        "REMEDIATION_CODE_NATIVEIAC",
+        "REMEDIATION_CODE_TERRAFORM",
+        "REMEDIATION_CODE_CLI",
+        "REMEDIATION_CODE_OTHER",
+        "COMPLIANCE",
+        "CATEGORIES",
+        "DEPENDS_ON",
+        "RELATED_TO",
+        "NOTES",
+        "PROWLER_VERSION",
+        "ADDITIONAL_URLS",
+    }
+)
 
 
 class CSVParseError(Exception):
@@ -664,7 +674,10 @@ def validate_csv_structure(content: bytes) -> tuple[bool, str | None]:
         headers_set = set(headers)
         missing_required = REQUIRED_CSV_COLUMNS - headers_set
         if missing_required:
-            return False, f"Missing required columns: {', '.join(sorted(missing_required))}"
+            return (
+                False,
+                f"Missing required columns: {', '.join(sorted(missing_required))}",
+            )
 
         # Try to read first row to validate structure
         try:

@@ -6070,7 +6070,9 @@ class ScanImportView(BaseRLSViewSet):
         file_size = len(file_content)
 
         # Determine input source for logging
-        input_source = "file" if serializer.validated_data.get("file") else "inline_json"
+        input_source = (
+            "file" if serializer.validated_data.get("file") else "inline_json"
+        )
         logger.debug(
             f"Processing scan import: source={input_source}, size={file_size} bytes",
             extra={

@@ -4,13 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  UploadIcon,
-} from "@/components/icons";
-
 import { importScan } from "@/actions/scans/import-scan";
+import { ChevronDownIcon, ChevronUpIcon, UploadIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 import { ProviderType } from "@/types/providers";
@@ -70,7 +65,9 @@ export function ScanImportSection({
   // Upload state machine
   const [status, setStatus] = useState<ImportStatus>("idle");
   const [progress, setProgress] = useState(0);
-  const [processingStep, setProcessingStep] = useState<ProcessingStepInfo | undefined>();
+  const [processingStep, setProcessingStep] = useState<
+    ProcessingStepInfo | undefined
+  >();
   const [result, setResult] = useState<ImportScanResult | undefined>();
   const [error, setError] = useState<ImportScanError | undefined>();
 
@@ -133,7 +130,10 @@ export function ScanImportSection({
         setProcessingStep({ step: "parsing", message: "Parsing file..." });
 
         // Simulate processing steps for better UX
-        const steps: Array<{ step: ProcessingStepInfo["step"]; message: string }> = [
+        const steps: Array<{
+          step: ProcessingStepInfo["step"];
+          message: string;
+        }> = [
           { step: "validating", message: "Validating data..." },
           { step: "resolving-provider", message: "Resolving provider..." },
           { step: "creating-resources", message: "Creating resources..." },
@@ -176,12 +176,13 @@ export function ScanImportSection({
         console.error("Import error:", err);
         setError({
           title: "Import failed",
-          detail: err instanceof Error ? err.message : "An unexpected error occurred",
+          detail:
+            err instanceof Error ? err.message : "An unexpected error occurred",
         });
         setStatus("error");
       }
     },
-    [onImportComplete, router]
+    [onImportComplete, router],
   );
 
   const isSubmitting = status === "uploading" || status === "processing";
@@ -194,32 +195,32 @@ export function ScanImportSection({
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
           "flex w-full items-center justify-between rounded-lg px-4 py-3",
-          "bg-bg-neutral-secondary border border-border-neutral-secondary",
+          "bg-bg-neutral-secondary border-border-neutral-secondary border",
           "hover:bg-bg-neutral-tertiary hover:border-border-neutral-tertiary",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-button-primary/50",
+          "focus-visible:ring-button-primary/50 focus:outline-none focus-visible:ring-2",
           "transition-all duration-200 ease-in-out",
-          isExpanded && "rounded-b-none border-b-0"
+          isExpanded && "rounded-b-none border-b-0",
         )}
         aria-expanded={isExpanded}
         aria-controls="scan-import-content"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-button-primary/10">
-            <UploadIcon className="h-4 w-4 text-button-primary" />
+          <div className="bg-button-primary/10 flex h-8 w-8 items-center justify-center rounded-md">
+            <UploadIcon className="text-button-primary h-4 w-4" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-medium text-text-neutral-primary">
+            <p className="text-text-neutral-primary text-sm font-medium">
               Import Scan Results
             </p>
-            <p className="text-xs text-text-neutral-secondary">
+            <p className="text-text-neutral-secondary text-xs">
               Upload Prowler CLI output (JSON or CSV)
             </p>
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUpIcon className="h-5 w-5 text-text-neutral-secondary" />
+          <ChevronUpIcon className="text-text-neutral-secondary h-5 w-5" />
         ) : (
-          <ChevronDownIcon className="h-5 w-5 text-text-neutral-secondary" />
+          <ChevronDownIcon className="text-text-neutral-secondary h-5 w-5" />
         )}
       </button>
 
@@ -236,8 +237,8 @@ export function ScanImportSection({
           >
             <div
               className={cn(
-                "rounded-b-lg border border-t-0 border-border-neutral-secondary",
-                "bg-bg-neutral-secondary p-4"
+                "border-border-neutral-secondary rounded-b-lg border border-t-0",
+                "bg-bg-neutral-secondary p-4",
               )}
             >
               {/* Progress Display (when not idle) */}

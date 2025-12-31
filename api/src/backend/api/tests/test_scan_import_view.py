@@ -56,7 +56,6 @@ Run with coverage::
 
 import io
 import json
-from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -64,7 +63,6 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.models import Finding, Provider, Resource, Scan, StateChoices
-from api.services.scan_import import ScanImportError, ScanImportResult
 
 
 @pytest.mark.django_db
@@ -179,7 +177,9 @@ class TestScanImportViewValidation:
         url = reverse("scan-import")
 
         # Create binary content that is neither JSON nor CSV
-        binary_content = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])  # PNG header
+        binary_content = bytes(
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        )  # PNG header
         file_obj = io.BytesIO(binary_content)
         file_obj.name = "image.png"
 
@@ -192,6 +192,9 @@ class TestScanImportViewValidation:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         response_data = response.json()
         assert "errors" in response_data
+        # Check that errors is a list and has at least one error
+        assert isinstance(response_data["errors"], list)
+        assert len(response_data["errors"]) > 0
         assert response_data["errors"][0]["code"] == "invalid_format"
 
     def test_xml_file_returns_422(self, authenticated_client):
@@ -218,9 +221,14 @@ class TestScanImportViewValidation:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         response_data = response.json()
         assert "errors" in response_data
+        # Check that errors is a list and has at least one error
+        assert isinstance(response_data["errors"], list)
+        assert len(response_data["errors"]) > 0
         assert response_data["errors"][0]["code"] == "invalid_format"
 
-    def test_invalid_ocsf_missing_required_fields_returns_422(self, authenticated_client):
+    def test_invalid_ocsf_missing_required_fields_returns_422(
+        self, authenticated_client
+    ):
         """Test that OCSF JSON missing required fields returns 422."""
         url = reverse("scan-import")
 
@@ -289,9 +297,14 @@ value3;value4"""
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         response_data = response.json()
         assert "errors" in response_data
+        # Check that errors is a list and has at least one error
+        assert isinstance(response_data["errors"], list)
+        assert len(response_data["errors"]) > 0
         assert response_data["errors"][0]["code"] == "invalid_format"
 
-    def test_json_array_with_non_object_elements_returns_422(self, authenticated_client):
+    def test_json_array_with_non_object_elements_returns_422(
+        self, authenticated_client
+    ):
         """Test that JSON array with non-object elements returns 422."""
         url = reverse("scan-import")
 
@@ -359,6 +372,9 @@ value3;value4"""
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         response_data = response.json()
         assert "errors" in response_data
+        # Check that errors is a list and has at least one error
+        assert isinstance(response_data["errors"], list)
+        assert len(response_data["errors"]) > 0
         assert response_data["errors"][0]["code"] == "invalid_provider_type"
 
 
@@ -419,7 +435,10 @@ class TestScanImportViewJSONImport:
                     },
                     "cloud": {
                         "provider": "aws",
-                        "account": {"uid": "111122223333", "name": "Production Account"},
+                        "account": {
+                            "uid": "111122223333",
+                            "name": "Production Account",
+                        },
                     },
                     "resources": [
                         {
@@ -499,14 +518,22 @@ class TestScanImportViewJSONImport:
         assert finding.check_id == "s3_bucket_public_access"
         assert finding.severity == "high"
         assert finding.status == "FAIL"
-        assert finding.status_extended == "Bucket my-test-bucket has public access enabled"
+        assert (
+            finding.status_extended == "Bucket my-test-bucket has public access enabled"
+        )
         assert str(finding.scan_id) == scan_id
         assert str(finding.tenant_id) == str(tenant.id)
 
         # Verify check metadata
         assert finding.check_metadata["title"] == "S3 Bucket Public Access Check"
-        assert finding.check_metadata["description"] == "Checks if S3 buckets have public access enabled"
-        assert finding.check_metadata["risk"] == "Public S3 buckets can expose sensitive data"
+        assert (
+            finding.check_metadata["description"]
+            == "Checks if S3 buckets have public access enabled"
+        )
+        assert (
+            finding.check_metadata["risk"]
+            == "Public S3 buckets can expose sensitive data"
+        )
 
         # Verify resource was created
         resource = Resource.objects.get(uid=resource_uid)
@@ -578,7 +605,7 @@ class TestScanImportViewJSONImport:
     ):
         """Test JSON import with multiple findings creates all records."""
         url = reverse("scan-import")
-        tenant = tenants_fixture[0]
+        _tenant = tenants_fixture[0]  # noqa: F841 - used for fixture setup
 
         # Create OCSF data with multiple findings
         finding_uid_1 = str(uuid4())
@@ -796,14 +823,22 @@ finding-001;aws;check_test_1;PASS;123456789012;low;resource-001;test-resource;us
         assert finding.check_id == "s3_bucket_public_access"
         assert finding.severity == "high"
         assert finding.status == "FAIL"
-        assert finding.status_extended == "Bucket my-test-bucket has public access enabled"
+        assert (
+            finding.status_extended == "Bucket my-test-bucket has public access enabled"
+        )
         assert str(finding.scan_id) == scan_id
         assert str(finding.tenant_id) == str(tenant.id)
 
         # Verify check metadata
         assert finding.check_metadata["title"] == "S3 Bucket Public Access Check"
-        assert finding.check_metadata["description"] == "Checks if S3 buckets have public access enabled"
-        assert finding.check_metadata["risk"] == "Public S3 buckets can expose sensitive data"
+        assert (
+            finding.check_metadata["description"]
+            == "Checks if S3 buckets have public access enabled"
+        )
+        assert (
+            finding.check_metadata["risk"]
+            == "Public S3 buckets can expose sensitive data"
+        )
 
         # Verify resource was created
         resource = Resource.objects.get(uid=resource_uid)
@@ -845,7 +880,7 @@ finding-001;aws;check_test_1;PASS;123456789012;low;resource-001;test-resource;us
     ):
         """Test CSV import with multiple findings creates all records."""
         url = reverse("scan-import")
-        tenant = tenants_fixture[0]
+        _tenant = tenants_fixture[0]  # noqa: F841 - used for fixture setup
 
         # Create CSV data with multiple findings
         finding_uid_1 = str(uuid4())
@@ -974,7 +1009,7 @@ class TestScanImportViewProviderHandling:
         self, authenticated_client, providers_fixture, tenants_fixture
     ):
         """Test import automatically resolves existing provider by type and account UID.
-        
+
         This test verifies that when importing scan data without explicitly passing
         provider_id, the system correctly finds and uses an existing provider that
         matches the provider type and account UID from the scan data.
@@ -1054,7 +1089,7 @@ class TestScanImportViewProviderHandling:
         self, authenticated_client, providers_fixture, tenants_fixture
     ):
         """Test import resolves existing GCP provider by type and account UID.
-        
+
         This test verifies provider resolution works for non-AWS providers.
         """
         url = reverse("scan-import")
@@ -1428,7 +1463,7 @@ class TestScanImportViewProviderHandling:
 @pytest.mark.django_db
 class TestScanImportViewTenantIsolation:
     """Tests for tenant isolation.
-    
+
     These tests verify that the scan import functionality properly enforces
     tenant isolation (Row-Level Security) to ensure:
     - Scans are created in the authenticated user's tenant
@@ -1483,20 +1518,20 @@ class TestScanImportViewTenantIsolation:
         # Verify successful response
         assert response.status_code == status.HTTP_201_CREATED
         response_data = response.json()
-        
+
         # Verify scan was created in the correct tenant
         scan_id = response_data["data"]["attributes"]["scan_id"]
         scan = Scan.objects.get(id=scan_id)
         assert str(scan.tenant_id) == str(tenant.id)
-        
+
         # Verify finding was created in the correct tenant
         finding = Finding.objects.get(uid=finding_uid)
         assert str(finding.tenant_id) == str(tenant.id)
-        
+
         # Verify resource was created in the correct tenant
         resource = Resource.objects.get(uid=resource_uid)
         assert str(resource.tenant_id) == str(tenant.id)
-        
+
         # Verify provider was created in the correct tenant
         provider_id = response_data["data"]["attributes"]["provider_id"]
         provider = Provider.objects.get(id=provider_id)
@@ -1506,19 +1541,18 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that import cannot use a provider belonging to another tenant.
-        
+
         This test verifies that when a user tries to import scan data with
         a provider_id that belongs to a different tenant, the request is
         rejected with a 422 error.
         """
         from api.db_utils import rls_transaction
-        from api.models import Membership, Tenant, User
-        
+
         url = reverse("scan-import")
-        
+
         # Create a provider in a different tenant (tenant3 which the user is not a member of)
         other_tenant = tenants_fixture[2]  # tenant3 - user is not a member
-        
+
         with rls_transaction(str(other_tenant.id)):
             other_tenant_provider = Provider.objects.create(
                 provider="aws",
@@ -1526,7 +1560,7 @@ class TestScanImportViewTenantIsolation:
                 alias="Other Tenant Provider",
                 tenant_id=other_tenant.id,
             )
-        
+
         # Try to import using the other tenant's provider
         ocsf_data = [
             {
@@ -1545,10 +1579,12 @@ class TestScanImportViewTenantIsolation:
 
         response = authenticated_client.post(
             url,
-            data=json.dumps({
-                "data": ocsf_data,
-                "provider_id": str(other_tenant_provider.id),
-            }),
+            data=json.dumps(
+                {
+                    "data": ocsf_data,
+                    "provider_id": str(other_tenant_provider.id),
+                }
+            ),
             content_type="application/json",
         )
 
@@ -1559,20 +1595,20 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that auto-resolution does not find providers from other tenants.
-        
+
         This test verifies that when importing scan data, the provider
         auto-resolution only looks for providers within the user's tenant,
         not across all tenants.
         """
         from api.db_utils import rls_transaction
-        
+
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
         other_tenant = tenants_fixture[2]  # tenant3 - user is not a member
-        
+
         # Create a provider in another tenant with a specific UID
         unique_uid = "888877776666"  # Valid 12-digit AWS account ID
-        
+
         with rls_transaction(str(other_tenant.id)):
             Provider.objects.create(
                 provider="aws",
@@ -1580,15 +1616,15 @@ class TestScanImportViewTenantIsolation:
                 alias="Other Tenant Provider",
                 tenant_id=other_tenant.id,
             )
-        
+
         # Count providers in user's tenant before import
         initial_provider_count = Provider.objects.filter(tenant_id=tenant.id).count()
-        
+
         # Import with the same UID - should create a NEW provider in user's tenant
         # because the existing one is in a different tenant
         finding_uid = str(uuid4())
         resource_uid = str(uuid4())
-        
+
         ocsf_data = [
             {
                 "message": "Test finding for cross-tenant resolution",
@@ -1626,15 +1662,15 @@ class TestScanImportViewTenantIsolation:
         # Should succeed and create a new provider
         assert response.status_code == status.HTTP_201_CREATED
         response_data = response.json()
-        
+
         # Verify a new provider was created (not the one from other tenant)
         attributes = response_data["data"]["attributes"]
         assert attributes["provider_created"] is True
-        
+
         # Verify provider count increased in user's tenant
         final_provider_count = Provider.objects.filter(tenant_id=tenant.id).count()
         assert final_provider_count == initial_provider_count + 1
-        
+
         # Verify the new provider is in the user's tenant
         provider_id = attributes["provider_id"]
         provider = Provider.objects.get(id=provider_id)
@@ -1645,17 +1681,17 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that imported findings are only visible within the same tenant.
-        
+
         This test verifies that findings created during import are properly
         isolated and cannot be accessed from other tenants. We verify this
         by checking that the finding is created with the correct tenant_id.
         """
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
-        
+
         finding_uid = str(uuid4())
         resource_uid = str(uuid4())
-        
+
         ocsf_data = [
             {
                 "message": "Isolated finding test",
@@ -1691,11 +1727,11 @@ class TestScanImportViewTenantIsolation:
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        
+
         # Verify finding exists and is associated with the correct tenant
         finding = Finding.objects.get(uid=finding_uid)
         assert str(finding.tenant_id) == str(tenant.id)
-        
+
         # Verify the finding is NOT associated with any other tenant
         other_tenant = tenants_fixture[2]
         assert str(finding.tenant_id) != str(other_tenant.id)
@@ -1704,16 +1740,16 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that imported resources are only visible within the same tenant.
-        
+
         This test verifies that resources created during import are properly
         isolated by checking that they are associated with the correct tenant_id.
         """
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
-        
+
         finding_uid = str(uuid4())
         resource_uid = str(uuid4())
-        
+
         ocsf_data = [
             {
                 "message": "Resource isolation test",
@@ -1749,11 +1785,11 @@ class TestScanImportViewTenantIsolation:
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        
+
         # Verify resource exists and is associated with the correct tenant
         resource = Resource.objects.get(uid=resource_uid)
         assert str(resource.tenant_id) == str(tenant.id)
-        
+
         # Verify the resource is NOT associated with any other tenant
         other_tenant = tenants_fixture[2]
         assert str(resource.tenant_id) != str(other_tenant.id)
@@ -1762,16 +1798,16 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that imported scans are only visible within the same tenant.
-        
+
         This test verifies that scans created during import are properly
         isolated by checking that they are associated with the correct tenant_id.
         """
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
-        
+
         finding_uid = str(uuid4())
         resource_uid = str(uuid4())
-        
+
         ocsf_data = [
             {
                 "message": "Scan isolation test",
@@ -1809,11 +1845,11 @@ class TestScanImportViewTenantIsolation:
         assert response.status_code == status.HTTP_201_CREATED
         response_data = response.json()
         scan_id = response_data["data"]["attributes"]["scan_id"]
-        
+
         # Verify scan exists and is associated with the correct tenant
         scan = Scan.objects.get(id=scan_id)
         assert str(scan.tenant_id) == str(tenant.id)
-        
+
         # Verify the scan is NOT associated with any other tenant
         other_tenant = tenants_fixture[2]
         assert str(scan.tenant_id) != str(other_tenant.id)
@@ -1822,17 +1858,17 @@ class TestScanImportViewTenantIsolation:
         self, authenticated_client, tenants_fixture
     ):
         """Test that providers created during import are isolated by tenant.
-        
+
         This test verifies that providers created during import are properly
         isolated by checking that they are associated with the correct tenant_id.
         """
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
-        
+
         finding_uid = str(uuid4())
         resource_uid = str(uuid4())
         unique_provider_uid = "555566667777"  # Valid 12-digit AWS account ID
-        
+
         ocsf_data = [
             {
                 "message": "Provider isolation test",
@@ -1847,7 +1883,10 @@ class TestScanImportViewTenantIsolation:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": unique_provider_uid, "name": "Isolated Provider"},
+                    "account": {
+                        "uid": unique_provider_uid,
+                        "name": "Isolated Provider",
+                    },
                 },
                 "resources": [
                     {
@@ -1870,12 +1909,12 @@ class TestScanImportViewTenantIsolation:
         assert response.status_code == status.HTTP_201_CREATED
         response_data = response.json()
         provider_id = response_data["data"]["attributes"]["provider_id"]
-        
+
         # Verify provider exists and is associated with the correct tenant
         provider = Provider.objects.get(id=provider_id)
         assert str(provider.tenant_id) == str(tenant.id)
         assert provider.uid == unique_provider_uid
-        
+
         # Verify the provider is NOT associated with any other tenant
         other_tenant = tenants_fixture[2]
         assert str(provider.tenant_id) != str(other_tenant.id)
@@ -1996,7 +2035,10 @@ class TestScanImportViewMultipartFileUpload:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": f"multipart-json-{uuid4().hex[:8]}", "name": "Test Account"},
+                    "account": {
+                        "uid": f"multipart-json-{uuid4().hex[:8]}",
+                        "name": "Test Account",
+                    },
                 },
                 "resources": [
                     {
@@ -2182,9 +2224,7 @@ class TestScanImportViewMultipartFileUpload:
         assert attributes["provider_id"] == str(provider.id)
         assert attributes["provider_created"] is False
 
-    def test_multipart_file_upload_empty_file_returns_422(
-        self, authenticated_client
-    ):
+    def test_multipart_file_upload_empty_file_returns_422(self, authenticated_client):
         """Test that empty file upload returns 422."""
         url = reverse("scan-import")
 
@@ -2199,9 +2239,7 @@ class TestScanImportViewMultipartFileUpload:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_multipart_file_upload_invalid_json_returns_422(
-        self, authenticated_client
-    ):
+    def test_multipart_file_upload_invalid_json_returns_422(self, authenticated_client):
         """Test that invalid JSON file returns 422."""
         url = reverse("scan-import")
 
@@ -2239,7 +2277,10 @@ class TestScanImportViewMultipartFileUpload:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": f"ext-test-{uuid4().hex[:8]}", "name": "Test Account"},
+                    "account": {
+                        "uid": f"ext-test-{uuid4().hex[:8]}",
+                        "name": "Test Account",
+                    },
                 },
                 "resources": [
                     {
@@ -2289,7 +2330,10 @@ class TestScanImportViewMultipartFileUpload:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": f"large-file-{uuid4().hex[:8]}", "name": "Test Account"},
+                    "account": {
+                        "uid": f"large-file-{uuid4().hex[:8]}",
+                        "name": "Test Account",
+                    },
                 },
                 "resources": [
                     {
@@ -2337,7 +2381,10 @@ class TestScanImportViewMultipartFileUpload:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": f"unicode-{uuid4().hex[:8]}", "name": "Test Account"},
+                    "account": {
+                        "uid": f"unicode-{uuid4().hex[:8]}",
+                        "name": "Test Account",
+                    },
                 },
                 "resources": [
                     {
@@ -2365,13 +2412,15 @@ class TestScanImportViewMultipartFileUpload:
 
         # Verify unicode was preserved
         finding = Finding.objects.get(uid=finding_uid)
-        assert "日本語" in finding.impact_extended or "unicode" in finding.check_id.lower()
+        assert (
+            "日本語" in finding.impact_extended or "unicode" in finding.check_id.lower()
+        )
 
 
 @pytest.mark.django_db
 class TestScanImportViewInlineJSON:
     """Tests for inline JSON via request body.
-    
+
     These tests verify that the scan import endpoint correctly handles
     inline JSON data sent directly in the request body (as opposed to
     file uploads). This is the alternative input method where OCSF JSON
@@ -2462,7 +2511,7 @@ class TestScanImportViewInlineJSON:
     ):
         """Test inline JSON import with multiple findings creates all records."""
         url = reverse("scan-import")
-        tenant = tenants_fixture[0]
+        _tenant = tenants_fixture[0]  # noqa: F841 - used for fixture setup
 
         finding_uid_1 = str(uuid4())
         finding_uid_2 = str(uuid4())
@@ -2611,10 +2660,12 @@ class TestScanImportViewInlineJSON:
 
         response = authenticated_client.post(
             url,
-            data=json.dumps({
-                "data": ocsf_data,
-                "provider_id": str(provider.id),
-            }),
+            data=json.dumps(
+                {
+                    "data": ocsf_data,
+                    "provider_id": str(provider.id),
+                }
+            ),
             content_type="application/json",
         )
 
@@ -2663,10 +2714,12 @@ class TestScanImportViewInlineJSON:
 
         response = authenticated_client.post(
             url,
-            data=json.dumps({
-                "data": ocsf_data,
-                "create_provider": False,
-            }),
+            data=json.dumps(
+                {
+                    "data": ocsf_data,
+                    "create_provider": False,
+                }
+            ),
             content_type="application/json",
         )
 
@@ -2702,7 +2755,10 @@ class TestScanImportViewInlineJSON:
                 },
                 "cloud": {
                     "provider": "aws",
-                    "account": {"uid": unique_account_uid, "name": "New Inline Provider"},
+                    "account": {
+                        "uid": unique_account_uid,
+                        "name": "New Inline Provider",
+                    },
                 },
                 "resources": [
                     {
@@ -2842,7 +2898,9 @@ class TestScanImportViewInlineJSON:
 
         # Verify unicode was preserved
         finding = Finding.objects.get(uid=finding_uid)
-        assert "日本語" in finding.impact_extended or "unicode" in finding.check_id.lower()
+        assert (
+            "日本語" in finding.impact_extended or "unicode" in finding.check_id.lower()
+        )
 
     def test_inline_json_empty_array_returns_error(self, authenticated_client):
         """Test that empty inline JSON array returns an error."""
@@ -2855,7 +2913,10 @@ class TestScanImportViewInlineJSON:
         )
 
         # Empty array should return either 400 (validation error) or 422 (processing error)
-        assert response.status_code in [status.HTTP_400_BAD_REQUEST, status.HTTP_422_UNPROCESSABLE_ENTITY]
+        assert response.status_code in [
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ]
         response_data = response.json()
         assert "errors" in response_data
 
@@ -2950,12 +3011,16 @@ class TestScanImportViewInlineJSON:
 
         # Verify remediation data was preserved
         finding = Finding.objects.get(uid=finding_uid)
-        assert finding.check_metadata.get("risk") == "This is a high-risk finding that needs immediate attention"
-        assert "remediation" in finding.check_metadata or finding.check_metadata.get("remediation") is not None
+        assert (
+            finding.check_metadata.get("risk")
+            == "This is a high-risk finding that needs immediate attention"
+        )
+        assert (
+            "remediation" in finding.check_metadata
+            or finding.check_metadata.get("remediation") is not None
+        )
 
-    def test_inline_json_tenant_isolation(
-        self, authenticated_client, tenants_fixture
-    ):
+    def test_inline_json_tenant_isolation(self, authenticated_client, tenants_fixture):
         """Test that inline JSON import respects tenant isolation."""
         url = reverse("scan-import")
         tenant = tenants_fixture[0]
