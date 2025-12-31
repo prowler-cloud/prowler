@@ -739,6 +739,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="prowler-test",
+        resource_group="compute",
     )
 
     resource1.upsert_or_delete_tags(tags)
@@ -751,6 +752,7 @@ def resources_fixture(providers_fixture):
         region="eu-west-1",
         service="s3",
         type="prowler-test",
+        resource_group="storage",
     )
     resource2.upsert_or_delete_tags(tags)
 
@@ -762,6 +764,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="test",
+        resource_group="compute",
     )
 
     tags = [

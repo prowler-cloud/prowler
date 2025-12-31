@@ -1175,6 +1175,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
+            "resource_group",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1183,6 +1184,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
+            "resource_group": {"read_only": True},
         }
 
     included_serializers = {

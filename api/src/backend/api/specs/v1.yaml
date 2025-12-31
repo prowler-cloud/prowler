@@ -4829,7 +4829,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: filter[category__in]
+        name: filter[region__in]
         schema:
           type: array
           items:
@@ -4838,7 +4838,20 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
+        name: filter[resource_group]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
         schema:
           type: string
           format: uuid
@@ -18781,6 +18794,11 @@ components:
             type:
               type: string
               readOnly: true
+            resource_group:
+              type: string
+              nullable: true
+              description: Resource group category (e.g., compute, storage, IAM, database)
+              maxLength: 50
           required:
           - uid
           - name

@@ -3625,6 +3625,7 @@ class TestResourceViewSet:
         assert "metadata" in response.json()["data"][0]["attributes"]
         assert "details" in response.json()["data"][0]["attributes"]
         assert "partition" in response.json()["data"][0]["attributes"]
+        assert "resource_group" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -3699,6 +3700,10 @@ class TestResourceViewSet:
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
+                # resource_group filter
+                ("resource_group", "compute", 2),
+                ("resource_group", "storage", 1),
+                ("resource_group.in", "compute,storage", 3),
             ]
         ),
     )
