@@ -333,7 +333,7 @@ export function ScanImportProgress({
 
           {/* View Scan Link */}
           <Link
-            href={`/scans/${result.scanId}`}
+            href={`/findings?filter[scan__in]=${result.scanId}&filter[status__in]=FAIL`}
             className={cn(
               "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2",
               "bg-button-primary text-sm font-medium text-black",
@@ -343,7 +343,7 @@ export function ScanImportProgress({
             )}
           >
             <FileTextIcon className="h-4 w-4" />
-            View Imported Scan
+            View Scan Findings
             <ExternalLinkIcon className="h-3 w-3" />
           </Link>
         </div>

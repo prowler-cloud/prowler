@@ -31,6 +31,12 @@ import type { ScanImportFormData, ScanImportFormProps } from "./types";
 import { ACCEPTED_MIME_TYPES, MAX_IMPORT_FILE_SIZE } from "./types";
 
 /**
+ * Sentinel value for auto-detect provider option.
+ * Used because Radix UI Select doesn't allow empty string values.
+ */
+const AUTO_DETECT_VALUE = "__auto_detect__";
+
+/**
  * Zod schema for the scan import form.
  *
  * Validates:
@@ -100,7 +106,7 @@ export function ScanImportForm({
     resolver: zodResolver(scanImportFormSchema),
     defaultValues: {
       file: null,
-      providerId: "",
+      providerId: AUTO_DETECT_VALUE,
       createProvider: true,
     },
   });
@@ -115,9 +121,13 @@ export function ScanImportForm({
 
   const handleSubmit = useCallback(
     (values: ScanImportFormValues) => {
+      // Convert sentinel value back to undefined for API call
+      const providerId =
+        values.providerId === AUTO_DETECT_VALUE ? undefined : values.providerId;
+
       const formData: ScanImportFormData = {
         file: values.file,
-        providerId: values.providerId || undefined,
+        providerId: providerId || undefined,
         createProvider: values.createProvider,
       };
       onSubmit(formData);
@@ -202,8 +212,8 @@ export function ScanImportForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {/* Empty option for auto-detect */}
-                  <SelectItem value="">
+                  {/* Auto-detect option with sentinel value */}
+                  <SelectItem value={AUTO_DETECT_VALUE}>
                     <span className="text-text-neutral-secondary">
                       Auto-detect from scan data
                     </span>
