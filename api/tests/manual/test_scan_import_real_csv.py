@@ -24,7 +24,6 @@ This script tests:
     - Comparison with example output files
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -45,10 +44,10 @@ def create_real_csv_test_data(
 ) -> str:
     """
     Create realistic CSV test data based on actual Prowler output format.
-    
+
     This generates test data that matches the structure of real Prowler CLI output
     as seen in examples/output/example_output_aws.csv.
-    
+
     The CSV has 42 columns (semicolon-delimited):
     AUTH_METHOD, TIMESTAMP, ACCOUNT_UID, ACCOUNT_NAME, ACCOUNT_EMAIL,
     ACCOUNT_ORGANIZATION_UID, ACCOUNT_ORGANIZATION_NAME, ACCOUNT_TAGS,
@@ -59,28 +58,34 @@ def create_real_csv_test_data(
     REMEDIATION_RECOMMENDATION_URL, REMEDIATION_CODE_NATIVEIAC, REMEDIATION_CODE_TERRAFORM,
     REMEDIATION_CODE_CLI, REMEDIATION_CODE_OTHER, COMPLIANCE, CATEGORIES, DEPENDS_ON,
     RELATED_TO, NOTES, PROWLER_VERSION, ADDITIONAL_URLS
-    
+
     Args:
         account_uid: AWS account ID to use in the test data.
         account_name: AWS account name to use in the test data.
-    
+
     Returns:
         CSV content as string (semicolon-delimited).
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    
+
     # Generate unique IDs for this test run
-    finding_uid_1 = f"prowler-aws-accessanalyzer_enabled-{account_uid}-us-east-1-{uuid4().hex[:8]}"
-    finding_uid_2 = f"prowler-aws-s3_bucket_public_access-{account_uid}-us-west-2-{uuid4().hex[:8]}"
+    finding_uid_1 = (
+        f"prowler-aws-accessanalyzer_enabled-{account_uid}-us-east-1-{uuid4().hex[:8]}"
+    )
+    finding_uid_2 = (
+        f"prowler-aws-s3_bucket_public_access-{account_uid}-us-west-2-{uuid4().hex[:8]}"
+    )
     finding_uid_3 = f"prowler-aws-ec2_imdsv2-{account_uid}-us-east-1-{uuid4().hex[:8]}"
-    
+
     resource_uid_1 = f"arn:aws:iam::{account_uid}:root"
     resource_uid_2 = f"arn:aws:s3:::test-bucket-{uuid4().hex[:8]}"
-    resource_uid_3 = f"arn:aws:ec2:us-east-1:{account_uid}:instance/i-{uuid4().hex[:12]}"
-    
+    resource_uid_3 = (
+        f"arn:aws:ec2:us-east-1:{account_uid}:instance/i-{uuid4().hex[:12]}"
+    )
+
     # CSV header (matching real Prowler output - 42 columns)
     header = "AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS"
-    
+
     # Row 1: IAM Access Analyzer (FAIL) - 42 fields
     # Fields: AUTH_METHOD(1), TIMESTAMP(2), ACCOUNT_UID(3), ACCOUNT_NAME(4), ACCOUNT_EMAIL(5),
     #         ACCOUNT_ORGANIZATION_UID(6), ACCOUNT_ORGANIZATION_NAME(7), ACCOUNT_TAGS(8),
@@ -138,7 +143,7 @@ def create_real_csv_test_data(
         "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-getting-started.html",  # ADDITIONAL_URLS
     ]
     row1 = ";".join(row1_fields)
-    
+
     # Row 2: S3 Bucket Public Access (PASS) - 42 fields
     row2_fields = [
         "profile",  # AUTH_METHOD
@@ -185,7 +190,7 @@ def create_real_csv_test_data(
         "",  # ADDITIONAL_URLS
     ]
     row2 = ";".join(row2_fields)
-    
+
     # Row 3: EC2 IMDSv2 (PASS) - 42 fields
     row3_fields = [
         "profile",  # AUTH_METHOD
@@ -232,30 +237,30 @@ def create_real_csv_test_data(
         "",  # ADDITIONAL_URLS
     ]
     row3 = ";".join(row3_fields)
-    
+
     return "\n".join([header, row1, row2, row3])
 
 
 def test_csv_parser_with_real_data():
     """Test the CSV parser with realistic Prowler output data."""
     from api.parsers.csv_parser import parse_csv, validate_csv_structure
-    
+
     # Create test data
     test_data = create_real_csv_test_data()
-    content = test_data.encode('utf-8')
-    
+    content = test_data.encode("utf-8")
+
     # Validate structure
     is_valid, error = validate_csv_structure(content)
     assert is_valid, f"CSV structure validation failed: {error}"
-    print(f"✓ CSV structure validation passed")
-    
+    print("✓ CSV structure validation passed")
+
     # Parse the content
     findings = parse_csv(content)
-    
+
     # Verify parsing results
     assert len(findings) == 3, f"Expected 3 findings, got {len(findings)}"
     print(f"✓ Parsed {len(findings)} findings successfully")
-    
+
     # Verify first finding (FAIL - IAM Access Analyzer)
     finding_1 = findings[0]
     assert finding_1.check_id == "accessanalyzer_enabled"
@@ -265,8 +270,8 @@ def test_csv_parser_with_real_data():
     assert finding_1.account_uid == "123456789012"
     assert finding_1.resource.service == "accessanalyzer"
     assert "CIS-1.4" in finding_1.compliance
-    print(f"✓ Finding 1 (accessanalyzer_enabled) parsed correctly")
-    
+    print("✓ Finding 1 (accessanalyzer_enabled) parsed correctly")
+
     # Verify second finding (PASS - S3 public access)
     finding_2 = findings[1]
     assert finding_2.check_id == "s3_bucket_public_access_block_enabled"
@@ -275,8 +280,8 @@ def test_csv_parser_with_real_data():
     assert finding_2.resource.service == "s3"
     assert finding_2.resource.type == "bucket"
     assert "PCI-DSS-3.2.1" in finding_2.compliance
-    print(f"✓ Finding 2 (s3_bucket_public_access_block_enabled) parsed correctly")
-    
+    print("✓ Finding 2 (s3_bucket_public_access_block_enabled) parsed correctly")
+
     # Verify third finding (PASS - EC2 IMDSv2)
     finding_3 = findings[2]
     assert finding_3.check_id == "ec2_instance_imdsv2_enabled"
@@ -284,8 +289,8 @@ def test_csv_parser_with_real_data():
     assert finding_3.status == "PASS"
     assert finding_3.resource.service == "ec2"
     assert finding_3.resource.type == "instance"
-    print(f"✓ Finding 3 (ec2_instance_imdsv2_enabled) parsed correctly")
-    
+    print("✓ Finding 3 (ec2_instance_imdsv2_enabled) parsed correctly")
+
     print("\n✓ All CSV parser tests passed!")
     return findings
 
@@ -293,107 +298,107 @@ def test_csv_parser_with_real_data():
 def test_csv_parser_with_example_file():
     """Test the CSV parser with the actual example output file."""
     from api.parsers.csv_parser import parse_csv, validate_csv_structure
-    
+
     example_file = EXAMPLES_DIR / "example_output_aws.csv"
-    
+
     if not example_file.exists():
         print(f"⚠ Example file not found: {example_file}")
         print("  Skipping example file test")
         return None
-    
+
     print(f"Testing with example file: {example_file}")
-    
+
     # Read the example file
-    with open(example_file, 'rb') as f:
+    with open(example_file, "rb") as f:
         content = f.read()
-    
+
     # Validate structure
     is_valid, error = validate_csv_structure(content)
     assert is_valid, f"CSV structure validation failed: {error}"
-    print(f"✓ Example file structure validation passed")
-    
+    print("✓ Example file structure validation passed")
+
     # Parse the content
     findings = parse_csv(content)
-    
+
     print(f"✓ Parsed {len(findings)} findings from example file")
-    
+
     # Verify basic parsing
     assert len(findings) > 0, "Expected at least one finding"
-    
+
     # Check first finding
     first_finding = findings[0]
     assert first_finding.provider_type == "aws"
     assert first_finding.check_id  # Should have a check_id
     assert first_finding.status in ("PASS", "FAIL", "MANUAL")
     print(f"✓ First finding: {first_finding.check_id} ({first_finding.status})")
-    
+
     # Check compliance parsing
     has_compliance = any(f.compliance for f in findings)
     if has_compliance:
-        print(f"✓ Compliance data parsed successfully")
-    
+        print("✓ Compliance data parsed successfully")
+
     return findings
 
 
 def test_csv_parser_with_azure_example():
     """Test the CSV parser with Azure example output."""
     from api.parsers.csv_parser import parse_csv, validate_csv_structure
-    
+
     example_file = EXAMPLES_DIR / "example_output_azure.csv"
-    
+
     if not example_file.exists():
         print(f"⚠ Azure example file not found: {example_file}")
         print("  Skipping Azure example test")
         return None
-    
+
     print(f"Testing with Azure example file: {example_file}")
-    
-    with open(example_file, 'rb') as f:
+
+    with open(example_file, "rb") as f:
         content = f.read()
-    
+
     is_valid, error = validate_csv_structure(content)
     assert is_valid, f"Azure CSV structure validation failed: {error}"
-    print(f"✓ Azure example file structure validation passed")
-    
+    print("✓ Azure example file structure validation passed")
+
     findings = parse_csv(content)
     print(f"✓ Parsed {len(findings)} findings from Azure example")
-    
+
     if findings:
         first_finding = findings[0]
         assert first_finding.provider_type == "azure"
-        print(f"✓ Azure provider type detected correctly")
-    
+        print("✓ Azure provider type detected correctly")
+
     return findings
 
 
 def test_csv_parser_with_gcp_example():
     """Test the CSV parser with GCP example output."""
     from api.parsers.csv_parser import parse_csv, validate_csv_structure
-    
+
     example_file = EXAMPLES_DIR / "example_output_gcp.csv"
-    
+
     if not example_file.exists():
         print(f"⚠ GCP example file not found: {example_file}")
         print("  Skipping GCP example test")
         return None
-    
+
     print(f"Testing with GCP example file: {example_file}")
-    
-    with open(example_file, 'rb') as f:
+
+    with open(example_file, "rb") as f:
         content = f.read()
-    
+
     is_valid, error = validate_csv_structure(content)
     assert is_valid, f"GCP CSV structure validation failed: {error}"
-    print(f"✓ GCP example file structure validation passed")
-    
+    print("✓ GCP example file structure validation passed")
+
     findings = parse_csv(content)
     print(f"✓ Parsed {len(findings)} findings from GCP example")
-    
+
     if findings:
         first_finding = findings[0]
         assert first_finding.provider_type == "gcp"
-        print(f"✓ GCP provider type detected correctly")
-    
+        print("✓ GCP provider type detected correctly")
+
     return findings
 
 
@@ -401,14 +406,14 @@ def save_test_data_to_file():
     """Save test data to a CSV file for manual testing."""
     test_data = create_real_csv_test_data()
     output_path = Path(__file__).parent / "test_prowler_output.csv"
-    
-    with open(output_path, 'w') as f:
+
+    with open(output_path, "w") as f:
         f.write(test_data)
-    
+
     print(f"✓ Test data saved to: {output_path}")
-    print(f"  - 3 findings")
-    print(f"  - Provider: aws")
-    print(f"  - Account: 123456789012")
+    print("  - 3 findings")
+    print("  - Provider: aws")
+    print("  - Account: 123456789012")
     return output_path
 
 
@@ -416,7 +421,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("Manual Test: Scan Import with Real Prowler CSV Output")
     print("=" * 60)
-    
+
     # Test 1: Parser with generated realistic data
     print("\n[Test 1] Testing CSV Parser with generated realistic data...")
     try:
@@ -425,9 +430,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Test 2: Parser with actual example file
     print("\n[Test 2] Testing CSV Parser with example_output_aws.csv...")
     try:
@@ -437,9 +443,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Test 3: Parser with Azure example
     print("\n[Test 3] Testing CSV Parser with Azure example...")
     try:
@@ -449,9 +456,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Test 4: Parser with GCP example
     print("\n[Test 4] Testing CSV Parser with GCP example...")
     try:
@@ -461,17 +469,19 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Save test data for manual API testing
     print("\n[Test 5] Saving test data for manual API testing...")
     output_file = save_test_data_to_file()
-    
+
     print("\n" + "=" * 60)
     print("Manual API Testing Instructions")
     print("=" * 60)
-    print(f"""
+    print(
+        f"""
 To test the scan import API endpoint manually with CSV:
 
 1. Start the development environment:
@@ -492,6 +502,7 @@ To test the scan import API endpoint manually with CSV:
      -F "file=@examples/output/example_output_aws.csv"
 
 5. Verify the import in the UI at http://localhost:3000/scans
-""")
-    
+"""
+    )
+
     print("✓ Manual test setup complete!")

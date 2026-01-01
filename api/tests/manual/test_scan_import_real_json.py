@@ -24,7 +24,6 @@ This script tests:
 """
 
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -39,24 +38,24 @@ sys.path.insert(0, str(API_BACKEND))
 def create_real_ocsf_test_data() -> list[dict]:
     """
     Create realistic OCSF test data based on actual Prowler output format.
-    
+
     This generates test data that matches the structure of real Prowler CLI output
     as seen in examples/output/example_output_aws.ocsf.json.
-    
+
     Returns:
         List of OCSF finding dictionaries.
     """
     timestamp = datetime.now().isoformat()
     unix_timestamp = int(datetime.now().timestamp())
-    
+
     # Generate unique IDs for this test run
     finding_uid_1 = str(uuid4())
     finding_uid_2 = str(uuid4())
     finding_uid_3 = str(uuid4())
-    resource_uid_1 = f"arn:aws:iam::123456789012:root"
+    resource_uid_1 = "arn:aws:iam::123456789012:root"
     resource_uid_2 = f"arn:aws:s3:::test-bucket-{uuid4().hex[:8]}"
     resource_uid_3 = f"arn:aws:ec2:us-east-1:123456789012:instance/i-{uuid4().hex[:17]}"
-    
+
     return [
         {
             "message": "IAM Access Analyzer in account 123456789012 is not enabled.",
@@ -66,11 +65,11 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "name": "Prowler",
                     "uid": "prowler",
                     "vendor_name": "Prowler",
-                    "version": "5.0.0"
+                    "version": "5.0.0",
                 },
                 "profiles": ["cloud", "datetime"],
                 "tenant_uid": "",
-                "version": "1.4.0"
+                "version": "1.4.0",
             },
             "severity_id": 2,
             "severity": "Low",
@@ -92,9 +91,9 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "CIS-3.0": ["1.20"],
                     "AWS-Account-Security-Onboarding": [
                         "Enabled security services",
-                        "Create analyzers in each active regions"
-                    ]
-                }
+                        "Create analyzers in each active regions",
+                    ],
+                },
             },
             "activity_name": "Create",
             "activity_id": 1,
@@ -105,7 +104,7 @@ def create_real_ocsf_test_data() -> list[dict]:
                 "product_uid": "prowler",
                 "title": "Check if IAM Access Analyzer is enabled",
                 "types": ["IAM"],
-                "uid": finding_uid_1
+                "uid": finding_uid_1,
             },
             "resources": [
                 {
@@ -120,14 +119,14 @@ def create_real_ocsf_test_data() -> list[dict]:
                             "findings": [],
                             "tags": [],
                             "type": "",
-                            "region": "us-east-1"
-                        }
+                            "region": "us-east-1",
+                        },
                     },
                     "group": {"name": "accessanalyzer"},
                     "labels": [],
                     "name": "123456789012",
                     "type": "Other",
-                    "uid": resource_uid_1
+                    "uid": resource_uid_1,
                 }
             ],
             "category_name": "Findings",
@@ -140,24 +139,24 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "type": "AWS Account",
                     "type_id": 10,
                     "uid": "123456789012",
-                    "labels": []
+                    "labels": [],
                 },
                 "org": {"name": "", "uid": ""},
                 "provider": "aws",
-                "region": "us-east-1"
+                "region": "us-east-1",
             },
             "remediation": {
                 "desc": "Enable IAM Access Analyzer for all accounts.",
                 "references": [
                     "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
-                    "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
-                ]
+                    "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+                ],
             },
             "risk_details": "AWS IAM Access Analyzer helps identify resources shared with external entities.",
             "time": unix_timestamp,
             "time_dt": timestamp,
             "type_uid": 200401,
-            "type_name": "Detection Finding: Create"
+            "type_name": "Detection Finding: Create",
         },
         {
             "message": "S3 bucket test-bucket has public access enabled.",
@@ -167,11 +166,11 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "name": "Prowler",
                     "uid": "prowler",
                     "vendor_name": "Prowler",
-                    "version": "5.0.0"
+                    "version": "5.0.0",
                 },
                 "profiles": ["cloud", "datetime"],
                 "tenant_uid": "",
-                "version": "1.4.0"
+                "version": "1.4.0",
             },
             "severity_id": 4,
             "severity": "High",
@@ -190,8 +189,8 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "CIS-1.4": ["2.1.5"],
                     "CIS-2.0": ["2.1.4"],
                     "PCI-DSS-3.2.1": ["1.2.1", "1.3.1"],
-                    "SOC2": ["CC6.1"]
-                }
+                    "SOC2": ["CC6.1"],
+                },
             },
             "activity_name": "Create",
             "activity_id": 1,
@@ -202,7 +201,7 @@ def create_real_ocsf_test_data() -> list[dict]:
                 "product_uid": "prowler",
                 "title": "S3 Bucket Public Access Block Check",
                 "types": ["S3"],
-                "uid": finding_uid_2
+                "uid": finding_uid_2,
             },
             "resources": [
                 {
@@ -217,14 +216,14 @@ def create_real_ocsf_test_data() -> list[dict]:
                             "findings": [],
                             "tags": [{"Key": "Environment", "Value": "Test"}],
                             "type": "bucket",
-                            "region": "us-west-2"
-                        }
+                            "region": "us-west-2",
+                        },
                     },
                     "group": {"name": "s3"},
                     "labels": [],
                     "name": "test-bucket",
                     "type": "bucket",
-                    "uid": resource_uid_2
+                    "uid": resource_uid_2,
                 }
             ],
             "category_name": "Findings",
@@ -237,23 +236,23 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "type": "AWS Account",
                     "type_id": 10,
                     "uid": "123456789012",
-                    "labels": []
+                    "labels": [],
                 },
                 "org": {"name": "", "uid": ""},
                 "provider": "aws",
-                "region": "us-west-2"
+                "region": "us-west-2",
             },
             "remediation": {
                 "desc": "Enable S3 Block Public Access settings.",
                 "references": [
                     "aws s3api put-public-access-block --bucket <bucket-name> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
-                ]
+                ],
             },
             "risk_details": "Public S3 buckets can expose sensitive data to unauthorized users.",
             "time": unix_timestamp,
             "time_dt": timestamp,
             "type_uid": 200401,
-            "type_name": "Detection Finding: Create"
+            "type_name": "Detection Finding: Create",
         },
         {
             "message": "EC2 instance i-1234567890abcdef0 has IMDSv2 enabled.",
@@ -263,11 +262,11 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "name": "Prowler",
                     "uid": "prowler",
                     "vendor_name": "Prowler",
-                    "version": "5.0.0"
+                    "version": "5.0.0",
                 },
                 "profiles": ["cloud", "datetime"],
                 "tenant_uid": "",
-                "version": "1.4.0"
+                "version": "1.4.0",
             },
             "severity_id": 1,
             "severity": "Informational",
@@ -285,8 +284,8 @@ def create_real_ocsf_test_data() -> list[dict]:
                 "compliance": {
                     "CIS-1.4": ["5.6"],
                     "CIS-2.0": ["5.6"],
-                    "AWS-Foundational-Security-Best-Practices": ["EC2.8"]
-                }
+                    "AWS-Foundational-Security-Best-Practices": ["EC2.8"],
+                },
             },
             "activity_name": "Create",
             "activity_id": 1,
@@ -297,7 +296,7 @@ def create_real_ocsf_test_data() -> list[dict]:
                 "product_uid": "prowler",
                 "title": "EC2 Instance IMDSv2 Check",
                 "types": ["EC2"],
-                "uid": finding_uid_3
+                "uid": finding_uid_3,
             },
             "resources": [
                 {
@@ -312,14 +311,14 @@ def create_real_ocsf_test_data() -> list[dict]:
                             "findings": [],
                             "tags": [{"Key": "Name", "Value": "test-instance"}],
                             "type": "instance",
-                            "region": "us-east-1"
-                        }
+                            "region": "us-east-1",
+                        },
                     },
                     "group": {"name": "ec2"},
                     "labels": [],
                     "name": "test-instance",
                     "type": "instance",
-                    "uid": resource_uid_3
+                    "uid": resource_uid_3,
                 }
             ],
             "category_name": "Findings",
@@ -332,45 +331,45 @@ def create_real_ocsf_test_data() -> list[dict]:
                     "type": "AWS Account",
                     "type_id": 10,
                     "uid": "123456789012",
-                    "labels": []
+                    "labels": [],
                 },
                 "org": {"name": "", "uid": ""},
                 "provider": "aws",
-                "region": "us-east-1"
+                "region": "us-east-1",
             },
             "remediation": {
                 "desc": "IMDSv2 is already enabled. No action required.",
-                "references": []
+                "references": [],
             },
             "risk_details": "IMDSv2 provides enhanced security for instance metadata access.",
             "time": unix_timestamp,
             "time_dt": timestamp,
             "type_uid": 200401,
-            "type_name": "Detection Finding: Create"
-        }
+            "type_name": "Detection Finding: Create",
+        },
     ]
 
 
 def test_ocsf_parser_with_real_data():
     """Test the OCSF parser with realistic Prowler output data."""
     from api.parsers.ocsf_parser import parse_ocsf_json, validate_ocsf_structure
-    
+
     # Create test data
     test_data = create_real_ocsf_test_data()
-    content = json.dumps(test_data).encode('utf-8')
-    
+    content = json.dumps(test_data).encode("utf-8")
+
     # Validate structure
     is_valid, error = validate_ocsf_structure(content)
     assert is_valid, f"OCSF structure validation failed: {error}"
-    print(f"✓ OCSF structure validation passed")
-    
+    print("✓ OCSF structure validation passed")
+
     # Parse the content
     findings = parse_ocsf_json(content)
-    
+
     # Verify parsing results
     assert len(findings) == 3, f"Expected 3 findings, got {len(findings)}"
     print(f"✓ Parsed {len(findings)} findings successfully")
-    
+
     # Verify first finding (FAIL - IAM Access Analyzer)
     finding_1 = findings[0]
     assert finding_1.check_id == "accessanalyzer_enabled"
@@ -380,8 +379,8 @@ def test_ocsf_parser_with_real_data():
     assert finding_1.account_uid == "123456789012"
     assert len(finding_1.resources) == 1
     assert "CIS-1.4" in finding_1.compliance
-    print(f"✓ Finding 1 (accessanalyzer_enabled) parsed correctly")
-    
+    print("✓ Finding 1 (accessanalyzer_enabled) parsed correctly")
+
     # Verify second finding (FAIL - S3 public access)
     finding_2 = findings[1]
     assert finding_2.check_id == "s3_bucket_public_access_block_enabled"
@@ -390,8 +389,8 @@ def test_ocsf_parser_with_real_data():
     assert len(finding_2.resources) == 1
     assert finding_2.resources[0].service == "s3"
     assert "PCI-DSS-3.2.1" in finding_2.compliance
-    print(f"✓ Finding 2 (s3_bucket_public_access_block_enabled) parsed correctly")
-    
+    print("✓ Finding 2 (s3_bucket_public_access_block_enabled) parsed correctly")
+
     # Verify third finding (PASS - EC2 IMDSv2)
     finding_3 = findings[2]
     assert finding_3.check_id == "ec2_instance_imdsv2_enabled"
@@ -399,8 +398,8 @@ def test_ocsf_parser_with_real_data():
     assert finding_3.status == "PASS"
     assert len(finding_3.resources) == 1
     assert finding_3.resources[0].service == "ec2"
-    print(f"✓ Finding 3 (ec2_instance_imdsv2_enabled) parsed correctly")
-    
+    print("✓ Finding 3 (ec2_instance_imdsv2_enabled) parsed correctly")
+
     print("\n✓ All OCSF parser tests passed!")
     return findings
 
@@ -408,62 +407,69 @@ def test_ocsf_parser_with_real_data():
 def test_ocsf_parser_with_single_finding():
     """Test the OCSF parser with a single finding (simpler test case)."""
     from api.parsers.ocsf_parser import parse_ocsf_json, validate_ocsf_structure
-    
+
     # Create minimal test data with one finding
-    test_data = [{
-        "message": "IAM Access Analyzer in account 123456789012 is not enabled.",
-        "metadata": {
-            "event_code": "accessanalyzer_enabled",
-            "product": {"name": "Prowler", "uid": "prowler", "vendor_name": "Prowler", "version": "5.0.0"},
-            "profiles": ["cloud", "datetime"],
-            "tenant_uid": "",
-            "version": "1.4.0"
-        },
-        "severity": "Low",
-        "status_code": "FAIL",
-        "status_detail": "IAM Access Analyzer in account 123456789012 is not enabled.",
-        "unmapped": {
-            "compliance": {"CIS-1.4": ["1.20"], "CIS-2.0": ["1.20"]}
-        },
-        "finding_info": {
-            "created_time": 1735570800,
-            "created_time_dt": "2024-12-30T15:00:00.000000",
-            "desc": "Check if IAM Access Analyzer is enabled",
-            "product_uid": "prowler",
-            "title": "Check if IAM Access Analyzer is enabled",
-            "types": ["IAM"],
-            "uid": "prowler-aws-accessanalyzer_enabled-123456789012-us-east-1"
-        },
-        "resources": [{
-            "cloud_partition": "aws",
-            "region": "us-east-1",
-            "group": {"name": "accessanalyzer"},
-            "name": "123456789012",
-            "type": "Other",
-            "uid": "arn:aws:iam::123456789012:root"
-        }],
-        "cloud": {
-            "account": {"name": "Test AWS Account", "uid": "123456789012"},
-            "provider": "aws",
-            "region": "us-east-1"
-        },
-        "time": 1735570800,
-        "time_dt": "2024-12-30T15:00:00.000000"
-    }]
-    
-    content = json.dumps(test_data).encode('utf-8')
-    
+    test_data = [
+        {
+            "message": "IAM Access Analyzer in account 123456789012 is not enabled.",
+            "metadata": {
+                "event_code": "accessanalyzer_enabled",
+                "product": {
+                    "name": "Prowler",
+                    "uid": "prowler",
+                    "vendor_name": "Prowler",
+                    "version": "5.0.0",
+                },
+                "profiles": ["cloud", "datetime"],
+                "tenant_uid": "",
+                "version": "1.4.0",
+            },
+            "severity": "Low",
+            "status_code": "FAIL",
+            "status_detail": "IAM Access Analyzer in account 123456789012 is not enabled.",
+            "unmapped": {"compliance": {"CIS-1.4": ["1.20"], "CIS-2.0": ["1.20"]}},
+            "finding_info": {
+                "created_time": 1735570800,
+                "created_time_dt": "2024-12-30T15:00:00.000000",
+                "desc": "Check if IAM Access Analyzer is enabled",
+                "product_uid": "prowler",
+                "title": "Check if IAM Access Analyzer is enabled",
+                "types": ["IAM"],
+                "uid": "prowler-aws-accessanalyzer_enabled-123456789012-us-east-1",
+            },
+            "resources": [
+                {
+                    "cloud_partition": "aws",
+                    "region": "us-east-1",
+                    "group": {"name": "accessanalyzer"},
+                    "name": "123456789012",
+                    "type": "Other",
+                    "uid": "arn:aws:iam::123456789012:root",
+                }
+            ],
+            "cloud": {
+                "account": {"name": "Test AWS Account", "uid": "123456789012"},
+                "provider": "aws",
+                "region": "us-east-1",
+            },
+            "time": 1735570800,
+            "time_dt": "2024-12-30T15:00:00.000000",
+        }
+    ]
+
+    content = json.dumps(test_data).encode("utf-8")
+
     # Validate structure
     is_valid, error = validate_ocsf_structure(content)
     print(f"Structure valid: {is_valid}")
     if not is_valid:
         print(f"Error: {error}")
         return None
-    
+
     # Parse the content
     findings = parse_ocsf_json(content)
     print(f"Parsed {len(findings)} findings")
-    
+
     if findings:
         f = findings[0]
         print(f"Check ID: {f.check_id}")
@@ -473,7 +479,7 @@ def test_ocsf_parser_with_single_finding():
         print(f"Account: {f.account_uid}")
         print(f"Resources: {len(f.resources)}")
         print(f"Compliance: {list(f.compliance.keys())}")
-    
+
     return findings
 
 
@@ -481,14 +487,14 @@ def save_test_data_to_file():
     """Save test data to a JSON file for manual testing."""
     test_data = create_real_ocsf_test_data()
     output_path = Path(__file__).parent / "test_prowler_output.ocsf.json"
-    
-    with open(output_path, 'w') as f:
+
+    with open(output_path, "w") as f:
         json.dump(test_data, f, indent=2)
-    
+
     print(f"✓ Test data saved to: {output_path}")
     print(f"  - {len(test_data)} findings")
-    print(f"  - Provider: aws")
-    print(f"  - Account: 123456789012")
+    print("  - Provider: aws")
+    print("  - Account: 123456789012")
     return output_path
 
 
@@ -496,7 +502,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("Manual Test: Scan Import with Real Prowler JSON Output")
     print("=" * 60)
-    
+
     # Test 1: Simple single-finding test
     print("\n[Test 1] Testing OCSF Parser with single finding...")
     try:
@@ -509,9 +515,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Test 2: Full test with multiple findings
     print("\n[Test 2] Testing OCSF Parser with multiple findings...")
     try:
@@ -520,17 +527,19 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
-    
+
     # Save test data for manual API testing
     print("\n[Test 3] Saving test data for manual API testing...")
     output_file = save_test_data_to_file()
-    
+
     print("\n" + "=" * 60)
     print("Manual API Testing Instructions")
     print("=" * 60)
-    print(f"""
+    print(
+        f"""
 To test the scan import API endpoint manually:
 
 1. Start the development environment:
@@ -551,6 +560,7 @@ To test the scan import API endpoint manually:
      -d '{{"data": <contents of test file>}}'
 
 5. Verify the import in the UI at http://localhost:3000/scans
-""")
-    
+"""
+    )
+
     print("✓ Manual test setup complete!")
