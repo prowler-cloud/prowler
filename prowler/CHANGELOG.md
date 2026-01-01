@@ -7,10 +7,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
+- `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
 - Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
 - `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
 - Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
 - `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
+- `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)

@@ -43,11 +43,6 @@ export const DEFAULT_FILTER_BADGES: FilterBadgeConfig[] = [
     label: "Check ID",
     formatMultiple: (count) => `${count} Check IDs filtered`,
   },
-  {
-    filterKey: "scan__in",
-    label: "Scan",
-    formatValue: (id) => `${id.slice(0, 8)}...`,
-  },
 ];
 
 interface ActiveFilterBadgeProps {
