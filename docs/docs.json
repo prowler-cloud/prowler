@@ -107,6 +107,7 @@
                   "user-guide/tutorials/prowler-app-mute-findings"
                 ]
               },
+              "user-guide/tutorials/prowler-app-scan-import",
               {
                 "group": "Integrations",
                 "expanded": true,

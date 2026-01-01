@@ -107,6 +107,48 @@ pnpm run dev
 - [Framer Motion](https://www.framer.com/motion/)
 - [next-themes](https://github.com/pacocoursey/next-themes)
 
+## Configuration
+
+### Next.js Configuration (`next.config.js`)
+
+The Next.js configuration includes several important settings:
+
+#### Security Headers
+
+- **Content-Security-Policy (CSP)**: Restricts resource loading to prevent XSS attacks
+- **X-Content-Type-Options**: Set to `nosniff` to prevent MIME type sniffing
+- **Referrer-Policy**: Set to `strict-origin-when-cross-origin`
+
+#### Server Actions
+
+Server actions are configured with an extended body size limit to support large scan file imports:
+
+```javascript
+experimental: {
+  serverActions: {
+    bodySizeLimit: "1gb",  // Supports importing large scan result files
+  },
+}
+```
+
+This allows importing Prowler CLI scan results (OCSF JSON or CSV format) up to 1GB in size.
+
+#### Sentry Integration
+
+Error tracking is automatically enabled when Sentry environment variables are configured:
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SENTRY_DSN` | Client-side Sentry DSN |
+| `SENTRY_DSN` | Server-side Sentry DSN |
+| `SENTRY_ORG` | Sentry organization slug |
+| `SENTRY_PROJECT` | Sentry project slug |
+| `SENTRY_AUTH_TOKEN` | Auth token for source map uploads |
+
+#### Production Build
+
+In production (`NODE_ENV=production`), the build uses standalone output mode for optimized Docker deployments. This is automatically disabled in CI environments.
+
 ## Git Hooks & Code Review
 
 This project uses Git hooks to maintain code quality. When you commit changes to TypeScript/JavaScript files, the pre-commit hook can optionally validate them against our coding standards using Claude Code.

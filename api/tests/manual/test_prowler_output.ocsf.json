@@ -1,0 +1,285 @@
+[
+  {
+    "message": "IAM Access Analyzer in account 123456789012 is not enabled.",
+    "metadata": {
+      "event_code": "accessanalyzer_enabled",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.0.0"
+      },
+      "profiles": ["cloud", "datetime"],
+      "tenant_uid": "",
+      "version": "1.4.0"
+    },
+    "severity_id": 2,
+    "severity": "Low",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "IAM Access Analyzer in account 123456789012 is not enabled.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+      "categories": [],
+      "depends_on": [],
+      "related_to": [],
+      "additional_urls": [],
+      "notes": "",
+      "compliance": {
+        "CIS-1.4": ["1.20"],
+        "CIS-1.5": ["1.20"],
+        "CIS-2.0": ["1.20"],
+        "CIS-3.0": ["1.20"]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1735570800,
+      "created_time_dt": "2024-12-30T15:00:00.000000",
+      "desc": "Check if IAM Access Analyzer is enabled",
+      "product_uid": "prowler",
+      "title": "Check if IAM Access Analyzer is enabled",
+      "types": ["IAM"],
+      "uid": "prowler-aws-accessanalyzer_enabled-123456789012-us-east-1-123456789012"
+    },
+    "resources": [
+      {
+        "cloud_partition": "aws",
+        "region": "us-east-1",
+        "data": {
+          "details": "",
+          "metadata": {
+            "arn": "arn:aws:iam::123456789012:root",
+            "name": "123456789012",
+            "status": "NOT_AVAILABLE",
+            "findings": [],
+            "tags": [],
+            "type": "",
+            "region": "us-east-1"
+          }
+        },
+        "group": {"name": "accessanalyzer"},
+        "labels": [],
+        "name": "123456789012",
+        "type": "Other",
+        "uid": "arn:aws:iam::123456789012:root"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "Test AWS Account",
+        "type": "AWS Account",
+        "type_id": 10,
+        "uid": "123456789012",
+        "labels": []
+      },
+      "org": {"name": "", "uid": ""},
+      "provider": "aws",
+      "region": "us-east-1"
+    },
+    "remediation": {
+      "desc": "Enable IAM Access Analyzer for all accounts.",
+      "references": [
+        "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+        "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+      ]
+    },
+    "risk_details": "AWS IAM Access Analyzer helps identify resources shared with external entities.",
+    "time": 1735570800,
+    "time_dt": "2024-12-30T15:00:00.000000",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "S3 bucket test-bucket-12345 has public access block enabled.",
+    "metadata": {
+      "event_code": "s3_bucket_public_access_block_enabled",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.0.0"
+      },
+      "profiles": ["cloud", "datetime"],
+      "tenant_uid": "",
+      "version": "1.4.0"
+    },
+    "severity_id": 1,
+    "severity": "Informational",
+    "status": "New",
+    "status_code": "PASS",
+    "status_detail": "S3 bucket test-bucket-12345 has public access block enabled.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+      "categories": ["storage", "security"],
+      "depends_on": [],
+      "related_to": [],
+      "additional_urls": [],
+      "notes": "",
+      "compliance": {
+        "CIS-1.4": ["2.1.5"],
+        "CIS-2.0": ["2.1.4"],
+        "PCI-DSS-3.2.1": ["1.2.1", "1.3.1"]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1735570800,
+      "created_time_dt": "2024-12-30T15:00:00.000000",
+      "desc": "Check if S3 buckets have public access block enabled",
+      "product_uid": "prowler",
+      "title": "S3 Bucket Public Access Block Check",
+      "types": ["S3"],
+      "uid": "prowler-aws-s3_bucket_public_access_block_enabled-123456789012-us-west-2-test-bucket-12345"
+    },
+    "resources": [
+      {
+        "cloud_partition": "aws",
+        "region": "us-west-2",
+        "data": {
+          "details": "",
+          "metadata": {
+            "arn": "arn:aws:s3:::test-bucket-12345",
+            "name": "test-bucket-12345",
+            "status": "ENABLED",
+            "findings": [],
+            "tags": [{"Key": "Environment", "Value": "Test"}],
+            "type": "bucket",
+            "region": "us-west-2"
+          }
+        },
+        "group": {"name": "s3"},
+        "labels": [],
+        "name": "test-bucket-12345",
+        "type": "bucket",
+        "uid": "arn:aws:s3:::test-bucket-12345"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "Test AWS Account",
+        "type": "AWS Account",
+        "type_id": 10,
+        "uid": "123456789012",
+        "labels": []
+      },
+      "org": {"name": "", "uid": ""},
+      "provider": "aws",
+      "region": "us-west-2"
+    },
+    "remediation": {
+      "desc": "S3 Block Public Access is already enabled. No action required.",
+      "references": []
+    },
+    "risk_details": "Public S3 buckets can expose sensitive data to unauthorized users.",
+    "time": 1735570800,
+    "time_dt": "2024-12-30T15:00:00.000000",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "EC2 instance i-0abc123def456789 has IMDSv2 enabled.",
+    "metadata": {
+      "event_code": "ec2_instance_imdsv2_enabled",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.0.0"
+      },
+      "profiles": ["cloud", "datetime"],
+      "tenant_uid": "",
+      "version": "1.4.0"
+    },
+    "severity_id": 1,
+    "severity": "Informational",
+    "status": "New",
+    "status_code": "PASS",
+    "status_detail": "EC2 instance i-0abc123def456789 has IMDSv2 enabled.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
+      "categories": ["compute", "security"],
+      "depends_on": [],
+      "related_to": [],
+      "additional_urls": [],
+      "notes": "",
+      "compliance": {
+        "CIS-1.4": ["5.6"],
+        "CIS-2.0": ["5.6"],
+        "AWS-Foundational-Security-Best-Practices": ["EC2.8"]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1735570800,
+      "created_time_dt": "2024-12-30T15:00:00.000000",
+      "desc": "Check if EC2 instances have IMDSv2 enabled",
+      "product_uid": "prowler",
+      "title": "EC2 Instance IMDSv2 Check",
+      "types": ["EC2"],
+      "uid": "prowler-aws-ec2_instance_imdsv2_enabled-123456789012-us-east-1-i-0abc123def456789"
+    },
+    "resources": [
+      {
+        "cloud_partition": "aws",
+        "region": "us-east-1",
+        "data": {
+          "details": "",
+          "metadata": {
+            "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc123def456789",
+            "name": "test-instance",
+            "status": "running",
+            "findings": [],
+            "tags": [{"Key": "Name", "Value": "test-instance"}],
+            "type": "instance",
+            "region": "us-east-1"
+          }
+        },
+        "group": {"name": "ec2"},
+        "labels": [],
+        "name": "test-instance",
+        "type": "instance",
+        "uid": "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc123def456789"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "cloud": {
+      "account": {
+        "name": "Test AWS Account",
+        "type": "AWS Account",
+        "type_id": 10,
+        "uid": "123456789012",
+        "labels": []
+      },
+      "org": {"name": "", "uid": ""},
+      "provider": "aws",
+      "region": "us-east-1"
+    },
+    "remediation": {
+      "desc": "IMDSv2 is already enabled. No action required.",
+      "references": []
+    },
+    "risk_details": "IMDSv2 provides enhanced security for instance metadata access.",
+    "time": 1735570800,
+    "time_dt": "2024-12-30T15:00:00.000000",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  }
+]
