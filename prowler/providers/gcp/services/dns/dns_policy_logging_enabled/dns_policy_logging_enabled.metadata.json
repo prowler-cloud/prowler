@@ -1,0 +1,34 @@
+{
+  "Provider": "gcp",
+  "CheckID": "dns_policy_logging_enabled",
+  "CheckTitle": "Ensure that Cloud DNS logging is enabled for all VPC networks",
+  "CheckType": [
+    "Logging"
+  ],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "projects/{project}/locations/global/networks/{network_name}",
+  "Severity": "low",
+  "ResourceType": "GcpVpcNetwork",
+  "Description": "This check ensures that Cloud DNS logging is enabled for all VPC networks.",
+  "Risk": "Lack of DNS logging limits visibility into DNS queries, hindering detection of malicious domains or C2 communication.",
+  "RelatedUrl": "https://cloud.google.com/dns/docs/monitoring",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud dns policies update <policy_name> --enable-logging",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create or update a DNS policy to enable logging and associate it with your VPC networks.",
+      "Url": "https://cloud.google.com/dns/docs/monitoring#enable-logging"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if VPCs are attached to a DNS policy with logging on."
+}
