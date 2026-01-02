@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "serviceusage.googleapis.com/Service",
+  "ResourceGroup": "governance",
   "Description": "Evaluates whether **Artifact Analysis** (`containeranalysis.googleapis.com`) is enabled at the project level to support **vulnerability scanning** and metadata for container images in Artifact Registry or Container Registry.",
   "Risk": "Absent this service, images aren't continuously scanned, leaving known CVEs unnoticed. Attackers can run vulnerable containers, gain code execution, move laterally, and exfiltrate data, eroding the **integrity** and **confidentiality** of workloads and the software supply chain.",
   "RelatedUrl": "",

@@ -27,18 +27,19 @@ class MinimalSerializerMixin(BaseModel):
             Dictionary with non-empty values only
         """
         data = handler(self)
-        return {k: v for k, v in data.items() if not self._should_exclude(v)}
+        return {k: v for k, v in data.items() if not self._should_exclude(k, v)}
 
-    def _should_exclude(self, value: Any) -> bool:
-        """Determine if a value should be excluded from serialization.
+    def _should_exclude(self, key: str, value: Any) -> bool:
+        """Determine if a key-value pair should be excluded from serialization.
 
         Override this method in subclasses for custom exclusion logic.
 
         Args:
+            key: Field name
             value: Field value
 
         Returns:
-            True if the value should be excluded, False otherwise
+            True if the field should be excluded, False otherwise
         """
         # None values
         if value is None:

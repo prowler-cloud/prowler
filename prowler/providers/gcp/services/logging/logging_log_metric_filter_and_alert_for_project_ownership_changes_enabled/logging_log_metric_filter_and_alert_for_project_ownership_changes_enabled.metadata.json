@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure Log Metric Filter and Alerts Exist for Project Ownership Assignments/Changes.",
   "Risk": "Project ownership has the highest level of privileges on a GCP project. These privileges include viewer permissions on all GCP services inside the project, permission to modify the state of all GCP services within the project, set up billing and manage roles and permissions for the project and all the resources inside the project.",
   "RelatedUrl": "",

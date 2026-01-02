@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "Check if S3 buckets have policies which allow WRITE access.",
   "Risk": "Non intended users can put objects in a given bucket.",
   "RelatedUrl": "",

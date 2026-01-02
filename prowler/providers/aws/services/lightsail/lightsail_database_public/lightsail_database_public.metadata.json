@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Lightsail managed database** is evaluated for **public accessibility**. When `public mode` is enabled, the database accepts connections from the Internet using its endpoint and port; otherwise, access is limited to authorized Lightsail resources.",
   "Risk": "**Publicly reachable databases** expose confidential data and credentials to the Internet, enabling:\n- **Brute-force** and credential stuffing\n- **Data exfiltration** via unauthorized queries\n- **Service disruption** from scanning or DoS\n\nCompromise enables **lateral movement** and tampering, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",

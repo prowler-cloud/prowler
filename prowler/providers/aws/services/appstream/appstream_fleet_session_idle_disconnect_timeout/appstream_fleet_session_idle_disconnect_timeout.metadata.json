@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon AppStream fleets** are evaluated for the **idle disconnect timeout** setting, confirming it is configured to `10 minutes` (`<=600s`) or less before inactive users are dropped and the session's `disconnect_timeout` window begins.",
   "Risk": "**Long idle sessions** keep desktops/apps accessible without user presence, enabling **session hijacking**, **shoulder surfing**, and **data exposure**. They also **consume capacity** and extend **billing**, reducing **availability** for other users.",
   "RelatedUrl": "",

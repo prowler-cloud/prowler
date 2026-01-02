@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the NamespaceLifecycle admission control plugin is enabled in the Kubernetes API server. This plugin prevents the creation of objects in non-existent or terminating namespaces, enforcing the integrity of the namespace lifecycle and availability of new objects.",
   "Risk": "Without NamespaceLifecycle, objects may be created in namespaces that are being terminated, potentially leading to inconsistencies and resource conflicts.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",

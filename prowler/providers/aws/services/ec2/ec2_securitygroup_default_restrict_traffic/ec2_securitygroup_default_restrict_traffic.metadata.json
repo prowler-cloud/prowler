@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "Ensure the default security group of every VPC restricts all traffic.",
   "Risk": "Even having a perimeter firewall, having security groups open allows any user or malware with vpc access to scan for well known and sensitive ports and gain access to instance.",
   "RelatedUrl": "",

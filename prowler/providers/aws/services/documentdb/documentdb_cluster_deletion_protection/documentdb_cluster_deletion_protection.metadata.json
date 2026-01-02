@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**Amazon DocumentDB clusters** are evaluated for the `deletion_protection` setting on the cluster configuration.\n\nThe finding highlights clusters where this protection is not enabled.",
   "Risk": "Without **deletion protection**, clusters can be deleted by mistake or misuse, causing sudden outage and loss of recovery points, impacting **availability** and **data integrity**.\n\nCompromised accounts or faulty automation can remove databases or skip final snapshots, hindering restoration.",
   "RelatedUrl": "",

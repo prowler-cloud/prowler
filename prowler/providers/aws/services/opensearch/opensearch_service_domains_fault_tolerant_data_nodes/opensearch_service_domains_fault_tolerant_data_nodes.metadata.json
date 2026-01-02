@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:es:{region}:{account-id}:domain/{domain-name}",
   "Severity": "medium",
   "ResourceType": "AwsElasticsearchDomain",
+  "ResourceGroup": "database",
   "Description": "This control checks whether Elasticsearch/Opensearch domains are fault-tolerant with at least three data nodes and cross-zone replication (Zone Awareness) enabled.",
   "Risk": "Without at least three data nodes and without cross-zone replication (Zone Awareness), the Elasticsearch/Opensearch domain may not be fault-tolerant, leading to a higher risk of data loss or unavailability in case of node failure.",
   "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
