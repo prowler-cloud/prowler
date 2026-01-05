@@ -69,18 +69,18 @@ If your IAM Role is configured with Multi-Factor Authentication (MFA), use `--mf
 
 ## Creating a Role for One or Multiple Accounts
 
-To create an IAM role that can be assumed in one or multiple AWS accounts, use either a CloudFormation Stack or StackSet with the provided [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/create_role_to_assume_cfn.yaml).
+To create an IAM role that can be assumed in one or multiple AWS accounts, use either a CloudFormation Stack or StackSet with the provided [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml).
 
 The template requires the following parameters:
 
-- **AuthorisedARN:** The ARN of the user or role authorized to assume the created role (e.g., `arn:aws:iam::123456789012:root`)
 - **ExternalId:** A unique identifier to prevent the [confused deputy problem](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html)
-- **ProwlerRoleName:** *(Optional)* Name of the IAM role (default: `ProwlerScanRole`)
+- **AccountId:** *(Optional)* AWS Account ID that will assume the role (default: Prowler Cloud account)
+- **IAMPrincipal:** *(Optional)* The IAM principal allowed to assume the role (default: `role/prowler*`)
 
-When running Prowler, include the External ID using the `-I/--external-id` flag:
+When running Prowler CLI, include the External ID using the `-I/--external-id` flag:
 
 ```sh
-prowler aws -R arn:aws:iam::<account_id>:role/<role_name> -I <external_id>
+prowler aws -R arn:aws:iam::<account_id>:role/ProwlerScan -I <external_id>
 ```
 
 <Note>
