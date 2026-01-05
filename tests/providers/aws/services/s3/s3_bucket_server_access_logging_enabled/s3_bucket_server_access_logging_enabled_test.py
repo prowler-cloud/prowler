@@ -249,4 +249,3 @@ class Test_s3_bucket_server_access_logging_enabled:
                     by_id[bucket_pass].resource_arn
                     == f"arn:{aws_provider.identity.partition}:s3:::{bucket_pass}"
                 )
-
