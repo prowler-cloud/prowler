@@ -134,7 +134,7 @@ export const DataTableSearch = () => {
           onChange={(e) => handleChange(e.target.value)}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          className="border-border-neutral-tertiary bg-bg-neutral-tertiary pr-9 pl-9 focus:border-border-input-primary-pressed focus:ring-0 focus:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
+          className="border-border-neutral-tertiary bg-bg-neutral-tertiary focus:border-border-input-primary-pressed pr-9 pl-9 focus:ring-0 focus:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
         />
         {isLoading && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
