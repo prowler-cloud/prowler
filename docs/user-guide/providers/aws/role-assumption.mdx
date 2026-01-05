@@ -69,7 +69,7 @@ If your IAM Role is configured with Multi-Factor Authentication (MFA), use `--mf
 
 ## Creating a Role for One or Multiple Accounts
 
-To create an IAM role that can be assumed in one or multiple AWS accounts, use either a CloudFormation Stack or StackSet and adapt the provided [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/create_role_to_assume_cfn.yaml).
+To create an IAM role that can be assumed in one or multiple AWS accounts, use either a CloudFormation Stack or StackSet and adapt the provided [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml).
 
 <Note>
 **Session Duration Considerations**: Depending on the number of checks performed and the size of your infrastructure, Prowler may require more than 1 hour to complete. Use the `-T <seconds>` option to allow up to 12 hours (43,200 seconds). If you need more than 1 hour, modify the _“Maximum CLI/API session duration”_ setting for the role. Learn more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
