@@ -16,13 +16,8 @@
   "Risk": "With fewer than `3` or disabled **dedicated master nodes**, the cluster can lose **quorum**, blocking leader election.\n\nEffects include stalled cluster state updates, failed reads/writes, shard allocation issues, and possible split-brain, reducing **availability** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000233340-ensure-opensearch-service-domain-should-have-at-least-three-dedicated-master-nodes",
-    "https://medium.com/@stetseng/handling-10m-offline-matchmaking-using-amazon-opensearch-part-2-of-4-a6e92cce402f",
-    "https://repost.aws/questions/QUPeRkfj8fRNufXMfFKfo_jQ/how-to-select-correct-of-data-nodes-and-dedicated-nodes-in-opensearch",
-    "https://confluence.atlassian.com/adminjiraserver/opensearch-hardware-recommendations-for-jira-1680483410.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-11",
-    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number",
-    "https://orca.security/resources/blog/elasticsearch-without-at-least-three-dedicated-master-nodes/"
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number"
   ],
   "Remediation": {
     "Code": {

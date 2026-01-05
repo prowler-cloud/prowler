@@ -9,7 +9,7 @@
   "ServiceName": "opensearch",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
   "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch Service domains** are evaluated for **fine-grained access control** being enabled in `advanced-security-options`, ensuring role-based authorization at index, document, and field levels for API and Dashboards access.",
@@ -18,12 +18,8 @@
   "AdditionalURLs": [
     "https://repost.aws/questions/QUvejSG0WDRByFVMcDchn_5w/how-do-resource-based-access-policies-interact-with-fgac-master-users-in-amazon-opensearch-service",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-7",
-    "https://www.antstack.com/blog/integrating-amazon-open-search-with-aws-sso-for-secure-authentication/",
-    "https://itnext.io/aws-creating-an-opensearch-service-cluster-and-configuring-authentication-and-authorization-a68b89e9a00c",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html#fgac-enabling",
-    "https://docs.datadoghq.com/security/default_rules/def-000-hsf/",
-    "https://ealtili.medium.com/how-to-use-fine-grained-access-control-in-amazon-opensearch-service-4dc86bffd40d",
-    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html"
+    "https://ealtili.medium.com/how-to-use-fine-grained-access-control-in-amazon-opensearch-service-4dc86bffd40d"
   ],
   "Remediation": {
     "Code": {

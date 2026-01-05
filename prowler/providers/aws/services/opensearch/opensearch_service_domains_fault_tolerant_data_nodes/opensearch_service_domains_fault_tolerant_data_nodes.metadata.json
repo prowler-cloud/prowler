@@ -16,13 +16,8 @@
   "Risk": "**Insufficient data nodes** or disabled **Zone Awareness** reduces availability and durability. A node or AZ failure can trigger shard unavailability, write failures, or cluster outage, increasing risk of data inconsistency during rebalancing and blocking reads/writes until recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://orca.security/resources/blog/elasticsearch-domain-has-less-than-three-data-nodes/",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-multiaz.html",
-    "https://repost.aws/questions/QUPeRkfj8fRNufXMfFKfo_jQ/how-to-select-correct-of-data-nodes-and-dedicated-nodes-in-opensearch",
-    "https://zephyrnet.com/achieve-high-availability-in-amazon-opensearch-multi-az-with-standby-enabled-domains-a-deep-dive-into-failovers-amazon-web-services/",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/es-controls.html#es-6",
-    "https://www.cloudanix.com/docs/aws/audit/opensearchmonitoring/rules/opensearch_data_node_fault_tolerance",
-    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/es-controls.html#es-6"
   ],
   "Remediation": {
     "Code": {

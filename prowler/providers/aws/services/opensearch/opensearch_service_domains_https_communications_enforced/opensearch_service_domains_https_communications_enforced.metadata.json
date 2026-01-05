@@ -18,8 +18,7 @@
   "Risk": "Allowing HTTP exposes queries, credentials, and results in cleartext, enabling interception and session hijacking. Adversaries can alter requests or responses, compromising **confidentiality** and **integrity**, and harvest auth data for **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html",
-    "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_6#aws-console"
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html"
   ],
   "Remediation": {
     "Code": {

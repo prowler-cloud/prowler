@@ -16,10 +16,7 @@
   "Risk": "**Missing service software updates** can leave known flaws unpatched, threatening data confidentiality and index integrity.\n\nRequired updates missed may lead to AWS isolating the domain, causing **outages** and, if prolonged, **permanent deletion**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.rs/aws-sdk-opensearch/latest/aws_sdk_opensearch/struct.Client.html",
-    "https://search.r-project.org/CRAN/refmans/paws/html/opensearchservice.html",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/service-software.html",
-    "https://hexdocs.pm/aws/AWS.OpenSearch.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html"
   ],

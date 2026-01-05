@@ -19,8 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/domain-exposed.html",
-    "https://stackoverflow.com/questions/76880510/anonymous-user-access-to-amazon-opensearch-dashboard"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/domain-exposed.html"
   ],
   "Remediation": {
     "Code": {

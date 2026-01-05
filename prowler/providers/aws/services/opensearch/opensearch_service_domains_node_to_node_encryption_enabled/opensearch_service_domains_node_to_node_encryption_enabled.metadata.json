@@ -20,12 +20,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/ntn.html",
-    "https://cloud-kb.sentinelone.com/elasticsearch-node-to-node-encryption-disabled",
-    "https://github.com/vumdao/aws-opensearch",
-    "https://www.pulumi.com/ai/answers/4kCSBDD3MytyLVjKJBypyA/deploying-aws-opensearch-with-c",
-    "https://www.cloudanix.com/docs/aws/audit/opensearchmonitoring/rules/opensearch_node_to_node_encryption",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ntn.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-h9o/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html"
   ],
   "Remediation": {

@@ -15,11 +15,7 @@
   "Risk": "An enabled internal user database creates **credential sprawl** and weak **account lifecycle**. Missing centralized MFA, rotation, and revocation raises unauthorized access risk, impacting **confidentiality** and **integrity**.\n\nBasic auth on exposed endpoints eases brute force and reduces **auditability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000235053-ensure-amazon-elasticsearch-opensearch-service-domains-have-internal-user-database-enabled",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-2-52",
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/fgac.html",
-    "https://repost.aws/questions/QUwabNwJqqRJm7k6ETQ6GbBw/set-up-opensearch-manual-snapshots-with-the-master-user-from-an-internal-user-database",
-    "https://ealtili.medium.com/how-to-use-fine-grained-access-control-in-amazon-opensearch-service-4dc86bffd40d",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html"
   ],
   "Remediation": {
