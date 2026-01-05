@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch domains** have **dedicated master nodes** enabled with a master node count of at least `3` to support stable cluster coordination and elections",
   "Risk": "With fewer than `3` or disabled **dedicated master nodes**, the cluster can lose **quorum**, blocking leader election.\n\nEffects include stalled cluster state updates, failed reads/writes, shard allocation issues, and possible split-brain, reducing **availability** and **integrity**.",
   "RelatedUrl": "",

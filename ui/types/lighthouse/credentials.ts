@@ -112,11 +112,21 @@ export const openAICredentialsSchema = z.object({
 /**
  * Amazon Bedrock Provider Credentials Schema
  */
-export const bedrockCredentialsSchema = z.object({
+export const bedrockIamCredentialsSchema = z.object({
   access_key_id: awsAccessKeyIdSchema,
   secret_access_key: awsSecretAccessKeySchema,
   region: awsRegionSchema,
 });
+
+export const bedrockApiKeyCredentialsSchema = z.object({
+  api_key: genericApiKeySchema,
+  region: awsRegionSchema,
+});
+
+export const bedrockCredentialsSchema = z.union([
+  bedrockIamCredentialsSchema,
+  bedrockApiKeyCredentialsSchema,
+]);
 
 /**
  * OpenAI Compatible Provider Credentials Schema

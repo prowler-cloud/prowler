@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch Service domains** are evaluated for `encryption at rest` using AWS KMS (`AES-256`) across stored data, including indexes, swap files, and automated snapshots.",
   "Risk": "**Unencrypted OpenSearch data** can be read or copied if an attacker gains **disk-level access**, steals **automated snapshots**, or compromises the host. This jeopardizes **confidentiality** and enables tampering with stored indices, affecting **integrity**.",
   "RelatedUrl": "",

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:datasync:{region}:{account-id}:task/{task-id}",
   "Severity": "high",
   "ResourceType": "AwsDataSyncTask",
+  "ResourceGroup": "storage",
   "Description": "This control checks if AWS DataSync tasks have logging enabled. The control fails if the task doesn't have the CloudWatchLogGroupArn property defined.",
   "Risk": "Without logging enabled, important operational data may be lost, making it difficult to troubleshoot issues, monitor performance, and ensure compliance with auditing requirements.",
   "RelatedUrl": "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging",

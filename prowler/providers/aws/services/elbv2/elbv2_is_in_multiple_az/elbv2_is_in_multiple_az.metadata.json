@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "ELBv2 load balancers (Application, Network, or Gateway) are assessed for distribution across multiple **Availability Zones**. The finding indicates whether each load balancer spans at least the configured minimum number of AZs (default `2`).",
   "Risk": "Limiting a load balancer to one AZ introduces a single point of failure. An AZ outage, zonal degradation, or imbalanced target capacity can cause downtime, dropped connections, and deployment risk, undermining service **availability** and resiliency.",
   "RelatedUrl": "",

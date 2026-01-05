@@ -1,0 +1,43 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "securitycenter_notification_enabled_high_risk",
+  "CheckTitle": "Notification is enabled on all high risk items",
+  "CheckType": [
+    "Suspicious process",
+    "Webshell",
+    "Unusual logon",
+    "Sensitive file tampering",
+    "Malicious software"
+  ],
+  "ServiceName": "securitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:sas::account-id:notice-config/{project}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSecurityCenterNoticeConfig",
+  "ResourceGroup": "security",
+  "Description": "Enable all **risk item notifications** in Vulnerability, Baseline Risks, Alerts, and AccessKey Leak event detection categories.\n\nThis ensures that relevant security operators receive notifications as soon as security events occur.",
+  "Risk": "Without **notifications enabled** for high-risk items, security operators may not be aware of critical security events in a timely manner, potentially leading to **delayed response** and **increased security exposure**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/111648.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/enable-high-risk-item-notifications.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun sas ModifyNoticeConfig --Project <project_name> --Route <route_value>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **Security Center Console**\n2. Select **Settings**\n3. Click **Notification**\n4. Enable all high-risk items on Notification setting\n\nRoute values: `1`=text message, `2`=email, `3`=internal message, `4`=text+email, `5`=text+internal, `6`=email+internal, `7`=all methods",
+      "Url": "https://hub.prowler.com/check/securitycenter_notification_enabled_high_risk"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

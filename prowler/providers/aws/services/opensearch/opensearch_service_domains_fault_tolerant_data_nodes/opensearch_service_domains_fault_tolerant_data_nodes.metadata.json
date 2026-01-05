@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch domains** are assessed for fault tolerance: **>= 3 data nodes** (`instance_count >= 3`) and **Zone Awareness** (`zone_awareness_enabled = true`) to distribute data across Availability Zones.",
   "Risk": "**Insufficient data nodes** or disabled **Zone Awareness** reduces availability and durability. A node or AZ failure can trigger shard unavailability, write failures, or cluster outage, increasing risk of data inconsistency during rebalancing and blocking reads/writes until recovery.",
   "RelatedUrl": "",

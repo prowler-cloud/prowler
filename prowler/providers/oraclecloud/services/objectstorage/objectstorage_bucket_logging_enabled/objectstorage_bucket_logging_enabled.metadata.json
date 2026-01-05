@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OciObjectStorageBucket",
+  "ResourceGroup": "storage",
   "Description": "Write-level logging for Object Storage buckets provides an audit trail of all write operations (PUT, POST, DELETE) performed on buckets, enabling security monitoring and compliance requirements.",
   "Risk": "Without write-level logging, unauthorized or malicious modifications to Object Storage data cannot be detected or investigated.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm",

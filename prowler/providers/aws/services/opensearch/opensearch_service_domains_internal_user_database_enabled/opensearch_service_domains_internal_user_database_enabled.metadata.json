@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch Service domains** are evaluated for the **internal user database** setting (`InternalUserDatabaseEnabled`). The finding identifies domains that rely on built-in HTTP basic users instead of external identity providers.",
   "Risk": "An enabled internal user database creates **credential sprawl** and weak **account lifecycle**. Missing centralized MFA, rotation, and revocation raises unauthorized access risk, impacting **confidentiality** and **integrity**.\n\nBasic auth on exposed endpoints eases brute force and reduces **auditability**.",
   "RelatedUrl": "",

@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch domains** with **node-to-node encryption** use TLS to protect traffic between cluster nodes. The finding evaluates the domain's `node_to_node_encryption` configuration for intra-cluster communications.",
   "Risk": "Unencrypted intra-cluster traffic enables interception and manipulation by anyone with network foothold.\n- **Confidentiality**: exposure of documents, credentials, metadata\n- **Integrity**: tampering with queries and shard replication\n- **Availability**: spoofing/MITM can disrupt coordination and cause outages",
   "RelatedUrl": "",

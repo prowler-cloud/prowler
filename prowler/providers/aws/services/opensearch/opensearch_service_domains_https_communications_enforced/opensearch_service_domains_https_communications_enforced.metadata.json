@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "Amazon OpenSearch Service domains with **HTTPS enforcement** require encrypted connections. This assessment identifies domains missing `Require HTTPS for all traffic`, indicating that unencrypted HTTP is accepted.",
   "Risk": "Allowing HTTP exposes queries, credentials, and results in cleartext, enabling interception and session hijacking. Adversaries can alter requests or responses, compromising **confidentiality** and **integrity**, and harvest auth data for **lateral movement**.",
   "RelatedUrl": "",

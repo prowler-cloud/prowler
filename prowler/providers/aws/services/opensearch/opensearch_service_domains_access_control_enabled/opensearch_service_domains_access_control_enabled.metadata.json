@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch Service domains** are evaluated for **fine-grained access control** being enabled in `advanced-security-options`, ensuring role-based authorization at index, document, and field levels for API and Dashboards access.",
   "Risk": "Without **fine-grained access control**, identities may gain overly broad permissions, enabling unauthorized reads or writes across indices and Dashboards. This undermines **confidentiality** and **integrity**, facilitates lateral movement, and increases the blast radius of a compromised account.",
   "RelatedUrl": "",

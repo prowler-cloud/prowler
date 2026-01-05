@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**OpenSearch Service domains** are assessed for pending **service software updates**. This focuses on internal platform updates, distinct from engine version upgrades.",
   "Risk": "**Missing service software updates** can leave known flaws unpatched, threatening data confidentiality and index integrity.\n\nRequired updates missed may lead to AWS isolating the domain, causing **outages** and, if prolonged, **permanent deletion**.",
   "RelatedUrl": "",

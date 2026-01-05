@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DatabaseInstance",
+  "ResourceGroup": "database",
   "Description": "Ensure that the 'cross db ownership chaining' database flag for Cloud SQL SQL Server instance is set to 'off'",
   "Risk": "Use the cross db ownership for chaining option to configure cross-database ownership chaining for an instance of Microsoft SQL Server. This server option allows you to control cross-database ownership chaining at the database level or to allow cross- database ownership chaining for all databases. Enabling cross db ownership is not recommended unless all of the databases hosted by the instance of SQL Server must participate in cross-database ownership chaining and you are aware of the security implications of this setting.",
   "RelatedUrl": "",

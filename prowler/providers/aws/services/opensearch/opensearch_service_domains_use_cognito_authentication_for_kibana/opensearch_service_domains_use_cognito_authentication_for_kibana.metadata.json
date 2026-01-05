@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**OpenSearch Service domains** use **Amazon Cognito** or **SAML** to authenticate access to Kibana/OpenSearch Dashboards.\n\nThe evaluation identifies domains where either provider is enabled for Dashboards access.",
   "Risk": "Without **federated authentication**, Dashboards can be reached using weak or shared credentials or broad IP rules, enabling unauthorized queries and admin actions. This threatens:\n- **Confidentiality**: data exposure\n- **Integrity**: index changes or deletion\n- **Availability**: heavy queries degrading the cluster",
   "RelatedUrl": "",

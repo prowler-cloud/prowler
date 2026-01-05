@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch domains** are assessed for **public exposure** via their resource-based access policies. Domains inside a VPC are treated as **privately reachable**; domains with overly permissive policies that allow broad, unauthenticated access are identified as **publicly accessible**.",
   "Risk": "Public exposure lets anyone query, index, or delete data, impacting **confidentiality** (record disclosure), **integrity** (unauthorized writes, index tampering), and **availability** (disruption, deletion). Attackers can harvest sensitive logs/PII, alter analytics, or wipe indices, enabling lateral movement and operational outage.",
   "RelatedUrl": "",

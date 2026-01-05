@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "**Amazon OpenSearch Service** domains have **slow log publishing** enabled for both **search** and **indexing** operations to CloudWatch Logs (`SEARCH_SLOW_LOGS` and `INDEX_SLOW_LOGS`).",
   "Risk": "Without these logs, visibility into **expensive searches** and **slow indexing** is lost, masking hotspots and abuse.\n- Availability: timeouts, throttling, node pressure\n- Integrity: missed or delayed indexing\n- Operations: slower incident response and capacity planning",
   "RelatedUrl": "",
