@@ -21,6 +21,7 @@ class Compute(GCPService):
         self.compute_projects = []
         self.load_balancers = []
         self.instance_groups = []
+        self.images = []
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -34,6 +35,7 @@ class Compute(GCPService):
         self.__threading_call__(self._get_regional_instance_groups, self.regions)
         self.__threading_call__(self._get_zonal_instance_groups, self.zones)
         self._associate_migs_with_load_balancers()
+        self._get_images()
 
     def _get_regions(self):
         for project_id in self.project_ids:
@@ -533,6 +535,51 @@ class Compute(GCPService):
             if (mig.project_id, mig.name) in load_balanced_groups:
                 mig.load_balanced = True
 
+    def _get_images(self) -> None:
+        for project_id in self.project_ids:
+            try:
+                request = self.client.images().list(project=project_id)
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    for image in response.get("items", []):
+                        # Extract public members from IAM policy
+                        public_members = []
+                        try:
+                            iam_policy = (
+                                self.client.images()
+                                .getIamPolicy(
+                                    project=project_id, resource=image["name"]
+                                )
+                                .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                            )
+                            for binding in iam_policy.get("bindings", []):
+                                for member in binding.get("members", []):
+                                    # allUsers cannot be assigned to Compute Engine images (API restriction).
+                                    # Only allAuthenticatedUsers can be set, which is the security risk.
+                                    if member == "allAuthenticatedUsers":
+                                        public_members.append(member)
+                        except Exception as error:
+                            logger.error(
+                                f"{project_id}/{image['name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
+                        self.images.append(
+                            Image(
+                                name=image["name"],
+                                id=image["id"],
+                                project_id=project_id,
+                                public_members=list(set(public_members)),
+                            )
+                        )
+
+                    request = self.client.images().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class Disk(BaseModel):
     name: str
@@ -625,3 +672,10 @@ class ManagedInstanceGroup(BaseModel):
     project_id: str
     auto_healing_policies: list[AutoHealingPolicy] = []
     load_balanced: bool = False
+
+
+class Image(BaseModel):
+    name: str
+    id: str
+    project_id: str
+    public_members: list[str] = []
