@@ -5,9 +5,15 @@ import {
   RadialBar,
   RadialBarChart,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 
-import { CHART_COLORS } from "./shared/constants";
+export interface TooltipItem {
+  name: string;
+  value: number;
+  color?: string;
+}
+
 interface RadialChartProps {
   percentage: number;
   label?: string;
@@ -18,24 +24,70 @@ interface RadialChartProps {
   outerRadius?: number;
   startAngle?: number;
   endAngle?: number;
+  tooltipData?: TooltipItem[];
 }
+
+interface RadialChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload?: {
+      tooltipData?: TooltipItem[];
+    };
+  }>;
+}
+
+const CustomTooltip = ({ active, payload }: RadialChartTooltipProps) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const tooltipItems = payload[0]?.payload?.tooltipData;
+  if (
+    !tooltipItems ||
+    !Array.isArray(tooltipItems) ||
+    tooltipItems.length === 0
+  )
+    return null;
+
+  return (
+    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary rounded-xl border px-3 py-1.5 shadow-lg">
+      <div className="flex flex-col gap-0.5">
+        {tooltipItems.map((item: TooltipItem, index: number) => (
+          <div key={index} className="flex items-end gap-1">
+            <p className="text-text-neutral-primary text-xs leading-5 font-medium">
+              {item.name}
+            </p>
+            <div className="border-text-neutral-primary mb-[4px] flex-1 border-b border-dotted" />
+            <p
+              className="text-xs leading-5 font-medium"
+              style={{
+                color: item.color || "var(--text-neutral-primary)",
+              }}
+            >
+              {item.value}%
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export function RadialChart({
   percentage,
-  label = "Score",
-  color = "var(--chart-success-color)",
-  backgroundColor = CHART_COLORS.tooltipBackground,
+  color = "var(--bg-pass-primary)",
+  backgroundColor = "var(--bg-neutral-tertiary)",
   height = 250,
   innerRadius = 60,
   outerRadius = 100,
   startAngle = 90,
   endAngle = -270,
+  tooltipData,
 }: RadialChartProps) {
+  // Calculate the real barSize based on the difference
+  const barSize = outerRadius - innerRadius;
   const data = [
     {
-      name: label,
       value: percentage,
-      fill: color,
+      tooltipData,
     },
   ];
 
@@ -46,7 +98,7 @@ export function RadialChart({
         cy="50%"
         innerRadius={innerRadius}
         outerRadius={outerRadius}
-        barSize={20}
+        barSize={barSize}
         data={data}
         startAngle={startAngle}
         endAngle={endAngle}
@@ -57,20 +109,31 @@ export function RadialChart({
           angleAxisId={0}
           tick={false}
         />
+
+        {tooltipData && (
+          <Tooltip
+            content={<CustomTooltip />}
+            wrapperStyle={{ zIndex: 1000 }}
+            cursor={false}
+          />
+        )}
+
         <RadialBar
           background={{ fill: backgroundColor }}
           dataKey="value"
-          cornerRadius={10}
           fill={color}
+          cornerRadius={10}
+          isAnimationActive={false}
         />
+
         <text
           x="50%"
-          y="50%"
+          y="38%"
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-4xl font-bold"
+          className="text-2xl font-bold"
           style={{
-            fill: "var(--chart-text-primary)",
+            fill: "var(--text-neutral-secondary)",
           }}
         >
           {percentage}%

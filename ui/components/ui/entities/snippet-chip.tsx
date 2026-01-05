@@ -28,11 +28,9 @@ export const SnippetChip = ({
       classNames={{
         content: "min-w-0 overflow-hidden",
         pre: "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+        base: "border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-lg border py-1",
       }}
-      color="default"
       size="sm"
-      variant="flat"
-      radius="lg"
       hideSymbol
       copyIcon={<CopyIcon size={16} />}
       checkIcon={<DoneIcon size={16} />}

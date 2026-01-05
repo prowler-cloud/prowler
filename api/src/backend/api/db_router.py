@@ -26,6 +26,7 @@ class MainRouter:
     default_db = "default"
     admin_db = "admin"
     replica_db = "replica"
+    admin_replica_db = "admin_replica"
 
     def db_for_read(self, model, **hints):  # noqa: F841
         model_table_name = model._meta.db_table
@@ -48,8 +49,14 @@ class MainRouter:
         return db == self.admin_db
 
     def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
-        # Allow relations if both objects are in either "default" or "admin" db connectors
-        if {obj1._state.db, obj2._state.db} <= {self.default_db, self.admin_db}:
+        # Allow relations when both objects originate from allowed connectors
+        allowed_dbs = {
+            self.default_db,
+            self.admin_db,
+            self.replica_db,
+            self.admin_replica_db,
+        }
+        if {obj1._state.db, obj2._state.db} <= allowed_dbs:
             return True
         return None
 

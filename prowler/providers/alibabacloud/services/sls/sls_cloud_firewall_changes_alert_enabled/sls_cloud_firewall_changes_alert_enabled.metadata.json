@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_cloud_firewall_changes_alert_enabled",
+  "CheckTitle": "Log monitoring and alerts are set up for Cloud Firewall changes",
+  "CheckType": [
+    "Suspicious network connection",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
+  "Description": "It is recommended that a **metric filter and alarm** be established for **Cloud Firewall** rule changes.",
+  "Risk": "Monitoring for **Create** or **Update** firewall rule events gives insight into network access changes and may reduce the time it takes to detect **suspicious activity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/cloudfirewall-control-policy-changes-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for Cloud Firewall changes",
+      "Url": "https://hub.prowler.com/check/sls_cloud_firewall_changes_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

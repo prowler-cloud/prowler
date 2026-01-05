@@ -22,6 +22,13 @@ Please add a detailed description of how to review this PR.
 - [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
 
+#### UI
+- [ ] All issue/task requirements work as expected on the UI
+- [ ] Screenshots/Video of the functionality flow (if applicable) - Mobile (X < 640px)
+- [ ] Screenshots/Video of the functionality flow (if applicable) - Table (640px > X < 1024px)
+- [ ] Screenshots/Video of the functionality flow (if applicable) - Desktop (X > 1024px)
+- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/ui/CHANGELOG.md), if applicable.
+
 #### API
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required (e.g., specs, Poetry, etc.).

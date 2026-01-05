@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_postgresql_log_disconnections_enabled",
+  "CheckTitle": "Server parameter log_disconnections is set to ON for PostgreSQL Database Server",
+  "CheckType": [
+    "Intrusion into applications",
+    "Unusual logon"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Enable `log_disconnections` on **PostgreSQL Servers**. Enabling `log_disconnections` helps PostgreSQL Database log session terminations of the server, as well as duration of the session.\n\nLog data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+  "Risk": "Without **disconnection logging**, it's harder to track session durations and identify abnormal disconnection patterns that might indicate **attacks** or **stability issues**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-disconnections-for-postgresql.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyParameter --DBInstanceId <instance_id> --Parameters \"{\\\"log_disconnections\\\":\\\"on\\\"}\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Select the region and target instance\n3. In the left-side navigation pane, select **Parameters**\n4. Find the `log_disconnections` parameter and set it to `on`\n5. Click **Apply Changes**",
+      "Url": "https://hub.prowler.com/check/rds_instance_postgresql_log_disconnections_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

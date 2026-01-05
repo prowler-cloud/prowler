@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:guardrails/resource-id",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Ensure that sensitive information filters are enabled for Amazon Bedrock guardrails to prevent the leakage of sensitive data such as personally identifiable information (PII), financial data, or confidential corporate information.",
   "Risk": "If sensitive information filters are not enabled, Bedrock models may inadvertently generate or expose confidential or sensitive information in responses, leading to data breaches, regulatory violations, or reputational damage.",
   "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
@@ -23,7 +24,9 @@
       "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

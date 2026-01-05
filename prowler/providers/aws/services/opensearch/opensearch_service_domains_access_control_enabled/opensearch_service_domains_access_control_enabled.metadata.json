@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have fine grained access control enabled",
   "Risk": "Amazon ES's fine graine access control enhances security by verifying that access to OpenSearch domains is controlled at a granular level, allowing for more precise permissions management and reducing the risk of unauthorised access.",
   "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html",

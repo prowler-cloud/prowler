@@ -1,10 +1,10 @@
 import { Tooltip } from "@heroui/tooltip";
-import React from "react";
 
 import { ProviderType } from "@/types";
 
 import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
 import { getProviderLogo } from "../ui/entities";
+
 interface ProviderInfoProps {
   connected: boolean | null;
   provider: ProviderType;
@@ -12,12 +12,12 @@ interface ProviderInfoProps {
   providerUID?: string;
 }
 
-export const ProviderInfo: React.FC<ProviderInfoProps> = ({
+export const ProviderInfo = ({
   connected,
   provider,
   providerAlias,
   providerUID,
-}) => {
+}: ProviderInfoProps) => {
   const getIcon = () => {
     switch (connected) {
       case true:
@@ -31,8 +31,8 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
       case false:
         return (
           <Tooltip content="Provider connection failed" className="text-xs">
-            <div className="rounded-medium border-danger bg-system-error-lighter flex items-center justify-center border-2 p-1">
-              <ConnectionFalse className="text-danger" size={24} />
+            <div className="rounded-medium border-border-error flex items-center justify-center border-2 p-1">
+              <ConnectionFalse className="text-text-error-primary" size={24} />
             </div>
           </Tooltip>
         );

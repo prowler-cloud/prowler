@@ -52,7 +52,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
+              "getting-started/products/prowler-lighthouse-ai"
             ]
           },
           {
@@ -98,8 +98,15 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-mute-findings",
+              "user-guide/tutorials/prowler-app-api-keys",
+              {
+                "group": "Mutelist",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-simple-mutelist",
+                  "user-guide/tutorials/prowler-app-mute-findings"
+                ]
+              },
               {
                 "group": "Integrations",
                 "expanded": true,
@@ -109,7 +116,14 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
+              "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
@@ -192,10 +206,16 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
-                  "user-guide/providers/kubernetes/in-cluster",
-                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
                 ]
               },
@@ -264,7 +284,8 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse"
+              "developer-guide/lighthouse",
+              "developer-guide/mcp-server"
             ]
           },
           {
@@ -287,7 +308,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",

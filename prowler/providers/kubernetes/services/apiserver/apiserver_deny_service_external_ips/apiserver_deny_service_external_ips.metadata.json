@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures the DenyServiceExternalIPs admission controller is enabled, which rejects all new usage of the Service field externalIPs. Enabling this controller enhances security by preventing the misuse of the externalIPs field.",
   "Risk": "Not setting the DenyServiceExternalIPs admission controller could allow users to create Services with external IPs, potentially exposing services to security risks.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#denyserviceexternalips",

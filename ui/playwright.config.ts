@@ -13,7 +13,9 @@ export default defineConfig({
   },
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.AUTH_URL
+      ? process.env.AUTH_URL
+      : "http://localhost:3000",
     trace: "off",
     screenshot: "off",
     video: "off",
@@ -89,11 +91,35 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: "auth-login.spec.ts",
+    },
+    // This project runs the sign-up test suite
+    {
+      name: "sign-up",
+      testMatch: "sign-up.spec.ts",
+    },
+    // This project runs the scans test suite
+    {
+      name: "scans",
+      testMatch: "scans.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
+    // This project runs the providers test suite
+    {
+      name: "providers",
+      testMatch: "providers.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
+    // This project runs the invitations test suite
+    {
+      name: "invitations",
+      testMatch: "invitations.spec.ts",
+      dependencies: ["admin.auth.setup"],
     },
   ],
 
   webServer: {
-    command: process.env.CI ? "npm run start" : "npm run dev",
+    command: process.env.CI ? "pnpm run start" : "pnpm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

@@ -11,19 +11,22 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
+  ApiResponse,
   ProviderType,
 } from "@/types";
 
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
-  onSubmit: (formData: FormData) => Promise<any>;
+  providerUid?: string;
+  onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
 };
 
 export const useCredentialsForm = ({
   providerType,
   providerId,
+  providerUid,
   onSubmit,
   successNavigationUrl,
 }: UseCredentialsFormProps) => {
@@ -35,6 +38,9 @@ export const useCredentialsForm = ({
   // Select the appropriate schema based on provider type and via parameter
   const getFormSchema = () => {
     if (providerType === "aws" && via === "role") {
+      return addCredentialsRoleFormSchema(providerType);
+    }
+    if (providerType === "alibabacloud" && via === "role") {
       return addCredentialsRoleFormSchema(providerType);
     }
     if (providerType === "gcp" && via === "service-account") {
@@ -155,6 +161,37 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
+      case "oraclecloud":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OCI_USER]: "",
+          [ProviderCredentialFields.OCI_FINGERPRINT]: "",
+          [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
+          [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
+          [ProviderCredentialFields.OCI_REGION]: "",
+          [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
+        };
+      case "mongodbatlas":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: "",
+          [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
+        };
+      case "alibabacloud":
+        if (via === "role") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: "",
+          };
+        }
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+        };
       default:
         return baseDefaults;
     }

@@ -11,12 +11,11 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
 import { Menu } from "./menu";
-import { SidebarToggle } from "./sidebar-toggle";
 
 export function Sidebar() {
   const sidebar = useStore(useSidebar, (x) => x);
   if (!sidebar) return null;
-  const { isOpen, toggleOpen, getOpenState, setIsHover, settings } = sidebar;
+  const { isOpen, getOpenState, setIsHover, settings } = sidebar;
   return (
     <aside
       className={cn(
@@ -25,11 +24,10 @@ export function Sidebar() {
         settings.disabled && "hidden",
       )}
     >
-      <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />
       <div
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
-        className="no-scrollbar dark:shadow-primary relative flex h-full flex-col overflow-x-hidden overflow-y-auto px-3 py-4 shadow-md"
+        className="no-scrollbar relative flex h-full flex-col overflow-x-hidden overflow-y-auto px-3 py-6"
       >
         <Button
           className={cn(
