@@ -542,8 +542,7 @@ class Compute(GCPService):
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for image in response.get("items", []):
-                        # Extract public members from IAM policy
-                        public_members = []
+                        publicly_shared = False
                         try:
                             iam_policy = (
                                 self.client.images()
@@ -553,11 +552,13 @@ class Compute(GCPService):
                                 .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                             )
                             for binding in iam_policy.get("bindings", []):
-                                for member in binding.get("members", []):
-                                    # allUsers cannot be assigned to Compute Engine images (API restriction).
-                                    # Only allAuthenticatedUsers can be set, which is the security risk.
-                                    if member == "allAuthenticatedUsers":
-                                        public_members.append(member)
+                                # allUsers cannot be assigned to Compute Engine images (API restriction).
+                                # Only allAuthenticatedUsers can be set, which is the security risk.
+                                if "allAuthenticatedUsers" in binding.get(
+                                    "members", []
+                                ):
+                                    publicly_shared = True
+                                    break
                         except Exception as error:
                             logger.error(
                                 f"{project_id}/{image['name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -568,7 +569,7 @@ class Compute(GCPService):
                                 name=image["name"],
                                 id=image["id"],
                                 project_id=project_id,
-                                public_members=list(set(public_members)),
+                                publicly_shared=publicly_shared,
                             )
                         )
 
@@ -678,4 +679,4 @@ class Image(BaseModel):
     name: str
     id: str
     project_id: str
-    public_members: list[str] = []
+    publicly_shared: bool = False

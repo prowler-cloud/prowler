@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class compute_image_publicly_shared(Check):
+class compute_image_not_publicly_shared(Check):
     """Ensure Compute Engine disk images are not publicly shared.
 
     This check evaluates whether custom disk images in GCP Compute Engine
@@ -30,10 +30,9 @@ class compute_image_publicly_shared(Check):
                 f"Compute Engine disk image {image.name} is not publicly shared."
             )
 
-            if image.public_members:
+            if image.publicly_shared:
                 report.status = "FAIL"
-                public_members_str = ", ".join(image.public_members)
-                report.status_extended = f"Compute Engine disk image {image.name} is publicly shared with {public_members_str}."
+                report.status_extended = f"Compute Engine disk image {image.name} is publicly shared with allAuthenticatedUsers."
 
             findings.append(report)
 

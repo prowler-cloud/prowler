@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_image_publicly_shared",
+  "CheckID": "compute_image_not_publicly_shared",
   "CheckTitle": "Compute Engine disk image is not publicly shared",
   "CheckType": [],
   "ServiceName": "compute",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Restrict access to custom disk images by removing the **allAuthenticatedUsers** IAM binding. Apply the principle of least privilege by granting access only to specific users, groups, or service accounts that require it.",
-      "Url": "https://hub.prowler.com/check/compute_image_publicly_shared"
+      "Url": "https://hub.prowler.com/check/compute_image_not_publicly_shared"
     }
   },
   "Categories": [

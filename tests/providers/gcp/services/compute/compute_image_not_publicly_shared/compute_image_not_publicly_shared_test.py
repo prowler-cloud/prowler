@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
-class Test_compute_image_publicly_shared:
+class Test_compute_image_not_publicly_shared:
     def test_compute_no_images(self):
         compute_client = mock.MagicMock()
         compute_client.images = []
@@ -14,15 +14,15 @@ class Test_compute_image_publicly_shared:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared.compute_client",
+                "prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared import (
-                compute_image_publicly_shared,
+            from prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared import (
+                compute_image_not_publicly_shared,
             )
 
-            check = compute_image_publicly_shared()
+            check = compute_image_not_publicly_shared()
             result = check.execute()
             assert len(result) == 0
 
@@ -35,12 +35,12 @@ class Test_compute_image_publicly_shared:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared.compute_client",
+                "prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared import (
-                compute_image_publicly_shared,
+            from prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared import (
+                compute_image_not_publicly_shared,
             )
             from prowler.providers.gcp.services.compute.compute_service import Image
 
@@ -48,13 +48,13 @@ class Test_compute_image_publicly_shared:
                 name="private-image",
                 id="1234567890",
                 project_id=GCP_PROJECT_ID,
-                public_members=[],
+                publicly_shared=False,
             )
 
             compute_client.project_ids = [GCP_PROJECT_ID]
             compute_client.images = [image]
 
-            check = compute_image_publicly_shared()
+            check = compute_image_not_publicly_shared()
             result = check.execute()
 
             assert len(result) == 1
@@ -75,7 +75,7 @@ class Test_compute_image_publicly_shared:
             name="public-image",
             id="1234567890",
             project_id=GCP_PROJECT_ID,
-            public_members=["allAuthenticatedUsers"],
+            publicly_shared=True,
         )
 
         compute_client = mock.MagicMock()
@@ -88,15 +88,15 @@ class Test_compute_image_publicly_shared:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared.compute_client",
+                "prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared import (
-                compute_image_publicly_shared,
+            from prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared import (
+                compute_image_not_publicly_shared,
             )
 
-            check = compute_image_publicly_shared()
+            check = compute_image_not_publicly_shared()
             result = check.execute()
 
             assert len(result) == 1
@@ -117,14 +117,14 @@ class Test_compute_image_publicly_shared:
             name="private-image",
             id="1111111111",
             project_id=GCP_PROJECT_ID,
-            public_members=[],
+            publicly_shared=False,
         )
 
         public_image = Image(
             name="public-image",
             id="2222222222",
             project_id=GCP_PROJECT_ID,
-            public_members=["allAuthenticatedUsers"],
+            publicly_shared=True,
         )
 
         compute_client = mock.MagicMock()
@@ -137,15 +137,15 @@ class Test_compute_image_publicly_shared:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared.compute_client",
+                "prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_image_publicly_shared.compute_image_publicly_shared import (
-                compute_image_publicly_shared,
+            from prowler.providers.gcp.services.compute.compute_image_not_publicly_shared.compute_image_not_publicly_shared import (
+                compute_image_not_publicly_shared,
             )
 
-            check = compute_image_publicly_shared()
+            check = compute_image_not_publicly_shared()
             result = check.execute()
 
             assert len(result) == 2
