@@ -54,6 +54,8 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
+    GitHubConfigSerializer,
+    GitHubCredentialSerializer,
     IntegrationConfigField,
     IntegrationCredentialField,
     JiraConfigSerializer,
@@ -2432,6 +2434,28 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.GITHUB:
+            if providers:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Relationship field is not accepted. This integration applies to all providers."
+                    }
+                )
+            if configuration:
+                raise serializers.ValidationError(
+                    {
+                        "configuration": "This integration does not support custom configuration."
+                    }
+                )
+            config_serializer = GitHubConfigSerializer
+            # Create non-editable configuration for GitHub integration
+            configuration.update(
+                {
+                    "repositories": {},
+                    "owner": credentials.get("owner", ""),
+                }
+            )
+            credentials_serializers = [GitHubCredentialSerializer]
         elif integration_type == Integration.IntegrationChoices.JIRA:
             if providers:
                 raise serializers.ValidationError(
@@ -2519,7 +2543,11 @@ class IntegrationSerializer(RLSSerializer):
                 for provider in representation["providers"]
                 if provider["id"] in allowed_provider_ids
             ]
-        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+        if instance.integration_type == Integration.IntegrationChoices.GITHUB:
+            representation["configuration"].update(
+                {"owner": instance.credentials.get("owner", "")}
+            )
+        elif instance.integration_type == Integration.IntegrationChoices.JIRA:
             representation["configuration"].update(
                 {"domain": instance.credentials.get("domain")}
             )
@@ -2664,6 +2692,51 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
                 {"domain": instance.credentials.get("domain")}
             )
         return representation
+
+
+class IntegrationGitHubDispatchSerializer(BaseSerializerV1):
+    """
+    Serializer for dispatching findings to GitHub integration.
+    """
+
+    repository = serializers.CharField(required=True)
+    labels = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+
+    class JSONAPIMeta:
+        resource_name = "integrations-github-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if (
+            integration_instance.integration_type
+            != Integration.IntegrationChoices.GITHUB
+        ):
+            raise ValidationError(
+                {
+                    "integration_type": "The given integration is not a GitHub integration"
+                }
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        repository = attrs.get("repository")
+        if repository not in integration_instance.configuration.get("repositories", {}):
+            raise ValidationError(
+                {
+                    "repository": "The given repository is not available for this GitHub integration. Refresh the "
+                    "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
 
 
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):

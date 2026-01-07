@@ -67,6 +67,14 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class GitHubConfigSerializer(BaseValidateSerializer):
+    owner = serializers.CharField(read_only=True)
+    repositories = serializers.DictField(read_only=True)
+
+    class Meta:
+        resource_name = "integrations"
+
+
 class JiraConfigSerializer(BaseValidateSerializer):
     domain = serializers.CharField(read_only=True)
     issue_types = serializers.ListField(
@@ -88,6 +96,14 @@ class AWSCredentialSerializer(BaseValidateSerializer):
     aws_access_key_id = serializers.CharField(required=False)
     aws_secret_access_key = serializers.CharField(required=False)
     aws_session_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class GitHubCredentialSerializer(BaseValidateSerializer):
+    token = serializers.CharField(required=True)
+    owner = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "integrations"
@@ -152,6 +168,23 @@ class JiraCredentialSerializer(BaseValidateSerializer):
                         "pattern": "^[a-zA-Z0-9=,.@_-]+$",
                     },
                 },
+            },
+            {
+                "type": "object",
+                "title": "GitHub Credentials",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "description": "GitHub Personal Access Token (PAT) with repo scope. Can be generated from "
+                        "GitHub Settings > Developer settings > Personal access tokens.",
+                    },
+                    "owner": {
+                        "type": "string",
+                        "description": "Repository owner (username or organization name). Optional - if not provided, "
+                        "all accessible repositories will be available.",
+                    },
+                },
+                "required": ["token"],
             },
             {
                 "type": "object",
@@ -220,6 +253,14 @@ class IntegrationCredentialField(serializers.JSONField):
                         "description": "If true, archives findings that are not present in the current execution.",
                     },
                 },
+            },
+            {
+                "type": "object",
+                "title": "GitHub",
+                "description": "GitHub integration does not accept any configuration in the payload. Leave it as an "
+                "empty JSON object (`{}`).",
+                "properties": {},
+                "additionalProperties": False,
             },
             {
                 "type": "object",

@@ -12,6 +12,7 @@ from api.v1.views import (
     FindingViewSet,
     GithubSocialLoginView,
     GoogleSocialLoginView,
+    IntegrationGitHubViewSet,
     IntegrationJiraViewSet,
     IntegrationViewSet,
     InvitationAcceptViewSet,
@@ -93,6 +94,9 @@ users_router.register(r"memberships", MembershipViewSet, basename="user-membersh
 
 integrations_router = routers.NestedSimpleRouter(
     router, r"integrations", lookup="integration"
+)
+integrations_router.register(
+    r"github", IntegrationGitHubViewSet, basename="integration-github"
 )
 integrations_router.register(
     r"jira", IntegrationJiraViewSet, basename="integration-jira"

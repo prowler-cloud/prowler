@@ -287,6 +287,20 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             integration.save()
 
         return connection
+    elif integration.integration_type == Integration.IntegrationChoices.GITHUB:
+        from prowler.lib.outputs.github.github import GitHub
+
+        github_connection = GitHub.test_connection(
+            **integration.credentials,
+            raise_on_exception=False,
+        )
+        repositories = (
+            github_connection.repositories if github_connection.is_connected else {}
+        )
+        with rls_transaction(str(integration.tenant_id)):
+            integration.configuration["repositories"] = repositories
+            integration.save()
+        return github_connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
         jira_connection = Jira.test_connection(
             **integration.credentials,
@@ -406,9 +420,22 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     return serializer.data
 
 
-def initialize_prowler_integration(integration: Integration) -> Jira:
+def initialize_prowler_integration(integration: Integration):
     # TODO Refactor other integrations to use this function
-    if integration.integration_type == Integration.IntegrationChoices.JIRA:
+    if integration.integration_type == Integration.IntegrationChoices.GITHUB:
+        from prowler.lib.outputs.github.exceptions import GitHubAuthenticationError
+        from prowler.lib.outputs.github.github import GitHub
+
+        try:
+            return GitHub(**integration.credentials)
+        except GitHubAuthenticationError as github_auth_error:
+            with rls_transaction(str(integration.tenant_id)):
+                integration.configuration["repositories"] = {}
+                integration.connected = False
+                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.save()
+            raise github_auth_error
+    elif integration.integration_type == Integration.IntegrationChoices.JIRA:
         try:
             return Jira(**integration.credentials)
         except JiraBasicAuthError as jira_auth_error:

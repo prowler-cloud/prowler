@@ -1586,6 +1586,7 @@ class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         AMAZON_S3 = "amazon_s3", _("Amazon S3")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
+        GITHUB = "github", _("GitHub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")
 
