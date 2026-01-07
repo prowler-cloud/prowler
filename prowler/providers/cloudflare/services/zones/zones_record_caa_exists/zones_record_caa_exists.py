@@ -3,7 +3,7 @@ from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zones.zones_client import zones_client
 
 
-class zones_caa_record_exists(Check):
+class zones_record_caa_exists(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 

@@ -1,6 +1,6 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_spf_record_exists",
+  "CheckID": "zones_record_spf_exists",
   "CheckTitle": "SPF record exists for email authentication",
   "CheckType": [],
   "ServiceName": "zones",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure **SPF records** listing authorized mail servers.\n- SPF records start with `v=spf1` and define authorized senders\n- Use `include:` to authorize third-party mail services\n- Combine with **DKIM** and **DMARC** for comprehensive email authentication\n- Test SPF records using online validators before deployment",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_spf_record_exists"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_record_spf_exists"
     }
   },
   "Categories": [

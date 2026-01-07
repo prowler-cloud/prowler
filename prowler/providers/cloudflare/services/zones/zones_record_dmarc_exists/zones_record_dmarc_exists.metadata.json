@@ -1,6 +1,6 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_dmarc_record_exists",
+  "CheckID": "zones_record_dmarc_exists",
   "CheckTitle": "DMARC record exists for email authentication and reporting",
   "CheckType": [],
   "ServiceName": "zones",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Implement **DMARC** as part of a complete email authentication strategy with SPF and DKIM.\n- Start with `p=none` (monitoring) to gather data without affecting delivery\n- Progress to `p=quarantine` to send suspicious emails to spam\n- Finally use `p=reject` for strict enforcement\n- Configure `rua` to receive aggregate reports on authentication results",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_dmarc_record_exists"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_record_dmarc_exists"
     }
   },
   "Categories": [

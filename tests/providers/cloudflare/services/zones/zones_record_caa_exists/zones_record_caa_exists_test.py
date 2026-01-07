@@ -27,7 +27,7 @@ class CloudflareDNSRecord(BaseModel):
     proxied: bool = False
 
 
-class Test_zones_caa_record_exists:
+class Test_zones_record_caa_exists:
     def test_no_zones(self):
         zones_client = mock.MagicMock
         zones_client.zones = {}
@@ -41,19 +41,19 @@ class Test_zones_caa_record_exists:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.zones_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.zones_client",
                 new=zones_client,
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.dns_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.dns_client",
                 new=dns_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists import (
-                zones_caa_record_exists,
+            from prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists import (
+                zones_record_caa_exists,
             )
 
-            check = zones_caa_record_exists()
+            check = zones_record_caa_exists()
             result = check.execute()
             assert len(result) == 0
 
@@ -87,19 +87,19 @@ class Test_zones_caa_record_exists:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.zones_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.zones_client",
                 new=zones_client,
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.dns_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.dns_client",
                 new=dns_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists import (
-                zones_caa_record_exists,
+            from prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists import (
+                zones_record_caa_exists,
             )
 
-            check = zones_caa_record_exists()
+            check = zones_record_caa_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == ZONE_ID
@@ -148,19 +148,19 @@ class Test_zones_caa_record_exists:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.zones_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.zones_client",
                 new=zones_client,
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.dns_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.dns_client",
                 new=dns_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists import (
-                zones_caa_record_exists,
+            from prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists import (
+                zones_record_caa_exists,
             )
 
-            check = zones_caa_record_exists()
+            check = zones_record_caa_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -199,19 +199,19 @@ class Test_zones_caa_record_exists:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.zones_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.zones_client",
                 new=zones_client,
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.dns_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.dns_client",
                 new=dns_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists import (
-                zones_caa_record_exists,
+            from prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists import (
+                zones_record_caa_exists,
             )
 
-            check = zones_caa_record_exists()
+            check = zones_record_caa_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -250,19 +250,19 @@ class Test_zones_caa_record_exists:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.zones_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.zones_client",
                 new=zones_client,
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists.dns_client",
+                "prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists.dns_client",
                 new=dns_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_caa_record_exists.zones_caa_record_exists import (
-                zones_caa_record_exists,
+            from prowler.providers.cloudflare.services.zones.zones_record_caa_exists.zones_record_caa_exists import (
+                zones_record_caa_exists,
             )
 
-            check = zones_caa_record_exists()
+            check = zones_record_caa_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

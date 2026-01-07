@@ -1,6 +1,6 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_caa_record_exists",
+  "CheckID": "zones_record_caa_exists",
   "CheckTitle": "CAA record exists to restrict certificate authority issuance",
   "CheckType": [],
   "ServiceName": "zones",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Add **CAA records** specifying authorized certificate authorities for your domain.\n- Provides defense against unauthorized certificate issuance\n- Use `issue` tag to authorize CAs for regular certificates\n- Use `issuewild` tag to control wildcard certificate issuance\n- Use `iodef` tag to receive reports of policy violations",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_caa_record_exists"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zones_record_caa_exists"
     }
   },
   "Categories": [

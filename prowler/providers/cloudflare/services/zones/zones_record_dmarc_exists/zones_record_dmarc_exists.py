@@ -3,7 +3,7 @@ from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zones.zones_client import zones_client
 
 
-class zones_spf_record_exists(Check):
+class zones_record_dmarc_exists(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
 
@@ -13,21 +13,23 @@ class zones_spf_record_exists(Check):
                 resource=zone,
             )
 
-            # SPF records are TXT records starting with "v=spf1"
-            spf_records = [
+            # DMARC records are TXT records at _dmarc subdomain starting with "v=DMARC1"
+            dmarc_records = [
                 record
                 for record in dns_client.records
                 if record.zone_id == zone.id
                 and record.type == "TXT"
-                and record.content.startswith("v=spf1")
+                and record.name
+                and record.name.startswith("_dmarc")
+                and "V=DMARC1" in record.content.upper()
             ]
 
-            if spf_records:
+            if dmarc_records:
                 report.status = "PASS"
-                report.status_extended = f"SPF record exists for zone {zone.name}."
+                report.status_extended = f"DMARC record exists for zone {zone.name}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"No SPF record found for zone {zone.name}."
+                report.status_extended = f"No DMARC record found for zone {zone.name}."
             findings.append(report)
 
         return findings
