@@ -254,27 +254,27 @@ prowler azure --managed-identity-auth
 
 ### Prerequisites
 
-Before using Managed Identity authentication, you need to:
+Before using Managed Identity authentication, the following steps are required:
 
-1. **Enable Managed Identity** on your Azure resource (e.g., VM, Container Instance)
-2. **Assign the required permissions** to the Managed Identity on the target subscription(s) you want to scan
+1. **Enable Managed Identity** on the Azure resource (e.g., VM, Container Instance)
+2. **Assign the required permissions** to the Managed Identity on the target subscription(s) to scan
 
 <Warning>
-A common misconception is that enabling a Managed Identity on a resource automatically grants it permissions. **This is not the case.** The Managed Identity itself is a service principal that must be explicitly granted Reader and ProwlerRole permissions on each subscription you want to scan.
+A common misconception is that enabling a Managed Identity on a resource automatically grants it permissions. **This is not the case.** Without explicit role assignments, Prowler will be unable to scan subscriptions and will return authorization errors, resulting in incomplete security assessments. The Managed Identity itself is a service principal that must be explicitly granted Reader and ProwlerRole permissions on each subscription to scan.
 </Warning>
 
 ### Step-by-Step Setup Guide
 
-#### Step 1: Enable Managed Identity on Your Azure Resource
+#### Step 1: Enable Managed Identity on the Azure Resource
 
 <Tabs>
   <Tab title="Azure VM">
     **Via Azure Portal:**
-    1. Navigate to your VM in the Azure Portal
+    1. Navigate to the VM in Azure Portal
     2. Select "Identity" from the left menu under "Security"
     3. Under "System assigned" tab, set Status to "On"
     4. Click "Save"
-    5. Note the "Object (principal) ID" - you'll need this for permission assignment
+    5. Note the "Object (principal) ID" - this value is required for permission assignment
 
     **Via Azure CLI:**
     ```console
@@ -303,26 +303,26 @@ A common misconception is that enabling a Managed Identity on a resource automat
 
 #### Step 2: Assign Reader Role to the Managed Identity
 
-The Managed Identity needs the **Reader** role on each subscription you want to scan. You must assign this role to the **Managed Identity's principal ID**, not the VM or resource itself.
+The Managed Identity needs the **Reader** role on each subscription to scan. This role must be assigned to the **Managed Identity's principal ID**, not the VM or resource itself.
 
 <Tabs>
   <Tab title="Azure Portal">
-    1. Navigate to the **target subscription** you want to scan (not the VM's resource group)
+    1. Navigate to the **target subscription** to scan (not the VM's resource group)
     2. Select "Access control (IAM)" from the left menu
     3. Click "+ Add" > "Add role assignment"
     4. Select "Reader" role, click "Next"
     5. Click "+ Select members"
-    6. Search for your VM name or paste the Managed Identity's Object/Principal ID
+    6. Search for the VM name or paste the Managed Identity's Object/Principal ID
     7. Select it and click "Select"
     8. Click "Review + assign"
 
     <Note>
-    If you're scanning a subscription different from where your VM is located, make sure you're assigning the role on the **target subscription**, not the VM's subscription.
+    When scanning a subscription different from where the VM is located, ensure the role is assigned on the **target subscription**, not the VM's subscription.
     </Note>
   </Tab>
   <Tab title="Azure CLI">
     ```console
-    # Get the principal ID of your resource's managed identity
+    # Get the principal ID of the resource's managed identity
     PRINCIPAL_ID=$(az vm identity show --name <vm-name> --resource-group <resource-group> --query principalId -o tsv)
 
     # Assign Reader role on the target subscription
@@ -337,7 +337,7 @@ The Managed Identity needs the **Reader** role on each subscription you want to 
 
 #### Step 3: Create and Assign ProwlerRole to the Managed Identity
 
-The ProwlerRole is a custom role required for specific security checks. First, create the role if it doesn't exist, then assign it to your Managed Identity.
+The ProwlerRole is a custom role required for specific security checks. First, create the role if it does not exist, then assign it to the Managed Identity.
 
 <Tabs>
   <Tab title="Azure CLI">
@@ -357,7 +357,7 @@ The ProwlerRole is a custom role required for specific security checks. First, c
 
     **Assign ProwlerRole to the Managed Identity:**
     ```console
-    # Get the principal ID if you don't have it
+    # Get the principal ID if not already available
     PRINCIPAL_ID=$(az vm identity show --name <vm-name> --resource-group <resource-group> --query principalId -o tsv)
 
     # Assign ProwlerRole on the target subscription
@@ -369,7 +369,7 @@ The ProwlerRole is a custom role required for specific security checks. First, c
     ```
   </Tab>
   <Tab title="Azure Portal">
-    Follow the same process as creating the ProwlerRole in the [Assigning ProwlerRole Permissions](/user-guide/providers/azure/authentication#assigning-prowlerrole-permissions-at-the-subscription-level) section, then assign it to your Managed Identity using the same steps as the Reader role assignment.
+    Follow the same process as creating the ProwlerRole in the [Assigning ProwlerRole Permissions](/user-guide/providers/azure/authentication#assigning-prowlerrole-permissions-at-the-subscription-level) section, then assign it to the Managed Identity using the same steps as the Reader role assignment.
   </Tab>
 </Tabs>
 
@@ -403,7 +403,7 @@ az rest --method POST \
 
 #### Step 5: Run Prowler
 
-SSH or connect to your Azure resource and run Prowler:
+SSH or connect to the Azure resource and run Prowler:
 
 ```console
 # Scan all accessible subscriptions
@@ -421,11 +421,11 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 
 #### Error: "No subscriptions were found, please check your permission assignments"
 
-**Cause:** The Managed Identity doesn't have the Reader role assigned on any subscription.
+**Cause:** The Managed Identity does not have the Reader role assigned on any subscription.
 
 **Solution:**
-- Verify the Managed Identity has the Reader role assigned on at least one subscription
-- Wait a few minutes after role assignment for Azure to propagate permissions
+- Verify the Managed Identity has the Reader role assigned on at least one subscription.
+- Wait a few minutes after role assignment for Azure to propagate permissions.
 - Verify role assignments:
   ```console
   az role assignment list --assignee <principal-id> --all
@@ -436,8 +436,8 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** The Managed Identity lacks the Reader role on the target subscription.
 
 **Solution:**
-- Ensure you assigned the Reader role to the **Managed Identity's principal ID**, not the VM resource
-- Verify you're assigning the role on the **target subscription** you want to scan, not just the VM's resource group
+- Ensure the Reader role is assigned to the **Managed Identity's principal ID**, not the VM resource.
+- Verify the role is assigned on the **target subscription** to scan, not just the VM's resource group.
 - Check role assignments:
   ```console
   az role assignment list --assignee <principal-id> --scope /subscriptions/<subscription-id>
@@ -445,11 +445,11 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 
 #### Error: "CredentialUnavailableError: ManagedIdentityCredential authentication unavailable"
 
-**Cause:** Managed Identity is not enabled on the resource, or you're running Prowler outside of Azure.
+**Cause:** Managed Identity is not enabled on the resource, or Prowler is running outside of Azure.
 
 **Solution:**
-- Verify Managed Identity is enabled on your Azure resource
-- Ensure you're running Prowler from within the Azure resource (not your local machine)
+- Verify Managed Identity is enabled on the Azure resource.
+- Ensure Prowler is running from within the Azure resource (not a local machine).
 - Check Managed Identity status:
   ```console
   az vm identity show --name <vm-name> --resource-group <resource-group>
@@ -460,8 +460,8 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** The Managed Identity lacks Microsoft Graph API permissions.
 
 **Solution:**
-- Assign the required Graph API permissions as shown in Step 4
-- These permissions are optional for basic resource scanning but required for Entra ID security checks
+- Assign the required Graph API permissions as shown in Step 4.
+- These permissions are optional for basic resource scanning but required for Entra ID security checks.
 
 ## Browser Authentication
 
