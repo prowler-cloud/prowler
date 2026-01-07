@@ -8,10 +8,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Add Provider filter to Resources page [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
 
 ### 🔄 Changed
 
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Rename resource_group filter to group in Resources page and Overview cards [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
+- Update Resources filters to use __in format for multi-select support [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
 - Swap Risk Plot axes: X = Fail Findings, Y = Prowler ThreatScore [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
