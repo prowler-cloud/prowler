@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have enforce HTTPS enabled",
   "Risk": "If not enable unauthorized access to your data could risk increases.",
   "RelatedUrl": "",

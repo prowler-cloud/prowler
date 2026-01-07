@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
+  "ResourceGroup": "database",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have node-to-node encryption enabled",
   "Risk": "Node-to-node encryption provides an additional layer of security on top of the default features of Amazon ES. This architecture prevents potential attackers from intercepting traffic between Elasticsearch nodes and keeps the cluster secure.",
   "RelatedUrl": "",

@@ -1,0 +1,81 @@
+name: "MCP: PyPI Release"
+
+on:
+  release:
+    types:
+      - "published"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name }}
+  PYTHON_VERSION: "3.12"
+  WORKING_DIRECTORY: ./mcp_server
+
+jobs:
+  validate-release:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      prowler_version: ${{ steps.parse-version.outputs.version }}
+      major_version: ${{ steps.parse-version.outputs.major }}
+
+    steps:
+      - name: Parse and validate version
+        id: parse-version
+        run: |
+          PROWLER_VERSION="${{ env.RELEASE_TAG }}"
+          echo "version=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
+
+          # Extract major version
+          MAJOR_VERSION="${PROWLER_VERSION%%.*}"
+          echo "major=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
+
+          # Validate major version (only Prowler 3, 4, 5 supported)
+          case ${MAJOR_VERSION} in
+            3|4|5)
+              echo "✓ Releasing Prowler MCP for tag ${PROWLER_VERSION}"
+              ;;
+            *)
+              echo "::error::Unsupported Prowler major version: ${MAJOR_VERSION}"
+              exit 1
+              ;;
+          esac
+
+  publish-prowler-mcp:
+    needs: validate-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: pypi-prowler-mcp
+      url: https://pypi.org/project/prowler-mcp/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build prowler-mcp package
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: uv build
+
+      - name: Publish prowler-mcp package to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          packages-dir: ${{ env.WORKING_DIRECTORY }}/dist/
+          print-hash: true

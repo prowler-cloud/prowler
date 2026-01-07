@@ -20,6 +20,7 @@ env:
 
 jobs:
   api-dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -27,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Check if Dockerfile changed
         id: dockerfile-changed
@@ -43,6 +44,7 @@ jobs:
           ignore: DL3013
 
   api-container-build-and-scan:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -61,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Check for API changes
         id: check-changes
@@ -90,7 +92,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
       - name: Scan container with Trivy for ${{ matrix.arch }}
-        if: github.repository == 'prowler-cloud/prowler' && steps.check-changes.outputs.any_changed == 'true'
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}

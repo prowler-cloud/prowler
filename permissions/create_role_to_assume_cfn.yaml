@@ -5,7 +5,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
 #  --template-body "file://create_role_to_assume_cfn.yaml" \
 #  --stack-name "ProwlerScanRole" \
-#  --parameters "ParameterKey=AuthorisedARN,ParameterValue=arn:aws:iam::123456789012:root"
+#  --parameters "ParameterKey=AuthorisedARN,ParameterValue=arn:aws:iam::123456789012:root" \
+#               "ParameterKey=ExternalId,ParameterValue=YourExternalId"
 #
 Description: |
   This template creates an AWS IAM Role with an inline policy and two AWS managed policies
@@ -20,6 +21,13 @@ Parameters:
       ARN of user who is authorised to assume the role that is created by this template.
       E.g., arn:aws:iam::123456789012:root
     Type: String
+  ExternalId:
+    Description: |
+      This is the External ID that Prowler will use to assume the role.
+    Type: String
+    MinLength: 1
+    AllowedPattern: ".+"
+    ConstraintDescription: "ExternalId must not be empty."
   ProwlerRoleName:
     Description: |
       Name of the IAM role that will have these policies attached. Default: ProwlerScanRole
@@ -37,10 +45,12 @@ Resources:
             Principal:
               AWS: !Sub ${AuthorisedARN}
             Action: 'sts:AssumeRole'
-            ## In case MFA is required uncomment lines below and read https://github.com/prowler-cloud/prowler#run-prowler-with-mfa-protected-credentials
-            # Condition:
-            #   Bool:
-            #     'aws:MultiFactorAuthPresent': true
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+              ## In case MFA is required uncomment lines below and read https://github.com/prowler-cloud/prowler#run-prowler-with-mfa-protected-credentials
+              # Bool:
+              #   'aws:MultiFactorAuthPresent': true
       # This is 12h that is maximum allowed, Minimum is 3600 = 1h
       # to take advantage of this use -T like in './prowler --role ProwlerScanRole.ARN -T 43200'
       MaxSessionDuration: 43200

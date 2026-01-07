@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**Amazon Macie** administrator account has **automated sensitive data discovery** enabled for S3 data. The evaluation confirms the feature's status for the account in each Region.",
   "Risk": "Without continuous discovery, sensitive S3 objects remain unclassified and unnoticed, weakening **confidentiality**. Over-permissive or public access can persist undetected, enabling **data exfiltration** and delaying containment and **forensic** response.",
   "RelatedUrl": "",
