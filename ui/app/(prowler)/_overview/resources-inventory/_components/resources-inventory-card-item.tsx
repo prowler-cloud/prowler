@@ -22,13 +22,16 @@ export function ResourcesInventoryCardItem({
 
     const params = new URLSearchParams();
 
-    // Add resource group specific filter
-    params.set("filter[resource_group]", item.id);
+    // Add group specific filter
+    params.set("filter[group__in]", item.id);
 
     // Add current page filters (provider, account, etc.)
+    // Transform provider_id__in to provider__in for resources endpoint
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && !params.has(key)) {
-        params.set(key, String(value));
+        const transformedKey =
+          key === "filter[provider_id__in]" ? "filter[provider__in]" : key;
+        params.set(transformedKey, String(value));
       }
     });
 
