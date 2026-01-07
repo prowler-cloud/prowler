@@ -9,6 +9,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.17.2] (Prowler v5.16.2)
+
+### Security
+- Updated dependencies to patch security vulnerabilities: Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
+
+---
+
 ## [1.17.1] (Prowler v5.16.1)
 
 ### Changed
