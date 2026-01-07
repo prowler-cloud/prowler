@@ -294,6 +294,7 @@
               "developer-guide/aws-details",
               "developer-guide/azure-details",
               "developer-guide/gcp-details",
+              "developer-guide/alibabacloud-details",
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
