@@ -343,8 +343,11 @@ This configures skills for AI coding assistants that follow the [agentskills.io]
 | **Claude Code** | `.claude/skills/` (symlink) |
 | **OpenCode** | `.claude/skills/` (symlink) |
 | **Codex (OpenAI)** | `.codex/skills/` (symlink) |
+| **GitHub Copilot** | `.github/skills/` (symlink) |
+| **Gemini CLI** | `.gemini/skills/` (symlink) |
 
 > **Note:** Restart your AI coding assistant after running setup to load the skills.
+> Gemini CLI requires `experimental.skills` enabled in settings.
 
 # 📖 Documentation
 

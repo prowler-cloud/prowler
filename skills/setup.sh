@@ -3,6 +3,8 @@
 # Creates symlinks for AI coding assistants that follow agentskills.io standard:
 #   - Claude Code / OpenCode: .claude/skills/ symlink
 #   - Codex (OpenAI): .codex/skills/ symlink
+#   - GitHub Copilot: .github/skills/ symlink
+#   - Gemini CLI: .gemini/skills/ symlink
 
 set -e
 
@@ -13,6 +15,8 @@ SKILLS_SOURCE="$SCRIPT_DIR"
 # Target locations
 CLAUDE_SKILLS_TARGET="$REPO_ROOT/.claude/skills"
 CODEX_SKILLS_TARGET="$REPO_ROOT/.codex/skills"
+GITHUB_SKILLS_TARGET="$REPO_ROOT/.github/skills"
+GEMINI_SKILLS_TARGET="$REPO_ROOT/.gemini/skills"
 
 # Colors for output
 RED='\033[0;31m'
@@ -39,7 +43,7 @@ echo ""
 # =============================================================================
 # CLAUDE CODE / OPENCODE SETUP (.claude/skills symlink)
 # =============================================================================
-echo -e "${YELLOW}[1/2] Setting up Claude Code / OpenCode...${NC}"
+echo -e "${YELLOW}[1/4] Setting up Claude Code / OpenCode...${NC}"
 
 if [ ! -d "$REPO_ROOT/.claude" ]; then
     mkdir -p "$REPO_ROOT/.claude"
@@ -57,7 +61,7 @@ echo -e "${GREEN}  ✓ .claude/skills -> skills/${NC}"
 # =============================================================================
 # CODEX (OPENAI) SETUP (.codex/skills symlink)
 # =============================================================================
-echo -e "${YELLOW}[2/2] Setting up Codex (OpenAI)...${NC}"
+echo -e "${YELLOW}[2/4] Setting up Codex (OpenAI)...${NC}"
 
 if [ ! -d "$REPO_ROOT/.codex" ]; then
     mkdir -p "$REPO_ROOT/.codex"
@@ -73,6 +77,43 @@ ln -s "$SKILLS_SOURCE" "$CODEX_SKILLS_TARGET"
 echo -e "${GREEN}  ✓ .codex/skills -> skills/${NC}"
 
 # =============================================================================
+# GITHUB COPILOT SETUP (.github/skills symlink)
+# =============================================================================
+echo -e "${YELLOW}[3/4] Setting up GitHub Copilot...${NC}"
+
+# Note: .github/ directory likely already exists for workflows, templates, etc.
+if [ ! -d "$REPO_ROOT/.github" ]; then
+    mkdir -p "$REPO_ROOT/.github"
+fi
+
+if [ -L "$GITHUB_SKILLS_TARGET" ]; then
+    rm "$GITHUB_SKILLS_TARGET"
+elif [ -d "$GITHUB_SKILLS_TARGET" ]; then
+    mv "$GITHUB_SKILLS_TARGET" "$REPO_ROOT/.github/skills.backup.$(date +%s)"
+fi
+
+ln -s "$SKILLS_SOURCE" "$GITHUB_SKILLS_TARGET"
+echo -e "${GREEN}  ✓ .github/skills -> skills/${NC}"
+
+# =============================================================================
+# GEMINI CLI SETUP (.gemini/skills symlink)
+# =============================================================================
+echo -e "${YELLOW}[4/4] Setting up Gemini CLI...${NC}"
+
+if [ ! -d "$REPO_ROOT/.gemini" ]; then
+    mkdir -p "$REPO_ROOT/.gemini"
+fi
+
+if [ -L "$GEMINI_SKILLS_TARGET" ]; then
+    rm "$GEMINI_SKILLS_TARGET"
+elif [ -d "$GEMINI_SKILLS_TARGET" ]; then
+    mv "$GEMINI_SKILLS_TARGET" "$REPO_ROOT/.gemini/skills.backup.$(date +%s)"
+fi
+
+ln -s "$SKILLS_SOURCE" "$GEMINI_SKILLS_TARGET"
+echo -e "${GREEN}  ✓ .gemini/skills -> skills/${NC}"
+
+# =============================================================================
 # SUMMARY
 # =============================================================================
 echo ""
@@ -81,6 +122,8 @@ echo ""
 echo "Configuration created:"
 echo "  • Claude Code / OpenCode: .claude/skills/ (symlink)"
 echo "  • Codex (OpenAI):         .codex/skills/ (symlink)"
+echo "  • GitHub Copilot:         .github/skills/ (symlink)"
+echo "  • Gemini CLI:             .gemini/skills/ (symlink)"
 echo ""
 echo "Available skills:"
 echo "  Generic:  typescript, react-19, nextjs-15, playwright, pytest,"
@@ -92,3 +135,4 @@ echo "            prowler-test-sdk, prowler-compliance, prowler-docs,"
 echo "            prowler-provider, prowler-pr"
 echo ""
 echo -e "${BLUE}Note: Restart your AI coding assistant to load the skills.${NC}"
+echo -e "${BLUE}      Gemini CLI requires experimental.skills enabled in settings.${NC}"
