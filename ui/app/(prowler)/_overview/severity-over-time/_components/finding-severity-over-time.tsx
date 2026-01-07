@@ -66,7 +66,7 @@ export const FindingSeverityOverTime = ({
       params.set("filter[provider_type__in]", providerType);
     }
     if (providerId) {
-      params.set("filter[provider__in]", providerId);
+      params.set("filter[provider_id__in]", providerId);
     }
 
     router.push(`/findings?${params.toString()}`);
