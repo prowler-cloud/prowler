@@ -94,8 +94,12 @@ class ChoiceInFilter(BaseInFilter, ChoiceFilter):
 
 class CommonFindingFilters(FilterSet):
     # We filter providers from the scan in findings
+    # Both 'provider' and 'provider_id' parameters are supported for API consistency
+    # Frontend uses 'provider_id' uniformly across all endpoints
     provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
     )
@@ -783,24 +787,7 @@ class ComplianceOverviewFilter(FilterSet):
         }
 
 
-class ProviderIdAdapterMixin:
-    """Mixin to adapt 'provider' parameter to 'provider_id' for backwards compatibility.
-
-    This allows using 'provider' as an alias for 'provider_id' in filter parameters.
-    Will be removed in a future version when 'provider' becomes the primary parameter.
-    """
-
-    def __init__(self, data=None, *args, **kwargs):
-        if data is not None:
-            data = data.copy()
-            if "provider" in data and "provider_id" not in data:
-                data["provider_id"] = data.pop("provider")
-            if "provider__in" in data and "provider_id__in" not in data:
-                data["provider_id__in"] = data.pop("provider__in")
-        super().__init__(data, *args, **kwargs)
-
-
-class ScanSummaryFilter(ProviderIdAdapterMixin, FilterSet):
+class ScanSummaryFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
@@ -820,7 +807,7 @@ class ScanSummaryFilter(ProviderIdAdapterMixin, FilterSet):
         }
 
 
-class DailySeveritySummaryFilter(ProviderIdAdapterMixin, FilterSet):
+class DailySeveritySummaryFilter(FilterSet):
     """Filter for findings_severity/timeseries endpoint."""
 
     MAX_DATE_RANGE_DAYS = 365
@@ -1070,7 +1057,7 @@ class MuteRuleFilter(FilterSet):
         }
 
 
-class ThreatScoreSnapshotFilter(ProviderIdAdapterMixin, FilterSet):
+class ThreatScoreSnapshotFilter(FilterSet):
     """
     Filter for ThreatScore snapshots.
     Allows filtering by scan, provider, compliance_id, and date ranges.
@@ -1103,7 +1090,7 @@ class ThreatScoreSnapshotFilter(ProviderIdAdapterMixin, FilterSet):
         }
 
 
-class AttackSurfaceOverviewFilter(ProviderIdAdapterMixin, FilterSet):
+class AttackSurfaceOverviewFilter(FilterSet):
     """Filter for attack surface overview aggregations by provider."""
 
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
@@ -1122,7 +1109,7 @@ class AttackSurfaceOverviewFilter(ProviderIdAdapterMixin, FilterSet):
         fields = {}
 
 
-class CategoryOverviewFilter(ProviderIdAdapterMixin, FilterSet):
+class CategoryOverviewFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
