@@ -58,6 +58,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_services_calls(client)
     mock_api_access_policies_calls(client)
     mock_api_instance_group_managers_calls(client)
+    mock_api_images_calls(client)
 
     return client
 
@@ -1219,6 +1220,12 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         },
                     ]
                 },
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/http-health-check",
+                        "initialDelaySec": 300,
+                    }
+                ],
             },
             {
                 "name": "regional-mig-single-zone",
@@ -1231,6 +1238,7 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         }
                     ]
                 },
+                # No autoHealingPolicies - testing missing autohealing
             },
         ]
     }
@@ -1243,7 +1251,63 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                 "name": "zonal-mig-1",
                 "id": zonal_mig1_id,
                 "targetSize": 2,
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/tcp-health-check",
+                        "initialDelaySec": 120,
+                    }
+                ],
             },
         ]
     }
     client.instanceGroupManagers().list_next.return_value = None
+
+
+def mock_api_images_calls(client: MagicMock):
+    image1_id = str(uuid4())
+    image2_id = str(uuid4())
+    image3_id = str(uuid4())
+
+    client.images().list().execute.return_value = {
+        "items": [
+            {
+                "name": "test-image-1",
+                "id": image1_id,
+            },
+            {
+                "name": "test-image-2",
+                "id": image2_id,
+            },
+            {
+                "name": "test-image-3",
+                "id": image3_id,
+            },
+        ]
+    }
+    client.images().list_next.return_value = None
+
+    def mock_get_image_iam_policy(project, resource):
+        return_value = MagicMock()
+        if resource == "test-image-1":
+            return_value.execute.return_value = {
+                "bindings": [
+                    {
+                        "role": "roles/compute.imageUser",
+                        "members": ["user:test@example.com"],
+                    }
+                ]
+            }
+        elif resource == "test-image-2":
+            return_value.execute.return_value = {
+                "bindings": [
+                    {
+                        "role": "roles/compute.imageUser",
+                        "members": ["allAuthenticatedUsers"],
+                    }
+                ]
+            }
+        elif resource == "test-image-3":
+            return_value.execute.side_effect = Exception("Permission denied")
+        return return_value
+
+    client.images().getIamPolicy = mock_get_image_iam_policy

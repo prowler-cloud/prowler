@@ -277,16 +277,12 @@ export function ScatterPlot<T extends ScatterDataPoint = ScatterDataPoint>({
 
   const providers = Object.keys(dataByProvider);
 
-  // Calculate domain for ReferenceArea
-  // For X axis: get max value from data (using the correct dataKey)
-  // For Y axis: use domain if provided, otherwise calculate from data
-  const xDataValues = data.length > 0 ? data.map((d) => d[xAxis.dataKey]) : [0];
-  const yDataValues = data.length > 0 ? data.map((d) => d[yAxis.dataKey]) : [0];
-
+  // ReferenceArea bounds - use very large values and let ifOverflow="hidden" clip to chart area
+  // This ensures the gradient always covers exactly the visible chart area regardless of data
   const minX = xAxis.domain?.[0] ?? 0;
-  const maxX = xAxis.domain?.[1] ?? Math.max(...xDataValues) * 1.031;
+  const maxX = xAxis.domain?.[1] ?? Number.MAX_SAFE_INTEGER;
   const minY = yAxis.domain?.[0] ?? 0;
-  const maxY = yAxis.domain?.[1] ?? Math.max(...yDataValues) * 1.031;
+  const maxY = yAxis.domain?.[1] ?? Number.MAX_SAFE_INTEGER;
 
   const handleSelectPoint = (point: T) => {
     if (onSelectPoint) {
@@ -342,7 +338,7 @@ export function ScatterPlot<T extends ScatterDataPoint = ScatterDataPoint>({
                 y1={minY}
                 y2={maxY}
                 fill={`url(#${gradientId})`}
-                ifOverflow="extendDomain"
+                ifOverflow="hidden"
               />
             )}
             <CartesianGrid
