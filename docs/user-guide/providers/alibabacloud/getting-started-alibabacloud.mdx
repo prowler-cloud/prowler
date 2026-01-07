@@ -4,9 +4,30 @@ title: 'Getting Started With Alibaba Cloud on Prowler'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.18.0" />
+Prowler supports Alibaba Cloud both from the CLI and from Prowler Cloud. This guide walks you through the requirements, how to connect the provider in the UI, and how to run scans from the command line.
 
-## Prowler App
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. An **Alibaba Cloud Account ID** (visible in the Alibaba Cloud Console under your profile).
+2. **Credentials** with appropriate permissions:
+   - **RAM User with Access Keys**: For static credential authentication.
+   - **RAM Role**: For cross-account access using role assumption (recommended).
+3. The required permissions for Prowler to audit your resources. See the [Alibaba Cloud Authentication](/user-guide/providers/alibabacloud/authentication) guide for the full list of required permissions.
+
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Alibaba Cloud using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Alibaba Cloud using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+<VersionBadge version="5.18.0" />
 
 ### Step 1: Get Your Alibaba Cloud Account ID
 
@@ -35,104 +56,57 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
     ![Add Account ID](/images/providers/add-alibaba-account-id.png)
 
-6. Choose the preferred authentication method (next step)
+### Step 3: Choose and Provide Authentication
 
-    ![Select Auth Method](/images/providers/select-auth-method-alibaba.png)
+After the Account ID is in place, select the authentication method that matches your Alibaba Cloud setup:
 
-### Step 3: Set Up Alibaba Cloud Authentication
-
-Before proceeding, choose the preferred authentication mode:
-
-**Credentials**
-
-* Quick scan as current user
-* No extra setup
-* Less secure
-
-**RAM Role Assumption**
-
-* Preferred Setup
-* Cross-account access
-* Requires access to create role
-
----
+![Select Auth Method](/images/providers/select-auth-method-alibaba.png)
 
 #### RAM Role Assumption (Recommended)
 
-This method grants secure cross-account access and is the recommended setup.
+Use this method for secure cross-account access. For detailed instructions on how to create the RAM role, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended-for-cross-account).
 
-![RAM Role Overview](/images/providers/alibaba-ram-role-overview.png)
-
-For detailed instructions on how to create the RAM role, see [Authentication > RAM Role Assumption](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended-for-cross-account).
-
-1. Once the RAM role is created, go to the **RAM Console**, click on the role to open its details
-
-2. Copy the **Role ARN** (format: `acs:ram::<account-id>:role/<role-name>`)
-
-3. Complete the form in Prowler Cloud or Prowler App with:
-    - **Role ARN**: The ARN of the RAM role to assume
-    - **Access Key ID**: The access key ID of the RAM user that will assume the role
-    - **Access Key Secret**: The access key secret of the RAM user
+1. Enter the **Role ARN** (format: `acs:ram::<account-id>:role/<role-name>`)
+2. Enter the **Access Key ID** and **Access Key Secret** of the RAM user that will assume the role
 
     ![Input the Role ARN](/images/providers/alibaba-get-role-arn.png)
 
-4. Click "Next", then "Launch Scan"
-
-    ![Launch Scan](/images/providers/launch-scan-alibaba.png)
-
 <Info>
-The RAM user whose credentials you provide must have permission to assume the target role. The role assumption provides temporary credentials with the permissions defined in the role's policy.
+The RAM user whose credentials you provide must have permission to assume the target role. For more details, see the [Alibaba Cloud AssumeRole API documentation](https://www.alibabacloud.com/help/en/ram/developer-reference/api-sts-2015-04-01-assumerole).
 </Info>
-
----
 
 #### Credentials (Static Access Keys)
 
+Use static credentials for quick scans (not recommended for production). For detailed setup, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#permanent-access-keys).
 
-Alibaba Cloud accounts can also be configured using static credentials (not recommended for long-term use):
-
-![Connect via Credentials](/images/providers/alibaba-connect-via-credentials-static.png)
-
-For detailed instructions on how to create the credentials, see [Authentication > Permanent Access Keys](/user-guide/providers/alibabacloud/authentication#permanent-access-keys).
-
-1. Go to your RAM Console and create an AccessKey for the user with the required permissions
-
-2. Complete the form in Prowler Cloud or Prowler App with:
-    - **Access Key ID**
-    - **Access Key Secret**
+1. Enter the **Access Key ID** and **Access Key Secret**
 
     ![Filled Credentials Page](/images/providers/alibaba-credentials-form.png)
-
-3. Click "Next", then "Launch Scan"
-
-    ![Launch Scan](/images/providers/launch-scan-alibaba.png)
 
 <Warning>
 Static access keys are long-lived credentials. For production environments, consider using RAM Role Assumption instead.
 </Warning>
 
+### Step 4: Launch the Scan
+
+1. Click "Next" to review your configuration
+2. Click "Launch Scan" to start auditing your Alibaba Cloud account
+
+    ![Launch Scan](/images/providers/launch-scan-alibaba.png)
+
 ---
 
 ## Prowler CLI
 
-### Configure Alibaba Cloud Credentials
+<VersionBadge version="5.15.0" />
 
-Prowler requires Alibaba Cloud credentials to perform security checks. Authentication is available through the following methods (in order of priority):
+You can also run Alibaba Cloud assessments directly from the CLI. Both command-line flags and environment variables are supported.
 
-1. **Credentials URI** (Recommended for centralized credential services)
-2. **OIDC Role Authentication** (Recommended for ACK/Kubernetes)
-3. **ECS RAM Role** (Recommended for ECS instances)
-4. **RAM Role Assumption** (Recommended for cross-account access)
-5. **STS Temporary Credentials**
-6. **Permanent Access Keys**
-7. **Default Credential Chain**
+### Step 1: Select an Authentication Method
 
-<Warning>
-Prowler does not accept credentials through command-line arguments. Provide credentials through environment variables or the Alibaba Cloud credential chain.
+Choose one of the following authentication methods. For the complete list and detailed configuration, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication).
 
-</Warning>
-
-#### Option 1: Environment Variables (Permanent Credentials)
+#### Environment Variables
 
 ```bash
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
@@ -140,104 +114,49 @@ export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
 prowler alibabacloud
 ```
 
-#### Option 2: Environment Variables (STS Temporary Credentials)
-
-```bash
-export ALIBABA_CLOUD_ACCESS_KEY_ID="your-sts-access-key-id"
-export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-sts-access-key-secret"
-export ALIBABA_CLOUD_SECURITY_TOKEN="your-sts-security-token"
-prowler alibabacloud
-```
-
-#### Option 3: RAM Role Assumption (Environment Variables)
+#### RAM Role Assumption
 
 ```bash
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
 export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"
-export ALIBABA_CLOUD_ROLE_SESSION_NAME="ProwlerAssessmentSession"  # Optional
 prowler alibabacloud
 ```
 
-#### Option 4: RAM Role Assumption (CLI + Environment Variables)
+#### ECS RAM Role (for ECS instances)
 
 ```bash
-# Set credentials via environment variables
-export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
-export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
-# Specify role via CLI argument
-prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole --role-session-name ProwlerAssessmentSession
-```
-
-#### Option 5: ECS Instance Metadata (ECS RAM Role)
-
-```bash
-# When running on an ECS instance with an attached RAM role
 prowler alibabacloud --ecs-ram-role RoleName
-
-# Or using environment variable
-export ALIBABA_CLOUD_ECS_METADATA="RoleName"
-prowler alibabacloud
 ```
 
-#### Option 6: OIDC Role Authentication (for ACK/Kubernetes)
+### Step 2: Run the First Scan
 
-```bash
-# For applications running in ACK (Alibaba Container Service for Kubernetes) with RRSA enabled
-export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/YourRole"
-export ALIBABA_CLOUD_OIDC_PROVIDER_ARN="acs:ram::123456789012:oidc-provider/ack-rrsa-provider"
-export ALIBABA_CLOUD_OIDC_TOKEN_FILE="/var/run/secrets/tokens/oidc-token"
-export ALIBABA_CLOUD_ROLE_SESSION_NAME="ProwlerOIDCSession"  # Optional
-prowler alibabacloud
-
-# Or using CLI argument
-prowler alibabacloud --oidc-role-arn acs:ram::123456789012:role/YourRole
-```
-
-#### Option 7: Credentials URI (External Credential Service)
-
-```bash
-# Retrieve credentials from an external URI endpoint
-export ALIBABA_CLOUD_CREDENTIALS_URI="http://localhost:8080/credentials"
-prowler alibabacloud
-
-# Or using CLI argument
-prowler alibabacloud --credentials-uri http://localhost:8080/credentials
-```
-
-#### Option 8: Default Credential Chain
-
-The SDK automatically checks credentials in the following order:
-1. Environment variables (`ALIBABA_CLOUD_*` or `ALIYUN_*`)
-2. OIDC authentication (if OIDC environment variables are set)
-3. Configuration file (`~/.aliyun/config.json`)
-4. ECS instance metadata (if running on ECS)
-5. Credentials URI (if `ALIBABA_CLOUD_CREDENTIALS_URI` is set)
+#### Scan all regions
 
 ```bash
 prowler alibabacloud
 ```
 
-### Specify Regions
-
-To run checks only in specific regions:
+#### Scan specific regions
 
 ```bash
 prowler alibabacloud --regions cn-hangzhou cn-shanghai
 ```
 
-### Run Specific Checks
-
-To run specific checks:
+#### Run specific checks
 
 ```bash
 prowler alibabacloud --checks ram_no_root_access_key ram_user_mfa_enabled_console_access
 ```
 
-### Run Compliance Framework
-
-To run a specific compliance framework:
+#### Run a compliance framework
 
 ```bash
 prowler alibabacloud --compliance cis_2.0_alibabacloud
 ```
+
+### Additional Tips
+
+- Combine flags (for example, `--checks` or `--services`) just like with other providers.
+- Use `--output-modes` to export findings in JSON, CSV, ASFF, etc.
+- For more authentication options (OIDC, Credentials URI, STS), see the [Authentication guide](/user-guide/providers/alibabacloud/authentication).
