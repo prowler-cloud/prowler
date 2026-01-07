@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
+  "ResourceGroup": "database",
   "Description": "Check if RDS instances are deployed within a VPC.",
   "Risk": "If your RDS instances are not deployed within a VPC, they are not isolated from the public internet and are exposed to potential security threats. Deploying RDS instances within a VPC allows you to control inbound and outbound traffic to and from the instances, and provides an additional layer of security to your database instances.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html#USER_VPC.Subnets",

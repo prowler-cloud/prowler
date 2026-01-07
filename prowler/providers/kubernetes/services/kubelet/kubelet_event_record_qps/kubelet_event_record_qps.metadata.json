@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubelet is configured with an appropriate eventRecordQPS level. The eventRecordQPS parameter limits the rate at which events are gathered, ensuring important security events are not missed while preventing potential denial-of-service conditions.",
   "Risk": "An inappropriate eventRecordQPS setting could lead to missing vital security events or DoS conditions.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",

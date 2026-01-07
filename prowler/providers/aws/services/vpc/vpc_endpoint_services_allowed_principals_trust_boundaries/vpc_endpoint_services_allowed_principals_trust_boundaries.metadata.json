@@ -13,11 +13,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2VpcEndpointService",
+  "ResourceGroup": "network",
   "Description": "**VPC endpoint services** are assessed for their **allowed principals**, comparing each to a configured set of trusted accounts and identifying any **untrusted principals** or a wildcard `*` present in the allowlist.",
   "Risk": "Untrusted or wildcard principals can create PrivateLink connections to your service, eroding segmentation. This enables unauthorized data access (**confidentiality**), abuse of internal APIs (**integrity**), and excess load on backends (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
     "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
   ],
   "Remediation": {

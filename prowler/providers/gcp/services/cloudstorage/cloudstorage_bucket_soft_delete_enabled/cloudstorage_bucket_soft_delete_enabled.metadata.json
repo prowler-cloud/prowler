@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Google Cloud Storage buckets** are evaluated to ensure that **Soft Delete** is enabled. Soft Delete helps protect data from accidental or malicious deletion by retaining deleted objects for a specified duration, allowing recovery within that retention window.",
   "Risk": "Buckets without Soft Delete enabled are at higher risk of irreversible data loss caused by accidental or unauthorized deletions, since deleted objects cannot be recovered once removed.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
+  "ResourceGroup": "network",
   "Description": "Non-default **VPCs** are evaluated across the account to determine whether they exist in **more than one region**. The result reflects if your custom network topology is regionally distributed or concentrated in a single region.",
   "Risk": "Single-region VPC deployment weakens **availability** and **resilience**. A regional outage, service disruption, or network control misconfiguration can cause broad downtime, hinder recovery, and increase the **blast radius** of incidents impacting business continuity.",
   "RelatedUrl": "",

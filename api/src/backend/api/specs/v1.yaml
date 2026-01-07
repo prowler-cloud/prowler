@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.16.0
+  version: 1.18.0
   description: |-
     Prowler API specification.
 
@@ -711,6 +711,7 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
             - raw_result
             - inserted_at
             - updated_at
@@ -723,6 +724,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -880,6 +894,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -890,6 +905,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -907,6 +923,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -919,6 +936,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1205,6 +1223,7 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
             - raw_result
             - inserted_at
             - updated_at
@@ -1265,6 +1284,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1419,6 +1451,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1429,6 +1462,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1446,6 +1480,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1458,6 +1493,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1722,6 +1758,7 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
             - raw_result
             - inserted_at
             - updated_at
@@ -1734,6 +1771,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1866,6 +1916,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1876,6 +1927,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1893,6 +1945,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1905,6 +1958,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2151,9 +2205,23 @@ paths:
             - services
             - regions
             - resource_types
+            - categories
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2311,6 +2379,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2321,6 +2390,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2338,6 +2408,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2350,6 +2421,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2609,9 +2681,23 @@ paths:
             - services
             - regions
             - resource_types
+            - categories
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2744,6 +2830,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2754,6 +2841,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2771,6 +2859,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2783,6 +2872,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4499,7 +4589,7 @@ paths:
           description: No response body
   /api/v1/overviews/attack-surfaces:
     get:
-      operationId: overviews_attack_surfaces_retrieve
+      operationId: overviews_attack_surfaces_list
       description: Retrieve aggregated attack surface metrics from latest completed
         scans per provider.
       summary: Get attack surface overview
@@ -4515,31 +4605,116 @@ paths:
             - total_findings
             - failed_findings
             - muted_failed_findings
-            - check_ids
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[provider_id.in]
-        schema:
-          type: string
-        description: Filter by multiple provider IDs (comma-separated UUIDs)
       - in: query
         name: filter[provider_id]
         schema:
           type: string
           format: uuid
-        description: Filter by specific provider ID
       - in: query
-        name: filter[provider_type.in]
+        name: filter[provider_id__in]
         schema:
-          type: string
-        description: Filter by multiple provider types (comma-separated)
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-        description: Filter by provider type (aws, azure, gcp, etc.)
+          x-spec-enum-id: eca8c51e6bd28935
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: eca8c51e6bd28935
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - muted_failed_findings
+            - -muted_failed_findings
+        explode: false
       tags:
       - Overview
       security:
@@ -4549,7 +4724,164 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/AttackSurfaceOverviewResponse'
+                $ref: '#/components/schemas/PaginatedAttackSurfaceOverviewList'
+          description: ''
+  /api/v1/overviews/categories:
+    get:
+      operationId: overviews_categories_list
+      description: 'Retrieve aggregated category metrics from latest completed scans
+        per provider. Returns one row per category with total, failed, and new failed
+        findings counts, plus a severity breakdown showing failed findings per severity
+        level. '
+      summary: Get category overview
+      parameters:
+      - in: query
+        name: fields[category-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: eca8c51e6bd28935
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: eca8c51e6bd28935
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryOverviewList'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -4635,6 +4967,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4645,6 +4978,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4662,6 +4996,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4674,6 +5009,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4824,6 +5160,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4834,6 +5171,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4851,6 +5189,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4863,6 +5202,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4951,7 +5291,7 @@ paths:
       summary: Get findings severity data over time
       parameters:
       - in: query
-        name: fields[findings-severity-timeseries]
+        name: fields[findings-severity-over-time]
         schema:
           type: array
           items:
@@ -4972,10 +5312,12 @@ paths:
         name: filter[date_from]
         schema:
           type: string
+          format: date
       - in: query
         name: filter[date_to]
         schema:
           type: string
+          format: date
       - in: query
         name: filter[provider_id]
         schema:
@@ -5005,6 +5347,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5015,6 +5358,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5031,6 +5375,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5043,6 +5388,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -5229,6 +5575,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5239,6 +5586,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5256,6 +5604,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5268,6 +5617,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -5401,6 +5751,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5411,6 +5762,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5428,6 +5780,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5440,6 +5793,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6220,6 +6574,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6230,6 +6585,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider__in]
         schema:
@@ -6247,6 +6603,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6259,6 +6616,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6276,6 +6634,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6286,6 +6645,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6303,6 +6663,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6315,6 +6676,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -6926,6 +7288,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6936,6 +7299,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6953,6 +7317,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6965,6 +7330,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7309,6 +7675,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7319,6 +7686,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7336,6 +7704,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7348,6 +7717,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7587,6 +7957,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7597,6 +7968,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7614,6 +7986,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7626,6 +7999,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7871,6 +8245,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7881,6 +8256,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7898,6 +8274,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7910,6 +8287,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -8718,6 +9096,7 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
+          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8728,6 +9107,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8745,6 +9125,7 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
+            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -8757,6 +9138,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -10846,23 +11228,46 @@ components:
               type: integer
             muted_failed_findings:
               type: integer
-            check_ids:
-              type: array
-              items:
-                type: string
-              readOnly: true
           required:
           - id
           - total_findings
           - failed_findings
           - muted_failed_findings
-    AttackSurfaceOverviewResponse:
+    CategoryOverview:
       type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/AttackSurfaceOverview'
       required:
-      - data
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - category-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - severity
     ComplianceOverview:
       type: object
       required:
@@ -11079,6 +11484,13 @@ components:
               type: string
               maxLength: 100
             check_metadata: {}
+            categories:
+              type: array
+              items:
+                type: string
+                maxLength: 100
+              nullable: true
+              description: Categories from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -11229,10 +11641,15 @@ components:
               type: array
               items:
                 type: string
+            categories:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - resource_types
+          - categories
     FindingMetadataResponse:
       type: object
       properties:
@@ -13935,6 +14352,24 @@ components:
           $ref: '#/components/schemas/OverviewSeverity'
       required:
       - data
+    PaginatedAttackSurfaceOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackSurfaceOverview'
+      required:
+      - data
+    PaginatedCategoryOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryOverview'
+      required:
+      - data
     PaginatedComplianceOverviewAttributesList:
       type: object
       properties:
@@ -16199,6 +16634,7 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
+              - alibabacloud
               type: string
               description: |-
                 * `aws` - AWS
@@ -16210,6 +16646,7 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
               x-spec-enum-id: eca8c51e6bd28935
             uid:
               type: string
@@ -16325,6 +16762,7 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
+              - alibabacloud
               type: string
               x-spec-enum-id: eca8c51e6bd28935
               description: |-
@@ -16339,6 +16777,7 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -16385,6 +16824,7 @@ components:
                   - mongodbatlas
                   - iac
                   - oraclecloud
+                  - alibabacloud
                   type: string
                   x-spec-enum-id: eca8c51e6bd28935
                   description: |-
@@ -16399,6 +16839,7 @@ components:
                     * `mongodbatlas` - MongoDB Atlas
                     * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
+                    * `alibabacloud` - Alibaba Cloud
                 uid:
                   type: string
                   minLength: 3

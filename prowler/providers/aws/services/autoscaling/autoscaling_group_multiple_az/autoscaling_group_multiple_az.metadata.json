@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "ResourceGroup": "compute",
   "Description": "**EC2 Auto Scaling groups** use **multiple Availability Zones** within a Region, with instances distributed across more than one zone rather than confined to a single zone.",
   "Risk": "Relying on a single zone concentrates failure risk and harms **availability**. An AZ outage or capacity shortfall can block replacements and scaling, causing downtime, dropped traffic, and a wider blast radius. Recovery can lag because workloads can't shift to healthy zones.",
   "RelatedUrl": "",

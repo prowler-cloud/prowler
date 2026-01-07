@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 20 or 21 (FTP).",
   "Risk": "FTP is an insecure protocol and should not be used. If FTP is required, it should be used over a secure channel such as FTPS or SFTP.",
   "RelatedUrl": "",

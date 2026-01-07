@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsKinesisStream",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon Kinesis Data Streams** with **server-side encryption** use **AWS KMS** to protect records at rest. The evaluation determines whether a stream has `SSE-KMS` configured with a KMS key; streams lacking KMS-based at rest encryption are identified.",
   "Risk": "Without **SSE-KMS**, records in shards may be exposed in plaintext if storage, backups, or analytics exports are accessed, undermining **confidentiality**. Absence of KMS controls also reduces **integrity** and oversight by removing key policies, rotation, and audit trails-enabling covert data exfiltration or insider misuse.",
   "RelatedUrl": "",

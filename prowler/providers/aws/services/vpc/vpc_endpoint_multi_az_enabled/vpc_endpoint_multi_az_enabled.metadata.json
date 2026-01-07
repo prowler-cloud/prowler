@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2VpcEndpointService",
+  "ResourceGroup": "network",
   "Description": "**VPC interface endpoints** are evaluated for whether their endpoint network interfaces are placed in **multiple subnets**, which implies distribution across different **Availability Zones**. Endpoints present in only one subnet are identified.",
   "Risk": "A **single-subnet endpoint** creates a **single-AZ dependency**. An AZ outage or routing issue can cut access to the service, reducing **availability**. Workloads may revert to **public endpoints**, exposing traffic to the Internet and risking **confidentiality** through interception or tampering.",
   "RelatedUrl": "",

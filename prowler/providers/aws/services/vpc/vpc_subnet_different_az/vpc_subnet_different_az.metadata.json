@@ -10,17 +10,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEc2Vpc",
+  "ResourceType": "AwsEc2Subnet",
+  "ResourceGroup": "network",
   "Description": "**VPCs** are assessed for **subnets spread across multiple Availability Zones**. The finding distinguishes VPCs with subnets confined to a single AZ or with no subnets from those with subnets in `2+` distinct AZs.",
   "Risk": "Single-AZ subnet layouts create a **single point of failure**, leading to **service downtime** during AZ outages, maintenance, or capacity events. Lack of **zonal redundancy** constrains load balancing and egress design, reduces **fault isolation**, and undermines availability and recovery objectives.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000233587-ensure-all-vpc-has-subnets-in-more-than-one-availability-zone",
     "https://docs.aws.amazon.com/pdfs/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/building-scalable-secure-multi-vpc-network-infrastructure.pdf",
-    "https://stackoverflow.com/questions/75678808/creating-multiple-subnets-in-order-per-availability-zone-with-terraform/75679053",
-    "https://medium.com/@raj.shivaram/building-a-rock-solid-aws-vpc-best-practices-for-cloud-security-scalability-5da37467e20b",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
-    "https://quizlet.com/306327931/aws-scenario-vpc-multiple-subnetsavailability-zones-diagram/"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html"
   ],
   "Remediation": {
     "Code": {

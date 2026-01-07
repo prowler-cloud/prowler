@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that multifactor authentication (MFA) is enabled for all users to enhance security and reduce the risk of unauthorized access.",
   "Risk": "Without multifactor authentication (MFA), users are at a higher risk of account compromise due to credential theft, phishing, or brute-force attacks. A single-factor authentication method, such as passwords, is often insufficient to protect against modern cyber threats.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",

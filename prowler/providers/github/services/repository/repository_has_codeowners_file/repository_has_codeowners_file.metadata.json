@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
   "Severity": "high",
   "ResourceType": "GitHubRepository",
+  "ResourceGroup": "devops",
   "Description": "Ensure that repositories have a CODEOWNERS file.",
   "Risk": "Not having a CODEOWNERS file in a repository may lead to unclear code ownership and review responsibilities, increasing the risk of unreviewed or unauthorized changes.",
   "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",

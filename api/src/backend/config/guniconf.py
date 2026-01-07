@@ -19,8 +19,6 @@ PORT = env("DJANGO_PORT", default=8000)
 
 # Server settings
 bind = f"{BIND_ADDRESS}:{PORT}"
-# TODO: Remove after the category filter is implemented
-limit_request_line = 0
 
 workers = env.int("DJANGO_WORKERS", default=multiprocessing.cpu_count() * 2 + 1)
 reload = DEBUG

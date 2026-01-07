@@ -11,17 +11,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Subnet",
+  "ResourceGroup": "network",
   "Description": "**VPC subnets** where `MapPublicIpOnLaunch` is `true` automatically assign a public IPv4 address to instances at launch.\n\nThis identifies subnets configured for default public IP assignment.",
   "Risk": "**Internet-exposed instances** become reachable by default, enabling port scans, SSH/RDP brute force, and exploit attempts. Successful access can lead to data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and outages (**availability**) through abuse or DDoS.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/aws/aws-cdk/issues/16838",
-    "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html",
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default#terraform",
-    "https://help.stackzone.com/article/aws-config-rule-subnet-auto-assign-public-ip-disabled",
-    "https://community.seqera.io/t/unable-to-run-the-submitted-job-through-aws-batch-with-seqera-listed-firewall-configuration-ip/1765",
-    "https://stackoverflow.com/questions/71904283/enable-auto-assign-public-ipv4-address-in-aws",
-    "https://dev.to/hrmnjm/securing-the-aws-infrastructure-4n58"
+    "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html"
   ],
   "Remediation": {
     "Code": {

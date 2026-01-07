@@ -12,11 +12,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2VpcEndpointService",
+  "ResourceGroup": "network",
   "Description": "**VPC endpoint policies** are assessed for restriction to configured **trusted AWS accounts**. If `Principal` values (including `*`) or account ARNs permit non-trusted principals, or conditions aren't sufficiently restrictive, the endpoint is identified. *Endpoints without editable policies are excluded.*",
   "Risk": "Non-trusted principals using your endpoint can access AWS services as if from your VPC, weakening segmentation. This enables unauthorized reads/writes and data exfiltration from resources tied to the endpoint, harming **confidentiality** and **integrity**, and potentially increasing **costs**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
     "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
   ],
   "Remediation": {

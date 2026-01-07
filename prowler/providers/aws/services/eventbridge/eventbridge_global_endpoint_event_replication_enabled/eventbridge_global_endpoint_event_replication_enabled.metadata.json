@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEventsEndpoint",
+  "ResourceGroup": "messaging",
   "Description": "**EventBridge global endpoints** are configured with **event replication** `ENABLED` (not `DISABLED`) so custom events are replicated to both the primary and secondary Regions.",
   "Risk": "**No event replication** degrades **availability** and increases **RPO** during Regional outages.\n- Events can be lost or delayed if the primary Region fails\n- Automatic recovery to the primary may not occur, prolonging failover\n- Cross-Region inconsistency can affect data integrity",
   "RelatedUrl": "",

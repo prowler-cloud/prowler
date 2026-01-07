@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
   "Description": "[DEPRECATED]\n**Amazon ECR repositories** are evaluated for **image scanning on push**; when configured, new image uploads automatically trigger a vulnerability scan (`scan_on_push`).",
   "Risk": "Without **scan on push**, images with known CVEs can enter registries and reach runtime unnoticed, undermining **integrity** and **confidentiality** through exploitable packages. Attackers may achieve code execution and lateral movement. Delayed detection increases operational risk and extends remediation timelines.",
   "RelatedUrl": "",
