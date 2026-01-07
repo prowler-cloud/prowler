@@ -199,9 +199,10 @@ function generateLegendItems(
     if (seenTypes.has(nodeType)) return;
     seenTypes.add(nodeType);
 
-    // Skip findings - we show severity colors instead
+    // Skip findings and privilege escalations - we show severity colors instead
     const isFinding = nodeType.toLowerCase().includes("finding");
-    if (isFinding) return;
+    const isPrivilegeEscalation = nodeType === "PrivilegeEscalation";
+    if (isFinding || isPrivilegeEscalation) return;
 
     const description = nodeTypeDescriptions[nodeType];
 
@@ -395,9 +396,10 @@ interface GraphLegendProps {
 export const GraphLegend = ({ data }: GraphLegendProps) => {
   const nodeTypes = extractNodeTypes(data?.nodes);
 
-  // Check if there are any findings in the data
-  const hasFindings = nodeTypes.some((type) =>
-    type.toLowerCase().includes("finding"),
+  // Check if there are any findings or privilege escalations in the data
+  const hasFindings = nodeTypes.some(
+    (type) =>
+      type.toLowerCase().includes("finding") || type === "PrivilegeEscalation",
   );
 
   const legendItems = generateLegendItems(nodeTypes, hasFindings);

@@ -64,7 +64,9 @@ export const getNodeColor = (
   properties?: Record<string, unknown>,
 ): string => {
   const isFinding = labels.some((l) => l.toLowerCase().includes("finding"));
-  if (isFinding && properties?.severity) {
+  const isPrivilegeEscalation = labels.some((l) => l === "PrivilegeEscalation");
+
+  if ((isFinding || isPrivilegeEscalation) && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
     if (severity === "critical") return GRAPH_NODE_COLORS.critical;
     if (severity === "high") return GRAPH_NODE_COLORS.high;
@@ -97,7 +99,9 @@ export const getNodeBorderColor = (
   properties?: Record<string, unknown>,
 ): string => {
   const isFinding = labels.some((l) => l.toLowerCase().includes("finding"));
-  if (isFinding && properties?.severity) {
+  const isPrivilegeEscalation = labels.some((l) => l === "PrivilegeEscalation");
+
+  if ((isFinding || isPrivilegeEscalation) && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
     if (severity === "critical") return GRAPH_NODE_BORDER_COLORS.critical;
     if (severity === "high") return GRAPH_NODE_BORDER_COLORS.high;

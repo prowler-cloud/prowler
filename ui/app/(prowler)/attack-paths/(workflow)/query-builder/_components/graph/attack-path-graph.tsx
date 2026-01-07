@@ -713,11 +713,14 @@ const AttackPathGraphComponent = forwardRef<
       const isFinding = d.data.labels.some((label) =>
         label.toLowerCase().includes("finding"),
       );
+      const isPrivilegeEscalation = d.data.labels.some(
+        (label) => label === "PrivilegeEscalation",
+      );
       const nodeColor = getNodeColor(d.data.labels, d.data.properties);
       const borderColor = getNodeBorderColor(d.data.labels, d.data.properties);
       const hasFindings = resourcesWithFindings.has(d.id);
 
-      if (isFinding) {
+      if (isFinding || isPrivilegeEscalation) {
         // Hexagon for findings - always has glow
         const w = HEXAGON_WIDTH;
         const h = HEXAGON_HEIGHT;
@@ -834,6 +837,9 @@ const AttackPathGraphComponent = forwardRef<
       const isFinding = d.data.labels.some((label) =>
         label.toLowerCase().includes("finding"),
       );
+      const isPrivilegeEscalation = d.data.labels.some(
+        (label) => label === "PrivilegeEscalation",
+      );
 
       // Create text container - white text with shadow for readability
       const textGroup = group
@@ -844,7 +850,7 @@ const AttackPathGraphComponent = forwardRef<
         .attr("fill", "#ffffff")
         .style("text-shadow", "0 1px 2px rgba(0,0,0,0.5)");
 
-      if (isFinding) {
+      if (isFinding || isPrivilegeEscalation) {
         // For findings: show check_title/name (severity is shown by color)
         const title = String(
           d.data.properties?.check_title ||
@@ -852,18 +858,47 @@ const AttackPathGraphComponent = forwardRef<
             d.data.properties?.id ||
             "Finding",
         );
+        const subtitle = isPrivilegeEscalation
+          ? String(d.data.properties?.name || "")
+          : "";
+
         const maxChars = 24;
         const displayTitle =
           title.length > maxChars
             ? title.substring(0, maxChars) + "..."
             : title;
 
-        textGroup
-          .append("tspan")
-          .attr("x", 0)
-          .attr("font-size", "11px")
-          .attr("font-weight", "600")
-          .text(displayTitle);
+        if (subtitle) {
+          // Title (main)
+          textGroup
+            .append("tspan")
+            .attr("x", 0)
+            .attr("dy", "-0.3em")
+            .attr("font-size", "11px")
+            .attr("font-weight", "600")
+            .text(displayTitle);
+
+          // Subtitle (name)
+          const displaySubtitle =
+            subtitle.length > maxChars
+              ? subtitle.substring(0, maxChars) + "..."
+              : subtitle;
+          textGroup
+            .append("tspan")
+            .attr("x", 0)
+            .attr("dy", "1.3em")
+            .attr("font-size", "10px")
+            .attr("fill", "rgba(255,255,255,0.85)")
+            .text(displaySubtitle);
+        } else {
+          // Single line for regular findings
+          textGroup
+            .append("tspan")
+            .attr("x", 0)
+            .attr("font-size", "11px")
+            .attr("font-weight", "600")
+            .text(displayTitle);
+        }
       } else {
         // For resources: show name with type below
         const name = String(

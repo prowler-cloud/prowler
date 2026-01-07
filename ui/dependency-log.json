@@ -417,6 +417,14 @@
   },
   {
     "section": "dependencies",
+    "name": "require-in-the-middle",
+    "from": "8.0.1",
+    "to": "8.0.1",
+    "strategy": "installed",
+    "generatedAt": "2026-01-07T12:09:03.204Z"
+  },
+  {
+    "section": "dependencies",
     "name": "rss-parser",
     "from": "3.13.0",
     "to": "3.13.0",
