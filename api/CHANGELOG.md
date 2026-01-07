@@ -2,15 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.18.0] (Prowler UNRELEASED)
-
-### Added
-- Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
-
----
-
 ## [1.17.2] (Prowler v5.16.2)
 
 ### Security
@@ -18,7 +9,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> df8d82345 (fix(api): update dependencies to patch security vulnerabilities (#9730))
 ## [1.17.1] (Prowler v5.16.1)
 
 ### Changed

@@ -7833,8 +7833,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "c3f69105de7e604d4978c53877203d69c59d22276e8d7c751f4960764a5f926c"
-=======
-content-hash = "c40ff4d1cb06db047a7a39c35f6c765c259583c203da549146a0ed2e6d17a727"
->>>>>>> df8d82345 (fix(api): update dependencies to patch security vulnerabilities (#9730))
+content-hash = "a17dddd4e4a69d20abae449df5c0971cba12a1acc023eca61288d52e87f046e3"
