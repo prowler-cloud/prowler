@@ -4,6 +4,10 @@ from datetime import timedelta
 from celery.utils.log import get_task_logger
 from django.db.models import Sum
 from django.utils import timezone
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+)
 from tasks.jobs.scan import aggregate_category_counts
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
@@ -394,47 +398,6 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
         if not scan_info:
             return {"status": "no scans to process"}
 
-    upsert_sql = """
-        INSERT INTO provider_compliance_scores
-            (id, tenant_id, provider_id, scan_id, compliance_id, requirement_id,
-             requirement_status, scan_completed_at)
-        SELECT
-            gen_random_uuid(),
-            agg.tenant_id,
-            agg.provider_id,
-            agg.scan_id,
-            agg.compliance_id,
-            agg.requirement_id,
-            agg.requirement_status,
-            agg.completed_at
-        FROM (
-            SELECT DISTINCT ON (cro.compliance_id, cro.requirement_id)
-                cro.tenant_id,
-                s.provider_id,
-                cro.scan_id,
-                cro.compliance_id,
-                cro.requirement_id,
-                (CASE
-                    WHEN bool_or(cro.requirement_status = 'FAIL')
-                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'FAIL'
-                    WHEN bool_or(cro.requirement_status = 'MANUAL')
-                        OVER (PARTITION BY cro.compliance_id, cro.requirement_id) THEN 'MANUAL'
-                    ELSE 'PASS'
-                END)::status as requirement_status,
-                s.completed_at
-            FROM compliance_requirements_overviews cro
-            JOIN scans s ON s.id = cro.scan_id
-            WHERE cro.tenant_id = %s AND cro.scan_id = %s
-            ORDER BY cro.compliance_id, cro.requirement_id
-        ) agg
-        ON CONFLICT (tenant_id, provider_id, compliance_id, requirement_id)
-        DO UPDATE SET
-            requirement_status = EXCLUDED.requirement_status,
-            scan_id = EXCLUDED.scan_id,
-            scan_completed_at = EXCLUDED.scan_completed_at
-        WHERE EXCLUDED.scan_completed_at > provider_compliance_scores.scan_completed_at
-    """
-
     total_upserted = 0
     providers_processed = 0
     providers_skipped = 0
@@ -452,7 +415,10 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
                         cursor.execute(
                             SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id]
                         )
-                        cursor.execute(upsert_sql, [tenant_id, str(scan_id)])
+                        cursor.execute(
+                            COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+                            [tenant_id, str(scan_id)],
+                        )
                         upserted = cursor.rowcount
                     connection.commit()
                     total_upserted += upserted
@@ -471,43 +437,6 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
 
     # Recalculate tenant summary after all providers are backfilled
     if providers_processed > 0:
-        upsert_tenant_summary_sql = """
-            INSERT INTO tenant_compliance_summaries
-                (id, tenant_id, compliance_id,
-                 requirements_passed, requirements_failed, requirements_manual,
-                 total_requirements, updated_at)
-            SELECT
-                gen_random_uuid(),
-                %s as tenant_id,
-                compliance_id,
-                COUNT(*) FILTER (WHERE req_status = 'PASS') as requirements_passed,
-                COUNT(*) FILTER (WHERE req_status = 'FAIL') as requirements_failed,
-                COUNT(*) FILTER (WHERE req_status = 'MANUAL') as requirements_manual,
-                COUNT(*) as total_requirements,
-                NOW() as updated_at
-            FROM (
-                SELECT
-                    compliance_id,
-                    requirement_id,
-                    CASE
-                        WHEN bool_or(requirement_status = 'FAIL') THEN 'FAIL'
-                        WHEN bool_or(requirement_status = 'MANUAL') THEN 'MANUAL'
-                        ELSE 'PASS'
-                    END as req_status
-                FROM provider_compliance_scores
-                WHERE tenant_id = %s
-                GROUP BY compliance_id, requirement_id
-            ) req_agg
-            GROUP BY compliance_id
-            ON CONFLICT (tenant_id, compliance_id)
-            DO UPDATE SET
-                requirements_passed = EXCLUDED.requirements_passed,
-                requirements_failed = EXCLUDED.requirements_failed,
-                requirements_manual = EXCLUDED.requirements_manual,
-                total_requirements = EXCLUDED.total_requirements,
-                updated_at = NOW()
-        """
-
         with psycopg_connection(MainRouter.default_db) as connection:
             connection.autocommit = False
             try:
@@ -517,7 +446,10 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
                     cursor.execute(
                         "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
                     )
-                    cursor.execute(upsert_tenant_summary_sql, [tenant_id, tenant_id])
+                    cursor.execute(
+                        COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+                        [tenant_id, tenant_id],
+                    )
                     tenant_summary_count = cursor.rowcount
                 connection.commit()
             except Exception:

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -278,3 +280,45 @@ class TestBackfillProviderComplianceScores:
 
         result = backfill_provider_compliance_scores(str(tenant.id))
         assert result == {"status": "no completed scans"}
+
+    @patch("tasks.jobs.backfill.psycopg_connection")
+    def test_successful_backfill_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        scans_fixture,
+        settings,
+    ):
+        """Test successful backfill executes SQL queries and returns correct stats."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Set completed_at to make the scan eligible for backfill
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 5
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+
+        assert result["status"] == "backfilled"
+        assert result["providers_processed"] == 1
+        assert result["providers_skipped"] == 0
+        assert result["total_upserted"] == 5
+        assert result["tenant_summary_count"] == 5
