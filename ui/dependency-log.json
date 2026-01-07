@@ -42,10 +42,10 @@
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "0.3.78",
+    "from": "0.3.78",
+    "to": "0.3.77",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2026-01-07T08:46:39.109Z"
   },
   {
     "section": "dependencies",

@@ -1,7 +1,7 @@
 services:
   api-dev:
     hostname: "prowler-api"
-    image: prowler-api-dev
+    # image: prowler-api-dev
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -114,7 +114,7 @@ services:
         retries: 10
 
   worker-dev:
-    image: prowler-api-dev
+    # image: prowler-api-dev
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -141,7 +141,7 @@ services:
       - "worker"
 
   worker-beat:
-    image: prowler-api-dev
+    # image: prowler-api-dev
     build:
       context: ./api
       dockerfile: Dockerfile

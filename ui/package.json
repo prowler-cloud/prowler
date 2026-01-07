@@ -75,6 +75,7 @@
     "react-hook-form": "7.62.0",
     "react-markdown": "10.1.0",
     "recharts": "2.15.4",
+    "require-in-the-middle": "8.0.1",
     "rss-parser": "3.13.0",
     "server-only": "0.0.1",
     "sharp": "0.33.5",

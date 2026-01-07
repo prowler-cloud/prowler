@@ -336,6 +336,370 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 ),
             ],
         ),
+        # =====================================================================
+        # Privilege Escalation Queries (based on pathfinding.cloud research)
+        # Reference: https://github.com/DataDog/pathfinding.cloud
+        # =====================================================================
+        AttackPathsQueryDefinition(
+            id="aws-iam-privesc-create-policy-version",
+            name="Privilege Escalation: iam:CreatePolicyVersion",
+            description="Detect principals with iam:CreatePolicyVersion permission who can modify policies attached to themselves or others, enabling privilege escalation by creating a new policy version with elevated permissions. This is a self-escalation path (pathfinding.cloud: iam-001).",
+            provider="aws",
+            cypher="""
+                // Find principals with iam:CreatePolicyVersion permission
+                MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
+
+                // Find policies attached to the principal
+                MATCH path_attached = (principal)--(attached_policy:AWSPolicy)
+                WHERE attached_policy.type = 'Customer Managed'
+
+                // Find policy statements that grant iam:CreatePolicyVersion
+                MATCH path_perms = (principal)--(perms_policy:AWSPolicy)--(stmt:AWSPolicyStatement)
+                WHERE stmt.effect = 'Allow'
+                    AND (
+                        any(action IN stmt.action WHERE
+                            toLower(action) = 'iam:createpolicyversion'
+                            OR toLower(action) = 'iam:*'
+                            OR action = '*'
+                        )
+                    )
+                    // Check resource constraints - can they modify the attached policy?
+                    AND (
+                        any(resource IN stmt.resource WHERE
+                            resource = '*'
+                            OR attached_policy.arn CONTAINS resource
+                            OR resource CONTAINS attached_policy.name
+                        )
+                    )
+
+                // Create a virtual "Escalation" node to visualize the attack outcome
+                CALL apoc.create.vNode(['PrivilegeEscalation'], {
+                    id: 'privesc-' + principal.arn,
+                    name: 'Effective Administrator',
+                    technique: 'iam:CreatePolicyVersion',
+                    severity: 'CRITICAL',
+                    reference: 'https://pathfinding.cloud/paths/iam-001'
+                })
+                YIELD node AS escalation_outcome
+
+                CALL apoc.create.vRelationship(principal, 'CAN_ESCALATE_TO', {
+                    via: 'iam:CreatePolicyVersion',
+                    target_policy: attached_policy.arn
+                }, escalation_outcome)
+                YIELD rel AS escalation_rel
+
+                UNWIND nodes(path_principal) + nodes(path_attached) + nodes(path_perms) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_principal, path_attached, path_perms,
+                       escalation_outcome, escalation_rel,
+                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+            """,
+            parameters=[],
+        ),
+        AttackPathsQueryDefinition(
+            id="aws-iam-privesc-attach-role-policy-assume-role",
+            name="Privilege Escalation: iam:AttachRolePolicy + sts:AssumeRole",
+            description="Detect principals who can both attach policies to roles AND assume those roles. This two-step attack allows modifying a role's permissions then assuming it to gain elevated access. This is a principal-access escalation path (pathfinding.cloud: iam-014).",
+            provider="aws",
+            cypher="""
+                // Find principals in the account
+                MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
+
+                // Find statements granting iam:AttachRolePolicy
+                MATCH path_attach = (principal)--(attach_policy:AWSPolicy)--(stmt_attach:AWSPolicyStatement)
+                WHERE stmt_attach.effect = 'Allow'
+                    AND any(action IN stmt_attach.action WHERE
+                        toLower(action) = 'iam:attachrolepolicy'
+                        OR toLower(action) = 'iam:*'
+                        OR action = '*'
+                    )
+
+                // Find statements granting sts:AssumeRole
+                MATCH path_assume = (principal)--(assume_policy:AWSPolicy)--(stmt_assume:AWSPolicyStatement)
+                WHERE stmt_assume.effect = 'Allow'
+                    AND any(action IN stmt_assume.action WHERE
+                        toLower(action) = 'sts:assumerole'
+                        OR toLower(action) = 'sts:*'
+                        OR action = '*'
+                    )
+
+                // Find target roles that the principal can both modify AND assume
+                MATCH path_target = (aws)--(target_role:AWSRole)
+                WHERE target_role.arn CONTAINS $provider_uid
+                    // Can attach policy to this role
+                    AND any(resource IN stmt_attach.resource WHERE
+                        resource = '*'
+                        OR target_role.arn CONTAINS resource
+                        OR resource CONTAINS target_role.name
+                    )
+                    // Can assume this role
+                    AND any(resource IN stmt_assume.resource WHERE
+                        resource = '*'
+                        OR target_role.arn CONTAINS resource
+                        OR resource CONTAINS target_role.name
+                    )
+
+                // Create visualization of the escalation path
+                CALL apoc.create.vNode(['PrivilegeEscalation'], {
+                    id: 'privesc-' + principal.arn + '-via-' + target_role.name,
+                    name: 'Effective Administrator',
+                    technique: 'iam:AttachRolePolicy + sts:AssumeRole',
+                    severity: 'CRITICAL',
+                    reference: 'https://pathfinding.cloud/paths/iam-014'
+                })
+                YIELD node AS escalation_outcome
+
+                CALL apoc.create.vRelationship(principal, 'CAN_MODIFY', {
+                    via: 'iam:AttachRolePolicy'
+                }, target_role)
+                YIELD rel AS modify_rel
+
+                CALL apoc.create.vRelationship(target_role, 'CAN_BE_ASSUMED_BY', {
+                    via: 'sts:AssumeRole'
+                }, escalation_outcome)
+                YIELD rel AS assume_rel
+
+                UNWIND nodes(path_principal) + nodes(path_attach) + nodes(path_assume) + nodes(path_target) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_principal, path_attach, path_assume, path_target,
+                       escalation_outcome, modify_rel, assume_rel,
+                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+            """,
+            parameters=[],
+        ),
+        AttackPathsQueryDefinition(
+            id="aws-iam-privesc-passrole-ec2",
+            name="Privilege Escalation: iam:PassRole + ec2:RunInstances",
+            description="Detect principals who can launch EC2 instances with privileged IAM roles attached. This allows gaining the permissions of the passed role by accessing the EC2 instance metadata service. This is a new-passrole escalation path (pathfinding.cloud: ec2-001).",
+            provider="aws",
+            cypher="""
+                // Find principals in the account
+                MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
+
+                // Find statements granting iam:PassRole
+                MATCH path_passrole = (principal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+                WHERE stmt_passrole.effect = 'Allow'
+                    AND any(action IN stmt_passrole.action WHERE
+                        toLower(action) = 'iam:passrole'
+                        OR toLower(action) = 'iam:*'
+                        OR action = '*'
+                    )
+
+                // Find statements granting ec2:RunInstances
+                MATCH path_ec2 = (principal)--(ec2_policy:AWSPolicy)--(stmt_ec2:AWSPolicyStatement)
+                WHERE stmt_ec2.effect = 'Allow'
+                    AND any(action IN stmt_ec2.action WHERE
+                        toLower(action) = 'ec2:runinstances'
+                        OR toLower(action) = 'ec2:*'
+                        OR action = '*'
+                    )
+
+                // Find roles that trust EC2 service (can be passed to EC2)
+                MATCH path_target = (aws)--(target_role:AWSRole)
+                WHERE target_role.arn CONTAINS $provider_uid
+                    // Check if principal can pass this role
+                    AND any(resource IN stmt_passrole.resource WHERE
+                        resource = '*'
+                        OR target_role.arn CONTAINS resource
+                        OR resource CONTAINS target_role.name
+                    )
+
+                // Check if target role has elevated permissions (optional, for severity assessment)
+                OPTIONAL MATCH (target_role)--(role_policy:AWSPolicy)--(role_stmt:AWSPolicyStatement)
+                WHERE role_stmt.effect = 'Allow'
+                    AND (
+                        any(action IN role_stmt.action WHERE action = '*')
+                        OR any(action IN role_stmt.action WHERE toLower(action) = 'iam:*')
+                    )
+
+                // Create visualization
+                CALL apoc.create.vNode(['EC2Instance'], {
+                    id: 'potential-ec2-' + principal.arn,
+                    name: 'New EC2 Instance',
+                    description: 'Attacker-controlled EC2 with privileged role'
+                })
+                YIELD node AS ec2_node
+
+                CALL apoc.create.vNode(['PrivilegeEscalation'], {
+                    id: 'privesc-ec2-' + principal.arn + '-' + target_role.name,
+                    name: CASE WHEN role_stmt IS NOT NULL THEN 'Effective Administrator' ELSE 'Elevated Access' END,
+                    technique: 'iam:PassRole + ec2:RunInstances',
+                    severity: CASE WHEN role_stmt IS NOT NULL THEN 'CRITICAL' ELSE 'HIGH' END,
+                    reference: 'https://pathfinding.cloud/paths/ec2-001'
+                })
+                YIELD node AS escalation_outcome
+
+                CALL apoc.create.vRelationship(principal, 'CAN_LAUNCH', {
+                    via: 'ec2:RunInstances + iam:PassRole'
+                }, ec2_node)
+                YIELD rel AS launch_rel
+
+                CALL apoc.create.vRelationship(ec2_node, 'ASSUMES_ROLE', {}, target_role)
+                YIELD rel AS assumes_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {}, escalation_outcome)
+                YIELD rel AS grants_rel
+
+                UNWIND nodes(path_principal) + nodes(path_passrole) + nodes(path_ec2) + nodes(path_target) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_principal, path_passrole, path_ec2, path_target,
+                       ec2_node, escalation_outcome, launch_rel, assumes_rel, grants_rel,
+                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+            """,
+            parameters=[],
+        ),
+        AttackPathsQueryDefinition(
+            id="aws-iam-privesc-passrole-lambda",
+            name="Privilege Escalation: iam:PassRole + lambda:CreateFunction + lambda:InvokeFunction",
+            description="Detect principals who can create Lambda functions with privileged IAM roles and invoke them. This allows executing code with the permissions of the passed role. This is a new-passrole escalation path (pathfinding.cloud: lambda-001).",
+            provider="aws",
+            cypher="""
+                // Find principals in the account
+                MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
+
+                // Find statements granting iam:PassRole
+                MATCH path_passrole = (principal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+                WHERE stmt_passrole.effect = 'Allow'
+                    AND any(action IN stmt_passrole.action WHERE
+                        toLower(action) = 'iam:passrole'
+                        OR toLower(action) = 'iam:*'
+                        OR action = '*'
+                    )
+
+                // Find statements granting lambda:CreateFunction
+                MATCH path_create = (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
+                WHERE stmt_create.effect = 'Allow'
+                    AND any(action IN stmt_create.action WHERE
+                        toLower(action) = 'lambda:createfunction'
+                        OR toLower(action) = 'lambda:*'
+                        OR action = '*'
+                    )
+
+                // Find statements granting lambda:InvokeFunction
+                MATCH path_invoke = (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement)
+                WHERE stmt_invoke.effect = 'Allow'
+                    AND any(action IN stmt_invoke.action WHERE
+                        toLower(action) = 'lambda:invokefunction'
+                        OR toLower(action) = 'lambda:*'
+                        OR action = '*'
+                    )
+
+                // Find roles that can be passed (ideally those trusting Lambda service)
+                MATCH path_target = (aws)--(target_role:AWSRole)
+                WHERE target_role.arn CONTAINS $provider_uid
+                    AND any(resource IN stmt_passrole.resource WHERE
+                        resource = '*'
+                        OR target_role.arn CONTAINS resource
+                        OR resource CONTAINS target_role.name
+                    )
+
+                // Check if target role has elevated permissions
+                OPTIONAL MATCH (target_role)--(role_policy:AWSPolicy)--(role_stmt:AWSPolicyStatement)
+                WHERE role_stmt.effect = 'Allow'
+                    AND (
+                        any(action IN role_stmt.action WHERE action = '*')
+                        OR any(action IN role_stmt.action WHERE toLower(action) = 'iam:*')
+                    )
+
+                // Create visualization
+                CALL apoc.create.vNode(['LambdaFunction'], {
+                    id: 'potential-lambda-' + principal.arn,
+                    name: 'New Lambda Function',
+                    description: 'Attacker-controlled Lambda with privileged role'
+                })
+                YIELD node AS lambda_node
+
+                CALL apoc.create.vNode(['PrivilegeEscalation'], {
+                    id: 'privesc-lambda-' + principal.arn + '-' + target_role.name,
+                    name: CASE WHEN role_stmt IS NOT NULL THEN 'Effective Administrator' ELSE 'Elevated Access' END,
+                    technique: 'iam:PassRole + lambda:CreateFunction + lambda:InvokeFunction',
+                    severity: CASE WHEN role_stmt IS NOT NULL THEN 'CRITICAL' ELSE 'HIGH' END,
+                    reference: 'https://pathfinding.cloud/paths/lambda-001'
+                })
+                YIELD node AS escalation_outcome
+
+                CALL apoc.create.vRelationship(principal, 'CAN_CREATE_AND_INVOKE', {
+                    via: 'lambda:CreateFunction + lambda:InvokeFunction + iam:PassRole'
+                }, lambda_node)
+                YIELD rel AS create_rel
+
+                CALL apoc.create.vRelationship(lambda_node, 'EXECUTES_AS', {}, target_role)
+                YIELD rel AS executes_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {}, escalation_outcome)
+                YIELD rel AS grants_rel
+
+                UNWIND nodes(path_principal) + nodes(path_passrole) + nodes(path_create) + nodes(path_invoke) + nodes(path_target) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_principal, path_passrole, path_create, path_invoke, path_target,
+                       lambda_node, escalation_outcome, create_rel, executes_rel, grants_rel,
+                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+            """,
+            parameters=[],
+        ),
+        AttackPathsQueryDefinition(
+            id="aws-iam-privesc-role-chain",
+            name="Privilege Escalation: Role Assumption Chains to Admin",
+            description="Detect multi-hop role assumption chains where a principal can reach an administrative role through one or more intermediate role assumptions. This traces STS_ASSUMEROLE_ALLOW relationships to find paths to privileged roles.",
+            provider="aws",
+            cypher="""
+                // Find principals in the account
+                MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
+
+                // Find role assumption chains (1-5 hops) to roles with elevated permissions
+                MATCH path_chain = (principal)-[:STS_ASSUMEROLE_ALLOW*1..5]->(target_role:AWSRole)
+
+                // Target role must have administrative permissions
+                MATCH path_admin = (target_role)--(admin_policy:AWSPolicy)--(admin_stmt:AWSPolicyStatement)
+                WHERE admin_stmt.effect = 'Allow'
+                    AND (
+                        any(action IN admin_stmt.action WHERE action = '*')
+                        OR any(action IN admin_stmt.action WHERE toLower(action) = 'iam:*')
+                        OR any(action IN admin_stmt.action WHERE toLower(action) CONTAINS 'admin')
+                    )
+
+                // Calculate chain length for visualization
+                WITH principal, target_role, path_principal, path_chain, path_admin,
+                     length(path_chain) as chain_length,
+                     [node in nodes(path_chain) | node.name] as chain_nodes
+
+                // Create escalation outcome visualization
+                CALL apoc.create.vNode(['PrivilegeEscalation'], {
+                    id: 'privesc-chain-' + principal.arn + '-' + target_role.name,
+                    name: 'Effective Administrator',
+                    technique: 'sts:AssumeRole chain (' + toString(chain_length) + ' hops)',
+                    severity: CASE WHEN chain_length = 1 THEN 'CRITICAL' ELSE 'HIGH' END,
+                    chain_length: chain_length,
+                    chain_path: chain_nodes,
+                    reference: 'https://pathfinding.cloud/paths/sts-001'
+                })
+                YIELD node AS escalation_outcome
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ADMIN', {
+                    hops: chain_length
+                }, escalation_outcome)
+                YIELD rel AS admin_rel
+
+                UNWIND nodes(path_principal) + nodes(path_chain) + nodes(path_admin) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_principal, path_chain, path_admin,
+                       escalation_outcome, admin_rel,
+                       chain_length, chain_nodes,
+                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                ORDER BY chain_length ASC
+            """,
+            parameters=[],
+        ),
     ],
 }
 
