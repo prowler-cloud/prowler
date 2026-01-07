@@ -1266,6 +1266,7 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
 def mock_api_images_calls(client: MagicMock):
     image1_id = str(uuid4())
     image2_id = str(uuid4())
+    image3_id = str(uuid4())
 
     client.images().list().execute.return_value = {
         "items": [
@@ -1276,6 +1277,10 @@ def mock_api_images_calls(client: MagicMock):
             {
                 "name": "test-image-2",
                 "id": image2_id,
+            },
+            {
+                "name": "test-image-3",
+                "id": image3_id,
             },
         ]
     }
@@ -1301,6 +1306,8 @@ def mock_api_images_calls(client: MagicMock):
                     }
                 ]
             }
+        elif resource == "test-image-3":
+            return_value.execute.side_effect = Exception("Permission denied")
         return return_value
 
     client.images().getIamPolicy = mock_get_image_iam_policy
