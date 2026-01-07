@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Mailboxes",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that no mailboxes in the organization have 'AuditBypassEnabled' set to true. This setting prevents mailbox audit logging and can allow unauthorized access without traceability.",
   "Risk": "If 'AuditBypassEnabled' is set to true for any mailbox, access to those mailboxes won't be logged, creating a blind spot in forensic analysis and increasing the risk of undetected malicious activity.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailboxauditbypassassociation?view=exchange-ps",

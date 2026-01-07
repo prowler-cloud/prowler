@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:guardrails/resource-id",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Ensure that prompt attack filter strength is set to HIGH for Amazon Bedrock guardrails to mitigate prompt injection and bypass techniques.",
   "Risk": "If prompt attack filter strength is not set to HIGH, Bedrock models may be more vulnerable to prompt injection attacks or jailbreak attempts, which could allow harmful or sensitive content to bypass filters and reach end users.",
   "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
@@ -23,7 +24,9 @@
       "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Ensure that prompt attack protection is set to the highest strength to minimize the risk of prompt injection attacks."

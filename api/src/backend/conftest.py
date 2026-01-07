@@ -519,6 +519,12 @@ def providers_fixture(tenants_fixture):
         alias="mongodbatlas_testing",
         tenant_id=tenant.id,
     )
+    provider9 = Provider.objects.create(
+        provider="alibabacloud",
+        uid="1234567890123456",
+        alias="alibabacloud_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -529,6 +535,7 @@ def providers_fixture(tenants_fixture):
         provider6,
         provider7,
         provider8,
+        provider9,
     )
 
 

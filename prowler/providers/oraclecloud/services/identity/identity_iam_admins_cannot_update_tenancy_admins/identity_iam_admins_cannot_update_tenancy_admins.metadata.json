@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "high",
   "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
   "Description": "IAM administrators should not be able to update the tenancy Administrators group.",
   "Risk": "Not meeting this IAM requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",

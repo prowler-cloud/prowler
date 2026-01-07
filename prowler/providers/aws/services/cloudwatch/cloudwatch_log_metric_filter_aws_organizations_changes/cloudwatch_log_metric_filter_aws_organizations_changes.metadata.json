@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudWatch Logs** metric filters and alarms monitor **AWS Organizations** change events recorded by CloudTrail, including actions like `CreateAccount`, `AttachPolicy`, `MoveAccount`, and `UpdateOrganizationalUnit`.\n\nThe evaluation looks for a filter on the trail log group matching `organizations.amazonaws.com` events and an alarm linked to that metric.",
   "Risk": "Without alerting on **AWS Organizations changes**, attackers or misconfigurations can silently alter governance, enabling unauthorized access and policy bypass. They could create/remove accounts, change or detach SCPs, or delete the organization, risking data exposure (C), privilege escalation (I), and service disruption (A).",
   "RelatedUrl": "",
