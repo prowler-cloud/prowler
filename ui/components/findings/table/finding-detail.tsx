@@ -425,7 +425,7 @@ export const FindingDetail = ({
       onOpenChange={onOpenChange}
     >
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className="minimal-scrollbar h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none 2xl:w-1/3">
+      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
         <DrawerHeader className="sr-only">
           <DrawerTitle>Finding Details</DrawerTitle>
           <DrawerDescription>View the finding details</DrawerDescription>
