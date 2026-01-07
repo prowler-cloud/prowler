@@ -3,6 +3,7 @@ import {
   JiraIntegrationCard,
   S3IntegrationCard,
   SecurityHubIntegrationCard,
+  SNSIntegrationCard,
   SsoLinkCard,
 } from "@/components/integrations";
 import { ContentLayout } from "@/components/ui";
@@ -24,6 +25,9 @@ export default async function Integrations() {
 
           {/* AWS Security Hub Integration */}
           <SecurityHubIntegrationCard />
+
+          {/* Amazon SNS Integration */}
+          <SNSIntegrationCard />
 
           {/* Jira Integration */}
           <JiraIntegrationCard />

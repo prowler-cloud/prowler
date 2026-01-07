@@ -12,4 +12,7 @@ export * from "./security-hub/security-hub-integration-card";
 export * from "./security-hub/security-hub-integration-form";
 export * from "./security-hub/security-hub-integrations-manager";
 export * from "./shared";
+export * from "./sns/sns-integration-card";
+export * from "./sns/sns-integration-form";
+export * from "./sns/sns-integrations-manager";
 export * from "./sso/sso-link-card";
