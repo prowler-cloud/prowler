@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class compute_instance_multiple_network_interfaces(Check):
+class compute_instance_single_network_interface(Check):
     """
     Ensure that VM instances have a single network interface.
 
@@ -18,17 +18,25 @@ class compute_instance_multiple_network_interfaces(Check):
         for instance in compute_client.instances:
             report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
-            report.status_extended = (
-                f"VM Instance {instance.name} has a single network interface."
-            )
-            if instance.network_interfaces_count > 1:
+
+            interface_names = [nic.name for nic in instance.network_interfaces]
+            interface_count = len(instance.network_interfaces)
+
+            if interface_count == 1:
+                report.status_extended = f"VM Instance {instance.name} has a single network interface: {interface_names[0]}."
+            elif interface_count > 1:
                 # GKE instances may legitimately require multiple network interfaces
                 if instance.name.startswith("gke-"):
                     report.status = "PASS"
-                    report.status_extended = f"VM Instance {instance.name} has {instance.network_interfaces_count} network interfaces. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
+                    report.status_extended = f"VM Instance {instance.name} has {interface_count} network interfaces: {', '.join(interface_names)}. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"VM Instance {instance.name} has {instance.network_interfaces_count} network interfaces."
+                    report.status_extended = f"VM Instance {instance.name} has {interface_count} network interfaces: {', '.join(interface_names)}."
+            else:
+                report.status_extended = (
+                    f"VM Instance {instance.name} has no network interfaces."
+                )
+
             findings.append(report)
 
         return findings

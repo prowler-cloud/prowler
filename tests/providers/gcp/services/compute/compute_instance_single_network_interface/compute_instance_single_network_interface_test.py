@@ -3,7 +3,7 @@ from unittest import mock
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
-class Test_compute_instance_multiple_network_interfaces:
+class Test_compute_instance_single_network_interface:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock()
         compute_client.instances = []
@@ -14,15 +14,15 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
             assert len(result) == 0
 
@@ -35,14 +35,17 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
-            from prowler.providers.gcp.services.compute.compute_service import Instance
+            from prowler.providers.gcp.services.compute.compute_service import (
+                Instance,
+                NetworkInterface,
+            )
 
             instance = Instance(
                 name="test-instance",
@@ -60,20 +63,24 @@ class Test_compute_instance_multiple_network_interfaces:
                 ip_forward=False,
                 disks_encryption=[],
                 project_id=GCP_PROJECT_ID,
-                network_interfaces_count=1,
+                network_interfaces=[
+                    NetworkInterface(
+                        name="nic0", network="default", subnetwork="default"
+                    )
+                ],
             )
 
             compute_client.project_ids = [GCP_PROJECT_ID]
             compute_client.instances = [instance]
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "VM Instance test-instance has a single network interface."
+                == "VM Instance test-instance has a single network interface: nic0."
             )
             assert result[0].resource_id == "1234567890"
             assert result[0].project_id == GCP_PROJECT_ID
@@ -81,7 +88,10 @@ class Test_compute_instance_multiple_network_interfaces:
             assert result[0].location == "us-central1"
 
     def test_multiple_network_interfaces(self):
-        from prowler.providers.gcp.services.compute.compute_service import Instance
+        from prowler.providers.gcp.services.compute.compute_service import (
+            Instance,
+            NetworkInterface,
+        )
 
         instance = Instance(
             name="multi-nic-instance",
@@ -99,7 +109,11 @@ class Test_compute_instance_multiple_network_interfaces:
             ip_forward=False,
             disks_encryption=[],
             project_id=GCP_PROJECT_ID,
-            network_interfaces_count=3,
+            network_interfaces=[
+                NetworkInterface(name="nic0", network="default", subnetwork="subnet-1"),
+                NetworkInterface(name="nic1", network="vpc-2", subnetwork="subnet-2"),
+                NetworkInterface(name="nic2", network="vpc-3", subnetwork="subnet-3"),
+            ],
         )
 
         compute_client = mock.MagicMock()
@@ -112,22 +126,22 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "VM Instance multi-nic-instance has 3 network interfaces."
+                == "VM Instance multi-nic-instance has 3 network interfaces: nic0, nic1, nic2."
             )
             assert result[0].resource_id == "9876543210"
             assert result[0].project_id == GCP_PROJECT_ID
@@ -135,7 +149,10 @@ class Test_compute_instance_multiple_network_interfaces:
             assert result[0].location == "us-central1"
 
     def test_two_network_interfaces(self):
-        from prowler.providers.gcp.services.compute.compute_service import Instance
+        from prowler.providers.gcp.services.compute.compute_service import (
+            Instance,
+            NetworkInterface,
+        )
 
         instance = Instance(
             name="dual-nic-instance",
@@ -151,7 +168,10 @@ class Test_compute_instance_multiple_network_interfaces:
             ip_forward=False,
             disks_encryption=[],
             project_id=GCP_PROJECT_ID,
-            network_interfaces_count=2,
+            network_interfaces=[
+                NetworkInterface(name="nic0", network="default", subnetwork="default"),
+                NetworkInterface(name="nic1", network="vpc-2", subnetwork="subnet-2"),
+            ],
         )
 
         compute_client = mock.MagicMock()
@@ -164,22 +184,22 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "VM Instance dual-nic-instance has 2 network interfaces."
+                == "VM Instance dual-nic-instance has 2 network interfaces: nic0, nic1."
             )
             assert result[0].resource_id == "1111111111"
             assert result[0].project_id == GCP_PROJECT_ID
@@ -187,7 +207,10 @@ class Test_compute_instance_multiple_network_interfaces:
             assert result[0].location == "europe-west1"
 
     def test_mixed_instances(self):
-        from prowler.providers.gcp.services.compute.compute_service import Instance
+        from prowler.providers.gcp.services.compute.compute_service import (
+            Instance,
+            NetworkInterface,
+        )
 
         instance_single_nic = Instance(
             name="single-nic-instance",
@@ -203,7 +226,9 @@ class Test_compute_instance_multiple_network_interfaces:
             ip_forward=False,
             disks_encryption=[],
             project_id=GCP_PROJECT_ID,
-            network_interfaces_count=1,
+            network_interfaces=[
+                NetworkInterface(name="nic0", network="default", subnetwork="default")
+            ],
         )
 
         instance_multi_nic = Instance(
@@ -220,7 +245,12 @@ class Test_compute_instance_multiple_network_interfaces:
             ip_forward=False,
             disks_encryption=[],
             project_id=GCP_PROJECT_ID,
-            network_interfaces_count=4,
+            network_interfaces=[
+                NetworkInterface(name="nic0", network="default", subnetwork="default"),
+                NetworkInterface(name="nic1", network="vpc-2", subnetwork="subnet-2"),
+                NetworkInterface(name="nic2", network="vpc-3", subnetwork="subnet-3"),
+                NetworkInterface(name="nic3", network="vpc-4", subnetwork="subnet-4"),
+            ],
         )
 
         compute_client = mock.MagicMock()
@@ -233,15 +263,15 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
 
             assert len(result) == 2
@@ -250,7 +280,7 @@ class Test_compute_instance_multiple_network_interfaces:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "VM Instance single-nic-instance has a single network interface."
+                == "VM Instance single-nic-instance has a single network interface: nic0."
             )
             assert result[0].resource_id == "1111111111"
             assert result[0].resource_name == "single-nic-instance"
@@ -259,13 +289,16 @@ class Test_compute_instance_multiple_network_interfaces:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == "VM Instance multi-nic-instance has 4 network interfaces."
+                == "VM Instance multi-nic-instance has 4 network interfaces: nic0, nic1, nic2, nic3."
             )
             assert result[1].resource_id == "2222222222"
             assert result[1].resource_name == "multi-nic-instance"
 
     def test_gke_instance_multiple_network_interfaces(self):
-        from prowler.providers.gcp.services.compute.compute_service import Instance
+        from prowler.providers.gcp.services.compute.compute_service import (
+            Instance,
+            NetworkInterface,
+        )
 
         instance = Instance(
             name="gke-cluster-default-pool-12345678-abcd",
@@ -281,7 +314,14 @@ class Test_compute_instance_multiple_network_interfaces:
             ip_forward=False,
             disks_encryption=[],
             project_id=GCP_PROJECT_ID,
-            network_interfaces_count=2,
+            network_interfaces=[
+                NetworkInterface(
+                    name="nic0", network="gke-network", subnetwork="gke-subnet"
+                ),
+                NetworkInterface(
+                    name="nic1", network="gke-network-2", subnetwork="gke-subnet-2"
+                ),
+            ],
         )
 
         compute_client = mock.MagicMock()
@@ -294,22 +334,22 @@ class Test_compute_instance_multiple_network_interfaces:
                 return_value=set_mocked_gcp_provider(),
             ),
             mock.patch(
-                "prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces.compute_client",
+                "prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.gcp.services.compute.compute_instance_multiple_network_interfaces.compute_instance_multiple_network_interfaces import (
-                compute_instance_multiple_network_interfaces,
+            from prowler.providers.gcp.services.compute.compute_instance_single_network_interface.compute_instance_single_network_interface import (
+                compute_instance_single_network_interface,
             )
 
-            check = compute_instance_multiple_network_interfaces()
+            check = compute_instance_single_network_interface()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "VM Instance gke-cluster-default-pool-12345678-abcd has 2 network interfaces. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
+                == "VM Instance gke-cluster-default-pool-12345678-abcd has 2 network interfaces: nic0, nic1. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
             )
             assert result[0].resource_id == "9999999999"
             assert result[0].project_id == GCP_PROJECT_ID

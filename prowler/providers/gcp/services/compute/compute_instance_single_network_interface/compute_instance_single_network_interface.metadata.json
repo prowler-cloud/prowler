@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_instance_multiple_network_interfaces",
+  "CheckID": "compute_instance_single_network_interface",
   "CheckTitle": "VM instance has a single network interface",
   "CheckType": [],
   "ServiceName": "compute",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Configure VM instances with only the **minimum network connectivity** required for their intended purpose. Review instances with multiple network interfaces and consolidate to a single interface unless multi-NIC configuration is explicitly required for network appliance or routing purposes.",
-      "Url": "https://hub.prowler.com/check/compute_instance_multiple_network_interfaces"
+      "Url": "https://hub.prowler.com/check/compute_instance_single_network_interface"
     }
   },
   "Categories": [
