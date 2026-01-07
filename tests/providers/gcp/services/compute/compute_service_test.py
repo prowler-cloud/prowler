@@ -60,6 +60,7 @@ class TestComputeService:
             assert not compute_client.instances[0].automatic_restart
             assert not compute_client.instances[0].preemptible
             assert compute_client.instances[0].provisioning_model == "STANDARD"
+            assert len(compute_client.instances[0].network_interfaces) == 1
 
             assert compute_client.instances[1].name == "instance2"
             assert compute_client.instances[1].id.__class__.__name__ == "str"
@@ -84,6 +85,7 @@ class TestComputeService:
             assert not compute_client.instances[1].automatic_restart
             assert not compute_client.instances[1].preemptible
             assert compute_client.instances[1].provisioning_model == "STANDARD"
+            assert len(compute_client.instances[1].network_interfaces) == 0
 
             assert len(compute_client.networks) == 3
             assert compute_client.networks[0].name == "network1"

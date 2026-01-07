@@ -105,10 +105,30 @@ class Compute(GCPService):
 
                     for instance in response.get("items", []):
                         public_ip = False
-                        for interface in instance.get("networkInterfaces", []):
+                        network_interfaces_raw = instance.get("networkInterfaces", [])
+
+                        network_interfaces = []
+                        for interface in network_interfaces_raw:
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
+
+                            network_interfaces.append(
+                                NetworkInterface(
+                                    name=interface.get("name", ""),
+                                    network=(
+                                        interface.get("network", "").split("/")[-1]
+                                        if interface.get("network")
+                                        else ""
+                                    ),
+                                    subnetwork=(
+                                        interface.get("subnetwork", "").split("/")[-1]
+                                        if interface.get("subnetwork")
+                                        else ""
+                                    ),
+                                )
+                            )
+
                         self.instances.append(
                             Instance(
                                 name=instance["name"],
@@ -167,6 +187,7 @@ class Compute(GCPService):
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
                                 ),
+                                network_interfaces=network_interfaces,
                             )
                         )
 
@@ -582,6 +603,12 @@ class Compute(GCPService):
                 )
 
 
+class NetworkInterface(BaseModel):
+    name: str
+    network: str = ""
+    subnetwork: str = ""
+
+
 class Disk(BaseModel):
     name: str
     auto_delete: bool = False
@@ -608,6 +635,7 @@ class Instance(BaseModel):
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
+    network_interfaces: list[NetworkInterface] = []
 
 
 class Network(BaseModel):
