@@ -6,8 +6,18 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
 ---
+
+## Styling Decision Tree
+
+```
+Tailwind class exists?  → className="..."
+Dynamic value?          → style={{ width: `${x}%` }}
+Conditional styles?     → cn("base", condition && "variant")
+Static only?            → className="..." (no cn() needed)
+Library can't use class?→ style prop with var() constants
+```
 
 ## Critical Rules
 
