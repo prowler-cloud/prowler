@@ -539,7 +539,7 @@ def _process_finding_micro_batch(
                     resource_uid = finding.resource_uid
                     if resource_uid not in resource_cache:
                         check_metadata = finding.get_metadata()
-                        resource_group = check_metadata.get("resourcegroup") or None
+                        group = check_metadata.get("resourcegroup") or None
                         resource_instance, _ = Resource.objects.get_or_create(
                             tenant_id=tenant_id,
                             provider=provider_instance,
@@ -549,7 +549,7 @@ def _process_finding_micro_batch(
                                 "service": finding.service_name,
                                 "type": finding.resource_type,
                                 "name": finding.resource_name,
-                                "resource_group": resource_group,
+                                "group": group,
                             },
                         )
                         resource_cache[resource_uid] = resource_instance
@@ -571,7 +571,7 @@ def _process_finding_micro_batch(
         # Track resource field changes (defer save)
         updated = False
         check_metadata = finding.get_metadata()
-        resource_group = check_metadata.get("resourcegroup") or None
+        group = check_metadata.get("resourcegroup") or None
         if finding.region and resource_instance.region != finding.region:
             resource_instance.region = finding.region
             updated = True
@@ -592,8 +592,8 @@ def _process_finding_micro_batch(
         if resource_instance.partition != finding.partition:
             resource_instance.partition = finding.partition
             updated = True
-        if resource_group and resource_instance.resource_group != resource_group:
-            resource_instance.resource_group = resource_group
+        if group and resource_instance.group != group:
+            resource_instance.group = group
             updated = True
 
         if updated:

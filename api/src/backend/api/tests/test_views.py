@@ -3625,7 +3625,7 @@ class TestResourceViewSet:
         assert "metadata" in response.json()["data"][0]["attributes"]
         assert "details" in response.json()["data"][0]["attributes"]
         assert "partition" in response.json()["data"][0]["attributes"]
-        assert "resource_group" in response.json()["data"][0]["attributes"]
+        assert "group" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -3700,10 +3700,10 @@ class TestResourceViewSet:
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
-                # resource_group filter
-                ("resource_group", "compute", 2),
-                ("resource_group", "storage", 1),
-                ("resource_group.in", "compute,storage", 3),
+                # group filter
+                ("group", "compute", 2),
+                ("group", "storage", 1),
+                ("group.in", "compute,storage", 3),
             ]
         ),
     )
@@ -3850,12 +3850,14 @@ class TestResourceViewSet:
         expected_services = {"ec2", "s3"}
         expected_regions = {"us-east-1", "eu-west-1"}
         expected_resource_types = {"prowler-test"}
+        expected_groups = {"compute", "storage"}
 
         assert data["data"]["type"] == "resources-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
         assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+        assert set(data["data"]["attributes"]["groups"]) == expected_groups
 
     def test_resources_metadata_resource_filter_retrieve(
         self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
@@ -3891,6 +3893,7 @@ class TestResourceViewSet:
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
         assert data["data"]["attributes"]["types"] == []
+        assert data["data"]["attributes"]["groups"] == []
 
     def test_resources_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
@@ -3930,6 +3933,7 @@ class TestResourceViewSet:
         assert attributes["services"] == [latest_scan_resource.service]
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
+        assert "groups" in attributes
 
 
 @pytest.mark.django_db

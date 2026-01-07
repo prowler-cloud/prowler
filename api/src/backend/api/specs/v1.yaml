@@ -4838,11 +4838,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[resource_group]
+        name: filter[group]
         schema:
           type: string
       - in: query
-        name: filter[resource_group__in]
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -8139,6 +8139,7 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -18794,10 +18795,12 @@ components:
             type:
               type: string
               readOnly: true
-            resource_group:
+              deprecated: true
+              description: "Deprecated: Use 'group' field instead for resource categorization"
+            group:
               type: string
               nullable: true
-              description: Resource group category (e.g., compute, storage, IAM, database)
+              description: Group category (e.g., compute, storage, IAM, database)
               maxLength: 50
           required:
           - uid
@@ -18925,10 +18928,15 @@ components:
               type: array
               items:
                 type: string
+            groups:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - types
+          - groups
     ResourceMetadataResponse:
       type: object
       properties:

@@ -704,10 +704,10 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
-    resource_group = models.TextField(
+    group = models.TextField(
         blank=True,
         null=True,
-        help_text="Resource group for categorization (e.g., compute, storage, IAM)",
+        help_text="Group for categorization (e.g., compute, storage, IAM)",
     )
 
     failed_findings_count = models.IntegerField(default=0)

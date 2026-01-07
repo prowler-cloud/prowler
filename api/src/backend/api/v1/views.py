@@ -2526,23 +2526,23 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Get resource_groups from Resource model
-        resource_groups = list(
+        # Get groups from Resource model
+        groups = list(
             Resource.objects.filter(
                 tenant_id=tenant_id,
-                resource_group__isnull=False,
+                group__isnull=False,
             )
-            .exclude(resource_group__exact="")
-            .values_list("resource_group", flat=True)
+            .exclude(group__exact="")
+            .values_list("group", flat=True)
             .distinct()
-            .order_by("resource_group")
+            .order_by("group")
         )
 
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
-            "resource_groups": resource_groups,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2599,23 +2599,23 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Get resource_groups from Resource model for resources in latest scans
-        resource_groups = list(
+        # Get groups from Resource model for resources in latest scans
+        groups = list(
             Resource.objects.filter(
                 tenant_id=tenant_id,
-                resource_group__isnull=False,
+                group__isnull=False,
             )
-            .exclude(resource_group__exact="")
-            .values_list("resource_group", flat=True)
+            .exclude(group__exact="")
+            .values_list("group", flat=True)
             .distinct()
-            .order_by("resource_group")
+            .order_by("group")
         )
 
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
-            "resource_groups": resource_groups,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)

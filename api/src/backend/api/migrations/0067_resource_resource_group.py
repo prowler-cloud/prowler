@@ -9,10 +9,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="resource",
-            name="resource_group",
+            name="group",
             field=models.TextField(
                 blank=True,
-                help_text="Resource group for categorization (e.g., compute, storage, IAM)",
+                help_text="Group for categorization (e.g., compute, storage, IAM)",
                 null=True,
             ),
         ),

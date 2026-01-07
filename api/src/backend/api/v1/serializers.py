@@ -1175,7 +1175,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
-            "resource_group",
+            "group",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1184,7 +1184,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
-            "resource_group": {"read_only": True},
+            "group": {"read_only": True},
         }
 
     included_serializers = {
@@ -1278,9 +1278,7 @@ class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-    resource_groups = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True
-    )
+    groups = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
