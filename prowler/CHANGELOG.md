@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
 - Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
 - Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
+- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
 
 ---
 
