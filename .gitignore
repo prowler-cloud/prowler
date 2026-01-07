@@ -152,3 +152,4 @@ CLAUDE.md
 
 # Compliance report
 *.pdf
+.claude/skills

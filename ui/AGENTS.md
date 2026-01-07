@@ -1,16 +1,16 @@
 # Prowler UI - AI Agent Ruleset
 
 > **Skills Reference**: For detailed patterns, use these skills:
-> - `prowler-ui` - Prowler-specific UI patterns
-> - `prowler-test-ui` - Playwright E2E testing (comprehensive)
-> - `typescript` - Const types, flat interfaces
-> - `react-19` - No useMemo/useCallback, compiler
-> - `nextjs-15` - App Router, Server Actions
-> - `tailwind-4` - cn() utility, no var() in className
-> - `zod-4` - New API (z.email(), z.uuid())
-> - `zustand-5` - Selectors, persist middleware
-> - `ai-sdk-5` - UIMessage, sendMessage
-> - `playwright` - Page Object Model, selectors
+> - [`prowler-ui`](../skills/claude/prowler-ui/SKILL.md) - Prowler-specific UI patterns
+> - [`prowler-test-ui`](../skills/claude/prowler-test-ui/SKILL.md) - Playwright E2E testing (comprehensive)
+> - [`typescript`](../skills/claude/typescript/SKILL.md) - Const types, flat interfaces
+> - [`react-19`](../skills/claude/react-19/SKILL.md) - No useMemo/useCallback, compiler
+> - [`nextjs-15`](../skills/claude/nextjs-15/SKILL.md) - App Router, Server Actions
+> - [`tailwind-4`](../skills/claude/tailwind-4/SKILL.md) - cn() utility, no var() in className
+> - [`zod-4`](../skills/claude/zod-4/SKILL.md) - New API (z.email(), z.uuid())
+> - [`zustand-5`](../skills/claude/zustand-5/SKILL.md) - Selectors, persist middleware
+> - [`ai-sdk-5`](../skills/claude/ai-sdk-5/SKILL.md) - UIMessage, sendMessage
+> - [`playwright`](../skills/claude/playwright/SKILL.md) - Page Object Model, selectors
 
 ## CRITICAL RULES - NON-NEGOTIABLE
 
@@ -51,7 +51,7 @@
 ### Component Placement
 
 ```
-New feature UI? → shadcn/ui + Tailwind | Existing feature? → HeroUI
+New/Existing UI? → shadcn/ui + Tailwind (NEVER HeroUI for new code)
 Used 1 feature? → features/{feature}/components | Used 2+? → components/shared
 Needs state/hooks? → "use client" | Server component? → No directive
 ```
@@ -64,7 +64,7 @@ Data transform → actions/{feature}/{feature}.adapter.ts
 Types (shared 2+) → types/{domain}.ts | Types (local 1) → {feature}/types.ts
 Utils (shared 2+) → lib/ | Utils (local 1) → {feature}/utils/
 Hooks (shared 2+) → hooks/ | Hooks (local 1) → {feature}/hooks.ts
-shadcn components → components/shadcn/ | HeroUI → components/ui/
+shadcn components → components/shadcn/
 ```
 
 ---
@@ -141,8 +141,10 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 
 ## TECH STACK
 
-Next.js 15.5.3 | React 19.1.1 | Tailwind 4.1.13 | shadcn/ui (new) | HeroUI 2.8.4 (legacy)
+Next.js 15.5.3 | React 19.1.1 | Tailwind 4.1.13 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.29 | Recharts 2.15.4
+
+> **Note**: HeroUI exists in `components/ui/` as legacy code. Do NOT add new components there.
 
 ---
 
@@ -152,8 +154,8 @@ Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.29 | R
 ui/
 ├── app/(auth)/          # Auth pages
 ├── app/(prowler)/       # Main app: compliance, findings, providers, scans
-├── components/shadcn/   # New shadcn/ui components
-├── components/ui/       # HeroUI base (legacy)
+├── components/shadcn/   # shadcn/ui components (USE THIS)
+├── components/ui/       # HeroUI (LEGACY - do not add here)
 ├── actions/             # Server actions
 ├── types/               # Shared types
 ├── hooks/               # Shared hooks

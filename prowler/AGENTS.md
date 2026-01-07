@@ -1,11 +1,11 @@
 # Prowler SDK Agent Guide
 
 > **Skills Reference**: For detailed patterns, use these skills:
-> - `prowler-sdk-check` - Create new security checks (step-by-step)
-> - `prowler-provider` - Add new cloud providers
-> - `prowler-test-sdk` - pytest patterns for SDK
-> - `prowler-compliance` - Compliance framework structure
-> - `pytest` - Generic pytest patterns
+> - [`prowler-sdk-check`](../skills/claude/prowler-sdk-check/SKILL.md) - Create new security checks (step-by-step)
+> - [`prowler-provider`](../skills/claude/prowler-provider/SKILL.md) - Add new cloud providers
+> - [`prowler-test-sdk`](../skills/claude/prowler-test-sdk/SKILL.md) - pytest patterns for SDK
+> - [`prowler-compliance`](../skills/claude/prowler-compliance/SKILL.md) - Compliance framework structure
+> - [`pytest`](../skills/claude/pytest/SKILL.md) - Generic pytest patterns
 
 ## Project Overview
 

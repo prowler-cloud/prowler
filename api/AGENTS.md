@@ -1,10 +1,10 @@
 # Prowler API - AI Agent Ruleset
 
 > **Skills Reference**: For detailed patterns, use these skills:
-> - `prowler-api` - Models, Serializers, Views, RLS patterns
-> - `prowler-test-api` - Testing patterns (pytest-django)
-> - `django-drf` - Generic DRF patterns
-> - `pytest` - Generic pytest patterns
+> - [`prowler-api`](../skills/claude/prowler-api/SKILL.md) - Models, Serializers, Views, RLS patterns
+> - [`prowler-test-api`](../skills/claude/prowler-test-api/SKILL.md) - Testing patterns (pytest-django)
+> - [`django-drf`](../skills/claude/django-drf/SKILL.md) - Generic DRF patterns
+> - [`pytest`](../skills/claude/pytest/SKILL.md) - Generic pytest patterns
 
 ## CRITICAL RULES - NON-NEGOTIABLE
 
