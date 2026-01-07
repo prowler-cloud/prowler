@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**AWS CloudTrail trails** are evaluated for use of **SSE-KMS** with a customer-managed KMS key to encrypt delivered log files at rest in S3. Trails without a configured KMS key are identified. *Applies to single-Region and multi-Region trails.*",
   "Risk": "Absent a **customer-managed KMS key**, log protection relies only on storage permissions. Bucket misconfigurations or stolen credentials can expose audit data, aiding evasion and lateral movement. Missing key-level controls, rotation, and usage audit weaken **confidentiality** and **forensic integrity**.",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "IAM",
   "Description": "This check ensures that the 'cluster-admin' role, which provides wide-ranging powers, is used only where necessary. The 'cluster-admin' role grants super-user access to perform any action on any resource, including all namespaces. It should be applied cautiously to avoid excessive privileges.",
   "Risk": "Inappropriate use of the 'cluster-admin' role can lead to excessive privileges, increasing the risk of malicious actions and potentially impacting the cluster's security posture.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",

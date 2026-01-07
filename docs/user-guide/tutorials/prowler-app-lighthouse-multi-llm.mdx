@@ -20,9 +20,9 @@ Lighthouse AI supports the following LLM providers:
 
 For Lighthouse AI to work properly, models **must** support all of the following capabilities:
 
-- **Text input**: Ability to receive text prompts
-- **Text output**: Ability to generate text responses
-- **Tool calling**: Ability to invoke tools and functions
+- **Text input**: Ability to receive text prompts.
+- **Text output**: Ability to generate text responses.
+- **Tool calling**: Ability to invoke tools and functions.
 
 If any of these capabilities are missing, the model will not be compatible with Lighthouse AI.
 
@@ -53,26 +53,53 @@ To connect a provider:
   <Tab title="OpenAI">
     ### Required Information
 
-    - **API Key**: OpenAI API key (starts with `sk-` or `sk-proj-`). You can create an API key from the [OpenAI platform](https://platform.openai.com/api-keys).
+    - **API Key**: OpenAI API key (starts with `sk-` or `sk-proj-`). API keys can be created from the [OpenAI platform](https://platform.openai.com/api-keys).
 
     ### Before Connecting
 
-    - Ensure the OpenAI account has sufficient credits
-    - Verify that the `gpt-5` model (recommended for Lighthouse AI) is not blocked in the OpenAI organization settings
+    - Ensure the OpenAI account has sufficient credits.
+    - Verify that the `gpt-5` model (recommended for Lighthouse AI) is not blocked in the OpenAI organization settings.
   </Tab>
 
   <Tab title="Amazon Bedrock">
-    ### Required Information
+    Prowler connects to Amazon Bedrock using either [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) or IAM credentials.
 
-    To connect Amazon Bedrock, you need:
+    <Note>
+    Amazon Bedrock models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models that support tool calling and text input/output.
+    </Note>
 
-    - **AWS Access Key ID**: AWS access key ID
-    - **AWS Secret Access Key**: AWS secret access key
-    - **AWS Region**: Region where Bedrock is available (e.g., `us-east-1`, `us-west-2`)
+    ### Amazon Bedrock Long-Term API Key
 
-    Available models are region dependent. See [Amazon Bedrock models by region](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html) for details.
+    <VersionBadge version="5.15.0" />
 
-    ### Required Permissions
+    <Warning>
+    Amazon Bedrock Long-Term API keys are recommended only for exploration purposes. For production environments, use AWS IAM Access Keys with properly scoped permissions.
+    </Warning>
+
+    Amazon Bedrock API keys provide simpler authentication with automatically assigned permissions.
+
+    #### Required Information
+
+    - **Bedrock Long-Term API Key**: The API key generated from Amazon Bedrock.
+    - **AWS Region**: Region where Bedrock is available.
+
+    <Note>
+    Amazon Bedrock Long-Term API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
+
+    Learn more: [Getting Started with Amazon Bedrock API Keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html)
+    </Note>
+
+    ### AWS IAM Access Keys
+
+    Standard AWS IAM credentials can be used as an alternative authentication method.
+
+    #### Required Information
+
+    - **AWS Access Key ID**: The access key ID for the IAM user.
+    - **AWS Secret Access Key**: The secret access key for the IAM user.
+    - **AWS Region**: Region where Bedrock is available.
+
+    #### Required Permissions
 
     The AWS IAM user must have the `AmazonBedrockLimitedAccess` managed policy attached:
 
@@ -84,12 +111,6 @@ To connect a provider:
     Access to all Amazon Bedrock foundation models is enabled by default. When you select a model or invoke it for the first time (using Prowler or otherwise), you agree to Amazon's EULA. More info: [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
     </Note>
 
-    Prowler provides flexibility to select available models. When you select a model, you are subscribed in the Amazon Marketplace, but you are charged only on a usage basis.
-
-    <Note>
-    Lighthouse AI automatically filters Amazon Bedrock models to display only those that support text input, text output, and tool calling capabilities. This ensures all available models are compatible with Lighthouse AI features.
-    </Note>
-
   </Tab>
 
   <Tab title="OpenAI Compatible">
@@ -97,8 +118,8 @@ To connect a provider:
 
     ### Required Information
 
-    - **API Key**: API key from the compatible service
-    - **Base URL**: API endpoint URL including the API version (e.g., `https://openrouter.ai/api/v1`)
+    - **API Key**: API key from the compatible service.
+    - **Base URL**: API endpoint URL including the API version (e.g., `https://openrouter.ai/api/v1`).
 
     ### Example: OpenRouter
 

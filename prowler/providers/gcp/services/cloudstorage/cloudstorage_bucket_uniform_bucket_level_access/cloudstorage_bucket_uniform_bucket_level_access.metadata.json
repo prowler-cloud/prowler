@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Bucket",
+  "ResourceGroup": "storage",
   "Description": "Ensure That Cloud Storage Buckets Have Uniform Bucket-Level Access Enabled",
   "Risk": "Enabling uniform bucket-level access guarantees that if a Storage bucket is not publicly accessible, no object in the bucket is publicly accessible either.",
   "RelatedUrl": "",

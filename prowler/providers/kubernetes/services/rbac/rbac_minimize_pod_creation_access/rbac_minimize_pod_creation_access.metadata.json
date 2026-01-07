@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the ability to create pods in a Kubernetes cluster is restricted to a minimal group of users. Limiting pod creation access mitigates the risk of privilege escalation and exposure of sensitive data.",
   "Risk": "Unrestricted access to create pods can lead to potential security risks and privilege escalation within the cluster.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",

@@ -15,13 +15,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**AWS Transfer Family servers** are evaluated for presence of the unencrypted `FTP` protocol among enabled protocols, as opposed to encrypted options like SFTP, FTPS, or AS2.",
   "Risk": "Allowing **FTP** exposes credentials and file contents in cleartext, breaking confidentiality. Adversaries can sniff or perform **MITM** to read or alter files, compromising integrity and enabling credential theft that can be reused for broader unauthorized access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://qiita.com/tomori-ry/items/e9202e331eed9628c9a0",
     "https://docs.aws.amazon.com/config/latest/developerguide/transfer-family-server-no-ftp.html",
-    "https://www.geeksforgeeks.org/computer-networks/file-transfer-protocol-ftp-in-application-layer/",
     "https://docs.aws.amazon.com/transfer/latest/userguide/edit-server-config.html#edit-protocols",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/transfer-controls.html#transfer-2"
   ],

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with an appropriate number of audit log backups. Setting --audit-log-maxbackup to 10 or as per business requirements helps maintain a sufficient log backup for investigations or analysis.",
   "Risk": "Without an adequate number of audit log backups, there may be insufficient log history to investigate past events or security incidents.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",

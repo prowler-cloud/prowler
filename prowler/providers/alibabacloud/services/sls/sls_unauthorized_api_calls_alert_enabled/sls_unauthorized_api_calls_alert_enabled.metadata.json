@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_unauthorized_api_calls_alert_enabled",
+  "CheckTitle": "A log monitoring and alerts are set up for unauthorized API calls",
+  "CheckType": [
+    "Unusual logon",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
+  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for **unauthorized API calls**.",
+  "Risk": "Monitoring **unauthorized API calls** will help reveal application errors and may reduce time to detect **malicious activity**.\n\nThis is essential for early detection of potential security breaches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/unauthorized-api-calls-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for unauthorized API calls",
+      "Url": "https://hub.prowler.com/check/sls_unauthorized_api_calls_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

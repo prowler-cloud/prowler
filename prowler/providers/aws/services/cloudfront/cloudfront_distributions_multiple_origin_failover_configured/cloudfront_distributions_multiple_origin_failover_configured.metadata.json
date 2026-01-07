@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** are evaluated for an **origin group** configured with at least `2` origins to support automatic origin failover.",
   "Risk": "Without **origin failover**, the origin becomes a **single point of failure**. Origin outages, regional incidents, or targeted **DoS** can cause **downtime**, elevated error rates, and latency, degrading **availability** and impacting user experience and SLAs.",
   "RelatedUrl": "",

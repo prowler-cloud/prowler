@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFormationStack",
+  "ResourceGroup": "devops",
   "Description": "**AWS CloudFormation root stacks** are evaluated for **termination protection**. The detection identifies whether `termination protection` is enabled to block stack deletions on non-nested stacks.",
   "Risk": "Without **termination protection**, human error or automation can delete entire stacks, causing immediate **availability** loss and potential **data destruction** of managed resources.\n\nAttackers with delete rights can more easily trigger outages and hinder recovery.",
   "RelatedUrl": "",
