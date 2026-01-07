@@ -783,10 +783,27 @@ class ComplianceOverviewFilter(FilterSet):
         }
 
 
-class ScanSummaryFilter(FilterSet):
+class ProviderIdAdapterMixin:
+    """Mixin to adapt 'provider' parameter to 'provider_id' for backwards compatibility.
+
+    This allows using 'provider' as an alias for 'provider_id' in filter parameters.
+    Will be removed in a future version when 'provider' becomes the primary parameter.
+    """
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:
+            data = data.copy()
+            if "provider" in data and "provider_id" not in data:
+                data["provider_id"] = data.pop("provider")
+            if "provider__in" in data and "provider_id__in" not in data:
+                data["provider_id__in"] = data.pop("provider__in")
+        super().__init__(data, *args, **kwargs)
+
+
+class ScanSummaryFilter(ProviderIdAdapterMixin, FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
-    provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
@@ -803,13 +820,13 @@ class ScanSummaryFilter(FilterSet):
         }
 
 
-class DailySeveritySummaryFilter(FilterSet):
+class DailySeveritySummaryFilter(ProviderIdAdapterMixin, FilterSet):
     """Filter for findings_severity/timeseries endpoint."""
 
     MAX_DATE_RANGE_DAYS = 365
 
-    provider = UUIDFilter(field_name="provider_id", lookup_expr="exact")
-    provider__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
