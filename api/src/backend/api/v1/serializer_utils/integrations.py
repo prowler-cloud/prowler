@@ -67,6 +67,31 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class SNSConfigSerializer(BaseValidateSerializer):
+    topic_arn = serializers.CharField(required=True)
+
+    def validate_topic_arn(self, value):
+        """
+        Validate the topic_arn field to ensure it's a properly formatted SNS topic ARN.
+        """
+        if not value:
+            raise serializers.ValidationError("SNS topic ARN is required")
+
+        # Check if it matches the SNS ARN pattern: arn:partition:sns:region:account-id:topic-name
+        arn_pattern = (
+            r"^arn:(aws|aws-cn|aws-us-gov):sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9_-]+$"
+        )
+        if not re.match(arn_pattern, value):
+            raise serializers.ValidationError(
+                "Invalid SNS topic ARN format. Expected: arn:partition:sns:region:account-id:topic-name"
+            )
+
+        return value
+
+    class Meta:
+        resource_name = "integrations"
+
+
 class JiraConfigSerializer(BaseValidateSerializer):
     domain = serializers.CharField(read_only=True)
     issue_types = serializers.ListField(
@@ -228,6 +253,19 @@ class IntegrationCredentialField(serializers.JSONField):
                 "empty JSON object (`{}`).",
                 "properties": {},
                 "additionalProperties": False,
+            },
+            {
+                "type": "object",
+                "title": "Amazon SNS",
+                "properties": {
+                    "topic_arn": {
+                        "type": "string",
+                        "description": "The Amazon Resource Name (ARN) of the SNS topic to send alerts to. Format: "
+                        "arn:partition:sns:region:account-id:topic-name",
+                        "pattern": "^arn:(aws|aws-cn|aws-us-gov):sns:[a-z0-9-]+:\\d{12}:[a-zA-Z0-9_-]+$",
+                    },
+                },
+                "required": ["topic_arn"],
             },
         ]
     }

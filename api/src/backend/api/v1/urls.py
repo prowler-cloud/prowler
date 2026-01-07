@@ -13,6 +13,7 @@ from api.v1.views import (
     GithubSocialLoginView,
     GoogleSocialLoginView,
     IntegrationJiraViewSet,
+    IntegrationSNSViewSet,
     IntegrationViewSet,
     InvitationAcceptViewSet,
     InvitationViewSet,
@@ -97,6 +98,7 @@ integrations_router = routers.NestedSimpleRouter(
 integrations_router.register(
     r"jira", IntegrationJiraViewSet, basename="integration-jira"
 )
+integrations_router.register(r"sns", IntegrationSNSViewSet, basename="integration-sns")
 
 urlpatterns = [
     path("tokens", CustomTokenObtainView.as_view(), name="token-obtain"),

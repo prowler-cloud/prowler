@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_ddos_protection_enabled",
+  "CheckTitle": "Ensure that all Azure VNets have DDoS protection enabled",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "This check verifies that all Virtual Networks (VNets) in Azure have Distributed Denial of Service (DDoS) protection enabled to safeguard against potential DDoS attacks.",
+  "Risk": "Without DDoS protection, VNets are vulnerable to DDoS attacks, which can lead to service disruptions, increased latency, and potential data breaches.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "NativeIaC": "",
+      "Terraform": "",
+      "CLI": "",
+      "Other": ""
+    },
+    "Recommendation": {
+      "Text": "Enable DDoS protection for all Azure VNets to protect against potential DDoS attacks.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+} 

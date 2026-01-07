@@ -60,6 +60,7 @@ from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
+    SNSConfigSerializer,
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
@@ -2432,6 +2433,15 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.SNS:
+            if providers:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Relationship field is not accepted. This integration applies to all providers."
+                    }
+                )
+            config_serializer = SNSConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
         elif integration_type == Integration.IntegrationChoices.JIRA:
             if providers:
                 raise serializers.ValidationError(
@@ -2698,6 +2708,40 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
+
+
+class IntegrationSNSDispatchSerializer(BaseSerializerV1):
+    """
+    Serializer for dispatching findings to SNS integration as email alerts.
+    Supports filtering by severity, region, provider, resource name, and tags.
+    """
+
+    class JSONAPIMeta:
+        resource_name = "integrations-sns-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if integration_instance.integration_type != Integration.IntegrationChoices.SNS:
+            raise ValidationError(
+                {"integration_type": "The given integration is not an SNS integration"}
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        if not integration_instance.connected:
+            raise ValidationError(
+                {
+                    "integration": "The SNS integration is not connected. Please test the connection first."
                 }
             )
 

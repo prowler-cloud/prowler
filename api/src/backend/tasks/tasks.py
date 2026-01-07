@@ -29,6 +29,7 @@ from tasks.jobs.export import (
 )
 from tasks.jobs.integrations import (
     send_findings_to_jira,
+    send_findings_to_sns,
     upload_s3_integration,
     upload_security_hub_integration,
 )
@@ -806,6 +807,19 @@ def jira_integration_task(
     return send_findings_to_jira(
         tenant_id, integration_id, project_key, issue_type, finding_ids
     )
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-sns",
+    queue="integrations",
+)
+def sns_integration_task(
+    tenant_id: str,
+    integration_id: str,
+    finding_ids: list[str],
+):
+    return send_findings_to_sns(tenant_id, integration_id, finding_ids)
 
 
 @shared_task(
