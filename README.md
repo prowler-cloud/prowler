@@ -310,6 +310,42 @@ And many more environments.
 
 ![Architecture](docs/img/architecture.png)
 
+# 🤖 AI Skills for Development
+
+Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants (Claude Code, OpenCode, Cursor, and other [agentskills.io](https://agentskills.io)-compatible tools) understand Prowler's codebase patterns and conventions.
+
+## What are AI Skills?
+
+Skills are structured instructions that give AI assistants the context they need to write code that follows Prowler's standards. They include:
+
+- **Coding patterns** for each component (SDK, API, UI, MCP Server)
+- **Testing conventions** (pytest, Playwright)
+- **Architecture guidelines** (Clean Architecture, RLS patterns)
+- **Framework-specific rules** (React 19, Next.js 15, Django DRF, Tailwind 4)
+
+## Available Skills
+
+| Category | Skills |
+|----------|--------|
+| **Generic** | `typescript`, `react-19`, `nextjs-15`, `tailwind-4`, `playwright`, `pytest`, `django-drf`, `zod-4`, `zustand-5`, `ai-sdk-5` |
+| **Prowler** | `prowler`, `prowler-api`, `prowler-ui`, `prowler-mcp`, `prowler-sdk-check`, `prowler-test-ui`, `prowler-test-api`, `prowler-test-sdk`, `prowler-compliance`, `prowler-provider`, `prowler-pr`, `prowler-docs` |
+
+## Setup
+
+**Claude Code:**
+```bash
+./skills/setup-claude-skills.sh
+# Skills available via the skill tool
+```
+
+**OpenCode:**
+```bash
+./skills/setup-opencode-skills.sh
+# Restart OpenCode to use skills
+```
+
+> Skills follow the [agentskills.io](https://agentskills.io) open standard and can be used with any compatible AI coding assistant.
+
 # 📖 Documentation
 
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
