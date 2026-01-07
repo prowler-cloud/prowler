@@ -1070,7 +1070,7 @@ class MuteRuleFilter(FilterSet):
         }
 
 
-class ThreatScoreSnapshotFilter(FilterSet):
+class ThreatScoreSnapshotFilter(ProviderIdAdapterMixin, FilterSet):
     """
     Filter for ThreatScore snapshots.
     Allows filtering by scan, provider, compliance_id, and date ranges.
@@ -1103,7 +1103,7 @@ class ThreatScoreSnapshotFilter(FilterSet):
         }
 
 
-class AttackSurfaceOverviewFilter(FilterSet):
+class AttackSurfaceOverviewFilter(ProviderIdAdapterMixin, FilterSet):
     """Filter for attack surface overview aggregations by provider."""
 
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
@@ -1122,7 +1122,7 @@ class AttackSurfaceOverviewFilter(FilterSet):
         fields = {}
 
 
-class CategoryOverviewFilter(FilterSet):
+class CategoryOverviewFilter(ProviderIdAdapterMixin, FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
