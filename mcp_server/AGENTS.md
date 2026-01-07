@@ -1,6 +1,6 @@
 # Prowler MCP Server - AI Agent Ruleset
 
-> **Skills Reference**: For detailed patterns, use the [`prowler-mcp`](../skills/claude/prowler-mcp/SKILL.md) skill.
+> **Skills Reference**: For detailed patterns, use the [`prowler-mcp`](../skills/prowler-mcp/SKILL.md) skill.
 
 ## Project Overview
 

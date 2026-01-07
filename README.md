@@ -312,7 +312,7 @@ And many more environments.
 
 # 🤖 AI Skills for Development
 
-Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants (Claude Code, OpenCode, Cursor, and other [agentskills.io](https://agentskills.io)-compatible tools) understand Prowler's codebase patterns and conventions.
+Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants understand Prowler's codebase patterns and conventions.
 
 ## What are AI Skills?
 
@@ -332,19 +332,19 @@ Skills are structured instructions that give AI assistants the context they need
 
 ## Setup
 
-**Claude Code:**
 ```bash
-./skills/setup-claude-skills.sh
-# Skills available via the skill tool
+./skills/setup.sh
 ```
 
-**OpenCode:**
-```bash
-./skills/setup-opencode-skills.sh
-# Restart OpenCode to use skills
-```
+This configures skills for AI coding assistants that follow the [agentskills.io](https://agentskills.io) standard:
 
-> Skills follow the [agentskills.io](https://agentskills.io) open standard and can be used with any compatible AI coding assistant.
+| Tool | Configuration |
+|------|---------------|
+| **Claude Code** | `.claude/skills/` (symlink) |
+| **OpenCode** | `.claude/skills/` (symlink) |
+| **Codex (OpenAI)** | `.codex/skills/` (symlink) |
+
+> **Note:** Restart your AI coding assistant after running setup to load the skills.
 
 # 📖 Documentation
 

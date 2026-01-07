@@ -13,32 +13,32 @@ Use these skills for detailed patterns on-demand:
 ### Generic Skills (Any Project)
 | Skill | Description | URL |
 |-------|-------------|-----|
-| `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/claude/typescript/SKILL.md) |
-| `react-19` | No useMemo/useCallback, React Compiler | [SKILL.md](skills/claude/react-19/SKILL.md) |
-| `nextjs-15` | App Router, Server Actions, streaming | [SKILL.md](skills/claude/nextjs-15/SKILL.md) |
-| `tailwind-4` | cn() utility, no var() in className | [SKILL.md](skills/claude/tailwind-4/SKILL.md) |
-| `playwright` | Page Object Model, MCP workflow, selectors | [SKILL.md](skills/claude/playwright/SKILL.md) |
-| `pytest` | Fixtures, mocking, markers, parametrize | [SKILL.md](skills/claude/pytest/SKILL.md) |
-| `django-drf` | ViewSets, Serializers, Filters | [SKILL.md](skills/claude/django-drf/SKILL.md) |
-| `zod-4` | New API (z.email(), z.uuid()) | [SKILL.md](skills/claude/zod-4/SKILL.md) |
-| `zustand-5` | Persist, selectors, slices | [SKILL.md](skills/claude/zustand-5/SKILL.md) |
-| `ai-sdk-5` | UIMessage, streaming, LangChain | [SKILL.md](skills/claude/ai-sdk-5/SKILL.md) |
+| `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
+| `react-19` | No useMemo/useCallback, React Compiler | [SKILL.md](skills/react-19/SKILL.md) |
+| `nextjs-15` | App Router, Server Actions, streaming | [SKILL.md](skills/nextjs-15/SKILL.md) |
+| `tailwind-4` | cn() utility, no var() in className | [SKILL.md](skills/tailwind-4/SKILL.md) |
+| `playwright` | Page Object Model, MCP workflow, selectors | [SKILL.md](skills/playwright/SKILL.md) |
+| `pytest` | Fixtures, mocking, markers, parametrize | [SKILL.md](skills/pytest/SKILL.md) |
+| `django-drf` | ViewSets, Serializers, Filters | [SKILL.md](skills/django-drf/SKILL.md) |
+| `zod-4` | New API (z.email(), z.uuid()) | [SKILL.md](skills/zod-4/SKILL.md) |
+| `zustand-5` | Persist, selectors, slices | [SKILL.md](skills/zustand-5/SKILL.md) |
+| `ai-sdk-5` | UIMessage, streaming, LangChain | [SKILL.md](skills/ai-sdk-5/SKILL.md) |
 
 ### Prowler-Specific Skills
 | Skill | Description | URL |
 |-------|-------------|-----|
-| `prowler` | Project overview, component navigation | [SKILL.md](skills/claude/prowler/SKILL.md) |
-| `prowler-api` | Django + RLS + JSON:API patterns | [SKILL.md](skills/claude/prowler-api/SKILL.md) |
-| `prowler-ui` | Next.js + shadcn conventions | [SKILL.md](skills/claude/prowler-ui/SKILL.md) |
-| `prowler-sdk-check` | Create new security checks | [SKILL.md](skills/claude/prowler-sdk-check/SKILL.md) |
-| `prowler-mcp` | MCP server tools and models | [SKILL.md](skills/claude/prowler-mcp/SKILL.md) |
-| `prowler-test-sdk` | SDK testing (pytest + moto) | [SKILL.md](skills/claude/prowler-test-sdk/SKILL.md) |
-| `prowler-test-api` | API testing (pytest-django + RLS) | [SKILL.md](skills/claude/prowler-test-api/SKILL.md) |
-| `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/claude/prowler-test-ui/SKILL.md) |
-| `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/claude/prowler-compliance/SKILL.md) |
-| `prowler-provider` | Add new cloud providers | [SKILL.md](skills/claude/prowler-provider/SKILL.md) |
-| `prowler-pr` | Pull request conventions | [SKILL.md](skills/claude/prowler-pr/SKILL.md) |
-| `prowler-docs` | Documentation style guide | [SKILL.md](skills/claude/prowler-docs/SKILL.md) |
+| `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |
+| `prowler-api` | Django + RLS + JSON:API patterns | [SKILL.md](skills/prowler-api/SKILL.md) |
+| `prowler-ui` | Next.js + shadcn conventions | [SKILL.md](skills/prowler-ui/SKILL.md) |
+| `prowler-sdk-check` | Create new security checks | [SKILL.md](skills/prowler-sdk-check/SKILL.md) |
+| `prowler-mcp` | MCP server tools and models | [SKILL.md](skills/prowler-mcp/SKILL.md) |
+| `prowler-test-sdk` | SDK testing (pytest + moto) | [SKILL.md](skills/prowler-test-sdk/SKILL.md) |
+| `prowler-test-api` | API testing (pytest-django + RLS) | [SKILL.md](skills/prowler-test-api/SKILL.md) |
+| `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/prowler-test-ui/SKILL.md) |
+| `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
+| `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
+| `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
+| `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 
 ---
 

@@ -1,16 +1,16 @@
 # Prowler UI - AI Agent Ruleset
 
 > **Skills Reference**: For detailed patterns, use these skills:
-> - [`prowler-ui`](../skills/claude/prowler-ui/SKILL.md) - Prowler-specific UI patterns
-> - [`prowler-test-ui`](../skills/claude/prowler-test-ui/SKILL.md) - Playwright E2E testing (comprehensive)
-> - [`typescript`](../skills/claude/typescript/SKILL.md) - Const types, flat interfaces
-> - [`react-19`](../skills/claude/react-19/SKILL.md) - No useMemo/useCallback, compiler
-> - [`nextjs-15`](../skills/claude/nextjs-15/SKILL.md) - App Router, Server Actions
-> - [`tailwind-4`](../skills/claude/tailwind-4/SKILL.md) - cn() utility, no var() in className
-> - [`zod-4`](../skills/claude/zod-4/SKILL.md) - New API (z.email(), z.uuid())
-> - [`zustand-5`](../skills/claude/zustand-5/SKILL.md) - Selectors, persist middleware
-> - [`ai-sdk-5`](../skills/claude/ai-sdk-5/SKILL.md) - UIMessage, sendMessage
-> - [`playwright`](../skills/claude/playwright/SKILL.md) - Page Object Model, selectors
+> - [`prowler-ui`](../skills/prowler-ui/SKILL.md) - Prowler-specific UI patterns
+> - [`prowler-test-ui`](../skills/prowler-test-ui/SKILL.md) - Playwright E2E testing (comprehensive)
+> - [`typescript`](../skills/typescript/SKILL.md) - Const types, flat interfaces
+> - [`react-19`](../skills/react-19/SKILL.md) - No useMemo/useCallback, compiler
+> - [`nextjs-15`](../skills/nextjs-15/SKILL.md) - App Router, Server Actions
+> - [`tailwind-4`](../skills/tailwind-4/SKILL.md) - cn() utility, no var() in className
+> - [`zod-4`](../skills/zod-4/SKILL.md) - New API (z.email(), z.uuid())
+> - [`zustand-5`](../skills/zustand-5/SKILL.md) - Selectors, persist middleware
+> - [`ai-sdk-5`](../skills/ai-sdk-5/SKILL.md) - UIMessage, sendMessage
+> - [`playwright`](../skills/playwright/SKILL.md) - Page Object Model, selectors
 
 ## CRITICAL RULES - NON-NEGOTIABLE
 
