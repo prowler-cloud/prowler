@@ -22,9 +22,16 @@ class zones_caa_record_exists(Check):
 
             if caa_records:
                 report.status = "PASS"
+                # Extract CA names from CAA record content (format: "0 issue "ca.org"")
+                ca_names = []
+                for record in caa_records:
+                    parts = record.content.split()
+                    if len(parts) >= 3:
+                        ca_names.append(parts[2].strip('"'))
+                    else:
+                        ca_names.append(record.content)
                 report.status_extended = (
-                    f"CAA record exists for zone {zone.name} "
-                    f"({len(caa_records)} record(s))."
+                    f"CAA record exists for zone {zone.name}: {', '.join(ca_names)}."
                 )
             else:
                 report.status = "FAIL"

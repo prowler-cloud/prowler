@@ -16,6 +16,7 @@ class Zones(CloudflareService):
         self._list_zones()
         self._get_zones_settings()
         self._get_zones_dnssec()
+        self._get_zones_universal_ssl()
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -107,6 +108,20 @@ class Zones(CloudflareService):
                     f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_zones_universal_ssl(self) -> None:
+        """Get Universal SSL settings for all zones."""
+        logger.info("Zones - Getting Universal SSL settings...")
+        for zone in self.zones.values():
+            try:
+                universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
+                zone.settings.universal_ssl_enabled = getattr(
+                    universal_ssl, "enabled", False
+                )
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     def _get_zone_setting(self, zone_id: str, setting_id: str):
         """Get a single zone setting by ID."""
         try:
@@ -127,7 +142,6 @@ class Zones(CloudflareService):
                 "ssl",
                 "tls_1_3",
                 "automatic_https_rewrites",
-                "universal_ssl",
                 "security_header",
                 "waf",
                 "security_level",
@@ -148,7 +162,6 @@ class Zones(CloudflareService):
             ssl_encryption_mode=settings.get("ssl"),
             tls_1_3=settings.get("tls_1_3"),
             automatic_https_rewrites=settings.get("automatic_https_rewrites"),
-            universal_ssl=settings.get("universal_ssl"),
             strict_transport_security=self._get_strict_transport_security(
                 settings.get("security_header")
             ),
@@ -210,7 +223,7 @@ class CloudflareZoneSettings(BaseModel):
     ssl_encryption_mode: Optional[str] = None
     tls_1_3: Optional[str] = None
     automatic_https_rewrites: Optional[str] = None
-    universal_ssl: Optional[str] = None
+    universal_ssl_enabled: bool = False
     # HSTS settings
     strict_transport_security: StrictTransportSecurity = Field(
         default_factory=StrictTransportSecurity

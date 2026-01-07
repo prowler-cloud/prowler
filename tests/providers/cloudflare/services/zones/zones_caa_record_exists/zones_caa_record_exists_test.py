@@ -105,7 +105,10 @@ class Test_zones_caa_record_exists:
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "CAA record exists" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"CAA record exists for zone {ZONE_NAME}: letsencrypt.org."
+            )
 
     def test_zone_with_multiple_caa_records(self):
         zones_client = mock.MagicMock
@@ -161,7 +164,10 @@ class Test_zones_caa_record_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "2 record(s)" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"CAA record exists for zone {ZONE_NAME}: letsencrypt.org, ;."
+            )
 
     def test_zone_without_caa_record(self):
         zones_client = mock.MagicMock
@@ -209,7 +215,10 @@ class Test_zones_caa_record_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No CAA record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No CAA record found for zone {ZONE_NAME}."
+            )
 
     def test_zone_with_caa_record_for_different_zone(self):
         zones_client = mock.MagicMock
@@ -257,4 +266,7 @@ class Test_zones_caa_record_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No CAA record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No CAA record found for zone {ZONE_NAME}."
+            )

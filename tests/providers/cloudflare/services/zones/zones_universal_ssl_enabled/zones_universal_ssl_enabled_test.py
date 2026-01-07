@@ -43,7 +43,7 @@ class Test_zones_universal_ssl_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    universal_ssl="on",
+                    universal_ssl_enabled=True,
                 ),
             )
         }
@@ -68,7 +68,10 @@ class Test_zones_universal_ssl_enabled:
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "Universal SSL is enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Universal SSL is enabled for zone {ZONE_NAME}."
+            )
 
     def test_zone_universal_ssl_disabled(self):
         zones_client = mock.MagicMock
@@ -79,7 +82,7 @@ class Test_zones_universal_ssl_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    universal_ssl="off",
+                    universal_ssl_enabled=False,
                 ),
             )
         }
@@ -102,38 +105,7 @@ class Test_zones_universal_ssl_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Universal SSL is not enabled" in result[0].status_extended
-
-    def test_zone_universal_ssl_none(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                status="active",
-                paused=False,
-                settings=CloudflareZoneSettings(
-                    universal_ssl=None,
-                ),
+            assert (
+                result[0].status_extended
+                == f"Universal SSL is not enabled for zone {ZONE_NAME}."
             )
-        }
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_universal_ssl_enabled.zones_universal_ssl_enabled.zones_client",
-                new=zones_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zones.zones_universal_ssl_enabled.zones_universal_ssl_enabled import (
-                zones_universal_ssl_enabled,
-            )
-
-            check = zones_universal_ssl_enabled()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "Universal SSL is not enabled" in result[0].status_extended
