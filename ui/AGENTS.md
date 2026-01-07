@@ -1,5 +1,17 @@
 # Prowler UI - AI Agent Ruleset
 
+> **Skills Reference**: For detailed patterns, use these skills:
+> - `prowler-ui` - Prowler-specific UI patterns
+> - `prowler-test-ui` - Playwright E2E testing (comprehensive)
+> - `typescript` - Const types, flat interfaces
+> - `react-19` - No useMemo/useCallback, compiler
+> - `nextjs-15` - App Router, Server Actions
+> - `tailwind-4` - cn() utility, no var() in className
+> - `zod-4` - New API (z.email(), z.uuid())
+> - `zustand-5` - Selectors, persist middleware
+> - `ai-sdk-5` - UIMessage, sendMessage
+> - `playwright` - Page Object Model, selectors
+
 ## CRITICAL RULES - NON-NEGOTIABLE
 
 ### React
@@ -19,47 +31,18 @@
 - ALWAYS: Reuse via `extends`
 - NEVER: Inline nested objects
 
-```typescript
-// ✅ CORRECT
-interface UserAddress {
-  street: string;
-  city: string;
-}
-interface User {
-  id: string;
-  address: UserAddress;
-}
-interface Admin extends User {
-  permissions: string[];
-}
-
-// ❌ WRONG
-interface User {
-  address: { street: string; city: string };
-}
-```
-
 ### Styling
 
 - Single class: `className="bg-slate-800 text-white"`
-- Merge multiple classes: `className={cn(BUTTON_STYLES.base, BUTTON_STYLES.active, isLoading && "opacity-50")}` (cn() handles Tailwind conflicts with twMerge)
-- Conditional classes: `className={cn("base", condition && "variant")}`
-- Recharts props: `fill={CHART_COLORS.text}` (use constants with var())
-- Dynamic values: `style={{ width: "50%", opacity: 0.5 }}`
-- CSS custom properties: `style={{ "--color": "var(--css-var)" }}` (for dynamic theming)
-- NEVER: `var()` in className strings (use Tailwind semantic classes instead)
-- NEVER: hex colors (use `text-white` not `text-[#fff]`)
+- Merge multiple classes: `className={cn(BASE_STYLES, variant && "variant-class")}`
+- Dynamic values: `style={{ width: "50%" }}`
+- NEVER: `var()` in className, hex colors
 
 ### Scope Rule (ABSOLUTE)
 
-- Used 2+ places → `components/shared/` or `lib/` or `types/` or `hooks/`
+- Used 2+ places → `components/shared/` or `lib/` or `types/`
 - Used 1 place → keep local in feature directory
 - This determines ALL folder structure decisions
-
-### Memoization
-
-- NEVER: `useMemo`, `useCallback`
-- React 19 Compiler handles automatic optimization
 
 ---
 
@@ -84,14 +67,6 @@ Hooks (shared 2+) → hooks/ | Hooks (local 1) → {feature}/hooks.ts
 shadcn components → components/shadcn/ | HeroUI → components/ui/
 ```
 
-### Styling Decision
-
-```
-Tailwind class exists? → className | Dynamic value? → style prop
-Conditional styles? → cn() | Static? → className only
-Recharts? → CHART_COLORS constant + var() | Other? → Tailwind classes
-```
-
 ---
 
 ## PATTERNS
@@ -105,14 +80,6 @@ export default async function Page() {
 }
 ```
 
-### Form + Validation
-
-```typescript
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-const form = useForm({ resolver: zodResolver(schema) });
-```
-
 ### Server Action
 
 ```typescript
@@ -124,15 +91,22 @@ export async function updateProvider(formData: FormData) {
 }
 ```
 
-### Zod v4
+### Form + Validation (Zod 4)
 
-- `z.email()` not `z.string().email()`
-- `z.uuid()` not `z.string().uuid()`
-- `z.url()` not `z.string().url()`
-- `z.string().min(1)` not `z.string().nonempty()`
-- `error` param not `message` param
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-### Zustand v5
+const schema = z.object({
+  email: z.email(),  // Zod 4: z.email() not z.string().email()
+  id: z.uuid(),      // Zod 4: z.uuid() not z.string().uuid()
+});
+
+const form = useForm({ resolver: zodResolver(schema) });
+```
+
+### Zustand 5
 
 ```typescript
 const useStore = create(
@@ -146,47 +120,22 @@ const useStore = create(
 );
 ```
 
-### AI SDK v5
-
-```typescript
-import { useChat } from "@ai-sdk/react";
-const { messages, sendMessage } = useChat({
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
-});
-const [input, setInput] = useState("");
-const handleSubmit = (e) => {
-  e.preventDefault();
-  sendMessage({ text: input });
-  setInput("");
-};
-```
-
-### Testing (Playwright)
+### Playwright Test
 
 ```typescript
 export class FeaturePage extends BasePage {
   readonly submitBtn = this.page.getByRole("button", { name: "Submit" });
-  async goto() {
-    await super.goto("/path");
-  }
-  async submit() {
-    await this.submitBtn.click();
-  }
+  async goto() { await super.goto("/path"); }
+  async submit() { await this.submitBtn.click(); }
 }
 
-test(
-  "action works",
-  { tag: ["@critical", "@feature", "@TEST-001"] },
-  async ({ page }) => {
-    const p = new FeaturePage(page);
-    await p.goto();
-    await p.submit();
-    await expect(page).toHaveURL("/expected");
-  },
-);
+test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
+  const p = new FeaturePage(page);
+  await p.goto();
+  await p.submit();
+  await expect(page).toHaveURL("/expected");
+});
 ```
-
-Selector priority: `getByRole()` → `getByLabel()` → `getByText()` → other
 
 ---
 
@@ -201,36 +150,30 @@ Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.29 | R
 
 ```
 ui/
-├── app/                  (Next.js App Router)
-│   ├── (auth)/          (Auth pages)
-│   └── (prowler)/       (Main app: compliance, findings, providers, scans, services, integrations)
-├── components/
-│   ├── shadcn/          (New shadcn/ui components)
-│   ├── ui/              (HeroUI base)
-│   └── {domain}/        (Domain components)
-├── actions/             (Server actions)
-├── types/               (Shared types)
-├── hooks/               (Shared hooks)
-├── lib/                 (Utilities)
-├── store/               (Zustand state)
-├── tests/               (Playwright E2E)
-└── styles/              (Global CSS)
+├── app/(auth)/          # Auth pages
+├── app/(prowler)/       # Main app: compliance, findings, providers, scans
+├── components/shadcn/   # New shadcn/ui components
+├── components/ui/       # HeroUI base (legacy)
+├── actions/             # Server actions
+├── types/               # Shared types
+├── hooks/               # Shared hooks
+├── lib/                 # Utilities
+├── store/               # Zustand state
+├── tests/               # Playwright E2E
+└── styles/              # Global CSS
 ```
 
 ---
 
 ## COMMANDS
 
-```
-pnpm install && pnpm run dev        (Setup & start)
-pnpm run typecheck                  (Type check)
-pnpm run lint:fix                   (Fix linting)
-pnpm run format:write               (Format)
-pnpm run healthcheck                (typecheck + lint)
-pnpm run test:e2e                   (E2E tests)
-pnpm run test:e2e:ui                (E2E with UI)
-pnpm run test:e2e:debug             (Debug E2E)
-pnpm run build && pnpm start        (Build & start)
+```bash
+pnpm install && pnpm run dev
+pnpm run typecheck
+pnpm run lint:fix
+pnpm run healthcheck
+pnpm run test:e2e
+pnpm run test:e2e:ui
 ```
 
 ---
@@ -245,13 +188,3 @@ pnpm run build && pnpm start        (Build & start)
 - [ ] No secrets in code (use `.env.local`)
 - [ ] Error messages sanitized
 - [ ] Server-side validation present
-
----
-
-## MIGRATIONS (As of Jan 2025)
-
-React 18 → 19.1.1 (async components, compiler)
-Next.js 14 → 15.5.3
-NextUI → HeroUI 2.8.4
-Zod 3 → 4 (see patterns section)
-AI SDK 4 → 5 (see patterns section)
