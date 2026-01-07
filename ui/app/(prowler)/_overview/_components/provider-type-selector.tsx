@@ -142,7 +142,7 @@ export const ProviderTypeSelector = ({
 
     // Clear account selection when changing provider types
     // User should manually select accounts if they want to filter by specific accounts
-    params.delete("filter[provider__in]");
+    params.delete("filter[provider_id__in]");
 
     router.push(`?${params.toString()}`, { scroll: false });
   };

@@ -45,8 +45,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // All endpoints now use the unified filter[provider__in] parameter
-  const filterKey = "filter[provider__in]";
+  const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
   const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypesList = selectedTypes

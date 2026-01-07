@@ -42,8 +42,8 @@ export interface ThreatScoreResponse {
 // Filters for ThreatScore endpoint
 export interface ThreatScoreFilters {
   snapshot_id?: string;
-  provider?: string;
-  provider__in?: string;
+  provider_id?: string;
+  provider_id__in?: string;
   provider_type?: string;
   provider_type__in?: string;
   scan_id?: string;

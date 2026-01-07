@@ -478,7 +478,7 @@ export function SankeyChart({
 
       // Always set provider_type filter based on the clicked link's source (provider)
       // This ensures clicking "AWS → High" filters by AWS even when no global filter is set
-      const hasProviderFilter = searchParams.has("filter[provider__in]");
+      const hasProviderFilter = searchParams.has("filter[provider_id__in]");
       if (providerType && !hasProviderFilter) {
         params.set("filter[provider_type__in]", providerType);
       }

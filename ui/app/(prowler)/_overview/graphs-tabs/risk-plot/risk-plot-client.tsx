@@ -48,7 +48,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
     }
 
     // Add provider filter for the selected point
-    params.set("filter[provider__in]", selectedPoint.providerId);
+    params.set("filter[provider_id__in]", selectedPoint.providerId);
 
     // Add exclude muted findings filter
     params.set("filter[muted]", "false");
