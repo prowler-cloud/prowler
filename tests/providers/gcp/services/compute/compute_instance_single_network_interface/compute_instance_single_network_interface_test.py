@@ -346,7 +346,7 @@ class Test_compute_instance_single_network_interface:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == "VM Instance gke-cluster-default-pool-12345678-abcd has 2 network interfaces: nic0, nic1. This is a GKE-managed instance which may legitimately require multiple interfaces. Manual review recommended."
