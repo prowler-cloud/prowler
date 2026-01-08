@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1"
+  version: "1.0"
 ---
 
 ## Styling Decision Tree
