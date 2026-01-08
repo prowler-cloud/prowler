@@ -162,8 +162,8 @@ class CommonFindingFilters(FilterSet):
     category = CharFilter(method="filter_category")
     category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
 
-    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
-    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
+    group = CharFilter(field_name="group", lookup_expr="exact")
+    group__in = CharInFilter(field_name="group", lookup_expr="in")
 
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
@@ -1141,8 +1141,8 @@ class ResourceGroupOverviewFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
-    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
-    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
+    group = CharFilter(field_name="group", lookup_expr="exact")
+    group__in = CharInFilter(field_name="group", lookup_expr="in")
 
     class Meta:
         model = ScanResourceGroupSummary

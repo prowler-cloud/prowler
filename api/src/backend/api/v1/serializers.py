@@ -1305,7 +1305,7 @@ class FindingSerializer(RLSSerializer):
             "check_id",
             "check_metadata",
             "categories",
-            "resource_group",
+            "group",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1362,7 +1362,7 @@ class FindingMetadataSerializer(BaseSerializerV1):
         child=serializers.CharField(), allow_empty=True
     )
     categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-    resource_groups = serializers.ListField(
+    groups = serializers.ListField(
         child=serializers.CharField(), allow_empty=True, required=False, default=list
     )
     # Temporarily disabled until we implement tag filtering in the UI
@@ -2313,7 +2313,7 @@ class CategoryOverviewSerializer(BaseSerializerV1):
 class ResourceGroupOverviewSerializer(BaseSerializerV1):
     """Serializer for resource group overview aggregations."""
 
-    id = serializers.CharField(source="resource_group")
+    id = serializers.CharField(source="group")
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     new_failed_findings = serializers.IntegerField()

@@ -380,12 +380,10 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         for finding in (
             Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
             .annotate(resource_uid=Subquery(resource_uid_subquery))
-            .values(
-                "resource_group", "severity", "status", "delta", "muted", "resource_uid"
-            )
+            .values("group", "severity", "status", "delta", "muted", "resource_uid")
         ):
             aggregate_resource_group_counts(
-                resource_group=finding.get("resource_group"),
+                resource_group=finding.get("group"),
                 severity=finding.get("severity"),
                 status=finding.get("status"),
                 delta=finding.get("delta"),
@@ -401,14 +399,14 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         ScanResourceGroupSummary(
             tenant_id=tenant_id,
             scan_id=scan_id,
-            resource_group=resource_group,
+            group=grp,
             severity=severity,
             total_findings=counts["total"],
             failed_findings=counts["failed"],
             new_failed_findings=counts["new_failed"],
             resources_count=len(counts["resources"]),
         )
-        for (resource_group, severity), counts in resource_group_counts.items()
+        for (grp, severity), counts in resource_group_counts.items()
     ]
 
     with rls_transaction(tenant_id):

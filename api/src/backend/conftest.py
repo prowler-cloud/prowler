@@ -1386,7 +1386,7 @@ def latest_scan_finding_with_categories(
         check_id="genai_iam_check",
         check_metadata={"CheckId": "genai_iam_check"},
         categories=["gen-ai", "iam"],
-        resource_group="ai_ml",
+        group="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -1635,13 +1635,13 @@ def create_scan_category_summary():
 
 
 @pytest.fixture(scope="function")
-def findings_with_resource_group(scans_fixture, resources_fixture):
+def findings_with_group(scans_fixture, resources_fixture):
     scan = scans_fixture[0]
     resource = resources_fixture[0]
 
     finding = Finding.objects.create(
         tenant_id=scan.tenant_id,
-        uid="finding_with_resource_group_1",
+        uid="finding_with_group_1",
         scan=scan,
         delta=None,
         status=Status.FAIL,
@@ -1652,7 +1652,7 @@ def findings_with_resource_group(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="storage_check",
         check_metadata={"CheckId": "storage_check"},
-        resource_group="storage",
+        group="storage",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -1661,13 +1661,13 @@ def findings_with_resource_group(scans_fixture, resources_fixture):
 
 
 @pytest.fixture(scope="function")
-def findings_with_multiple_resource_groups(scans_fixture, resources_fixture):
+def findings_with_multiple_groups(scans_fixture, resources_fixture):
     scan = scans_fixture[0]
     resource1, resource2 = resources_fixture[:2]
 
     finding1 = Finding.objects.create(
         tenant_id=scan.tenant_id,
-        uid="finding_multi_rg_1",
+        uid="finding_multi_grp_1",
         scan=scan,
         delta=None,
         status=Status.FAIL,
@@ -1678,14 +1678,14 @@ def findings_with_multiple_resource_groups(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="storage_check",
         check_metadata={"CheckId": "storage_check"},
-        resource_group="storage",
+        group="storage",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding1.add_resources([resource1])
 
     finding2 = Finding.objects.create(
         tenant_id=scan.tenant_id,
-        uid="finding_multi_rg_2",
+        uid="finding_multi_grp_2",
         scan=scan,
         delta=None,
         status=Status.FAIL,
@@ -1696,7 +1696,7 @@ def findings_with_multiple_resource_groups(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="security_check",
         check_metadata={"CheckId": "security_check"},
-        resource_group="security",
+        group="security",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding2.add_resources([resource2])
@@ -1710,7 +1710,7 @@ def create_scan_resource_group_summary():
     def _create(
         tenant,
         scan,
-        resource_group,
+        group,
         severity,
         total_findings=10,
         failed_findings=5,
@@ -1720,7 +1720,7 @@ def create_scan_resource_group_summary():
         return ScanResourceGroupSummary.objects.create(
             tenant=tenant,
             scan=scan,
-            resource_group=resource_group,
+            group=group,
             severity=severity,
             total_findings=total_findings,
             failed_findings=failed_findings,

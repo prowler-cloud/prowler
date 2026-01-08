@@ -265,13 +265,13 @@ class TestBackfillScanCategorySummaries:
 
 
 @pytest.fixture(scope="function")
-def findings_with_resource_group_fixture(scans_fixture, resources_fixture):
+def findings_with_group_fixture(scans_fixture, resources_fixture):
     scan = scans_fixture[0]
     resource = resources_fixture[0]
 
     finding = Finding.objects.create(
         tenant_id=scan.tenant_id,
-        uid="finding_with_resource_group",
+        uid="finding_with_group",
         scan=scan,
         delta="new",
         status=Status.FAIL,
@@ -282,7 +282,7 @@ def findings_with_resource_group_fixture(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="test_check",
         check_metadata={"CheckId": "test_check"},
-        resource_group="ai_ml",
+        group="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -295,7 +295,7 @@ def scan_resource_group_summary_fixture(scans_fixture):
     return ScanResourceGroupSummary.objects.create(
         tenant_id=scan.tenant_id,
         scan=scan,
-        resource_group="existing-group",
+        group="existing-group",
         severity=Severity.high,
         total_findings=1,
         failed_findings=0,
@@ -328,8 +328,8 @@ class TestBackfillScanResourceGroupSummaries:
         )
         assert result == {"status": "no resource groups to backfill"}
 
-    def test_successful_backfill(self, findings_with_resource_group_fixture):
-        finding = findings_with_resource_group_fixture
+    def test_successful_backfill(self, findings_with_group_fixture):
+        finding = findings_with_group_fixture
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
@@ -344,7 +344,7 @@ class TestBackfillScanResourceGroupSummaries:
         assert summaries.count() == 1
 
         summary = summaries.first()
-        assert summary.resource_group == "ai_ml"
+        assert summary.group == "ai_ml"
         assert summary.severity == Severity.high
         assert summary.total_findings == 1
         assert summary.failed_findings == 1

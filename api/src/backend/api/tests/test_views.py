@@ -4373,7 +4373,7 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "iam"}
 
-    def test_findings_metadata_latest_resource_groups(
+    def test_findings_metadata_latest_groups(
         self, authenticated_client, latest_scan_finding_with_categories
     ):
         response = authenticated_client.get(
@@ -4381,8 +4381,8 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         attributes = response.json()["data"]["attributes"]
-        assert "resource_groups" in attributes
-        assert "ai_ml" in attributes["resource_groups"]
+        assert "groups" in attributes
+        assert "ai_ml" in attributes["groups"]
 
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
@@ -4430,43 +4430,41 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_filter_by_resource_group(
-        self, authenticated_client, findings_with_resource_group
-    ):
-        finding = findings_with_resource_group
+    def test_findings_filter_by_group(self, authenticated_client, findings_with_group):
+        finding = findings_with_group
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[resource_group]": "storage",
+                "filter[group]": "storage",
                 "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["resource_group"] == "storage"
+        assert response.json()["data"][0]["attributes"]["group"] == "storage"
 
-    def test_findings_filter_by_resource_group_in(
-        self, authenticated_client, findings_with_multiple_resource_groups
+    def test_findings_filter_by_group_in(
+        self, authenticated_client, findings_with_multiple_groups
     ):
-        finding1, _ = findings_with_multiple_resource_groups
+        finding1, _ = findings_with_multiple_groups
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[resource_group__in]": "storage,security",
+                "filter[group__in]": "storage,security",
                 "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
 
-    def test_findings_filter_by_resource_group_no_match(
-        self, authenticated_client, findings_with_resource_group
+    def test_findings_filter_by_group_no_match(
+        self, authenticated_client, findings_with_group
     ):
-        finding = findings_with_resource_group
+        finding = findings_with_group
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[resource_group]": "nonexistent",
+                "filter[group]": "nonexistent",
                 "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -8019,12 +8017,12 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["failed_findings"] == 13
         assert data[0]["attributes"]["new_failed_findings"] == 5
 
-    def test_overview_resource_groups_no_data(self, authenticated_client):
-        response = authenticated_client.get(reverse("overview-resource_groups"))
+    def test_overview_groups_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-groups"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"] == []
 
-    def test_overview_resource_groups_aggregates_by_resource_group_with_severity(
+    def test_overview_groups_aggregates_by_group_with_severity(
         self,
         authenticated_client,
         tenants_fixture,
@@ -8073,7 +8071,7 @@ class TestOverviewViewSet:
             resources_count=4,
         )
 
-        response = authenticated_client.get(reverse("overview-resource_groups"))
+        response = authenticated_client.get(reverse("overview-groups"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 2
@@ -8098,7 +8096,7 @@ class TestOverviewViewSet:
             ("filter[provider_type__in]", lambda p1, p2: "aws,gcp", 25, 12),
         ],
     )
-    def test_overview_resource_groups_provider_filters(
+    def test_overview_groups_provider_filters(
         self,
         authenticated_client,
         tenants_fixture,
@@ -8136,7 +8134,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-resource_groups"),
+            reverse("overview-groups"),
             {filter_key: filter_value_fn(provider1, gcp_provider)},
         )
         assert response.status_code == status.HTTP_200_OK
@@ -8145,7 +8143,7 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["total_findings"] == expected_total
         assert data[0]["attributes"]["failed_findings"] == expected_failed
 
-    def test_overview_resource_groups_resource_group_filter(
+    def test_overview_groups_group_filter(
         self,
         authenticated_client,
         tenants_fixture,
@@ -8174,15 +8172,15 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-resource_groups"),
-            {"filter[resource_group__in]": "storage,compute"},
+            reverse("overview-groups"),
+            {"filter[group__in]": "storage,compute"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        resource_group_ids = {item["id"] for item in data}
-        assert resource_group_ids == {"storage", "compute"}
+        group_ids = {item["id"] for item in data}
+        assert group_ids == {"storage", "compute"}
 
-    def test_overview_resource_groups_aggregates_multiple_providers(
+    def test_overview_groups_aggregates_multiple_providers(
         self,
         authenticated_client,
         tenants_fixture,
@@ -8228,7 +8226,7 @@ class TestOverviewViewSet:
             resources_count=6,
         )
 
-        response = authenticated_client.get(reverse("overview-resource_groups"))
+        response = authenticated_client.get(reverse("overview-groups"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1

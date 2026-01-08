@@ -680,7 +680,7 @@ def _process_finding_micro_batch(
             muted_reason=muted_reason,
             compliance=finding.compliance,
             categories=check_metadata.get("categories", []) or [],
-            resource_group=check_metadata.get("resourcegroup") or None,
+            group=check_metadata.get("resourcegroup") or None,
         )
         findings_to_create.append(finding_instance)
         resource_denormalized_data.append((finding_instance, resource_instance))
@@ -773,7 +773,15 @@ def _process_finding_micro_batch(
             tenant_id=tenant_id,
             model=Resource,
             objects=list(dirty_resources.values()),
-            fields=["metadata", "details", "partition", "region", "service", "type"],
+            fields=[
+                "metadata",
+                "details",
+                "partition",
+                "region",
+                "service",
+                "type",
+                "group",
+            ],
             batch_size=1000,
         )
 
@@ -1000,7 +1008,7 @@ def perform_prowler_scan(
                 ScanResourceGroupSummary(
                     tenant_id=tenant_id,
                     scan_id=scan_id,
-                    resource_group=resource_group,
+                    group=grp,
                     severity=severity,
                     total_findings=counts["total"],
                     failed_findings=counts["failed"],
@@ -1008,7 +1016,7 @@ def perform_prowler_scan(
                     resources_count=len(counts["resources"]),
                 )
                 for (
-                    resource_group,
+                    grp,
                     severity,
                 ), counts in scan_resource_groups_cache.items()
             ]
