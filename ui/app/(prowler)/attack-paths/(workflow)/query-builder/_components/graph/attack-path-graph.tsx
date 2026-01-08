@@ -1093,7 +1093,7 @@ const AttackPathGraphComponent = forwardRef<
               currentTransform.match(/scale\(([^)]+)\)/)?.[1] || "1",
             )
           : 1;
-        const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
+        const scaleFactor = event.deltaY > 0 ? 0.75 : 1.35;
         const newK = Math.max(0.1, Math.min(10, k * scaleFactor));
 
         if (zoomBehaviorRef.current && svgSelectionRef.current) {
