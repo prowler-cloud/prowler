@@ -12,7 +12,7 @@ export const getResourceGroupOverview = async ({
 } = {}): Promise<ResourceGroupOverviewResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/resource_groups`);
+  const url = new URL(`${apiBaseUrl}/overviews/groups`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {
