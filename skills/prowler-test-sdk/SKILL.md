@@ -6,13 +6,26 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
 ---
 
 > **Generic Patterns**: For base pytest patterns (fixtures, mocking, parametrize, markers), see the `pytest` skill.
 > This skill covers **Prowler-specific** conventions only.
+>
+> **Full Documentation**: `docs/developer-guide/unit-testing.mdx`
 
-## Check Test Pattern (AWS)
+## CRITICAL: Provider-Specific Testing
+
+| Provider | Mocking Approach | Decorator |
+|----------|------------------|-----------|
+| **AWS** | `moto` library | `@mock_aws` |
+| **Azure, GCP, K8s, others** | `MagicMock` | None |
+
+**NEVER use moto for non-AWS providers. NEVER use MagicMock for AWS.**
+
+---
+
+## AWS Check Test Pattern
 
 ```python
 from unittest import mock
@@ -106,76 +119,142 @@ class Test_{check_name}:
 
 ---
 
-## Mocking AWS with moto
+## Azure Check Test Pattern
 
-**CRITICAL: Use `@mock_aws` for AWS service tests + `set_mocked_aws_provider`.**
+**NO moto decorator. Use MagicMock to mock the service client directly.**
 
 ```python
 from unittest import mock
-from boto3 import client
-from moto import mock_aws
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from uuid import uuid4
 
-
-class TestS3Service:
-    @mock_aws
-    def test_fetch_buckets(self):
-        # Setup mock AWS resources
-        s3 = client("s3", region_name=AWS_REGION_US_EAST_1)
-        s3.create_bucket(Bucket="test-bucket")
-
-        # Create mocked provider
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        # Import service AFTER moto decorator is active
-        from prowler.providers.aws.services.s3.s3_service import S3
-
-        service = S3(aws_provider)
-        assert len(service.buckets) == 1
-```
-
-### Key Utilities from `tests/providers/aws/utils.py`
-
-```python
-from tests.providers.aws.utils import (
-    AWS_REGION_US_EAST_1,
-    AWS_REGION_EU_WEST_1,
-    AWS_ACCOUNT_NUMBER,
-    set_mocked_aws_provider,
+from prowler.providers.azure.services.{service}.{service}_service import {ResourceModel}
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
 )
+
+
+class Test_{check_name}:
+    def test_no_resources(self):
+        {service}_client = mock.MagicMock
+        {service}_client.{resources} = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={service}_client,
+            ),
+        ):
+            from prowler.providers.azure.services.{service}.{check_name}.{check_name} import (
+                {check_name},
+            )
+
+            check = {check_name}()
+            result = check.execute()
+            assert len(result) == 0
+
+    def test_{check_name}_pass(self):
+        resource_id = str(uuid4())
+        resource_name = "Test Resource"
+
+        {service}_client = mock.MagicMock
+        {service}_client.{resources} = {
+            AZURE_SUBSCRIPTION_ID: {
+                resource_id: {ResourceModel}(
+                    id=resource_id,
+                    name=resource_name,
+                    location="westeurope",
+                    # ... compliant attributes
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={service}_client,
+            ),
+        ):
+            from prowler.providers.azure.services.{service}.{check_name}.{check_name} import (
+                {check_name},
+            )
+
+            check = {check_name}()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_name == resource_name
+
+    def test_{check_name}_fail(self):
+        resource_id = str(uuid4())
+        resource_name = "Test Resource"
+
+        {service}_client = mock.MagicMock
+        {service}_client.{resources} = {
+            AZURE_SUBSCRIPTION_ID: {
+                resource_id: {ResourceModel}(
+                    id=resource_id,
+                    name=resource_name,
+                    location="westeurope",
+                    # ... non-compliant attributes
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={service}_client,
+            ),
+        ):
+            from prowler.providers.azure.services.{service}.{check_name}.{check_name} import (
+                {check_name},
+            )
+
+            check = {check_name}()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
 ```
 
 ---
 
-## Service Test Pattern
+## GCP/Kubernetes/Other Providers
+
+Follow the same MagicMock pattern as Azure:
 
 ```python
-class TestServiceName:
-    @mock_aws
-    def test_fetch_resources(self):
-        # Setup mock resources
-        client = boto3.client("service", region_name="us-east-1")
-        client.create_resource(...)
-
-        # Initialize service
-        service = ServiceName(provider)
-
-        # Verify resources fetched
-        assert len(service.resources) == 1
-        assert service.resources[0].id == "expected-id"
-
-    @mock_aws
-    def test_fetch_resources_empty(self):
-        service = ServiceName(provider)
-        assert len(service.resources) == 0
-
-    @mock_aws
-    def test_fetch_resources_error_handling(self):
-        # Test graceful error handling
-        with patch.object(service, '_fetch', side_effect=Exception("API Error")):
-            service = ServiceName(provider)
-            assert len(service.resources) == 0  # Should not crash
+from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider, GCP_PROJECT_ID
+from tests.providers.kubernetes.kubernetes_fixtures import set_mocked_kubernetes_provider
 ```
+
+**Key difference**: Each provider has its own fixtures file with `set_mocked_{provider}_provider`.
+
+---
+
+## Provider Fixtures Reference
+
+| Provider | Fixtures File | Key Constants |
+|----------|---------------|---------------|
+| AWS | `tests/providers/aws/utils.py` | `AWS_REGION_US_EAST_1`, `AWS_ACCOUNT_NUMBER` |
+| Azure | `tests/providers/azure/azure_fixtures.py` | `AZURE_SUBSCRIPTION_ID` |
+| GCP | `tests/providers/gcp/gcp_fixtures.py` | `GCP_PROJECT_ID` |
+| K8s | `tests/providers/kubernetes/kubernetes_fixtures.py` | - |
 
 ---
 
@@ -199,17 +278,23 @@ Every check MUST test:
 | Resource compliant | `status == "PASS"` |
 | Resource non-compliant | `status == "FAIL"` |
 | No resources | `len(results) == 0` |
-| Error during fetch | Graceful handling |
 
 ---
 
-## Best Practices
+## Assertions to Include
 
-1. **Mock at the client level** - Don't mock individual API calls
-2. **Test status_extended** - Verify meaningful messages
-3. **Use meaningful resource IDs** - Helps debugging
-4. **Isolate tests** - Each test independent
-5. **Use region consistently** - Usually `us-east-1` for AWS
+```python
+# Always verify these
+assert result[0].status == "PASS"  # or "FAIL"
+assert result[0].status_extended == "Expected message..."
+assert result[0].resource_id == expected_id
+assert result[0].resource_name == expected_name
+
+# Provider-specific
+assert result[0].region == "us-east-1"           # AWS
+assert result[0].subscription == AZURE_SUBSCRIPTION_ID  # Azure
+assert result[0].project_id == GCP_PROJECT_ID    # GCP
+```
 
 ---
 
@@ -222,18 +307,12 @@ poetry run pytest -n auto -vvv tests/
 # Specific provider
 poetry run pytest tests/providers/{provider}/ -v
 
-# Specific service
-poetry run pytest tests/providers/{provider}/services/{service}/ -v
-
 # Specific check
 poetry run pytest tests/providers/{provider}/services/{service}/{check_name}/ -v
-
-# With coverage
-poetry run pytest --cov=prowler tests/
 
 # Stop on first failure
 poetry run pytest -x tests/
 ```
 
 ## Keywords
-prowler sdk test, pytest, moto, mock, unit test, check test, aws, azure, gcp
+prowler sdk test, pytest, moto, mock, unit test, check test, aws, azure, gcp, magicmock
