@@ -31,7 +31,7 @@ class ec2_instance_with_outdated_ami(Check):
                 (image for image in ec2_client.images if image.id == instance.image_id),
                 None,
             )
-            if ami.owner == "amazon":
+            if ami and ami.owner == "amazon":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"
                 report.status_extended = (

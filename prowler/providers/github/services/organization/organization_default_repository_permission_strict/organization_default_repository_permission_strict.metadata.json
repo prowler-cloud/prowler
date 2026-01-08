@@ -1,0 +1,36 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_default_repository_permission_strict",
+  "CheckTitle": "Organization base repository permission is read or none",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "ResourceGroup": "governance",
+  "Description": "**GitHub organization** base repository permission for members uses a **strict setting** such as `read` or `none` rather than permissive options like `write` or `admin`. *Applies to members, not outside collaborators.*",
+  "Risk": "**Excessive default permissions** (`write`/`admin`) erode code **integrity** and **availability**.\n\nAny member-or a compromised account-can alter many repos, inject malicious commits, change tags/releases, or delete branches, enabling supply-chain compromise and large-scale disruptions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to GitHub as an organization owner\n2. Go to the organization > Settings\n3. Under \"Access\" in the sidebar, click \"Member privileges\"\n4. Under \"Base permissions\", select \"Read\" (or \"None\")\n5. Click \"Change default permission\" to confirm",
+      "Terraform": "```hcl\nresource \"github_organization_settings\" \"<example_resource_name>\" {\n  default_repository_permission = \"read\" # Critical: sets the org's base repository permission to a strict level (read/none passes)\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege**: set base permission to `none` or `read`.\n\nGrant higher access explicitly via teams per repo and enforce **separation of duties** with required reviews and **branch protection**. Regularly audit memberships and access to limit blast radius and maintain **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/organization_default_repository_permission_strict"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

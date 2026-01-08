@@ -15,11 +15,14 @@ const getInvitationData = (row: { original: InvitationProps }) => {
 export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
   {
     accessorKey: "email",
-    header: () => <div className="text-left">Email</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
     cell: ({ row }) => {
       const data = getInvitationData(row);
       return <p className="font-semibold">{data?.email || "N/A"}</p>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "state",
@@ -33,12 +36,15 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
   },
   {
     accessorKey: "role",
-    header: () => <div className="text-left">Role</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Role" />
+    ),
     cell: ({ row }) => {
       const roleName =
         row.original.relationships?.role?.attributes?.name || "No Role";
       return <p className="font-semibold">{roleName}</p>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "inserted_at",
@@ -71,11 +77,14 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
   },
   {
     accessorKey: "actions",
-    header: () => <div className="text-right">Actions</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Actions" />
+    ),
     id: "actions",
     cell: ({ row }) => {
       const roles = row.original.roles;
       return <DataTableRowActions row={row} roles={roles} />;
     },
+    enableSorting: false,
   },
 ];

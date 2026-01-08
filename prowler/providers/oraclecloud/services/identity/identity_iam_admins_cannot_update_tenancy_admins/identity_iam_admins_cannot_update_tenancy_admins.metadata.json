@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "identity_iam_admins_cannot_update_tenancy_admins",
+  "CheckTitle": "Ensure IAM administrators cannot update tenancy Administrators group",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:identity:user",
+  "Severity": "high",
+  "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
+  "Description": "IAM administrators should not be able to update the tenancy Administrators group.",
+  "Risk": "Not meeting this IAM requirement increases security risk.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/protect-administrators-group-with-access-policies.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure IAM administrators cannot update tenancy Administrators group",
+      "Url": "https://hub.prowler.com/check/oci/identity_iam_admins_cannot_update_tenancy_admins"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

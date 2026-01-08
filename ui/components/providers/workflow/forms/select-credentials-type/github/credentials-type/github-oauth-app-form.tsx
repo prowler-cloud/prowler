@@ -25,9 +25,6 @@ export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
         placeholder="Enter your GitHub OAuth App token"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.OAUTH_APP_TOKEN]
-        }
       />
     </>
   );

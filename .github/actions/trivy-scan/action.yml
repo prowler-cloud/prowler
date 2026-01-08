@@ -1,0 +1,164 @@
+name: 'Container Security Scan with Trivy'
+description: 'Scans container images for vulnerabilities using Trivy and reports results'
+author: 'Prowler'
+
+inputs:
+  image-name:
+    description: 'Container image name to scan'
+    required: true
+  image-tag:
+    description: 'Container image tag to scan'
+    required: true
+    default: ${{ github.sha }}
+  severity:
+    description: 'Severities to scan for (comma-separated)'
+    required: false
+    default: 'CRITICAL,HIGH,MEDIUM,LOW'
+  fail-on-critical:
+    description: 'Fail the build if critical vulnerabilities are found'
+    required: false
+    default: 'false'
+  upload-sarif:
+    description: 'Upload results to GitHub Security tab'
+    required: false
+    default: 'true'
+  create-pr-comment:
+    description: 'Create a comment on the PR with scan results'
+    required: false
+    default: 'true'
+  artifact-retention-days:
+    description: 'Days to retain the Trivy report artifact'
+    required: false
+    default: '2'
+
+outputs:
+  critical-count:
+    description: 'Number of critical vulnerabilities found'
+    value: ${{ steps.security-check.outputs.critical }}
+  high-count:
+    description: 'Number of high vulnerabilities found'
+    value: ${{ steps.security-check.outputs.high }}
+  total-count:
+    description: 'Total number of vulnerabilities found'
+    value: ${{ steps.security-check.outputs.total }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache Trivy vulnerability database
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/trivy
+        key: trivy-db-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: |
+          trivy-db-${{ runner.os }}-
+
+    - name: Run Trivy vulnerability scan (JSON)
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      with:
+        image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        format: 'json'
+        output: 'trivy-report.json'
+        severity: ${{ inputs.severity }}
+        exit-code: '0'
+        scanners: 'vuln'
+        timeout: '5m'
+
+    - name: Run Trivy vulnerability scan (SARIF)
+      if: inputs.upload-sarif == 'true' && github.event_name == 'push'
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      with:
+        image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+        scanners: 'vuln'
+        timeout: '5m'
+
+    - name: Upload Trivy results to GitHub Security tab
+      if: inputs.upload-sarif == 'true' && github.event_name == 'push'
+      uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: 'trivy-container'
+
+    - name: Upload Trivy report artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: always()
+      with:
+        name: trivy-scan-report-${{ inputs.image-name }}-${{ inputs.image-tag }}
+        path: trivy-report.json
+        retention-days: ${{ inputs.artifact-retention-days }}
+
+    - name: Generate security summary
+      id: security-check
+      shell: bash
+      run: |
+        CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+        HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
+        TOTAL=$(jq '[.Results[]?.Vulnerabilities[]?] | length' trivy-report.json)
+
+        echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+        echo "high=$HIGH" >> $GITHUB_OUTPUT
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+        echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Image:** \`${{ inputs.image-name }}:${{ inputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+        echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+
+    - name: Comment scan results on PR
+      if: inputs.create-pr-comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        GITHUB_SHA: ${{ inputs.image-tag }}
+        SEVERITY: ${{ inputs.severity }}
+      with:
+        script: |
+          const comment = require('./.github/scripts/trivy-pr-comment.js');
+
+          // Unique identifier to find our comment
+          const marker = '<!-- trivy-scan-comment:${{ inputs.image-name }} -->';
+          const body = marker + '\n' + comment;
+
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existingComment = comments.find(c => c.body?.includes(marker));
+
+          if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+            console.log('✅ Updated existing Trivy scan comment');
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+            console.log('✅ Created new Trivy scan comment');
+          }
+
+    - name: Check for critical vulnerabilities
+      if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
+      shell: bash
+      run: |
+        echo "::error::Found ${{ steps.security-check.outputs.critical }} critical vulnerabilities"
+        echo "::warning::Please update packages or use a different base image"
+        exit 1

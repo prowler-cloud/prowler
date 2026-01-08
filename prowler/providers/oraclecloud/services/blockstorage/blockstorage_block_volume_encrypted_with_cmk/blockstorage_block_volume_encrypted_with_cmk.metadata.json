@@ -1,0 +1,36 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "blockstorage_block_volume_encrypted_with_cmk",
+  "CheckTitle": "Block volume is encrypted with a Customer Managed Key (CMK)",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Volume",
+  "ResourceGroup": "storage",
+  "Description": "**OCI block volumes** use **Customer-Managed Keys** (`CMK`) from Vault for at-rest encryption instead of Oracle-managed keys.\n\nIdentifies whether a block volume has a customer-managed key associated for its encryption.",
+  "Risk": "Without **CMK**, encryption key control is limited, impacting confidentiality and auditability:\n- No rapid key disable/rotation to contain breaches\n- Weaker restrictions and visibility on decrypt operations\nThis can prolong unauthorized data access and hinder incident response and compliance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/overview.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "oci bv volume update --volume-id <VOLUME_OCID> --kms-key-id <KMS_KEY_OCID>",
+      "NativeIaC": "",
+      "Other": "1. In the OCI Console, go to Block Storage > Block Volumes\n2. Open the failing volume\n3. Click Edit\n4. Under Encryption, select \"Encrypt using customer-managed keys\" and choose the vault key\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"oci_core_volume\" \"<example_resource_name>\" {\n  compartment_id      = \"<example_resource_id>\"\n  availability_domain = \"<example_resource_name>\"\n  size_in_gbs         = 50\n\n  kms_key_id = \"<example_resource_id>\" # Critical: uses a Customer Managed Key to encrypt the volume\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use **Customer-Managed Keys** in Vault for all block volumes.\n- Enforce least privilege and separation of duties on key usage\n- Rotate keys regularly and monitor KMS events\n- Validate that key disable/deny revokes data access\nApply the same controls to snapshots and backups.",
+      "Url": "https://hub.prowler.com/check/blockstorage_block_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

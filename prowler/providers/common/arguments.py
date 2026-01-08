@@ -1,6 +1,7 @@
 import sys
 from argparse import Namespace
 from importlib import import_module
+from typing import Optional, Sequence
 
 from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider, providers_path
@@ -53,3 +54,19 @@ def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         sys.exit(1)
+
+
+def validate_asff_usage(
+    provider: Optional[str], output_formats: Optional[Sequence[str]]
+) -> tuple[bool, str]:
+    """Ensure json-asff output is only requested for the AWS provider."""
+    if not output_formats or "json-asff" not in output_formats:
+        return (True, "")
+
+    if provider == "aws":
+        return (True, "")
+
+    return (
+        False,
+        f"json-asff output format is only available for the aws provider, but {provider} was selected",
+    )

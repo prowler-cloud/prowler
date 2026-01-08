@@ -1,0 +1,38 @@
+---
+title: 'Azure Subscription Scope'
+---
+
+Prowler performs security scans within the subscription scope in Azure. To execute checks, it requires appropriate permissions to access the subscription and retrieve necessary metadata.
+
+By default, Prowler operates multi-subscription, scanning all subscriptions it has permission to list. If permissions are granted for only a single subscription, Prowler will limit scans to that subscription.
+
+## Configuring Specific Subscription Scans in Prowler
+
+Additionally, Prowler supports restricting scans to specific subscriptions by passing a set of subscription IDs as an input argument. To configure this limitation, use the appropriate command options:
+
+```console
+prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
+```
+
+Prowler allows you to specify one or more subscriptions for scanning (up to N), enabling flexible audit configurations.
+
+<Warning>
+The multi-subscription feature is available only in the CLI. In Prowler App, each scan is limited to a single subscription.
+
+</Warning>
+## Assigning Permissions for Subscription Scans
+Check the [Authentication > Subscription Scope Permissions](/user-guide/providers/azure/authentication#subscription-scope-permissions) guide for more information on how to assign permissions for subscription scans.
+
+## Recommendation for Managing Multiple Subscriptions
+
+Scanning multiple subscriptions requires creating and assigning roles for each, which can be a time-consuming process. To streamline subscription management and auditing, use management groups in Azure. This approach allows Prowler to efficiently organize and audit multiple subscriptions collectively.
+
+1. **Create a Management Group**: Follow the [official guide](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) to create a new management group.
+
+    ![Create management group](/images/create-management-group.gif)
+
+2. **Assign Roles**: Assign necessary roles to the management group, similar to the [role assignment process](#assigning-permissions-for-subscription-scans).
+
+    Role assignment should be done at the management group level instead of per subscription.
+
+3. **Add Subscriptions**: Add all subscriptions you want to audit to the newly created management group. ![Add Subscription to Management Group](/images/add-sub-to-management-group.gif)

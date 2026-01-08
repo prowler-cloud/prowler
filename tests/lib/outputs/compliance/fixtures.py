@@ -490,7 +490,7 @@ MITRE_ATTACK_GCP = Compliance(
 
 ENS_RD2022_AWS = Compliance(
     Framework="ENS",
-    Name="ENS RD 311/2022",
+    Name="ENS RD 311/2022 - Categoría Alta",
     Provider="AWS",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -538,7 +538,7 @@ ENS_RD2022_AWS = Compliance(
 
 ENS_RD2022_AZURE = Compliance(
     Framework="ENS",
-    Name="ENS RD 311/2022",
+    Name="ENS RD 311/2022 - Categoría Alta",
     Provider="Azure",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
@@ -585,7 +585,7 @@ ENS_RD2022_AZURE = Compliance(
 )
 ENS_RD2022_GCP = Compliance(
     Framework="ENS",
-    Name="ENS RD 311/2022",
+    Name="ENS RD 311/2022 - Categoría Alta",
     Provider="GCP",
     Version="RD2022",
     Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",

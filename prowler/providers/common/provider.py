@@ -220,7 +220,6 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,
-                        env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         certificate_auth=arguments.certificate_auth,
@@ -272,6 +271,29 @@ class Provider(ABC):
                         atlas_public_key=arguments.atlas_public_key,
                         atlas_private_key=arguments.atlas_private_key,
                         atlas_project_id=arguments.atlas_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "oraclecloud" in provider_class_name.lower():
+                    provider_class(
+                        oci_config_file=arguments.oci_config_file,
+                        profile=arguments.profile,
+                        region=arguments.region,
+                        compartment_ids=arguments.compartment_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        use_instance_principal=arguments.use_instance_principal,
+                    )
+                elif "alibabacloud" in provider_class_name.lower():
+                    provider_class(
+                        role_arn=arguments.role_arn,
+                        role_session_name=arguments.role_session_name,
+                        ecs_ram_role=arguments.ecs_ram_role,
+                        oidc_role_arn=arguments.oidc_role_arn,
+                        credentials_uri=arguments.credentials_uri,
+                        regions=arguments.regions,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

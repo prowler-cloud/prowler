@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "filestorage_file_system_encrypted_with_cmk",
+  "CheckTitle": "Ensure File Storage Systems are encrypted with Customer Managed Keys",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "filestorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:filestorage:resource",
+  "Severity": "medium",
+  "ResourceType": "OciFilestorageResource",
+  "ResourceGroup": "storage",
+  "Description": "File systems should be encrypted with Customer Managed Keys (CMK) for enhanced security and control over encryption keys.",
+  "Risk": "Not meeting this requirement increases security risk.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-FileStorage/file-storage-systems-encrypted-with-cmks.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure File Storage Systems are encrypted with Customer Managed Keys",
+      "Url": "https://hub.prowler.com/check/oci/filestorage_file_system_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

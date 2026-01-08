@@ -23,11 +23,16 @@ from api.db_utils import (
     StatusEnumField,
 )
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
     Membership,
+    MuteRule,
     OverviewStatusChoices,
     PermissionChoices,
     Processor,
@@ -38,12 +43,14 @@ from api.models import (
     ResourceTag,
     Role,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
 )
 from api.rls import Tenant
@@ -151,6 +158,9 @@ class CommonFindingFilters(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    category = CharFilter(method="filter_category")
+    category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
+
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
@@ -181,6 +191,9 @@ class CommonFindingFilters(FilterSet):
 
     def filter_resource_type(self, queryset, name, value):
         return queryset.filter(resource_types__contains=[value])
+
+    def filter_category(self, queryset, name, value):
+        return queryset.filter(categories__contains=[value])
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()
@@ -220,10 +233,39 @@ class MembershipFilter(FilterSet):
 
 
 class ProviderFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
-    connected = BooleanFilter()
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was added
+        (format: YYYY-MM-DD)""",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was updated
+        (format: YYYY-MM-DD)""",
+    )
+    connected = BooleanFilter(
+        help_text="""Filter by connection status. Set to True to return only
+        connected providers, or False to return only providers with failed
+        connections. If not specified, both connected and failed providers are
+        included. Providers with no connection attempt (status is null) are
+        excluded from this filter."""
+    )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
 
     class Meta:
         model = Provider
@@ -649,8 +691,16 @@ class LatestFindingFilter(CommonFindingFilters):
 
 
 class ProviderSecretFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was added (format: YYYY-MM-DD)",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was updated (format: YYYY-MM-DD)",
+    )
     provider = UUIDFilter(field_name="provider__id", lookup_expr="exact")
 
     class Meta:
@@ -719,7 +769,7 @@ class RoleFilter(FilterSet):
 
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    scan_id = UUIDFilter(field_name="scan_id")
+    scan_id = UUIDFilter(field_name="scan_id", required=True)
     region = CharFilter(field_name="region")
 
     class Meta:
@@ -736,6 +786,7 @@ class ComplianceOverviewFilter(FilterSet):
 class ScanSummaryFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
@@ -750,6 +801,68 @@ class ScanSummaryFilter(FilterSet):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
+
+
+class DailySeveritySummaryFilter(FilterSet):
+    """Filter for findings_severity/timeseries endpoint."""
+
+    MAX_DATE_RANGE_DAYS = 365
+
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    date_from = DateFilter(method="filter_noop")
+    date_to = DateFilter(method="filter_noop")
+
+    class Meta:
+        model = DailySeveritySummary
+        fields = ["provider_id"]
+
+    def filter_noop(self, queryset, name, value):
+        return queryset
+
+    def filter_queryset(self, queryset):
+        if not self.data.get("date_from"):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        today = date.today()
+        date_from = self.form.cleaned_data.get("date_from")
+        date_to = min(self.form.cleaned_data.get("date_to") or today, today)
+
+        if (date_to - date_from).days > self.MAX_DATE_RANGE_DAYS:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"Date range cannot exceed {self.MAX_DATE_RANGE_DAYS} days.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        # View access
+        self.request._date_from = date_from
+        self.request._date_to = date_to
+
+        # Apply date filter (only lte for fill-forward logic)
+        queryset = queryset.filter(date__lte=date_to)
+
+        return super().filter_queryset(queryset)
 
 
 class ScanSummarySeverityFilter(ScanSummaryFilter):
@@ -770,7 +883,8 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
         elif value == OverviewStatusChoices.PASS:
             return queryset.annotate(status_count=F("_pass"))
         else:
-            return queryset.annotate(status_count=F("total"))
+            # Exclude muted findings by default
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
     def filter_status_in(self, queryset, name, value):
         # Validate the status values
@@ -779,7 +893,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             if status_val not in valid_statuses:
                 raise ValidationError(f"Invalid status value: {status_val}")
 
-        # If all statuses or no valid statuses, use total
+        # If all statuses or no valid statuses, exclude muted findings (pass + fail)
         if (
             set(value)
             >= {
@@ -788,7 +902,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             }
             or not value
         ):
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         # Build the sum expression based on status values
         sum_expression = None
@@ -806,7 +920,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
                 sum_expression = sum_expression + field_expr
 
         if sum_expression is None:
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         return queryset.annotate(status_count=sum_expression)
 
@@ -816,26 +930,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
-
-
-class ServiceOverviewFilter(ScanSummaryFilter):
-    def is_valid(self):
-        # Check if at least one of the inserted_at filters is present
-        inserted_at_filters = [
-            self.data.get("inserted_at"),
-            self.data.get("inserted_at__gte"),
-            self.data.get("inserted_at__lte"),
-        ]
-        if not any(inserted_at_filters):
-            raise ValidationError(
-                {
-                    "inserted_at": [
-                        "At least one of filter[inserted_at], filter[inserted_at__gte], or "
-                        "filter[inserted_at__lte] is required."
-                    ]
-                }
-            )
-        return super().is_valid()
 
 
 class IntegrationFilter(FilterSet):
@@ -898,3 +992,133 @@ class TenantApiKeyFilter(FilterSet):
             "revoked": ["exact"],
             "name": ["exact", "icontains"],
         }
+
+
+class LighthouseProviderConfigFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_type",
+        lookup_expr="in",
+    )
+    is_active = BooleanFilter()
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = {
+            "provider_type": ["exact", "in"],
+            "is_active": ["exact"],
+        }
+
+
+class LighthouseProviderModelsFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+        lookup_expr="in",
+    )
+
+    # Allow filtering by model id
+    model_id = CharFilter(field_name="model_id", lookup_expr="exact")
+    model_id__icontains = CharFilter(field_name="model_id", lookup_expr="icontains")
+    model_id__in = CharInFilter(field_name="model_id", lookup_expr="in")
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = {
+            "model_id": ["exact", "icontains", "in"],
+        }
+
+
+class MuteRuleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    created_by = UUIDFilter(field_name="created_by__id", lookup_expr="exact")
+
+    class Meta:
+        model = MuteRule
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "icontains"],
+            "reason": ["icontains"],
+            "enabled": ["exact"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
+
+
+class ThreatScoreSnapshotFilter(FilterSet):
+    """
+    Filter for ThreatScore snapshots.
+    Allows filtering by scan, provider, compliance_id, and date ranges.
+    """
+
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    scan_id = UUIDFilter(field_name="scan__id", lookup_expr="exact")
+    scan_id__in = UUIDInFilter(field_name="scan__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
+    compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = {
+            "scan": ["exact", "in"],
+            "provider": ["exact", "in"],
+            "compliance_id": ["exact", "in"],
+            "inserted_at": ["date", "gte", "lte"],
+            "overall_score": ["exact", "gte", "lte"],
+        }
+
+
+class AttackSurfaceOverviewFilter(FilterSet):
+    """Filter for attack surface overview aggregations by provider."""
+
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = AttackSurfaceOverview
+        fields = {}
+
+
+class CategoryOverviewFilter(FilterSet):
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    category = CharFilter(field_name="category", lookup_expr="exact")
+    category__in = CharInFilter(field_name="category", lookup_expr="in")
+
+    class Meta:
+        model = ScanCategorySummary
+        fields = {}

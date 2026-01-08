@@ -11,17 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**AWS DataSync tasks** are evaluated for a configured **CloudWatch Logs** destination (`CloudWatchLogGroupArn`).\n\nTasks that specify a log group are recognized as logging-enabled; those without one are identified as not publishing execution events.",
   "Risk": "**Absent DataSync task logs** create blind spots, preventing timely detection of **failed or partial transfers**, unexpected deletions, or anomalies. This undermines data **integrity** verification, obscures potential **exfiltration** indicators, and slows forensics and recovery, reducing **availability** during incidents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233637-ensure-datasync-tasks-should-have-logging-enabled",
-    "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging",
-    "https://sudoconsultants.com/aws-datasync-accelerating-data-transfer-for-software-and-hardware-teams/",
-    "https://github.com/terraform-providers/terraform-provider-aws/issues/14666",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/datasync_task",
-    "https://github.com/terraform-providers/terraform-provider-aws/issues/13046",
-    "https://www.datacamp.com/tutorial/aws-datasync"
+    "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging"
   ],
   "Remediation": {
     "Code": {

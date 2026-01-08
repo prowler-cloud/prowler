@@ -1,6 +1,28 @@
+# SDK
 /* @prowler-cloud/sdk
-/.github/ @prowler-cloud/sdk
-prowler @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
-tests @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
-api @prowler-cloud/api
-ui @prowler-cloud/ui
+/prowler/ @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
+/tests/ @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
+/dashboard/ @prowler-cloud/sdk
+/docs/ @prowler-cloud/sdk
+/examples/ @prowler-cloud/sdk
+/util/ @prowler-cloud/sdk
+/contrib/ @prowler-cloud/sdk
+/permissions/ @prowler-cloud/sdk
+/codecov.yml @prowler-cloud/sdk @prowler-cloud/api
+
+# API
+/api/ @prowler-cloud/api
+
+# UI
+/ui/ @prowler-cloud/ui
+
+# AI
+/mcp_server/ @prowler-cloud/ai
+
+# Platform
+/.github/ @prowler-cloud/platform
+/Makefile @prowler-cloud/platform
+/kubernetes/ @prowler-cloud/platform
+**/Dockerfile* @prowler-cloud/platform
+**/docker-compose*.yml @prowler-cloud/platform
+**/docker-compose*.yaml @prowler-cloud/platform

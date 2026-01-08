@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "events_rule_cloudguard_problems",
+  "CheckTitle": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "events",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:events:rule",
+  "Severity": "medium",
+  "ResourceType": "OciEventRule",
+  "ResourceGroup": "messaging",
+  "Description": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
+  "Risk": "Without Cloud Guard, security threats may not be detected and remediated.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci cloud-guard configuration update --compartment-id <tenancy-ocid> --status ENABLED --reporting-region <region>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Security > Cloud Guard\n2. Enable Cloud Guard\n3. Select reporting region\n4. Configure detectors and responders",
+      "Terraform": "resource \"oci_cloud_guard_cloud_guard_configuration\" \"example\" {\n  compartment_id = var.tenancy_ocid\n  reporting_region = var.region\n  status = \"ENABLED\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
+      "Url": "https://hub.prowler.com/check/oci/cloudguard_notification_configured"
+    }
+  },
+  "Categories": [
+    "monitoring"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

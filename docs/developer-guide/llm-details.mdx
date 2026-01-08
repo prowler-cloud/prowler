@@ -1,0 +1,104 @@
+---
+title: 'LLM Provider'
+---
+
+This page details the [Large Language Model (LLM)](https://en.wikipedia.org/wiki/Large_language_model) provider implementation in Prowler.
+
+The LLM provider enables security testing of language models using red team techniques. By default, Prowler uses the built-in LLM configuration that targets OpenAI models with comprehensive security test suites. To configure it, follow the [LLM getting started guide](/user-guide/providers/llm/getting-started-llm).
+
+## LLM Provider Classes Architecture
+
+The LLM provider implementation follows the general [Provider structure](/developer-guide/provider). This section focuses on the LLM-specific implementation, highlighting how the generic provider concepts are realized for LLM security testing in Prowler. For a full overview of the provider pattern, base classes, and extension guidelines, see [Provider documentation](/developer-guide/provider).
+
+### Main Class
+
+- **Location:** [`prowler/providers/llm/llm_provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/llm/llm_provider.py)
+- **Base Class:** Inherits from `Provider` (see [base class details](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py)).
+- **Purpose:** Central orchestrator for LLM-specific logic, configuration management, and integration with promptfoo for red team testing.
+- **Key LLM Responsibilities:**
+    - Initializes and manages LLM configuration using promptfoo.
+    - Validates configuration and sets up the LLM testing context.
+    - Loads and manages red team test configuration, plugins, and target models.
+    - Provides properties and methods for downstream LLM security testing.
+    - Integrates with promptfoo for comprehensive LLM security evaluation.
+
+### Data Models
+
+- **Location:** [`prowler/providers/llm/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/llm/models.py)
+- **Purpose:** Define structured data for LLM output options and configuration.
+- **Key LLM Models:**
+    - `LLMOutputOptions`: Customizes output filename logic for LLM-specific reporting.
+
+### LLM Security Testing Integration
+
+- **Location:** [`prowler/providers/llm/llm_provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/llm/llm_provider.py)
+- **Purpose:** Integrates with promptfoo for comprehensive LLM security testing.
+- **Key LLM Responsibilities:**
+    - Executes promptfoo red team evaluations against target LLMs.
+    - Processes security test results and converts them to Prowler reports.
+    - Manages test concurrency and progress tracking.
+    - Handles real-time streaming of test results.
+
+### Configuration Management
+
+The LLM provider uses promptfoo configuration files to define:
+
+- **Target Models**: The LLM models to test (e.g., OpenAI GPT, Anthropic Claude)
+- **Red Team Plugins**: Security test suites (OWASP, MITRE, NIST, EU AI Act)
+- **Test Parameters**: Concurrency, test counts, and evaluation criteria
+
+### Default Configuration
+
+Prowler includes a comprehensive default LLM configuration that:
+
+- Targets OpenAI models by default
+- Includes multiple security test frameworks (OWASP, MITRE, NIST, EU AI Act)
+- Provides extensive test coverage for LLM security vulnerabilities
+- Supports custom configuration for specific testing needs
+
+## Specific Patterns in LLM Security Testing
+
+The LLM provider implements security testing through integration with promptfoo, following these patterns:
+
+### Red Team Testing Framework
+
+- **Plugin-based Architecture**: Uses promptfoo plugins for different security test categories
+- **Comprehensive Coverage**: Includes OWASP LLM Top 10, MITRE ATLAS, NIST AI Risk Management, and EU AI Act compliance
+- **Real-Time Evaluation**: Streams test results as they are generated
+- **Progress Tracking**: Provides detailed progress information during test execution
+
+### Test Execution Flow
+
+1. **Configuration Loading**: Loads promptfoo configuration with target models and test plugins
+2. **Test Generation**: Generates security test cases based on configured plugins
+3. **Concurrent Execution**: Runs tests with configurable concurrency limits
+4. **Result Processing**: Converts promptfoo results to Prowler security reports
+5. **Progress Monitoring**: Tracks and displays test execution progress
+
+### Security Test Categories
+
+The LLM provider supports comprehensive security testing across multiple frameworks:
+
+- **OWASP LLM Top 10**: Covers prompt injection, data leakage, and model security
+- **MITRE ATLAS**: Adversarial threat landscape for AI systems
+- **NIST AI Risk Management**: AI system risk assessment and mitigation
+- **EU AI Act**: European Union AI regulation compliance
+- **Custom Tests**: Support for organization-specific security requirements
+
+## Error Handling and Validation
+
+The LLM provider includes comprehensive error handling for:
+
+- **Configuration Validation**: Ensures valid promptfoo configuration files
+- **Model Access**: Handles authentication and access issues with target LLMs
+- **Test Execution**: Manages test failures and timeout scenarios
+- **Result Processing**: Handles malformed or incomplete test results
+
+## Integration with Prowler Ecosystem
+
+The LLM provider seamlessly integrates with Prowler's existing infrastructure:
+
+- **Output Formats**: Supports all Prowler output formats (JSON, CSV, HTML, etc.)
+- **Compliance Frameworks**: Integrates with Prowler's compliance reporting
+- **Fixer Integration**: Supports automated remediation recommendations
+- **Dashboard Integration**: Compatible with Prowler App for centralized management

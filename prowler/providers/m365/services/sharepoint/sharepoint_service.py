@@ -1,5 +1,5 @@
+import asyncio
 import uuid
-from asyncio import gather, get_event_loop
 from typing import List, Optional
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
@@ -16,14 +16,35 @@ class SharePoint(M365Service):
         if self.powershell:
             self.powershell.close()
 
-        loop = get_event_loop()
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize SharePoint service while event loop is running"
+            )
+
         self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(
-            gather(
+            asyncio.gather(
                 self._get_settings(),
             )
         )
         self.settings = attributes[0]
+
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     async def _get_settings(self):
         logger.info("M365 - Getting SharePoint global settings...")

@@ -6,7 +6,14 @@ from django.dispatch import receiver
 from django_celery_results.backends.database import DatabaseBackend
 
 from api.db_utils import delete_related_daily_task
-from api.models import Membership, Provider, TenantAPIKey, User
+from api.models import (
+    LighthouseProviderConfiguration,
+    LighthouseTenantConfiguration,
+    Membership,
+    Provider,
+    TenantAPIKey,
+    User,
+)
 
 
 def create_task_result_on_publish(sender=None, headers=None, **kwargs):  # noqa: F841
@@ -56,3 +63,33 @@ def revoke_membership_api_keys(sender, instance, **kwargs):  # noqa: F841
     TenantAPIKey.objects.filter(
         entity=instance.user, tenant_id=instance.tenant.id
     ).update(revoked=True)
+
+
+@receiver(pre_delete, sender=LighthouseProviderConfiguration)
+def cleanup_lighthouse_defaults_before_delete(sender, instance, **kwargs):  # noqa: F841
+    """
+    Ensure tenant Lighthouse defaults do not reference a soon-to-be-deleted provider.
+
+    This runs for both per-instance deletes and queryset (bulk) deletes.
+    """
+    try:
+        tenant_cfg = LighthouseTenantConfiguration.objects.get(
+            tenant_id=instance.tenant_id
+        )
+    except LighthouseTenantConfiguration.DoesNotExist:
+        return
+
+    updated = False
+    defaults = tenant_cfg.default_models or {}
+
+    if instance.provider_type in defaults:
+        defaults.pop(instance.provider_type, None)
+        tenant_cfg.default_models = defaults
+        updated = True
+
+    if tenant_cfg.default_provider == instance.provider_type:
+        tenant_cfg.default_provider = ""
+        updated = True
+
+    if updated:
+        tenant_cfg.save()

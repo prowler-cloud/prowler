@@ -40,7 +40,18 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    await handleApiResponse(response, "/integrations", false);
+    const result = await handleApiResponse(response, "/integrations", false);
+    if (result.error) {
+      return {
+        errors: {
+          general:
+            result.error instanceof Error
+              ? result.error.message
+              : "Error creating SAML configuration. Please try again.",
+        },
+      };
+    }
+
     return { success: "SAML configuration created successfully!" };
   } catch (error) {
     console.error("Error creating SAML config:", error);

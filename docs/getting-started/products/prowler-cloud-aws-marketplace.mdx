@@ -1,0 +1,82 @@
+---
+title: "AWS Marketplace"
+---
+
+This section contains the instructions to subscribe to **Prowler Cloud** through the **AWS Marketplace**.
+
+## How to subscribe
+
+To get to the **Prowler Cloud** product listing in the AWS Marketplace, and click the `View purchase options` button:
+
+1. Use this link to be taken directly to the [Prowler Cloud Marketplace Listing](https://aws.amazon.com/marketplace/pp/prodview-6ochhig5kxpok):
+
+    ![](/images/aws-marketplace/marketplace-listing.png)
+
+2. Then, scroll down to the "Purchase Details" section and click the `Subscribe` button:
+
+    ![](/images/aws-marketplace/marketplace-subscribe.png)
+
+## Set up your account
+
+After you have subscribed to the **Prowler Cloud** product, you will need to set up your **Prowler Cloud** account:
+
+1. Click the `Set up  your account` button:
+
+    ![](/images/aws-marketplace/marketplace-message.png)
+
+2. You will be redirected to **Prowler Cloud Sign In** page. You can sign in with an exsiting account or sign up with a new account.:
+
+    ![](/images/aws-marketplace/marketplace-sign-up.png)
+
+3. Once you have successfully authenticated, you should be automatically redirected to the **Prowler Cloud** [Billing](https://cloud.prowler.com/billing) page where you should now see that your account has the `AWS Marketplace Subscription` badge.
+
+    ![](/images/aws-marketplace/marketplace-my-account.png)
+
+If you have any issues signing up, please contact us at support@prowler.com.
+
+
+## Billing
+
+You will be charged monthly based on resources scanned and monitored depending on usage in **Prowler Cloud**. For more information on billing, please see the [Prowler Cloud Pricing FAQ](https://prowler.com/pricing/).
+
+**Note:** Your **Prowler Cloud** bills can be seen at [AWS Billing](https://us-east-1.console.aws.amazon.com/billing/home#/bills).
+
+## Subscription
+
+If you subscribe to Prowler Cloud through the AWS Marketplace it is not necessary to subscribe from different AWS accounts to use Prowler Cloud for those accounts.
+
+In Prowler Cloud you only need to subscribe from one of your AWS accounts through the AWS Marketplace and add multiple provider accounts once you are in the Prowler Cloud console. We will send usage metrics to the AWS Marketplace regardless of the number of accounts you add in our platform, so the AWS Marketplace will bill you based on those usage metrics.
+
+## Troubleshooting
+
+### SEPA Payment Method Issues
+
+If AWS Marketplace notifies that payment failed due to an issue with the payment method, this typically occurs when a SEPA bank account is set as the default payment method. AWS Marketplace does not support SEPA bank accounts for product subscriptions, even when the account includes valid alternative payment methods. This is because AWS Marketplace invoices are issued by AWS Inc., a US entity. SEPA accounts do not recognize these invoices as valid, causing subscription failures.
+
+To successfully subscribe to AWS Marketplace products with a SEPA account configuration:
+
+1. Switch default payment method to credit card
+2. Complete subscription
+3. Switch the default payment method back to the bank account
+
+<Warning>
+**Renewal Considerations**
+
+This issue will recur during subscription renewals. AWS service teams recommend maintaining credit card as the default payment method to prevent future disruptions. Update payment methods at https://console.aws.amazon.com/billing/home#/paymentmethods.
+
+</Warning>
+
+<Note>
+**AWS Marketplace Statement**
+
+The AWS Marketplace team acknowledges this limitation: "We apologize for these additional steps, and please know we are fully aware of this situation, and our internal teams are working on simplifying this process."
+
+</Note>
+
+### Credit and Debit Card Storage Restrictions (AISPL Customers in India)
+
+AWS Marketplace no longer supports payments using credit or debit cards stored on file for Amazon Internet Services Private Limited (AISPL) customers. This restriction stems from Reserve Bank of India (RBI) regulations regarding payment aggregators, which prohibit the storage of card data. As explained in [this AWS blog post](https://aws.amazon.com/blogs/awsmarketplace/restriction-on-credit-and-debit-card-purchases-for-aispl-customers-using-aws-marketplace/):
+
+> AWS Marketplace can no longer support payments using credit or debit cards stored on file. [The Reserve Bank of India (RBI) has issued a notice regarding regulation of payment aggregators](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=11822&Mode=0), which restricts the storage of card data. If you are currently using credit or debit card as your default payment instrument, your ability to use AWS Marketplace products will be restricted. However, you can switch your default payment instrument to Pay By Invoice to avoid disruption or restore your original experience.
+
+To maintain uninterrupted access to AWS Marketplace products, change the default payment instrument from stored card data to Pay By Invoice billing.

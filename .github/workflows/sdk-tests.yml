@@ -1,0 +1,461 @@
+name: 'SDK: Tests'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-tests:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Check for SDK changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: ./**
+          files_ignore: |
+            .github/**
+            prowler/CHANGELOG.md
+            docs/**
+            permissions/**
+            api/**
+            ui/**
+            dashboard/**
+            mcp_server/**
+            README.md
+            mkdocs.yml
+            .backportrc.json
+            .env
+            docker-compose*
+            examples/**
+            .gitignore
+            contrib/**
+
+      - name: Install Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pipx install poetry==2.1.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry install --no-root
+
+      # AWS Provider
+      - name: Check if AWS files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-aws
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/aws/**
+            ./tests/**/aws/**
+            ./poetry.lock
+
+      - name: Resolve AWS services under test
+        if: steps.changed-aws.outputs.any_changed == 'true'
+        id: aws-services
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+
+          dependents = {
+              "acm": ["elb"],
+              "autoscaling": ["dynamodb"],
+              "awslambda": ["ec2", "inspector2"],
+              "backup": ["dynamodb", "ec2", "rds"],
+              "cloudfront": ["shield"],
+              "cloudtrail": ["awslambda", "cloudwatch"],
+              "cloudwatch": ["bedrock"],
+              "ec2": ["dlm", "dms", "elbv2", "emr", "inspector2", "rds", "redshift", "route53", "shield", "ssm"],
+              "ecr": ["inspector2"],
+              "elb": ["shield"],
+              "elbv2": ["shield"],
+              "globalaccelerator": ["shield"],
+              "iam": ["bedrock", "cloudtrail", "cloudwatch", "codebuild"],
+              "kafka": ["firehose"],
+              "kinesis": ["firehose"],
+              "kms": ["kafka"],
+              "organizations": ["iam", "servicecatalog"],
+              "route53": ["shield"],
+              "s3": ["bedrock", "cloudfront", "cloudtrail", "macie"],
+              "ssm": ["ec2"],
+              "vpc": ["awslambda", "ec2", "efs", "elasticache", "neptune", "networkfirewall", "rds", "redshift", "workspaces"],
+              "waf": ["elbv2"],
+              "wafv2": ["cognito", "elbv2"],
+          }
+
+          changed_raw = """${{ steps.changed-aws.outputs.all_changed_files }}"""
+          # all_changed_files is space-separated, not newline-separated
+          # Strip leading "./" if present for consistent path handling
+          changed_files = [Path(f.lstrip("./")) for f in changed_raw.split() if f]
+
+          services = set()
+          run_all = False
+
+          for path in changed_files:
+              path_str = path.as_posix()
+              parts = path.parts
+              if path_str.startswith("prowler/providers/aws/services/"):
+                  if len(parts) > 4 and "." not in parts[4]:
+                      services.add(parts[4])
+                  else:
+                      run_all = True
+              elif path_str.startswith("tests/providers/aws/services/"):
+                  if len(parts) > 4 and "." not in parts[4]:
+                      services.add(parts[4])
+                  else:
+                      run_all = True
+              elif path_str.startswith("prowler/providers/aws/") or path_str.startswith("tests/providers/aws/"):
+                  run_all = True
+
+          # Expand with direct dependent services (one level only)
+          # We only test services that directly depend on the changed services,
+          # not transitive dependencies (services that depend on dependents)
+          original_services = set(services)
+          for svc in original_services:
+              for dep in dependents.get(svc, []):
+                  services.add(dep)
+
+          if run_all or not services:
+              run_all = True
+              services = set()
+
+          service_paths = " ".join(sorted(f"tests/providers/aws/services/{svc}" for svc in services))
+
+          output_lines = [
+              f"run_all={'true' if run_all else 'false'}",
+              f"services={' '.join(sorted(services))}",
+              f"service_paths={service_paths}",
+          ]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as gh_out:
+              for line in output_lines:
+                  gh_out.write(line + "\n")
+
+          print(f"AWS changed files (filtered): {changed_raw or 'none'}")
+          print(f"Run all AWS tests: {run_all}")
+          if services:
+              print(f"AWS service test paths: {service_paths}")
+          else:
+              print("AWS service test paths: none detected")
+          PY
+
+      - name: Run AWS tests
+        if: steps.changed-aws.outputs.any_changed == 'true'
+        run: |
+          echo "AWS run_all=${{ steps.aws-services.outputs.run_all }}"
+          echo "AWS service_paths='${{ steps.aws-services.outputs.service_paths }}'"
+
+          if [ "${{ steps.aws-services.outputs.run_all }}" = "true" ]; then
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+          elif [ -z "${{ steps.aws-services.outputs.service_paths }}" ]; then
+            echo "No AWS service paths detected; skipping AWS tests."
+          else
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${{ steps.aws-services.outputs.service_paths }}
+          fi
+
+      - name: Upload AWS coverage to Codecov
+        if: steps.changed-aws.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-aws
+          files: ./aws_coverage.xml
+
+      # Azure Provider
+      - name: Check if Azure files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-azure
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/azure/**
+            ./tests/**/azure/**
+            ./poetry.lock
+
+      - name: Run Azure tests
+        if: steps.changed-azure.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/azure --cov-report=xml:azure_coverage.xml tests/providers/azure
+
+      - name: Upload Azure coverage to Codecov
+        if: steps.changed-azure.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-azure
+          files: ./azure_coverage.xml
+
+      # GCP Provider
+      - name: Check if GCP files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-gcp
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/gcp/**
+            ./tests/**/gcp/**
+            ./poetry.lock
+
+      - name: Run GCP tests
+        if: steps.changed-gcp.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/gcp --cov-report=xml:gcp_coverage.xml tests/providers/gcp
+
+      - name: Upload GCP coverage to Codecov
+        if: steps.changed-gcp.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-gcp
+          files: ./gcp_coverage.xml
+
+      # Kubernetes Provider
+      - name: Check if Kubernetes files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-kubernetes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/kubernetes/**
+            ./tests/**/kubernetes/**
+            ./poetry.lock
+
+      - name: Run Kubernetes tests
+        if: steps.changed-kubernetes.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml:kubernetes_coverage.xml tests/providers/kubernetes
+
+      - name: Upload Kubernetes coverage to Codecov
+        if: steps.changed-kubernetes.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-kubernetes
+          files: ./kubernetes_coverage.xml
+
+      # GitHub Provider
+      - name: Check if GitHub files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-github
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/github/**
+            ./tests/**/github/**
+            ./poetry.lock
+
+      - name: Run GitHub tests
+        if: steps.changed-github.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/github --cov-report=xml:github_coverage.xml tests/providers/github
+
+      - name: Upload GitHub coverage to Codecov
+        if: steps.changed-github.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-github
+          files: ./github_coverage.xml
+
+      # NHN Provider
+      - name: Check if NHN files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-nhn
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/nhn/**
+            ./tests/**/nhn/**
+            ./poetry.lock
+
+      - name: Run NHN tests
+        if: steps.changed-nhn.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/nhn --cov-report=xml:nhn_coverage.xml tests/providers/nhn
+
+      - name: Upload NHN coverage to Codecov
+        if: steps.changed-nhn.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-nhn
+          files: ./nhn_coverage.xml
+
+      # M365 Provider
+      - name: Check if M365 files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-m365
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/m365/**
+            ./tests/**/m365/**
+            ./poetry.lock
+
+      - name: Run M365 tests
+        if: steps.changed-m365.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml:m365_coverage.xml tests/providers/m365
+
+      - name: Upload M365 coverage to Codecov
+        if: steps.changed-m365.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-m365
+          files: ./m365_coverage.xml
+
+      # IaC Provider
+      - name: Check if IaC files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-iac
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/iac/**
+            ./tests/**/iac/**
+            ./poetry.lock
+
+      - name: Run IaC tests
+        if: steps.changed-iac.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/iac --cov-report=xml:iac_coverage.xml tests/providers/iac
+
+      - name: Upload IaC coverage to Codecov
+        if: steps.changed-iac.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-iac
+          files: ./iac_coverage.xml
+
+      # MongoDB Atlas Provider
+      - name: Check if MongoDB Atlas files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-mongodbatlas
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/mongodbatlas/**
+            ./tests/**/mongodbatlas/**
+            ./poetry.lock
+
+      - name: Run MongoDB Atlas tests
+        if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/mongodbatlas --cov-report=xml:mongodbatlas_coverage.xml tests/providers/mongodbatlas
+
+      - name: Upload MongoDB Atlas coverage to Codecov
+        if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-mongodbatlas
+          files: ./mongodbatlas_coverage.xml
+
+      # OCI Provider
+      - name: Check if OCI files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-oraclecloud
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/**/oraclecloud/**
+            ./tests/**/oraclecloud/**
+            ./poetry.lock
+
+      - name: Run OCI tests
+        if: steps.changed-oraclecloud.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/oraclecloud --cov-report=xml:oraclecloud_coverage.xml tests/providers/oraclecloud
+
+      - name: Upload OCI coverage to Codecov
+        if: steps.changed-oraclecloud.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-oraclecloud
+          files: ./oraclecloud_coverage.xml
+
+      # Lib
+      - name: Check if Lib files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-lib
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/lib/**
+            ./tests/lib/**
+            ./poetry.lock
+
+      - name: Run Lib tests
+        if: steps.changed-lib.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/lib --cov-report=xml:lib_coverage.xml tests/lib
+
+      - name: Upload Lib coverage to Codecov
+        if: steps.changed-lib.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-lib
+          files: ./lib_coverage.xml
+
+      # Config
+      - name: Check if Config files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-config
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/config/**
+            ./tests/config/**
+            ./poetry.lock
+
+      - name: Run Config tests
+        if: steps.changed-config.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/config --cov-report=xml:config_coverage.xml tests/config
+
+      - name: Upload Config coverage to Codecov
+        if: steps.changed-config.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-config
+          files: ./config_coverage.xml

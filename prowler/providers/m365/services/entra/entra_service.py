@@ -1,5 +1,5 @@
 import asyncio
-from asyncio import gather, get_event_loop
+from asyncio import gather
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
@@ -20,7 +20,24 @@ class Entra(M365Service):
             self.user_accounts_status = self.powershell.get_user_account_status()
             self.powershell.close()
 
-        loop = get_event_loop()
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize Entra service while event loop is running"
+            )
+
         self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(
             gather(
@@ -40,6 +57,10 @@ class Entra(M365Service):
         self.organizations = attributes[4]
         self.users = attributes[5]
         self.user_accounts_status = {}
+
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -232,9 +253,7 @@ class Entra(M365Service):
                             )
                         ),
                         authentication_strength=(
-                            AuthenticationStrength(
-                                policy.grant_controls.authentication_strength.display_name
-                            )
+                            policy.grant_controls.authentication_strength.display_name
                             if policy.grant_controls is not None
                             and policy.grant_controls.authentication_strength
                             is not None
@@ -364,7 +383,7 @@ class Entra(M365Service):
         logger.info("Entra - Getting users...")
         users = {}
         try:
-            users_list = await self.client.users.get()
+            users_response = await self.client.users.get()
             directory_roles = await self.client.directory_roles.get()
 
             async def fetch_role_members(directory_role):
@@ -396,23 +415,29 @@ class Entra(M365Service):
                 )
                 registration_details = {}
 
-            for user in users_list.value:
-                users[user.id] = User(
-                    id=user.id,
-                    name=user.display_name,
-                    on_premises_sync_enabled=(
-                        True if (user.on_premises_sync_enabled) else False
-                    ),
-                    directory_roles_ids=user_roles_map.get(user.id, []),
-                    is_mfa_capable=(
-                        registration_details.get(user.id, {}).is_mfa_capable
-                        if registration_details.get(user.id, None) is not None
-                        else False
-                    ),
-                    account_enabled=not self.user_accounts_status.get(user.id, {}).get(
-                        "AccountDisabled", False
-                    ),
-                )
+            while users_response:
+                for user in getattr(users_response, "value", []) or []:
+                    users[user.id] = User(
+                        id=user.id,
+                        name=user.display_name,
+                        on_premises_sync_enabled=(
+                            True if (user.on_premises_sync_enabled) else False
+                        ),
+                        directory_roles_ids=user_roles_map.get(user.id, []),
+                        is_mfa_capable=(
+                            registration_details.get(user.id, {}).is_mfa_capable
+                            if registration_details.get(user.id, None) is not None
+                            else False
+                        ),
+                        account_enabled=not self.user_accounts_status.get(
+                            user.id, {}
+                        ).get("AccountDisabled", False),
+                    )
+
+                next_link = getattr(users_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                users_response = await self.client.users.with_url(next_link).get()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -428,6 +453,7 @@ class ConditionalAccessPolicyState(Enum):
 
 class UserAction(Enum):
     REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+    REGISTER_DEVICE = "urn:user:registerdevice"
 
 
 class ApplicationsConditions(BaseModel):
@@ -496,11 +522,19 @@ class SessionControls(BaseModel):
 
 
 class ConditionalAccessGrantControl(Enum):
+    """
+    Built-in grant controls for Conditional Access policies.
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessgrantcontrols
+    """
+
     MFA = "mfa"
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
     PASSWORD_CHANGE = "passwordChange"
     COMPLIANT_DEVICE = "compliantDevice"
+    APPROVED_APPLICATION = "approvedApplication"
+    COMPLIANT_APPLICATION = "compliantApplication"
+    TERMS_OF_USE = "termsOfUse"
 
 
 class GrantControlOperator(Enum):
@@ -508,16 +542,10 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
-class AuthenticationStrength(Enum):
-    MFA = "Multifactor authentication"
-    PASSWORDLESS_MFA = "Passwordless MFA"
-    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
-
-
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
-    authentication_strength: Optional[AuthenticationStrength]
+    authentication_strength: Optional[str]
 
 
 class ConditionalAccessPolicy(BaseModel):

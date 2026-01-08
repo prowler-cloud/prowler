@@ -394,7 +394,32 @@
       "Description": "Adversaries may abuse serverless computing, integration, and automation services to execute arbitrary code in cloud environments. Many cloud providers offer a variety of serverless resources, including compute engines, application integration services, and web servers.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1648/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AzureService": "Azure Activity Log",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Azure Activity Log captures all control plane operations including Azure Functions deployment, Logic Apps creation, and Azure Automation runbook execution. This provides Significant detection capability for identifying when serverless resources are created or modified, which could indicate adversaries establishing serverless execution capabilities. Activity Log records who performed the action, when, and from where."
+        },
+        {
+          "AzureService": "Azure Functions",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Azure Functions can be protected through authentication requirements, network restrictions (VNet integration), and managed identity configurations. Function-level authorization can restrict who can invoke functions. However, protection is Partial because authorized users with deployment permissions can still create and execute malicious functions, and proper security configurations are not always enforced by default."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Microsoft Defender for Cloud can detect suspicious serverless activity through alerts related to unusual function executions, suspicious automation runbook activities, and anomalous Logic Apps behavior. Defender for Cloud also provides security recommendations for serverless configurations. Coverage is Partial as it focuses on known malicious patterns and misconfigurations rather than all possible serverless abuse scenarios."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Azure Policy can enforce governance requirements on serverless resources, such as requiring specific configurations for Functions, Logic Apps, and Automation accounts. Policies can restrict deployment locations, require encryption, and enforce tagging. However, protection is Minimal against serverless execution abuse as policies focus on configuration compliance rather than preventing malicious code execution within properly configured serverless resources."
+        }
+      ]
     },
     {
       "Name": "User Execution",
@@ -665,7 +690,32 @@
       "Description": "Adversaries may abuse cloud management services to execute commands within virtual machines or hybrid-joined devices. Resources such as AWS Systems Manager, Azure RunCommand, and Runbooks allow users to remotely run scripts in virtual machines by leveraging installed virtual machine agents. Similarly, in Azure AD environments, Microsoft Endpoint Manager allows Global or Intune Administrators to run scripts as SYSTEM on on-premises devices joined to the Azure AD.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1651/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AzureService": "Azure Activity Log",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Azure Activity Log captures all Azure VM RunCommand operations, Azure Automation runbook executions, and Intune script deployments. This provides Significant detection capability for identifying when remote command execution is performed through cloud management services. Activity Log records detailed information about who executed commands, on which resources, and when, enabling effective monitoring of cloud administration command abuse."
+        },
+        {
+          "AzureService": "Azure Automation",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Azure Automation runbooks can be protected through role-based access control (RBAC), hybrid worker groups, and managed identities. Organizations can restrict who can create and execute runbooks. However, protection is Partial because authorized administrators with legitimate Automation access could potentially abuse these capabilities for malicious command execution, and runbook activity may be difficult to distinguish from legitimate automation."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Microsoft Defender for Cloud can detect suspicious patterns related to VM RunCommand usage and unusual automation activities through security alerts. Defender identifies anomalous command execution patterns and suspicious script deployments. Coverage is Partial as detection relies on known malicious patterns and baseline behavior, and may not catch all forms of cloud administration command abuse, especially when performed by authorized administrators."
+        },
+        {
+          "AzureService": "Microsoft Intune",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Microsoft Intune provides script deployment capabilities that can be protected through administrative role assignments and compliance policies. However, protection is Minimal against command execution abuse as Intune is designed specifically for remote management and script execution. Authorized Intune administrators have legitimate need for these capabilities, making it difficult to prevent malicious use without impacting normal operations."
+        }
+      ]
     },
     {
       "Name": "Implant Internal Image",
@@ -1184,7 +1234,32 @@
       "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AzureService": "Azure AD Sign-in Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Azure AD Sign-in Logs provide Significant detection capability for MFA fatigue attacks by recording all authentication attempts, MFA challenges, and their outcomes. These logs capture detailed information about repeated MFA prompts, failed MFA attempts, and unusual authentication patterns. Analysis of sign-in logs can reveal MFA bombing attempts where adversaries generate excessive MFA requests to fatigue users into approving malicious authentication attempts."
+        },
+        {
+          "AzureService": "Azure AD Conditional Access",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Azure AD Conditional Access can enforce MFA requirements and implement number matching or additional authentication context to make MFA fatigue attacks more difficult. Modern authentication methods like passwordless and FIDO2 are more resistant to MFA fatigue. However, protection is Partial because Conditional Access cannot prevent adversaries with valid credentials from generating MFA requests, and user awareness remains a critical factor."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud Apps",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Microsoft Defender for Cloud Apps can detect unusual authentication patterns and repeated MFA attempts through anomaly detection policies. Defender for Cloud Apps identifies suspicious sign-in activities that may indicate MFA fatigue attacks. Coverage is Partial as it relies on behavioral analytics and may not detect all forms of MFA request generation, especially when patterns are subtle or gradually escalated."
+        },
+        {
+          "AzureService": "Azure AD Identity Protection",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Azure AD Identity Protection can detect risk associated with unusual authentication patterns and repeated MFA attempts. Identity Protection's risk detections can identify anomalous user behavior that may indicate MFA bombing. However, coverage is Partial as Identity Protection focuses on broader authentication risks and may not specifically identify all MFA fatigue attack patterns, especially those that mimic legitimate behavior."
+        }
+      ]
     },
     {
       "Name": "Network Sniffing",
@@ -2242,7 +2317,32 @@
       "Description": "Adversaries may enumerate objects in cloud storage infrastructure. Adversaries may use this information during automated discovery to shape follow-on behaviors, including requesting all or specific objects from cloud storage. Similar to File and Directory Discovery on a local host, after identifying available storage services (i.e. Cloud Infrastructure Discovery) adversaries may access the contents/objects stored in cloud infrastructure.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1619/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AzureService": "Azure Storage Analytics Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Azure Storage Analytics Logs provide Significant detection capability for cloud storage enumeration by logging all operations against blob containers, file shares, and queues. These logs capture ListBlobs, ListContainers, and other enumeration operations, revealing when adversaries are discovering storage objects. Logs include details about who performed enumeration, from where, and what was accessed, enabling effective detection of storage reconnaissance."
+        },
+        {
+          "AzureService": "Azure Storage",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Azure Storage can be protected through shared access signatures (SAS), Azure AD authentication, and private endpoints to restrict access. Storage account firewalls and virtual network service endpoints can limit network access. However, protection is Partial because authorized users with storage access permissions can still enumerate objects, and restricting enumeration capabilities may impact legitimate operational needs."
+        },
+        {
+          "AzureService": "Microsoft Defender for Storage",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Microsoft Defender for Storage can detect unusual access patterns to storage accounts, including suspicious enumeration activities. Defender identifies anomalous blob listing operations and unusual data access patterns that may indicate reconnaissance. Coverage is Partial as it focuses on behavioral anomalies and may not detect all enumeration activities, especially when performed gradually or by authorized accounts."
+        },
+        {
+          "AzureService": "Azure Activity Log",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Azure Activity Log captures control plane operations for storage accounts but provides only Minimal detection for storage object enumeration. Activity Log records storage account management operations like creating containers but does not capture data plane operations like listing individual blobs. For comprehensive enumeration detection, Storage Analytics Logs are required."
+        }
+      ]
     },
     {
       "Name": "Network Service Discovery",
@@ -2381,7 +2481,32 @@
       "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AzureService": "Azure Activity Log",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Azure Activity Log logs API calls that reveal location information such as queries about Azure regions, resource locations, and availability zones. These operations can indicate adversaries attempting to determine the geographic location of Azure resources. However, detection is Partial because Activity Log captures control plane operations but cannot monitor instance-level commands that query Azure Instance Metadata Service without additional logging mechanisms."
+        },
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Azure Monitor can collect logs from virtual machines that may capture location discovery commands if VM extensions and log collection are properly configured. However, this provides only Minimal detection as it requires deployment of monitoring agents and proper log forwarding configuration. Adversaries can also query location through metadata services that may not be captured by standard monitoring."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Microsoft Defender for Cloud provides Minimal direct detection for system location discovery activities. Defender focuses on detecting security threats and vulnerabilities rather than reconnaissance queries about geographic location. Detection of location discovery would be indirect, potentially through identifying compromised resources that may be performing reconnaissance activities."
+        },
+        {
+          "AzureService": "Azure Virtual Network",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Azure Virtual Network provides Minimal protection against system location discovery. While network security groups and virtual network configurations can restrict network access, adversaries with VM access can still query location information through Azure APIs and the Azure Instance Metadata Service. Network controls focus on connectivity rather than preventing location enumeration."
+        }
+      ]
     },
     {
       "Name": "System Information Discovery",

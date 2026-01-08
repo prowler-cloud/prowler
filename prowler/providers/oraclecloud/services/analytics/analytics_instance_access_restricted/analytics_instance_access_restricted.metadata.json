@@ -1,0 +1,41 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "analytics_instance_access_restricted",
+  "CheckTitle": "Oracle Analytics Cloud instance is deployed within a Virtual Cloud Network or restricts public access to allowed sources",
+  "CheckType": [],
+  "ServiceName": "analytics",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AnalyticsInstance",
+  "ResourceGroup": "analytics",
+  "Description": "Oracle Analytics Cloud endpoints are evaluated for **network exposure**. Public endpoints must use **restricted allowlists** of specific IPs/CIDRs; presence of `0.0.0.0/0` or no allowed sources indicates unrestricted access. Instances using a **VCN/private endpoint** or public endpoints limited to specific sources align with the intended exposure model.",
+  "Risk": "Unrestricted OAC endpoints allow Internet-wide access to the login surface, enabling **credential stuffing** and **brute force**. Account takeover can expose **reports and data sources** (**confidentiality**), permit **dashboard/model changes** (**integrity**), and support **lateral movement** into connected systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/analytics-cloud/doc/public-endpoints-and-access-control-rules.html",
+    "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acsds/connect-databases-deployed-public-ip-address.html",
+    "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acoci/top-faqs-public-or-private-endpoint-security.html",
+    "https://docs.oracle.com/en/cloud/paas/analytics-cloud/acoci/manage-ingress-access-rules-public-endpoint-using-console.html",
+    "https://docs.oracle.com/en-us/iaas/analytics-cloud/doc/public-endpoints-and-access-control-rules.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In OCI Console, go to Analytics & AI > Analytics Cloud and select your instance\n2. On Instance Details, under Network Access, click Edit next to Access Control\n3. Remove any 0.0.0.0/0 entry (if present)\n4. Add an access rule with the specific allowed public IP or CIDR\n5. Click Save",
+      "Terraform": "```hcl\nresource \"oci_analytics_analytics_instance\" \"example\" {\n  compartment_id    = \"<example_resource_id>\"\n  name              = \"<example_resource_name>\"\n  feature_set       = \"ENTERPRISE_ANALYTICS\"\n  license_type      = \"LICENSE_INCLUDED\"\n  idcs_access_token = \"<example_resource_id>\"\n\n  capacity {\n    capacity_type  = \"OLPU_COUNT\"\n    capacity_value = 1\n  }\n\n  network_endpoint_details {\n    network_endpoint_type = \"PUBLIC\"\n    whitelisted_ips       = [\"<example_resource_id>\"] # Critical: restrict to specific allowed CIDR; not 0.0.0.0/0\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Prefer **private deployment in a VCN** and apply **least privilege** network access. *If public is required*, enforce **allowlists** to specific IPs/CIDRs and never include `0.0.0.0/0`. Use **private access channels/service gateways**, require **MFA/SSO**, and apply **defense in depth** (WAF, audit monitoring) to reduce exposure.",
+      "Url": "https://hub.prowler.com/check/analytics_instance_access_restricted"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

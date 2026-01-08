@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "network_default_security_list_restricts_traffic",
+  "CheckTitle": "Ensure the default security list of every VCN restricts all traffic except ICMP",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:network:securitylist",
+  "Severity": "high",
+  "ResourceType": "OciNetworkSecurityList",
+  "ResourceGroup": "network",
+  "Description": "Ensure the default security list of every VCN restricts all traffic except ICMP within VCN. A default security list is automatically created when you create a VCN. It is recommended that the default security list restrict all traffic except for ICMP within the VCN.",
+  "Risk": "The default security list should not be used for any purpose other than as a fail-safe. It is recommended to create custom security lists for your resources.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci network security-list update --security-list-id <default-security-list-ocid> --ingress-security-rules <restricted-rules-json> --egress-security-rules <restricted-rules-json>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/restrict-traffic-for-default-security-lists.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the default security list to restrict all traffic except ICMP within the VCN. Create custom security lists for your resources.",
+      "Url": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

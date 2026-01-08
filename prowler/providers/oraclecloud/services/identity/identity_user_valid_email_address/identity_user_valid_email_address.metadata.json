@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "identity_user_valid_email_address",
+  "CheckTitle": "Ensure all OCI IAM user accounts have a valid and current email address",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:identity:user",
+  "Severity": "low",
+  "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
+  "Description": "All user accounts should have valid email addresses.",
+  "Risk": "Not meeting this IAM requirement increases security risk.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all OCI IAM user accounts have a valid and current email address",
+      "Url": "https://hub.prowler.com/check/oci/identity_user_valid_email_address"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

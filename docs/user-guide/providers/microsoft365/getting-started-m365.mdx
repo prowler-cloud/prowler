@@ -1,0 +1,130 @@
+---
+title: 'Getting Started With Microsoft 365 on Prowler'
+---
+
+<Note>
+**Government Cloud Support**
+
+Government cloud accounts or tenants (Microsoft 365 Government) are currently unsupported, but we expect to add support for them in the near future.
+
+</Note>
+
+## Prerequisites
+
+Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](/user-guide/providers/microsoft365/authentication) guide before starting either path:
+
+- Register an application in Microsoft Entra ID
+- Grant the Microsoft Graph and external API permissions listed for the provider
+- Generate an application certificate (recommended) or client secret
+- Prepare PowerShell module permissions to enable every check
+
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Microsoft 365 using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Microsoft 365 using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+### Step 1: Locate the Domain ID
+
+1. Open the Entra ID portal, then search for "Domain" or go to Identity > Settings > Domain Names.
+
+    ![Search Domain Names](/images/providers/search-domain-names.png)
+
+    ![Custom Domain Names](/images/providers/custom-domain-names.png)
+
+2. Select the domain that acts as the unique identifier for the Microsoft 365 account in Prowler Cloud.
+
+### Step 2: Open Prowler Cloud
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Navigate to "Configuration" > "Cloud Providers".
+
+    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Cloud Provider".
+
+    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Microsoft 365".
+
+    ![Select Microsoft 365](/images/providers/select-m365-prowler-cloud.png)
+
+5. Add the Domain ID and an optional alias, then click "Next".
+
+    ![Add Domain ID](/images/providers/add-domain-id.png)
+
+### Step 3: Choose and Provide Authentication
+
+After the Domain ID is in place, select the app-only authentication option that matches the Microsoft Entra ID setup:
+
+<img src="/images/providers/m365-auth-selection-form.png" alt="M365 authentication method selection" width="700" />
+
+#### Application Certificate Authentication (Recommended)
+
+1. Enter the **tenant ID**, the unique identifier for the Microsoft Entra ID directory.
+2. Enter the **application (client) ID**, the identifier for the Entra application registration.
+3. Upload the **certificate file content** (Base64-encoded PFX).
+
+<img src="/images/providers/certificate-form.png" alt="M365 certificate authentication form" width="700" />
+
+Use this method to avoid managing secrets and to unlock all Microsoft 365 checks, including the PowerShell-based ones. Full setup steps are in the [Authentication guide](/user-guide/providers/microsoft365/authentication#application-certificate-authentication-recommended).
+
+#### Application Client Secret Authentication
+
+1. Enter the **tenant ID**.
+2. Enter the **application (client) ID**.
+3. Enter the **client secret**.
+
+<img src="/images/providers/secret-form.png" alt="M365 client secret authentication form" width="700" />
+
+For the complete setup workflow, follow the [Authentication guide](/user-guide/providers/microsoft365/authentication#application-client-secret-authentication).
+
+### Step 4: Launch the Scan
+
+1. Review the summary, then click **Next**.
+
+    ![Next Detail](/images/providers/click-next-m365.png)
+
+2. Click **Launch Scan** to start auditing Microsoft 365.
+
+    ![Launch Scan M365](/images/providers/launch-scan.png)
+
+---
+
+## Prowler CLI
+
+### Step 1: Confirm PowerShell Coverage
+
+PowerShell 7.4+ keeps the full Microsoft 365 coverage. Installation options are listed in the [Authentication guide](/user-guide/providers/microsoft365/authentication#supported-powershell-versions).
+
+### Step 2: Select an Authentication Method
+
+Choose the matching flag from the [Microsoft 365 Authentication](/user-guide/providers/microsoft365/authentication) guide:
+
+- **Application Certificate Authentication** (recommended): `--certificate-auth`
+- **Application Client Secret Authentication**: `--sp-env-auth`
+- **Azure CLI Authentication**: `--az-cli-auth`
+- **Interactive Browser Authentication**: `--browser-auth`
+
+### Step 3: Run the First Scan
+
+Run a baseline scan after credentials are configured:
+
+```console
+prowler m365 --sp-env-auth
+```
+
+### Step 4: Enable Full Coverage
+
+Include PowerShell module initialization to run every check:
+
+```console
+prowler m365 --sp-env-auth --init-modules
+```
+
+---
