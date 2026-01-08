@@ -62,9 +62,8 @@ class {check_name}(Check):
 
 ### 4. Create Metadata File
 
-See complete schema below. For detailed field documentation:
-- [Metadata Structure](https://docs.prowler.com/developer-guide/checks#metadata-structure-for-prowler-checks)
-- [Metadata Guidelines](https://docs.prowler.com/developer-guide/check-metadata-guidelines)
+See complete schema below and `assets/` folder for complete templates.
+For detailed field documentation, see `references/metadata-docs.md`.
 
 ### 5. Verify Check Detection
 
