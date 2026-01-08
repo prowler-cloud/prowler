@@ -73,11 +73,5 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 
 ## Resources
 
-<<<<<<< Updated upstream
-- **Templates**: See [assets/](assets/) for BaseTool, tool implementation, and model templates
-- **Documentation**: See [references/mcp-docs.md](references/mcp-docs.md) for official Prowler Developer Guide links
-
-=======
 - **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../../docs/developer-guide/mcp-server.mdx)
 - **Templates**: See [assets/](assets/) for tool and model templates
->>>>>>> Stashed changes
