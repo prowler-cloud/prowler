@@ -2,48 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [5.17.0] (Prowler UNRELEASED)
-
-### Added
-- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
-- `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
-- `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
-- Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
-- `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
-- Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
-- `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
-- `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
-- `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
-- `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
-
-### Changed
-- Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
-- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
-- Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
-- Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
-- Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
-- Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
-- Update AWS Redshift service metadata to new format [(#9385)](https://github.com/prowler-cloud/prowler/pull/9385)
-- Update AWS Storage Gateway service metadata to new format [(#9433)](https://github.com/prowler-cloud/prowler/pull/9433)
-- Update AWS Well-Architected service metadata to new format [(#9482)](https://github.com/prowler-cloud/prowler/pull/9482)
-- Update AWS SSM service metadata to new format [(#9430)](https://github.com/prowler-cloud/prowler/pull/9430)
-- Update AWS Organizations service metadata to new format [(#9384)](https://github.com/prowler-cloud/prowler/pull/9384)
-- Update AWS Resource Explorer v2 service metadata to new format [(#9386)](https://github.com/prowler-cloud/prowler/pull/9386)
-- Update AWS SageMaker service metadata to new format [(#9407)](https://github.com/prowler-cloud/prowler/pull/9407)
-- Update AWS Security Hub service metadata to new format [(#9409)](https://github.com/prowler-cloud/prowler/pull/9409)
-- Update AWS SES service metadata to new format [(#9411)](https://github.com/prowler-cloud/prowler/pull/9411)
-- Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
-- Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
-- Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
-- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
-- Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
-- Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
-- Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
-
----
-
 ## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
 
 ### Fixed
@@ -51,7 +9,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 27492cbd4 (fix(oci): validate credentials before scanning (#9738))
 ## [5.16.1] (Prowler v5.16.1)
 
 ### Fixed
