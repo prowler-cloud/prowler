@@ -19,6 +19,7 @@ import {
   getNodeBorderColor,
   getNodeColor,
   GRAPH_EDGE_COLOR,
+  GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_SELECTION_COLOR,
 } from "../../_lib";
 
@@ -73,14 +74,69 @@ const AttackPathGraphComponent = forwardRef<
   const nodeShapesRef = useRef<ReturnType<
     typeof select<SVGRectElement, NodeData>
   > | null>(null);
+  const linkElementsRef = useRef<ReturnType<
+    typeof select<SVGLineElement, unknown>
+  > | null>(null);
   const resourcesWithFindingsRef = useRef<Set<string>>(new Set());
+  const selectedNodeIdRef = useRef<string | null>(null);
+  const edgesDataRef = useRef<
+    Array<{
+      sourceId: string;
+      targetId: string;
+    }>
+  >([]);
+
+  // Keep selectedNodeIdRef in sync with selectedNodeId
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNodeId ?? null;
+  }, [selectedNodeId]);
+
+  // Helper function to find all edges in the path from a given node
+  const getPathEdges = (
+    nodeId: string,
+    edges: Array<{ sourceId: string; targetId: string }>,
+  ): Set<string> => {
+    const pathEdgeIds = new Set<string>();
+    const visitedNodes = new Set<string>();
+
+    // Traverse upstream (find all sources leading to this node)
+    const traverseUpstream = (currentNodeId: string) => {
+      if (visitedNodes.has(`up-${currentNodeId}`)) return;
+      visitedNodes.add(`up-${currentNodeId}`);
+
+      edges.forEach((edge) => {
+        if (edge.targetId === currentNodeId) {
+          pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
+          traverseUpstream(edge.sourceId);
+        }
+      });
+    };
+
+    // Traverse downstream (find all targets from this node)
+    const traverseDownstream = (currentNodeId: string) => {
+      if (visitedNodes.has(`down-${currentNodeId}`)) return;
+      visitedNodes.add(`down-${currentNodeId}`);
+
+      edges.forEach((edge) => {
+        if (edge.sourceId === currentNodeId) {
+          pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
+          traverseDownstream(edge.targetId);
+        }
+      });
+    };
+
+    traverseUpstream(nodeId);
+    traverseDownstream(nodeId);
+
+    return pathEdgeIds;
+  };
 
   // Update ref when onNodeClick changes
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
   }, [onNodeClick]);
 
-  // Update selected node styling without re-rendering
+  // Update selected node styling and edge highlighting without re-rendering
   useEffect(() => {
     if (nodeShapesRef.current) {
       const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
@@ -95,9 +151,9 @@ const AttackPathGraphComponent = forwardRef<
           if (!isFinding && hasFindings) {
             return ALERT_BORDER_COLOR;
           }
-          // Selected nodes get selection color
+          // Selected nodes get highlight color (orange)
           if (d.id === selectedNodeId) {
-            return GRAPH_SELECTION_COLOR;
+            return GRAPH_EDGE_HIGHLIGHT_COLOR;
           }
           // Default border color
           return getNodeBorderColor(d.data.labels, d.data.properties);
@@ -114,6 +170,24 @@ const AttackPathGraphComponent = forwardRef<
           }
           return d.id === selectedNodeId ? 3 : isFinding ? 2 : 1.5;
         });
+    }
+
+    // Update edge highlighting for selected node - highlight entire path
+    if (linkElementsRef.current && edgesDataRef.current.length > 0) {
+      const pathEdges = selectedNodeId
+        ? getPathEdges(selectedNodeId, edgesDataRef.current)
+        : new Set<string>();
+
+      linkElementsRef.current.each(function (edgeData: {
+        sourceId: string;
+        targetId: string;
+      }) {
+        const edgeId = `${edgeData.sourceId}-${edgeData.targetId}`;
+        const isInPath = pathEdges.has(edgeId);
+        select(this)
+          .attr("stroke", isInPath ? GRAPH_EDGE_HIGHLIGHT_COLOR : GRAPH_EDGE_COLOR)
+          .attr("marker-end", isInPath ? "url(#arrowhead-highlight)" : "url(#arrowhead)");
+      });
     }
   }, [selectedNodeId]);
 
@@ -299,6 +373,12 @@ const AttackPathGraphComponent = forwardRef<
       });
     });
 
+    // Store edges data in ref for path highlighting
+    edgesDataRef.current = edgesData.map((e) => ({
+      sourceId: e.sourceId,
+      targetId: e.targetId,
+    }));
+
     // Add defs for filters and markers FIRST (before using them)
     const defs = svg.append("defs");
 
@@ -332,7 +412,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("flood-color", "#ef4444")
       .attr("flood-opacity", "0.6");
 
-    // Arrow marker - refX=10 places the arrow tip exactly at the line endpoint
+    // Arrow marker (default white) - refX=10 places the arrow tip exactly at the line endpoint
     defs
       .append("marker")
       .attr("id", "arrowhead")
@@ -345,6 +425,20 @@ const AttackPathGraphComponent = forwardRef<
       .append("path")
       .attr("d", "M 0 0 L 10 5 L 0 10 z")
       .attr("fill", GRAPH_EDGE_COLOR);
+
+    // Arrow marker (highlighted orange) for hover state
+    defs
+      .append("marker")
+      .attr("id", "arrowhead-highlight")
+      .attr("viewBox", "0 0 10 10")
+      .attr("refX", 10)
+      .attr("refY", 5)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M 0 0 L 10 5 L 0 10 z")
+      .attr("fill", GRAPH_EDGE_HIGHLIGHT_COLOR);
 
     // Add CSS animation for dashed lines and resource edge styles
     svg.append("style").text(`
@@ -471,6 +565,11 @@ const AttackPathGraphComponent = forwardRef<
         select(this).style("visibility", visibility);
       });
 
+    // Store linkElements reference for hover interactions
+    linkElementsRef.current = linkElements as unknown as ReturnType<
+      typeof select<SVGLineElement, unknown>
+    >;
+
     // Draw nodes
     const nodesData = g.nodes().map((v) => {
       const node = g.node(v);
@@ -495,6 +594,70 @@ const AttackPathGraphComponent = forwardRef<
       .style("display", (d) =>
         hiddenNodeIdsRef.current.has(d.id) ? "none" : null,
       )
+      .on("mouseenter", function (_event: PointerEvent, d) {
+        // Highlight entire path from this node
+        const pathEdges = getPathEdges(d.id, edgesData);
+        linkElements.each(function (edgeData) {
+          const edgeId = `${edgeData.sourceId}-${edgeData.targetId}`;
+          if (pathEdges.has(edgeId)) {
+            select(this)
+              .attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR)
+              .attr("marker-end", "url(#arrowhead-highlight)");
+          }
+        });
+
+        // Change node border to highlight color on hover
+        const nodeGroup = select(this);
+        const nodeShape = nodeGroup.select(".node-shape");
+        const isFinding = d.data.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+        const hasFindings = resourcesWithFindings.has(d.id);
+
+        // Don't change border for resources with findings (keep red)
+        if (!hasFindings || isFinding) {
+          nodeShape.attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR);
+        }
+      })
+      .on("mouseleave", function (_event: PointerEvent, d) {
+        const selectedId = selectedNodeIdRef.current;
+
+        // Reset edges: keep selected node's path highlighted
+        const selectedPathEdges = selectedId
+          ? getPathEdges(selectedId, edgesData)
+          : new Set<string>();
+
+        linkElements.each(function (edgeData) {
+          const edgeId = `${edgeData.sourceId}-${edgeData.targetId}`;
+          if (selectedPathEdges.has(edgeId)) {
+            select(this)
+              .attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR)
+              .attr("marker-end", "url(#arrowhead-highlight)");
+          } else {
+            select(this)
+              .attr("stroke", GRAPH_EDGE_COLOR)
+              .attr("marker-end", "url(#arrowhead)");
+          }
+        });
+
+        // Reset node border
+        const nodeGroup = select(this);
+        const nodeShape = nodeGroup.select(".node-shape");
+        const isFinding = d.data.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+        const hasFindings = resourcesWithFindings.has(d.id);
+        const ALERT_BORDER_COLOR = "#ef4444";
+
+        // Determine the correct border color
+        if (!isFinding && hasFindings) {
+          nodeShape.attr("stroke", ALERT_BORDER_COLOR);
+        } else if (d.id === selectedId) {
+          nodeShape.attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR);
+        } else {
+          nodeShape.attr("stroke", getNodeBorderColor(d.data.labels, d.data.properties));
+        }
+      })
       .on("click", function (event: PointerEvent, d) {
         event.stopPropagation();
 
@@ -916,9 +1079,42 @@ const AttackPathGraphComponent = forwardRef<
 
     svg.call(zoomBehavior);
 
-    // Disable mouse wheel zoom (only allow programmatic zoom via buttons)
+    // Enable Ctrl + mouse wheel zoom only (disable regular scroll zoom)
     svg.on("wheel.zoom", null);
     svg.on("dblclick.zoom", null);
+
+    // Custom wheel handler that only zooms when Ctrl is pressed
+    svg.on("wheel", function (event: WheelEvent) {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        const currentTransform = container.attr("transform");
+        const k = currentTransform
+          ? parseFloat(
+              currentTransform.match(/scale\(([^)]+)\)/)?.[1] || "1",
+            )
+          : 1;
+        const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
+        const newK = Math.max(0.1, Math.min(10, k * scaleFactor));
+
+        if (zoomBehaviorRef.current && svgSelectionRef.current) {
+          const svgNode = svgRef.current;
+          if (svgNode) {
+            const rect = svgNode.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            svgSelectionRef.current
+              .transition()
+              .duration(100)
+              .call(
+                zoomBehaviorRef.current.scaleTo,
+                newK,
+                [mouseX, mouseY],
+              );
+          }
+        }
+      }
+    });
 
     // Auto-fit to screen
     setTimeout(() => {
