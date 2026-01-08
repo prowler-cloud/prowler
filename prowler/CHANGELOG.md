@@ -38,6 +38,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
 - Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
 
+---
+
+## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
+
 ### Fixed
 - Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
 
