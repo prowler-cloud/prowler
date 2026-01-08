@@ -146,5 +146,3 @@ export async function getSecretData() {
 }
 ```
 
-## Keywords
-nextjs, next.js, app router, server components, server actions, streaming

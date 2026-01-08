@@ -187,5 +187,3 @@ pytest --tb=short               # Short traceback
 For Prowler SDK testing with provider-specific patterns (moto, MagicMock), see:
 - **Documentation**: [references/prowler-testing.md](references/prowler-testing.md)
 
-## Keywords
-pytest, python, testing, fixtures, mocking, parametrize, markers

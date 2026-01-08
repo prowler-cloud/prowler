@@ -76,6 +76,3 @@ Otherwise    → {Default action}
 
 - **Templates**: See [assets/](assets/) for {description of templates}
 - **Documentation**: See [references/](references/) for local developer guide links
-
-## Keywords
-{keyword1}, {keyword2}, {keyword3}, {keyword4}

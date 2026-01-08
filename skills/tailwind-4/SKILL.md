@@ -195,5 +195,3 @@ const CHART_COLORS = {
 <div className="bg-[#1e293b]" />  // NO
 ```
 
-## Keywords
-tailwind, css, styling, cn, utility classes, responsive

@@ -215,5 +215,3 @@ uvx /path/to/prowler/mcp_server/                               # Run from anywhe
 - **Templates**: See [assets/](assets/) for BaseTool, tool implementation, and model templates
 - **Documentation**: See [references/mcp-docs.md](references/mcp-docs.md) for official Prowler Developer Guide links
 
-## Keywords
-prowler mcp, fastmcp, ai tools, model context protocol, llm tools

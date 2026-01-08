@@ -182,5 +182,3 @@ python manage.py createsuperuser
 python manage.py shell
 ```
 
-## Keywords
-django, drf, rest framework, viewset, serializer, api, rest api

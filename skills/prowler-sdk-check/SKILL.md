@@ -255,5 +255,3 @@ poetry run python prowler-cli.py {provider} --check {check1} {check2} {check3}
 - **Templates**: See [assets/](assets/) for complete check and metadata templates (AWS, Azure, GCP)
 - **Documentation**: See [references/metadata-docs.md](references/metadata-docs.md) for official Prowler Developer Guide links
 
-## Keywords
-prowler check, security check, aws check, azure check, gcp check, kubernetes check, create check

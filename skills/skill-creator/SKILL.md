@@ -74,9 +74,6 @@ metadata:
 
 - **Templates**: See [assets/](assets/) for {description}
 - **Documentation**: See [references/](references/) for local docs
-
-## Keywords
-{comma-separated keywords for discoverability}
 ```
 
 ---
@@ -135,9 +132,9 @@ Generic skill needs Prowler info?  → Add references/ pointing to Prowler docs
 - Use tables for decision trees
 - Keep code examples minimal and focused
 - Include Commands section with copy-paste commands
-- Add Keywords for discoverability
 
 ### DON'T
+- Add Keywords section (agent searches frontmatter, not body)
 - Duplicate content from existing docs (reference instead)
 - Include lengthy explanations (link to docs)
 - Add troubleshooting sections (keep focused)
@@ -160,16 +157,13 @@ After creating the skill, add it to `AGENTS.md`:
 - [ ] Skill doesn't already exist (check `skills/`)
 - [ ] Pattern is reusable (not one-off)
 - [ ] Name follows conventions
-- [ ] Frontmatter is complete
+- [ ] Frontmatter is complete (description includes trigger keywords)
 - [ ] Critical patterns are clear
 - [ ] Code examples are minimal
 - [ ] Commands section exists
-- [ ] Keywords are relevant
 - [ ] Added to AGENTS.md
 
 ## Resources
 
 - **Templates**: See [assets/](assets/) for SKILL.md template
 
-## Keywords
-skill, agent, ai, claude, instructions, patterns, meta

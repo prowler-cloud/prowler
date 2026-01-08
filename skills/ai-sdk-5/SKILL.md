@@ -232,5 +232,3 @@ const { error, messages, sendMessage } = useChat({
 )}
 ```
 
-## Keywords
-ai sdk, vercel ai, chat, streaming, langchain, openai, llm

@@ -188,5 +188,3 @@ cd ui && pnpm run test:e2e:report                       # Generate report
 
 - **Documentation**: See [references/](references/) for links to local developer guide
 
-## Keywords
-prowler ui test, playwright, e2e, page object model, providers, scans, findings

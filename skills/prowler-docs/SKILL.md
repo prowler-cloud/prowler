@@ -120,5 +120,3 @@ docs/
 
 - **Documentation**: See [references/](references/) for links to local developer guide
 
-## Keywords
-prowler docs, documentation, technical writing, seo, mdx, style guide

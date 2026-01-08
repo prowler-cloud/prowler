@@ -208,5 +208,3 @@ cd ui && pnpm start
 
 - **Documentation**: See [references/](references/) for links to local developer guide
 
-## Keywords
-prowler ui, next.js, react 19, tailwind 4, shadcn, heroui legacy

@@ -322,5 +322,3 @@ npx playwright test tests/login/       # Run specific folder
 For Prowler UI E2E testing with authentication setup, environment variables, and test IDs, see:
 - **Documentation**: [references/prowler-e2e.md](references/prowler-e2e.md)
 
-## Keywords
-playwright, e2e, testing, page object model, selectors, end-to-end, mcp
