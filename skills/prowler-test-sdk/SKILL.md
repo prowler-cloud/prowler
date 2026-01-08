@@ -314,5 +314,10 @@ poetry run pytest tests/providers/{provider}/services/{service}/{check_name}/ -v
 poetry run pytest -x tests/
 ```
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for complete test templates (AWS with moto, Azure/GCP with MagicMock)
+- **Documentation**: See [references/testing-docs.md](references/testing-docs.md) for official Prowler Developer Guide links
+
 ## Keywords
 prowler sdk test, pytest, moto, mock, unit test, check test, aws, azure, gcp, magicmock

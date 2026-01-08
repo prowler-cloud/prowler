@@ -253,5 +253,8 @@ cd api && poetry run pytest --cov=api          # With coverage
 cd api && poetry run pytest -v                 # Verbose
 ```
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for conftest.py, ViewSet tests, and Celery task test templates
 ## Keywords
 prowler api test, pytest, django, drf, json:api, rls, celery, viewset test

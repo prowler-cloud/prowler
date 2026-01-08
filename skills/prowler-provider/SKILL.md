@@ -136,5 +136,10 @@ poetry run python prowler-cli.py {provider} --services {service}
 poetry run python prowler-cli.py {provider} --log-level DEBUG
 ```
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for Provider, Service, and Client singleton templates
+- **Documentation**: See [references/provider-docs.md](references/provider-docs.md) for official Prowler Developer Guide links
+
 ## Keywords
 prowler provider, cloud security, aws, azure, gcp, kubernetes, github, m365, oci, alibabacloud

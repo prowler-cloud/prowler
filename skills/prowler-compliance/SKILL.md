@@ -106,5 +106,10 @@ poetry run python prowler-cli.py {provider} --compliance cis_aws_benchmark_v2 pc
 poetry run python prowler-cli.py {provider} --compliance {framework} -M csv json html
 ```
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for complete CIS framework JSON template
+- **Documentation**: See [references/compliance-docs.md](references/compliance-docs.md) for official Prowler Developer Guide links
+
 ## Keywords
 prowler compliance, cis, nist, pci-dss, soc2, gdpr, hipaa, security frameworks, audit

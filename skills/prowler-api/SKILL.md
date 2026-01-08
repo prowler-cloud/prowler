@@ -94,5 +94,8 @@ cd api && poetry run python src/backend/manage.py runserver
 cd api && poetry run pytest -x --tb=short
 ```
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for ViewSet, Serializer, Celery Task, and Filter templates
 ## Keywords
 prowler api, django, drf, rls, json:api, celery

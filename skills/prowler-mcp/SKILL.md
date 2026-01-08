@@ -210,5 +210,10 @@ uvx /path/to/prowler/mcp_server/                               # Run from anywhe
 - [ ] New tools auto-discovered (BaseTool) or decorated (`@mcp.tool()`)
 - [ ] Parameters use `Field()` with descriptions
 
+## Resources
+
+- **Templates**: See [assets/](assets/) for BaseTool, tool implementation, and model templates
+- **Documentation**: See [references/mcp-docs.md](references/mcp-docs.md) for official Prowler Developer Guide links
+
 ## Keywords
 prowler mcp, fastmcp, ai tools, model context protocol, llm tools
