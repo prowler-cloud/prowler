@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
   "Description": "This check verifies that VM instances are not configured as **preemptible** or **Spot VMs**.\n\nBoth preemptible and Spot VMs can be terminated by Google at any time when resources are needed elsewhere, making them unsuitable for production and business-critical workloads. Spot VMs are the newer version of preemptible VMs and are Google's recommended approach for interruptible workloads.",
   "Risk": "Preemptible and Spot VMs may be **terminated at any time** by Google Cloud, causing:\n\n- **Service disruptions** for production workloads\n- **Data loss** if workloads are not fault-tolerant\n- **Availability issues** for business-critical applications\n\nThey are designed for batch jobs and fault-tolerant workloads only.",
   "RelatedUrl": "",
