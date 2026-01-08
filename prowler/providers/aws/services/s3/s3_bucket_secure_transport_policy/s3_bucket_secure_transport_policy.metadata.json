@@ -12,18 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Amazon S3 buckets** are evaluated for a bucket policy that enforces **secure transport** by denying requests when `aws:SecureTransport` is `false`.\n\nBuckets without this explicit denial, or without a policy, are treated as allowing access over insecure transport.",
   "Risk": "HTTP access exposes object data and auth details to **eavesdropping** and **man-in-the-middle** attacks. Captured **pre-signed URLs** can be replayed to exfiltrate data. Traffic can be intercepted or altered, undermining **confidentiality** and **integrity** of S3 content.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://medium.com/@leocherian/protect-s3-objects-with-s3-bucket-policy-5579a6b07b54",
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_15-secure-data-transport#aws-console",
-    "https://stackoverflow.com/questions/21087474/force-ssl-on-amazon-s3",
-    "https://programming.am/advanced-s3-bucket-policy-management-for-large-enterprises-76da25c928e7",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/secure-transport.html",
-    "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/",
-    "https://repost.aws/knowledge-center/s3-bucket-policy-for-config-rule",
-    "https://kloudle.com/academy/how-to-enforce-ssl-tls-for-s3-requests-in-aws/"
+    "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
   ],
   "Remediation": {
     "Code": {

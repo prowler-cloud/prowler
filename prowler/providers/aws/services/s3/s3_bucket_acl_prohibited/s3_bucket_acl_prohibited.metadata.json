@@ -12,17 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Amazon S3 buckets** are evaluated for **Object Ownership** set to `BucketOwnerEnforced`, which disables bucket and object ACLs. Buckets using any other ownership setting indicate that ACLs remain enabled.",
   "Risk": "With **ACLs enabled**, access can bypass centralized policy controls, impacting confidentiality and integrity.\n- Unintended public or cross-account reads/writes\n- Object-writer ownership blocking bucket-owner governance\n- Per-object grants hinder auditing, enabling data exfiltration or tampering",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/knowledge-center/s3-bucket-owner-access",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html",
-    "https://medium.com/@mayamoraiss/s3-acl-disable-guide-81b7f834d42f",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ensure-object-ownership.html",
-    "https://docs.cubbit.io/guides/ownership-controls",
-    "https://www.puppeteers.net/blog/how-to-disable-s3-bucket-acls/",
-    "https://stackoverflow.com/questions/74514270/how-to-disable-s3-bucket-acl-using-terraform-scripts"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ensure-object-ownership.html"
   ],
   "Remediation": {
     "Code": {

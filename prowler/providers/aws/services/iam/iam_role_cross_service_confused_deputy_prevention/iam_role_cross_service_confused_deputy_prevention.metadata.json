@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "Ensure IAM Service Roles prevents against a cross-service confused deputy attack",
   "Risk": "Allow attackers to gain unauthorized access to resources",
   "RelatedUrl": "",

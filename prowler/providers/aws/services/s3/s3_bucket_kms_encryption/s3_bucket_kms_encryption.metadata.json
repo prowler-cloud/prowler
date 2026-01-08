@@ -13,18 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** use server-side encryption with **AWS KMS** keys, including dual-layer `aws:kms:dsse`. The evaluation identifies buckets whose default encryption is `aws:kms` or `aws:kms:dsse` rather than SSE-S3.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** use server-side encryption with **AWS KMS** keys, including dual-layer `aws:kms:dsse`. The evaluation identifies buckets whose default encryption is `aws:kms` or `aws:kms:dsse` rather than SSE-S3.",
   "Risk": "Without **KMS-based encryption**, data relies only on SSE-S3, reducing **confidentiality** controls. Missing key policies and grants weakens **least privilege**, cross-account scoping, and the ability to disable or rotate keys. Lack of **KMS audit trails** obscures key usage, hindering detection of misuse and **defense in depth**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/securing-your-data-amazon-s3-encryption-hands-on-guide-naim-hossen-8g51c",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html",
-    "https://issackpaul95.medium.com/aws-hands-on-s3-security-s3-encryption-339dfd52f12a",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
-    "https://www.deploymastery.com/2023/06/22/introducing-s3-dsse-kms-dual-layer-server-side-encryption/",
-    "https://storage.googleapis.com/pulumi-kotlin-docs/aws-native/0.121.0.0/pulumi-aws-native-kotlin/com.pulumi.awsnative.s3.kotlin.inputs/-bucket-encryption-args/index.html",
-    "https://runebook.dev/en/aws/s3/EncryptionConfiguration",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html"
   ],
   "Remediation": {

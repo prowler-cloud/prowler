@@ -14,11 +14,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 bucket policies** are evaluated for **public write permissions** (e.g., `s3:PutObject`, `s3:Delete*`, or `s3:*`). Account or bucket **Public Access Block** that restricts public buckets is considered when determining exposure.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 bucket policies** are evaluated for **public write permissions** (e.g., `s3:PutObject`, `s3:Delete*`, or `s3:*`). Account or bucket **Public Access Block** that restricts public buckets is considered when determining exposure.",
   "Risk": "Public write access lets anyone upload, overwrite, or delete objects, undermining **integrity** and **availability**. Attackers can plant malware, stage phishing content, poison data, or wipe buckets, causing outages and potential legal and cost impacts from storage abuse and content hosting.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_18-write-permissions-public#aws-console",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html"
   ],
   "Remediation": {

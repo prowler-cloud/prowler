@@ -13,15 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
-  "Description": "Amazon S3 buckets are evaluated for **public listing via ACLs**. Grants of `READ`, `READ_ACP`, or `FULL_CONTROL` to the `AllUsers` or `AuthenticatedUsers` groups are identified. Effective **Block Public Access** at account or bucket level (notably `IgnorePublicAcls` and `RestrictPublicBuckets`) is considered in the evaluation.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated for **public listing via ACLs**. Grants of `READ`, `READ_ACP`, or `FULL_CONTROL` to the `AllUsers` or `AuthenticatedUsers` groups are identified. Effective **Block Public Access** at account or bucket level (notably `IgnorePublicAcls` and `RestrictPublicBuckets`) is considered in the evaluation.",
   "Risk": "**Public listability** reveals object names, counts, and structure, enabling reconnaissance and targeted scraping. `READ_ACP` exposes permission details for further abuse. With `FULL_CONTROL`, attackers could alter ACLs and disrupt access, undermining **confidentiality** and risking **integrity** and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-read-access.html",
-    "https://community.spiceworks.com/t/securing-your-amazon-s3-buckets/950925",
-    "https://mike.bailey.net.au/blog/2019/03/05/why-you-should-enable-s3-block-public-access/",
-    "https://stackoverflow.com/questions/50303097/deny-amazon-s3-buckets-and-objects-from-being-public"
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-read-access.html"
   ],
   "Remediation": {
     "Code": {

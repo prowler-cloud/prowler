@@ -14,17 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Amazon S3 buckets** are assessed for ACL grants that allow **public write** access to `AllUsers` or `AuthenticatedUsers` via `WRITE`, `WRITE_ACP`, or `FULL_CONTROL`. Effective **Block Public Access** at account or bucket level (`ignore_public_acls`, `restrict_public_buckets`) is considered.",
   "Risk": "Public or cross-account writes enable object tampering, **log poisoning**, and ACL changes via `WRITE_ACP`, undermining **integrity** and causing covert **data exposure**. Attackers can plant malware, deface content, and inflate **costs**, impacting **availability** through overwrites or prefix flooding.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://www.csoonline.com/article/570817/aws-access-control-confusion-enables-cross-account-attacks.html",
-    "https://stackoverflow.com/questions/76097031/aws-s3-bucket-cannot-have-acls-set-with-objectownerships-bucketownerenforced-s",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html",
-    "https://repost.aws/zh-Hant/knowledge-center/s3-block-public-access-setting?sc_ichannel=ha&sc_ilang=en&sc_isite=repost&sc_iplace=hp&sc_icontent=AAZcoQernoRS2s0ZmaFOzbew&sc_ipos=11",
-    "https://community.spiceworks.com/t/securing-your-amazon-s3-buckets/950925",
-    "https://mike.bailey.net.au/blog/2019/03/05/why-you-should-enable-s3-block-public-access/"
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
   ],
   "Remediation": {
     "Code": {
@@ -39,8 +35,7 @@
     }
   },
   "Categories": [
-    "internet-exposed",
-    "identity-access"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

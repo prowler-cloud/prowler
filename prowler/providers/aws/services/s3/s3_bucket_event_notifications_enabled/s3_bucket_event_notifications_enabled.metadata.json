@@ -11,16 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** define a **notification configuration** that publishes bucket events (for example `s3:ObjectCreated:*`, `s3:ObjectRemoved:*`) to a destination. The evaluation identifies buckets that lack any notification setup.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** define a **notification configuration** that publishes bucket events (for example `s3:ObjectCreated:*`, `s3:ObjectRemoved:*`) to a destination. The evaluation identifies buckets that lack any notification setup.",
   "Risk": "Missing notifications leaves object and bucket changes **unseen**, weakening **integrity** and **availability** oversight. Undetected deletions, policy drift, or replication issues can stall data pipelines (S3 to Lambda/SQS), slow incident response, and allow tampering or exfiltration to persist longer.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-11",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-event-notifications.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html",
-    "https://docs.aws.amazon.com/cli/latest/reference/s3api/put-bucket-notification-configuration.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types",
-    "https://www.tech-reader.blog/2025/10/s3-event-notification-system-trigger.html"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html"
   ],
   "Remediation": {
     "Code": {

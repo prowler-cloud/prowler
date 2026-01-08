@@ -13,17 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** are assessed for **MFA Delete** status. MFA Delete requires a second factor to permanently delete object versions or change `Versioning` configuration. The finding highlights buckets where this protection is not enabled.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are assessed for **MFA Delete** status. MFA Delete requires a second factor to permanently delete object versions or change `Versioning` configuration. The finding highlights buckets where this protection is not enabled.",
   "Risk": "Without **MFA Delete**, a compromised or over-privileged identity can irrevocably purge object history or change versioning.\n\nThis erases recovery points, degrading data **availability**, weakening **integrity**, and increasing the blast radius of account compromise or ransomware.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_24#terraform",
-    "https://repost.aws/knowledge-center/s3-bucket-mfa-delete",
-    "https://www.geeksforgeeks.org/devops/configuring-mfa-delete-on-s3-buckets/",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html",
-    "https://github.com/a2f0/aws-s3-mfa-delete",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMFADelete.html",
-    "https://zenesys.medium.com/how-to-enable-mfa-delete-for-s3-bucket-83a83aac21ac?source=post_internal_links---------0----------------------------"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMFADelete.html"
   ],
   "Remediation": {
     "Code": {

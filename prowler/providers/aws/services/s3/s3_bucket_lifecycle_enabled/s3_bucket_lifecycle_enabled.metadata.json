@@ -11,16 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Amazon S3 buckets** use **Lifecycle configurations** with at least one rule `Status: Enabled` to automate object `Transitions` and `Expiration` based on age, prefix, or tags",
   "Risk": "Without lifecycle rules, objects persist indefinitely, driving costs and retaining sensitive data beyond policy. Unchecked log/version growth strains operations and recovery. Long-lived data increases exposure if the account is compromised and can break required deletion timelines, affecting confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
-    "https://www.elastic.co/guide/en/security/8.19/aws-s3-bucket-expiration-lifecycle-configuration-added.html",
-    "https://stackoverflow.com/questions/66357302/s3-bucket-lifecycle-configuration-with-boto3-lambda-function-and-getting-malform",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html",
-    "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-001-s3-bucket-fundamentals-from-default-settings-to-practical-1hmd",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
   ],
   "Remediation": {

@@ -11,9 +11,10 @@
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "AwsS3AccessPoint",
-  "Description": "**S3 access points** have **Block Public Access** configured with all settings enabled: `block_public_acls`, `ignore_public_acls`, `block_public_policy`, and `restrict_public_buckets`.\n\nThe evaluation inspects each access point's public access block configuration.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 access points** have **Block Public Access** configured with all settings enabled: `block_public_acls`, `ignore_public_acls`, `block_public_policy`, and `restrict_public_buckets`.\n\nThe evaluation inspects each access point's public access block configuration.",
   "Risk": "Without block public access on an access point, ACLs or policies can expose objects publicly despite intended restrictions. This enables unauthorized reads (**confidentiality** loss), writes or deletions (**integrity/availability** impact), and supports bulk data exfiltration or destructive actions.",
   "RelatedUrl": "",
   "AdditionalURLs": [

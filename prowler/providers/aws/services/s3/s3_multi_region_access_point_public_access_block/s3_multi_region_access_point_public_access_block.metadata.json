@@ -12,7 +12,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3AccessPoint",
-  "Description": "**S3 Multi-Region Access Points** are evaluated for **Block Public Access** being fully enabled (`block_public_acls`, `ignore_public_acls`, `block_public_policy`, `restrict_public_buckets`).\n\nFocus is on the MRAP's own settings, separate from bucket or account configurations.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 Multi-Region Access Points** are evaluated for **Block Public Access** being fully enabled (`block_public_acls`, `ignore_public_acls`, `block_public_policy`, `restrict_public_buckets`).\n\nFocus is on the MRAP's own settings, separate from bucket or account configurations.",
   "Risk": "Without MRAP **Block Public Access**, the global endpoint can accept internet traffic, exposing linked buckets.\n\nThis undermines confidentiality (object listing/reads) and integrity (unauthorized writes or policy abuse), and can trigger costly egress and data tampering across Regions.",
   "RelatedUrl": "",
   "AdditionalURLs": [

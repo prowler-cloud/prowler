@@ -13,19 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** are evaluated for **Block Public Access** settings, ensuring `ignore_public_acls` and `restrict_public_buckets` are enabled at the bucket or account scope.\n\n*Account-wide protections, when present, are treated as effective for the bucket.*",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated for **Block Public Access** settings, ensuring `ignore_public_acls` and `restrict_public_buckets` are enabled at the bucket or account scope.\n\n*Account-wide protections, when present, are treated as effective for the bucket.*",
   "Risk": "Absent **S3 Block Public Access**, public ACLs or broad policies can grant Internet or cross-account access.\n- Data disclosure (confidentiality)\n- Object overwrite or uploads (integrity)\n- Deletion or outages from misuse (availability)",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/bucket-public-access-block.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-    "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform",
-    "https://cloudquery-cuk3uk38m-cloudquery.vercel.app/blog/finding-enabled-s3-acls-and-disabled-s3-block-public-access",
-    "https://shisho.dev/dojo/providers/aws/Amazon_S3/aws-s3-bucket-public-access-block/",
-    "https://stackoverflow.com/questions/76972568/problems-creating-an-s3-bucket-with-terraform",
-    "https://practicaldev-herokuapp-com.global.ssl.fastly.net/aws-builders/how-to-implement-aws-ssb-controls-in-terraform-part-2-359k",
-    "https://medium.com/@kendine_muhendis/creating-an-s3-bucket-and-managing-secure-access-with-ip-restrictions-5f5b7f8a9b33"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
   ],
   "Remediation": {
     "Code": {

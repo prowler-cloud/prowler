@@ -13,14 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 bucket policies** are analyzed for statements that grant **cross-account access**.\n\nAny policy that names principals outside the owning account (other account IDs or `Principal: \"*\"`) is treated as cross-account; absence of a policy implies no cross-account grants.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 bucket policies** are analyzed for statements that grant **cross-account access**.\n\nAny policy that names principals outside the owning account (other account IDs or `Principal: \"*\"`) is treated as cross-account; absence of a policy implies no cross-account grants.",
   "Risk": "Cross-account grants can let external principals read, write, or administer the bucket, impacting:\n- Confidentiality: unauthorized object access/exfiltration\n- Integrity: object tampering, policy or encryption changes\n- Availability: deletions, versioning changes, or lockouts causing data loss and downtime",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://www.linkedin.com/learning/aws-essential-training-for-administrators-30216085/configure-an-s3-bucket",
-    "https://aws.plainenglish.io/easy-aws-access-security-a-practical-guide-to-iam-683599087e56"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
   ],
   "Remediation": {
     "Code": {

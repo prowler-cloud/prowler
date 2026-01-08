@@ -12,18 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** are evaluated for **server access logging** configured to record access requests and deliver logs to a designated destination bucket.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated for **server access logging** configured to record access requests and deliver logs to a designated destination bucket.",
   "Risk": "Without access logs, object reads, writes, and deletions may go untracked, hindering detection of unauthorized access and data exfiltration. This degrades forensic visibility, delays incident response, and weakens evidence integrity, impacting confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging",
-    "https://github.com/awslabs/aws-config-rules/blob/master/aws-config-conformance-packs/Operational-Best-Practices-for-Amazon-S3-with-Remediation.yaml",
     "https://docs.amazonaws.cn/en_us/config/latest/developerguide/s3-bucket-logging-enabled.html",
-    "https://repost.aws/knowledge-center/config-s3-bucket-logging-enabled",
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#terraform",
-    "https://runebook.dev/en/aws/s3/GetBucketLogging",
-    "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html",
-    "https://www.examtopics.com/discussions/amazon/view/150477-exam-aws-certified-sysops-administrator-associate-topic-1/"
+    "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
   ],
   "Remediation": {
     "Code": {

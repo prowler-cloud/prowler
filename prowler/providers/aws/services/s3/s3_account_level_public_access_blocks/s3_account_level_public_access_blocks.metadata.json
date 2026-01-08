@@ -13,15 +13,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3AccountPublicAccessBlock",
+  "ResourceGroup": "storage",
   "Description": "**Amazon S3** account-level **Block Public Access** is assessed for `ignore_public_acls` and `restrict_public_buckets` to confirm centralized blocking of ACL-based public access and limiting buckets with public policies to in-account principals.",
   "Risk": "Absent these settings, **public ACLs** and broad bucket policies may grant internet or cross-account access. This risks:\n- Confidentiality: bulk data exfiltration\n- Integrity: object overwrite/tampering\n- Availability: malicious deletions or malware hosting, triggering takedowns",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.edureka.co/community/55893/access-denied-error-when-trying-to-access-domain",
-    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3control/block-public-access",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_21#terraform",
-    "https://javascript.tutorialink.com/upload-to-aws-s3-got-403-forbidden-solved-by-remove-acl-in-param/"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
   ],
   "Remediation": {
     "Code": {

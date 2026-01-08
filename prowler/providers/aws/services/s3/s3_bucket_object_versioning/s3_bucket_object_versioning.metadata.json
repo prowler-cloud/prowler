@@ -13,15 +13,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** are evaluated for **object versioning** being `Enabled`, which maintains multiple versions of the same object key for historical state retention",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated for **object versioning** being `Enabled`, which maintains multiple versions of the same object key for historical state retention",
   "Risk": "Without **versioning**, deletions and overwrites remove the only copy, undermining **availability** and **integrity**.\n- Compromised identities or buggy apps can mass-delete/corrupt data\n- No historical versions means limited rollback and irrecoverable loss",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html",
-    "https://www.wiz.io/academy/cloud-security/amazon-s3-security-best-practices",
-    "https://github.com/predictr-io/aws-s3-create-bucket",
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#aws-console",
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_16-enable-versioning#terraform"
+    "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
   ],
   "Remediation": {
     "Code": {

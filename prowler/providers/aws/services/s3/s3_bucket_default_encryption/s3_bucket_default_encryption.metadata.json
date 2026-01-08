@@ -13,18 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** have a default **server-side encryption** setting that automatically encrypts new objects using `SSE-S3` or `SSE-KMS`. This evaluates whether a bucket has a default encryption configuration defined.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** have a default **server-side encryption** setting that automatically encrypts new objects using `SSE-S3` or `SSE-KMS`. This evaluates whether a bucket has a default encryption configuration defined.",
   "Risk": "Without default encryption, older objects may remain unencrypted and new uploads won't be forced to use `SSE-KMS`. This reduces confidentiality and governance by limiting key audit logs, rotation, and cross-account controls, and increases exposure if data is copied, replicated, or accessed outside intended paths.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.geekcafe.com/blog/2023/03/securing-s3-buckets-a-developers-checklist",
     "https://docs.amazonaws.cn/en_us/AmazonS3/latest/userguide/bucket-encryption.html",
     "https://aws.amazon.com/blogs/security/how-to-prevent-uploads-of-unencrypted-objects-to-amazon-s3/",
-    "https://docs.prowler.com/checks/aws/s3-policies/s3_14-data-encrypted-at-rest#terraform",
-    "https://docs.aws.amazon.com/us_en/AmazonS3/latest/userguide/default-encryption-faq.html",
-    "https://jayendrapatil.com/aws-s3-encryption/",
-    "https://www.iriusrisk.com/resources-blog/secure-by-design-aws-s3-buckets",
-    "https://runebook.dev/en/aws/s3/ServerSideEncryptionConfiguration"
+    "https://docs.aws.amazon.com/us_en/AmazonS3/latest/userguide/default-encryption-faq.html"
   ],
   "Remediation": {
     "Code": {

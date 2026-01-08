@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Settings",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure users can not send emails to channel email addresses.",
   "Risk": "Allowing users to send emails to Teams channel email addresses introduces a security risk, as these addresses are outside the tenant’s domain and lack proper security controls. This creates a potential attack vector where threat actors could exploit the channel email to deliver malicious content or spam.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps",

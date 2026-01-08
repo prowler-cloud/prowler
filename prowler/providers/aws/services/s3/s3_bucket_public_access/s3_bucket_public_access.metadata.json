@@ -13,19 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**S3 buckets** are evaluated for **public access** via ACLs and bucket policies. The check identifies account or bucket `PublicAccessBlock` protections (`IgnorePublicAcls`, `RestrictPublicBuckets`) and flags buckets granting group access to `AllUsers` or `AuthenticatedUsers`, or with a public bucket policy.",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated for **public access** via ACLs and bucket policies. The check identifies account or bucket `PublicAccessBlock` protections (`IgnorePublicAcls`, `RestrictPublicBuckets`) and flags buckets granting group access to `AllUsers` or `AuthenticatedUsers`, or with a public bucket policy.",
   "Risk": "Publicly accessible buckets jeopardize **confidentiality** through unauthenticated reads, **integrity** through write or ACL changes, and **availability** via object deletion or overwrite. Attackers can mass-exfiltrate data, host malware, or pivot after discovering secrets stored in objects.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/public-s3-buckets-digital-postcards-norman-argueta-y3w4e",
     "https://docs.aws.amazon.com/id_id/kitchensink/latest/testguide/access-control-block-public-access.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-    "https://mahira-technology.medium.com/securing-your-aws-s3-buckets-enforcing-block-public-access-with-terragrunt-automation-and-4f4490f2703b",
-    "https://www.cy5.io/blog/aws-s3-bucket-security-audit/",
-    "https://docs.prowler.com/checks/aws/networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform",
-    "https://community.spiceworks.com/t/securing-your-amazon-s3-buckets/950925",
-    "https://mike.bailey.net.au/blog/2019/03/05/why-you-should-enable-s3-block-public-access/"
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
   ],
   "Remediation": {
     "Code": {
