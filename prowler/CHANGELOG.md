@@ -42,6 +42,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### Fixed
+- Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
+
+---
+
 ## [5.16.1] (Prowler v5.16.1)
 
 ### Fixed
