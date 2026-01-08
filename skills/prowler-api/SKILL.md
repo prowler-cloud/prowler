@@ -19,7 +19,7 @@ metadata:
 ### Critical Pattern
 
 ```python
-from api.rls import rls_transaction
+from api.db_utils import rls_transaction
 
 # ALWAYS use rls_transaction for tenant-scoped queries
 with rls_transaction(tenant_id):
@@ -57,7 +57,7 @@ class ResourceViewSet(BaseRLSViewSet):
 
 ```python
 from celery import shared_task
-from api.rls import RLSTask
+from config.celery import RLSTask
 
 @shared_task(name="process-resource", queue="scans", bind=True, base=RLSTask)
 def process_resource_task(self, tenant_id: str, resource_id: str):

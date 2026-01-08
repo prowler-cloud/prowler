@@ -144,40 +144,31 @@ class TestProviderViewSet:
 
 ## Fixtures (conftest.py)
 
+> **Note:** The main `conftest.py` is at `api/src/backend/conftest.py` (not inside tests/).
+
+Key fixtures available:
+
 ```python
-import pytest
-from api.models import Provider, Tenant
+# Authentication fixtures
+authenticated_client           # Client with JWT auth (most common)
+authenticated_api_client       # APIClient with JWT auth
+authenticated_client_rbac      # Client with RBAC roles
 
-@pytest.fixture
-def tenant_fixture():
-    return Tenant.objects.create(name="test-tenant")
+# Data fixtures
+tenants_fixture               # Returns (tenant1, tenant2, tenant3)
+providers_fixture             # Returns tuple of providers (aws, gcp, k8s, azure, etc.)
+scans_fixture                 # Returns (scan1, scan2, scan3)
+resources_fixture             # Returns (resource1, resource2, resource3)
+findings_fixture              # Returns (finding1, finding2)
+roles_fixture                 # Returns (role1, role2, role3, role4)
+integrations_fixture          # Returns (integration1, integration2)
 
-@pytest.fixture
-def other_tenant_fixture():
-    return Tenant.objects.create(name="other-tenant")
-
-@pytest.fixture
-def provider_fixture(tenant_fixture):
-    return Provider.objects.create(
-        tenant_id=tenant_fixture.id,
-        provider_type=Provider.ProviderChoices.AWS,
-        uid="123456789012",
-        alias="test-aws",
-    )
-
-@pytest.fixture
-def other_tenant_provider(other_tenant_fixture):
-    return Provider.objects.create(
-        tenant_id=other_tenant_fixture.id,
-        provider_type=Provider.ProviderChoices.AWS,
-        uid="999999999999",
-        alias="other-aws",
-    )
-
-@pytest.fixture
-def authenticated_client(client, tenant_fixture, user_fixture):
-    client.force_authenticate(user=user_fixture)
-    return client
+# Example usage
+@pytest.mark.django_db
+class TestProviderViewSet:
+    def test_list_success(self, authenticated_client, providers_fixture):
+        response = authenticated_client.get(reverse("provider-list"))
+        assert response.status_code == status.HTTP_200_OK
 ```
 
 ---
@@ -220,15 +211,34 @@ class TestProcessScanTask:
 ```
 api/src/backend/api/tests/
 ├── conftest.py                # Shared fixtures
-├── test_providers.py          # Provider ViewSet tests
-├── test_scans.py              # Scan ViewSet tests
-├── test_findings.py           # Finding ViewSet tests
-└── test_serializers.py        # Serializer tests
+├── integration/               # Integration tests
+├── test_adapters.py           # Adapter tests
+├── test_apps.py               # App config tests
+├── test_authentication.py     # Auth tests
+├── test_compliance.py         # Compliance tests
+├── test_db_utils.py           # Database utilities tests
+├── test_decorators.py         # Decorator tests
+├── test_mixins.py             # Mixin tests
+├── test_models.py             # Model tests
+├── test_rbac.py               # RBAC tests
+├── test_serializers.py        # Serializer tests
+└── test_views.py              # ALL ViewSet tests (providers, scans, findings, resources, etc.)
 
 api/src/backend/tasks/tests/
 ├── conftest.py                # Task fixtures
-└── test_scan_tasks.py         # Celery task tests
+├── test_backfill.py           # Backfill task tests
+├── test_connection.py         # Connection tests
+├── test_deletion.py           # Deletion task tests
+├── test_export.py             # Export task tests
+├── test_integrations.py       # Integration task tests
+├── test_muting.py             # Muting task tests
+├── test_report.py             # Report task tests
+├── test_scan.py               # Scan task tests
+├── test_tasks.py              # General task tests
+└── test_utils.py              # Task utility tests
 ```
+
+> **Note:** All ViewSet tests are centralized in `test_views.py`. When adding new ViewSet tests, add them to this file following the existing patterns.
 
 ---
 
