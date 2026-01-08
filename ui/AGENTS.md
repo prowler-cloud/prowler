@@ -40,7 +40,7 @@
 
 ### Scope Rule (ABSOLUTE)
 
-- Used 2+ places → `components/shared/` or `lib/` or `types/`
+- Used 2+ places → `lib/` or `types/` or `hooks/` (components go in `components/{domain}/`)
 - Used 1 place → keep local in feature directory
 - This determines ALL folder structure decisions
 
@@ -52,7 +52,7 @@
 
 ```
 New/Existing UI? → shadcn/ui + Tailwind (NEVER HeroUI for new code)
-Used 1 feature? → features/{feature}/components | Used 2+? → components/shared
+Used 1 feature? → features/{feature}/components | Used 2+? → components/{domain}/
 Needs state/hooks? → "use client" | Server component? → No directive
 ```
 
@@ -141,8 +141,8 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 
 ## TECH STACK
 
-Next.js 15.5.3 | React 19.1.1 | Tailwind 4.1.13 | shadcn/ui
-Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.29 | Recharts 2.15.4
+Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
+Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 
 > **Note**: HeroUI exists in `components/ui/` as legacy code. Do NOT add new components there.
 

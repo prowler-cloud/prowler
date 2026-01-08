@@ -23,9 +23,9 @@ metadata:
 ## Tech Stack (Versions)
 
 ```
-Next.js 15.5.3 | React 19.1.1 | Tailwind 4.1.13 | shadcn/ui
+Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
-NextAuth 5.0.0-beta.29 | Recharts 2.15.4
+NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 HeroUI 2.8.4 (LEGACY - do not add new components)
 ```
 
@@ -74,7 +74,7 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ### Scope Rule (ABSOLUTE)
 
-- Used 2+ places → `components/shared/` or `lib/` or `types/` or `hooks/`
+- Used 2+ places → `lib/` or `types/` or `hooks/` (components go in `components/{domain}/`)
 - Used 1 place → keep local in feature directory
 - **This determines ALL folder structure decisions**
 
@@ -94,8 +94,10 @@ ui/
 ├── components/
 │   ├── shadcn/              # shadcn/ui (USE THIS)
 │   ├── ui/                  # HeroUI (LEGACY)
-│   ├── shared/              # Shared across features
-│   └── {domain}/            # Domain-specific
+│   ├── {domain}/            # Domain-specific (compliance, findings, providers, etc.)
+│   ├── filters/             # Filter components
+│   ├── graphs/              # Chart components
+│   └── icons/               # Icon components
 ├── actions/                 # Server actions
 ├── types/                   # Shared types
 ├── hooks/                   # Shared hooks

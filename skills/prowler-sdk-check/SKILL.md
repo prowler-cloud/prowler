@@ -40,12 +40,12 @@ touch prowler/providers/{provider}/services/{service}/{check_name}/{check_name}.
 ### 3. Implement Check Logic
 
 ```python
-from prowler.lib.check.models import Check, CheckReport{Provider}
+from prowler.lib.check.models import Check, Check_Report_{Provider}
 from prowler.providers.{provider}.services.{service}.{service}_client import {service}_client
 
 class {check_name}(Check):
     """Ensure that {resource} meets {security_requirement}."""
-    def execute(self) -> list[CheckReport{Provider}]:
+    def execute(self) -> list[Check_Report_{Provider}]:
         """Execute the check logic.
 
         Returns:
@@ -53,7 +53,7 @@ class {check_name}(Check):
         """
         findings = []
         for resource in {service}_client.{resources}:
-            report = CheckReport{Provider}(metadata=self.metadata(), resource=resource)
+            report = Check_Report_{Provider}(metadata=self.metadata(), resource=resource)
             report.status = "PASS" if resource.is_compliant else "FAIL"
             report.status_extended = f"Resource {resource.name} compliance status."
             findings.append(report)
@@ -184,11 +184,14 @@ Examples:
 ### AWS Check with Regional Resources
 
 ```python
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.s3.s3_client import s3_client
+
 class s3_bucket_encryption_enabled(Check):
-    def execute(self) -> list[CheckReportAWS]:
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
         for bucket in s3_client.buckets.values():
-            report = CheckReportAWS(metadata=self.metadata(), resource=bucket)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if bucket.encryption:
                 report.status = "PASS"
                 report.status_extended = f"S3 bucket {bucket.name} has encryption enabled."
@@ -202,11 +205,14 @@ class s3_bucket_encryption_enabled(Check):
 ### Check with Multiple Conditions
 
 ```python
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+
 class ec2_instance_hardened(Check):
-    def execute(self) -> list[CheckReportAWS]:
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
         for instance in ec2_client.instances:
-            report = CheckReportAWS(metadata=self.metadata(), resource=instance)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
 
             issues = []
             if instance.public_ip:

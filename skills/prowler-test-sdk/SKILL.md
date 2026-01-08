@@ -12,95 +12,137 @@ metadata:
 > **Generic Patterns**: For base pytest patterns (fixtures, mocking, parametrize, markers), see the `pytest` skill.
 > This skill covers **Prowler-specific** conventions only.
 
-## Check Test Pattern
+## Check Test Pattern (AWS)
 
 ```python
-import pytest
-from unittest.mock import patch, MagicMock
-from prowler.providers.{provider}.services.{service}.{check_name}.{check_name} import {check_name}
+from unittest import mock
+from boto3 import client
+from moto import mock_aws
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
-class Test{CheckName}:
-    @pytest.fixture
-    def mock_{service}_client(self):
-        with patch(
-            "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}.{service}_client"
-        ) as mock:
-            mock.{resources} = [
-                MagicMock(
-                    id="resource-1",
-                    name="compliant-resource",
-                    region="us-east-1",
-                    is_compliant=True,
+
+class Test_{check_name}:
+    @mock_aws
+    def test_no_resources(self):
+        from prowler.providers.aws.services.{service}.{service}_service import {ServiceClass}
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={ServiceClass}(aws_provider),
+            ):
+                from prowler.providers.aws.services.{service}.{check_name}.{check_name} import (
+                    {check_name},
                 )
-            ]
-            yield mock
 
-    def test_{check_name}_pass(self, mock_{service}_client):
-        check = {check_name}()
-        results = check.execute()
+                check = {check_name}()
+                result = check.execute()
 
-        assert len(results) == 1
-        assert results[0].status == "PASS"
-        assert "compliant" in results[0].status_extended.lower()
+                assert len(result) == 0
 
-    def test_{check_name}_fail(self, mock_{service}_client):
-        mock_{service}_client.{resources}[0].is_compliant = False
+    @mock_aws
+    def test_{check_name}_pass(self):
+        # Setup AWS resources with moto
+        {service}_client = client("{service}", region_name=AWS_REGION_US_EAST_1)
+        # Create compliant resource...
 
-        check = {check_name}()
-        results = check.execute()
+        from prowler.providers.aws.services.{service}.{service}_service import {ServiceClass}
 
-        assert len(results) == 1
-        assert results[0].status == "FAIL"
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-    def test_{check_name}_no_resources(self, mock_{service}_client):
-        mock_{service}_client.{resources} = []
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={ServiceClass}(aws_provider),
+            ):
+                from prowler.providers.aws.services.{service}.{check_name}.{check_name} import (
+                    {check_name},
+                )
 
-        check = {check_name}()
-        results = check.execute()
+                check = {check_name}()
+                result = check.execute()
 
-        assert len(results) == 0
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_{check_name}_fail(self):
+        # Setup AWS resources with moto
+        {service}_client = client("{service}", region_name=AWS_REGION_US_EAST_1)
+        # Create non-compliant resource...
+
+        from prowler.providers.aws.services.{service}.{service}_service import {ServiceClass}
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.{service}.{check_name}.{check_name}.{service}_client",
+                new={ServiceClass}(aws_provider),
+            ):
+                from prowler.providers.aws.services.{service}.{check_name}.{check_name} import (
+                    {check_name},
+                )
+
+                check = {check_name}()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
 ```
+
+> **Critical**: Always import the check INSIDE the mock.patch context to ensure proper client mocking.
 
 ---
 
 ## Mocking AWS with moto
 
-**CRITICAL: Use `@mock_aws` for AWS service tests.**
+**CRITICAL: Use `@mock_aws` for AWS service tests + `set_mocked_aws_provider`.**
 
 ```python
-import boto3
+from unittest import mock
+from boto3 import client
 from moto import mock_aws
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
-@mock_aws
-def test_aws_resource():
-    # Setup mock AWS environment
-    client = boto3.client("ec2", region_name="us-east-1")
-    client.create_vpc(CidrBlock="10.0.0.0/16")
 
-    # The service will use the mocked AWS
-    service = EC2Service(provider)
-    assert len(service.vpcs) == 1
+class TestS3Service:
+    @mock_aws
+    def test_fetch_buckets(self):
+        # Setup mock AWS resources
+        s3 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        s3.create_bucket(Bucket="test-bucket")
+
+        # Create mocked provider
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        # Import service AFTER moto decorator is active
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        service = S3(aws_provider)
+        assert len(service.buckets) == 1
 ```
 
-### Common moto Patterns
+### Key Utilities from `tests/providers/aws/utils.py`
 
 ```python
-@mock_aws
-class TestEC2Service:
-    def test_fetch_instances(self):
-        ec2 = boto3.client("ec2", region_name="us-east-1")
-        ec2.run_instances(ImageId="ami-12345", MinCount=1, MaxCount=1)
-
-        service = EC2Service(provider)
-        assert len(service.instances) == 1
-
-    def test_fetch_security_groups(self):
-        ec2 = boto3.client("ec2", region_name="us-east-1")
-        ec2.create_security_group(GroupName="test-sg", Description="Test")
-
-        service = EC2Service(provider)
-        # Default SG + created SG
-        assert len(service.security_groups) >= 1
+from tests.providers.aws.utils import (
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_EU_WEST_1,
+    AWS_ACCOUNT_NUMBER,
+    set_mocked_aws_provider,
+)
 ```
 
 ---

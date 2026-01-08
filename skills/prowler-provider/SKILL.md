@@ -110,9 +110,11 @@ Current providers:
 - Kubernetes
 - GitHub
 - M365 (Microsoft 365)
-- OCI (Oracle Cloud Infrastructure)
+- OracleCloud (Oracle Cloud Infrastructure)
 - AlibabaCloud
 - MongoDB Atlas
+- NHN (NHN Cloud)
+- LLM (Language Model providers)
 - IaC (Infrastructure as Code)
 
 ## Commands
