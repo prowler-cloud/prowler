@@ -91,7 +91,9 @@ const AttackPathGraphComponent = forwardRef<
     selectedNodeIdRef.current = selectedNodeId ?? null;
   }, [selectedNodeId]);
 
-  // Helper function to find all edges in the path from a given node
+  // Helper function to find edges in the path from a given node
+  // Upstream: follows only ONE parent path (first parent at each level) to avoid lighting up siblings
+  // Downstream: follows ALL children recursively
   const getPathEdges = (
     nodeId: string,
     edges: Array<{ sourceId: string; targetId: string }>,
@@ -99,20 +101,21 @@ const AttackPathGraphComponent = forwardRef<
     const pathEdgeIds = new Set<string>();
     const visitedNodes = new Set<string>();
 
-    // Traverse upstream (find all sources leading to this node)
+    // Traverse upstream - only follow ONE parent at each level (first found)
+    // This creates a single path to the root, not all paths
     const traverseUpstream = (currentNodeId: string) => {
       if (visitedNodes.has(`up-${currentNodeId}`)) return;
       visitedNodes.add(`up-${currentNodeId}`);
 
-      edges.forEach((edge) => {
-        if (edge.targetId === currentNodeId) {
-          pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
-          traverseUpstream(edge.sourceId);
-        }
-      });
+      // Find the first parent edge only
+      const parentEdge = edges.find((edge) => edge.targetId === currentNodeId);
+      if (parentEdge) {
+        pathEdgeIds.add(`${parentEdge.sourceId}-${parentEdge.targetId}`);
+        traverseUpstream(parentEdge.sourceId);
+      }
     };
 
-    // Traverse downstream (find all targets from this node)
+    // Traverse downstream (find ALL targets from this node)
     const traverseDownstream = (currentNodeId: string) => {
       if (visitedNodes.has(`down-${currentNodeId}`)) return;
       visitedNodes.add(`down-${currentNodeId}`);
