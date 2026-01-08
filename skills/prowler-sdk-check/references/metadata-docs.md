@@ -1,13 +1,19 @@
-# Metadata Documentation References
+# Check Documentation
 
-For detailed field documentation and guidelines, see the official Prowler Developer Guide:
+## Local Documentation
 
-## Metadata Structure
-Complete schema and field descriptions for check metadata files.
+For detailed check development patterns, see:
 
-https://docs.prowler.com/developer-guide/checks#metadata-structure-for-prowler-checks
+- `docs/developer-guide/checks.mdx` - Complete guide for creating security checks
+- `docs/developer-guide/check-metadata-guidelines.mdx` - Metadata writing standards and best practices
+- `docs/developer-guide/configurable-checks.mdx` - Using audit_config for configurable checks
+- `docs/developer-guide/renaming-checks.mdx` - Guidelines for renaming existing checks
 
-## Metadata Guidelines
-Best practices and conventions for writing check metadata.
+## Contents
 
-https://docs.prowler.com/developer-guide/check-metadata-guidelines
+The documentation covers:
+- Check structure and naming conventions
+- Metadata schema and field descriptions
+- Check implementation patterns per provider
+- Configurable check parameters
+- Check renaming procedures

@@ -105,3 +105,7 @@ Follow conventional commits:
 3. ✅ CHANGELOG updated (if applicable)
 4. ✅ Branch is up to date with main
 5. ✅ Commits are clean and descriptive
+
+## Resources
+
+- **Documentation**: See [references/](references/) for links to local developer guide

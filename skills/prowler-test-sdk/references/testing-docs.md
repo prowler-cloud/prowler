@@ -1,18 +1,17 @@
-# Testing Documentation References
+# SDK Testing Documentation
 
-For detailed testing patterns and guidelines, see the official Prowler Developer Guide:
+## Local Documentation
 
-## Unit Testing Overview
-Complete guide for writing check tests.
+For detailed SDK testing patterns, see:
 
-https://docs.prowler.com/developer-guide/unit-testing
+- `docs/developer-guide/unit-testing.mdx` - Complete guide for writing check tests
 
-## Azure Check Testing Approach
-MagicMock patterns for Azure provider tests.
+## Contents
 
-https://docs.prowler.com/developer-guide/unit-testing#azure-check-testing-approach
-
-## GCP Check Testing Approach
-MagicMock patterns for GCP provider tests.
-
-https://docs.prowler.com/developer-guide/unit-testing#gcp-check-testing-approach
+The documentation covers:
+- AWS testing with moto (`@mock_aws` decorator)
+- Azure testing with MagicMock
+- GCP testing with MagicMock
+- Provider-specific fixtures (`set_mocked_aws_provider`, etc.)
+- Service dependency table for CI optimization
+- Test structure and required scenarios

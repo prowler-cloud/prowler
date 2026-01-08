@@ -182,5 +182,10 @@ pytest -n auto                  # Parallel (pytest-xdist)
 pytest --tb=short               # Short traceback
 ```
 
+## Prowler-Specific Patterns
+
+For Prowler SDK testing with provider-specific patterns (moto, MagicMock), see:
+- **Documentation**: [references/prowler-testing.md](references/prowler-testing.md)
+
 ## Keywords
 pytest, python, testing, fixtures, mocking, parametrize, markers

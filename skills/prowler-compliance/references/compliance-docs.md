@@ -1,16 +1,15 @@
-# Compliance Documentation References
+# Compliance Framework Documentation
 
-For detailed compliance framework patterns, see the official Prowler Developer Guide:
+## Local Documentation
 
-## Creating Security Compliance Frameworks
+For detailed compliance framework patterns, see:
 
-How to create and organize compliance frameworks (CIS, NIST, PCI-DSS, etc.).
+- `docs/developer-guide/security-compliance-framework.mdx` - Complete guide for creating compliance frameworks (CIS, NIST, PCI-DSS, SOC2, GDPR)
 
-https://docs.prowler.com/developer-guide/security-compliance-framework
+## Contents
 
-## Framework JSON Structure
-
-The page above covers the complete JSON structure including:
+The documentation covers:
+- Framework JSON structure
 - Framework metadata (name, version, provider)
 - Requirements array with IDs, descriptions, and attributes
 - Check mappings for each requirement

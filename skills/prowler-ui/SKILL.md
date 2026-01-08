@@ -204,5 +204,9 @@ cd ui && pnpm start
 | Zod 3 | 4 | `z.email()` not `z.string().email()`, `error` not `message` |
 | AI SDK 4 | 5 | `@ai-sdk/react`, `sendMessage` not `handleSubmit`, `parts` not `content` |
 
+## Resources
+
+- **Documentation**: See [references/](references/) for links to local developer guide
+
 ## Keywords
 prowler ui, next.js, react 19, tailwind 4, shadcn, heroui legacy

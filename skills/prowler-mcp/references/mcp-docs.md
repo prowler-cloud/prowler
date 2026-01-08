@@ -1,21 +1,16 @@
-# MCP Server Documentation References
+# MCP Server Documentation
 
-For detailed MCP development patterns, see the official Prowler Developer Guide:
+## Local Documentation
 
-## MCP Server Architecture
+For detailed MCP development patterns, see:
 
-FastMCP patterns, tool implementation, and server structure.
+- `docs/developer-guide/mcp-server.mdx` - MCP server architecture, tool implementation, extending with new tools
+- `docs/developer-guide/lighthouse.mdx` - AI agent patterns and Lighthouse integration
 
-https://docs.prowler.com/developer-guide/mcp-server
+## Contents
 
-## Adding Tools to Prowler App
-
-How to create and register new MCP tools using BaseTool pattern.
-
-https://docs.prowler.com/developer-guide/mcp-server#adding-tools-to-prowler-app
-
-## Tools Reference
-
-Complete list of all available MCP tools.
-
-https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools
+The documentation covers:
+- FastMCP patterns and server structure
+- Creating and registering new MCP tools using BaseTool pattern
+- API client usage for tool implementations
+- AI agent integration patterns

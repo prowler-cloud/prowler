@@ -1,21 +1,28 @@
-# Provider Documentation References
+# Provider Documentation
 
-For detailed provider development patterns, see the official Prowler Developer Guide:
+## Local Documentation
 
-## Provider Architecture
+For detailed provider development patterns, see:
 
-How to create new cloud providers for Prowler (SDK, API, Tool/Wrapper types).
+### Core Documentation
+- `docs/developer-guide/provider.mdx` - Provider architecture and creation guide
+- `docs/developer-guide/services.mdx` - Adding services to existing providers
 
-https://docs.prowler.com/developer-guide/provider
+### Provider-Specific Details
+- `docs/developer-guide/aws-details.mdx` - AWS provider implementation
+- `docs/developer-guide/azure-details.mdx` - Azure provider implementation
+- `docs/developer-guide/gcp-details.mdx` - GCP provider implementation
+- `docs/developer-guide/kubernetes-details.mdx` - Kubernetes provider implementation
+- `docs/developer-guide/github-details.mdx` - GitHub provider implementation
+- `docs/developer-guide/m365-details.mdx` - Microsoft 365 provider implementation
+- `docs/developer-guide/alibabacloud-details.mdx` - Alibaba Cloud provider implementation
+- `docs/developer-guide/llm-details.mdx` - LLM provider implementation
 
-## Adding Services
+## Contents
 
-How to add new services to existing providers.
-
-https://docs.prowler.com/developer-guide/services
-
-## Local Files
-
-The complete provider documentation is also available locally:
-
-- `docs/developer-guide/provider.mdx`
+The documentation covers:
+- Provider types (SDK, API, Tool/Wrapper)
+- Provider class structure and identity
+- Service creation patterns
+- Client singleton implementation
+- Provider-specific authentication and API patterns

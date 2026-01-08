@@ -56,3 +56,7 @@ AWS, Azure, GCP, Kubernetes, GitHub, M365, OCI, AlibabaCloud, MongoDB Atlas, IaC
 - `prowler-ui` - Next.js/React patterns
 - `prowler-mcp` - MCP server tools
 - `prowler-test` - Testing patterns
+
+## Resources
+
+- **Documentation**: See [references/](references/) for links to local developer guide
