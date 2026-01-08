@@ -266,7 +266,6 @@ class OraclecloudProvider(Provider):
             # If API key credentials are provided directly, create config from them
             if user and fingerprint and tenancy and region:
                 import base64
-                import tempfile
 
                 logger.info("Using API key credentials from direct parameters")
 
@@ -280,21 +279,30 @@ class OraclecloudProvider(Provider):
 
                 # Handle private key
                 if key_content:
-                    # Decode base64 key content and write to temp file
+                    # Decode base64 key content
                     try:
                         key_data = base64.b64decode(key_content)
-                        temp_key_file = tempfile.NamedTemporaryFile(
-                            mode="wb", delete=False, suffix=".pem"
-                        )
-                        temp_key_file.write(key_data)
-                        temp_key_file.close()
-                        config["key_file"] = temp_key_file.name
+                        decoded_key = key_data.decode("utf-8")
                     except Exception as decode_error:
                         logger.error(f"Failed to decode key_content: {decode_error}")
                         raise OCIInvalidConfigError(
                             file=pathlib.Path(__file__).name,
                             message="Failed to decode key_content. Ensure it is base64 encoded.",
                         )
+
+                    # Validate the key format before using it
+                    is_valid, error_message = (
+                        OraclecloudProvider.validate_private_key_format(decoded_key)
+                    )
+                    if not is_valid:
+                        logger.error(f"Invalid private key format: {error_message}")
+                        raise OCIInvalidConfigError(
+                            file=pathlib.Path(__file__).name,
+                            message=error_message,
+                        )
+
+                    # Use OCI SDK's native key_content support
+                    config["key_content"] = decoded_key
                 elif key_file:
                     config["key_file"] = os.path.expanduser(key_file)
                 else:
@@ -459,8 +467,8 @@ class OraclecloudProvider(Provider):
                     message=f"Invalid region: {region}",
                 )
 
-            # Get tenancy name using Identity service
-            tenancy_name = "unknown"
+            # Validate credentials by calling OCI Identity service
+            # This is the actual authentication check - if credentials are invalid, this will fail
             try:
                 # Create identity client with proper authentication handling
                 if session.signer:
@@ -473,9 +481,30 @@ class OraclecloudProvider(Provider):
                 tenancy = identity_client.get_tenancy(tenancy_id).data
                 tenancy_name = tenancy.name
                 logger.info(f"Tenancy Name: {tenancy_name}")
+            except oci.exceptions.ServiceError as error:
+                logger.critical(
+                    f"OCI credential validation failed (HTTP {error.status}): {error.message}"
+                )
+                raise OCIAuthenticationError(
+                    file=pathlib.Path(__file__).name,
+                    message=f"OCI credential validation failed: {error.message}. Please verify your credentials and try again.",
+                    original_exception=error,
+                )
+            except oci.exceptions.InvalidPrivateKey as error:
+                # Invalid private key format
+                logger.critical(f"Invalid OCI private key: {error}")
+                raise OCIAuthenticationError(
+                    file=pathlib.Path(__file__).name,
+                    message="Invalid OCI private key format. Ensure the key is a valid PEM-encoded private key.",
+                    original_exception=error,
+                )
             except Exception as error:
-                logger.warning(
-                    f"Could not retrieve tenancy name: {error}. Using 'unknown'"
+                # Unexpected errors during authentication should fail
+                logger.critical(f"OCI authentication error: {error}")
+                raise OCIAuthenticationError(
+                    file=pathlib.Path(__file__).name,
+                    message=f"Failed to authenticate with OCI: {error}",
+                    original_exception=error,
                 )
 
             logger.info(f"OCI Tenancy ID: {tenancy_id}")
@@ -526,6 +555,55 @@ class OraclecloudProvider(Provider):
             return match.group(1) == resource_type
 
         return True
+
+    @staticmethod
+    def validate_private_key_format(key_content: str) -> tuple[bool, str]:
+        """
+        validate_private_key_format validates that the key content is a valid PEM-encoded private key.
+
+        OCI supports the following private key formats:
+        - RSA Private Key: -----BEGIN RSA PRIVATE KEY-----
+        - PKCS#8 Private Key: -----BEGIN PRIVATE KEY-----
+        - Encrypted Private Key: -----BEGIN ENCRYPTED PRIVATE KEY-----
+
+        Args:
+            key_content (str): The decoded private key content (PEM format string).
+
+        Returns:
+            tuple[bool, str]: A tuple containing:
+                - is_valid (bool): True if the key format is valid, False otherwise.
+                - error_message (str): Descriptive error message if invalid, empty string if valid.
+        """
+        # Supported PEM key formats with matching headers and footers
+        key_formats = [
+            ("-----BEGIN RSA PRIVATE KEY-----", "-----END RSA PRIVATE KEY-----"),
+            ("-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----"),
+            (
+                "-----BEGIN ENCRYPTED PRIVATE KEY-----",
+                "-----END ENCRYPTED PRIVATE KEY-----",
+            ),
+        ]
+
+        key_content = key_content.strip()
+
+        # Find which key format matches the header
+        for header, footer in key_formats:
+            if key_content.startswith(header):
+                # Found matching header, verify the footer matches
+                if key_content.endswith(footer):
+                    return (True, "")
+                else:
+                    return (
+                        False,
+                        f"Invalid private key format: key starts with '{header}' but does not end with '{footer}'",
+                    )
+
+        # No valid header found
+        valid_headers = [fmt[0] for fmt in key_formats]
+        return (
+            False,
+            f"Invalid private key format: key must start with one of {valid_headers}",
+        )
 
     def get_regions_to_audit(self, region: str = None) -> list:
         """
@@ -838,7 +916,6 @@ class OraclecloudProvider(Provider):
             # If API key credentials are provided directly, create config from them
             if user and fingerprint and tenancy and region:
                 import base64
-                import tempfile
 
                 logger.info("Using API key credentials from direct parameters")
 
@@ -852,21 +929,30 @@ class OraclecloudProvider(Provider):
 
                 # Handle private key
                 if key_content:
-                    # Decode base64 key content and write to temp file
+                    # Decode base64 key content
                     try:
                         key_data = base64.b64decode(key_content)
-                        temp_key_file = tempfile.NamedTemporaryFile(
-                            mode="wb", delete=False, suffix=".pem"
-                        )
-                        temp_key_file.write(key_data)
-                        temp_key_file.close()
-                        config["key_file"] = temp_key_file.name
+                        decoded_key = key_data.decode("utf-8")
                     except Exception as decode_error:
                         logger.error(f"Failed to decode key_content: {decode_error}")
                         raise OCIInvalidConfigError(
                             file=pathlib.Path(__file__).name,
                             message="Failed to decode key_content. Ensure it is base64 encoded.",
                         )
+
+                    # Validate the key format before using it
+                    is_valid, error_message = (
+                        OraclecloudProvider.validate_private_key_format(decoded_key)
+                    )
+                    if not is_valid:
+                        logger.error(f"Invalid private key format: {error_message}")
+                        raise OCIInvalidConfigError(
+                            file=pathlib.Path(__file__).name,
+                            message=error_message,
+                        )
+
+                    # Use OCI SDK's native key_content support (no temp file needed)
+                    config["key_content"] = decoded_key
                 elif key_file:
                     config["key_file"] = os.path.expanduser(key_file)
                 else:
