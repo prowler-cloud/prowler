@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload AWS coverage to Codecov
         if: steps.changed-aws.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload Azure coverage to Codecov
         if: steps.changed-azure.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -237,7 +237,7 @@ jobs:
 
       - name: Upload GCP coverage to Codecov
         if: steps.changed-gcp.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -261,7 +261,7 @@ jobs:
 
       - name: Upload Kubernetes coverage to Codecov
         if: steps.changed-kubernetes.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -285,7 +285,7 @@ jobs:
 
       - name: Upload GitHub coverage to Codecov
         if: steps.changed-github.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -309,7 +309,7 @@ jobs:
 
       - name: Upload NHN coverage to Codecov
         if: steps.changed-nhn.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -333,7 +333,7 @@ jobs:
 
       - name: Upload M365 coverage to Codecov
         if: steps.changed-m365.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -357,7 +357,7 @@ jobs:
 
       - name: Upload IaC coverage to Codecov
         if: steps.changed-iac.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -381,7 +381,7 @@ jobs:
 
       - name: Upload MongoDB Atlas coverage to Codecov
         if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -405,7 +405,7 @@ jobs:
 
       - name: Upload OCI coverage to Codecov
         if: steps.changed-oraclecloud.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -429,7 +429,7 @@ jobs:
 
       - name: Upload Lib coverage to Codecov
         if: steps.changed-lib.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -453,7 +453,7 @@ jobs:
 
       - name: Upload Config coverage to Codecov
         if: steps.changed-config.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
