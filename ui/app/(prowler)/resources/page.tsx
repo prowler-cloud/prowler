@@ -1,6 +1,7 @@
 import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
+import { getProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
   getLatestResources,
@@ -19,7 +20,11 @@ import {
   hasDateOrScanFilter,
   replaceFieldKey,
 } from "@/lib";
-import { ResourceProps, SearchParamsProps } from "@/types";
+import {
+  createProviderDetailsMappingById,
+  extractProviderIds,
+} from "@/lib/provider-helpers";
+import { FilterEntity, ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
   searchParams,
@@ -35,18 +40,27 @@ export default async function Resources({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  const metadataInfoData = await (
-    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
-  )({
-    query,
-    filters: outputFilters,
-    sort: encodedSort,
-  });
+  const [metadataInfoData, providersData] = await Promise.all([
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+      query,
+      filters: outputFilters,
+      sort: encodedSort,
+    }),
+    getProviders({ pageSize: 50 }),
+  ]);
 
-  // Extract unique regions, services, types, and names from the metadata endpoint
+  // Extract unique regions, services, groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
+  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
+
+  // Extract provider IDs and details
+  const providerIds = providersData ? extractProviderIds(providersData) : [];
+  const providerDetails = providersData
+    ? (createProviderDetailsMappingById(providerIds, providersData) as {
+        [id: string]: FilterEntity;
+      }[])
+    : [];
 
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
@@ -54,19 +68,25 @@ export default async function Resources({
       <DataTableFilterCustom
         filters={[
           {
-            key: "region",
+            key: "provider__in",
+            labelCheckboxGroup: "Provider",
+            values: providerIds,
+            valueLabelMapping: providerDetails,
+          },
+          {
+            key: "region__in",
             labelCheckboxGroup: "Region",
             values: uniqueRegions,
           },
           {
-            key: "type",
-            labelCheckboxGroup: "Type",
-            values: uniqueResourceTypes,
-          },
-          {
-            key: "service",
+            key: "service__in",
             labelCheckboxGroup: "Service",
             values: uniqueServices,
+          },
+          {
+            key: "group__in",
+            labelCheckboxGroup: "Group",
+            values: uniqueGroups,
           },
         ]}
       />
