@@ -116,6 +116,12 @@ export default defineConfig({
       testMatch: "invitations.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
+    // This project runs the scan import test suite
+    {
+      name: "scan-import",
+      testMatch: "scan-import.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
   ],
 
   webServer: {

@@ -194,7 +194,7 @@ export const FindingDetail = ({
               </h4>
 
               {/* Recommendation section */}
-              {attributes.check_metadata.remediation.recommendation.text && (
+              {attributes.check_metadata.remediation.recommendation?.text && (
                 <InfoField label="Recommendation">
                   <div className="flex flex-col gap-2">
                     <MarkdownContainer>
@@ -205,7 +205,7 @@ export const FindingDetail = ({
                     </MarkdownContainer>
 
                     {attributes.check_metadata.remediation.recommendation
-                      .url && (
+                      ?.url && (
                       <CustomLink
                         href={
                           attributes.check_metadata.remediation.recommendation
@@ -221,7 +221,7 @@ export const FindingDetail = ({
               )}
 
               {/* CLI Command section */}
-              {attributes.check_metadata.remediation.code.cli && (
+              {attributes.check_metadata.remediation.code?.cli && (
                 <InfoField label="CLI Command" variant="simple">
                   <Snippet>
                     <span className="text-xs whitespace-pre-line">
@@ -232,7 +232,7 @@ export const FindingDetail = ({
               )}
 
               {/* Remediation Steps section */}
-              {attributes.check_metadata.remediation.code.other && (
+              {attributes.check_metadata.remediation.code?.other && (
                 <InfoField label="Remediation Steps">
                   <MarkdownContainer>
                     {attributes.check_metadata.remediation.code.other}

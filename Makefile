@@ -23,7 +23,7 @@ format: ## Format Code
 
 lint: ## Lint Code
 	@echo "Running flake8..."
-	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,.venv,ui/node_modules
 	@echo "Running black... "
 	black --check .
 	@echo "Running pylint..."

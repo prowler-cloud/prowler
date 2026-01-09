@@ -23,6 +23,9 @@ bind = f"{BIND_ADDRESS}:{PORT}"
 workers = env.int("DJANGO_WORKERS", default=multiprocessing.cpu_count() * 2 + 1)
 reload = DEBUG
 
+# Timeout settings for large file uploads (5 minutes)
+timeout = env.int("DJANGO_GUNICORN_TIMEOUT", default=300)
+
 # Logging
 logconfig_dict = DJANGO_LOGGERS
 gunicorn_logger = logging.getLogger(BackendLogger.GUNICORN)
