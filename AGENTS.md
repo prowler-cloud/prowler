@@ -41,6 +41,21 @@ Use these skills for detailed patterns on-demand:
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Creating a PR | `prowler-pr` |
+| Writing SDK tests | `prowler-test-sdk` |
+| Writing API tests | `prowler-test-api` |
+| Writing UI/E2E tests | `prowler-test-ui` |
+| Creating a new check | `prowler-sdk-check` |
+| Adding a new provider | `prowler-provider` |
+| Writing documentation | `prowler-docs` |
+| Adding compliance framework | `prowler-compliance` |
+
 ---
 
 ## Project Overview
