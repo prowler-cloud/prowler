@@ -239,8 +239,8 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="text-text-error-primary mt-4 rounded-md p-3">
-            <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
+          <div className="text-text-error-primary mt-4 rounded-md">
+            <p>{apiErrorMessage}</p>
           </div>
         )}
 
