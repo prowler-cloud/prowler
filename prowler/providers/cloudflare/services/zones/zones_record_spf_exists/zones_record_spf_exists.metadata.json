@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_record_spf_exists",
-  "CheckTitle": "SPF record exists with strict policy (-all) for email authentication",
+  "CheckTitle": "SPF record exists with strict policy (-all)",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

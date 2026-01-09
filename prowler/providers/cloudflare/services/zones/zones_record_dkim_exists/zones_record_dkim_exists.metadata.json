@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_record_dkim_exists",
-  "CheckTitle": "DKIM record exists with valid public key for email authentication",
+  "CheckTitle": "DKIM record exists with valid public key",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

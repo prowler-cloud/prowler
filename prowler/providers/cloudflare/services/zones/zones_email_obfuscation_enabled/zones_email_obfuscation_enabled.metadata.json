@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_email_obfuscation_enabled",
-  "CheckTitle": "Email Obfuscation is enabled to protect against email harvesting",
+  "CheckTitle": "Email Obfuscation is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

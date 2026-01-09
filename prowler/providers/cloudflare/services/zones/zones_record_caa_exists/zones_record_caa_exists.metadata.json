@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_record_caa_exists",
-  "CheckTitle": "CAA record exists with issue or issuewild tag to restrict certificate authority issuance",
+  "CheckTitle": "CAA record exists with issue or issuewild tag",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

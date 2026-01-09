@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_universal_ssl_enabled",
-  "CheckTitle": "Universal SSL is enabled to provide SSL/TLS certificates",
+  "CheckTitle": "Universal SSL is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",
