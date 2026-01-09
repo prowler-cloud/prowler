@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_hsts_enabled",
-  "CheckTitle": "HSTS is enabled with secure settings",
+  "CheckTitle": "HSTS is enabled with recommended max-age and includes subdomains",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",
