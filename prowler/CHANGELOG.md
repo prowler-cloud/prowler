@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
 - Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
 - `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
+- `compute_configuration_changes` check for GCP provider to detect Compute Engine configuration changes in Cloud Audit Logs [(#9698)](https://github.com/prowler-cloud/prowler/pull/9698)
 - `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
 - `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
 - `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
