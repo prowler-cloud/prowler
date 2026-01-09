@@ -133,11 +133,4 @@ cd api && poetry run celery -A config.celery worker -l info  # Start worker
 
 ## Resources
 
-| File | Content |
-|------|---------|
-| `api/src/backend/api/models.py` | Models, Providers, UID validation |
-| `api/src/backend/api/v1/views.py` | ViewSets, RBAC patterns |
-| `api/src/backend/api/v1/serializers.py` | Serializers |
-| `api/src/backend/api/rbac/permissions.py` | RBAC functions |
-| `api/src/backend/tasks/tasks.py` | Celery tasks |
-| `api/src/backend/api/db_utils.py` | rls_transaction |
+- **Documentation**: See [references/api-docs.md](references/api-docs.md) for local file paths and documentation

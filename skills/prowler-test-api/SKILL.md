@@ -114,8 +114,4 @@ cd api && poetry run pytest -k "TestRBAC"
 
 ## Resources
 
-| File | Content |
-|------|---------|
-| `api/src/backend/conftest.py` | All fixtures |
-| `api/src/backend/api/tests/` | API tests |
-| `api/src/backend/tasks/tests/` | Task tests |
+- **Documentation**: See [references/test-api-docs.md](references/test-api-docs.md) for local file paths and documentation
