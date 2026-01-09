@@ -44,7 +44,7 @@ from api.models import (
     Role,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -1130,7 +1130,7 @@ class CategoryOverviewFilter(FilterSet):
         fields = {}
 
 
-class ResourceGroupOverviewFilter(FilterSet):
+class GroupOverviewFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
@@ -1145,5 +1145,5 @@ class ResourceGroupOverviewFilter(FilterSet):
     group__in = CharInFilter(field_name="group", lookup_expr="in")
 
     class Meta:
-        model = ScanResourceGroupSummary
+        model = ScanGroupSummary
         fields = {}

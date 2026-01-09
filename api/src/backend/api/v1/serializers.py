@@ -2310,7 +2310,7 @@ class CategoryOverviewSerializer(BaseSerializerV1):
         resource_name = "category-overviews"
 
 
-class ResourceGroupOverviewSerializer(BaseSerializerV1):
+class GroupOverviewSerializer(BaseSerializerV1):
     """Serializer for resource group overview aggregations."""
 
     id = serializers.CharField(source="group")

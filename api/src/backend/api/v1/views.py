@@ -104,6 +104,7 @@ from api.filters import (
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
+    GroupOverviewFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -118,7 +119,6 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
-    ResourceGroupOverviewFilter,
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
@@ -159,7 +159,7 @@ from api.models import (
     SAMLToken,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -191,6 +191,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     FindingsSeverityOverTimeSerializer,
+    GroupOverviewSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
@@ -231,7 +232,6 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
-    ResourceGroupOverviewSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
     RoleCreateSerializer,
@@ -3044,9 +3044,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     categories_set.update(categories_list)
             categories = sorted(categories_set)
 
-        # Get groups from ScanResourceGroupSummary for latest scans
+        # Get groups from ScanGroupSummary for latest scans
         groups = list(
-            ScanResourceGroupSummary.objects.filter(
+            ScanGroupSummary.objects.filter(
                 tenant_id=tenant_id,
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
@@ -4144,7 +4144,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         tags=["Overview"],
         filters=True,
-        responses={200: ResourceGroupOverviewSerializer(many=True)},
+        responses={200: GroupOverviewSerializer(many=True)},
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -4196,7 +4196,7 @@ class OverviewViewSet(BaseRLSViewSet):
         elif self.action == "categories":
             return CategoryOverviewSerializer
         elif self.action == "groups":
-            return ResourceGroupOverviewSerializer
+            return GroupOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4211,7 +4211,7 @@ class OverviewViewSet(BaseRLSViewSet):
         elif self.action == "categories":
             return CategoryOverviewFilter
         elif self.action == "groups":
-            return ResourceGroupOverviewFilter
+            return GroupOverviewFilter
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewFilter
         return None
@@ -5049,7 +5049,7 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id, provider_filters
         )
 
-        base_queryset = ScanResourceGroupSummary.objects.filter(
+        base_queryset = ScanGroupSummary.objects.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
         provider_filter_keys = {
@@ -5060,7 +5060,7 @@ class OverviewViewSet(BaseRLSViewSet):
         }
         filtered_queryset = self._apply_filterset(
             base_queryset,
-            ResourceGroupOverviewFilter,
+            GroupOverviewFilter,
             exclude_keys=provider_filter_keys,
         )
 

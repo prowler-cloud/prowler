@@ -17,7 +17,7 @@ from api.models import (
     ResourceScanSummary,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
 )
@@ -346,10 +346,10 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
 
 def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
     """
-    Backfill ScanResourceGroupSummary for a completed scan.
+    Backfill ScanGroupSummary for a completed scan.
 
     Aggregates resource group counts from all findings in the scan and creates
-    one ScanResourceGroupSummary row per (resource_group, severity) combination.
+    one ScanGroupSummary row per (resource_group, severity) combination.
 
     Args:
         tenant_id: Target tenant UUID
@@ -359,7 +359,7 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         dict: Status indicating whether backfill was performed
     """
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        if ScanResourceGroupSummary.objects.filter(
+        if ScanGroupSummary.objects.filter(
             tenant_id=tenant_id, scan_id=scan_id
         ).exists():
             return {"status": "already backfilled"}
@@ -396,7 +396,7 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
             return {"status": "no resource groups to backfill"}
 
     resource_group_summaries = [
-        ScanResourceGroupSummary(
+        ScanGroupSummary(
             tenant_id=tenant_id,
             scan_id=scan_id,
             group=grp,
@@ -410,7 +410,7 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
     ]
 
     with rls_transaction(tenant_id):
-        ScanResourceGroupSummary.objects.bulk_create(
+        ScanGroupSummary.objects.bulk_create(
             resource_group_summaries, batch_size=500, ignore_conflicts=True
         )
 

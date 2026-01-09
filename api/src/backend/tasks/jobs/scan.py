@@ -41,7 +41,7 @@ from api.models import (
     ResourceTag,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
 )
@@ -705,7 +705,7 @@ def _process_finding_micro_batch(
             cache=scan_categories_cache,
         )
 
-        # Track resource groups with counts for ScanResourceGroupSummary
+        # Track resource groups with counts for ScanGroupSummary
         aggregate_resource_group_counts(
             resource_group=check_metadata.get("resourcegroup") or None,
             severity=finding.severity.value,
@@ -1005,7 +1005,7 @@ def perform_prowler_scan(
     try:
         if scan_resource_groups_cache:
             resource_group_summaries = [
-                ScanResourceGroupSummary(
+                ScanGroupSummary(
                     tenant_id=tenant_id,
                     scan_id=scan_id,
                     group=grp,
@@ -1021,7 +1021,7 @@ def perform_prowler_scan(
                 ), counts in scan_resource_groups_cache.items()
             ]
             with rls_transaction(tenant_id):
-                ScanResourceGroupSummary.objects.bulk_create(
+                ScanGroupSummary.objects.bulk_create(
                     resource_group_summaries, batch_size=500, ignore_conflicts=True
                 )
     except Exception as rg_exception:

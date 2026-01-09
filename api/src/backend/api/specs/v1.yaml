@@ -712,7 +712,7 @@ paths:
             - check_id
             - check_metadata
             - categories
-            - resource_group
+            - group
             - raw_result
             - inserted_at
             - updated_at
@@ -769,6 +769,19 @@ paths:
           * `changed` - Changed
       - in: query
         name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -967,19 +980,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
         schema:
           type: array
           items:
@@ -1238,7 +1238,7 @@ paths:
             - check_id
             - check_metadata
             - categories
-            - resource_group
+            - group
             - raw_result
             - inserted_at
             - updated_at
@@ -1343,6 +1343,19 @@ paths:
           * `changed` - Changed
       - in: query
         name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -1538,19 +1551,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
         schema:
           type: array
           items:
@@ -1787,7 +1787,7 @@ paths:
             - check_id
             - check_metadata
             - categories
-            - resource_group
+            - group
             - raw_result
             - inserted_at
             - updated_at
@@ -1844,6 +1844,19 @@ paths:
           * `changed` - Changed
       - in: query
         name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -2017,19 +2030,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
         schema:
           type: array
           items:
@@ -2248,7 +2248,7 @@ paths:
             - regions
             - resource_types
             - categories
-            - resource_groups
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2296,6 +2296,19 @@ paths:
           * `changed` - Changed
       - in: query
         name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -2494,19 +2507,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
         schema:
           type: array
           items:
@@ -2738,7 +2738,7 @@ paths:
             - regions
             - resource_types
             - categories
-            - resource_groups
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2786,6 +2786,19 @@ paths:
           * `changed` - Changed
       - in: query
         name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
         schema:
           type: array
           items:
@@ -2959,19 +2972,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
         schema:
           type: array
           items:
@@ -4829,7 +4829,7 @@ paths:
         schema:
           type: string
       - in: query
-        name: filter[region__in]
+        name: filter[category__in]
         schema:
           type: array
           items:
@@ -4838,20 +4838,7 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[group]
-        schema:
-          type: string
-      - in: query
-        name: filter[group__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[scan]
+        name: filter[provider_id]
         schema:
           type: string
           format: uuid
@@ -5525,6 +5512,170 @@ paths:
               schema:
                 $ref: '#/components/schemas/FindingsSeverityOverTimeResponse'
           description: ''
+  /api/v1/overviews/groups:
+    get:
+      operationId: overviews_groups_list
+      description: Retrieve aggregated resource group metrics from latest completed
+        scans per provider. Returns one row per resource group with total, failed,
+        and new failed findings counts, plus a severity breakdown showing failed findings
+        per severity level, and a count of distinct resources evaluated per group.
+      summary: Get resource group overview
+      parameters:
+      - in: query
+        name: fields[resource-group-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - resources_count
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - resources_count
+            - -resources_count
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGroupOverviewList'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
@@ -5768,170 +5919,6 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewRegionResponse'
-          description: ''
-  /api/v1/overviews/resource_groups:
-    get:
-      operationId: overviews_resource_groups_list
-      description: Retrieve aggregated resource group metrics from latest completed
-        scans per provider. Returns one row per resource group with total, failed,
-        and new failed findings counts, plus a severity breakdown showing failed findings
-        per severity level, and a count of distinct resources evaluated per group.
-      summary: Get resource group overview
-      parameters:
-      - in: query
-        name: fields[resource-group-overview]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - total_findings
-            - failed_findings
-            - new_failed_findings
-            - resources_count
-            - severity
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: 684bf4173d2b754f
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: 684bf4173d2b754f
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - total_findings
-            - -total_findings
-            - failed_findings
-            - -failed_findings
-            - new_failed_findings
-            - -new_failed_findings
-            - resources_count
-            - -resources_count
-            - severity
-            - -severity
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResourceGroupOverviewList'
           description: ''
   /api/v1/overviews/services:
     get:
@@ -7469,10 +7456,24 @@ paths:
             - metadata
             - details
             - partition
+            - group
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -7809,6 +7810,7 @@ paths:
             - metadata
             - details
             - partition
+            - group
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7871,10 +7873,24 @@ paths:
             - metadata
             - details
             - partition
+            - group
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -8143,6 +8159,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -8443,9 +8472,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[group]
+        schema:
+          type: string
+      - in: query
+        name: filter[group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -11747,11 +11790,10 @@ components:
                 maxLength: 100
               nullable: true
               description: Categories from check metadata for efficient filtering
-            resource_group:
+            group:
               type: string
               nullable: true
-              description: Resource group from check metadata for efficient filtering
-              maxLength: 50
+              description: Group from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -11906,7 +11948,7 @@ components:
               type: array
               items:
                 type: string
-            resource_groups:
+            groups:
               type: array
               items:
                 type: string
@@ -11983,6 +12025,44 @@ components:
           $ref: '#/components/schemas/FindingsSeverityOverTime'
       required:
       - data
+    GroupOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-group-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            resources_count:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - resources_count
+          - severity
     Integration:
       type: object
       required:
@@ -14671,6 +14751,15 @@ components:
             $ref: '#/components/schemas/Finding'
       required:
       - data
+    PaginatedGroupOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupOverview'
+      required:
+      - data
     PaginatedIntegrationList:
       type: object
       properties:
@@ -14777,15 +14866,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderSecret'
-      required:
-      - data
-    PaginatedResourceGroupOverviewList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceGroupOverview'
       required:
       - data
     PaginatedResourceList:
@@ -18792,16 +18872,14 @@ components:
               type: string
               readOnly: true
               nullable: true
+            group:
+              type: string
+              readOnly: true
+              nullable: true
+              description: Group for categorization (e.g., compute, storage, IAM)
             type:
               type: string
               readOnly: true
-              deprecated: true
-              description: "Deprecated: Use 'group' field instead for resource categorization"
-            group:
-              type: string
-              nullable: true
-              description: Group category (e.g., compute, storage, IAM, database)
-              maxLength: 50
           required:
           - uid
           - name
@@ -18860,44 +18938,6 @@ components:
               readOnly: true
           required:
           - provider
-    ResourceGroupOverview:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - resource-group-overview
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            total_findings:
-              type: integer
-            failed_findings:
-              type: integer
-            new_failed_findings:
-              type: integer
-            resources_count:
-              type: integer
-            severity:
-              description: 'Severity breakdown: {informational, low, medium, high,
-                critical}'
-          required:
-          - id
-          - total_findings
-          - failed_findings
-          - new_failed_findings
-          - resources_count
-          - severity
     ResourceMetadata:
       type: object
       required:

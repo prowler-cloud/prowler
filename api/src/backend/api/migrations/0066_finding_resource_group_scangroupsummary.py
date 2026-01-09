@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.CreateModel(
-            name="ScanResourceGroupSummary",
+            name="ScanGroupSummary",
             fields=[
                 (
                     "id",
@@ -103,23 +103,23 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddIndex(
-            model_name="scanresourcegroupsummary",
+            model_name="scangroupsummary",
             index=models.Index(
                 fields=["tenant_id", "scan"], name="srgs_tenant_scan_idx"
             ),
         ),
         migrations.AddConstraint(
-            model_name="scanresourcegroupsummary",
+            model_name="scangroupsummary",
             constraint=models.UniqueConstraint(
                 fields=("tenant_id", "scan_id", "group", "severity"),
                 name="unique_resource_group_severity_per_scan",
             ),
         ),
         migrations.AddConstraint(
-            model_name="scanresourcegroupsummary",
+            model_name="scangroupsummary",
             constraint=api.rls.RowLevelSecurityConstraint(
                 field="tenant_id",
-                name="rls_on_scanresourcegroupsummary",
+                name="rls_on_scangroupsummary",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),

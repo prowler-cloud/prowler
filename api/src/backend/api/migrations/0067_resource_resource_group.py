@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0066_finding_resource_group_scanresourcegroupsummary"),
+        ("api", "0066_finding_resource_group_scangroupsummary"),
     ]
 
     operations = [

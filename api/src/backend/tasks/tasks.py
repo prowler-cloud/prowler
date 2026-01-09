@@ -615,7 +615,7 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
 @handle_provider_deletion
 def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
-    Backfill ScanResourceGroupSummary for a completed scan.
+    Backfill ScanGroupSummary for a completed scan.
 
     Aggregates unique resource groups from findings and creates a summary row.
 

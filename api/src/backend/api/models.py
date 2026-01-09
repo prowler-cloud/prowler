@@ -2042,12 +2042,12 @@ class ScanCategorySummary(RowLevelSecurityProtectedModel):
         resource_name = "scan-category-summaries"
 
 
-class ScanResourceGroupSummary(RowLevelSecurityProtectedModel):
+class ScanGroupSummary(RowLevelSecurityProtectedModel):
     """
     Pre-aggregated resource group metrics per scan by severity.
 
     Stores one row per (resource_group, severity) combination per scan for efficient
-    overview queries. Resource groups come from check_metadata.ResourceGroup.
+    overview queries. Resource groups come from check_metadata.Group.
 
     Count relationships (each is a subset of the previous):
         - total_findings >= failed_findings >= new_failed_findings

@@ -14,7 +14,7 @@ from api.models import (
     ResourceScanSummary,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     StateChoices,
 )
 from prowler.lib.check.models import Severity
@@ -292,7 +292,7 @@ def findings_with_group_fixture(scans_fixture, resources_fixture):
 @pytest.fixture(scope="function")
 def scan_resource_group_summary_fixture(scans_fixture):
     scan = scans_fixture[0]
-    return ScanResourceGroupSummary.objects.create(
+    return ScanGroupSummary.objects.create(
         tenant_id=scan.tenant_id,
         scan=scan,
         group="existing-group",
@@ -305,7 +305,7 @@ def scan_resource_group_summary_fixture(scans_fixture):
 
 
 @pytest.mark.django_db
-class TestBackfillScanResourceGroupSummaries:
+class TestBackfillScanGroupSummaries:
     def test_already_backfilled(self, scan_resource_group_summary_fixture):
         tenant_id = scan_resource_group_summary_fixture.tenant_id
         scan_id = scan_resource_group_summary_fixture.scan_id
@@ -338,7 +338,7 @@ class TestBackfillScanResourceGroupSummaries:
         # 1 resource group × 1 severity = 1 row
         assert result == {"status": "backfilled", "resource_groups_count": 1}
 
-        summaries = ScanResourceGroupSummary.objects.filter(
+        summaries = ScanGroupSummary.objects.filter(
             tenant_id=tenant_id, scan_id=scan_id
         )
         assert summaries.count() == 1

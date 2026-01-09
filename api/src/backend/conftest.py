@@ -41,7 +41,7 @@ from api.models import (
     SAMLDomainIndex,
     Scan,
     ScanCategorySummary,
-    ScanResourceGroupSummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -1717,7 +1717,7 @@ def create_scan_resource_group_summary():
         new_failed_findings=2,
         resources_count=3,
     ):
-        return ScanResourceGroupSummary.objects.create(
+        return ScanGroupSummary.objects.create(
             tenant=tenant,
             scan=scan,
             group=group,
