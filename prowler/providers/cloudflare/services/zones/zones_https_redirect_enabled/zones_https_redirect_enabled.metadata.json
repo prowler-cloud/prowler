@@ -12,8 +12,7 @@
   "Risk": "Without **automatic HTTPS redirects**, users may access resources over unencrypted HTTP.\n- **Confidentiality**: traffic can be intercepted and read by attackers on the network path\n- **Integrity**: HTTP responses can be modified in transit (content injection, malware insertion)\n- **Authentication**: session cookies and credentials may be transmitted in plaintext",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/",
-    "https://developers.cloudflare.com/terraform/tutorial/configure-https-settings/"
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/"
   ],
   "Remediation": {
     "Code": {
