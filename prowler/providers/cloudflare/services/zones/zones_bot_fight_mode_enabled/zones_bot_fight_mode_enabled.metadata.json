@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_bot_fight_mode_enabled",
-  "CheckTitle": "Bot Fight Mode is enabled to detect and mitigate automated bot traffic",
+  "CheckTitle": "Bot Fight Mode is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_waf_enabled",
-  "CheckTitle": "WAF is enabled to protect against web application attacks",
+  "CheckTitle": "WAF is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",
