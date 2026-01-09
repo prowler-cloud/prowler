@@ -28,6 +28,7 @@
   --bg-input-primary: var(--color-white);
   --border-input-primary: var(--color-slate-400);
   --border-input-primary-press: var(--color-slate-700);
+  --border-input-primary-pressed: #A7F3D0;
   --border-input-primary-fill: var(--color-slate-500);
 
   /* Text Colors */
@@ -101,6 +102,7 @@
   --bg-input-primary: var(--color-neutral-900);
   --border-input-primary: var(--color-neutral-800);
   --border-input-primary-press: var(--color-neutral-800);
+  --border-input-primary-pressed: #A7F3D0;
   --border-input-primary-fill: var(--color-neutral-300);
 
   /* Text Colors */
@@ -185,6 +187,7 @@
   --color-bg-input-primary: var(--bg-input-primary);
   --color-border-input-primary: var(--border-input-primary);
   --color-border-input-primary-press: var(--border-input-primary-press);
+  --color-border-input-primary-pressed: var(--border-input-primary-pressed);
   --color-border-input-primary-fill: var(--border-input-primary-fill);
 
   /* Neutral Map Colors */

@@ -17,6 +17,10 @@ import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import {
+  FindingStatus,
+  StatusFindingBadge,
+} from "@/components/ui/table/status-finding-badge";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { FindingProps, ProviderType } from "@/types";
 
@@ -106,17 +110,7 @@ export const FindingDetail = ({
       <Card variant="base" padding="lg">
         <CardHeader className="flex items-center justify-between">
           <CardTitle>Finding Details</CardTitle>
-          <div
-            className={`rounded-lg px-3 py-1 text-sm font-semibold ${
-              attributes.status === "PASS"
-                ? "bg-green-100 text-green-600"
-                : attributes.status === "MANUAL"
-                  ? "bg-gray-100 text-gray-600"
-                  : "text-system-severity-critical bg-red-100"
-            }`}
-          >
-            {renderValue(attributes.status)}
-          </div>
+          <StatusFindingBadge status={attributes.status as FindingStatus} />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-4">

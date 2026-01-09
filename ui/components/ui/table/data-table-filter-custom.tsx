@@ -27,10 +27,16 @@ import { ProviderConnectionStatus } from "@/types/providers";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
+  /** Optional element to render at the start of the filters grid */
+  prependElement?: React.ReactNode;
+  /** Hide the clear filters button and active badges (useful when parent manages this) */
+  hideClearButton?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
+  prependElement,
+  hideClearButton = false,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
@@ -134,6 +140,7 @@ export const DataTableFilterCustom = ({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {prependElement}
       {sortedFilters().map((filter) => {
         const selectedValues = getSelectedValues(filter);
 
@@ -168,10 +175,12 @@ export const DataTableFilterCustom = ({
           </MultiSelect>
         );
       })}
-      <div className="flex items-center justify-start gap-2">
-        <ActiveFilterBadges />
-        <ClearFiltersButton />
-      </div>
+      {!hideClearButton && (
+        <div className="flex items-center justify-start gap-2">
+          <ActiveFilterBadges />
+          <ClearFiltersButton />
+        </div>
+      )}
     </div>
   );
 };
