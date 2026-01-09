@@ -1,7 +1,7 @@
 ### E2E Tests: AWS Provider Management
 
 **Suite ID:** `PROVIDER-E2E`
-**Feature:** AWS Provider Management - Add and configure AWS cloud providers with different authentication methods
+**Feature:** AWS Provider Management.
 
 ---
 
@@ -33,13 +33,15 @@
 5. Select "credentials" authentication type
 6. Fill static credentials (access key and secret key)
 7. Launch initial scan
-8. Verify redirect to provider management page
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
 ### Expected Result:
 
 - AWS provider successfully added with static credentials
 - Initial scan launched successfully
-- User redirected to provider details page
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
 
 ### Key verification points:
 
@@ -47,7 +49,9 @@
 - Connect account page displays AWS option
 - Credentials form accepts static credentials
 - Launch scan page appears
-- Successful redirect to provider page after scan launch
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
 
 ### Notes:
 
@@ -85,13 +89,15 @@
 5. Select "role" authentication type
 6. Fill role credentials (access key, secret key, and role ARN)
 7. Launch initial scan
-8. Verify redirect to provider management page
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
 ### Expected Result:
 
 - AWS provider successfully added with role credentials
 - Initial scan launched successfully
-- User redirected to provider details page
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
 
 ### Key verification points:
 
@@ -99,7 +105,9 @@
 - Connect account page displays AWS option
 - Role credentials form accepts all required fields
 - Launch scan page appears
-- Successful redirect to provider page after scan launch
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
 
 ### Notes:
 
@@ -137,13 +145,15 @@
 4. Fill provider details (subscription ID and alias)
 5. Fill Azure credentials (client ID, client secret, tenant ID)
 6. Launch initial scan
-7. Verify redirect to provider management page
+7. Verify redirect to Scans page
+8. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
 ### Expected Result:
 
 - Azure provider successfully added with static credentials
 - Initial scan launched successfully
-- User redirected to provider details page
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
 
 ### Key verification points:
 
@@ -151,7 +161,9 @@
 - Connect account page displays Azure option
 - Azure credentials form accepts all required fields
 - Launch scan page appears
-- Successful redirect to provider page after scan launch
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by subscription ID)
+- Scan name field contains "scheduled scan"
 
 ### Notes:
 
@@ -190,13 +202,15 @@
 5. Select static credentials type
 6. Fill M365 credentials (client ID, client secret, tenant ID)
 7. Launch initial scan
-8. Verify redirect to provider management page
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
 ### Expected Result:
 
 - M365 provider successfully added with static credentials
 - Initial scan launched successfully
-- User redirected to provider details page
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
 
 ### Key verification points:
 
@@ -204,7 +218,9 @@
 - Connect account page displays M365 option
 - M365 credentials form accepts all required fields
 - Launch scan page appears
-- Successful redirect to provider page after scan launch
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by domain ID)
+- Scan name field contains "scheduled scan"
 
 ### Notes:
 
@@ -243,13 +259,15 @@
 5. Select certificate credentials type
 6. Fill M365 certificate credentials (client ID, tenant ID, certificate content)
 7. Launch initial scan
-8. Verify redirect to provider management page
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
 
 ### Expected Result:
 
 - M365 provider successfully added with certificate credentials
 - Initial scan launched successfully
-- User redirected to provider details page
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
 
 ### Key verification points:
 
@@ -257,7 +275,9 @@
 - Connect account page displays M365 option
 - Certificate credentials form accepts all required fields
 - Launch scan page appears
-- Successful redirect to provider page after scan launch
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by domain ID)
+- Scan name field contains "scheduled scan"
 
 ### Notes:
 
@@ -265,3 +285,426 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Microsoft 365 tenant with certificate-based authentication
 - Certificate must be properly configured and have sufficient permissions for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-006` - Add Kubernetes Provider with Kubeconfig Content
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @kubernetes
+
+**Description/Objective:** Validates the complete flow of adding a new Kubernetes provider using kubeconfig content authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_KUBERNETES_CONTEXT, E2E_KUBERNETES_KUBECONFIG_PATH
+- Kubeconfig file must exist at the specified path
+- Remove any existing provider with the same Context before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Context not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Kubernetes provider type
+4. Fill provider details (context and alias)
+5. Verify credentials page is loaded
+6. Fill Kubernetes credentials (kubeconfig content)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- Kubernetes provider successfully added with kubeconfig content
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays Kubernetes option
+- Provider details form accepts context and alias
+- Credentials page loads with kubeconfig content field
+- Kubeconfig content is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by context)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for Kubernetes context and kubeconfig file path
+- Kubeconfig content is read from file and used for authentication
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Kubernetes cluster with accessible kubeconfig
+- Kubeconfig must have sufficient permissions for security scanning
+- Test validates that kubeconfig content goes to the correct field (not the context field)
+
+---
+
+## Test Case: `PROVIDER-E2E-007` - Add GCP Provider with Service Account Key
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @gcp
+
+**Description/Objective:** Validates the complete flow of adding a new GCP provider using service account key authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GCP_PROJECT_ID, E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY
+- Remove any existing provider with the same Project ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Project ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GCP provider type
+4. Fill provider details (project ID and alias)
+5. Select service account credentials type
+6. Fill GCP service account key credentials
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- GCP provider successfully added with service account key
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GCP option
+- Provider details form accepts project ID and alias
+- Service account credentials page loads with service account key field
+- Service account key is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by project ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for GCP project ID and service account key
+- Service account key is provided as base64 encoded JSON content
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GCP project with service account having appropriate permissions
+- Service account must have sufficient permissions for security scanning
+- Test validates that service account key goes to the correct field
+- Test uses base64 encoded environment variables for GCP service account key
+
+---
+
+## Test Case: `PROVIDER-E2E-008` - Add GitHub Provider with Personal Access Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using personal access token authentication for a user account
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_USERNAME, E2E_GITHUB_PERSONAL_ACCESS_TOKEN
+- Remove any existing provider with the same Username before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (username and alias)
+5. Select personal access token credentials type
+6. Fill GitHub personal access token credentials
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- GitHub provider successfully added with personal access token
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts username and alias
+- Personal access token credentials page loads with token field
+- Personal access token is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by username)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for GitHub username and personal access token
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub account with personal access token
+- Personal access token must have sufficient permissions for security scanning
+- Test validates that personal access token goes to the correct field
+
+---
+
+## Test Case: `PROVIDER-E2E-009` - Add GitHub Provider with GitHub App
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using GitHub App authentication for a user account
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_USERNAME, E2E_GITHUB_APP_ID, E2E_GITHUB_BASE64_APP_PRIVATE_KEY
+- Remove any existing provider with the same Username before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (username and alias)
+5. Select GitHub App credentials type
+6. Fill GitHub App credentials (App ID and private key)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- GitHub provider successfully added with GitHub App credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts username and alias
+- GitHub App credentials page loads with App ID and private key fields
+- GitHub App credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by username)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for GitHub username, App ID, and base64 encoded private key
+- Private key is base64 encoded and must be decoded before use
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub App with App ID and private key
+- GitHub App must have sufficient permissions for security scanning
+- Test validates that GitHub App credentials go to the correct fields
+
+---
+
+## Test Case: `PROVIDER-E2E-010` - Add GitHub Provider with Organization Personal Access Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using organization personal access token authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_ORGANIZATION, E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN
+- Remove any existing provider with the same Organization name before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Organization name not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (organization name and alias)
+5. Select personal access token credentials type
+6. Fill GitHub organization personal access token credentials
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- GitHub provider successfully added with organization personal access token
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts organization name and alias
+- Personal access token credentials page loads with token field
+- Organization personal access token is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by organization name)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for GitHub organization name and organization access token
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub organization with organization access token
+- Organization access token must have sufficient permissions for security scanning
+- Test validates that organization personal access token goes to the correct field
+
+---
+
+## Test Case: `PROVIDER-E2E-011` - Add AWS Provider with Assume Role via AWS SDK Defaults
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates adding an AWS provider assuming a role while sourcing credentials from the AWS SDK default chain.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_AWS_PROVIDER_ROLE_ARN
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Fill provider details (account ID and alias)
+5. Select "role" authentication type
+6. Switch authentication method to "Use AWS SDK default credentials"
+7. Fill role ARN using AWS SDK credential inputs
+8. Launch initial scan
+9. Verify redirect to Scans page
+10. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AWS provider successfully added using AWS SDK default credentials to assume the role
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AWS option
+- Credentials form exposes AWS SDK default authentication method
+- Role ARN field accepts provided value when SDK method is selected
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test leverages AWS SDK default credential chain (environment-configured keys) for Access Key and Secret Key
+- Environment variable `E2E_AWS_PROVIDER_ROLE_ARN` must reference a valid assumable role
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid AWS account with permissions to assume the target role
+
+---
+
+## Test Case: `PROVIDER-E2E-012` - Add OCI Provider with API Key Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @oci
+
+**Description/Objective:** Validates the complete flow of adding a new OCI provider using API Key credentials.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- Remove any existing provider with the same Tenancy ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select OCI provider type
+4. Fill provider details (tenancy ID and alias)
+5. Verify OCI credentials page is loaded
+6. Fill OCI credentials (user ID, fingerprint, key content, region)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- OCI provider successfully added with API Key credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays OCI option
+- Provider details form accepts tenancy ID and alias
+- OCI credentials page loads
+- Credentials form accepts all required fields (user ID, fingerprint, key content, region)
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by tenancy ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for OCI credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid OCI account with API Key set up
+- API Key credential type is automatically used for OCI providers

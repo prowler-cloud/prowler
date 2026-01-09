@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "Ensure a Security Audit role has been created to conduct security audits",
   "Risk": "Creating an IAM role with a security audit policy provides a clear separation of duties between the security team and other teams within the organization. This helps to ensure that security-related activities are performed by authorized individuals with the appropriate expertise and access permissions.",
   "RelatedUrl": "",

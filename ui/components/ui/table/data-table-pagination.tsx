@@ -10,16 +10,15 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { getPaginationInfo } from "@/lib";
-import { MetaDataProps } from "@/types";
-
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../select/Select";
+} from "@/components/shadcn/select/select";
+import { getPaginationInfo } from "@/lib";
+import { MetaDataProps } from "@/types";
 
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
@@ -27,7 +26,7 @@ interface DataTablePaginationProps {
 }
 
 const baseLinkClass =
-  "relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green";
+  "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none";
 
 const disabledLinkClass =
   "text-gray-300 dark:text-gray-600 hover:bg-transparent hover:text-gray-300 dark:hover:text-gray-600 cursor-default pointer-events-none";
@@ -114,7 +113,7 @@ export function DataTablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-18">
+              <SelectTrigger className="h-8 w-[6rem]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">

@@ -130,11 +130,6 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Access Key ID"
             variant="bordered"
             isRequired
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_ACCESS_KEY_ID
-              ]
-            }
           />
           <CustomInput
             control={control}
@@ -145,11 +140,6 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Secret Access Key"
             variant="bordered"
             isRequired
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-              ]
-            }
           />
           <CustomInput
             control={control}
@@ -160,11 +150,6 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Session Token"
             variant="bordered"
             isRequired={false}
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_SESSION_TOKEN
-              ]
-            }
           />
         </>
       )}
@@ -207,9 +192,6 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the Role ARN"
             variant="bordered"
             isRequired={showRoleSection}
-            isInvalid={
-              !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
-            }
           />
           <CustomInput
             control={control}
@@ -222,9 +204,6 @@ export const AWSRoleCredentialsForm = ({
             defaultValue={externalId}
             isDisabled
             isRequired
-            isInvalid={
-              !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
-            }
           />
 
           <span className="text-default-500 text-xs">Optional fields</span>
@@ -238,11 +217,6 @@ export const AWSRoleCredentialsForm = ({
               placeholder="Enter the role session name"
               variant="bordered"
               isRequired={false}
-              isInvalid={
-                !!control._formState.errors[
-                  ProviderCredentialFields.ROLE_SESSION_NAME
-                ]
-              }
             />
             <CustomInput
               control={control}
@@ -253,11 +227,6 @@ export const AWSRoleCredentialsForm = ({
               placeholder="Enter the session duration (default: 3600 seconds)"
               variant="bordered"
               isRequired={false}
-              isInvalid={
-                !!control._formState.errors[
-                  ProviderCredentialFields.SESSION_DURATION
-                ]
-              }
             />
           </div>
         </>

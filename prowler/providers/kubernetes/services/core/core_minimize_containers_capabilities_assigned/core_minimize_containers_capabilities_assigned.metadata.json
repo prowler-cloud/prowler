@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with Linux capabilities assigned, adhering to the principle of least privilege and reducing the risk of privilege escalation.",
   "Risk": "Assigning unnecessary Linux capabilities to containers increases the risk of privilege escalation and security breaches.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

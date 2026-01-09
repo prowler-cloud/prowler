@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
+  "ResourceGroup": "devops",
   "Description": "**AWS CodeArtifact packages** with an **internal or unknown origin** are evaluated for their **package origin controls**. The check identifies packages where the `upstream` setting allows ingesting versions from external or upstream repositories.",
   "Risk": "Allowing upstream on internal packages enables **dependency confusion**: public repos can supply higher versions to builds, leading to malicious code execution and package tampering. This threatens **integrity**, exposes secrets and data (**confidentiality**), and may disrupt pipelines and services (**availability**).",
   "RelatedUrl": "",

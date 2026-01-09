@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:model/resource-id",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
   "Description": "Ensure that Amazon Bedrock model invocation logs are encrypted using AWS KMS to protect sensitive data in the request and response logs for all model invocations.",
   "Risk": "If Amazon Bedrock model invocation logs are not encrypted, sensitive data such as prompts, responses, and token usage could be exposed to unauthorized parties. This may lead to data breaches, security vulnerabilities, or unintended use of sensitive information.",
   "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html",

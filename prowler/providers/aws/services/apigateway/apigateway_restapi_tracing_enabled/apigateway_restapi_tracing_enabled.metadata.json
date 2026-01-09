@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsApiGatewayStage",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway REST API stages** have **AWS X-Ray active tracing** enabled to sample incoming requests and produce distributed traces across connected services.",
   "Risk": "Without X-Ray tracing, you lose end-to-end visibility, hindering detection of timeouts, errors, and anomalous latency.\n\nThis delays incident response and root-cause analysis, increasing MTTR and risking partial outages (availability) and undetected integration failures (integrity).",
   "RelatedUrl": "",

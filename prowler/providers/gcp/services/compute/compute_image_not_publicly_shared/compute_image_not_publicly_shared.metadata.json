@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_image_not_publicly_shared",
+  "CheckTitle": "Compute Engine disk image is not publicly shared",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Image",
+  "ResourceGroup": "compute",
+  "Description": "Custom disk images should not be shared publicly with **allAuthenticatedUsers**.\n\nNote: Per Google Cloud API restrictions, **allUsers** cannot be assigned to Compute Engine images. The security concern is **allAuthenticatedUsers**, which grants access to anyone with a Google account.\n\nPublicly shared disk images can expose application snapshots and sensitive data to anyone with a Google Cloud account, potentially leading to unauthorized access and data breaches.",
+  "Risk": "Publicly shared disk images can expose **sensitive data** and application configurations to unauthorized users.\n\n- Any authenticated GCP user can access the image content\n- Could lead to **data breaches** if images contain secrets or proprietary code\n- Attackers may use exposed images to understand application architecture",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/images/managing-access-custom-images",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/publicly-shared-disk-images.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute images remove-iam-policy-binding IMAGE_NAME --member='allAuthenticatedUsers' --role='ROLE_NAME'",
+      "NativeIaC": "",
+      "Other": "1. Go to the GCP Console\n2. Navigate to Compute Engine > Images\n3. Select the disk image\n4. Click on the INFO PANEL to view permissions\n5. Remove **allAuthenticatedUsers** bindings\n6. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_image_iam_binding\" \"example_resource\" {\n  project = \"your-project-id\"\n  image   = \"your-image-name\"\n  role    = \"roles/compute.imageUser\"\n  # Remove allAuthenticatedUsers and grant access only to specific members\n  members = [\n    \"user:specific-user@example.com\",\n  ]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Restrict access to custom disk images by removing the **allAuthenticatedUsers** IAM binding. Apply the principle of least privilege by granting access only to specific users, groups, or service accounts that require it.",
+      "Url": "https://hub.prowler.com/check/compute_image_not_publicly_shared"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -144,6 +144,7 @@ def generate_scan_compliance(
     Returns:
         None: This function modifies the compliance_overview in place.
     """
+
     for compliance_id in PROWLER_CHECKS[provider_type][check_id]:
         for requirement in compliance_overview[compliance_id]["requirements"].values():
             if check_id in requirement["checks"]:

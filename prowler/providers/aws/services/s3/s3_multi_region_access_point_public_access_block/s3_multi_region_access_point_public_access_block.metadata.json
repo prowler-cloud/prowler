@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:s3:region:account-id:accesspoint/access-point-name",
   "Severity": "high",
   "ResourceType": "AwsS3AccessPoint",
+  "ResourceGroup": "storage",
   "Description": "Ensures that public access is blocked on S3 Access Points.",
   "Risk": "Leaving S3 multi region access points open to the public in AWS can lead to data exposure, breaches, compliance violations, unauthorized access, and data integrity issues.",
   "RelatedUrl": "https://aws.amazon.com/es/getting-started/hands-on/getting-started-with-amazon-s3-multi-region-access-points/",

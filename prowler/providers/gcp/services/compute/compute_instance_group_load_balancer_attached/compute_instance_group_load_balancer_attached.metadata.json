@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_group_load_balancer_attached",
+  "CheckTitle": "Managed Instance Group is attached to a load balancer",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "compute.googleapis.com/InstanceGroupManager",
+  "ResourceGroup": "compute",
+  "Description": "Managed Instance Groups (MIGs) should be attached to load balancers via backend services to enable traffic distribution across instances. Load balancers provide health checking, autoscaling integration, and high availability features that are essential for production workloads.",
+  "Risk": "Without load balancer attachment, MIGs cannot distribute traffic evenly across instances, which impacts:\n\n- **Application availability** - No automatic failover when instances become unhealthy\n- **Scalability** - Autoscaling benefits are limited without proper traffic distribution\n- **Performance** - Uneven load distribution can cause hotspots and degraded user experience",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instance-groups",
+    "https://cloud.google.com/load-balancing/docs/backend-service",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/mig-load-balancer-check.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute backend-services add-backend BACKEND_SERVICE_NAME --instance-group=INSTANCE_GROUP_NAME --instance-group-zone=ZONE --global",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Network Services > Load balancing\n2. Create or edit an HTTP(S) load balancer\n3. Configure the backend service\n4. Select the target MIG from the instance group dropdown\n5. Configure port and balancing mode\n6. Complete the load balancer setup",
+      "Terraform": "```hcl\nresource \"google_compute_backend_service\" \"example\" {\n  name        = \"example-backend-service\"\n  protocol    = \"HTTP\"\n  port_name   = \"http\"\n  timeout_sec = 30\n\n  # Attach MIG as backend\n  backend {\n    group = google_compute_instance_group_manager.example.instance_group\n  }\n\n  health_checks = [google_compute_health_check.example.id]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach Managed Instance Groups to load balancers using backend services to enable traffic distribution, health checking, and seamless autoscaling. This ensures high availability and optimal performance for production workloads.",
+      "Url": "https://hub.prowler.com/check/compute_instance_group_load_balancer_attached"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

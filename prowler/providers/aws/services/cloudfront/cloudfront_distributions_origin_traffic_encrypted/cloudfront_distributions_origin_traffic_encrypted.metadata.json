@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** are evaluated for **TLS to origins**. The check ensures custom origins use `origin_protocol_policy`=`https-only`, or `match-viewer` only when the viewer protocol policy disallows HTTP. For S3 origins, it inspects the viewer protocol policy and flags `allow-all` as permitting non-encrypted paths.",
   "Risk": "Unencrypted origin links enable on-path interception and manipulation. Secrets, cookies, and PII can be exposed, and responses altered, undermining **confidentiality** and **integrity**. This increases chances of session hijacking, cache poisoning, and malicious content injection.",
   "RelatedUrl": "",

@@ -3,7 +3,8 @@
 import { Chip } from "@heroui/chip";
 import { useState } from "react";
 
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { Button, Card } from "@/components/shadcn";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { MembershipDetailData } from "@/types/users";
 
@@ -35,7 +36,7 @@ export const MembershipItem = ({
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>
-      <div className="min-w-[320px] rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+      <Card variant="inner" className="min-w-[320px] p-2">
         <div className="flex w-full items-center gap-4">
           <Chip size="sm" variant="flat" color="secondary">
             {membership.attributes.role}
@@ -57,20 +58,18 @@ export const MembershipItem = ({
           </div>
 
           {isOwner && (
-            <CustomButton
+            <Button
               type="button"
-              ariaLabel="Change name"
-              className="ml-auto text-blue-500"
-              variant="flat"
-              color="transparent"
+              variant="ghost"
               size="sm"
-              onPress={() => setIsEditOpen(true)}
+              onClick={() => setIsEditOpen(true)}
+              className="ml-auto"
             >
               Edit
-            </CustomButton>
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
     </>
   );
 };

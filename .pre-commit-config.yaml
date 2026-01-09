@@ -126,3 +126,12 @@ repos:
         entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/" --min-confidence 100 .'
         language: system
         files: '.*\.py'
+
+      - id: ui-checks
+        name: UI - Husky Pre-commit
+        description: "Run UI pre-commit checks (Claude Code validation + healthcheck)"
+        entry: bash -c 'cd ui && .husky/pre-commit'
+        language: system
+        files: '^ui/.*\.(ts|tsx|js|jsx|json|css)$'
+        pass_filenames: false
+        verbose: true

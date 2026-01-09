@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Sink",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure there is at least one sink used to export copies of all the log entries.",
   "Risk": "If sinks are not created, logs would be deleted after the configured retention period, and would not be backed up.",
   "RelatedUrl": "",

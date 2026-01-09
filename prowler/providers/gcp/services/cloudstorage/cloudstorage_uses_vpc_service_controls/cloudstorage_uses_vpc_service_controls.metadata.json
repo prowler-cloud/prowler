@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_uses_vpc_service_controls",
+  "CheckTitle": "Cloud Storage services are protected by VPC Service Controls",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Project",
+  "ResourceGroup": "governance",
+  "Description": "**GCP Projects** are evaluated to ensure they have **VPC Service Controls** enabled for Cloud Storage. VPC Service Controls establish security boundaries by restricting access to Cloud Storage resources to specific networks and trusted clients, preventing unauthorized data access and exfiltration.",
+  "Risk": "Projects without VPC Service Controls protection for Cloud Storage may be vulnerable to unauthorized data access and exfiltration, even with proper IAM policies in place. VPC Service Controls provide an additional layer of network-level security that restricts API access based on the context of the request.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/use-vpc-service-controls.html",
+    "https://cloud.google.com/vpc-service-controls/docs/create-service-perimeters"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1) Open Google Cloud Console → Security → VPC Service Controls\n2) Create a new service perimeter or select an existing one\n3) Add the relevant GCP projects to the perimeter's protected resources\n4) Add 'storage.googleapis.com' to the list of restricted services\n5) Configure appropriate ingress and egress rules\n6) Save the perimeter configuration",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable VPC Service Controls for all Cloud Storage buckets by adding their projects to a service perimeter with storage.googleapis.com as a restricted service. This prevents data exfiltration and ensures API calls are only allowed from authorized networks.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_uses_vpc_service_controls"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

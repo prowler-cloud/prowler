@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "VMInstance",
+  "ResourceGroup": "compute",
   "Description": "Check for Virtual Machine Instances with Public IP Addresses",
   "Risk": "To reduce your attack surface, Compute instances should not have public IP addresses. Instead, instances should be configured behind load balancers, to minimize the instance's exposure to the internet.",
   "RelatedUrl": "",

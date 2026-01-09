@@ -2,10 +2,10 @@
 
 import { Input } from "@heroui/input";
 import { Icon } from "@iconify/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField } from "@/components/ui/form";
 
 interface CustomInputProps<T extends FieldValues> {
   control: Control<T>;
@@ -21,9 +21,7 @@ interface CustomInputProps<T extends FieldValues> {
   defaultValue?: string;
   isReadOnly?: boolean;
   isRequired?: boolean;
-  isInvalid?: boolean;
   isDisabled?: boolean;
-  showFormMessage?: boolean;
 }
 
 export const CustomInput = <T extends FieldValues>({
@@ -40,9 +38,7 @@ export const CustomInput = <T extends FieldValues>({
   defaultValue,
   isReadOnly = false,
   isRequired = true,
-  isInvalid,
   isDisabled = false,
-  showFormMessage = true,
 }: CustomInputProps<T>) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -94,15 +90,15 @@ export const CustomInput = <T extends FieldValues>({
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <>
           <FormControl>
             <Input
               id={name}
               classNames={{
                 label:
-                  "tracking-tight font-light !text-default-500 text-xs z-0!",
-                input: "text-default-500 text-small",
+                  "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
+                input: "text-text-neutral-secondary text-small",
               }}
               isRequired={inputIsRequired}
               label={inputLabel}
@@ -111,18 +107,16 @@ export const CustomInput = <T extends FieldValues>({
               type={inputType}
               variant={variant}
               size={size}
-              isInvalid={isInvalid}
               defaultValue={defaultValue}
               endContent={endContent}
               isDisabled={isDisabled}
               isReadOnly={isReadOnly}
+              isInvalid={!!fieldState.error}
+              errorMessage={fieldState.error?.message}
               {...field}
               value={field.value ?? ""}
             />
           </FormControl>
-          {showFormMessage && (
-            <FormMessage className="text-system-error dark:text-system-error max-w-full text-xs" />
-          )}
         </>
       )}
     />

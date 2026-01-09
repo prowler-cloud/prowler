@@ -29,11 +29,11 @@ const MAP_CONFIG = {
 } as const;
 
 const MAP_COLORS = {
-  landFill: "var(--chart-border-emphasis)",
-  landStroke: "var(--chart-border)",
-  pointDefault: "#DB2B49",
-  pointSelected: "#86DA26",
-  pointHover: "#DB2B49",
+  landFill: "var(--border-neutral-tertiary)",
+  landStroke: "var(--border-neutral-secondary)",
+  pointDefault: "var(--bg-fail)",
+  pointSelected: "var(--bg-pass)",
+  pointHover: "var(--bg-fail)",
 } as const;
 
 const RISK_LEVELS = {
@@ -119,10 +119,10 @@ function MapTooltip({
   position: { x: number; y: number };
 }) {
   const CHART_COLORS = {
-    tooltipBorder: "var(--chart-border-emphasis)",
-    tooltipBackground: "var(--chart-background)",
-    textPrimary: "var(--chart-text-primary)",
-    textSecondary: "var(--chart-text-secondary)",
+    tooltipBorder: "var(--border-neutral-tertiary)",
+    tooltipBackground: "var(--bg-neutral-secondary)",
+    textPrimary: "var(--text-neutral-primary)",
+    textSecondary: "var(--text-neutral-secondary)",
   };
 
   return (
@@ -169,14 +169,14 @@ function MapTooltip({
 
 function EmptyState() {
   const CHART_COLORS = {
-    tooltipBorder: "var(--chart-border-emphasis)",
-    tooltipBackground: "var(--chart-background)",
-    textSecondary: "var(--chart-text-secondary)",
+    tooltipBorder: "var(--border-neutral-tertiary)",
+    tooltipBackground: "var(--bg-neutral-secondary)",
+    textSecondary: "var(--text-neutral-secondary)",
   };
 
   return (
     <div
-      className="flex h-full min-h-[400px] items-center justify-center rounded-lg border p-6"
+      className="flex h-full min-h-[400px] w-full items-center justify-center rounded-lg border p-6"
       style={{
         borderColor: CHART_COLORS.tooltipBorder,
         backgroundColor: CHART_COLORS.tooltipBackground,
@@ -198,7 +198,7 @@ function EmptyState() {
 
 function LoadingState({ height }: { height: number }) {
   const CHART_COLORS = {
-    textSecondary: "var(--chart-text-secondary)",
+    textSecondary: "var(--text-neutral-secondary)",
   };
 
   return (
@@ -382,10 +382,10 @@ export function MapChart({
   ]);
 
   const CHART_COLORS = {
-    tooltipBorder: "var(--chart-border-emphasis)",
-    tooltipBackground: "var(--chart-background)",
-    textPrimary: "var(--chart-text-primary)",
-    textSecondary: "var(--chart-text-secondary)",
+    tooltipBorder: "var(--border-neutral-tertiary)",
+    tooltipBackground: "var(--bg-neutral-secondary)",
+    textPrimary: "var(--text-neutral-primary)",
+    textSecondary: "var(--text-neutral-secondary)",
   };
 
   return (

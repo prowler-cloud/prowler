@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "Account settings contain a **Security alternate contact** in Alternate Contacts (name, `EmailAddress`, `PhoneNumber`) for targeted AWS security notifications.",
   "Risk": "Missing or outdated **security contact** can delay or prevent AWS advisories from reaching responders, increasing risk to:\n- Confidentiality: data exfiltration from undetected compromise\n- Integrity: unauthorized changes persist longer\n- Availability: resource abuse (e.g., cryptomining) and outages",
   "RelatedUrl": "",

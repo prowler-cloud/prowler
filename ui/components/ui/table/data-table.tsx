@@ -8,6 +8,9 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  OnChangeFn,
+  Row,
+  RowSelectionState,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -30,6 +33,11 @@ interface DataTableProviderProps<TData, TValue> {
   metadata?: MetaDataProps;
   customFilters?: FilterOption[];
   disableScroll?: boolean;
+  enableRowSelection?: boolean;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  /** Function to determine if a row can be selected */
+  getRowCanSelect?: (row: Row<TData>) => boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -37,6 +45,10 @@ export function DataTable<TData, TValue>({
   data,
   metadata,
   disableScroll = false,
+  enableRowSelection = false,
+  rowSelection,
+  onRowSelectionChange,
+  getRowCanSelect,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -45,26 +57,35 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     enableSorting: true,
+    // Use getRowCanSelect function if provided, otherwise use boolean
+    enableRowSelection: getRowCanSelect ?? enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange,
     manualPagination: true,
     state: {
       sorting,
       columnFilters,
+      rowSelection: rowSelection ?? {},
     },
   });
 
+  // Calculate selection key to force header re-render when selection changes
+  const selectionKey = rowSelection
+    ? Object.keys(rowSelection).filter((k) => rowSelection[k]).length
+    : 0;
+
   return (
     <>
-      <div className="rounded-large shadow-small dark:bg-prowler-blue-400 relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto p-4">
+      <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={`${headerGroup.id}-${selectionKey}`}>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>

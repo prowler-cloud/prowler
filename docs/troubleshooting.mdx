@@ -2,46 +2,87 @@
 title: 'Troubleshooting'
 ---
 
-- **Running `prowler` I get `[File: utils.py:15] [Module: utils]	CRITICAL: path/redacted: OSError[13]`**:
+## Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
 
-    That is an error related to file descriptors or opened files allowed by your operating system.
+That is an error related to file descriptors or opened files allowed by your operating system.
 
-    In macOS Ventura, the default value for the `file descriptors` is `256`. With the following command `ulimit -n 1000` you'll increase that value and solve the issue.
+In macOS Ventura, the default value for the `file descriptors` is `256`. With the following command `ulimit -n 1000` you'll increase that value and solve the issue.
 
-    If you have a different OS and you are experiencing the same, please increase the value of your `file descriptors`. You can check it running `ulimit -a | grep "file descriptors"`.
+If you have a different OS and you are experiencing the same, please increase the value of your `file descriptors`. You can check it running `ulimit -a | grep "file descriptors"`.
 
-    This error is also related with a lack of system requirements. To improve performance, Prowler stores information in memory so it may need to be run in a system with more than 1GB of memory.
-
+This error is also related with a lack of system requirements. To improve performance, Prowler stores information in memory so it may need to be run in a system with more than 1GB of memory.
 
 See section [Logging](/user-guide/cli/tutorials/logging) for further information or [contact us](/contact).
 
 ## Common Issues with Docker Compose Installation
 
-- **Problem adding AWS Provider using "Connect assuming IAM Role" in Docker (see [GitHub Issue #7745](https://github.com/prowler-cloud/prowler/issues/7745))**:
+### Problem adding AWS Provider using "Connect assuming IAM Role" in Docker
 
-    When running Prowler App via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
+See [GitHub Issue #7745](https://github.com/prowler-cloud/prowler/issues/7745) for more details.
 
-    **Workaround:**
+When running Prowler App via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
 
-      - Ensure your AWS credentials and configuration are available to the Docker container. You can do this by mounting your local `.aws` directory into the container. For example, in your `docker-compose.yaml`, add the following volume to the relevant services:
+**Workaround:**
 
-      ```yaml
-      volumes:
-        - "${HOME}/.aws:/home/prowler/.aws:ro"
-      ```
-      This should be added to the `api`, `worker`, and `worker-beat` services.
+- Ensure your AWS credentials and configuration are available to the Docker container. You can do this by mounting your local `.aws` directory into the container. For example, in your `docker-compose.yaml`, add the following volume to the relevant services:
 
-    - Create or update your `~/.aws/config` and `~/.aws/credentials` files with the appropriate profiles and roles. For example:
+```yaml
+volumes:
+  - "${HOME}/.aws:/home/prowler/.aws:ro"
+```
 
-      ```ini
-      [profile prowler-profile]
-      role_arn = arn:aws:iam::<account-id>:role/ProwlerScan
-      source_profile = default
-      ```
-      And set the environment variable in your `.env` file:
+This should be added to the `api`, `worker`, and `worker-beat` services.
 
-      ```env
-      AWS_PROFILE=prowler-profile
-      ```
+- Create or update your `~/.aws/config` and `~/.aws/credentials` files with the appropriate profiles and roles. For example:
 
-    - If you are scanning multiple AWS accounts, you may need to add multiple profiles to your AWS config. Note that this workaround is mainly for local testing; for production or multi-account setups, follow the [CloudFormation Template guide](https://github.com/prowler-cloud/prowler/issues/7745) and ensure the correct IAM roles and permissions are set up in each account.
+```ini
+[profile prowler-profile]
+role_arn = arn:aws:iam::<account-id>:role/ProwlerScan
+source_profile = default
+```
+
+And set the environment variable in your `.env` file:
+
+```env
+AWS_PROFILE=prowler-profile
+```
+
+- If you are scanning multiple AWS accounts, you may need to add multiple profiles to your AWS config. Note that this workaround is mainly for local testing; for production or multi-account setups, follow the [CloudFormation Template guide](https://github.com/prowler-cloud/prowler/issues/7745) and ensure the correct IAM roles and permissions are set up in each account.
+
+### Scans complete but reports are missing or compliance data is empty (`Too many open files` error)
+
+When running Prowler App via Docker Compose, you may encounter situations where scans complete successfully but reports are not available for download, compliance data shows as empty, or you see 404 errors when trying to access scan reports. Checking the `worker` container logs may reveal errors like `[Errno 24] Too many open files`.
+
+This issue occurs because the default file descriptor limits in Docker containers are too low for Prowler's operations.
+
+**Solution:**
+
+Add `ulimits` configuration to the `worker` and `worker-beat` services in your `docker-compose.yaml`:
+
+```yaml
+services:
+  worker:
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    # ... rest of service configuration
+
+  worker-beat:
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    # ... rest of service configuration
+```
+
+After making these changes, restart your Docker Compose stack:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+<Note>
+We are evaluating adding these values to the default `docker-compose.yml` to avoid this issue in future releases.
+</Note>

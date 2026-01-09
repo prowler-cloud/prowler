@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Dataset",
+  "ResourceGroup": "analytics",
   "Description": "Ensure That BigQuery Datasets Are Not Anonymously or Publicly Accessible.",
   "Risk": "Granting permissions to allUsers or allAuthenticatedUsers allows anyone to access the dataset. Such access might not be desirable if sensitive data is being stored in the dataset. Therefore, ensure that anonymous and/or public access to a dataset is not allowed.",
   "RelatedUrl": "",

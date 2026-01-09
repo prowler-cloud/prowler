@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_deletion_protection_enabled",
+  "CheckTitle": "VM instance has deletion protection enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "This check verifies whether GCP Compute Engine VM instances have **deletion protection** enabled to prevent accidental termination of production or critical workloads.",
+  "Risk": "Without deletion protection enabled, VM instances are vulnerable to **accidental deletion** by users with sufficient permissions.\n\nThis could result in:\n- **Service disruption** and downtime for critical applications\n- **Data loss** if persistent disks are also deleted\n- **Recovery delays** while recreating instances and restoring configurations",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instances/preventing-accidental-vm-deletion",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-deletion-protection.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances update INSTANCE_NAME --deletion-protection --zone=ZONE",
+      "NativeIaC": "",
+      "Other": "1. Open the Google Cloud Console\n2. Navigate to Compute Engine > VM instances\n3. Select the target VM instance\n4. Click Edit\n5. Under Deletion protection, check the box to enable\n6. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  # Enable deletion protection\n  deletion_protection = true\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection on all production and business-critical VM instances to prevent accidental termination. Regularly review instances to ensure critical workloads are protected.",
+      "Url": "https://hub.prowler.com/check/compute_instance_deletion_protection_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

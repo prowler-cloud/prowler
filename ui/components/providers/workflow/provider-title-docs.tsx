@@ -28,6 +28,7 @@ export const ProviderTitleDocs = ({
         <CustomLink
           href={getProviderHelpText(providerType as string).link}
           size="sm"
+          className="text-nowrap"
         >
           Read the docs
         </CustomLink>

@@ -1,0 +1,212 @@
+---
+title: 'Alibaba Cloud Provider'
+---
+
+This page details the [Alibaba Cloud](https://www.alibabacloud.com/) provider implementation in Prowler.
+
+By default, Prowler will audit all the Alibaba Cloud regions that are available. To configure it, follow the [Alibaba Cloud getting started guide](/user-guide/providers/alibabacloud/getting-started-alibabacloud).
+
+## Alibaba Cloud Provider Classes Architecture
+
+The Alibaba Cloud provider implementation follows the general [Provider structure](/developer-guide/provider). This section focuses on the Alibaba Cloud-specific implementation, highlighting how the generic provider concepts are realized for Alibaba Cloud in Prowler. For a full overview of the provider pattern, base classes, and extension guidelines, see [Provider documentation](/developer-guide/provider).
+
+### Main Class
+
+- **Location:** [`prowler/providers/alibabacloud/alibabacloud_provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/alibabacloud/alibabacloud_provider.py)
+- **Base Class:** Inherits from `Provider` (see [base class details](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py)).
+- **Purpose:** Central orchestrator for Alibaba Cloud-specific logic, session management, credential validation, and configuration.
+- **Key Alibaba Cloud Responsibilities:**
+    - Initializes and manages Alibaba Cloud sessions (supports Access Keys, STS Temporary Credentials, RAM Role Assumption, ECS RAM Role, OIDC Authentication, and Credentials URI).
+    - Validates credentials using STS GetCallerIdentity.
+    - Loads and manages configuration, mutelist, and fixer settings.
+    - Discovers and manages Alibaba Cloud regions.
+    - Provides properties and methods for downstream Alibaba Cloud service classes to access session, identity, and configuration data.
+
+### Data Models
+
+- **Location:** [`prowler/providers/alibabacloud/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/alibabacloud/models.py)
+- **Purpose:** Define structured data for Alibaba Cloud identity, session, credentials, and region info.
+- **Key Alibaba Cloud Models:**
+    - `AlibabaCloudCallerIdentity`: Stores caller identity information from STS GetCallerIdentity (account_id, principal_id, arn, identity_type).
+    - `AlibabaCloudIdentityInfo`: Holds Alibaba Cloud identity metadata including account ID, user info, profile, and audited regions.
+    - `AlibabaCloudCredentials`: Stores credentials (access_key_id, access_key_secret, security_token).
+    - `AlibabaCloudRegion`: Represents an Alibaba Cloud region with region_id and region_name.
+    - `AlibabaCloudSession`: Manages the session and provides methods to create service clients.
+
+### `AlibabaCloudService` (Service Base Class)
+
+- **Location:** [`prowler/providers/alibabacloud/lib/service/service.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/alibabacloud/lib/service/service.py)
+- **Purpose:** Abstract base class that all Alibaba Cloud service-specific classes inherit from. This implements the generic service pattern (described in [service page](/developer-guide/services#service-base-class)) specifically for Alibaba Cloud.
+- **Key Alibaba Cloud Responsibilities:**
+    - Receives an `AlibabacloudProvider` instance to access session, identity, and configuration.
+    - Manages regional clients for services that are region-specific.
+    - Provides `__threading_call__` method to make API calls in parallel by region or resource.
+    - Exposes common audit context (`audited_account`, `audited_account_name`, `audit_resources`, `audit_config`) to subclasses.
+
+### Exception Handling
+
+- **Location:** [`prowler/providers/alibabacloud/exceptions/exceptions.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/alibabacloud/exceptions/exceptions.py)
+- **Purpose:** Custom exception classes for Alibaba Cloud-specific error handling.
+- **Key Alibaba Cloud Exceptions:**
+    - `AlibabaCloudClientError`: General client errors
+    - `AlibabaCloudNoCredentialsError`: No credentials found
+    - `AlibabaCloudInvalidCredentialsError`: Invalid credentials provided
+    - `AlibabaCloudSetUpSessionError`: Session setup failures
+    - `AlibabaCloudAssumeRoleError`: RAM role assumption failures
+    - `AlibabaCloudInvalidRegionError`: Invalid region specified
+    - `AlibabaCloudHTTPError`: HTTP/API errors
+
+### Session and Utility Helpers
+
+- **Location:** [`prowler/providers/alibabacloud/lib/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/alibabacloud/lib/)
+- **Purpose:** Helpers for argument parsing, mutelist management, and other cross-cutting concerns.
+
+## Specific Patterns in Alibaba Cloud Services
+
+The generic service pattern is described in [service page](/developer-guide/services#service-structure-and-initialisation). You can find all the currently implemented services in the following locations:
+
+- Directly in the code, in location [`prowler/providers/alibabacloud/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/alibabacloud/services)
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
+
+The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used across all Alibaba Cloud services.
+
+### Alibaba Cloud Service Common Patterns
+
+- Services communicate with Alibaba Cloud using the official Alibaba Cloud Python SDKs. Documentation for individual services can be found in the [Alibaba Cloud SDK documentation](https://www.alibabacloud.com/help/en/sdk).
+- Every Alibaba Cloud service class inherits from `AlibabaCloudService`, ensuring access to session, identity, configuration, and client utilities.
+- The constructor (`__init__`) always calls `super().__init__` with the service name, provider, and optionally `global_service=True` for services that are not regional (e.g., RAM).
+- Resource containers **must** be initialized in the constructor. For regional services, resources are typically stored in dictionaries keyed by region and resource ID.
+- All Alibaba Cloud resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes.
+- Alibaba Cloud SDK functions are wrapped in try/except blocks, with specific handling for errors, always logging errors.
+- Regional services use `self.regional_clients` to maintain clients for each audited region.
+- The `__threading_call__` method is used for parallel execution across regions or resources.
+
+### Example Service Implementation
+
+```python
+from prowler.lib.logger import logger
+from prowler.providers.alibabacloud.lib.service.service import AlibabaCloudService
+
+
+class MyService(AlibabaCloudService):
+    def __init__(self, provider):
+        # Initialize parent class with service name
+        super().__init__("myservice", provider)
+
+        # Initialize resource containers
+        self.resources = {}
+
+        # Discover resources using threading
+        self.__threading_call__(self._describe_resources)
+
+    def _describe_resources(self, regional_client):
+        try:
+            region = regional_client.region
+            response = regional_client.describe_resources()
+
+            for resource in response.body.resources:
+                self.resources[resource.id] = MyResource(
+                    id=resource.id,
+                    name=resource.name,
+                    region=region,
+                    # ... other attributes
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+```
+
+## Specific Patterns in Alibaba Cloud Checks
+
+The Alibaba Cloud checks pattern is described in [checks page](/developer-guide/checks). You can find all the currently implemented checks:
+
+- Directly in the code, within each service folder, each check has its own folder named after the name of the check. (e.g. [`prowler/providers/alibabacloud/services/ram/ram_no_root_access_key/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/alibabacloud/services/ram/ram_no_root_access_key))
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
+
+The best reference to understand how to implement a new check is following the [check implementation documentation](/developer-guide/checks#creating-a-check) and taking other similar checks as reference.
+
+### Check Report Class
+
+The `CheckReportAlibabaCloud` class models a single finding for an Alibaba Cloud resource in a check report. It is defined in [`prowler/lib/check/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py) and inherits from the generic `Check_Report` base class.
+
+#### Purpose
+
+`CheckReportAlibabaCloud` extends the base report structure with Alibaba Cloud-specific fields, enabling detailed tracking of the resource, resource ID, ARN, and region associated with each finding.
+
+#### Constructor and Attribute Population
+
+When you instantiate `CheckReportAlibabaCloud`, you must provide the check metadata and a resource object. The class will attempt to automatically populate its Alibaba Cloud-specific attributes from the resource, using the following logic:
+
+- **`resource_id`**:
+    - Uses `resource.id` if present.
+    - Otherwise, uses `resource.name` if present.
+    - Defaults to an empty string if not available.
+
+- **`resource_arn`**:
+    - Uses `resource.arn` if present.
+    - Defaults to an empty string if not available.
+
+- **`region`**:
+    - Uses `resource.region` if present.
+    - Defaults to an empty string if not available.
+
+If the resource object does not contain the required attributes, you must set them manually in the check logic.
+
+Other attributes are inherited from the `Check_Report` class, from which you **always** have to set the `status` and `status_extended` attributes in the check logic.
+
+#### Example Usage
+
+```python
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
+from prowler.providers.alibabacloud.services.myservice.myservice_client import myservice_client
+
+
+class myservice_example_check(Check):
+    def execute(self) -> list[CheckReportAlibabaCloud]:
+        findings = []
+
+        for resource in myservice_client.resources.values():
+            report = CheckReportAlibabaCloud(
+                metadata=self.metadata(),
+                resource=resource
+            )
+            report.region = resource.region
+            report.resource_id = resource.id
+            report.resource_arn = f"acs:myservice::{myservice_client.audited_account}:resource/{resource.id}"
+
+            if resource.is_compliant:
+                report.status = "PASS"
+                report.status_extended = f"Resource {resource.name} is compliant."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"Resource {resource.name} is not compliant."
+
+            findings.append(report)
+
+        return findings
+```
+
+## Authentication Methods
+
+The Alibaba Cloud provider supports multiple authentication methods, prioritized in the following order:
+
+1. **Credentials URI** - Retrieve credentials from an external URI endpoint
+2. **OIDC Role Authentication** - For applications running in ACK with RRSA enabled
+3. **ECS RAM Role** - For ECS instances with attached RAM roles
+4. **RAM Role Assumption** - Cross-account access with role assumption
+5. **STS Temporary Credentials** - Pre-obtained temporary credentials
+6. **Permanent Access Keys** - Static access key credentials
+7. **Default Credential Chain** - Automatic credential discovery
+
+For detailed authentication configuration, see the [Authentication documentation](/user-guide/providers/alibabacloud/authentication).
+
+## Regions
+
+Alibaba Cloud has multiple regions across the globe. By default, Prowler audits all available regions. You can specify specific regions using the `--regions` CLI argument:
+
+```bash
+prowler alibabacloud --regions cn-hangzhou cn-shanghai
+```
+
+The list of supported regions is maintained in [`prowler/providers/alibabacloud/config.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/alibabacloud/config.py).

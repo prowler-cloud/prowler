@@ -2,11 +2,12 @@
 
 import { Select, SelectItem } from "@heroui/select";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useMemo } from "react";
+import { ReactElement } from "react";
 
 import { PROVIDER_TYPES, ProviderType } from "@/types/providers";
 
 import {
+  CustomProviderInputAlibabaCloud,
   CustomProviderInputAWS,
   CustomProviderInputAzure,
   CustomProviderInputGCP,
@@ -14,32 +15,25 @@ import {
   CustomProviderInputIac,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
+  CustomProviderInputMongoDBAtlas,
   CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
 const providerDisplayData: Record<
   ProviderType,
-  { label: string; component: React.ReactElement }
+  { label: string; component: ReactElement }
 > = {
   aws: {
     label: "Amazon Web Services",
     component: <CustomProviderInputAWS />,
   },
-  gcp: {
-    label: "Google Cloud Platform",
-    component: <CustomProviderInputGCP />,
-  },
   azure: {
     label: "Microsoft Azure",
     component: <CustomProviderInputAzure />,
   },
-  m365: {
-    label: "Microsoft 365",
-    component: <CustomProviderInputM365 />,
-  },
-  kubernetes: {
-    label: "Kubernetes",
-    component: <CustomProviderInputKubernetes />,
+  gcp: {
+    label: "Google Cloud Platform",
+    component: <CustomProviderInputGCP />,
   },
   github: {
     label: "GitHub",
@@ -49,9 +43,25 @@ const providerDisplayData: Record<
     label: "Infrastructure as Code",
     component: <CustomProviderInputIac />,
   },
+  kubernetes: {
+    label: "Kubernetes",
+    component: <CustomProviderInputKubernetes />,
+  },
+  m365: {
+    label: "Microsoft 365",
+    component: <CustomProviderInputM365 />,
+  },
+  mongodbatlas: {
+    label: "MongoDB Atlas",
+    component: <CustomProviderInputMongoDBAtlas />,
+  },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     component: <CustomProviderInputOracleCloud />,
+  },
+  alibabacloud: {
+    label: "Alibaba Cloud",
+    component: <CustomProviderInputAlibabaCloud />,
   },
 };
 
@@ -61,32 +71,27 @@ const dataInputsProvider = PROVIDER_TYPES.map((providerType) => ({
   value: providerDisplayData[providerType].component,
 }));
 
-export const CustomSelectProvider: React.FC = () => {
+export const CustomSelectProvider = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const applyProviderFilter = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("filter[provider_type]", value);
-      } else {
-        params.delete("filter[provider_type]");
-      }
-      router.push(`?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams],
-  );
+  const applyProviderFilter = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set("filter[provider_type]", value);
+    } else {
+      params.delete("filter[provider_type]");
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   const currentProvider = searchParams.get("filter[provider_type]") || "";
 
-  const selectedKeys = useMemo(() => {
-    return dataInputsProvider.some(
-      (provider) => provider.key === currentProvider,
-    )
-      ? [currentProvider]
-      : [];
-  }, [currentProvider]);
+  const selectedKeys = dataInputsProvider.some(
+    (provider) => provider.key === currentProvider,
+  )
+    ? [currentProvider]
+    : [];
 
   return (
     <Select

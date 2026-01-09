@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
+  "ResourceGroup": "container",
   "Description": "This check ensures that profiling is disabled in the Kubernetes Controller Manager, reducing the potential attack surface.",
   "Risk": "Enabling profiling can expose detailed system and program information, which could be exploited if accessed by unauthorized users.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",

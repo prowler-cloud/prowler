@@ -325,7 +325,7 @@ class Scan:
                             resource_name=report.resource_name,
                             resource_details=report.resource_details,
                             resource_tags={},  # IaC doesn't have resource tags
-                            region="global",  # IaC doesn't have regions
+                            region=report.region,  # IaC region is the branch name
                             compliance={},  # IaC doesn't have compliance mappings yet
                             raw=report.resource,  # The raw finding dict
                         )

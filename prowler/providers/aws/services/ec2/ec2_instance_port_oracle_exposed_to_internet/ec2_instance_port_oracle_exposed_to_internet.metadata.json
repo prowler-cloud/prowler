@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 1521, 2483 or 2484 (Oracle).",
   "Risk": "Oracle database servers are a high value target for attackers. Allowing internet access to these ports could lead to unauthorized access to the database.",
   "RelatedUrl": "",

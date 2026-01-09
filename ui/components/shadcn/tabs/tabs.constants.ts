@@ -8,9 +8,9 @@ const TRIGGER_STYLES = {
   active:
     "data-[state=active]:text-slate-900 dark:data-[state=active]:text-white",
   underline:
-    "after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-[#20B853] after:transition-all data-[state=active]:after:w-[calc(100%-theme(spacing.5))]",
+    "after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-emerald-400 after:transition-all data-[state=active]:after:w-[calc(100%-theme(spacing.5))]",
   focus:
-    "focus-visible:ring-2 focus-visible:ring-[#20B853] focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-offset-slate-950",
+    "focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-offset-slate-950",
   icon: "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 } as const;
 

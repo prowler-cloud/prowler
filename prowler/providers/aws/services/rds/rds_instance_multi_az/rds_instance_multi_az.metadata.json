@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
+  "ResourceGroup": "database",
   "Description": "Check if RDS instances have multi-AZ enabled.",
   "Risk": "In case of failure, with a single-AZ deployment configuration, should an availability zone specific database failure occur, Amazon RDS can not automatically fail over to the standby availability zone.",
   "RelatedUrl": "https://aws.amazon.com/rds/features/multi-az/",

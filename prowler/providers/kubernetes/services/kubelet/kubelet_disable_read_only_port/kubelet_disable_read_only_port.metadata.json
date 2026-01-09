@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the read-only port of the Kubelet is disabled by verifying that the --read-only-port argument is set to 0. Disabling the read-only port is crucial to prevent unauthenticated access to sensitive cluster data.",
   "Risk": "If the read-only port is open, it could allow unauthenticated access to sensitive cluster information.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationInstance",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS replication instances** are evaluated for the `auto_minor_version_upgrade` setting to confirm **automatic minor engine updates** are enabled during the maintenance window.",
   "Risk": "Without **automatic minor upgrades**, DMS engines can miss security patches and fixes, enabling exploitation of known flaws and instability.\n- Confidentiality: exposure via unpatched components\n- Integrity: replication errors or data drift\n- Availability: outages during migration or CDC",
   "RelatedUrl": "",

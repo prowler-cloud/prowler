@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "API Key",
+  "ResourceGroup": "IAM",
   "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. If they are in use it is recommended to rotate API keys every 90 days.",
   "Risk": "Once a Google Cloud API key is compromised, it can be used indefinitely unless the project owner revokes or regenerates that key.",
   "RelatedUrl": "",

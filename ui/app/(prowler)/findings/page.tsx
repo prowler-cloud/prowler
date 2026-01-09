@@ -1,5 +1,5 @@
 import { Spacer } from "@heroui/spacer";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
   getFindings,
@@ -11,11 +11,10 @@ import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  ColumnFindings,
+  FindingsTableWithSelection,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   createScanDetailsMapping,
@@ -24,8 +23,8 @@ import {
   hasDateOrScanFilter,
 } from "@/lib";
 import {
-  createProviderDetailsMapping,
-  extractProviderUIDs,
+  createProviderDetailsMappingById,
+  extractProviderIds,
 } from "@/lib/provider-helpers";
 import { FilterEntity, ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
@@ -53,17 +52,18 @@ export default async function Findings({
     getScans({ pageSize: 50 }),
   ]);
 
-  // Extract unique regions and services from the new endpoint
+  // Extract unique regions, services, categories from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
 
-  // Extract provider UIDs and details using helper functions
-  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  // Extract provider IDs and details using helper functions
+  const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
-        [uid: string]: FilterEntity;
+    ? (createProviderDetailsMappingById(providerIds, providersData) as {
+        [id: string]: FilterEntity;
       }[])
     : [];
 
@@ -78,14 +78,14 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   const scanDetails = createScanDetailsMapping(
-    completedScans,
+    completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
       <FindingsFilters
-        providerUIDs={providerUIDs}
+        providerIds={providerIds}
         providerDetails={providerDetails}
         completedScans={completedScans || []}
         completedScanIds={completedScanIds}
@@ -93,6 +93,7 @@ export default async function Findings({
         uniqueRegions={uniqueRegions}
         uniqueServices={uniqueServices}
         uniqueResourceTypes={uniqueResourceTypes}
+        uniqueCategories={uniqueCategories}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
@@ -164,9 +165,7 @@ const SSRDataTable = async ({
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={Date.now()}
-        columns={ColumnFindings}
+      <FindingsTableWithSelection
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}
       />

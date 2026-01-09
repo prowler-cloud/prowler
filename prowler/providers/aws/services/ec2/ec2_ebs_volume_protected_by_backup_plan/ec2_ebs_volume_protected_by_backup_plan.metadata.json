@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:volume/volume-id",
   "Severity": "low",
   "ResourceType": "AwsEc2Volume",
+  "ResourceGroup": "storage",
   "Description": "Evaluates if an Amazon EBS volume in in-use state is covered by a backup plan. The check fails if an EBS volume isn't covered by a backup plan. If you set the backupVaultLockCheck parameter equal to true, the control passes only if the EBS volume is backed up in an AWS Backup locked vault.",
   "Risk": "Without backup coverage, Amazon EBS volumes are vulnerable to data loss or deletion, reducing the resilience of your systems and making recovery from incidents more difficult.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ebs-resources-protected-by-backup-plan.html",

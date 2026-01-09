@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** with `S3OriginConfig` should reference existing **S3 bucket origins** (excluding static website hosting).\n\nIdentifies origins where the configured bucket name does not exist.",
   "Risk": "**Dangling S3 origins** allow potential **bucket takeover**: an attacker could create the missing bucket and have CloudFront retrieve attacker-controlled objects *if access isn't restricted*.\n\nThis threatens **integrity** (content spoofing, cache poisoning) and **availability** (errors/timeouts), undermining user trust.",
   "RelatedUrl": "",

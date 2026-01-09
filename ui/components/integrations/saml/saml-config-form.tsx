@@ -12,8 +12,9 @@ import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
+import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomServerInput } from "@/components/ui/custom";
+import { CustomServerInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
@@ -293,75 +294,76 @@ export const SamlConfigForm = ({
         }}
       />
 
-      <div className="flex flex-col gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-        <h3 className="text-lg font-semibold">
+      <Card variant="inner">
+        <CardHeader className="mb-2">
           Identity Provider Configuration
-        </h3>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                ACS URL:
+              </span>
+              <SnippetChip
+                value={acsUrl}
+                ariaLabel="Copy ACS URL to clipboard"
+                className="h-10 w-full"
+              />
+            </div>
 
-        <div className="flex flex-col gap-4">
-          <div>
-            <span className="text-default-500 mb-2 block text-sm font-medium">
-              ACS URL:
-            </span>
-            <SnippetChip
-              value={acsUrl}
-              ariaLabel="Copy ACS URL to clipboard"
-              className="w-full"
-            />
-          </div>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Audience:
+              </span>
+              <SnippetChip
+                value="urn:prowler.com:sp"
+                ariaLabel="Copy Audience to clipboard"
+                className="h-10 w-full"
+              />
+            </div>
 
-          <div>
-            <span className="text-default-500 mb-2 block text-sm font-medium">
-              Audience:
-            </span>
-            <SnippetChip
-              value="urn:prowler.com:sp"
-              ariaLabel="Copy Audience to clipboard"
-              className="w-full"
-            />
-          </div>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Name ID Format:
+              </span>
+              <span className="w-full text-sm text-gray-600 dark:text-gray-400">
+                urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+              </span>
+            </div>
 
-          <div>
-            <span className="text-default-500 mb-2 block text-sm font-medium">
-              Name ID Format:
-            </span>
-            <span className="text-default-600 w-full text-sm">
-              urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
-            </span>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Supported Assertion Attributes:
+              </span>
+              <ul className="ml-4 flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+                <li>• firstName</li>
+                <li>• lastName</li>
+                <li>• userType</li>
+                <li>• organization</li>
+              </ul>
+              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                <strong>Note:</strong> The userType attribute will be used to
+                assign the user&apos;s role. If the role does not exist, one
+                will be created with minimal permissions. You can assign
+                permissions to roles on the{" "}
+                <CustomLink href="/roles" target="_self">
+                  <span>Roles</span>
+                </CustomLink>{" "}
+                page.
+              </p>
+            </div>
           </div>
-
-          <div>
-            <span className="text-default-500 mb-2 block text-sm font-medium">
-              Supported Assertion Attributes:
-            </span>
-            <ul className="text-default-600 ml-4 flex flex-col gap-1 text-sm">
-              <li>• firstName</li>
-              <li>• lastName</li>
-              <li>• userType</li>
-              <li>• organization</li>
-            </ul>
-            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-              <strong>Note:</strong> The userType attribute will be used to
-              assign the user&apos;s role. If the role does not exist, one will
-              be created with minimal permissions. You can assign permissions to
-              roles on the{" "}
-              <CustomLink href="/roles" target="_self">
-                <span>Roles</span>
-              </CustomLink>{" "}
-              page.
-            </p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
       <div className="flex flex-col items-start gap-2">
-        <span className="text-default-500 text-xs">
+        <span className="text-xs text-gray-700 dark:text-gray-300">
           Metadata XML File <span className="text-red-500">*</span>
         </span>
-        <CustomButton
+        <Button
           type="button"
-          ariaLabel="Select Metadata XML File"
-          isDisabled={isPending}
-          onPress={() => {
+          variant="outline"
+          disabled={isPending}
+          onClick={() => {
             const fileInput = document.getElementById(
               "metadata_xml_file",
             ) as HTMLInputElement;
@@ -369,8 +371,7 @@ export const SamlConfigForm = ({
               fileInput.click();
             }
           }}
-          startContent={<AddIcon size={20} />}
-          className={`rounded-medium text-default-500 h-10 justify-start border-2 ${
+          className={`justify-start gap-2 ${
             (
               clientErrors.metadata_xml === null
                 ? undefined
@@ -379,10 +380,11 @@ export const SamlConfigForm = ({
               ? "border-red-500"
               : uploadedFile
                 ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                : "border-default-200"
+                : ""
           }`}
         >
-          <span className="text-small">
+          <AddIcon size={20} />
+          <span className="text-sm">
             {uploadedFile ? (
               <span className="flex items-center gap-2">
                 <span className="max-w-36 truncate">{uploadedFile.name}</span>
@@ -391,7 +393,7 @@ export const SamlConfigForm = ({
               "Choose File"
             )}
           </span>
-        </CustomButton>
+        </Button>
 
         <input
           type="file"

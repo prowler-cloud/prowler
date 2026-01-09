@@ -4,7 +4,41 @@ title: 'Getting Started with Oracle Cloud Infrastructure (OCI)'
 
 Prowler supports security scanning of Oracle Cloud Infrastructure (OCI) environments. This guide will help you get started with using Prowler to audit your OCI tenancy.
 
-## Prerequisites
+## Prowler Cloud
+
+The following steps apply to Prowler Cloud and the self-hosted Prowler App.
+
+### Step 1: Collect OCI Identifiers
+1. Sign in to the [OCI Console](https://cloud.oracle.com/) and open **Tenancy Details** to copy the Tenancy OCID.
+2. Go to **Identity & Security** → **Users**, select the principal that owns the API key, and copy the **User OCID**.
+3. Generate or locate the API key fingerprint and private key for that user. Follow the [Config File Authentication steps](/user-guide/providers/oci/authentication#config-file-authentication-manual-api-key-setup) to create or rotate the key pair and copy the fingerprint.
+4. Note the **Region** identifier to scan (for example, `us-ashburn-1`).
+
+### Step 2: Access Prowler Cloud or Prowler App
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Go to **Configuration** → **Cloud Providers** and click **Add Cloud Provider**.
+![Add OCI Cloud Provider](./images/oci-add-cloud-provider.png)
+3. Select **Oracle Cloud** and enter the **Tenancy OCID** and an optional alias, then choose **Next**.
+![Add OCI Cloud Tenancy](./images/oci-add-tenancy.png)
+
+### Step 3: Add OCI API Key Credentials
+Prowler App connects to OCI with API key credentials. Provide:
+
+- **User OCID** for the API key owner
+- **Fingerprint** of the API key
+- **Region** (for example, `us-ashburn-1`)
+- **Private Key Content** (paste the full PEM value)
+- **Passphrase (Optional)** if the private key is encrypted
+
+Select **Next**, then **Launch Scan** to validate the connection and start the first OCI scan. The private key content is encoded for secure transmission.
+
+![Add OCI API Key Credentials](./images/oci-add-api-key-credentials.png)
+
+---
+
+## Prowler CLI
+
+### Prerequisites
 
 Before you begin, ensure you have:
 
@@ -22,13 +56,13 @@ Before you begin, ensure you have:
 
 3. **OCI Account Access** with appropriate permissions to read resources in your tenancy.
 
-## Authentication
+### Authentication
 
-Prowler supports multiple authentication methods for OCI. For detailed authentication setup, see the [OCI Authentication Guide](./authentication.mdx).
+Prowler supports multiple authentication methods for OCI. For detailed authentication setup, see the [OCI Authentication Guide](./authentication).
 
 **Note:** OCI Session Authentication and Config File Authentication both use the same `~/.oci/config` file. The difference is how the config file is generated - automatically via browser (session auth) or manually with API keys.
 
-### Quick Start: OCI Session Authentication (Recommended)
+#### Quick Start: OCI Session Authentication (Recommended)
 
 The easiest and most secure method is using OCI session authentication, which automatically generates your config file via browser login.
 
@@ -71,13 +105,13 @@ The easiest and most secure method is using OCI session authentication, which au
    prowler oci
    ```
 
-### Alternative: Manual API Key Setup
+#### Alternative: Manual API Key Setup
 
-If you prefer to manually generate API keys instead of using browser-based session authentication, see the detailed instructions in the [Authentication Guide](./authentication.mdx#config-file-authentication-manual-api-key-setup).
+If you prefer to manually generate API keys instead of using browser-based session authentication, see the detailed instructions in the [Authentication Guide](./authentication#config-file-authentication-manual-api-key-setup).
 
 **Note:** Both methods use the same `~/.oci/config` file - the difference is that manual setup uses static API keys while session authentication uses temporary session tokens.
 
-#### Using a Specific Profile
+##### Using a Specific Profile
 
 If you have multiple profiles in your OCI config:
 
@@ -85,13 +119,13 @@ If you have multiple profiles in your OCI config:
 prowler oci --profile production
 ```
 
-#### Using a Custom Config File
+##### Using a Custom Config File
 
 ```bash
 prowler oci --config-file /path/to/custom/config
 ```
 
-### 2. Instance Principal Authentication
+#### Instance Principal Authentication
 
 **IMPORTANT:** This authentication method **only works when Prowler is running inside an OCI compute instance**. If you're running Prowler from your local machine, use [OCI Session Authentication](#quick-start-oci-session-authentication-recommended) instead.
 
@@ -110,39 +144,39 @@ prowler oci --use-instance-principal
   Allow dynamic-group prowler-instances to read all-resources in tenancy
   ```
 
-## Basic Usage
+### Basic Usage
 
-### Scan Entire Tenancy
+#### Scan Entire Tenancy
 
 ```bash
 prowler oci
 ```
 
-### Scan Specific Region
+#### Scan Specific Region
 
 ```bash
 prowler oci --region us-phoenix-1
 ```
 
-### Scan Specific Compartments
+#### Scan Specific Compartments
 
 ```bash
 prowler oci --compartment-id ocid1.compartment.oc1..example1 ocid1.compartment.oc1..example2
 ```
 
-### Run Specific Checks
+#### Run Specific Checks
 
 ```bash
 prowler oci --check identity_password_policy_minimum_length_14
 ```
 
-### Run Specific Services
+#### Run Specific Services
 
 ```bash
 prowler oci --service identity network
 ```
 
-### Compliance Frameworks
+#### Compliance Frameworks
 
 Run CIS OCI Foundations Benchmark v3.0:
 
@@ -150,11 +184,11 @@ Run CIS OCI Foundations Benchmark v3.0:
 prowler oci --compliance cis_3.0_oci
 ```
 
-## Required Permissions
+### Required Permissions
 
 Prowler requires **read-only** permissions to audit your OCI tenancy. Below are the minimum required permissions:
 
-### Tenancy-Level Policy
+#### Tenancy-Level Policy
 
 Create a group `prowler-users` and add your user to it, then create this policy:
 
@@ -167,7 +201,7 @@ Allow group prowler-users to read cloud-guard-problems in tenancy
 Allow group prowler-users to read cloud-guard-targets in tenancy
 ```
 
-### Service-Specific Permissions
+#### Service-Specific Permissions
 
 For more granular control, you can grant specific permissions:
 
@@ -217,33 +251,33 @@ Allow group prowler-users to inspect ons-subscriptions in tenancy
 Allow group prowler-users to inspect rules in tenancy
 ```
 
-## Output Formats
+### Output Formats
 
 Prowler supports multiple output formats for OCI:
 
-### JSON
+#### JSON
 ```bash
 prowler oci --output-formats json
 ```
 
-### CSV
+#### CSV
 ```bash
 prowler oci --output-formats csv
 ```
 
-### HTML
+#### HTML
 ```bash
 prowler oci --output-formats html
 ```
 
-### Multiple Formats
+#### Multiple Formats
 ```bash
 prowler oci --output-formats json csv html
 ```
 
-## Common Scenarios
+### Common Scenarios
 
-### Security Assessment
+#### Security Assessment
 
 Full security assessment with CIS compliance:
 
@@ -254,7 +288,7 @@ prowler oci \
   --output-directory ./oci-assessment-$(date +%Y%m%d)
 ```
 
-### Continuous Monitoring
+#### Continuous Monitoring
 
 Run specific security-critical checks:
 
@@ -266,7 +300,7 @@ prowler oci \
   --output-formats json
 ```
 
-### Compartment-Specific Audit
+#### Compartment-Specific Audit
 
 Audit a specific project compartment:
 
@@ -277,9 +311,9 @@ prowler oci \
   --region us-ashburn-1
 ```
 
-## Troubleshooting
+### Troubleshooting
 
-### Authentication Issues
+#### Authentication Issues
 
 **Error: "Could not find a valid config file"**
 - Ensure `~/.oci/config` exists and is properly formatted
@@ -291,23 +325,23 @@ prowler oci \
 - Ensure the public key is uploaded to your OCI user account
 - Check that the private key file is accessible
 
-### Permission Issues
+#### Permission Issues
 
 **Error: "Authorization failed or requested resource not found"**
 - Verify your user has the required policies (see [Required Permissions](#required-permissions))
 - Check that policies apply to the correct compartments
 - Ensure policies are not restricted by conditions that exclude your user
 
-### Region Issues
+#### Region Issues
 
 **Error: "Invalid region"**
 - Check available regions: `prowler oci --list-regions`
 - Verify your tenancy is subscribed to the region
 - Use the region identifier (e.g., `us-ashburn-1`), not the display name
 
-## Advanced Usage
+### Advanced Usage
 
-### Using Mutelist
+#### Using Mutelist
 
 Create a mutelist file to suppress specific findings:
 
@@ -329,7 +363,7 @@ Run with mutelist:
 prowler oci --mutelist-file oci-mutelist.yaml
 ```
 
-### Custom Checks Metadata
+#### Custom Checks Metadata
 
 Override check metadata:
 
@@ -346,7 +380,7 @@ Run with custom metadata:
 prowler oci --custom-checks-metadata-file custom-metadata.yaml
 ```
 
-### Filtering by Status
+#### Filtering by Status
 
 Only show failed checks:
 
@@ -354,7 +388,7 @@ Only show failed checks:
 prowler oci --status FAIL
 ```
 
-### Filtering by Severity
+#### Filtering by Severity
 
 Only show critical and high severity findings:
 
@@ -362,13 +396,13 @@ Only show critical and high severity findings:
 prowler oci --severity critical high
 ```
 
-## Next Steps
+### Next Steps
 
 - Learn about [Compliance Frameworks](/user-guide/cli/tutorials/compliance) in Prowler
 - Review [Prowler Output Formats](/user-guide/cli/tutorials/reporting)
 - Explore [Integrations](/user-guide/cli/tutorials/integrations) with SIEM and ticketing systems
 
-## Additional Resources
+### Additional Resources
 
 - [OCI Documentation](https://docs.oracle.com/en-us/iaas/Content/home.htm)
 - [CIS OCI Foundations Benchmark](https://www.cisecurity.org/benchmark/oracle_cloud)

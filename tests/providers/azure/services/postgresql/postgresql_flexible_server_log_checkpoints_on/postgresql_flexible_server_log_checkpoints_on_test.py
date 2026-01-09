@@ -41,14 +41,16 @@ class Test_postgresql_flexible_server_log_checkpoints_on:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="ON",
+                    active_directory_auth=None,
+                    entra_id_admins=[],
                     log_checkpoints="OFF",
                     log_connections="ON",
                     log_disconnections="ON",
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
-                    location="location",
                 )
             ]
         }
@@ -90,14 +92,16 @@ class Test_postgresql_flexible_server_log_checkpoints_on:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="ON",
+                    active_directory_auth=None,
+                    entra_id_admins=[],
                     log_checkpoints="ON",
                     log_connections="ON",
                     log_disconnections="ON",
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
-                    location="location",
                 )
             ]
         }

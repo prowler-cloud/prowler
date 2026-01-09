@@ -87,7 +87,7 @@ runs:
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: always()
       with:
-        name: trivy-scan-report-${{ inputs.image-name }}
+        name: trivy-scan-report-${{ inputs.image-name }}-${{ inputs.image-tag }}
         path: trivy-report.json
         retention-days: ${{ inputs.artifact-retention-days }}
 

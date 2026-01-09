@@ -3,11 +3,18 @@ import { Bell, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { TooltipData } from "../types";
-import { CHART_COLORS } from "./constants";
+
+interface MultiSeriesPayloadEntry {
+  color?: string;
+  name?: string;
+  value?: string | number;
+  dataKey?: string;
+  payload?: Record<string, string | number | undefined>;
+}
 
 interface ChartTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: MultiSeriesPayloadEntry[];
   label?: string;
   showColorIndicator?: boolean;
   colorIndicatorShape?: "circle" | "square";
@@ -24,17 +31,11 @@ export function ChartTooltip({
     return null;
   }
 
-  const data: TooltipData = payload[0].payload || payload[0];
+  const data: TooltipData = (payload[0].payload || payload[0]) as TooltipData;
   const color = payload[0].color || data.color;
 
   return (
-    <div
-      className="min-w-[200px] rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800"
-      style={{
-        borderColor: CHART_COLORS.tooltipBorder,
-        backgroundColor: CHART_COLORS.tooltipBackground,
-      }}
-    >
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
       <div className="flex items-center gap-2">
         {showColorIndicator && color && (
           <div
@@ -45,12 +46,12 @@ export function ChartTooltip({
             style={{ backgroundColor: color }}
           />
         )}
-        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+        <p className="text-text-neutral-primary text-sm font-semibold">
           {label || data.name}
         </p>
       </div>
 
-      <p className="mt-1 text-xs text-slate-900 dark:text-white">
+      <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
         {typeof data.value === "number"
           ? data.value.toLocaleString()
           : data.value}
@@ -59,8 +60,8 @@ export function ChartTooltip({
 
       {data.newFindings !== undefined && data.newFindings > 0 && (
         <div className="mt-1 flex items-center gap-2">
-          <Bell size={14} className="text-slate-600 dark:text-slate-400" />
-          <span className="text-xs text-slate-600 dark:text-slate-400">
+          <Bell size={14} className="text-text-neutral-secondary" />
+          <span className="text-text-neutral-secondary text-sm font-medium">
             {data.newFindings} New Findings
           </span>
         </div>
@@ -68,8 +69,8 @@ export function ChartTooltip({
 
       {data.new !== undefined && data.new > 0 && (
         <div className="mt-1 flex items-center gap-2">
-          <Bell size={14} className="text-slate-600 dark:text-slate-400" />
-          <span className="text-xs text-slate-600 dark:text-slate-400">
+          <Bell size={14} className="text-text-neutral-secondary" />
+          <span className="text-text-neutral-secondary text-sm font-medium">
             {data.new} New
           </span>
         </div>
@@ -77,17 +78,17 @@ export function ChartTooltip({
 
       {data.muted !== undefined && data.muted > 0 && (
         <div className="mt-1 flex items-center gap-2">
-          <VolumeX size={14} className="text-slate-600 dark:text-slate-400" />
-          <span className="text-xs text-slate-600 dark:text-slate-400">
+          <VolumeX size={14} className="text-text-neutral-secondary" />
+          <span className="text-text-neutral-secondary text-sm font-medium">
             {data.muted} Muted
           </span>
         </div>
       )}
 
       {data.change !== undefined && (
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+        <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
           <span className="font-bold">
-            {data.change > 0 ? "+" : ""}
+            {(data.change as number) > 0 ? "+" : ""}
             {data.change}%
           </span>{" "}
           Since Last Scan
@@ -110,26 +111,29 @@ export function MultiSeriesChartTooltip({
   }
 
   return (
-    <div className="min-w-[200px] rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800">
-      <p className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
+      <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
         {label}
       </p>
 
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry: MultiSeriesPayloadEntry, index: number) => (
         <div key={index} className="flex items-center gap-2">
           <div
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs text-slate-900 dark:text-white">
+          <span className="text-text-neutral-secondary text-sm font-medium">
             {entry.name}:
           </span>
-          <span className="text-xs font-semibold text-slate-900 dark:text-white">
+          <span className="text-text-neutral-secondary text-sm font-semibold">
             {entry.value}
           </span>
-          {entry.payload[`${entry.dataKey}_change`] && (
-            <span className="text-xs text-slate-600 dark:text-slate-400">
-              ({entry.payload[`${entry.dataKey}_change`] > 0 ? "+" : ""}
+          {entry.payload && entry.payload[`${entry.dataKey}_change`] && (
+            <span className="text-text-neutral-secondary text-sm font-medium">
+              (
+              {(entry.payload[`${entry.dataKey}_change`] as number) > 0
+                ? "+"
+                : ""}
               {entry.payload[`${entry.dataKey}_change`]}%)
             </span>
           )}

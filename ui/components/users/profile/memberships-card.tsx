@@ -1,5 +1,4 @@
-import { Card, CardBody, CardHeader } from "@heroui/card";
-
+import { Card, CardContent } from "@/components/shadcn";
 import { MembershipDetailData, TenantDetailData } from "@/types/users";
 
 import { MembershipItem } from "./membership-item";
@@ -14,16 +13,14 @@ export const MembershipsCard = ({
   isOwner: boolean;
 }) => {
   return (
-    <Card className="dark:bg-prowler-blue-400">
-      <CardHeader className="gap-2">
-        <div className="flex flex-col gap-1">
+    <Card variant="base" padding="none" className="p-4">
+      <CardContent>
+        <div className="mb-6 flex flex-col gap-1">
           <h4 className="text-lg font-bold">Organizations</h4>
           <p className="text-xs text-gray-500">
             Organizations this user is associated with
           </p>
         </div>
-      </CardHeader>
-      <CardBody>
         {memberships.length === 0 ? (
           <div className="text-sm text-gray-500">No memberships found.</div>
         ) : (
@@ -42,7 +39,7 @@ export const MembershipsCard = ({
             })}
           </div>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "MongoDBAtlasCluster",
+  "ResourceGroup": "database",
   "Description": "Ensure MongoDB Atlas clusters have authentication enabled to prevent unauthorized access",
   "Risk": "Without authentication enabled, MongoDB Atlas clusters may be vulnerable to unauthorized access, potentially exposing sensitive data or allowing malicious actions",
   "RelatedUrl": "",

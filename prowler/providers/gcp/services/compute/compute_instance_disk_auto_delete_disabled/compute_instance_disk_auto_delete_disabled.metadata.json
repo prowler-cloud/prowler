@@ -1,0 +1,36 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_disk_auto_delete_disabled",
+  "CheckTitle": "VM instance attached disks have auto-delete disabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "Description": "This check verifies whether GCP Compute Engine VM instances have **auto-delete** disabled for their attached persistent disks.\n\nWhen auto-delete is enabled, persistent disks are automatically removed when the associated VM instance is deleted, which can lead to unintended data loss.",
+  "Risk": "With auto-delete enabled, persistent disks are automatically deleted when the associated VM instance is terminated.\n\nThis could result in:\n- **Permanent data loss** if the instance is accidentally or intentionally deleted\n- **Recovery challenges** for mission-critical workloads\n- **Compliance violations** where data retention is required",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/disks/add-persistent-disk",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-auto-delete.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances set-disk-auto-delete INSTANCE_NAME --zone=ZONE --no-auto-delete --disk=DISK_NAME",
+      "NativeIaC": "",
+      "Other": "1. Open the Google Cloud Console\n2. Navigate to Compute Engine > VM instances\n3. Click the target VM instance name\n4. Click Edit\n5. In the Boot disk section, select 'Keep disk' from the 'When deleting instance' dropdown\n6. For Additional disks, click each disk and select 'Keep disk' under 'Deletion rule'\n7. Click Save",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  boot_disk {\n    # Disable auto-delete for the boot disk\n    auto_delete = false\n\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  attached_disk {\n    source      = google_compute_disk.example_disk.id\n    # Disable auto-delete for attached disks\n    auto_delete = false\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable `auto-delete` for all persistent disks attached to **production** and **business-critical** VM instances to prevent **accidental data loss**. Regularly review disk configurations to ensure data retention requirements are met.",
+      "Url": "https://hub.prowler.com/check/compute_instance_disk_auto_delete_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

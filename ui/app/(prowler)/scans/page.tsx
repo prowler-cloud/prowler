@@ -148,9 +148,12 @@ const SSRDataTableScans = async ({
     include: "provider",
   });
 
-  // Process scans with provider information from included data
+  const scans = scansData?.data;
+  const included = scansData?.included;
+  const meta = scansData && "meta" in scansData ? scansData.meta : undefined;
+
   const expandedScansData =
-    scansData?.data?.map((scan: any) => {
+    scans?.map((scan: ScanProps) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
@@ -158,8 +161,9 @@ const SSRDataTableScans = async ({
       }
 
       // Find the provider data in the included array
-      const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+      const providerData = included?.find(
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
@@ -181,7 +185,7 @@ const SSRDataTableScans = async ({
       key={`scans-${Date.now()}`}
       columns={ColumnGetScans}
       data={expandedScansData || []}
-      metadata={scansData?.meta}
+      metadata={meta}
     />
   );
 };

@@ -352,6 +352,7 @@ export const SecurityHubIntegrationForm = ({
                     isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">
                       Send only findings with status FAIL
@@ -370,6 +371,7 @@ export const SecurityHubIntegrationForm = ({
                     isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">Archive previous findings</span>
                   </Checkbox>
@@ -387,6 +389,7 @@ export const SecurityHubIntegrationForm = ({
                       isSelected={field.value}
                       onValueChange={field.onChange}
                       size="sm"
+                      color="default"
                     >
                       <span className="text-sm">
                         Use custom credentials (By default, AWS account ones

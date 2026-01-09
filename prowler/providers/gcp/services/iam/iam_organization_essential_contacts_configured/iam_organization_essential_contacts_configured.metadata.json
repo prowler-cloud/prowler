@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Organization",
+  "ResourceGroup": "governance",
   "Description": "It is recommended that Essential Contacts is configured to designate email addresses for Google Cloud services to notify of important technical or security information.",
   "Risk": "Google Cloud Platform (GCP) services, such as Cloud Billing, send out billing notifications to share important information with the cloud platform users. By default, these types of notifications are sent to members with certain Identity and Access Management (IAM) roles such as 'roles/owner' and 'roles/billing.admin'. With Essential Contacts, you can specify exactly who receives important notifications by providing your own list of contacts (i.e. email addresses).",
   "RelatedUrl": "",

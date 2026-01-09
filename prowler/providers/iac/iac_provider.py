@@ -45,11 +45,12 @@ class IacProvider(Provider):
         self.scan_repository_url = scan_repository_url
         self.scanners = scanners
         self.exclude_path = exclude_path
-        self.region = "global"
+        self.region = "branch"
         self.audited_account = "local-iac"
         self._session = None
         self._identity = "prowler"
         self._auth_method = "No auth"
+        self._temp_clone_dir = None  # Track temporary directory for cleanup
 
         if scan_repository_url:
             oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
@@ -79,6 +80,20 @@ class IacProvider(Provider):
                 logger.debug(
                     "No GitHub authentication method provided; proceeding without authentication."
                 )
+
+            # Clone repository and detect branch during initialization
+            # This ensures the branch is detected for both CLI and API usage
+            self._temp_clone_dir, branch_name = self._clone_repository(
+                self.scan_repository_url,
+                self.github_username,
+                self.personal_access_token,
+                self.oauth_app_token,
+            )
+            # Update scan_path to point to the cloned repository
+            self.scan_path = self._temp_clone_dir
+            # Update region with the detected branch name
+            self.region = branch_name
+            logger.info(f"Updated region to branch: {branch_name}")
 
         # Audit Config
         if config_content:
@@ -130,6 +145,20 @@ class IacProvider(Provider):
     @property
     def fixer_config(self):
         return self._fixer_config
+
+    def __del__(self):
+        """Cleanup temporary directory when provider is destroyed"""
+        self.cleanup()
+
+    def cleanup(self):
+        """Remove temporary cloned repository if it exists"""
+        if self._temp_clone_dir:
+            try:
+                logger.info(f"Removing temporary directory {self._temp_clone_dir}...")
+                shutil.rmtree(self._temp_clone_dir)
+                self._temp_clone_dir = None
+            except Exception as error:
+                logger.warning(f"Failed to remove temporary directory: {error}")
 
     def setup_session(self):
         """IAC provider doesn't need a session since it uses Trivy directly"""
@@ -208,6 +237,8 @@ class IacProvider(Provider):
             )
             if finding_status == "MUTED":
                 report.muted = True
+            # Set the region from the provider
+            report.region = self.region
             return report
         except Exception as error:
             logger.critical(
@@ -215,15 +246,50 @@ class IacProvider(Provider):
             )
             sys.exit(1)
 
+    def _detect_branch_name(self, repo_path: str) -> str:
+        """
+        Detect the current branch name from a cloned repository.
+
+        Args:
+            repo_path: Path to the cloned repository
+
+        Returns:
+            str: The branch name, defaulting to "main" if detection fails
+        """
+        try:
+            import os
+
+            # Read .git/HEAD to detect the current branch
+            head_file = os.path.join(repo_path, ".git", "HEAD")
+            if os.path.exists(head_file):
+                with open(head_file, "r") as f:
+                    content = f.read().strip()
+                    # Format: "ref: refs/heads/branch-name"
+                    if content.startswith("ref: refs/heads/"):
+                        branch_name = content[16:]  # Remove "ref: refs/heads/"
+                        logger.info(f"Detected branch: {branch_name}")
+                        return branch_name
+
+            # Fallback: return "main" as default
+            logger.warning("Could not detect branch name, defaulting to 'main'")
+            return "main"
+
+        except Exception as error:
+            logger.error(f"Error detecting branch name: {error}")
+            return "main"  # Safe fallback
+
     def _clone_repository(
         self,
         repository_url: str,
         github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         Clone a git repository to a temporary directory, supporting GitHub authentication.
+
+        Returns:
+            tuple[str, str]: (temporary_directory, branch_name)
         """
         try:
             original_url = repository_url
@@ -276,33 +342,36 @@ class IacProvider(Provider):
                 porcelain.clone(repository_url, temporary_directory, depth=1)
                 logger.info("Repository cloned successfully!")
 
-            return temporary_directory
+            # Detect the branch name from the cloned repository
+            branch_name = self._detect_branch_name(temporary_directory)
+
+            return temporary_directory, branch_name
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
     def run(self) -> List[CheckReportIAC]:
-        temp_dir = None
-        if self.scan_repository_url:
-            scan_dir = temp_dir = self._clone_repository(
-                self.scan_repository_url,
-                getattr(self, "github_username", None),
-                getattr(self, "personal_access_token", None),
-                getattr(self, "oauth_app_token", None),
-            )
-        else:
-            scan_dir = self.scan_path
+        """
+        Execute the IaC scan.
 
+        Note: Repository cloning and branch detection now happen in __init__(),
+        so this method just runs the scan and returns results.
+        For CLI compatibility, cleanup is still performed at the end.
+        """
         try:
             # Collect all batches from the generator
+            # scan_path now points to either the local directory or the cloned repo
             reports = []
-            for batch in self.run_scan(scan_dir, self.scanners, self.exclude_path):
+            for batch in self.run_scan(
+                self.scan_path, self.scanners, self.exclude_path
+            ):
                 reports.extend(batch)
         finally:
-            if temp_dir:
-                logger.info(f"Removing temporary directory {temp_dir}...")
-                shutil.rmtree(temp_dir)
+            # Clean up temporary directory if this was a repository scan
+            # This ensures CLI usage cleans up immediately after run()
+            if self._temp_clone_dir:
+                self.cleanup()
 
         return reports
 

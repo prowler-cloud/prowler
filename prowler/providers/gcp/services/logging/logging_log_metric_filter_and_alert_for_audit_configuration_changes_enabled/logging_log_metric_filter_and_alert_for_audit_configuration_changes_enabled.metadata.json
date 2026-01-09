@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure That the Log Metric Filter and Alerts Exist for Audit Configuration Changes.",
   "Risk": "Admin Activity audit logs and Data Access audit logs produced by the Google Cloud Audit Logs service can be extremely useful for security analysis, resource change tracking, and compliance auditing.",
   "RelatedUrl": "",

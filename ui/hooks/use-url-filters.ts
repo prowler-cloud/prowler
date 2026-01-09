@@ -16,19 +16,29 @@ export const useUrlFilters = () => {
     (key: string, value: string | string[] | null) => {
       const params = new URLSearchParams(searchParams.toString());
 
+      const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+
+      const currentValue = params.get(filterKey);
+      const nextValue = Array.isArray(value)
+        ? value.length > 0
+          ? value.join(",")
+          : null
+        : value === null
+          ? null
+          : value;
+
+      // If effective value is unchanged, do nothing (avoids redundant fetches)
+      if (currentValue === nextValue) return;
+
       // Only reset page to 1 if page parameter already exists
       if (params.has("page")) {
         params.set("page", "1");
       }
 
-      const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
-
-      if (value === null || (Array.isArray(value) && value.length === 0)) {
+      if (nextValue === null) {
         params.delete(filterKey);
-      } else if (Array.isArray(value)) {
-        params.set(filterKey, value.join(","));
       } else {
-        params.set(filterKey, value);
+        params.set(filterKey, nextValue);
       }
 
       router.push(`${pathname}?${params.toString()}`, { scroll: false });

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "CloudFront distributions are evaluated for a configured **default root object** that maps `/` requests to a specific file such as `index.html`, rather than forwarding root requests directly to the origin.",
   "Risk": "Without a **default root object**, root requests can reveal **origin listings** or unintended files, exposing data (**confidentiality**) and aiding reconnaissance. They may also return errors, lowering uptime (**availability**), or route unpredictably, risking wrong content delivery (**integrity**).",
   "RelatedUrl": "",

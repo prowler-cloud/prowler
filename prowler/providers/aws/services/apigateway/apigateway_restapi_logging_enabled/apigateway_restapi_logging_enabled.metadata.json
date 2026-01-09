@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayStage",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway REST API stages** with **stage logging** enabled to emit execution or access logs to CloudWatch",
   "Risk": "Without stage logging, API activity lacks visibility, hindering detection of abuse and incident response.\nAttackers can probe endpoints, exfiltrate data, or tamper integrations without traces, impacting confidentiality, integrity, and availability and blocking forensic investigation.",
   "RelatedUrl": "",

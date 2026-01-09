@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Column } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HTMLAttributes } from "react";
@@ -10,6 +9,7 @@ import {
   ArrowUpIcon,
   ChevronsLeftRightIcon,
 } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends HTMLAttributes<HTMLDivElement> {
@@ -75,13 +75,19 @@ export const DataTableColumnHeader = <TData, TValue>({
   };
 
   if (!column.getCanSort()) {
-    return <div>{title}</div>;
+    return (
+      <div className="text-text-neutral-primary flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none">
+        <span className="block break-normal whitespace-nowrap">{title}</span>
+      </div>
+    );
   }
 
   return (
     <Button
-      className="text-tiny text-foreground-500 flex h-10 w-full items-center justify-between bg-transparent px-0 text-left align-middle font-semibold whitespace-nowrap outline-none dark:text-slate-400"
-      onPress={getToggleSortingHandler}
+      variant="ghost"
+      size="sm"
+      className="text-text-neutral-primary hover:text-text-neutral-tertiary -ml-3 flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none hover:bg-transparent"
+      onClick={getToggleSortingHandler}
     >
       <span className="block break-normal whitespace-nowrap">{title}</span>
       {renderSortIcon()}

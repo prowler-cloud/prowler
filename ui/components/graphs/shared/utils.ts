@@ -1,4 +1,12 @@
-import { SEVERITY_COLORS } from "./constants";
+const SEVERITY_COLORS = {
+  Critical: "var(--color-bg-data-critical)",
+  High: "var(--color-bg-data-high)",
+  Medium: "var(--color-bg-data-medium)",
+  Low: "var(--color-bg-data-low)",
+  Informational: "var(--color-bg-data-info)",
+  Info: "var(--color-bg-data-info)",
+  Muted: "var(--color-bg-data-muted)",
+};
 
 export function getSeverityColorByRiskScore(riskScore: number): string {
   if (riskScore >= 7) return SEVERITY_COLORS.Critical;

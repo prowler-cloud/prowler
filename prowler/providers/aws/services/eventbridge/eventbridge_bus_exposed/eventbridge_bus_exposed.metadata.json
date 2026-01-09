@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEventsEventbus",
+  "ResourceGroup": "messaging",
   "Description": "EventBridge event bus resource policy is evaluated for **public access**, such as a `Principal: \"*\"` or overly broad conditions that allow any AWS account to publish events or manage rules on the bus.",
   "Risk": "Publicly accessible event buses enable **event injection** and unauthorized rule changes, undermining **integrity** and enabling **lateral movement**. Attackers can trigger downstream targets, causing **data exposure**, service disruption, and unexpected **costs** through high-volume events.",
   "RelatedUrl": "",

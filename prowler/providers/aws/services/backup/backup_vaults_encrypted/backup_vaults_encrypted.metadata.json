@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsBackupBackupVault",
+  "ResourceGroup": "storage",
   "Description": "**AWS Backup vaults** are evaluated for **encryption at rest** with **AWS KMS**. The finding highlights vaults without a configured KMS key protecting stored recovery points.",
   "Risk": "Unencrypted vaults allow recovery points to be read if storage or credentials are compromised, undermining **confidentiality** and enabling data exfiltration. Missing KMS controls also weaken **integrity** guarantees and impede forensic **auditability** during investigations.",
   "RelatedUrl": "",

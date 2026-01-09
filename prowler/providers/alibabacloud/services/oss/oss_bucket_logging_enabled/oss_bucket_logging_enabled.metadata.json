@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_logging_enabled",
+  "CheckTitle": "Logging is enabled for OSS buckets",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
+  "Description": "**OSS Bucket Access Logging** generates a log that contains access records for each request made to your OSS bucket.\n\nAn access log record contains details about the request, such as the request type, the resources specified in the request, and the time and date the request was processed. It is recommended that bucket access logging be enabled on OSS buckets.",
+  "Risk": "By enabling **OSS bucket logging** on target OSS buckets, it is possible to capture all events which may affect objects within target buckets.\n\nConfiguring logs to be placed in a separate bucket allows access to log information useful in **security** and **incident response** workflows.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/31900.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/enable-bucket-access-logging.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ossutil logging --method put oss://<bucket-name> --target-bucket <target-bucket> --target-prefix <prefix>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_oss_bucket_logging\" \"example\" {\n  bucket        = alicloud_oss_bucket.example.bucket\n  target_bucket = alicloud_oss_bucket.log_bucket.bucket\n  target_prefix = \"log/\"\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **OSS Console**\n2. In the bucket-list pane, click on a target OSS bucket\n3. Under **Log**, click **Configure**\n4. Click the **Enabled** checkbox\n5. Select `Target Bucket` from the list\n6. Enter a `Target Prefix`\n7. Click **Save**",
+      "Url": "https://hub.prowler.com/check/oss_bucket_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service directories** are configured to forward domain controller security event logs to **CloudWatch Logs** using log subscriptions.\n\nEvaluation identifies directories with or without this forwarding in place.",
   "Risk": "Without forwarding, visibility into AD security events is lost, delaying detection of suspicious authentications, policy changes, or privilege grants. Attackers can escalate and persist unnoticed, risking unauthorized access (confidentiality) and identity/policy manipulation (integrity), while hampering forensics and response.",
   "RelatedUrl": "",

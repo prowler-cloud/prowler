@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_preemptible_vm_disabled",
+  "CheckTitle": "VM instance is not configured as preemptible or Spot VM",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "This check verifies that VM instances are not configured as **preemptible** or **Spot VMs**.\n\nBoth preemptible and Spot VMs can be terminated by Google at any time when resources are needed elsewhere, making them unsuitable for production and business-critical workloads. Spot VMs are the newer version of preemptible VMs and are Google's recommended approach for interruptible workloads.",
+  "Risk": "Preemptible and Spot VMs may be **terminated at any time** by Google Cloud, causing:\n\n- **Service disruptions** for production workloads\n- **Data loss** if workloads are not fault-tolerant\n- **Availability issues** for business-critical applications\n\nThey are designed for batch jobs and fault-tolerant workloads only.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instances/preemptible",
+    "https://cloud.google.com/compute/docs/instances/spot",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-preemptibility.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Go to Compute Engine console\n2. Select the preemptible or Spot VM instance\n3. Create a machine image from the instance\n4. Create a new instance from the machine image\n5. During creation, set **VM provisioning model** to **Standard** (not Spot)\n6. Delete the original preemptible or Spot VM instance",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  scheduling {\n    # Use standard provisioning model for production workloads (not Spot)\n    provisioning_model = \"STANDARD\"\n    # Also ensure preemptible is false (legacy field)\n    preemptible = false\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use standard provisioning model for production and business-critical VM instances. Preemptible and Spot VMs should only be used for fault-tolerant, batch processing, or non-critical workloads that can handle interruptions.",
+      "Url": "https://hub.prowler.com/checks/compute_instance_preemptible_vm_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

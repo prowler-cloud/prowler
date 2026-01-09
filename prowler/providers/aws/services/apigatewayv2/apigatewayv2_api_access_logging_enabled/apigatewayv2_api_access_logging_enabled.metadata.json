@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Stage",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway v2** stages have **access logging** configured to capture request details and deliver them to a logging destination (e.g., CloudWatch Logs or Firehose). The evaluation looks for logging being enabled at each API stage.",
   "Risk": "Without access logs, API calls lack traceability, making it hard to spot credential misuse, route abuse, or anomalous traffic.\n\nThis reduces confidentiality and integrity through undetected data access or manipulation, and impacts availability by slowing incident response.",
   "RelatedUrl": "",

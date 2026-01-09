@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**AWS Lambda function URLs** are assessed to determine whether `AuthType` enforces **AWS IAM authentication** or permits **public invocation**.\n\nApplies to functions with a function URL and highlights when requests must be authenticated and authorized via IAM principals.",
   "Risk": "An unauthenticated function URL lets anyone invoke code:\n- Confidentiality: data exposure\n- Integrity: unintended changes via over-privileged logic\n- Availability: DoS/denial-of-wallet through high request rates\n\nAttackers can script calls, exfiltrate data, and pivot using the function's permissions.",
   "RelatedUrl": "",

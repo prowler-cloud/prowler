@@ -152,7 +152,6 @@ export const JiraIntegrationForm = ({
             placeholder="your-domain.atlassian.net"
             isRequired
             isDisabled={isLoading}
-            isInvalid={!!form.formState.errors.domain}
           />
         )}
 
@@ -165,7 +164,6 @@ export const JiraIntegrationForm = ({
             labelPlacement="inside"
             placeholder="your-domain.atlassian.net"
             isDisabled={isLoading}
-            isInvalid={!!form.formState.errors.domain}
           />
         )}
 
@@ -178,7 +176,6 @@ export const JiraIntegrationForm = ({
           placeholder="user@example.com"
           isRequired
           isDisabled={isLoading}
-          isInvalid={!!form.formState.errors.user_mail}
         />
 
         <CustomInput
@@ -190,7 +187,6 @@ export const JiraIntegrationForm = ({
           placeholder="Enter your Jira API token"
           isRequired
           isDisabled={isLoading}
-          isInvalid={!!form.formState.errors.api_token}
         />
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">

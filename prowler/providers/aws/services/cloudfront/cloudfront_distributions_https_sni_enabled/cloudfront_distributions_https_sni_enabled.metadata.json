@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** that use **custom SSL/TLS certificates** are configured to serve **HTTPS** using **Server Name Indication** (`ssl_support_method: sni-only`). It evaluates SNI use rather than dedicated IP during the TLS handshake.",
   "Risk": "Without **SNI**, distributions use dedicated IP SSL, driving higher costs and inefficient IP usage. Dedicated IPs can strain quotas and hinder scaling, reducing **availability**. Managing IP-bound certificates adds **operational risk** during rotations and expansions.",
   "RelatedUrl": "",

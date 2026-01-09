@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Google Cloud Storage buckets** are evaluated to ensure that **Usage and Storage Logs** are enabled. Enabling these logs provides detailed visibility into access requests, usage patterns, and storage activity within each bucket.",
   "Risk": "Buckets without Usage and Storage Logs enabled lack visibility into access and storage activity, which increases the risk of undetected data exfiltration, misuse, or configuration errors.",
   "RelatedUrl": "",

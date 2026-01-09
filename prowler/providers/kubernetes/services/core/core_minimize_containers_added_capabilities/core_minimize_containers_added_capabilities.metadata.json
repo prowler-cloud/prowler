@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with capabilities assigned beyond the default set, mitigating the risks of container breakout attacks.",
   "Risk": "Allowing containers with additional capabilities increases the risk of security breaches and container breakout attacks.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

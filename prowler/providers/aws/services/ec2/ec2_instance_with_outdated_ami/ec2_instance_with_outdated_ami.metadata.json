@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:instance/resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "This check identifies EC2 instances using outdated Amazon Machine Images (AMIs) by auditing instances to gather AMI IDs, comparing them against the latest available versions, verifying suppo and security update status, and checking for deprecation.",
   "Risk": "Using outdated AMIs can expose EC2 instances to security vulnerabilities, lack of support, and missing critical updates, increasing the risk of exploitation.",
   "RelatedUrl": "",

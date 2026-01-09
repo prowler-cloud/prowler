@@ -34,7 +34,6 @@ export const OracleCloudCredentialsForm = ({
         placeholder="ocid1.user.oc1..aaaaaaa..."
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.user}
       />
       <CustomInput
         control={control}
@@ -45,7 +44,6 @@ export const OracleCloudCredentialsForm = ({
         placeholder="Enter the API key fingerprint"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.fingerprint}
       />
       <CustomInput
         control={control}
@@ -56,7 +54,6 @@ export const OracleCloudCredentialsForm = ({
         placeholder="e.g. us-ashburn-1"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.region}
       />
       <CustomTextarea
         control={control}
@@ -67,7 +64,6 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         minRows={6}
         isRequired
-        isInvalid={!!control._formState.errors.key_content}
       />
       <CustomInput
         control={control}
@@ -78,7 +74,6 @@ export const OracleCloudCredentialsForm = ({
         placeholder="Enter passphrase if key is encrypted"
         variant="bordered"
         isRequired={false}
-        isInvalid={!!control._formState.errors.pass_phrase}
       />
       <div className="text-default-400 text-xs">
         Paste the raw content of your OCI private key file (PEM format). The key

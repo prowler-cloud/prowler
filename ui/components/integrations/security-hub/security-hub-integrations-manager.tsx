@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
@@ -17,14 +16,16 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
 interface SecurityHubIntegrationsManagerProps {
@@ -264,38 +265,33 @@ export const SecurityHubIntegrationsManager = ({
         title="Delete Security Hub Integration"
         description="This action cannot be undone. This will permanently delete your Security Hub integration."
       >
-        <div className="flex w-full justify-center gap-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
+            variant="ghost"
             size="lg"
-            onPress={() => {
+            onClick={() => {
               setIsDeleteOpen(false);
               setIntegrationToDelete(null);
             }}
-            isDisabled={isDeleting !== null}
+            disabled={isDeleting !== null}
           >
-            <span>Cancel</span>
-          </CustomButton>
+            Cancel
+          </Button>
 
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete"
-            className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting !== null}
-            startContent={!isDeleting && <Trash2Icon size={24} />}
-            onPress={() =>
+            disabled={isDeleting !== null}
+            onClick={() =>
               integrationToDelete &&
               handleDeleteIntegration(integrationToDelete.id)
             }
           >
+            {!isDeleting && <Trash2Icon size={24} />}
             {isDeleting ? "Deleting..." : "Delete"}
-          </CustomButton>
+          </Button>
         </div>
       </CustomAlertModal>
 
@@ -334,14 +330,10 @@ export const SecurityHubIntegrationsManager = ({
                 : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured`}
             </p>
           </div>
-          <CustomButton
-            color="action"
-            startContent={<PlusIcon size={16} />}
-            onPress={handleAddIntegration}
-            ariaLabel="Add integration"
-          >
+          <Button onClick={handleAddIntegration}>
+            <PlusIcon size={16} />
             Add Integration
-          </CustomButton>
+          </Button>
         </div>
 
         {isOperationLoading ? (
@@ -359,8 +351,8 @@ export const SecurityHubIntegrationsManager = ({
               const providerDetails = getProviderDetails(integration);
 
               return (
-                <Card key={integration.id} className="dark:bg-gray-800">
-                  <CardHeader className="pb-2">
+                <Card key={integration.id} variant="base">
+                  <CardHeader>
                     <IntegrationCardHeader
                       icon={<AWSSecurityHubIcon size={32} />}
                       title={providerDetails.displayName}
@@ -388,7 +380,7 @@ export const SecurityHubIntegrationsManager = ({
                       }}
                     />
                   </CardHeader>
-                  <CardBody className="pt-0">
+                  <CardContent className="pt-0">
                     <div className="flex flex-col gap-3">
                       {enabledRegions.length > 0 && (
                         <div className="flex flex-wrap gap-1">
@@ -397,7 +389,7 @@ export const SecurityHubIntegrationsManager = ({
                               key={region}
                               size="sm"
                               variant="flat"
-                              className="bg-default-100"
+                              className="bg-bg-neutral-secondary"
                             >
                               {region}
                             </Chip>
@@ -428,7 +420,7 @@ export const SecurityHubIntegrationsManager = ({
                         />
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               );
             })}

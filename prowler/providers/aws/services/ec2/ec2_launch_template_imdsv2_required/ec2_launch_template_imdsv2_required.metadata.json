@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "arn:aws:ec2:region:account-id:launch-template/resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2LaunchTemplate",
+  "ResourceGroup": "compute",
   "Description": "This control checks if Amazon EC2 launch templates are configured with IMDSv2 enabled and required. The control fails if IMDSv2 is not enabled or required in the launch template versions.",
   "Risk": "Without IMDSv2 required, EC2 instances may be vulnerable to metadata service attacks, allowing unauthorized access to instance metadata, potentially leading to compromise of instance credentials or other sensitive data.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",

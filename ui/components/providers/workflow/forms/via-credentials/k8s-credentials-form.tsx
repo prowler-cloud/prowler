@@ -27,7 +27,6 @@ export const KubernetesCredentialsForm = ({
         variant="bordered"
         minRows={10}
         isRequired
-        isInvalid={!!control._formState.errors.kubeconfig_content}
       />
     </>
   );

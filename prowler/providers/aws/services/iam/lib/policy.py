@@ -427,25 +427,33 @@ def is_policy_public(
                         has_public_access = True
 
                     # Check for cross-service confused deputy
-                    if check_cross_service_confused_deputy and (
+                    if check_cross_service_confused_deputy:
                         # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
-                        (
-                            ".amazonaws.com" in principal.get("Service", "")
-                            or ".amazon.com" in principal.get("Service", "")
-                            or "*" in principal.get("Service", "")
+
+                        svc = principal.get("Service", [])
+                        if isinstance(svc, str):
+                            services = [svc]
+                        elif isinstance(svc, list):
+                            services = [s for s in svc if isinstance(s, str)]
+                        else:
+                            services = []
+
+                        is_cross_service = any(
+                            s == "*"
+                            or s.endswith(".amazonaws.com")
+                            or s.endswith(".amazon.com")
+                            for s in services
                         )
-                        and (
-                            "secretsmanager.amazonaws.com"
-                            not in principal.get(
-                                "Service", ""
-                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
-                            or "eks.amazonaws.com"
-                            not in principal.get(
-                                "Service", ""
-                            )  # AWS ensures that resources called by EKS are executed in the same AWS account
+
+                        # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                        # AWS ensures that resources called by EKS are executed in the same AWS account
+                        is_exempt = any(
+                            s in {"secretsmanager.amazonaws.com", "eks.amazonaws.com"}
+                            for s in services
                         )
-                    ):
-                        has_public_access = True
+
+                        if is_cross_service and not is_exempt:
+                            has_public_access = True
 
                 if has_public_access and (
                     not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "oci:identity:tenancy",
   "Severity": "high",
   "ResourceType": "OciTenancy",
+  "ResourceGroup": "governance",
   "Description": "The root compartment is the top-level compartment in your tenancy and should be used only for management purposes. All other cloud resources should be created in child compartments to maintain proper organization, access control, and resource isolation.",
   "Risk": "Creating resources in the root compartment bypasses the benefits of compartmentalization, makes access control management difficult, violates the principle of least privilege, and increases the risk of unauthorized access to resources. It also makes it harder to implement effective IAM policies and resource governance.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",

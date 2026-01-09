@@ -410,6 +410,9 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # gcp.compute_instance_group_multiple_zones
+  # Minimum number of zones a MIG should span for high availability
+  mig_min_zones: 2
   max_unused_account_days: 30
 
 # Kubernetes Configuration

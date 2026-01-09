@@ -26,7 +26,7 @@ export const IacCredentialsForm = ({
         placeholder="Token for private repositories (optional)"
         variant="bordered"
         type="password"
-        isInvalid={!!control._formState.errors.access_token}
+        isRequired={false}
       />
     </>
   );

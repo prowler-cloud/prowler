@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**FSx for Windows File Server** file systems are evaluated for **Multi-AZ deployment**, determined when `SubnetIds` include more than one subnet in different Availability Zones.",
   "Risk": "Using **Single-AZ** creates a **single point of failure**. AZ outages, server failures, or maintenance can cause extended file share downtime, impacting availability. Crash scenarios may leave data inconsistent, threatening **integrity**, and recovery may rely on backups, increasing **RTO/RPO**.",
   "RelatedUrl": "",

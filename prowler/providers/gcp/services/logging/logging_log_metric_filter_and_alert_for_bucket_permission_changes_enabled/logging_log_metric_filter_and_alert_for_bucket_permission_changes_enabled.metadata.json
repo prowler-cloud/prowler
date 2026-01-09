@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure That the Log Metric Filter and Alerts Exist for Cloud Storage IAM Permission Changes.",
   "Risk": "Monitoring changes to cloud storage bucket permissions may reduce the time needed to detect and correct permissions on sensitive cloud storage buckets and objects inside the bucket.",
   "RelatedUrl": "",

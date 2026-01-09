@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_group_autohealing_enabled",
+  "CheckTitle": "Managed Instance Group has autohealing enabled with a valid health check",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/InstanceGroupManager",
+  "ResourceGroup": "compute",
+  "Description": "Managed Instance Groups (MIGs) should have **autohealing** enabled with a valid health check configured. Autohealing automatically recreates unhealthy instances based on application-level health checks, ensuring continuous availability.",
+  "Risk": "Without autohealing, MIGs cannot detect application-level failures such as crashes, freezes, or memory issues. Instances that are technically running but experiencing problems will remain undetected and unreplaced, leading to:\n\n- **Service degradation** from unhealthy instances\n- **Extended downtime** during application failures\n- **Manual intervention** required to detect and replace failed instances",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instance-groups/autohealing-instances-in-migs",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-instance-group-autohealing.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instance-groups managed update INSTANCE_GROUP_NAME --health-check=HEALTH_CHECK_NAME --initial-delay=300 --zone=ZONE",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Compute Engine > Instance groups\n2. Select the Managed Instance Group\n3. Click 'Edit'\n4. Under 'Autohealing', click 'Add health check'\n5. Select or create a health check\n6. Set an appropriate initial delay (e.g., 300 seconds)\n7. Click 'Save'",
+      "Terraform": "```hcl\nresource \"google_compute_instance_group_manager\" \"example\" {\n  name               = \"example-mig\"\n  base_instance_name = \"example\"\n  zone               = \"us-central1-a\"\n  target_size        = 2\n\n  version {\n    instance_template = google_compute_instance_template.example.id\n  }\n\n  # Enable autohealing with health check\n  auto_healing_policies {\n    health_check      = google_compute_health_check.example.id\n    initial_delay_sec = 300\n  }\n}\n\nresource \"google_compute_health_check\" \"example\" {\n  name               = \"example-health-check\"\n  check_interval_sec = 10\n  timeout_sec        = 5\n\n  http_health_check {\n    port = 80\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable autohealing on all Managed Instance Groups by configuring a health check that validates application-level health. Set an appropriate initial delay to allow instances time to start before health checks begin.",
+      "Url": "https://hub.prowler.com/check/compute_instance_group_autohealing_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

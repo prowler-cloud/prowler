@@ -5,18 +5,26 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler's Infrastructure as Code (IaC) provider enables scanning of local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks, allowing assessment of code before deployment.
 
-## Supported Scanners
+## Supported IaC Formats
 
-The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnerability/) to support multiple scanners, including:
+Prowler IaC provider scans the following Infrastructure as Code configurations for misconfigurations and secrets:
 
-- Vulnerability
-- Misconfiguration
-- Secret
-- License
+| Configuration Type | File Patterns                                |
+|--------------------|----------------------------------------------|
+| Kubernetes         | `*.yml`, `*.yaml`, `*.json`                  |
+| Docker             | `Dockerfile`, `Containerfile`                |
+| Terraform          | `*.tf`, `*.tf.json`, `*.tfvars`              |
+| Terraform Plan     | `tfplan`, `*.tfplan`, `*.json`               |
+| CloudFormation     | `*.yml`, `*.yaml`, `*.json`                  |
+| Azure ARM Template | `*.json`                                     |
+| Helm               | `*.yml`, `*.yaml`, `*.tpl`, `*.tar.gz`, etc. |
+| YAML               | `*.yaml`, `*.yml`                            |
+| JSON               | `*.json`                                     |
+| Ansible            | `*.yml`, `*.yaml`, `*.json`, `*.ini`, without extension |
 
 ## How It Works
 
-- The IaC provider scans local directories (or specified paths) for supported IaC files, or scans remote repositories.
+- Prowler App leverages [Trivy](https://trivy.dev/docs/latest/guide/coverage/iac/#scanner) to scan local directories (or specified paths) for supported IaC files, or scans remote repositories.
 - No cloud credentials or authentication are required for local scans.
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
   - Check the [IaC Authentication](/user-guide/providers/iac/authentication) page for more details.
@@ -26,6 +34,10 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 ## Prowler App
 
 <VersionBadge version="5.14.0" />
+
+### Supported Scanners
+
+Scanner selection is not configurable in Prowler App. Default scanners, misconfig and secret, run automatically during each scan.
 
 ### Step 1: Access Prowler Cloud/App
 
@@ -62,6 +74,17 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 ## Prowler CLI
 
 <VersionBadge version="5.8.0" />
+
+### Supported Scanners
+
+Prowler CLI supports the following scanners:
+
+- [Vulnerability](https://trivy.dev/docs/latest/guide/scanner/vulnerability/)
+- [Misconfiguration](https://trivy.dev/docs/latest/guide/scanner/misconfiguration/)
+- [Secret](https://trivy.dev/docs/latest/guide/scanner/secret/)
+- [License](https://trivy.dev/docs/latest/guide/scanner/license/)
+
+By default, only misconfiguration and secret scanners run during a scan. To specify which scanners to use, refer to the [Specify Scanners](#specify-scanners) section below.
 
 ### Usage
 
@@ -103,7 +126,7 @@ Authentication for private repositories can be provided using one of the followi
 
 #### Specify Scanners
 
-Scan only vulnerability and misconfiguration scanners:
+To run only specific scanners, use the `--scanners` flag. For example, to scan only for vulnerabilities and misconfigurations:
 
 ```sh
 prowler iac --scan-path ./my-iac-directory --scanners vuln misconfig

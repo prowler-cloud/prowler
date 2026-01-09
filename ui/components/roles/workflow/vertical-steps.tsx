@@ -1,6 +1,5 @@
 "use client";
 
-import type { ButtonProps } from "@heroui/button";
 import { cn } from "@heroui/theme";
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
@@ -26,7 +25,13 @@ export interface VerticalStepsProps
    *
    * @default "primary"
    */
-  color?: ButtonProps["color"];
+  color?:
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "danger"
+    | "default";
   /**
    * The current step index.
    */

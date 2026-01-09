@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service** directories with **manual snapshot capacity** fully consumed or nearly exhausted, based on current snapshot count relative to the directory's maximum allowed.",
   "Risk": "With no remaining snapshot capacity, you cannot create new recovery points:\n- Reduced availability during outages or ransomware\n- Higher RPO from failed scheduled backups\n- Greater change risk (schema/OS updates) without a safe rollback",
   "RelatedUrl": "",

@@ -1,0 +1,40 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_single_network_interface",
+  "CheckTitle": "VM instance has a single network interface",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "VM instances should be configured with only **one network interface** unless multiple interfaces are explicitly required for complex network configurations.\n\nMultiple network interfaces expand the attack surface and create additional network pathways that may be exploited.",
+  "Risk": "Multiple network interfaces on a VM instance can:\n\n- **Expand attack surface** by providing additional entry points for unauthorized access\n- **Create unintended network paths** that bypass security controls\n- **Increase management complexity** leading to potential misconfigurations",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/vms-with-multiple-enis.html",
+    "https://cloud.google.com/vpc/docs/multiple-interfaces-concepts"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Create a machine image from the non-compliant VM instance\n2. Create a new VM instance from the machine image with only one network interface\n3. Verify the new instance is functioning correctly\n4. Delete the original multi-interface instance",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  # Only one network interface\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure VM instances with only the **minimum network connectivity** required for their intended purpose. Review instances with multiple network interfaces and consolidate to a single interface unless multi-NIC configuration is explicitly required for network appliance or routing purposes.",
+      "Url": "https://hub.prowler.com/check/compute_instance_single_network_interface"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "compute_instance_public_ip",
+    "compute_instance_ip_forwarding_is_enabled"
+  ],
+  "Notes": "Instances created by GKE or used as network virtual appliances may legitimately require multiple network interfaces."
+}

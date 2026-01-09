@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:network:securitylist",
   "Severity": "high",
   "ResourceType": "OciNetworkSecurityList",
+  "ResourceGroup": "network",
   "Description": "Ensure the default security list of every VCN restricts all traffic except ICMP within VCN. A default security list is automatically created when you create a VCN. It is recommended that the default security list restrict all traffic except for ICMP within the VCN.",
   "Risk": "The default security list should not be used for any purpose other than as a fail-safe. It is recommended to create custom security lists for your resources.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**ElastiCache for Redis** replication groups have **in-transit encryption (TLS)** enabled for client and inter-node traffic (`TransitEncryptionEnabled=true`).",
   "Risk": "Absent **in-transit encryption**, traffic between apps and Redis or between nodes can be **eavesdropped** or **tampered**.\n\nThis exposes keys, tokens, and cached sensitive data, enables **MITM** and session hijacking, and can corrupt replication, harming **confidentiality** and **integrity**.",
   "RelatedUrl": "",
