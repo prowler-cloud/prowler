@@ -17,11 +17,11 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
-from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
-from prowler.providers.common.models import Connection
 from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
     SecurityHubNoEnabledRegionsError,
 )
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+from prowler.providers.common.models import Connection
 
 logger = get_task_logger(__name__)
 
@@ -508,4 +508,86 @@ def send_findings_to_jira(
     return {
         "created_count": num_tickets_created,
         "failed_count": len(finding_ids) - num_tickets_created,
+    }
+
+
+def send_findings_to_sns(
+    tenant_id: str,
+    integration_id: str,
+    finding_ids: list[str],
+):
+    with rls_transaction(tenant_id):
+        integration = Integration.objects.get(id=integration_id)
+        sns_integration = initialize_prowler_integration(integration)
+
+    num_alerts_sent = 0
+    for finding_id in finding_ids:
+        with rls_transaction(tenant_id):
+            finding_instance = (
+                Finding.all_objects.select_related("scan__provider")
+                .prefetch_related("resources")
+                .get(id=finding_id)
+            )
+
+            # Extract resource information
+            resource = (
+                finding_instance.resources.first()
+                if finding_instance.resources.exists()
+                else None
+            )
+            resource_uid = resource.uid if resource else ""
+            resource_name = resource.name if resource else ""
+            resource_type = resource.type if resource else ""
+            resource_tags = {}
+            if resource and hasattr(resource, "tags"):
+                resource_tags = resource.get_tags(tenant_id)
+
+            # Get region
+            region = resource.region if resource and resource.region else ""
+
+            # Extract remediation information from check_metadata
+            check_metadata = finding_instance.check_metadata
+            remediation = check_metadata.get("remediation", {})
+            recommendation = remediation.get("recommendation", {})
+            remediation_code = remediation.get("code", {})
+
+            # Build finding data for SNS
+            finding_data = {
+                "severity": finding_instance.severity,
+                "status": finding_instance.status,
+                "check_id": finding_instance.check_id,
+                "check_title": check_metadata.get("checktitle", ""),
+                "resource_name": resource_name,
+                "resource_type": resource_type,
+                "resource_uid": resource_uid,
+                "region": region,
+                "account_id": finding_instance.scan.provider.uid,
+                "service": check_metadata.get("service", ""),
+                "provider": finding_instance.scan.provider.provider,
+                "risk": check_metadata.get("risk", ""),
+                "remediation_recommendation_text": recommendation.get("text", ""),
+                "remediation_recommendation_url": recommendation.get("url", ""),
+                "remediation_code_cli": remediation_code.get("cli", ""),
+                "remediation_code_terraform": remediation_code.get("terraform", ""),
+                "remediation_code_other": remediation_code.get("other", ""),
+                "resource_tags": resource_tags,
+                "compliance": finding_instance.compliance or {},
+                "prowler_url": f"https://prowler.com/findings/{finding_id}",  # Adjust URL as needed
+            }
+
+            # Send the individual finding to SNS
+            result = sns_integration.send_finding(finding_data)
+            if result.get("success"):
+                num_alerts_sent += 1
+                logger.info(
+                    f"Successfully sent finding {finding_id} to SNS. Message ID: {result.get('message_id')}"
+                )
+            else:
+                logger.error(
+                    f"Failed to send finding {finding_id} to SNS: {result.get('error')}"
+                )
+
+    return {
+        "created_count": num_alerts_sent,
+        "failed_count": len(finding_ids) - num_alerts_sent,
     }

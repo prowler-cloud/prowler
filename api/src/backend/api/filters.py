@@ -977,6 +977,48 @@ class IntegrationJiraFindingsFilter(FilterSet):
         return super().filter_queryset(queryset)
 
 
+class IntegrationSNSFindingsFilter(FilterSet):
+    """Filter for SNS integration with support for severity, region, provider, resource name, and tag filtering."""
+
+    finding_id = UUIDFilter(field_name="id", lookup_expr="exact")
+    finding_id__in = UUIDInFilter(field_name="id", lookup_expr="in")
+
+    # Severity filtering
+    severity = ChoiceFilter(choices=SeverityChoices)
+    severity__in = ChoiceInFilter(choices=SeverityChoices, field_name="severity")
+
+    # Provider filtering
+    provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+    )
+
+    # Region filtering
+    region = CharFilter(field_name="region", lookup_expr="exact")
+    region__in = CharInFilter(field_name="region", lookup_expr="in")
+    region__icontains = CharFilter(field_name="region", lookup_expr="icontains")
+
+    # Resource filtering
+    resource_name = CharFilter(field_name="resources__name", lookup_expr="icontains")
+    resource_uid = CharFilter(field_name="resources__uid", lookup_expr="exact")
+    resource_tags = CharFilter(field_name="resources__tags", lookup_expr="icontains")
+
+    class Meta:
+        model = Finding
+        fields = {}
+
+    def filter_queryset(self, queryset):
+        # Validate that there is at least one filter provided
+        if not self.data:
+            raise ValidationError(
+                {
+                    "findings": "No finding filters provided. At least one filter is required."
+                }
+            )
+        return super().filter_queryset(queryset)
+
+
 class TenantApiKeyFilter(FilterSet):
     inserted_at = DateFilter(field_name="created", lookup_expr="date")
     inserted_at__gte = DateFilter(field_name="created", lookup_expr="gte")

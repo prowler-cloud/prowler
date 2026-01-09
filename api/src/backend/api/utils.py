@@ -15,6 +15,7 @@ from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudPro
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+from prowler.providers.aws.lib.sns.sns import SNS
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -297,6 +298,12 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             integration.configuration["projects"] = project_keys
             integration.save()
         return jira_connection
+    elif integration.integration_type == Integration.IntegrationChoices.SNS:
+        return SNS.test_connection(
+            **integration.credentials,
+            topic_arn=integration.configuration["topic_arn"],
+            raise_on_exception=False,
+        )
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:
@@ -406,7 +413,7 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     return serializer.data
 
 
-def initialize_prowler_integration(integration: Integration) -> Jira:
+def initialize_prowler_integration(integration: Integration):
     # TODO Refactor other integrations to use this function
     if integration.integration_type == Integration.IntegrationChoices.JIRA:
         try:
@@ -418,3 +425,15 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
                 integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
                 integration.save()
             raise jira_auth_error
+    elif integration.integration_type == Integration.IntegrationChoices.SNS:
+        try:
+            return SNS(
+                topic_arn=integration.configuration["topic_arn"],
+                **integration.credentials,
+            )
+        except Exception as sns_error:
+            with rls_transaction(str(integration.tenant_id)):
+                integration.connected = False
+                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.save()
+            raise sns_error

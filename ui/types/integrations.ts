@@ -2,7 +2,15 @@ import { z } from "zod";
 
 import type { TaskState } from "@/types/tasks";
 
-export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
+export const IntegrationType = {
+  AMAZON_S3: "amazon_s3",
+  AWS_SECURITY_HUB: "aws_security_hub",
+  JIRA: "jira",
+  SNS: "sns",
+} as const;
+
+export type IntegrationType =
+  (typeof IntegrationType)[keyof typeof IntegrationType];
 
 export interface IntegrationProps {
   type: "integrations";
@@ -309,4 +317,84 @@ export interface JiraCredentialsPayload {
   domain?: string;
   user_mail?: string;
   api_token?: string;
+}
+
+// SNS Integration Schemas
+export const snsIntegrationFormSchema = z
+  .object({
+    integration_type: z.literal("sns"),
+    topic_arn: z
+      .string()
+      .min(1, "SNS topic ARN is required")
+      .regex(
+        /^arn:(aws|aws-cn|aws-us-gov):sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9_-]+$/,
+        "Invalid SNS topic ARN format. Expected: arn:partition:sns:region:account-id:topic-name",
+      ),
+    enabled: z.boolean().default(true),
+    use_custom_credentials: z.boolean().default(false),
+    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
+    role_arn: z.string().optional(),
+    external_id: z.string().optional(),
+    role_session_name: z.string().optional(),
+    session_duration: z.coerce
+      .number()
+      .min(900, "Session duration must be at least 900 seconds")
+      .max(43200, "Session duration cannot exceed 43200 seconds")
+      .optional(),
+    aws_access_key_id: z.string().optional(),
+    aws_secret_access_key: z.string().optional(),
+    aws_session_token: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.use_custom_credentials) {
+      validateAwsCredentialsCreate(data, ctx);
+      validateIamRole(data, ctx);
+    }
+    // Always validate role if role_arn is provided
+    if (!data.use_custom_credentials && data.role_arn) {
+      validateIamRole(data, ctx, false);
+    }
+  });
+
+export const editSNSIntegrationFormSchema = z
+  .object({
+    integration_type: z.literal("sns"),
+    topic_arn: z
+      .string()
+      .min(1, "SNS topic ARN is required")
+      .regex(
+        /^arn:(aws|aws-cn|aws-us-gov):sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9_-]+$/,
+        "Invalid SNS topic ARN format",
+      )
+      .optional(),
+    use_custom_credentials: z.boolean().optional(),
+    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
+    role_arn: z.string().optional(),
+    external_id: z.string().optional(),
+    role_session_name: z.string().optional(),
+    session_duration: z.coerce
+      .number()
+      .min(900)
+      .max(43200)
+      .optional(),
+    aws_access_key_id: z.string().optional(),
+    aws_secret_access_key: z.string().optional(),
+    aws_session_token: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.use_custom_credentials !== false) {
+      validateAwsCredentialsEdit(data, ctx);
+    }
+    // Always validate role if role_arn is provided
+    validateIamRole(data, ctx, false);
+  });
+
+export interface SNSCredentialsPayload {
+  role_arn?: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: number;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+  aws_session_token?: string;
 }

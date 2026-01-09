@@ -87,6 +87,7 @@ from tasks.tasks import (
     mute_historical_findings_task,
     perform_scan_task,
     refresh_lighthouse_provider_models_task,
+    sns_integration_task,
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -106,6 +107,7 @@ from api.filters import (
     FindingFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
+    IntegrationSNSFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
@@ -192,6 +194,7 @@ from api.v1.serializers import (
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
+    IntegrationSNSDispatchSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
@@ -5196,6 +5199,72 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 integration_id=integration_pk,
                 project_key=project_key,
                 issue_type=issue_type,
+                finding_ids=finding_ids,
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+class IntegrationSNSViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationSNSDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationSNSFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+
+        with transaction.atomic():
+            task = sns_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
                 finding_ids=finding_ids,
             )
         prowler_task = Task.objects.get(id=task.id)
