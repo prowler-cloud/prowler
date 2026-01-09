@@ -18,8 +18,8 @@ Please add a detailed description of how to review this PR.
 
 <summary><b>Community Checklist</b></summary>
 
-- [ ] There is an issue/feature-request, check it in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen).
-- [ ] Is it assigned to you?
+- [ ] This feature/issue is listed in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
+- [ ] Is it assigned to me, if not, request it via the issue/feature in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
 
 </details>
 
