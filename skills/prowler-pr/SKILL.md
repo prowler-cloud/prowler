@@ -34,6 +34,15 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ### Checklist
 
+<details>
+
+<summary><b>Community Checklist</b></summary>
+
+- [ ] This feature/issue is listed in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
+- [ ] Is it assigned to me, if not, request it via the issue/feature in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
+
+</details>
+
 - Are there new checks included in this PR? Yes / No
     - If so, do we need to update permissions for the provider?
 - [ ] Review if the code is being covered by tests.
@@ -41,6 +50,10 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - [ ] Review if backport is needed.
 - [ ] Review if is needed to change the Readme.md
 - [ ] Ensure new entries are added to CHANGELOG.md, if applicable.
+
+#### SDK/CLI
+- Are there new checks included in this PR? Yes / No
+    - If so, do we need to update permissions for the provider? Please review this carefully.
 
 #### UI (if applicable)
 - [ ] All issue/task requirements work as expected on the UI
