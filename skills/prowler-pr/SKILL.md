@@ -65,7 +65,7 @@ By submitting this pull request, I confirm that my contribution is made under th
 | SDK | `prowler/CHANGELOG.md` | New checks → permissions update? |
 | API | `api/CHANGELOG.md` | API specs regeneration, version bump |
 | UI | `ui/CHANGELOG.md` | Screenshots for Mobile/Tablet/Desktop |
-| MCP | N/A | N/A |
+| MCP | `mcp_server/CHANGELOG.md` | N/A |
 
 ## Commands
 
@@ -85,7 +85,7 @@ EOF
 )"
 
 # Create draft PR
-gh pr create --draft --title "wip: description"
+gh pr create --draft --title "feat: description"
 ```
 
 ## Title Conventions
