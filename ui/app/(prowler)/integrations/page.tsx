@@ -1,5 +1,6 @@
 import {
   ApiKeyLinkCard,
+  GitHubIntegrationCard,
   JiraIntegrationCard,
   S3IntegrationCard,
   SecurityHubIntegrationCard,
@@ -24,6 +25,9 @@ export default async function Integrations() {
 
           {/* AWS Security Hub Integration */}
           <SecurityHubIntegrationCard />
+
+          {/* GitHub Integration */}
+          <GitHubIntegrationCard />
 
           {/* Jira Integration */}
           <JiraIntegrationCard />

@@ -310,3 +310,26 @@ export interface JiraCredentialsPayload {
   user_mail?: string;
   api_token?: string;
 }
+
+// GitHub Integration Schemas
+export const githubIntegrationFormSchema = z.object({
+  integration_type: z.literal("github"),
+  token: z.string().min(1, "GitHub token is required"),
+  owner: z.string().optional(),
+  enabled: z.boolean().default(true),
+});
+
+export const editGitHubIntegrationFormSchema = z.object({
+  integration_type: z.literal("github"),
+  token: z.string().min(1, "GitHub token is required").optional(),
+  owner: z.string().optional(),
+});
+
+export type GitHubCreateValues = z.infer<typeof githubIntegrationFormSchema>;
+export type GitHubEditValues = z.infer<typeof editGitHubIntegrationFormSchema>;
+export type GitHubFormValues = GitHubCreateValues | GitHubEditValues;
+
+export interface GitHubCredentialsPayload {
+  token?: string;
+  owner?: string;
+}

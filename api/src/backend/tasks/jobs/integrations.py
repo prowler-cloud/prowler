@@ -17,11 +17,11 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
-from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
-from prowler.providers.common.models import Connection
 from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
     SecurityHubNoEnabledRegionsError,
 )
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+from prowler.providers.common.models import Connection
 
 logger = get_task_logger(__name__)
 
@@ -434,6 +434,81 @@ def upload_security_hub_integration(
             f"Security Hub integrations failed for provider {provider_id}: {str(e)}"
         )
         return False
+
+
+def send_findings_to_github(
+    tenant_id: str,
+    integration_id: str,
+    repository: str,
+    labels: list[str],
+    finding_ids: list[str],
+):
+    with rls_transaction(tenant_id):
+        integration = Integration.objects.get(id=integration_id)
+        github_integration = initialize_prowler_integration(integration)
+
+    num_issues_created = 0
+    for finding_id in finding_ids:
+        with rls_transaction(tenant_id):
+            finding_instance = (
+                Finding.all_objects.select_related("scan__provider")
+                .prefetch_related("resources")
+                .get(id=finding_id)
+            )
+
+            # Extract resource information
+            resource = (
+                finding_instance.resources.first()
+                if finding_instance.resources.exists()
+                else None
+            )
+            resource_uid = resource.uid if resource else ""
+            resource_name = resource.name if resource else ""
+            resource_tags = {}
+            if resource and hasattr(resource, "tags"):
+                resource_tags = resource.get_tags(tenant_id)
+
+            # Get region
+            region = resource.region if resource and resource.region else ""
+
+            # Extract remediation information from check_metadata
+            check_metadata = finding_instance.check_metadata
+            remediation = check_metadata.get("remediation", {})
+            recommendation = remediation.get("recommendation", {})
+            remediation_code = remediation.get("code", {})
+
+            # Send the individual finding to GitHub
+            result = github_integration.send_finding(
+                check_id=finding_instance.check_id,
+                check_title=check_metadata.get("checktitle", ""),
+                severity=finding_instance.severity,
+                status=finding_instance.status,
+                status_extended=finding_instance.status_extended or "",
+                provider=finding_instance.scan.provider.provider,
+                region=region,
+                resource_uid=resource_uid,
+                resource_name=resource_name,
+                risk=check_metadata.get("risk", ""),
+                recommendation_text=recommendation.get("text", ""),
+                recommendation_url=recommendation.get("url", ""),
+                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                remediation_code_terraform=remediation_code.get("terraform", ""),
+                remediation_code_cli=remediation_code.get("cli", ""),
+                remediation_code_other=remediation_code.get("other", ""),
+                resource_tags=resource_tags,
+                compliance=finding_instance.compliance or {},
+                repository=repository,
+                issue_labels=labels,
+            )
+            if result:
+                num_issues_created += 1
+            else:
+                logger.error(f"Failed to send finding {finding_id} to GitHub")
+
+    return {
+        "created_count": num_issues_created,
+        "failed_count": len(finding_ids) - num_issues_created,
+    }
 
 
 def send_findings_to_jira(
