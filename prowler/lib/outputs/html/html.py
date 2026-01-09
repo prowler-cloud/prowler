@@ -1023,6 +1023,77 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_cloudflare_assessment_summary(provider: Provider) -> str:
+        """
+        get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
+
+        Args:
+            provider (Provider): the Cloudflare provider object
+
+        Returns:
+            str: HTML assessment summary for the Cloudflare provider
+        """
+        try:
+            # Build assessment summary items (only non-None values)
+            assessment_items = ""
+            if provider.accounts:
+                accounts = ", ".join([acc.id for acc in provider.accounts])
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Accounts:</b> {accounts}
+                            </li>"""
+
+            # Build credentials items (only non-None values)
+            credentials_items = ""
+
+            # Authentication method
+            if provider.session.api_token:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+            elif provider.session.api_key and provider.session.api_email:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Email
+                            </li>"""
+
+            # Email (from identity or session)
+            email = getattr(provider.identity, "email", None) or getattr(
+                provider.session, "api_email", None
+            )
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_alibabacloud_assessment_summary(provider: Provider) -> str:
         """
         get_alibabacloud_assessment_summary gets the HTML assessment summary for the Alibaba Cloud provider
