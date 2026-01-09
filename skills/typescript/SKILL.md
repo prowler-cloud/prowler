@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## Const Types Pattern (REQUIRED)
@@ -105,4 +106,3 @@ function isUser(value: unknown): value is User {
 import type { User } from "./types";
 import { createUser, type Config } from "./utils";
 ```
-

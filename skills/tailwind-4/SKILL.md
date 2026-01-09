@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## Styling Decision Tree
@@ -194,4 +195,3 @@ const CHART_COLORS = {
 // ❌ Don't use for colors - use theme instead
 <div className="bg-[#1e293b]" />  // NO
 ```
-

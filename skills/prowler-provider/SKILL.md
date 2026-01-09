@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## When to Use
@@ -140,4 +141,3 @@ poetry run python prowler-cli.py {provider} --log-level DEBUG
 
 - **Templates**: See [assets/](assets/) for Provider, Service, and Client singleton templates
 - **Documentation**: See [references/provider-docs.md](references/provider-docs.md) for official Prowler Developer Guide links
-

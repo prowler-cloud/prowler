@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## When to Use
@@ -110,4 +111,3 @@ poetry run python prowler-cli.py {provider} --compliance {framework} -M csv json
 
 - **Templates**: See [assets/](assets/) for complete CIS framework JSON template
 - **Documentation**: See [references/compliance-docs.md](references/compliance-docs.md) for official Prowler Developer Guide links
-

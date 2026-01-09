@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## When to Create a Skill
@@ -166,4 +167,3 @@ After creating the skill, add it to `AGENTS.md`:
 ## Resources
 
 - **Templates**: See [assets/](assets/) for SKILL.md template
-

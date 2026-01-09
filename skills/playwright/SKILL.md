@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## MCP Workflow (MANDATORY If Available)
@@ -321,4 +322,3 @@ npx playwright test tests/login/       # Run specific folder
 
 For Prowler UI E2E testing with authentication setup, environment variables, and test IDs, see:
 - **Documentation**: [references/prowler-e2e.md](references/prowler-e2e.md)
-

@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## No Manual Memoization (REQUIRED)
@@ -119,4 +120,3 @@ function Input({ ref, ...props }) {
 // ❌ Old way (unnecessary now)
 const Input = forwardRef((props, ref) => <input ref={ref} {...props} />);
 ```
-

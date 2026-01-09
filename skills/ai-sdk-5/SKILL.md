@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## Breaking Changes from AI SDK 4
@@ -231,4 +232,3 @@ const { error, messages, sendMessage } = useChat({
   </div>
 )}
 ```
-

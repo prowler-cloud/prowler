@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## Breaking Changes from Zod 3
@@ -211,4 +212,3 @@ function Form() {
   );
 }
 ```
-

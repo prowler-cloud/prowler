@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 > **Generic Patterns**: For base pytest patterns (fixtures, mocking, parametrize, markers), see the `pytest` skill.
@@ -318,4 +319,3 @@ poetry run pytest -x tests/
 
 - **Templates**: See [assets/](assets/) for complete test templates (AWS with moto, Azure/GCP with MagicMock)
 - **Documentation**: See [references/testing-docs.md](references/testing-docs.md) for official Prowler Developer Guide links
-

@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## When to Use
@@ -119,4 +120,3 @@ docs/
 ## Resources
 
 - **Documentation**: See [references/](references/) for links to local developer guide
-

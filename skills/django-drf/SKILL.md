@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## ViewSet Pattern
@@ -181,4 +182,3 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py shell
 ```
-

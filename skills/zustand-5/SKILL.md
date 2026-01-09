@@ -7,6 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## Basic Store
@@ -217,4 +218,3 @@ const unsubscribe = useCounterStore.subscribe(
   (state) => console.log("Count changed:", state.count)
 );
 ```
-
