@@ -14,6 +14,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
 - `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
 - `Cloudflare` provider with critical security checks [(#9423)](https://github.com/prowler-cloud/prowler/pull/9423)
+- `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
+- `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
@@ -33,6 +35,18 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SES service metadata to new format [(#9411)](https://github.com/prowler-cloud/prowler/pull/9411)
 - Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
 - Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
+- Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
+- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
+- Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
+- Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
+- Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
+
+---
+
+## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### Fixed
+- Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
 
 ---
 
