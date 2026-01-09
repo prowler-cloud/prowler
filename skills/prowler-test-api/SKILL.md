@@ -9,6 +9,15 @@ metadata:
   version: "1.0"
 ---
 
+## Critical Rules
+
+- ALWAYS use `response.json()["data"]` not `response.data`
+- ALWAYS use `content_type = "application/vnd.api+json"` in requests
+- ALWAYS test cross-tenant isolation with `other_tenant_provider` fixture
+- NEVER skip RLS isolation tests when adding new endpoints
+
+---
+
 ## 1. JSON:API Format (Critical)
 
 ```python

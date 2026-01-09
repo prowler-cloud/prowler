@@ -9,6 +9,15 @@ metadata:
   version: "1.0"
 ---
 
+## Critical Rules
+
+- ALWAYS use `rls_transaction(tenant_id)` when querying outside ViewSet context
+- ALWAYS use `get_role()` before checking permissions (returns FIRST role only)
+- NEVER access `Provider.objects` without RLS context in Celery tasks
+- ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order
+
+---
+
 ## 1. Providers (10 Supported)
 
 UID validation is dynamic: `getattr(self, f"validate_{self.provider}_uid")(self.uid)`
@@ -109,6 +118,16 @@ response.json()["data"]["attributes"]["alias"]
 | `ProviderCreateSerializer` | POST |
 | `ProviderUpdateSerializer` | PATCH |
 | `RLSSerializer` | Auto-injects tenant_id |
+
+---
+
+## Commands
+
+```bash
+cd api && poetry run python manage.py migrate      # Run migrations
+cd api && poetry run python manage.py shell        # Django shell
+cd api && poetry run celery -A config.celery worker -l info  # Start worker
+```
 
 ---
 
