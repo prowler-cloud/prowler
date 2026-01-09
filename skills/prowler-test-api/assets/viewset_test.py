@@ -4,6 +4,7 @@
 from unittest.mock import patch
 
 import pytest
+from conftest import TEST_PASSWORD, TEST_USER, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from rest_framework import status
 
@@ -99,13 +100,6 @@ class TestRLSIsolation:
         set_user_admin_roles_fixture,
     ):
         """Verify user cannot access another tenant's resources."""
-        from conftest import (
-            TEST_PASSWORD,
-            TEST_USER,
-            get_api_tokens,
-            get_authorization_header,
-        )
-
         client = authenticated_client
         tenant1 = str(tenants_fixture[0].id)
         tenant2 = str(tenants_fixture[1].id)

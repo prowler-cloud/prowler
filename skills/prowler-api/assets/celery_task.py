@@ -1,83 +1,175 @@
-# Example: Celery Tasks with RLS
+# Example: Celery Task Patterns
 # Source: api/src/backend/tasks/tasks.py
 
-from celery import shared_task
+import json
+from datetime import datetime, timedelta
+
+from celery import chain, group, shared_task
 from config.celery import RLSTask
+from django.utils import timezone
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from api.db_utils import rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
+from api.models import Provider
+
+# =============================================================================
+# 1. Basic Task with RLS - Standard pattern for new tasks
+# =============================================================================
 
 
-@shared_task(base=RLSTask, name="provider-connection-check")
+@shared_task(base=RLSTask, name="my-task-name", queue="scans")
 @set_tenant
-def check_provider_connection_task(provider_id: str):
-    """
-    Task with @set_tenant decorator - pops tenant_id from kwargs.
-
-    Key patterns:
-    1. base=RLSTask for automatic task tracking in DB
-    2. @set_tenant decorator handles RLS context setup
-    3. tenant_id is passed via kwargs but popped by decorator
-    """
-    return check_provider_connection(provider_id=provider_id)
-
-
-@shared_task(base=RLSTask, name="scan-perform", queue="scans")
 @handle_provider_deletion
-def perform_scan_task(
-    tenant_id: str,
-    scan_id: str,
-    provider_id: str,
-    checks_to_execute: list[str] = None,
-):
+def my_task(tenant_id: str, provider_id: str):
     """
-    Task with custom queue and error handling decorator.
+    Standard task pattern with both decorators.
 
-    Key patterns:
-    1. queue="scans" for dedicated worker queue
-    2. @handle_provider_deletion handles cleanup on provider deletion
-    3. Orchestrates follow-up tasks after completion
+    Decorators (order matters - outer to inner):
+    - @set_tenant: Pops tenant_id from kwargs, sets PostgreSQL RLS context
+    - @handle_provider_deletion: Catches ObjectDoesNotExist if provider deleted
+
+    Note: Many tasks use only one decorator. Check existing tasks for patterns.
+
+    Args:
+        tenant_id: Extracted by @set_tenant, sets RLS context
+        provider_id: Your task parameters
     """
-    result = perform_prowler_scan(
-        tenant_id=tenant_id,
-        scan_id=scan_id,
-        provider_id=provider_id,
-        checks_to_execute=checks_to_execute,
-    )
-    _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
-    return result
+    provider = Provider.objects.get(id=provider_id)
+    # Your task logic here
+    return {"status": "completed"}
 
 
-@shared_task(name="findings-mute-historical")
-def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+# =============================================================================
+# 2. Task without RLSTask base - Not tracked in APITask table
+# =============================================================================
+
+
+@shared_task(name="simple-task", queue="overview")
+def simple_task(tenant_id: str, data: dict):
     """
-    Task without RLSTask base - uses rls_transaction manually.
+    Task without RLSTask base.
 
-    Key pattern: When not using RLSTask base, wrap DB operations in rls_transaction.
+    When NOT using RLSTask:
+    - Task is NOT tracked in APITask table
+    - Must manually use rls_transaction
     """
     with rls_transaction(tenant_id):
-        return mute_historical_findings(tenant_id, mute_rule_id)
+        # Your logic here
+        pass
 
 
-# RLSTask base class (from config/celery.py)
-class RLSTask(Task):
+# =============================================================================
+# 3. Task with Auto-Retry
+# =============================================================================
+
+
+@shared_task(
+    base=RLSTask,
+    name="retryable-task",
+    queue="integrations",
+    autoretry_for=(Exception,),
+    retry_kwargs={"max_retries": 3, "countdown": 60},
+)
+@set_tenant
+def retryable_task(tenant_id: str, integration_id: str):
     """
-    Celery Task base that tracks tasks in DB with tenant isolation.
+    Task with auto-retry on failure.
 
-    Key pattern: Override apply_async to create Task record in tenant context.
+    autoretry_for: Exception types that trigger retry
+    retry_kwargs: max_retries and countdown (seconds between retries)
     """
+    # External API call that might fail
 
-    def apply_async(self, args=None, kwargs=None, task_id=None, **options):
-        result = super().apply_async(
-            args=args, kwargs=kwargs, task_id=task_id, **options
-        )
-        task_result_instance = TaskResult.objects.get(task_id=result.task_id)
 
-        tenant_id = kwargs.get("tenant_id")
-        with rls_transaction(tenant_id):
-            APITask.objects.update_or_create(
-                id=task_result_instance.task_id,
-                tenant_id=tenant_id,
-                defaults={"task_runner_task": task_result_instance},
-            )
-        return result
+# =============================================================================
+# 4. Task Orchestration - Sequential and Parallel execution
+# =============================================================================
+
+
+def orchestrate_tasks(tenant_id: str, scan_id: str):
+    """
+    Example of task orchestration.
+
+    - chain(): Sequential execution (step1 -> step2 -> step3)
+    - group(): Parallel execution (all at once)
+    - .si(): "Signature immutable" - doesn't pass result to next task
+    """
+    # Independent tasks - fire immediately
+    independent_task.apply_async(kwargs={"tenant_id": tenant_id})
+
+    # Sequential with parallel groups
+    workflow = chain(
+        # Step 1: Must complete first
+        step_one_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        # Step 2: After step 1, these run in parallel
+        group(
+            parallel_task_a.si(tenant_id=tenant_id, scan_id=scan_id),
+            parallel_task_b.si(tenant_id=tenant_id, scan_id=scan_id),
+        ),
+    )
+
+    workflow.apply_async()
+
+
+# =============================================================================
+# 5. Scheduled Task (Celery Beat)
+# =============================================================================
+
+
+def schedule_recurring_task(provider: Provider):
+    """
+    Schedule recurring task using Celery Beat.
+
+    Uses django_celery_beat models:
+    - IntervalSchedule: How often (24 hours, 1 hour, etc.)
+    - PeriodicTask: The scheduled task
+    """
+    schedule, _ = IntervalSchedule.objects.get_or_create(
+        every=24,
+        period=IntervalSchedule.HOURS,
+    )
+
+    task_name = f"my-task-{provider.id}"
+    PeriodicTask.objects.create(
+        interval=schedule,
+        name=task_name,
+        task="my-task-name",  # Must match @shared_task name
+        kwargs=json.dumps(
+            {
+                "tenant_id": str(provider.tenant_id),
+                "provider_id": str(provider.id),
+            }
+        ),
+        start_time=timezone.now() + timedelta(hours=24),
+    )
+
+
+def unschedule_task(provider_id: str):
+    """Remove scheduled task."""
+    task_name = f"my-task-{provider_id}"
+    PeriodicTask.objects.filter(name=task_name).delete()
+
+
+# =============================================================================
+# 6. Calling Tasks
+# =============================================================================
+
+
+def trigger_task_examples():
+    """Different ways to trigger tasks."""
+
+    # Immediate execution
+    my_task.apply_async(kwargs={"tenant_id": "uuid", "provider_id": "uuid"})
+
+    # Delayed execution (5 seconds)
+    my_task.apply_async(
+        kwargs={"tenant_id": "uuid", "provider_id": "uuid"},
+        countdown=5,
+    )
+
+    # Scheduled for specific time
+    my_task.apply_async(
+        kwargs={"tenant_id": "uuid", "provider_id": "uuid"},
+        eta=datetime.now() + timedelta(hours=1),
+    )
