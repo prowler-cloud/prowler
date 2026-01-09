@@ -34,6 +34,7 @@ repos:
     rev: v2.3.1
     hooks:
       - id: autoflake
+        exclude: ^skills/
         args:
           [
             "--in-place",
@@ -45,18 +46,20 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
+        exclude: ^skills/
         args: ["--profile", "black"]
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
     hooks:
       - id: black
+        exclude: ^skills/
 
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
-        exclude: contrib
+        exclude: (contrib|^skills/)
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
@@ -109,7 +112,7 @@ repos:
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
-        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .'
+        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/,./.venv/,./skills/' -r .'
         language: system
         files: '.*\.py'
 
@@ -123,7 +126,7 @@ repos:
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
-        entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/" --min-confidence 100 .'
+        entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/,skills/" --min-confidence 100 .'
         language: system
         files: '.*\.py'
 

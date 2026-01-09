@@ -5,6 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.17.0] (Prowler UNRELEASED)
 
 ### Added
+- AI Skills pack for AI coding assistants (Claude Code, OpenCode, Codex) following agentskills.io standard [(#9728)](https://github.com/prowler-cloud/prowler/pull/9728)
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
 - `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
