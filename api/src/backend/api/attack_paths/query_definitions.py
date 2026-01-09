@@ -773,7 +773,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Create virtual ECS task node (one per unique principal->target pair)
                 CALL apoc.create.vNode(['ECSTask'], {
-                    name: 'Malicious Task Definition',
+                    name: 'New Task Definition',
                     description: 'Task with target role attached',
                     id: effective_principal.arn + '->' + target_role.arn
                 })
@@ -915,7 +915,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Create virtual Glue endpoint node (one per unique principal->target pair)
                 CALL apoc.create.vNode(['GlueDevEndpoint'], {
-                    name: 'Malicious Dev Endpoint',
+                    name: 'New Dev Endpoint',
                     description: 'Glue endpoint with target role attached',
                     id: effective_principal.arn + '->' + target_role.arn
                 })
@@ -1000,7 +1000,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Create virtual Bedrock code interpreter node (one per unique principal->target pair)
                 CALL apoc.create.vNode(['BedrockCodeInterpreter'], {
-                    name: 'Malicious Code Interpreter',
+                    name: 'New Code Interpreter',
                     description: 'Bedrock agent with target role attached',
                     id: effective_principal.arn + '->' + target_role.arn
                 })
@@ -1077,7 +1077,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Create virtual CloudFormation stack node (one per unique principal->target pair)
                 CALL apoc.create.vNode(['CloudFormationStack'], {
-                    name: 'Malicious Stack',
+                    name: 'New Stack',
                     description: 'CloudFormation stack with target role attached',
                     id: effective_principal.arn + '->' + target_role.arn
                 })
