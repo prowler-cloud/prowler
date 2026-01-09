@@ -66,6 +66,7 @@ class Entra(AzureService):
             for tenant, client in self.clients.items():
                 users.update({tenant: {}})
                 users_response = await client.users.get()
+                registration_details = await self._get_user_registration_details(client)
 
                 try:
                     while users_response:
@@ -75,19 +76,9 @@ class Entra(AzureService):
                                     user.id: User(
                                         id=user.id,
                                         name=user.display_name,
-                                        authentication_methods=[
-                                            AuthMethod(
-                                                id=auth_method.id,
-                                                type=getattr(
-                                                    auth_method, "odata_type", None
-                                                ),
-                                            )
-                                            for auth_method in (
-                                                await client.users.by_user_id(
-                                                    user.id
-                                                ).authentication.methods.get()
-                                            ).value
-                                        ],
+                                        authentication_methods=registration_details.get(
+                                            user.id, []
+                                        ),
                                     )
                                 }
                             )
@@ -115,6 +106,50 @@ class Entra(AzureService):
             )
 
         return users
+
+    async def _get_user_registration_details(self, client):
+        registration_details = {}
+        try:
+            registration_builder = (
+                client.reports.authentication_methods.user_registration_details
+            )
+            registration_response = await registration_builder.get()
+
+            while registration_response:
+                for detail in getattr(registration_response, "value", []) or []:
+                    registration_details.update(
+                        {
+                            detail.id: [
+                                AuthMethod(
+                                    id=f"{detail.id}-{method}",
+                                    type=method,
+                                )
+                                for method in getattr(detail, "methods_registered", [])
+                            ]
+                        }
+                    )
+
+                next_link = getattr(registration_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                registration_response = await registration_builder.with_url(
+                    next_link
+                ).get()
+
+        except Exception as error:
+            if (
+                error.__class__.__name__ == "ODataError"
+                and error.__dict__.get("response_status_code", None) == 403
+            ):
+                logger.error(
+                    "You need 'Reports.Read.All' permission to access user registration details. It only can be granted through Service Principal authentication."
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        return registration_details
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
