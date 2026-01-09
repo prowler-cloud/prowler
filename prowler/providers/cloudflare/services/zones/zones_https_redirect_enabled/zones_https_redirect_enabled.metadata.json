@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_https_redirect_enabled",
-  "CheckTitle": "Always Use HTTPS is enabled to redirect all HTTP traffic",
+  "CheckTitle": "Always Use HTTPS is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

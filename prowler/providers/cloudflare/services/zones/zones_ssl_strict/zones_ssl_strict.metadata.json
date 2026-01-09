@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_ssl_strict",
-  "CheckTitle": "SSL/TLS encryption mode is set to Full (Strict) for end-to-end encryption",
+  "CheckTitle": "SSL/TLS encryption mode is set to Full Strict",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

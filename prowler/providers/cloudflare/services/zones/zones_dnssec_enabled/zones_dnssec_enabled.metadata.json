@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_dnssec_enabled",
-  "CheckTitle": "DNSSEC is enabled to protect DNS responses from tampering",
+  "CheckTitle": "DNSSEC is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",
