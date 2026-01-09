@@ -63,6 +63,11 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - [ ] Ensure new entries are added to ui/CHANGELOG.md
 
 #### API (if applicable)
+- [ ] All issue/task requirements work as expected on the API
+- [ ] Endpoint response output (if applicable)
+- [ ] EXPLAIN ANALYZE output for new/modified queries or indexes (if applicable)
+- [ ] Performance test results (if applicable)
+- [ ] Any other relevant evidence of the implementation (if applicable)
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required.
 - [ ] Ensure new entries are added to api/CHANGELOG.md
@@ -77,7 +82,7 @@ By submitting this pull request, I confirm that my contribution is made under th
 | Component | CHANGELOG | Extra Checks |
 |-----------|-----------|--------------|
 | SDK | `prowler/CHANGELOG.md` | New checks → permissions update? |
-| API | `api/CHANGELOG.md` | API specs regeneration, version bump |
+| API | `api/CHANGELOG.md` | API specs, version bump, endpoint output, EXPLAIN ANALYZE, performance |
 | UI | `ui/CHANGELOG.md` | Screenshots for Mobile/Tablet/Desktop |
 | MCP | `mcp_server/CHANGELOG.md` | N/A |
 
