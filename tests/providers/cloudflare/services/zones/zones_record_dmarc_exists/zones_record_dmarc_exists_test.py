@@ -57,7 +57,7 @@ class Test_zones_record_dmarc_exists:
             result = check.execute()
             assert len(result) == 0
 
-    def test_zone_with_dmarc_record(self):
+    def test_zone_with_dmarc_record_reject_policy(self):
         zones_client = mock.MagicMock
         zones_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -105,7 +105,112 @@ class Test_zones_record_dmarc_exists:
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "DMARC record exists" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"DMARC record with enforcement policy p=reject exists for zone {ZONE_NAME}: _dmarc.{ZONE_NAME}."
+            )
+
+    def test_zone_with_dmarc_record_quarantine_policy(self):
+        zones_client = mock.MagicMock
+        zones_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                status="active",
+                paused=False,
+                settings=CloudflareZoneSettings(),
+            )
+        }
+
+        dns_client = mock.MagicMock
+        dns_client.records = [
+            CloudflareDNSRecord(
+                id="record-1",
+                zone_id=ZONE_ID,
+                zone_name=ZONE_NAME,
+                name=f"_dmarc.{ZONE_NAME}",
+                type="TXT",
+                content="v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com",
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists.zones_client",
+                new=zones_client,
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists.dns_client",
+                new=dns_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists import (
+                zones_record_dmarc_exists,
+            )
+
+            check = zones_record_dmarc_exists()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"DMARC record with enforcement policy p=quarantine exists for zone {ZONE_NAME}: _dmarc.{ZONE_NAME}."
+            )
+
+    def test_zone_with_dmarc_record_none_policy(self):
+        zones_client = mock.MagicMock
+        zones_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                status="active",
+                paused=False,
+                settings=CloudflareZoneSettings(),
+            )
+        }
+
+        dns_client = mock.MagicMock
+        dns_client.records = [
+            CloudflareDNSRecord(
+                id="record-1",
+                zone_id=ZONE_ID,
+                zone_name=ZONE_NAME,
+                name=f"_dmarc.{ZONE_NAME}",
+                type="TXT",
+                content="v=DMARC1; p=none; rua=mailto:dmarc@example.com",
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists.zones_client",
+                new=zones_client,
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists.dns_client",
+                new=dns_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zones.zones_record_dmarc_exists.zones_record_dmarc_exists import (
+                zones_record_dmarc_exists,
+            )
+
+            check = zones_record_dmarc_exists()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"DMARC record exists for zone {ZONE_NAME} but uses monitoring-only policy p=none: _dmarc.{ZONE_NAME}."
+            )
 
     def test_zone_without_dmarc_record(self):
         zones_client = mock.MagicMock
@@ -153,7 +258,10 @@ class Test_zones_record_dmarc_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No DMARC record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No DMARC record found for zone {ZONE_NAME}."
+            )
 
     def test_zone_with_txt_record_but_not_dmarc(self):
         zones_client = mock.MagicMock
@@ -201,7 +309,10 @@ class Test_zones_record_dmarc_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No DMARC record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No DMARC record found for zone {ZONE_NAME}."
+            )
 
     def test_zone_with_dmarc_record_lowercase(self):
         zones_client = mock.MagicMock
@@ -249,7 +360,10 @@ class Test_zones_record_dmarc_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "DMARC record exists" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"DMARC record with enforcement policy p=reject exists for zone {ZONE_NAME}: _dmarc.{ZONE_NAME}."
+            )
 
     def test_zone_with_dmarc_record_different_zone(self):
         zones_client = mock.MagicMock
@@ -297,4 +411,7 @@ class Test_zones_record_dmarc_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No DMARC record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No DMARC record found for zone {ZONE_NAME}."
+            )

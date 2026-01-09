@@ -1,3 +1,5 @@
+import re
+
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zones.zones_client import zones_client
@@ -20,22 +22,39 @@ class zones_record_caa_exists(Check):
                 if record.zone_id == zone.id and record.type == "CAA"
             ]
 
-            if caa_records:
-                report.status = "PASS"
-                # Extract CA names from CAA record content (format: "0 issue "ca.org"")
-                ca_names = []
-                for record in caa_records:
-                    parts = record.content.split()
-                    if len(parts) >= 3:
-                        ca_names.append(parts[2].strip('"'))
-                    else:
-                        ca_names.append(record.content)
-                report.status_extended = (
-                    f"CAA record exists for zone {zone.name}: {', '.join(ca_names)}."
-                )
-            else:
+            if not caa_records:
                 report.status = "FAIL"
                 report.status_extended = f"No CAA record found for zone {zone.name}."
+            else:
+                # Check if CAA records have issue or issuewild tags with CA specified
+                issue_records = [
+                    record
+                    for record in caa_records
+                    if self._has_issue_tag_with_ca(record.content)
+                ]
+
+                records_str = ", ".join(record.name for record in caa_records)
+
+                if issue_records:
+                    report.status = "PASS"
+                    report.status_extended = f"CAA record with certificate issuance restrictions exists for zone {zone.name}: {records_str}."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"CAA record exists for zone {zone.name} but does not specify authorized CAs with issue or issuewild tags: {records_str}."
+
             findings.append(report)
 
         return findings
+
+    def _has_issue_tag_with_ca(self, content: str) -> bool:
+        """Check if CAA record has issue or issuewild tag with a CA specified.
+
+        CAA content format: "flags tag value" e.g., "0 issue letsencrypt.org"
+        """
+        # Strip quotes that may be present from Cloudflare API
+        content_lower = content.strip('"').lower()
+        # Match issue or issuewild tag followed by a value (CA name or ";" to block all)
+        # Format: "0 issue letsencrypt.org" or "0 issuewild ;" or "0 issue \"digicert.com\""
+        issue_match = re.search(r"\bissue\b", content_lower)
+        issuewild_match = re.search(r"\bissuewild\b", content_lower)
+        return bool(issue_match or issuewild_match)

@@ -57,7 +57,60 @@ class Test_zones_record_spf_exists:
             result = check.execute()
             assert len(result) == 0
 
-    def test_zone_with_spf_record(self):
+    def test_zone_with_spf_record_strict_policy(self):
+        zones_client = mock.MagicMock
+        zones_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                status="active",
+                paused=False,
+                settings=CloudflareZoneSettings(),
+            )
+        }
+
+        dns_client = mock.MagicMock
+        dns_client.records = [
+            CloudflareDNSRecord(
+                id="record-1",
+                zone_id=ZONE_ID,
+                zone_name=ZONE_NAME,
+                name=ZONE_NAME,
+                type="TXT",
+                content="v=spf1 include:_spf.google.com -all",
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_spf_exists.zones_record_spf_exists.zones_client",
+                new=zones_client,
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zones.zones_record_spf_exists.zones_record_spf_exists.dns_client",
+                new=dns_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zones.zones_record_spf_exists.zones_record_spf_exists import (
+                zones_record_spf_exists,
+            )
+
+            check = zones_record_spf_exists()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ZONE_ID
+            assert result[0].resource_name == ZONE_NAME
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"SPF record with strict policy -all exists for zone {ZONE_NAME}: {ZONE_NAME}."
+            )
+
+    def test_zone_with_spf_record_permissive_policy(self):
         zones_client = mock.MagicMock
         zones_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -102,10 +155,11 @@ class Test_zones_record_spf_exists:
             check = zones_record_spf_exists()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].resource_id == ZONE_ID
-            assert result[0].resource_name == ZONE_NAME
-            assert result[0].status == "PASS"
-            assert "SPF record exists" in result[0].status_extended
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"SPF record exists for zone {ZONE_NAME} but does not use strict policy -all: {ZONE_NAME}."
+            )
 
     def test_zone_without_spf_record(self):
         zones_client = mock.MagicMock
@@ -153,7 +207,10 @@ class Test_zones_record_spf_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No SPF record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No SPF record found for zone {ZONE_NAME}."
+            )
 
     def test_zone_with_txt_record_but_not_spf(self):
         zones_client = mock.MagicMock
@@ -201,7 +258,10 @@ class Test_zones_record_spf_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No SPF record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No SPF record found for zone {ZONE_NAME}."
+            )
 
     def test_zone_with_spf_record_different_zone(self):
         zones_client = mock.MagicMock
@@ -223,7 +283,7 @@ class Test_zones_record_spf_exists:
                 zone_name="other.com",
                 name="other.com",
                 type="TXT",
-                content="v=spf1 include:_spf.google.com ~all",
+                content="v=spf1 include:_spf.google.com -all",
             )
         ]
 
@@ -249,4 +309,7 @@ class Test_zones_record_spf_exists:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "No SPF record found" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"No SPF record found for zone {ZONE_NAME}."
+            )
