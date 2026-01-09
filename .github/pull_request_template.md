@@ -14,13 +14,25 @@ Please add a detailed description of how to review this PR.
 
 ### Checklist
 
-- Are there new checks included in this PR? Yes / No
-    - If so, do we need to update permissions for the provider? Please review this carefully.
+<details>
+
+<summary><b>Community Checklist</b></summary>
+
+- [ ] There is an issue/feature-request, check it in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen).
+- [ ] Is it assigned to you?
+
+</details>
+
+
 - [ ] Review if the code is being covered by tests.
 - [ ] Review if code is being documented following this specification https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
 - [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
+
+#### SDK/CLI
+- Are there new checks included in this PR? Yes / No
+    - If so, do we need to update permissions for the provider? Please review this carefully.
 
 #### UI
 - [ ] All issue/task requirements work as expected on the UI
