@@ -66,17 +66,3 @@ class TestLoggingService:
                 == "resource.type=gae_app AND severity>=ERROR"
             )
             assert logging_client.metrics[1].project_id == GCP_PROJECT_ID
-
-            assert GCP_PROJECT_ID in logging_client.compute_audit_entries
-            assert len(logging_client.compute_audit_entries[GCP_PROJECT_ID]) == 1
-
-            audit_entry = logging_client.compute_audit_entries[GCP_PROJECT_ID][0]
-            assert audit_entry.insert_id == "audit-log-entry-1"
-            assert audit_entry.timestamp == "2024-01-15T10:30:00Z"
-            assert audit_entry.resource_type == "gce_instance"
-            assert audit_entry.resource_name == "test-instance-1"
-            assert audit_entry.method_name == "v1.compute.instances.insert"
-            assert audit_entry.service_name == "compute.googleapis.com"
-            assert audit_entry.principal_email == "user@example.com"
-            assert audit_entry.caller_ip == "192.168.1.1"
-            assert audit_entry.project_id == GCP_PROJECT_ID

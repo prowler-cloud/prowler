@@ -33,7 +33,6 @@ def set_mocked_gcp_provider(
         profile=profile,
     )
     provider.audit_config = {
-        "compute_audit_log_lookback_days": 1,
         "mig_min_zones": 2,
         "max_unused_account_days": 30,
     }

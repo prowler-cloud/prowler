@@ -333,7 +333,6 @@ config_gcp = {
     "shodan_api_key": None,
     "mig_min_zones": 2,
     "max_unused_account_days": 30,
-    "compute_audit_log_lookback_days": 1,
 }
 
 config_kubernetes = {

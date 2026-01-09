@@ -510,9 +510,6 @@ gcp:
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
-  # gcp.compute_configuration_changes
-  # Number of days to look back for Compute Engine configuration changes in audit logs
-  compute_audit_log_lookback_days: 1
   # GCP Service Account and user-managed keys unused configuration
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused
