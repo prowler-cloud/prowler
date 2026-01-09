@@ -41,6 +41,7 @@ from api.models import (
     ResourceTag,
     Scan,
     ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
 )
@@ -121,6 +122,46 @@ def aggregate_category_counts(
             cache[key]["failed"] += 1
         if is_new_failed:
             cache[key]["new_failed"] += 1
+
+
+def aggregate_resource_group_counts(
+    resource_group: str | None,
+    severity: str,
+    status: str,
+    delta: str | None,
+    muted: bool,
+    resource_uid: str,
+    cache: dict[tuple[str, str], dict[str, int | set]],
+) -> None:
+    """
+    Increment resource group counters in-place for a finding.
+
+    Args:
+        resource_group: Resource group from check metadata (e.g., "database", "compute").
+        severity: Severity level (e.g., "high", "medium").
+        status: Finding status as string ("FAIL", "PASS").
+        delta: Delta value as string ("new", "changed") or None.
+        muted: Whether the finding is muted.
+        resource_uid: Unique identifier for the resource to count distinct resources.
+        cache: Dict {(resource_group, severity): {"total", "failed", "new_failed", "resources"}} to update.
+    """
+    if not resource_group:
+        return
+
+    is_failed = status == "FAIL" and not muted
+    is_new_failed = is_failed and delta == "new"
+
+    key = (resource_group, severity)
+    if key not in cache:
+        cache[key] = {"total": 0, "failed": 0, "new_failed": 0, "resources": set()}
+    if not muted:
+        cache[key]["total"] += 1
+    if is_failed:
+        cache[key]["failed"] += 1
+    if is_new_failed:
+        cache[key]["new_failed"] += 1
+    if resource_uid and not muted:
+        cache[key]["resources"].add(resource_uid)
 
 
 def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
@@ -434,6 +475,7 @@ def _process_finding_micro_batch(
     scan_resource_cache: set,
     mute_rules_cache: dict,
     scan_categories_cache: dict[tuple[str, str], dict[str, int]],
+    scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]],
 ) -> None:
     """
     Process a micro-batch of findings and persist them using bulk operations.
@@ -455,6 +497,7 @@ def _process_finding_micro_batch(
         scan_resource_cache: Set of tuples used to create `ResourceScanSummary` rows.
         mute_rules_cache: Map of finding UID -> mute reason gathered before the scan.
         scan_categories_cache: Dict tracking category counts {(category, severity): {"total", "failed", "new_failed"}}.
+        scan_resource_groups_cache: Dict tracking resource group counts {(resource_group, severity): {"total", "failed", "new_failed", "resources"}}.
     """
     # Accumulate objects for bulk operations
     findings_to_create = []
@@ -495,6 +538,8 @@ def _process_finding_micro_batch(
                 with rls_transaction(tenant_id):
                     resource_uid = finding.resource_uid
                     if resource_uid not in resource_cache:
+                        check_metadata = finding.get_metadata()
+                        group = check_metadata.get("resourcegroup") or None
                         resource_instance, _ = Resource.objects.get_or_create(
                             tenant_id=tenant_id,
                             provider=provider_instance,
@@ -504,6 +549,7 @@ def _process_finding_micro_batch(
                                 "service": finding.service_name,
                                 "type": finding.resource_type,
                                 "name": finding.resource_name,
+                                "group": group,
                             },
                         )
                         resource_cache[resource_uid] = resource_instance
@@ -524,6 +570,8 @@ def _process_finding_micro_batch(
 
         # Track resource field changes (defer save)
         updated = False
+        check_metadata = finding.get_metadata()
+        group = check_metadata.get("resourcegroup") or None
         if finding.region and resource_instance.region != finding.region:
             resource_instance.region = finding.region
             updated = True
@@ -543,6 +591,9 @@ def _process_finding_micro_batch(
             updated = True
         if resource_instance.partition != finding.partition:
             resource_instance.partition = finding.partition
+            updated = True
+        if group and resource_instance.group != group:
+            resource_instance.group = group
             updated = True
 
         if updated:
@@ -629,6 +680,7 @@ def _process_finding_micro_batch(
             muted_reason=muted_reason,
             compliance=finding.compliance,
             categories=check_metadata.get("categories", []) or [],
+            group=check_metadata.get("resourcegroup") or None,
         )
         findings_to_create.append(finding_instance)
         resource_denormalized_data.append((finding_instance, resource_instance))
@@ -651,6 +703,17 @@ def _process_finding_micro_batch(
             delta=delta.value if delta else None,
             muted=is_muted,
             cache=scan_categories_cache,
+        )
+
+        # Track resource groups with counts for ScanGroupSummary
+        aggregate_resource_group_counts(
+            resource_group=check_metadata.get("resourcegroup") or None,
+            severity=finding.severity.value,
+            status=status.value,
+            delta=delta.value if delta else None,
+            muted=is_muted,
+            resource_uid=resource_instance.uid if resource_instance else "",
+            cache=scan_resource_groups_cache,
         )
 
     # Bulk operations within single transaction
@@ -710,7 +773,15 @@ def _process_finding_micro_batch(
             tenant_id=tenant_id,
             model=Resource,
             objects=list(dirty_resources.values()),
-            fields=["metadata", "details", "partition", "region", "service", "type"],
+            fields=[
+                "metadata",
+                "details",
+                "partition",
+                "region",
+                "service",
+                "type",
+                "group",
+            ],
             batch_size=1000,
         )
 
@@ -753,6 +824,7 @@ def perform_prowler_scan(
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
     scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+    scan_resource_groups_cache: dict[tuple[str, str], dict[str, int | set]] = {}
     start_time = time.time()
     exc = None
 
@@ -843,6 +915,7 @@ def perform_prowler_scan(
                     scan_resource_cache=scan_resource_cache,
                     mute_rules_cache=mute_rules_cache,
                     scan_categories_cache=scan_categories_cache,
+                    scan_resource_groups_cache=scan_resource_groups_cache,
                 )
 
             # Update scan progress
@@ -928,6 +1001,34 @@ def perform_prowler_scan(
     except Exception as cat_exception:
         sentry_sdk.capture_exception(cat_exception)
         logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
+
+    try:
+        if scan_resource_groups_cache:
+            resource_group_summaries = [
+                ScanGroupSummary(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    group=grp,
+                    severity=severity,
+                    total_findings=counts["total"],
+                    failed_findings=counts["failed"],
+                    new_failed_findings=counts["new_failed"],
+                    resources_count=len(counts["resources"]),
+                )
+                for (
+                    grp,
+                    severity,
+                ), counts in scan_resource_groups_cache.items()
+            ]
+            with rls_transaction(tenant_id):
+                ScanGroupSummary.objects.bulk_create(
+                    resource_group_summaries, batch_size=500, ignore_conflicts=True
+                )
+    except Exception as rg_exception:
+        sentry_sdk.capture_exception(rg_exception)
+        logger.error(
+            f"Error storing resource groups for scan {scan_id}: {rg_exception}"
+        )
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data

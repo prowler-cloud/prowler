@@ -104,6 +104,7 @@ from api.filters import (
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
+    GroupOverviewFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -158,6 +159,7 @@ from api.models import (
     SAMLToken,
     Scan,
     ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -189,6 +191,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     FindingsSeverityOverTimeSerializer,
+    GroupOverviewSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
@@ -2523,10 +2526,23 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get groups from Resource model
+        groups = list(
+            Resource.objects.filter(
+                tenant_id=tenant_id,
+                group__isnull=False,
+            )
+            .exclude(group__exact="")
+            .values_list("group", flat=True)
+            .distinct()
+            .order_by("group")
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2583,10 +2599,23 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get groups from Resource model for resources in latest scans
+        groups = list(
+            Resource.objects.filter(
+                tenant_id=tenant_id,
+                group__isnull=False,
+            )
+            .exclude(group__exact="")
+            .values_list("group", flat=True)
+            .distinct()
+            .order_by("group")
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -3015,11 +3044,23 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     categories_set.update(categories_list)
             categories = sorted(categories_set)
 
+        # Get groups from ScanGroupSummary for latest scans
+        groups = list(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            .values_list("group", flat=True)
+            .distinct()
+            .order_by("group")
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
             "categories": categories,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -4093,6 +4134,18 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         filters=True,
         responses={200: CategoryOverviewSerializer(many=True)},
     ),
+    groups=extend_schema(
+        summary="Get resource group overview",
+        description=(
+            "Retrieve aggregated resource group metrics from latest completed scans per provider. "
+            "Returns one row per resource group with total, failed, and new failed findings counts, "
+            "plus a severity breakdown showing failed findings per severity level, "
+            "and a count of distinct resources evaluated per group."
+        ),
+        tags=["Overview"],
+        filters=True,
+        responses={200: GroupOverviewSerializer(many=True)},
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4142,6 +4195,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return AttackSurfaceOverviewSerializer
         elif self.action == "categories":
             return CategoryOverviewSerializer
+        elif self.action == "groups":
+            return GroupOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4155,6 +4210,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return DailySeveritySummaryFilter
         elif self.action == "categories":
             return CategoryOverviewFilter
+        elif self.action == "groups":
+            return GroupOverviewFilter
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewFilter
         return None
@@ -4977,6 +5034,75 @@ class OverviewViewSet(BaseRLSViewSet):
 
         response_data = [
             {"category": cat, **data} for cat, data in sorted(category_data.items())
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"], url_name="groups")
+    def groups(self, request):
+        tenant_id = request.tenant_id
+        provider_filters = self._extract_provider_filters_from_params()
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(
+            tenant_id, provider_filters
+        )
+
+        base_queryset = ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        provider_filter_keys = {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+        }
+        filtered_queryset = self._apply_filterset(
+            base_queryset,
+            GroupOverviewFilter,
+            exclude_keys=provider_filter_keys,
+        )
+
+        aggregation = (
+            filtered_queryset.values("group", "severity")
+            .annotate(
+                total=Coalesce(Sum("total_findings"), 0),
+                failed=Coalesce(Sum("failed_findings"), 0),
+                new_failed=Coalesce(Sum("new_failed_findings"), 0),
+                resources=Coalesce(Sum("resources_count"), 0),
+            )
+            .order_by("group", "severity")
+        )
+
+        group_data = defaultdict(
+            lambda: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "new_failed_findings": 0,
+                "resources_count": 0,
+                "severity": {
+                    "informational": 0,
+                    "low": 0,
+                    "medium": 0,
+                    "high": 0,
+                    "critical": 0,
+                },
+            }
+        )
+
+        for row in aggregation:
+            grp = row["group"]
+            sev = row["severity"]
+            group_data[grp]["total_findings"] += row["total"]
+            group_data[grp]["failed_findings"] += row["failed"]
+            group_data[grp]["new_failed_findings"] += row["new_failed"]
+            group_data[grp]["resources_count"] += row["resources"]
+            if sev in group_data[grp]["severity"]:
+                group_data[grp]["severity"][sev] = row["failed"]
+
+        response_data = [
+            {"group": grp, **data} for grp, data in sorted(group_data.items())
         ]
 
         return Response(

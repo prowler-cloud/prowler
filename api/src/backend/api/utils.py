@@ -393,11 +393,21 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
             categories_set.update(categories_list)
     categories = sorted(categories_set)
 
+    # Aggregate groups from findings
+    groups = list(
+        filtered_queryset.exclude(group__isnull=True)
+        .exclude(group__exact="")
+        .values_list("group", flat=True)
+        .distinct()
+        .order_by("group")
+    )
+
     result = {
         "services": services,
         "regions": regions,
         "resource_types": resource_types,
         "categories": categories,
+        "groups": groups,
     }
 
     serializer = FindingMetadataSerializer(data=result)
