@@ -77,7 +77,7 @@ class CloudStorage(GCPService):
                             Bucket(
                                 name=bucket["name"],
                                 id=bucket["id"],
-                                region=bucket["location"],
+                                region=bucket["location"].lower(),
                                 uniform_bucket_level_access=bucket["iamConfiguration"][
                                     "uniformBucketLevelAccess"
                                 ]["enabled"],

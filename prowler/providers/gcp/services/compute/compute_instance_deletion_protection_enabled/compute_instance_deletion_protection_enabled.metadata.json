@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
   "Description": "This check verifies whether GCP Compute Engine VM instances have **deletion protection** enabled to prevent accidental termination of production or critical workloads.",
   "Risk": "Without deletion protection enabled, VM instances are vulnerable to **accidental deletion** by users with sufficient permissions.\n\nThis could result in:\n- **Service disruption** and downtime for critical applications\n- **Data loss** if persistent disks are also deleted\n- **Recovery delays** while recreating instances and restoring configurations",
   "RelatedUrl": "",

@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_tls_1_3_enabled",
-  "CheckTitle": "TLS 1.3 is enabled for improved security and performance",
+  "CheckTitle": "TLS 1.3 is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

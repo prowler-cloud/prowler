@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Route Changes.",
   "Risk": "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path.",
   "RelatedUrl": "",

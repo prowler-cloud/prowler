@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**Amazon DocumentDB clusters** are evaluated for **automated backups** and an adequate **backup retention period**. Clusters should have `backup_retention_period` set to at least the configured minimum (default `7` days). Values of `0` indicate backups are disabled; values below the threshold are considered insufficient.",
   "Risk": "Without adequate backups, clusters can't be reliably restored. Accidental deletes, logical corruption, or ransomware may cause irreversible data loss once a short retention window expires, leading to prolonged outages, missed RPO/RTO, and limited ability to roll back malicious or erroneous changes.",
   "RelatedUrl": "",

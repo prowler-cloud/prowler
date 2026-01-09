@@ -307,6 +307,15 @@ export const FindingDetail = ({
             <InfoField label="Region">{renderValue(resource.region)}</InfoField>
           </div>
 
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Partition">
+              {renderValue(resource.partition)}
+            </InfoField>
+            <InfoField label="Details">
+              {renderValue(resource.details)}
+            </InfoField>
+          </div>
+
           {resource.tags && Object.entries(resource.tags).length > 0 && (
             <div className="flex flex-col gap-4">
               <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">

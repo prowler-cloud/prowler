@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Transport Rules",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure mail transport rules are set to disable mail forwarding.",
   "Risk": "Enabling email auto-forwarding can be exploited by attackers or malicious insiders to exfiltrate sensitive data outside the organization, often without detection.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MongoDBAtlasOrganization",
+  "ResourceGroup": "governance",
   "Description": "Ensure organization has a security contact defined to receive security-related notifications",
   "Risk": "Without a security contact, the organization may not receive important security notifications and alerts",
   "RelatedUrl": "",

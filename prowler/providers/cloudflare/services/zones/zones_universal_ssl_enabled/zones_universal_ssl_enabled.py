@@ -10,8 +10,7 @@ class zones_universal_ssl_enabled(Check):
                 metadata=self.metadata(),
                 resource=zone,
             )
-            universal_ssl = (zone.settings.universal_ssl or "").lower()
-            if universal_ssl == "on":
+            if zone.settings.universal_ssl_enabled:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Universal SSL is enabled for zone {zone.name}."
