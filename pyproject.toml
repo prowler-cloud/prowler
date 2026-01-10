@@ -114,7 +114,7 @@ black = "25.1.0"
 coverage = "7.6.12"
 docker = "7.1.0"
 flake8 = "7.1.2"
-freezegun = "1.5.1"
+freezegun = "1.5.5"
 marshmallow = ">=3.15.0,<4.0.0"
 mock = "5.2.0"
 moto = {extras = ["all"], version = "5.1.11"}
