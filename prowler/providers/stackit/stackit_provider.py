@@ -1,4 +1,7 @@
+import contextlib
 import os
+import pathlib
+import sys
 from typing import Optional
 from uuid import UUID
 
@@ -10,7 +13,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import print_boxes
+from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.stackit.exceptions.exceptions import (
@@ -23,6 +26,20 @@ from prowler.providers.stackit.exceptions.exceptions import (
 )
 from prowler.providers.stackit.lib.mutelist.mutelist import StackITMutelist
 from prowler.providers.stackit.models import StackITIdentityInfo
+
+STACKIT_REGIONS_JSON_FILE = "stackit_regions_by_service.json"
+
+
+@contextlib.contextmanager
+def suppress_stderr():
+    """Context manager to suppress stderr output."""
+    original_stderr = sys.stderr
+    try:
+        sys.stderr = open(os.devnull, "w")
+        yield
+    finally:
+        sys.stderr.close()
+        sys.stderr = original_stderr
 
 
 class StackitProvider(Provider):
@@ -65,6 +82,7 @@ class StackitProvider(Provider):
         self,
         api_token: str = None,
         project_id: str = None,
+        regions: set = None,
         config_path: str = None,
         fixer_config: dict = None,
         mutelist_path: str = None,
@@ -76,6 +94,7 @@ class StackitProvider(Provider):
         Args:
             - api_token: The StackIT API token for authentication
             - project_id: The StackIT project ID to audit
+            - regions: The list of regions to audit
             - config_path: The path to the configuration file.
             - fixer_config: The fixer configuration.
             - mutelist_path: The path to the mutelist file.
@@ -86,6 +105,7 @@ class StackitProvider(Provider):
         # 1) Store argument values
         self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
+        self._audited_regions = regions if regions else self.get_regions()
 
         # 2) Validate credentials format (following Azure's validation pattern)
         try:
@@ -131,6 +151,7 @@ class StackitProvider(Provider):
             self._identity = StackITIdentityInfo(
                 project_id=self._project_id,
                 project_name=project_name,
+                audited_regions=self._audited_regions,
             )
         except StackITInvalidTokenError:
             # Re-raise authentication errors without wrapping to avoid verbose output
@@ -144,6 +165,53 @@ class StackitProvider(Provider):
 
         # 6) Register as global provider
         Provider.set_global_provider(self)
+
+    @staticmethod
+    def read_stackit_regions_file() -> dict:
+        """Read the STACKIT regions JSON file."""
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        with open_file(f"{actual_directory}/{STACKIT_REGIONS_JSON_FILE}") as f:
+            return parse_json_file(f)
+
+    @staticmethod
+    def get_regions() -> set:
+        """Get all available STACKIT regions from the JSON file."""
+        regions = set()
+        data = StackitProvider.read_stackit_regions_file()
+        for service in data["services"].values():
+            regions.update(service["regions"])
+        return regions
+
+    @staticmethod
+    def get_available_service_regions(service: str, audited_regions: set = None) -> set:
+        """Get available regions for a specific service, filtered by audited_regions."""
+        data = StackitProvider.read_stackit_regions_file()
+        json_regions = set(data["services"].get(service, {}).get("regions", []))
+        if audited_regions:
+            return json_regions.intersection(audited_regions)
+        return json_regions
+
+    def generate_regional_clients(self, service: str = "iaas") -> dict:
+        """Generate regional API clients for the given service.
+
+        Returns dict: {"eu01": DefaultApi_client, "eu02": DefaultApi_client}
+        """
+        from stackit.core.configuration import Configuration
+        from stackit.iaas import DefaultApi
+
+        regional_clients = {}
+        service_regions = self.get_available_service_regions(
+            service, self._audited_regions
+        )
+
+        for region in service_regions:
+            with suppress_stderr():
+                config = Configuration(service_account_token=self._api_token)
+                client = DefaultApi(config)
+                client.region = region  # Attach region attribute
+                regional_clients[region] = client
+
+        return regional_clients
 
     @property
     def type(self) -> str:
@@ -277,22 +345,8 @@ class StackitProvider(Provider):
             StackITInvalidTokenError: If the API token is invalid or expired
         """
         try:
-            import contextlib
-            import sys
-
             from stackit.core.configuration import Configuration
             from stackit.resourcemanager import DefaultApi
-
-            # Suppress SDK stderr warnings during initialization
-            @contextlib.contextmanager
-            def suppress_stderr():
-                original_stderr = sys.stderr
-                try:
-                    sys.stderr = open(os.devnull, 'w')
-                    yield
-                finally:
-                    sys.stderr.close()
-                    sys.stderr = original_stderr
 
             # Configure SDK with API token (thread-safe), suppressing warnings
             with suppress_stderr():
@@ -406,15 +460,18 @@ class StackitProvider(Provider):
                 # Pass the API token directly to Configuration (thread-safe approach)
                 # This avoids manipulating global environment variables
                 # Note: project_id is passed to API methods, not to Configuration
-                config = Configuration(service_account_token=api_token)
+                with suppress_stderr():
+                    config = Configuration(service_account_token=api_token)
 
-                # Create DefaultApi client directly with Configuration
-                # DefaultApi takes Configuration directly, not ApiClient
-                client = DefaultApi(config)
+                    # Create DefaultApi client directly with Configuration
+                    # DefaultApi takes Configuration directly, not ApiClient
+                    client = DefaultApi(config)
 
-                # Test with a simple API call (list buckets)
-                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
-                client.list_buckets(project_id=project_id, region="eu01")
+                    # Test with a simple API call (list buckets)
+                    # StackIT SDK limitation: Only eu01 region is currently supported in the SDK
+                    # eu02 (Austria West) exists but is not yet available in the Python SDK
+                    # When SDK adds eu02 support, this test should verify connectivity to all regions
+                    client.list_buckets(project_id=project_id, region="eu01")
 
                 logger.info(
                     "StackIT test_connection: Successfully connected using StackIT SDK."

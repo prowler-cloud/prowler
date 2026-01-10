@@ -28,7 +28,7 @@ The StackIT provider implementation follows the general [Provider structure](/de
 - **Purpose:** Define structured data for StackIT identity, region configuration, and resource models.
 - **Key StackIT Models:**
     - `StackITIdentityInfo`: Holds StackIT identity metadata, including project ID and project name (fetched automatically from Resource Manager API).
-    - `StackITRegionConfig`: Stores the region configuration (currently supports `eu01`).
+    - `StackITRegionConfig`: Stores the region configuration (supports `eu01`, `eu02`).
     - Resource models for IaaS services: `SecurityGroup`, `SecurityGroupRule`, `Server`, `NetworkInterface`.
 
 ### `StackITService` (Service Base Class)
@@ -181,6 +181,7 @@ StackIT-specific command-line arguments:
 |----------|-------------|----------|---------|
 | `--stackit-api-token` | StackIT service account API token | Yes* | `$STACKIT_SERVICE_ACCOUNT_TOKEN` |
 | `--stackit-project-id` | StackIT project ID (UUID format) | Yes* | `$STACKIT_PROJECT_ID` |
+| `--stackit-region` | StackIT region(s) to scan | No | All available regions |
 
 \* Required unless provided via environment variables.
 
@@ -328,37 +329,57 @@ poetry install
 
 ## Region Support
 
-### Current Support
+### Supported Regions
 
-- **Region:** `eu01` (Germany South)
-- **Default:** All scans currently use the eu01 region
+- **Available Regions:** `eu01` (Germany South) and `eu02` (Austria West)
+- **Default:** All scans use both `eu01` and `eu02` regions by default.
+
+### Multi-Region Scanning
+
+Prowler supports scanning multiple StackIT regions in a single execution. By default, it will scan all regions defined in the `stackit_regions_by_service.json` configuration file.
+
+### CLI Argument
+
+You can specify which regions to scan using the `--stackit-region` argument:
+
+```bash
+# Scan only eu01
+prowler stackit --stackit-region eu01
+
+# Scan both eu01 and eu02
+prowler stackit --stackit-region eu01 eu02
+```
+
+### Implementation Details
+
+- **Regional Clients:** Prowler generates a separate API client for each audited region.
+- **Service Iteration:** Each service (e.g., IaaS) iterates through the regional clients to fetch and audit resources.
+- **Identity Tracking:** The `audited_regions` are stored in the identity model for reporting.
 
 ### Future Enhancements
 
-The StackIT provider is planned to support:
-- **eu02** region
-- Auto-discovery across all available regions
-- Region-specific reporting
+As StackIT adds more regions, they can be easily added to Prowler by updating the `prowler/providers/stackit/stackit_regions_by_service.json` file without requiring code changes.
 
 ## Command Examples
 
-### Basic Scan
+### Scan Specific Regions
 
-Scan a StackIT project with all available checks:
+Scan only the `eu01` region:
 
 ```bash
 prowler stackit \
   --stackit-api-token "your-token" \
-  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
+  --stackit-project-id "your-project-id" \
+  --stackit-region eu01
 ```
 
-### Using Environment Variables
+Scan multiple regions:
 
 ```bash
-export STACKIT_SERVICE_ACCOUNT_TOKEN="your-token"
-export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
-
-prowler stackit
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --stackit-region eu01 eu02
 ```
 
 ### Scan Specific Checks
@@ -406,15 +427,13 @@ prowler stackit \
 ### Current Limitations
 
 1. **Single Project Scope**: Only one project can be scanned at a time
-2. **Region Support**: Currently limited to eu01 region only
-3. **Service Coverage**: Only IaaS service is implemented (objectstorage service is work in progress)
-4. **Check Coverage**: Limited to security group network security checks (4 checks total)
-5. **No Compliance Frameworks**: Compliance framework mappings are not yet implemented
+2. **Service Coverage**: Only IaaS service is implemented (objectstorage service is work in progress)
+3. **Check Coverage**: Limited to security group network security checks (4 checks total)
+4. **No Compliance Frameworks**: Compliance framework mappings are not yet implemented
 
 ### Planned Enhancements
 
 - Multi-project scanning capability
-- Support for eu02 region
 - Additional IaaS checks (volume encryption, server public IP exposure, backup status)
 - ObjectStorage service implementation and checks
 - Compliance framework mappings (CIS, custom StackIT best practices)

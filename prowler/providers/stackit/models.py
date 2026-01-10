@@ -15,6 +15,7 @@ class StackITIdentityInfo(BaseModel):
 
     project_id: str
     project_name: str = ""
+    audited_regions: set = set()
 
 
 class StackITOutputOptions(ProviderOutputOptions):
@@ -38,9 +39,7 @@ class StackITOutputOptions(ProviderOutputOptions):
         if not getattr(arguments, "output_filename", None):
             # If project_id exists, include it in the filename (e.g., prowler-output-stackit-<project_id>-20230101)
             if identity.project_id:
-                self.output_filename = (
-                    f"prowler-output-stackit-{identity.project_id}-{output_file_timestamp}"
-                )
+                self.output_filename = f"prowler-output-stackit-{identity.project_id}-{output_file_timestamp}"
             # Otherwise just 'prowler-output-stackit-<timestamp>'
             else:
                 self.output_filename = f"prowler-output-stackit-{output_file_timestamp}"

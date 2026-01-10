@@ -68,7 +68,7 @@ dependencies = [
   "shodan==1.31.0",
   "slack-sdk==3.34.0",
   "stackit-core==0.2.0",
-  "stackit-iaas==0.9.0",
+  "stackit-iaas==1.1.0",
   "stackit-objectstorage==1.2.1",
   "stackit-resourcemanager>=0.6.0",
   "tabulate==0.9.0",

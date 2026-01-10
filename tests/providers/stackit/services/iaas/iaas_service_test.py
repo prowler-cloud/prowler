@@ -10,65 +10,13 @@ from tests.providers.stackit.stackit_fixtures import (
 )
 
 
-def mock_iaas_get_stackit_client(_):
-    """Mock the _get_stackit_client method to avoid real SDK initialization."""
-    return "mock_client"
-
-
-def mock_iaas_list_public_ips(_):
-    """Mock the _list_public_ips method to populate public_nic_ids."""
-    # Simulate that we found 2 public IPs attached to NICs
-    # This will be called during __init__ so we need to modify the instance
-
-
-def mock_iaas_list_server_nics(_):
-    """Mock the _list_server_nics method to populate server_nics and in_use_sg_ids."""
-
-
-def mock_iaas_list_security_groups(_):
-    """Mock the _list_security_groups method to populate security_groups list."""
-
-
-def mock_iaas_list_security_group_rules(_, client, security_group_id):
-    """Mock the _list_security_group_rules method to return mock rules."""
-    # Return different rules based on security group ID for testing
-    if security_group_id == "sg-with-rules":
-        return [
-            SecurityGroupRule(
-                id="rule-1",
-                direction="ingress",
-                protocol="tcp",
-                ip_range="0.0.0.0/0",
-                port_range_min=22,
-                port_range_max=22,
-            ),
-            SecurityGroupRule(
-                id="rule-2",
-                direction="egress",
-                protocol="tcp",
-                ip_range="10.0.0.0/8",
-                port_range_min=443,
-                port_range_max=443,
-            ),
-        ]
-    return []
+def mock_iaas_fetch_all_regions(_):
+    """Mock the _fetch_all_regions method to avoid real API calls."""
 
 
 @patch(
-    "prowler.providers.stackit.services.iaas.iaas_service.IaaSService._get_stackit_client",
-    new=mock_iaas_get_stackit_client,
-)
-@patch(
-    "prowler.providers.stackit.services.iaas.iaas_service.IaaSService._list_public_ips",
-    new=mock_iaas_list_public_ips,
-)
-@patch(
-    "prowler.providers.stackit.services.iaas.iaas_service.IaaSService._list_server_nics",
-    new=mock_iaas_list_server_nics,
-)
-@patch(
-    "prowler.providers.stackit.services.iaas.iaas_service.IaaSService._list_security_groups",
-    new=mock_iaas_list_security_groups,
+    "prowler.providers.stackit.services.iaas.iaas_service.IaaSService._fetch_all_regions",
+    new=mock_iaas_fetch_all_regions,
 )
 class Test_IaaS_Service:
     def test_service_initialization(self):

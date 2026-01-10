@@ -241,6 +241,11 @@ class Provider(ABC):
                     provider_class(
                         api_token=arguments.stackit_api_token,
                         project_id=arguments.stackit_project_id,
+                        regions=(
+                            set(arguments.stackit_region)
+                            if arguments.stackit_region
+                            else None
+                        ),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

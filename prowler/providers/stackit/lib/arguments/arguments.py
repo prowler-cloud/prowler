@@ -1,3 +1,6 @@
+from prowler.providers.stackit.stackit_provider import StackitProvider
+
+
 def init_parser(self):
     """Init the StackIT Provider CLI parser"""
     stackit_parser = self.subparsers.add_parser(
@@ -17,4 +20,13 @@ def init_parser(self):
         nargs="?",
         default=None,
         help="StackIT Project ID to audit (alternatively set via STACKIT_PROJECT_ID environment variable)",
+    )
+
+    stackit_parser.add_argument(
+        "--stackit-region",
+        "-r",
+        nargs="+",
+        help="STACKIT region(s) to scan (default: all available regions)",
+        choices=StackitProvider.get_regions(),
+        default=None,
     )

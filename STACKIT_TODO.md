@@ -266,13 +266,21 @@ poetry run pytest tests/providers/stackit/ -v
 - **iaas_server_backup_enabled** - Check if server backups are configured
 - **iaas_security_group_default_in_use** - Flag if default security group is being used
 
-### Priority 3: Multi-Region Support
-**Current**: Hardcoded to "eu01" region (Germany South)
+### ✅ Priority 3: Multi-Region Support (COMPLETED!)
 
-**Enhancement**:
-- Add `--stackit-region` argument to support eu01/eu02
-- Or auto-discover: Loop through all regions [eu01, eu02] when discovering resources
-- Store region info with each resource for proper reporting
+**Status**: ✅ **Implemented and Verified**
+
+**Implementation Details**:
+1. **Dependency Upgrade**: Upgraded `stackit-iaas` to 1.1.0 to support regional features.
+2. **Configuration File**: Created `prowler/providers/stackit/stackit_regions_by_service.json` to define available regions per service (currently eu01, eu02).
+3. **CLI Argument**: Added `--stackit-region` argument to allow users to specify regions to scan.
+4. **Provider Logic**: Updated `StackitProvider` to read regions from JSON, filter based on user input, and generate regional clients.
+5. **Service Logic**: Updated `IaaSService` to iterate through generated regional clients and fetch resources from each region.
+6. **Identity Model**: Updated `StackITIdentityInfo` to track audited regions.
+
+**Usage**:
+- Scan all regions (default): `prowler stackit --project-id <ID>`
+- Scan specific regions: `prowler stackit --project-id <ID> --stackit-region eu01 eu02`
 
 ### Priority 4: Code Quality
 - Add unit tests for IaaSService

@@ -1,24 +1,9 @@
-import contextlib
-import os
-import sys
 from typing import Optional
 
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.stackit.stackit_provider import StackitProvider
-
-
-@contextlib.contextmanager
-def suppress_stderr():
-    """Context manager to suppress stderr output."""
-    original_stderr = sys.stderr
-    try:
-        sys.stderr = open(os.devnull, 'w')
-        yield
-    finally:
-        sys.stderr.close()
-        sys.stderr = original_stderr
+from prowler.providers.stackit.stackit_provider import StackitProvider, suppress_stderr
 
 
 class IaaSService:
@@ -40,6 +25,10 @@ class IaaSService:
         self.project_id = provider.identity.project_id
         self.api_token = provider.session.get("api_token")
 
+        # Generate regional clients (AWS pattern)
+        self.regional_clients = provider.generate_regional_clients("iaas")
+        self.audited_regions = provider.identity.audited_regions
+
         # Initialize security groups list
         self.security_groups: list[SecurityGroup] = []
 
@@ -48,48 +37,15 @@ class IaaSService:
         self.public_nic_ids: set[str] = set()  # NICs with public IPs
         self.in_use_sg_ids: set[str] = set()
 
-        # Fetch public IPs first to determine which NICs are publicly accessible
-        self._list_public_ips()
+        # Fetch resources from all regions
+        self._fetch_all_regions()
 
-        # Fetch all server NICs to determine which security groups are in use
-        self._list_server_nics()
-
-        # Fetch all security groups and their rules
-        self._list_security_groups()
-
-    def _get_stackit_client(self):
-        """
-        Get or create the StackIT IaaS client using the SDK.
-
-        Returns:
-            StackIT IaaS client configured with API token
-        """
-        try:
-            # Import the StackIT SDK
-            from stackit.core.configuration import Configuration
-            from stackit.iaas import DefaultApi
-
-            # Suppress StackIT SDK print() messages to stderr
-            # The SDK prints warnings directly to stderr using print()
-            with suppress_stderr():
-                # Pass the API token directly to Configuration (thread-safe approach)
-                # This avoids manipulating global environment variables
-                config = Configuration(service_account_token=self.api_token)
-
-                # Create DefaultApi client directly with Configuration
-                client = DefaultApi(config)
-
-            return client
-
-        except ImportError as e:
-            logger.error(
-                f"StackIT SDK not available: {e}. "
-                "Please ensure stackit-core and stackit-iaas are installed."
-            )
-            return None
-        except Exception as e:
-            logger.error(f"Error initializing StackIT IaaS client: {e}")
-            return None
+    def _fetch_all_regions(self):
+        """Fetch resources from all audited regions."""
+        for region, client in self.regional_clients.items():
+            self._list_public_ips(client, region)
+            self._list_server_nics(client, region)
+            self._list_security_groups(client, region)
 
     def _handle_api_call(self, api_function, *args, **kwargs):
         """
@@ -114,7 +70,7 @@ class IaaSService:
             # Use centralized error handler from provider
             self.provider.handle_api_error(e)
 
-    def _list_security_groups(self):
+    def _list_security_groups(self, client, region: str):
         """
         List all security groups in the StackIT project and fetch their rules.
 
@@ -122,16 +78,15 @@ class IaaSService:
         objects containing information about each security group and its rules.
         """
         try:
-            client = self._get_stackit_client()
             if not client:
                 logger.warning(
-                    "Cannot list security groups: StackIT IaaS client not available"
+                    f"Cannot list security groups in {region}: StackIT IaaS client not available"
                 )
                 return
 
             # Call the list security groups API with centralized error handling
             response = self._handle_api_call(
-                client.list_security_groups, project_id=self.project_id
+                client.list_security_groups, project_id=self.project_id, region=region
             )
 
             # Extract security groups from response
@@ -154,11 +109,9 @@ class IaaSService:
                     if hasattr(sg_data, "id"):
                         sg_id = sg_data.id
                         sg_name = getattr(sg_data, "name", sg_id)
-                        region = getattr(sg_data, "region", "eu01")
                     elif isinstance(sg_data, dict):
                         sg_id = sg_data.get("id", "")
                         sg_name = sg_data.get("name", sg_id)
-                        region = sg_data.get("region", "eu01")
                     else:
                         logger.warning(
                             f"Unexpected security group data type: {type(sg_data)}"
@@ -166,7 +119,7 @@ class IaaSService:
                         continue
 
                     # Get security group rules
-                    rules = self._list_security_group_rules(client, sg_id)
+                    rules = self._list_security_group_rules(client, region, sg_id)
 
                     # Create SecurityGroup object
                     security_group = SecurityGroup(
@@ -184,23 +137,21 @@ class IaaSService:
                     continue
 
             logger.info(
-                f"Successfully listed {len(self.security_groups)} security groups"
+                f"Successfully listed {len(security_groups_list)} security groups in {region}"
             )
 
-        except StackITInvalidTokenError:
-            # Re-raise authentication errors so they propagate to the user
-            raise
         except Exception as e:
-            logger.error(f"Error listing StackIT IaaS security groups: {e}")
+            logger.error(f"Error listing StackIT IaaS security groups in {region}: {e}")
 
     def _list_security_group_rules(
-        self, client, security_group_id: str
+        self, client, region: str, security_group_id: str
     ) -> list["SecurityGroupRule"]:
         """
         List all rules for a specific security group.
 
         Args:
             client: The StackIT IaaS client
+            region: The region of the security group
             security_group_id: The ID of the security group
 
         Returns:
@@ -209,8 +160,10 @@ class IaaSService:
         rules = []
         try:
             # Get security group rules via SDK
-            response = client.list_security_group_rules(
+            response = self._handle_api_call(
+                client.list_security_group_rules,
                 project_id=self.project_id,
+                region=region,
                 security_group_id=security_group_id,
             )
 
@@ -301,12 +254,12 @@ class IaaSService:
 
         except Exception as e:
             logger.debug(
-                f"Error listing rules for security group {security_group_id}: {e}"
+                f"Error listing rules for security group {security_group_id} in {region}: {e}"
             )
 
         return rules
 
-    def _list_public_ips(self):
+    def _list_public_ips(self, client, region: str):
         """
         List all public IPs in the StackIT project and build a set of NIC IDs
         that have public IPs attached.
@@ -315,16 +268,15 @@ class IaaSService:
         publicly accessible via public IP addresses.
         """
         try:
-            client = self._get_stackit_client()
             if not client:
                 logger.warning(
-                    "Cannot list public IPs: StackIT IaaS client not available"
+                    f"Cannot list public IPs in {region}: StackIT IaaS client not available"
                 )
                 return
 
             # Call the list public IPs API with centralized error handling
             response = self._handle_api_call(
-                client.list_public_ips, project_id=self.project_id
+                client.list_public_ips, project_id=self.project_id, region=region
             )
 
             # Extract public IPs from response
@@ -346,9 +298,9 @@ class IaaSService:
                     if hasattr(public_ip, "network_interface"):
                         nic_id = public_ip.network_interface
                     elif isinstance(public_ip, dict):
-                        nic_id = public_ip.get(
-                            "network_interface"
-                        ) or public_ip.get("networkInterface")
+                        nic_id = public_ip.get("network_interface") or public_ip.get(
+                            "networkInterface"
+                        )
                     else:
                         continue
 
@@ -360,17 +312,13 @@ class IaaSService:
                     continue
 
             logger.info(
-                f"Successfully listed {len(public_ips_list)} public IPs "
-                f"attached to {len(self.public_nic_ids)} NICs."
+                f"Successfully listed {len(public_ips_list)} public IPs in {region}."
             )
 
-        except StackITInvalidTokenError:
-            # Re-raise authentication errors so they propagate to the user
-            raise
         except Exception as e:
-            logger.error(f"Error listing StackIT public IPs: {e}")
+            logger.error(f"Error listing StackIT public IPs in {region}: {e}")
 
-    def _list_server_nics(self):
+    def _list_server_nics(self, client, region: str):
         """
         List all server network interfaces (NICs) in the StackIT project.
 
@@ -378,16 +326,15 @@ class IaaSService:
         actively in use by checking which security groups are attached to NICs.
         """
         try:
-            client = self._get_stackit_client()
             if not client:
                 logger.warning(
-                    "Cannot list server NICs: StackIT IaaS client not available"
+                    f"Cannot list server NICs in {region}: StackIT IaaS client not available"
                 )
                 return
 
             # Call the list project NICs API with centralized error handling
             response = self._handle_api_call(
-                client.list_project_nics, project_id=self.project_id
+                client.list_project_nics, project_id=self.project_id, region=region
             )
 
             # Extract NICs from response
@@ -403,37 +350,32 @@ class IaaSService:
                 )
                 nics_list = []
 
-            self.server_nics = nics_list
+            self.server_nics.extend(nics_list)
 
             # Extract security group IDs that are in use (on public NICs only)
-            self.in_use_sg_ids = self._get_used_security_group_ids()
+            used_sg_ids = self._get_used_security_group_ids(nics_list)
+            self.in_use_sg_ids.update(used_sg_ids)
 
             # Count NICs with public IPs for logging
             public_nic_count = sum(
                 1
-                for nic in self.server_nics
+                for nic in nics_list
                 if (
                     (hasattr(nic, "id") and nic.id in self.public_nic_ids)
-                    or (
-                        isinstance(nic, dict)
-                        and nic.get("id") in self.public_nic_ids
-                    )
+                    or (isinstance(nic, dict) and nic.get("id") in self.public_nic_ids)
                 )
             )
 
             logger.info(
-                f"Successfully listed {len(self.server_nics)} NICs "
+                f"Successfully listed {len(nics_list)} NICs in {region} "
                 f"({public_nic_count} with public IPs). "
-                f"Found {len(self.in_use_sg_ids)} security groups attached to public NICs."
+                f"Found {len(used_sg_ids)} security groups attached to public NICs."
             )
 
-        except StackITInvalidTokenError:
-            # Re-raise authentication errors so they propagate to the user
-            raise
         except Exception as e:
-            logger.error(f"Error listing StackIT server NICs: {e}")
+            logger.error(f"Error listing StackIT server NICs in {region}: {e}")
 
-    def _get_used_security_group_ids(self) -> set[str]:
+    def _get_used_security_group_ids(self, nics_list) -> set[str]:
         """
         Get the set of security group IDs that are actively attached to NICs
         with public IP addresses (internet-accessible).
@@ -446,7 +388,7 @@ class IaaSService:
         """
         used_sg_ids = set()
 
-        for nic in self.server_nics:
+        for nic in nics_list:
             try:
                 # Get the NIC ID
                 if hasattr(nic, "id"):
@@ -577,6 +519,6 @@ class SecurityGroup(BaseModel):
     id: str
     name: str
     project_id: str
-    region: str = "eu01"
+    region: str
     rules: list[SecurityGroupRule] = []
     in_use: bool = False
