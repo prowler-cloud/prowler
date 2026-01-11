@@ -93,23 +93,23 @@ repos:
     hooks:
       - id: pylint
         name: pylint
-        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
+        entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn "$@"' --
         language: system
         files: '.*\.py'
 
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
-        entry: bash -c 'trufflehog --no-update git file://. --only-verified --fail'
+        entry: bash -c 'trufflehog filesystem --no-update --only-verified --fail "$@"' --
         # For running trufflehog in docker, use the following entry instead:
-        # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
+        # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest filesystem --no-update --only-verified --fail "$@"' --
         language: system
         stages: ["pre-commit", "pre-push"]
 
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
-        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .'
+        entry: bash -c 'bandit -q -lll -x "*_test.py,./contrib/,./.venv/" "$@"' --
         language: system
         files: '.*\.py'
 
@@ -123,6 +123,6 @@ repos:
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
-        entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/" --min-confidence 100 .'
+        entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/" --min-confidence 100 "$@"' --
         language: system
         files: '.*\.py'

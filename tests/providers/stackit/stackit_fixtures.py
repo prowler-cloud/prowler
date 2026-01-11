@@ -9,7 +9,6 @@ from prowler.providers.stackit.stackit_provider import StackitProvider
 STACKIT_PROJECT_ID = str(uuid4())
 STACKIT_API_TOKEN = "test-api-token-" + str(uuid4())
 STACKIT_PROJECT_NAME = "Test Project"
-STACKIT_ACCOUNT_ID = str(uuid4())
 
 
 def set_mocked_stackit_provider(
@@ -36,7 +35,6 @@ def set_mocked_stackit_provider(
         identity = StackITIdentityInfo(
             project_id=project_id,
             project_name=STACKIT_PROJECT_NAME,
-            account_id=STACKIT_ACCOUNT_ID,
         )
 
     provider = MagicMock()

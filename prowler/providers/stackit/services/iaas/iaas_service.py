@@ -383,6 +383,12 @@ class IaaSService:
         Only security groups on NICs with public IPs are considered "in use"
         for security checks, as private NICs are not reachable from the internet.
 
+        Design Decision: This implementation intentionally focuses on internet-facing
+        resources to reduce noise and align with cloud security best practices.
+        Security groups on private NICs (without public IPs) are not flagged, as
+        they do not represent direct exposure to the public internet. This approach
+        helps teams prioritize the most critical security risks.
+
         Returns:
             set[str]: Set of security group IDs that are attached to public NICs
         """

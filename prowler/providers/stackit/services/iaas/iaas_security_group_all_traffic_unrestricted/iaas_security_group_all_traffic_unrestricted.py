@@ -4,10 +4,12 @@ from prowler.providers.stackit.services.iaas.iaas_client import iaas_client
 
 class iaas_security_group_all_traffic_unrestricted(Check):
     """
-    Check if IaaS security groups allow unrestricted access to all traffic.
+    Check if IaaS security groups allow unrestricted access to all ports.
 
-    This check verifies that security groups do not allow all traffic
-    (all ports and protocols) from the public internet (0.0.0.0/0 or ::/0).
+    This check verifies that security groups do not allow all ports
+    from the public internet (0.0.0.0/0 or ::/0). This includes rules
+    with no port range specified or rules covering the full port range
+    (0-65535 or 1-65535), regardless of the specific protocol.
     """
 
     def execute(self):
