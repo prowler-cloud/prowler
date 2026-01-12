@@ -3,7 +3,28 @@ from prowler.providers.cloudflare.services.zones.zones_client import zones_clien
 
 
 class zones_ssl_strict(Check):
+    """Ensure that SSL/TLS encryption mode is set to strict for Cloudflare zones.
+
+    The SSL/TLS encryption mode determines how Cloudflare connects to the origin
+    server. In 'strict' or 'full_strict' mode, Cloudflare validates the origin
+    server's SSL certificate, ensuring end-to-end encryption with certificate
+    verification. Lower modes (off, flexible, full) are vulnerable to
+    man-in-the-middle attacks between Cloudflare and the origin.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the SSL strict mode check.
+
+        Iterates through all Cloudflare zones and verifies that the SSL/TLS
+        encryption mode is set to 'strict' or 'full_strict'. These modes
+        require a valid SSL certificate on the origin server and provide
+        full end-to-end encryption with certificate validation.
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if
+            SSL mode is 'strict' or 'full_strict', or FAIL status if using
+            less secure modes like 'off', 'flexible', or 'full'.
+        """
         findings = []
         for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
