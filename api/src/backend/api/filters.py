@@ -143,8 +143,12 @@ class BaseScanProviderFilter(FilterSet):
 
 class CommonFindingFilters(FilterSet):
     # We filter providers from the scan in findings
+    # Both 'provider' and 'provider_id' parameters are supported for API consistency
+    # Frontend uses 'provider_id' uniformly across all endpoints
     provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
     )
