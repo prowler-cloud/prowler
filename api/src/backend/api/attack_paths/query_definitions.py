@@ -760,7 +760,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         any(action IN ecs_stmt.action WHERE toLower(action) = 'ecs:createservice' OR toLower(action) = 'ecs:runtask' OR action = '*' OR toLower(action) = 'ecs:*')
                     )
 
-                // Find target role with elevated permissions that could be passed
+                // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
                     AND (
@@ -768,14 +768,20 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Deduplicate before creating virtual nodes
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+                // Collect all target roles per principal (merge into one node)
+                WITH escalation_outcome, aws, principal, effective_principal,
+                     collect(DISTINCT target_role) AS target_roles,
+                     count(DISTINCT target_role) AS target_count
 
-                // Create virtual ECS task node (one per unique principal->target pair)
+                // Deduplicate to one node per principal
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_roles, target_count
+
+                // Create single virtual ECS task node per principal
                 CALL apoc.create.vNode(['ECSTask'], {
                     name: 'New Task Definition',
-                    description: 'Task with target role attached',
-                    id: effective_principal.arn + '->' + target_role.arn
+                    description: toString(target_count) + ' admin role(s) can be passed',
+                    id: effective_principal.arn,
+                    target_role_count: target_count
                 })
                 YIELD node AS ecs_task
 
@@ -785,20 +791,16 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, ecs_task)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(ecs_task, 'RUNS_AS', {}, target_role)
-                YIELD rel AS runs_rel
-
-                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
+                CALL apoc.create.vRelationship(ecs_task, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/ecs-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       ecs_task, escalation_outcome, create_rel, runs_rel, grants_rel
+                RETURN path_principal,
+                       ecs_task, escalation_outcome, create_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
