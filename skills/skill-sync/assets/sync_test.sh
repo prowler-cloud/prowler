@@ -370,6 +370,85 @@ test_generate_includes_action_text() {
         "Should include auto_invoke action text"
 }
 
+test_generate_splits_multi_action_auto_invoke_list() {
+    # Change UI skill to use list auto_invoke (two actions)
+    cat > "$TEST_DIR/skills/mock-ui-skill/SKILL.md" << 'EOF'
+---
+name: mock-ui-skill
+description: Mock UI skill with multi-action auto_invoke list.
+license: Apache-2.0
+metadata:
+  author: test
+  version: "1.0"
+  scope: [ui]
+  auto_invoke:
+    - "Action B"
+    - "Action A"
+allowed-tools: Read
+---
+EOF
+
+    run_sync > /dev/null
+
+    # Both actions should produce rows
+    assert_file_contains "$TEST_DIR/ui/AGENTS.md" "| Action A | \`mock-ui-skill\` |" \
+        "Should create row for Action A" && \
+    assert_file_contains "$TEST_DIR/ui/AGENTS.md" "| Action B | \`mock-ui-skill\` |" \
+        "Should create row for Action B"
+}
+
+test_generate_orders_rows_by_action_then_skill() {
+    # Two skills, intentionally out-of-order actions, same scope
+    cat > "$TEST_DIR/skills/mock-ui-skill/SKILL.md" << 'EOF'
+---
+name: mock-ui-skill
+description: Mock UI skill.
+license: Apache-2.0
+metadata:
+  author: test
+  version: "1.0"
+  scope: [ui]
+  auto_invoke:
+    - "Z action"
+    - "A action"
+allowed-tools: Read
+---
+EOF
+
+    mkdir -p "$TEST_DIR/skills/mock-ui-skill-2"
+    cat > "$TEST_DIR/skills/mock-ui-skill-2/SKILL.md" << 'EOF'
+---
+name: mock-ui-skill-2
+description: Second UI skill.
+license: Apache-2.0
+metadata:
+  author: test
+  version: "1.0"
+  scope: [ui]
+  auto_invoke: "A action"
+allowed-tools: Read
+---
+EOF
+
+    run_sync > /dev/null
+
+    # Verify order within the table is: "A action" rows first, then "Z action"
+    local table_segment
+    table_segment=$(awk '
+        /^\| Action \| Skill \|/ { in_table=1 }
+        in_table && /^---$/ { next }
+        in_table && /^\|/ { print }
+        in_table && !/^\|/ { exit }
+    ' "$TEST_DIR/ui/AGENTS.md")
+
+    local first_a_index first_z_index
+    first_a_index=$(echo "$table_segment" | awk '/\| A action \|/ { print NR; exit }')
+    first_z_index=$(echo "$table_segment" | awk '/\| Z action \|/ { print NR; exit }')
+
+    # Both must exist and A must come before Z
+    [ -n "$first_a_index" ] && [ -n "$first_z_index" ] && [ "$first_a_index" -lt "$first_z_index" ]
+}
+
 # =============================================================================
 # TESTS: AGENTS.MD UPDATE
 # =============================================================================
@@ -396,8 +475,9 @@ test_update_replaces_existing_section() {
     # First run creates section
     run_sync > /dev/null
 
-    # Modify a skill's auto_invoke
-    sed -i 's/Testing UI components/Modified UI action/' "$TEST_DIR/skills/mock-ui-skill/SKILL.md"
+    # Modify a skill's auto_invoke (portable: BSD/GNU sed)
+    # macOS/BSD sed needs -i '' (separate arg). GNU sed accepts it too.
+    sed -i '' 's/Testing UI components/Modified UI action/' "$TEST_DIR/skills/mock-ui-skill/SKILL.md"
 
     # Second run should replace
     run_sync > /dev/null
