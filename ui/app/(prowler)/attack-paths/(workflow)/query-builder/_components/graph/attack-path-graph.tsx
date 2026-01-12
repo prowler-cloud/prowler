@@ -595,15 +595,18 @@ const AttackPathGraphComponent = forwardRef<
         return hasFinding ? "animated-edge" : "resource-edge";
       })
       .attr("marker-end", "url(#arrowhead)")
-      .style("opacity", (d) => {
+      .style("visibility", (d) => {
         const sourceIsFinding = isNodeFinding(d.sourceId);
         const targetIsFinding = isNodeFinding(d.targetId);
 
-        // Hide edges connected to findings (they are shown when user clicks on a node)
-        if (sourceIsFinding || targetIsFinding) {
-          return 0.1;
+        // Hide edges connected to findings in full view (shown when user clicks on a node or in filtered view)
+        if (
+          !isFilteredView &&
+          (sourceIsFinding || targetIsFinding)
+        ) {
+          return "hidden";
         }
-        return 1;
+        return "visible";
       });
 
     // Store linkElements reference for hover interactions
@@ -632,12 +635,9 @@ const AttackPathGraphComponent = forwardRef<
       .attr("class", "node")
       .attr("transform", (d) => `translate(${d.x},${d.y})`)
       .attr("cursor", "pointer")
-      .style("opacity", (d) => {
-        // Hide findings initially (they are shown when user clicks on a node)
-        return hiddenNodeIdsRef.current.has(d.id) ? 0.15 : 1;
-      })
-      .style("pointer-events", (d) => {
-        return hiddenNodeIdsRef.current.has(d.id) ? "none" : "auto";
+      .style("display", (d) => {
+        // Hide findings in full view (they are shown when user clicks on a node or in filtered view)
+        return hiddenNodeIdsRef.current.has(d.id) ? "none" : null;
       })
       .on("mouseenter", function (_event: PointerEvent, d) {
         // Highlight entire path from this node
@@ -1227,7 +1227,7 @@ const AttackPathGraphComponent = forwardRef<
       }
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [data, isFilteredView]);
 
   return (
     <svg
