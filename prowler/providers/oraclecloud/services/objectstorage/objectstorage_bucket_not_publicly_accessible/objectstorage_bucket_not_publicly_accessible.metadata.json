@@ -1,0 +1,38 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "objectstorage_bucket_not_publicly_accessible",
+  "CheckTitle": "Ensure no Object Storage buckets are publicly visible",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:objectstorage:bucket",
+  "Severity": "critical",
+  "ResourceType": "OciObjectStorageBucket",
+  "ResourceGroup": "storage",
+  "Description": "Ensure no Object Storage buckets are publicly visible. Public access to Object Storage buckets can lead to unauthorized data access or data leakage.",
+  "Risk": "Publicly accessible Object Storage buckets can expose sensitive data to unauthorized users on the internet.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/managingbuckets.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci os bucket update --namespace <namespace> --bucket-name <bucket-name> --public-access-type NoPublicAccess",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/publicly-accessible-buckets.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update the bucket's public access type to 'NoPublicAccess' to prevent unauthorized access.",
+      "Url": "https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/managingbuckets.htm"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

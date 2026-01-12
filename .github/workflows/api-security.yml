@@ -1,0 +1,67 @@
+name: 'API: Security'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_WORKING_DIR: ./api
+
+jobs:
+  api-security-scans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Check for API changes
+        id: check-changes
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        with:
+          files: |
+            api/**
+            .github/workflows/api-security.yml
+          files_ignore: |
+            api/docs/**
+            api/README.md
+            api/CHANGELOG.md
+
+      - name: Setup Python with Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+          working-directory: ./api
+
+      - name: Bandit
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+
+      - name: Safety
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run safety check
+
+      - name: Vulture
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .

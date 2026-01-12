@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_not_publicly_accessible",
+  "CheckTitle": "OSS bucket is not anonymously or publicly accessible",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
+  "Description": "A bucket is a container used to store objects in **Object Storage Service (OSS)**. All objects in OSS are stored in buckets.\n\nIt is recommended that the access policy on OSS buckets does not allow **anonymous** and/or **public access**.",
+  "Risk": "Allowing **anonymous** and/or **public access** grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data.\n\nPublic buckets can lead to **data breaches**, **unauthorized data access**, and **compliance violations**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/31896.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/publicly-accessible-oss-bucket.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun oss PutBucketAcl --bucket <bucket-name> --acl private",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_oss_bucket_public_access_block\" \"example\" {\n  bucket              = alicloud_oss_bucket.example.bucket\n  block_public_access = true\n}"
+    },
+    "Recommendation": {
+      "Text": "**Set Bucket ACL to Private:**\n1. Log on to the **OSS Console**\n2. In the bucket-list pane, click on a target OSS bucket\n3. Click on **Basic Setting** in the top middle of the console\n4. Under ACL section, click on **Configure**\n5. Click **Private** and click **Save**\n\n**For Bucket Policy:**\n1. Click **Bucket**, and then click the name of the target bucket\n2. Click the **Files** tab and click **Authorize**\n3. In the Authorize dialog, choose `Anonymous Accounts (*)` for Accounts and choose `None` for Authorized Operation\n4. Click **OK**",
+      "Url": "https://hub.prowler.com/check/oss_bucket_not_publicly_accessible"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

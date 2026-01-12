@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_policy_attached_only_to_group_or_roles",
+  "CheckTitle": "RAM policies are attached only to groups or roles",
+  "CheckType": [
+    "Abnormal account",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
+  "Severity": "low",
+  "ResourceType": "AlibabaCloudRAMUser",
+  "ResourceGroup": "IAM",
+  "Description": "By default, **RAM users**, groups, and roles have no access to Alibaba Cloud resources. RAM policies are the means by which privileges are granted to users, groups, or roles.\n\nIt is recommended that RAM policies be applied directly to **groups and roles** but not users.",
+  "Risk": "Assigning privileges at the **group or role level** reduces the complexity of access management as the number of users grows.\n\nReducing access management complexity may in turn reduce opportunity for a principal to inadvertently receive or retain **excessive privileges**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/receive-permissions-via-ram-groups-only.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType <System|Custom> --UserName <ram_user>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Create **RAM user groups** and assign policies to those groups\n2. Add users to the appropriate groups\n3. Detach any policies directly attached to users using the RAM Console or CLI",
+      "Url": "https://hub.prowler.com/check/ram_policy_attached_only_to_group_or_roles"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

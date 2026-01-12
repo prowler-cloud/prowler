@@ -1,14 +1,12 @@
 import logging
 import os
-
-from pathlib import Path
 import sys
-
-from django.apps import AppConfig
-from django.conf import settings
+from pathlib import Path
 
 from config.custom_logging import BackendLogger
 from config.env import env
+from django.apps import AppConfig
+from django.conf import settings
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -30,6 +28,7 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
+        from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
         from api.compliance import load_prowler_compliance
 

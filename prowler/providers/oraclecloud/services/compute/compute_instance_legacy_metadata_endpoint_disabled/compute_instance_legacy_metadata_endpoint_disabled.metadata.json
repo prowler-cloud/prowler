@@ -1,0 +1,38 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "compute_instance_legacy_metadata_endpoint_disabled",
+  "CheckTitle": "Ensure Compute Instance Legacy Metadata service endpoint is disabled",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:compute:instance",
+  "Severity": "medium",
+  "ResourceType": "OciComputeInstance",
+  "ResourceGroup": "compute",
+  "Description": "The legacy Instance Metadata Service (IMDS) v1 endpoints do not use session authentication. Disabling the legacy endpoints helps prevent unauthorized access to instance metadata.",
+  "Risk": "If legacy metadata endpoints are enabled, attackers who gain access to the instance may be able to access instance metadata without authentication, potentially exposing sensitive information.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/gettingmetadata.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci compute instance update --instance-id <instance-ocid> --instance-options '{\"areLegacyImdsEndpointsDisabled\": true}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enforce-imds-v2.html",
+      "Terraform": "resource \"oci_core_instance\" \"example\" {\n  # ... other configuration ...\n  instance_options {\n    are_legacy_imds_endpoints_disabled = true\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Disable legacy metadata service endpoints on all compute instances to enforce session-based authentication.",
+      "Url": "https://hub.prowler.com/check/oci/compute_instance_legacy_metadata_endpoint_disabled"
+    }
+  },
+  "Categories": [
+    "compute",
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

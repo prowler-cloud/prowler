@@ -11,6 +11,7 @@ from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
+from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
@@ -18,8 +19,11 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
+from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
+from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -60,21 +64,25 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [
-    AwsProvider
+) -> (
+    AlibabacloudProvider
+    | AwsProvider
     | AzureProvider
     | GcpProvider
     | GithubProvider
+    | IacProvider
     | KubernetesProvider
     | M365Provider
-]:
+    | MongodbatlasProvider
+    | OraclecloudProvider
+):
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -92,6 +100,14 @@ def return_prowler_provider(
             prowler_provider = M365Provider
         case Provider.ProviderChoices.GITHUB.value:
             prowler_provider = GithubProvider
+        case Provider.ProviderChoices.MONGODBATLAS.value:
+            prowler_provider = MongodbatlasProvider
+        case Provider.ProviderChoices.IAC.value:
+            prowler_provider = IacProvider
+        case Provider.ProviderChoices.ORACLECLOUD.value:
+            prowler_provider = OraclecloudProvider
+        case Provider.ProviderChoices.ALIBABACLOUD.value:
+            prowler_provider = AlibabacloudProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -128,10 +144,26 @@ def get_prowler_provider_kwargs(
                 **prowler_provider_kwargs,
                 "organizations": [provider.uid],
             }
+    elif provider.provider == Provider.ProviderChoices.IAC.value:
+        # For IaC provider, uid contains the repository URL
+        # Extract the access token if present in the secret
+        prowler_provider_kwargs = {
+            "scan_repository_url": provider.uid,
+        }
+        if "access_token" in provider.secret.secret:
+            prowler_provider_kwargs["oauth_app_token"] = provider.secret.secret[
+                "access_token"
+            ]
+    elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "atlas_organization_id": provider.uid,
+        }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
-        if mutelist_content:
+        # IaC provider doesn't support mutelist (uses Trivy's built-in logic)
+        if mutelist_content and provider.provider != Provider.ProviderChoices.IAC.value:
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
 
     return prowler_provider_kwargs
@@ -141,12 +173,16 @@ def initialize_prowler_provider(
     provider: Provider,
     mutelist_processor: Processor | None = None,
 ) -> (
-    AwsProvider
+    AlibabacloudProvider
+    | AwsProvider
     | AzureProvider
     | GcpProvider
     | GithubProvider
+    | IacProvider
     | KubernetesProvider
     | M365Provider
+    | MongodbatlasProvider
+    | OraclecloudProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
 
@@ -155,9 +191,8 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
-            provider's secrets.
+        AlibabacloudProvider | AwsProvider | AzureProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
+            initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
     prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
@@ -180,9 +215,23 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
 
-    return prowler_provider.test_connection(
-        **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
-    )
+    # For IaC provider, construct the kwargs properly for test_connection
+    if provider.provider == Provider.ProviderChoices.IAC.value:
+        # Don't pass repository_url from secret, use scan_repository_url with the UID
+        iac_test_kwargs = {
+            "scan_repository_url": provider.uid,
+            "raise_on_exception": False,
+        }
+        # Add access_token if present in the secret
+        if "access_token" in prowler_provider_kwargs:
+            iac_test_kwargs["access_token"] = prowler_provider_kwargs["access_token"]
+        return prowler_provider.test_connection(**iac_test_kwargs)
+    else:
+        return prowler_provider.test_connection(
+            **prowler_provider_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
 
 
 def prowler_integration_connection_test(integration: Integration) -> Connection:
@@ -337,10 +386,18 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     regions = sorted({region for region in aggregation["regions"] or [] if region})
     resource_types = sorted(set(aggregation["resource_types"] or []))
 
+    # Aggregate categories from findings
+    categories_set = set()
+    for categories_list in filtered_queryset.values_list("categories", flat=True):
+        if categories_list:
+            categories_set.update(categories_list)
+    categories = sorted(categories_set)
+
     result = {
         "services": services,
         "regions": regions,
         "resource_types": resource_types,
+        "categories": categories,
     }
 
     serializer = FindingMetadataSerializer(data=result)

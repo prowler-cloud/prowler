@@ -1,0 +1,291 @@
+---
+title: "Configuration"
+---
+
+Configure your MCP client to connect to Prowler MCP Server.
+
+## Step 1: Get Your API Key
+
+<Note>
+**Authentication is optional**: Prowler Hub and Prowler Documentation features work without authentication. An API key is only required for Prowler Cloud and Prowler App (Self-Managed) features.
+</Note>
+
+To use Prowler Cloud or Prowler App (Self-Managed) features. To get the API key, please refer to the [API Keys](/user-guide/tutorials/prowler-app-api-keys) guide.
+
+<Warning>
+Keep the API key secure. Never share it publicly or commit it to version control.
+</Warning>
+
+## Step 2: Configure Your MCP Host/Client
+
+Choose the configuration based on your deployment:
+
+- **HTTP Mode**: Prowler Cloud MCP Server or self-hosted Prowler MCP Server.
+- **STDIO Mode**: Local installation only (runs as subprocess of your MCP client).
+
+### HTTP Mode
+
+<Tabs>
+  <Tab title="Generic Native HTTP Support">
+    **Configuration:**
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "url": "https://mcp.prowler.com/mcp", // or your self-hosted Prowler MCP Server URL
+          "headers": {
+            "Authorization": "Bearer <your-api-key-here>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Generic without Native HTTP Support">
+    **Configuration:**
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://mcp.prowler.com/mcp", // or your self-hosted Prowler MCP Server URL
+            "--header",
+            "Authorization: Bearer ${PROWLER_APP_API_KEY}"
+          ],
+          "env": {
+            "PROWLER_APP_API_KEY": "<your-api-key-here>"
+          }
+        }
+      }
+    }
+    ```
+    <Info>
+    The `mcp-remote` tool acts as a bridge for clients that don't support HTTP natively. Learn more at [mcp-remote on npm](https://www.npmjs.com/package/mcp-remote).
+    </Info>
+  </Tab>
+
+  <Tab title="Claude Desktop">
+    1. Open Claude Desktop settings
+    2. Go to "Developer" tab
+    3. Click in "Edit Config" button
+    4. Edit the `claude_desktop_config.json` file with your favorite editor
+    5. Add the following configuration:
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://mcp.prowler.com/mcp",
+            "--header",
+            "Authorization: Bearer ${PROWLER_APP_API_KEY}"
+          ],
+          "env": {
+            "PROWLER_APP_API_KEY": "<your-api-key-here>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Claude Code">
+    Run the following command:
+    ```bash
+    export PROWLER_APP_API_KEY="<your-api-key-here>"
+    claude mcp add --transport http prowler https://mcp.prowler.com/mcp --header "Authorization: Bearer $PROWLER_APP_API_KEY" --scope user
+    ```
+  </Tab>
+
+  <Tab title="Cursor">
+    1. Open Cursor settings
+    2. Go to "Tools & MCP"
+    3. Click in "New MCP Server" button
+    4. Add to the JSON Configuration the following:
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "url": "https://mcp.prowler.com/mcp",
+          "headers": {
+            "Authorization": "Bearer <your-api-key-here>"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+
+
+</Tabs>
+
+### STDIO Mode
+
+STDIO mode is only available when running the MCP server locally.
+
+<Tabs>
+  <Tab title="Generic uvx installation">
+    **Run from source or local installation**
+
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "command": "uvx",
+          "args": ["/absolute/path/to/prowler/mcp_server/"],
+          "env": {
+            "PROWLER_APP_API_KEY": "<your-api-key-here>",
+            "API_BASE_URL": "https://api.prowler.com/api/v1"
+          }
+        }
+      }
+    }
+    ```
+
+    <Note>
+    Replace `/absolute/path/to/prowler/mcp_server/` with the actual path. The `API_BASE_URL` is optional and defaults to Prowler Cloud API.
+    </Note>
+
+  </Tab>
+
+  <Tab title="Generic Docker installation">
+    **Run with Docker image**
+
+    ```json
+    {
+      "mcpServers": {
+        "prowler": {
+          "command": "docker",
+          "args": [
+            "run",
+            "--rm",
+            "-i",
+            "--env",
+            "PROWLER_APP_API_KEY=<your-api-key-here>",
+            "--env",
+            "API_BASE_URL=https://api.prowler.com/api/v1",
+            "prowlercloud/prowler-mcp"
+          ]
+        }
+      }
+    }
+    ```
+
+    <Note>
+    The `API_BASE_URL` is optional and defaults to Prowler Cloud API.
+    </Note>
+
+  </Tab>
+</Tabs>
+
+## Step 3: Start Using Prowler MCP
+
+Restart your MCP client and start asking questions:
+- *"Show me all critical findings from my AWS accounts"*
+- *"What does the S3 bucket public access check do?"*
+- *"Onboard this new AWS account in my Prowler Organization"*
+
+## Authentication Methods
+
+Prowler MCP Server supports two authentication methods to connect to Prowler Cloud or Prowler App (Self-Managed):
+
+### API Key (Recommended)
+
+Use your Prowler API key directly in the Bearer token:
+
+```
+Authorization: Bearer <your-api-key-here>
+```
+
+This is the recommended method for most users.
+
+### JWT Token
+
+Alternatively, obtain a JWT token from Prowler:
+
+```bash
+curl -X POST https://api.prowler.com/api/v1/tokens \
+  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "tokens",
+      "attributes": {
+        "email": "your-email@example.com",
+        "password": "your-password"
+      }
+    }
+  }'
+```
+
+Use the returned JWT token in place of the API key:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+<Warning>
+JWT tokens are only valid for 30 minutes. You need to generate a new token if you want to continue using the MCP server.
+</Warning>
+
+## Troubleshooting
+
+### Server Not Detected
+
+- Restart your MCP client after configuration changes
+- Check the configuration file syntax (valid JSON)
+- Review client logs for specific error messages
+- Verify the server URL is correct
+
+### Authentication Failures
+
+**Error: Unauthorized (401)**
+- Verify your API key is correct
+- Ensure the key hasn't expired
+- Check you're using the right API endpoint
+
+### Connection Issues
+
+**Cannot Reach Server:**
+- Verify the server URL is correct
+- Check network connectivity
+- For local servers, ensure the server is running
+- Check firewall settings
+
+## Security Best Practices
+
+1. **Protect Your API Key**
+   - Never commit API keys to version control.
+   - Use environment variables or secure vaults.
+   - Rotate keys regularly.
+
+2. **Network Security**
+   - Use HTTPS for production deployments.
+   - Restrict network access to the MCP server.
+   - Consider VPN for remote access.
+
+3. **Least Privilege**
+   - API key gives the permission of the user who created the key, make sure to use the key with the minimal required permissions.
+   - Review the tools that are gonna be used and how they are gonna be used to avoid prompt injections or unintended behavior.
+
+## Next Steps
+
+Now that your MCP server is configured:
+
+<CardGroup cols={1}>
+  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+    Explore all available tools
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+Need assistance with configuration?
+
+- Search for existing [GitHub issues](https://github.com/prowler-cloud/prowler/issues)
+- Ask for help in our [Slack community](https://goto.prowler.com/slack)
+- Report a new issue on [GitHub](https://github.com/prowler-cloud/prowler/issues/new)

@@ -13,17 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsS3Bucket",
-  "Description": "**Amazon Bedrock model invocation logs** are stored in encrypted destinations: **S3 buckets** with bucket encryption and **CloudWatch Logs** groups protected by an AWS KMS key.\n\nThis evaluates whether configured log targets enforce encryption at rest for request/response content and associated metadata.",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock model invocation logs** are stored in encrypted destinations: **S3 buckets** with bucket encryption and **CloudWatch Logs** groups protected by an AWS KMS key.\n\nThis evaluates whether configured log targets enforce encryption at rest for request/response content and associated metadata.",
   "Risk": "Without encryption at rest, prompts, outputs, images, and token/usage metadata in logs can be read if S3 or CloudWatch storage or replicas are accessed by unauthorized principals.\n\nImpacts:\n- Loss of data **confidentiality**\n- Secret or PII exposure enabling **account abuse**\n- Operational intel for **lateral movement**",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/es_es/bedrock/latest/userguide/model-invocation-logging.html",
-    "https://medium.com/@binaya.puri/leveraging-cloudwatch-insights-for-real-time-analysis-of-model-invocation-logs-in-generative-ai-841cf7296ef3",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html",
-    "https://aws-blogs-artifacts-public.s3.amazonaws.com/ML-15986/AmazonBedrock_UserGuide.pdf",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html",
     "https://support.icompaas.com/support/solutions/articles/62000233532-ensure-that-amazon-bedrock-model-invocation-logs-are-encrypted-with-kms",
-    "https://docs.aws.amazon.com/ja_jp/bedrock/latest/userguide/model-invocation-logging.html",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/configure-bedrock-invocation-logging-cloudformation.html"
   ],
   "Remediation": {

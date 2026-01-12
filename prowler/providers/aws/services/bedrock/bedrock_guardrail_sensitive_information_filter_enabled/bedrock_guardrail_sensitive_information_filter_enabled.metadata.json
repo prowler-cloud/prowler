@@ -13,7 +13,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "**Amazon Bedrock guardrails** use **sensitive information filters** to `block` or `mask` detected PII and custom pattern matches in prompts and responses.\n\nThe evaluation looks for guardrails with this filtering configured.",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock guardrails** use **sensitive information filters** to `block` or `mask` detected PII and custom pattern matches in prompts and responses.\n\nThe evaluation looks for guardrails with this filtering configured.",
   "Risk": "Absent filtering, prompts or outputs can reveal **PII**, credentials, or financial records, compromising **confidentiality**.\n- Exposed tokens enable unauthorized access and data tampering (integrity)\n- Disclosed customer details facilitate fraud and identity theft, with potential lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [

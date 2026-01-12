@@ -12,21 +12,15 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "**Amazon Bedrock guardrails** have the **Prompt attack** filter set to `HIGH` strength to detect and block injection and jailbreak patterns. Guardrails missing this setting or using lower strengths are identified.",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock guardrails** have the **Prompt attack** filter set to `HIGH` strength to detect and block injection and jailbreak patterns. Guardrails missing this setting or using lower strengths are identified.",
   "Risk": "Without **HIGH** prompt-attack filtering, models are exposed to **prompt injection/jailbreaks**:\n- Confidentiality: coerced disclosure of sensitive data\n- Integrity: policy evasion and manipulated outputs\n- Operations: unintended tool execution and workflow tampering",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.datacamp.com/tutorial/aws-bedrock",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html",
-    "https://cloudelligent.com/blog/amazon-bedrock-agents-prompt-injections-security/",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/",
     "https://support.icompaas.com/support/solutions/articles/62000233535-ensure-prompt-attack-filter-is-configured-at-highest-strength-for-amazon-bedrock-guardrails",
-    "https://blog.kinto-technologies.com/posts/2025-06-16-aispm-en/",
-    "https://pmsquare.com/resource/blogs/2024-6-17-amazon-bedrock-guardrails/",
-    "https://medium.com/@vinayakdeshpande111/aws-guardrails-with-langchain-6554411d4d74",
-    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html"
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
   ],
   "Remediation": {
     "Code": {

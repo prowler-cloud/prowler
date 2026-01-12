@@ -48,7 +48,7 @@ class Test_is_cidr_public:
         with pytest.raises(ValueError) as ex:
             _is_cidr_public(cidr)
 
-        assert ex.type == ValueError
+        assert ex.type is ValueError
         assert ex.match(f"{cidr} has host bits set")
 
     def test__is_cidr_public_Public_IPv6_all_IPs_any_address_false(self):
@@ -77,7 +77,7 @@ class Test_is_cidr_public:
 
 
 class Test_check_security_group:
-    def generate_ip_ranges_list(self, input_ip_ranges: [str], v4=True):
+    def generate_ip_ranges_list(self, input_ip_ranges: list[str], v4=True):
         cidr_ranges = "CidrIp" if v4 else "CidrIpv6"
         return [{cidr_ranges: ip, "Description": ""} for ip in input_ip_ranges]
 
@@ -86,8 +86,8 @@ class Test_check_security_group:
         from_port: int,
         to_port: int,
         ip_protocol: str,
-        input_ipv4_ranges: [str],
-        input_ipv6_ranges: [str],
+        input_ipv4_ranges: list[str],
+        input_ipv6_ranges: list[str],
     ):
         """
         ingress_rule_generator returns the following AWS Security Group IpPermissions Ingress Rule based on the input arguments

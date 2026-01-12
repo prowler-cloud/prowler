@@ -81,10 +81,13 @@ export const SecurityHubIntegrationForm = ({
       integration_type: "aws_security_hub" as const,
       provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
-        integration?.attributes.configuration.send_only_fails ?? true,
+        (integration?.attributes.configuration.send_only_fails as
+          | boolean
+          | undefined) ?? true,
       archive_previous_findings:
-        integration?.attributes.configuration.archive_previous_findings ??
-        false,
+        (integration?.attributes.configuration.archive_previous_findings as
+          | boolean
+          | undefined) ?? false,
       use_custom_credentials: false,
       enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
@@ -349,6 +352,7 @@ export const SecurityHubIntegrationForm = ({
                     isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">
                       Send only findings with status FAIL
@@ -367,6 +371,7 @@ export const SecurityHubIntegrationForm = ({
                     isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">Archive previous findings</span>
                   </Checkbox>
@@ -384,6 +389,7 @@ export const SecurityHubIntegrationForm = ({
                       isSelected={field.value}
                       onValueChange={field.onChange}
                       size="sm"
+                      color="default"
                     >
                       <span className="text-sm">
                         Use custom credentials (By default, AWS account ones

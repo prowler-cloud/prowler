@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime, timedelta
+from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
 from urllib.parse import parse_qs, urlparse
 
@@ -59,6 +60,49 @@ class TestJiraIntegration:
             api_token=self.api_token,
             domain=self.domain,
         )
+
+    @staticmethod
+    def _collect_text_from_cell(cell: dict) -> str:
+        pieces: List[str] = []
+
+        def walk(node: dict) -> None:
+            node_type = node.get("type")
+            if node_type == "text":
+                pieces.append(node.get("text", ""))
+            elif node_type == "hardBreak":
+                pieces.append(" ")
+            else:
+                for child in node.get("content", []):
+                    walk(child)
+                if node_type in {"paragraph", "listItem"}:
+                    pieces.append(" ")
+
+        for child in cell.get("content", []):
+            walk(child)
+
+        flattened = "".join(pieces)
+        return " ".join(flattened.split())
+
+    @staticmethod
+    def _find_link_mark(nodes: List[dict]) -> Optional[dict]:
+        for node in nodes:
+            if node.get("type") == "text":
+                for mark in node.get("marks", []):
+                    if mark.get("type") == "link":
+                        return mark
+            found = TestJiraIntegration._find_link_mark(node.get("content", []))
+            if found:
+                return found
+        return None
+
+    @staticmethod
+    def _find_table_row(rows: List[dict], header: str) -> dict:
+        for row in rows:
+            header_cell = row.get("content", [])[0]
+            header_text = TestJiraIntegration._collect_text_from_cell(header_cell)
+            if header_text == header:
+                return row
+        raise AssertionError(f"Row with header '{header}' not found")
 
     @patch.object(Jira, "get_auth", return_value=None)
     def test_auth_code_url(self, mock_get_auth):
@@ -711,10 +755,6 @@ class TestJiraIntegration:
 
         call_args = mock_post.call_args
 
-        mock_post.assert_called_once()
-
-        call_args = mock_post.call_args
-
         expected_url = (
             "https://api.atlassian.com/ex/jira/valid_cloud_id/rest/api/3/issue"
         )
@@ -747,24 +787,24 @@ class TestJiraIntegration:
         assert table["type"] == "table"
 
         table_rows = table["content"]
-        row_texts = []
+        row_entries = {}
+        recommendation_cell = None
+
         for row in table_rows:
-            if row["type"] == "tableRow":
-                cells = row["content"]
-                if len(cells) == 2:
-                    key_cell = cells[0]["content"][0]["content"][0]["text"]
+            if row["type"] != "tableRow":
+                continue
 
-                    value_content = cells[1]["content"][0]["content"]
-                    if len(value_content) > 1:
-                        value_texts = []
-                        for content_item in value_content:
-                            if content_item["type"] == "text":
-                                value_texts.append(content_item["text"])
-                        value_cell = "".join(value_texts)
-                    else:
-                        value_cell = value_content[0]["text"]
+            cells = row["content"]
+            if len(cells) != 2:
+                continue
 
-                    row_texts.append((key_cell, value_cell))
+            key_text = self._collect_text_from_cell(cells[0])
+            value_text = self._collect_text_from_cell(cells[1])
+
+            if key_text:
+                row_entries[key_text] = value_text
+                if key_text == "Recommendation":
+                    recommendation_cell = cells[1]
 
         expected_keys = [
             "Check Id",
@@ -788,12 +828,15 @@ class TestJiraIntegration:
             "Tenant Info",
         ]
 
-        actual_keys = [key for key, _ in row_texts]
-
         for expected_key in expected_keys:
-            assert expected_key in actual_keys, f"Missing row key: {expected_key}"
+            assert expected_key in row_entries, f"Missing row key: {expected_key}"
 
-        row_dict = dict(row_texts)
+        row_dict = row_entries
+
+        assert recommendation_cell is not None
+        link_mark = self._find_link_mark(recommendation_cell.get("content", []))
+        assert link_mark is not None
+        assert link_mark.get("attrs", {}).get("href") == "remediation_url"
         assert row_dict["Check Id"] == "CHECK-1"
         assert row_dict["Check Title"] == "Check Title"
         assert row_dict["Status"] == "FAIL"
@@ -827,6 +870,117 @@ class TestJiraIntegration:
         assert "NIST: AC-3, AC-6" in row_dict["Compliance"]
         assert "https://prowler-cloud-link/findings/12345" in row_dict["Finding URL"]
         assert "Tenant Info" in row_dict["Tenant Info"]
+
+    def test_get_adf_description_renders_markdown(self):
+        status_extended_md = "Finding uses **bold** text and `code` snippets."
+        risk_md = "High risk:\n- Item one\n- Item two"
+        recommendation_md = "Apply fixes:\n- Step one\n- Step two"
+        recommendation_url = "https://example.com/fix"
+
+        adf_description = self.jira_integration.get_adf_description(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="HIGH",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#00FF00",
+            status_extended=status_extended_md,
+            provider="aws",
+            region="us-east-1",
+            resource_uid="resource-1",
+            resource_name="resource-name",
+            risk=risk_md,
+            recommendation_text=recommendation_md,
+            recommendation_url=recommendation_url,
+        )
+
+        assert adf_description["type"] == "doc"
+        table = adf_description["content"][1]
+        assert table["type"] == "table"
+
+        rows = {}
+        for row in table["content"]:
+            if row.get("type") != "tableRow":
+                continue
+            key_cell, value_cell = row["content"]
+            key_text = self._collect_text_from_cell(key_cell)
+            rows[key_text] = value_cell
+
+        assert "Status Extended" in rows
+        assert "Risk" in rows
+        assert "Recommendation" in rows
+
+        def walk_nodes(nodes: List[dict]):
+            stack = list(nodes)
+            while stack:
+                current = stack.pop()
+                yield current
+                stack.extend(current.get("content", []))
+
+        status_text = self._collect_text_from_cell(rows["Status Extended"])
+        assert status_text == status_extended_md
+
+        risk_nodes = list(walk_nodes(rows["Risk"].get("content", [])))
+        assert any(node.get("type") == "bulletList" for node in risk_nodes)
+
+        recommendation_cell = rows["Recommendation"]
+        recommendation_nodes = list(walk_nodes(recommendation_cell.get("content", [])))
+        assert any(node.get("type") == "bulletList" for node in recommendation_nodes)
+        link_mark = self._find_link_mark(recommendation_cell.get("content", []))
+        assert link_mark is not None
+        assert link_mark.get("attrs", {}).get("href") == recommendation_url
+
+    def test_get_adf_description_code_blocks_strip_fences(self):
+        code_block_value = """```hcl\nresource \"aws_s3_bucket\" \"example\" {\n  bucket = \"my-bucket\"\n}\n```"""
+
+        adf_description = self.jira_integration.get_adf_description(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="HIGH",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#00FF00",
+            recommendation_text="",
+            remediation_code_native_iac=code_block_value,
+        )
+
+        table = adf_description["content"][1]
+        code_row = self._find_table_row(table["content"], "Remediation Native IaC")
+        code_cell = code_row["content"][1]
+        code_block = code_cell["content"][0]
+
+        assert code_block["type"] == "codeBlock"
+        assert code_block.get("attrs", {}).get("language") == "hcl"
+        expected_text = (
+            'resource "aws_s3_bucket" "example" {\n  bucket = "my-bucket"\n}'
+        )
+        assert code_block["content"][0]["text"] == expected_text
+
+    def test_get_adf_description_other_remediation_uses_markdown(self):
+        other_value = "Use **bold** text"
+
+        adf_description = self.jira_integration.get_adf_description(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="HIGH",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#00FF00",
+            recommendation_text="",
+            remediation_code_other=other_value,
+        )
+
+        table = adf_description["content"][1]
+        other_row = self._find_table_row(table["content"], "Remediation Other")
+        other_cell = other_row["content"][1]
+
+        paragraph = other_cell["content"][0]
+        assert paragraph["type"] == "paragraph"
+        assert any(
+            mark.get("type") == "strong"
+            for node in paragraph.get("content", [])
+            for mark in node.get("marks", [])
+        )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(

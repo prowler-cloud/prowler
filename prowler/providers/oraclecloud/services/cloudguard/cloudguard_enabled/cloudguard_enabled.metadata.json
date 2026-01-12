@@ -1,0 +1,36 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "cloudguard_enabled",
+  "CheckTitle": "Cloud Guard is enabled in the root compartment of the tenancy",
+  "CheckType": [],
+  "ServiceName": "cloudguard",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
+  "Description": "**OCI Cloud Guard** status in the tenancy's root compartment is evaluated, expecting `ENABLED` to indicate the service is active for organization-wide detection and response.",
+  "Risk": "Without **Cloud Guard** at the root, signals across compartments can be missed, allowing misconfigurations and malicious activity to persist. This undermines confidentiality (undetected data access), integrity (unauthorized changes), and availability (ongoing abuse without automated response).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "oci cloud-guard cloud-guard-configuration update --compartment-id <tenancy-ocid> --status ENABLED --reporting-region <region>",
+      "NativeIaC": "",
+      "Other": "1. In the OCI Console, go to Security > Cloud Guard\n2. Ensure the root compartment is selected\n3. Click Enable Cloud Guard\n4. Choose a Reporting region\n5. Click Enable",
+      "Terraform": "```hcl\nresource \"oci_cloud_guard_cloud_guard_configuration\" \"<example_resource_name>\" {\n  compartment_id   = var.tenancy_ocid\n  reporting_region = var.region\n  status           = \"ENABLED\" # Critical: Turns on Cloud Guard in the root compartment\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Cloud Guard** at the tenancy root to centralize monitoring and automated response. Apply **defense in depth** by using detectors/responders, integrate alerts with monitoring, and enforce **least privilege** for its roles. Regularly tune policies and review findings to prevent blind spots.",
+      "Url": "https://hub.prowler.com/check/cloudguard_enabled"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

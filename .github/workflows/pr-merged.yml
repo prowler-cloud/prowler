@@ -1,0 +1,49 @@
+name: 'Tools: PR Merged'
+
+on:
+  pull_request_target:
+    branches:
+      - 'master'
+    types:
+      - 'closed'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  trigger-cloud-pull-request:
+    if: |
+      github.event.pull_request.merged == true &&
+      github.repository == 'prowler-cloud/prowler' &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-sync')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Calculate short commit SHA
+        id: vars
+        run: |
+          SHORT_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+          echo "SHORT_SHA=${SHORT_SHA::7}" >> $GITHUB_ENV
+
+      - name: Trigger Cloud repository pull request
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.CLOUD_DISPATCH }}
+          event-type: prowler-pull-request-merged
+          client-payload: |
+            {
+              "PROWLER_COMMIT_SHA": "${{ github.event.pull_request.merge_commit_sha }}",
+              "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
+              "PROWLER_PR_NUMBER": "${{ github.event.pull_request.number }}",
+              "PROWLER_PR_TITLE": ${{ toJson(github.event.pull_request.title) }},
+              "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},
+              "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }},
+              "PROWLER_PR_URL": ${{ toJson(github.event.pull_request.html_url) }},
+              "PROWLER_PR_MERGED_BY": "${{ github.event.pull_request.merged_by.login }}",
+              "PROWLER_PR_BASE_BRANCH": "${{ github.event.pull_request.base.ref }}",
+              "PROWLER_PR_HEAD_BRANCH": "${{ github.event.pull_request.head.ref }}"
+            }

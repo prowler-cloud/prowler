@@ -21,10 +21,7 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn(
-      "[&>tr]:first:shadow-small [&>tr]:first:rounded-lg",
-      className,
-    )}
+    className={cn("[&>tr]:first:rounded-lg", className)}
     {...props}
   />
 ));
@@ -75,7 +72,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "bg-default-100 text-tiny text-foreground-500 data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-focus dark:bg-prowler-blue-800 h-10 px-2 text-left align-middle font-semibold whitespace-nowrap outline-none first:rounded-l-lg last:rounded-r-lg data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2 rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] dark:text-slate-400 [&:has([role=checkbox])]:pr-0",
+      "bg-bg-neutral-secondary text-tiny text-foreground-500 data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-focus h-10 px-2 text-left align-middle font-semibold whitespace-nowrap outline-none first:rounded-l-lg last:rounded-r-lg data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2 rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] dark:text-slate-400 [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}

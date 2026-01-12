@@ -18,9 +18,20 @@ const isPublicRoute = (pathname: string): boolean => {
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
+  const sessionError = req.auth?.error;
+
+  // If there's a session error (e.g., RefreshAccessTokenError), redirect to login with error info
+  if (sessionError && !isPublicRoute(pathname)) {
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("error", sessionError);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
+  }
 
   if (!user && !isPublicRoute(pathname)) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   if (user?.permissions) {
@@ -36,6 +47,20 @@ export default auth((req: NextRequest & { auth: any }) => {
     ) {
       return NextResponse.redirect(new URL("/profile", req.url));
     }
+  }
+
+  // Redirect /findings to include default muted filter if not present
+  if (
+    pathname === "/findings" &&
+    !req.nextUrl.searchParams.has("filter[muted]")
+  ) {
+    const findingsUrl = new URL("/findings", req.url);
+    // Preserve existing search params
+    req.nextUrl.searchParams.forEach((value, key) => {
+      findingsUrl.searchParams.set(key, value);
+    });
+    findingsUrl.searchParams.set("filter[muted]", "false");
+    return NextResponse.redirect(findingsUrl);
   }
 
   return NextResponse.next();

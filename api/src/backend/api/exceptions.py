@@ -1,6 +1,10 @@
 from django.core.exceptions import ValidationError as django_validation_error
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import (
+    APIException,
+    AuthenticationFailed,
+    NotAuthenticated,
+)
 from rest_framework_json_api.exceptions import exception_handler
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
@@ -62,21 +66,28 @@ class ProviderConnectionError(Exception):
     """Base exception for provider connection errors."""
 
 
+class ProviderDeletedException(Exception):
+    """Raised when a provider has been deleted during scan/task execution."""
+
+
 def custom_exception_handler(exc, context):
     if isinstance(exc, django_validation_error):
         if hasattr(exc, "error_dict"):
             exc = ValidationError(exc.message_dict)
         else:
             exc = ValidationError(detail=exc.messages[0], code=exc.code)
-    elif isinstance(exc, (TokenError, InvalidToken)):
-        if (
-            hasattr(exc, "detail")
-            and isinstance(exc.detail, dict)
-            and "messages" in exc.detail
-        ):
-            exc.detail["messages"] = [
-                message_item["message"] for message_item in exc.detail["messages"]
-            ]
+    # Force 401 status for AuthenticationFailed exceptions regardless of the authentication backend
+    elif isinstance(exc, (AuthenticationFailed, NotAuthenticated, TokenError)):
+        exc.status_code = status.HTTP_401_UNAUTHORIZED
+        if isinstance(exc, (TokenError, InvalidToken)):
+            if (
+                hasattr(exc, "detail")
+                and isinstance(exc.detail, dict)
+                and "messages" in exc.detail
+            ):
+                exc.detail["messages"] = [
+                    message_item["message"] for message_item in exc.detail["messages"]
+                ]
     return exception_handler(exc, context)
 
 

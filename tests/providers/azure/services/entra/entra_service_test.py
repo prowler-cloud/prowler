@@ -1,4 +1,6 @@
-from unittest.mock import patch
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 from prowler.providers.azure.models import AzureIdentityInfo
@@ -223,3 +225,64 @@ class Test_Entra_Service:
             ]
             == []
         )
+
+
+def test_azure_entra__get_users_handles_pagination():
+    entra_service = Entra.__new__(Entra)
+
+    users_page_one = [
+        SimpleNamespace(id="user-1", display_name="User 1"),
+        SimpleNamespace(id="user-2", display_name="User 2"),
+    ]
+    users_page_two = [
+        SimpleNamespace(id="user-3", display_name="User 3"),
+    ]
+
+    users_response_page_one = SimpleNamespace(
+        value=users_page_one,
+        odata_next_link="next-link",
+    )
+    users_response_page_two = SimpleNamespace(
+        value=users_page_two, odata_next_link=None
+    )
+
+    users_with_url_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_two)
+    )
+    with_url_mock = MagicMock(return_value=users_with_url_builder)
+
+    def by_user_id_side_effect(user_id):
+        auth_methods_response = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id=f"{user_id}-method",
+                    odata_type="#microsoft.graph.passwordAuthenticationMethod",
+                )
+            ]
+        )
+        return SimpleNamespace(
+            authentication=SimpleNamespace(
+                methods=SimpleNamespace(
+                    get=AsyncMock(return_value=auth_methods_response)
+                )
+            )
+        )
+
+    users_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_one),
+        with_url=with_url_mock,
+        by_user_id=MagicMock(side_effect=by_user_id_side_effect),
+    )
+
+    entra_service.clients = {"tenant-1": SimpleNamespace(users=users_builder)}
+
+    users = asyncio.run(entra_service._get_users())
+
+    assert len(users["tenant-1"]) == 3
+    assert users_builder.get.await_count == 1
+    with_url_mock.assert_called_once_with("next-link")
+    assert users["tenant-1"]["user-1"].authentication_methods[0].id == "user-1-method"
+    assert (
+        users["tenant-1"]["user-3"].authentication_methods[0].type
+        == "#microsoft.graph.passwordAuthenticationMethod"
+    )

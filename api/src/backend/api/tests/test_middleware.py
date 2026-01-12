@@ -24,6 +24,7 @@ def test_api_logging_middleware_logging(mock_logger):
         mock_extract_auth_info.return_value = {
             "user_id": "user123",
             "tenant_id": "tenant456",
+            "api_key_prefix": "pk_test",
         }
 
         with patch("api.middleware.logging.getLogger") as mock_get_logger:
@@ -44,6 +45,7 @@ def test_api_logging_middleware_logging(mock_logger):
                 expected_extra = {
                     "user_id": "user123",
                     "tenant_id": "tenant456",
+                    "api_key_prefix": "pk_test",
                     "method": "GET",
                     "path": "/test-path",
                     "query_params": {"param1": "value1", "param2": "value2"},

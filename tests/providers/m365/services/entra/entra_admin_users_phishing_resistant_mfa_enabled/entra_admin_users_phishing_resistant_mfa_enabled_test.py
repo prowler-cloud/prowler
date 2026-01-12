@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from prowler.providers.m365.services.entra.entra_service import (
     ApplicationsConditions,
-    AuthenticationStrength,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
@@ -114,7 +113,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
-                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                        authentication_strength="Phishing-resistant MFA",
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -206,7 +205,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
-                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                        authentication_strength="Phishing-resistant MFA",
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -301,7 +300,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
-                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                        authentication_strength="Phishing-resistant MFA",
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(

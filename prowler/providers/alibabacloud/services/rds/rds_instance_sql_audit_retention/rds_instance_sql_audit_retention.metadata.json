@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_sql_audit_retention",
+  "CheckTitle": "Auditing Retention is greater than the configured period",
+  "CheckType": [
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Database **SQL Audit Retention** should be configured to be greater than or equal to the configured period (default: **6 months / 180 days**).\n\nAudit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
+  "Risk": "**Short retention periods** for audit logs can result in the loss of critical forensic data needed for **incident investigation** and **compliance auditing**.\n\nMany regulations require minimum retention periods for audit data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96123.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/configure-log-retention-period.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifySQLCollectorPolicy --DBInstanceId <instance_id> --SQLCollectorStatus Enable --StoragePeriod 180",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Select **SQL Explorer**\n3. Click **Service Setting**\n4. Enable `Activate SQL Explorer`\n5. Set the storage duration to `6 months` or longer",
+      "Url": "https://hub.prowler.com/check/rds_instance_sql_audit_retention"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

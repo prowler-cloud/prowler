@@ -11,18 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "**Amazon Bedrock agents** should have an associated **guardrail** for their sessions. The evaluation identifies agents without a guardrail linked for input/output screening during interactions.",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock agents** should have an associated **guardrail** for their sessions. The evaluation identifies agents without a guardrail linked for input/output screening during interactions.",
   "Risk": "Without **guardrails**, agent exchanges may expose **PII** or internal data (confidentiality), accept **prompt injections** that manipulate tool calls or outputs (integrity), and produce unsafe or out-of-scope responses that erode trust and cause policy violations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html",
-    "https://practicaldev-herokuapp-com.freetls.fastly.net/aws-builders/guardrail-support-for-the-generic-bedrock-agent-test-ui-4om5",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-guardrail.html",
-    "https://aws.plainenglish.io/how-to-secure-amazon-bedrock-with-guardrails-for-safe-ai-operations-in-the-cloud-2e18a2d70688",
-    "https://itnext.io/use-guardrails-to-prevent-hallucinations-in-generative-ai-applications-2f0b002e15fe",
-    "https://aihub.hkuspace.hku.hk/2024/10/12/improve-llm-application-robustness-with-amazon-bedrock-guardrails-and-amazon-bedrock-agents/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
-    "https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/README.md",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
   ],
   "Remediation": {

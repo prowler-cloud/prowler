@@ -1,0 +1,74 @@
+name: 'Slack Notification'
+description: 'Generic action to send Slack notifications with optional message updates and automatic status detection'
+inputs:
+  slack-bot-token:
+    description: 'Slack bot token for authentication'
+    required: true
+  payload-file-path:
+    description: 'Path to JSON file with the Slack message payload'
+    required: true
+  update-ts:
+    description: 'Message timestamp to update (only for updates, leave empty for new messages)'
+    required: false
+    default: ''
+  step-outcome:
+    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_TEXT and STATUS_COLOR env vars'
+    required: false
+    default: ''
+outputs:
+  ts:
+    description: 'Timestamp of the Slack message'
+    value: ${{ steps.slack-notification.outputs.ts }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine status
+      id: status
+      shell: bash
+      run: |
+        if [[ "${{ inputs.step-outcome }}" == "success" ]]; then
+          echo "STATUS_TEXT=Completed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#6aa84f" >> $GITHUB_ENV
+        elif [[ "${{ inputs.step-outcome }}" == "failure" ]]; then
+          echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#fc3434" >> $GITHUB_ENV
+        else
+          # No outcome provided - pending/in progress state
+          echo "STATUS_COLOR=#dbab09" >> $GITHUB_ENV
+        fi
+
+    - name: Send Slack notification (new message)
+      if: inputs.update-ts == ''
+      id: slack-notification-post
+      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
+      with:
+        method: chat.postMessage
+        token: ${{ inputs.slack-bot-token }}
+        payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
+
+    - name: Update Slack notification
+      if: inputs.update-ts != ''
+      id: slack-notification-update
+      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
+      with:
+        method: chat.update
+        token: ${{ inputs.slack-bot-token }}
+        payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
+
+    - name: Set output
+      id: slack-notification
+      shell: bash
+      run: |
+        if [[ "${{ inputs.update-ts }}" == "" ]]; then
+          echo "ts=${{ steps.slack-notification-post.outputs.ts }}" >> $GITHUB_OUTPUT
+        else
+          echo "ts=${{ inputs.update-ts }}" >> $GITHUB_OUTPUT
+        fi

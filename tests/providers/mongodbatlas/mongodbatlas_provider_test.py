@@ -7,6 +7,7 @@ from prowler.providers.mongodbatlas.exceptions.exceptions import (
     MongoDBAtlasAuthenticationError,
     MongoDBAtlasCredentialsError,
     MongoDBAtlasIdentityError,
+    MongoDBAtlasInvalidOrganizationIdError,
 )
 from prowler.providers.mongodbatlas.models import (
     MongoDBAtlasIdentityInfo,
@@ -173,6 +174,93 @@ class TestMongodbatlasProvider:
 
             assert connection.is_connected is False
             assert connection.error is not None
+
+    def test_test_connection_with_matching_provider_id(self):
+        """Test connection test with matching provider_id"""
+        with (
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_session",
+                return_value=MongoDBAtlasSession(
+                    public_key=ATLAS_PUBLIC_KEY,
+                    private_key=ATLAS_PRIVATE_KEY,
+                ),
+            ),
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
+                return_value=MongoDBAtlasIdentityInfo(
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
+                    roles=["ORGANIZATION_ADMIN"],
+                ),
+            ),
+        ):
+            connection = MongodbatlasProvider.test_connection(
+                atlas_public_key=ATLAS_PUBLIC_KEY,
+                atlas_private_key=ATLAS_PRIVATE_KEY,
+                provider_id=ORGANIZATION_ID,
+            )
+
+            assert connection.is_connected is True
+
+    def test_test_connection_with_mismatched_provider_id(self):
+        """Test connection test with mismatched provider_id raises error"""
+        different_org_id = "different_org_id"
+        with (
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_session",
+                return_value=MongoDBAtlasSession(
+                    public_key=ATLAS_PUBLIC_KEY,
+                    private_key=ATLAS_PRIVATE_KEY,
+                ),
+            ),
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
+                return_value=MongoDBAtlasIdentityInfo(
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
+                    roles=["ORGANIZATION_ADMIN"],
+                ),
+            ),
+        ):
+            with pytest.raises(MongoDBAtlasInvalidOrganizationIdError) as exc_info:
+                MongodbatlasProvider.test_connection(
+                    atlas_public_key=ATLAS_PUBLIC_KEY,
+                    atlas_private_key=ATLAS_PRIVATE_KEY,
+                    provider_id=different_org_id,
+                )
+
+            assert different_org_id in str(exc_info.value)
+
+    def test_test_connection_with_mismatched_provider_id_no_raise(self):
+        """Test connection test with mismatched provider_id always raises error regardless of raise_on_exception"""
+        different_org_id = "different_org_id"
+        with (
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_session",
+                return_value=MongoDBAtlasSession(
+                    public_key=ATLAS_PUBLIC_KEY,
+                    private_key=ATLAS_PRIVATE_KEY,
+                ),
+            ),
+            patch(
+                "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
+                return_value=MongoDBAtlasIdentityInfo(
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
+                    roles=["ORGANIZATION_ADMIN"],
+                ),
+            ),
+        ):
+            # MongoDBAtlasInvalidOrganizationIdError is always raised regardless of raise_on_exception
+            with pytest.raises(MongoDBAtlasInvalidOrganizationIdError) as exc_info:
+                MongodbatlasProvider.test_connection(
+                    atlas_public_key=ATLAS_PUBLIC_KEY,
+                    atlas_private_key=ATLAS_PRIVATE_KEY,
+                    provider_id=different_org_id,
+                    raise_on_exception=False,
+                )
+
+            assert different_org_id in str(exc_info.value)
 
     def test_provider_properties(self):
         """Test provider properties"""

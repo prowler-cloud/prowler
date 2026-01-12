@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "database_autonomous_database_access_restricted",
+  "CheckTitle": "Ensure Oracle Autonomous Shared Database (ADB) access is restricted or deployed within a VCN",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:database:autonomousdatabase",
+  "Severity": "high",
+  "ResourceType": "AutonomousDatabase",
+  "ResourceGroup": "database",
+  "Description": "Autonomous Shared Database instances should either have IP whitelisting configured or be deployed within a VCN to restrict network access and improve security posture.",
+  "Risk": "Public or unrestricted Autonomous Database access increases the attack surface and risk of unauthorized access.",
+  "RelatedUrl": "https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/autonomous-private-endpoints.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci db autonomous-database create-private-endpoint --autonomous-database-id <adb-ocid> --subnet-id <subnet-ocid>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Autonomous Database\n2. Select the database instance\n3. Click 'More Actions' → 'Update'\n4. Under Network Access, select 'Private endpoint access only'\n5. Configure VCN and subnet for private endpoint\n6. Alternatively, configure Access Control List (ACL) with specific IP addresses",
+      "Terraform": "resource \"oci_database_autonomous_database\" \"adb\" {\n  compartment_id = var.compartment_id\n  db_name = \"MyADB\"\n  display_name = \"My Autonomous Database\"\n  is_free_tier = false\n  db_workload = \"OLTP\"\n  whitelisted_ips = [\"10.0.0.0/24\"]\n  nsg_ids = [oci_core_network_security_group.adb_nsg.id]\n  subnet_id = oci_core_subnet.private_subnet.id\n}"
+    },
+    "Recommendation": {
+      "Text": "Deploy Autonomous Databases within a VCN using private endpoints or configure strict IP whitelisting to restrict access.",
+      "Url": "https://hub.prowler.com/check/oci/database_autonomous_database_access_restricted"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,487 @@
+---
+title: "Prowler ThreatScore Documentation"
+---
+
+
+
+
+## Introduction
+
+The **Prowler ThreatScore** is a comprehensive compliance scoring system that provides a unified metric for assessing your organization's security posture across compliance frameworks. It aggregates findings from individual security checks into a single, normalized score ranging from 0 to 100.
+
+### Purpose
+- **Unified View**: Get a single metric representing overall compliance health
+- **Risk Prioritization**: Understand which areas pose the highest security risks
+- **Progress Tracking**: Monitor improvements in compliance posture over time
+- **Executive Reporting**: Provide clear, quantifiable security metrics to stakeholders
+
+## How ThreatScore Works
+
+The ThreatScore calculation considers four critical factors for each compliance requirement:
+
+### 1. Pass Rate (`rate_i`)
+The percentage of security checks that passed for a specific requirement:
+```
+Pass Rate = (Number of PASS findings) / (Total findings)
+```
+
+### 2. Total Findings (`total_i`)
+The total number of checks performed (both PASS and FAIL) for a requirement. This represents the amount of evidence available - more findings provide greater confidence in the assessment.
+
+### 3. Weight (`weight_i`)
+A numerical value (1-1000) representing the business importance or criticality of the requirement within your organization's context.
+
+### 4. Risk Level (`risk_i`)
+A severity rating (1-5) indicating the potential impact of non-compliance with this requirement.
+
+## Score Interpretation Guidelines
+
+| ThreatScore | Interpretation | Recommended Actions |
+|------------------|----------------|-------------------|
+| 90-100% | Excellent | Maintain current controls, focus on continuous improvement |
+| 80-89% | Good | Address remaining gaps, prepare for compliance audits |
+| 70-79% | Acceptable | Prioritize high-risk failures, develop improvement plan |
+| 60-69% | Needs Improvement | Immediate attention required, may not pass compliance audit |
+| Below 60% | Critical | Emergency response needed, potential regulatory issues |
+
+## Mathematical Formula
+
+The ThreatScore uses a weighted average formula that accounts for all four factors:
+
+```
+ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weight_i × risk_i)) × 100
+```
+
+### Formula Properties
+- **Normalization**: Always produces a score between 0 and 100
+- **Evidence-weighted**: Requirements with more findings have proportionally greater influence
+- **Risk-sensitive**: Higher risk requirements impact the score more significantly
+- **Business-aligned**: Weight values allow customization based on organizational priorities
+
+## Parameters Explained
+
+### Weight Values (1-1000)
+
+The weight parameter allows customization of ThreatScore calculation based on organizational priorities and regulatory requirements.
+
+#### Weight Assignment Guidelines
+
+| Weight Range | Priority Level | Use Cases |
+|--------------|----------------|-----------|
+| 1-100 | Low | Optional or nice-to-have controls |
+| 101-300 | Medium | Standard security practices |
+| 301-600 | High | Important security controls |
+| 601-850 | Critical | Regulatory compliance requirements |
+| 851-1000 | Maximum | Mission-critical security controls |
+
+#### Weight Selection Strategy
+1. **Regulatory Mapping**: Assign higher weights to controls required by industry regulations
+2. **Business Impact**: Consider the potential business impact of control failures
+3. **Risk Tolerance**: Align weights with organizational risk appetite
+4. **Stakeholder Input**: Involve compliance and business teams in weight decisions
+
+### Risk Levels (1-5)
+
+Risk levels represent the potential security impact of non-compliance with a requirement.
+
+| Risk Level | Severity | Impact Description |
+|------------|----------|-------------------|
+| 1 | Very Low | Minimal security impact, informational |
+| 2 | Low | Limited exposure, low probability of exploitation |
+| 3 | Medium | Moderate security risk, potential for limited damage |
+| 4 | High | Significant security risk, high probability of impact |
+| 5 | Critical | Severe security risk, immediate threat to organization |
+
+#### Risk Level Assessment Criteria
+- **Confidentiality Impact**: Data exposure potential
+- **Integrity Impact**: Risk of unauthorized data modification
+- **Availability Impact**: Service disruption potential
+- **Compliance Impact**: Regulatory violation consequences
+- **Exploitability**: Ease of exploitation by threat actors
+
+## Security Pillars and Subpillars
+
+Prowler organizes security requirements into a hierarchical structure of pillars and subpillars, providing a comprehensive framework for security assessment and compliance evaluation.
+
+### Security Pillars Overview
+
+The ThreatScore calculation considers requirements organized within the following security pillars:
+
+#### 1. IAM (Identity and Access Management)
+
+**Purpose**: Controls who can access what resources and under what conditions
+
+**Subpillars**:
+
+- **1.1 Authentication**: Verifying user and system identities
+- **1.2 Authorization**: Controlling access to resources based on authenticated identity
+- **1.3 Privilege Escalation**: Preventing unauthorized elevation of permissions
+
+#### 2. Attack Surface
+
+**Purpose**: Minimizing exposure points that could be exploited by threat actors across network, storage, and application layers
+
+**Subpillars**:
+
+- **2.1 Network**: Network infrastructure security, segmentation, firewall rules, VPC configurations, and traffic controls
+- **2.2 Storage**: Data storage systems security, database security, file system permissions, backup security, and storage encryption
+- **2.3 Application**: Application-level controls and configurations, application security settings, code security, runtime protections
+
+#### 3. Logging and Monitoring
+
+**Purpose**: Ensuring comprehensive visibility and audit capabilities
+
+**Subpillars**:
+
+- **3.1 Logging**: Capturing security-relevant events and activities
+- **3.2 Retention**: Maintaining logs for appropriate time periods
+- **3.3 Monitoring**: Active surveillance and alerting on security events
+
+#### 4. Encryption
+
+**Purpose**: Protecting data confidentiality through cryptographic controls
+
+**Subpillars**:
+
+- **4.1 In-Transit**: Encrypting data during transmission
+- **4.2 At-Rest**: Encrypting stored data
+
+### Pillar Hierarchy and ThreatScore Impact
+
+#### Hierarchy Structure
+```
+Security Framework
+├── 1. IAM
+│   ├── 1.1 Authentication
+│   ├── 1.2 Authorization
+│   └── 1.3 Privilege Escalation
+├── 2. Attack Surface
+│   ├── 2.1 Network
+│   ├── 2.2 Storage
+│   └── 2.3 Application
+├── 3. Logging and Monitoring
+│   ├── 3.1 Logging
+│   ├── 3.2 Retention
+│   └── 3.3 Monitoring
+└── 4. Encryption
+    ├── 4.1 In-Transit
+    └── 4.2 At-Rest
+
+Example Requirement Structure:
+├── Pillar: 1. IAM
+│   ├── Subpillar: 1.1 Authentication
+│   │   ├── Requirement: MFA Implementation
+│   │   │   ├── Check 1: Admin accounts use MFA
+│   │   │   ├── Check 2: Regular users use MFA
+│   │   │   └── Check 3: Service accounts use MFA
+│   │   └── [Additional Requirements]
+│   └── [Additional Subpillars: Authorization, Privilege Escalation]
+```
+
+#### Weight and Risk Assignment by Pillar
+
+Different pillars typically receive different weight and risk assignments based on their security impact:
+
+| Pillar | Typical Weight Range | Typical Risk Range | Rationale |
+|--------|---------------------|-------------------|-----------|
+| 1. IAM | 800-1000 | 4-5 | Critical for access control, high impact if compromised |
+| 2. Attack Surface | 500-900 | 3-5 | Highly dependent on exposure and criticality across network, storage, and application layers |
+| 3. Logging and Monitoring | 600-800 | 3-4 | Important for detection and compliance, moderate direct impact |
+| 4. Encryption | 700-950 | 4-5 | Essential for data protection, regulatory compliance |
+
+**Subpillar Weight Considerations**:
+
+- **2.1 Network (Attack Surface)**: 500-800, Risk 3-4 - Network perimeter defense
+- **2.2 Storage (Attack Surface)**: 600-900, Risk 4-5 - Data exposure impact
+- **2.3 Application (Attack Surface)**: 400-700, Risk 2-4 - Varies by application criticality
+
+### Pillar-Specific Scoring Considerations
+
+#### High-Impact Pillars (1. IAM, 4. Encryption)
+
+- **Characteristics**: Direct impact on data protection and access control
+- **ThreatScore Impact**: Failures in these pillars significantly lower overall score
+- **Weight Strategy**: Assign maximum weights (800-1000) to critical requirements
+- **Risk Strategy**: Most requirements rated 4-5 due to severe consequences
+
+#### Variable-Impact Pillar (2. Attack Surface)
+
+- **Characteristics**: Impact varies significantly across subpillars (Network, Storage, Application)
+- **ThreatScore Impact**: Depends on specific subpillar and business context
+- **Weight Strategy**:
+    - 2.1 Network subpillar: 500-800 (perimeter defense importance)
+    - 2.2 Storage subpillar: 600-900 (data exposure risk)
+    - 2.3 Application subpillar: 400-700 (application-specific criticality)
+- **Risk Strategy**: Wide range (2-5) based on exposure, data sensitivity, and business criticality
+
+#### Monitoring Pillar (3. Logging and Monitoring)
+
+- **Characteristics**: Essential for compliance and incident response
+- **ThreatScore Impact**: Moderate influence, critical for audit requirements
+- **Weight Strategy**: Consistent weights (600-800) across logging, retention, and monitoring subpillars
+- **Risk Strategy**: Moderate risk levels (3-4) with emphasis on compliance impact
+
+### Cross-Pillar Dependencies
+
+#### Authentication ↔ Authorization (IAM)
+
+- Strong authentication enables effective authorization controls
+- Weight both subpillars highly as they're interdependent
+
+#### Logging ↔ Monitoring (Logging and Monitoring)
+
+- Logging provides the data that monitoring systems analyze
+- Balance weights to ensure both data collection and analysis are prioritized
+
+#### In-Transit ↔ At-Rest (Encryption)
+
+- Comprehensive data protection requires both encryption types
+- Consider data flow patterns when assigning relative weights
+
+### Pillar Coverage in ThreatScore
+
+#### Complete Coverage Benefits
+
+- **Comprehensive Assessment**: All security domains represented in score
+- **Balanced View**: Prevents over-emphasis on single security aspect
+- **Regulatory Alignment**: Covers requirements across major compliance frameworks
+
+#### Partial Coverage Considerations
+
+- **Focused Assessment**: Target specific security domains
+- **Resource Optimization**: Concentrate efforts on high-priority areas
+- **Gradual Implementation**: Phase in additional pillars over time
+
+## Scoring Examples
+
+### Example 1: Basic Two-Requirement Scenario
+
+Consider a compliance framework with two requirements:
+
+**Requirement 1: Encryption at Rest**
+
+- Findings: 200 PASS, 500 FAIL (total = 700)
+- Pass Rate: 200/700 = 0.286 (28.6%)
+- Weight: 500 (High priority - data protection)
+- Risk Level: 4 (High risk - data exposure)
+
+**Requirement 2: Access Logging**
+
+- Findings: 300 PASS, 100 FAIL (total = 400)
+- Pass Rate: 300/400 = 0.75 (75%)
+- Weight: 800 (Critical for audit compliance)
+- Risk Level: 3 (Medium risk - audit trail)
+
+**Calculation:**
+```
+Numerator = (0.286 × 700 × 500 × 4) + (0.75 × 400 × 800 × 3)
+          = (400,400) + (720,000)
+          = 1,120,400
+
+Denominator = (700 × 500 × 4) + (400 × 800 × 3)
+            = 1,400,000 + 960,000
+            = 2,360,000
+
+ThreatScore = (1,120,400 / 2,360,000) × 100 = 47.5%
+```
+
+### Example 2: Enterprise Scenario with Pillar Structure
+
+This example demonstrates how pillar organization affects ThreatScore calculation:
+
+| Pillar | Subpillar | Requirement | Pass | Fail | Total | Weight | Risk | Pass Rate |
+|--------|-----------|-------------|------|------|-------|--------|------|-----------|
+| 1. IAM | 1.2 Authorization | Access Controls | 280 | 120 | 400 | 800 | 4 | 70% |
+| 2. Attack Surface | 2.1 Network | Network Segmentation | 150 | 50 | 200 | 750 | 4 | 75% |
+| 2. Attack Surface | 2.2 Storage | Backup Security | 200 | 100 | 300 | 600 | 3 | 66.7% |
+| 3. Logging and Monitoring | 3.1 Logging | Audit Logging | 350 | 50 | 400 | 700 | 3 | 87.5% |
+| 4. Encryption | 4.2 At-Rest | Encryption | 450 | 50 | 500 | 950 | 5 | 90% |
+
+**Step-by-step Calculation:**
+
+1. **Calculate weighted contributions for each requirement:**
+
+    ```
+    Numerator = Σ(rate_i × total_i × weight_i × risk_i)
+    ```
+
+    - **Access Controls (1.2 Authorization)**: 0.70 × 400 × 800 × 4 = 896,000
+    - **Network Segmentation (2.1 Network)**: 0.75 × 200 × 750 × 4 = 450,000
+    - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
+    - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
+    - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
+
+2. **Sum numerator:** 2,137,500 + 896,000 + 735,000 + 360,060 + 450,000 = **4,578,560**
+
+3. **Calculate total weights for each requirement:**
+
+    ```
+    Denominator = Σ(total_i × weight_i × risk_i)
+    ```
+
+    - **Access Controls (1.2 Authorization)**: 400 × 800 × 4 = 1,280,000
+    - **Network Segmentation (2.1 Network)**: 200 × 750 × 4 = 600,000
+    - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
+    - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
+    - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
+
+4. **Sum denominator:** 2,375,000 + 1,280,000 + 840,000 + 540,000 + 600,000 = **5,635,000**
+
+5. **Final ThreatScore calculation:**
+
+    ```
+    ThreatScore = (Numerator / Denominator) × 100
+    ThreatScore = (4,578,560 / 5,635,000) × 100 = 81.2%
+    ```
+
+**Pillar-Level Analysis:**
+
+- **1. IAM pillar (1.2 Authorization)**: Significant impact despite lower pass rate (70%) due to high weight (800)
+- **2. Attack Surface pillar (2.1 Network)**: Strong performance (75%) with high weight (750) balances the score
+- **2. Attack Surface pillar (2.2 Storage)**: Lowest performance (66.7%) but limited impact due to moderate weight (600)
+- **3. Logging and Monitoring pillar (3.1 Logging)**: Moderate contribution with good performance (87.5%)
+- **4. Encryption pillar (4.2 At-Rest)**: Highest contribution due to maximum weight (950) and risk (5)
+
+### Example 3: Multi-Pillar Comprehensive Scenario
+
+
+| Pillar | Subpillar | Requirement | Pass | Fail | Weight | Risk | Pass Rate |
+|--------|-----------|-------------|------|------|--------|------|-----------|
+| 1. IAM | 1.1 Authentication | MFA Implementation | 180 | 20 | 900 | 5 | 90% |
+| 1. IAM | 1.2 Authorization | Least Privilege Access | 150 | 50 | 850 | 4 | 75% |
+| 1. IAM | 1.3 Privilege Escalation | Admin Account Controls | 95 | 5 | 950 | 5 | 95% |
+| 2. Attack Surface | 2.1 Network | Firewall Configuration | 400 | 100 | 600 | 3 | 80% |
+| 2. Attack Surface | 2.1 Network | Public Endpoint Security | 80 | 20 | 700 | 4 | 80% |
+| 2. Attack Surface | 2.2 Storage | Data Classification | 300 | 100 | 650 | 3 | 75% |
+| 2. Attack Surface | 2.3 Application | Input Validation | 150 | 50 | 500 | 3 | 75% |
+| 3. Logging and Monitoring | 3.1 Logging | Transaction Logging | 500 | 50 | 750 | 3 | 90.9% |
+| 3. Logging and Monitoring | 3.3 Monitoring | Real-time Alerts | 200 | 50 | 700 | 4 | 80% |
+| 4. Encryption | 4.2 At-Rest | Database Encryption | 300 | 20 | 900 | 5 | 93.8% |
+| 4. Encryption | 4.1 In-Transit | API/Web Encryption | 250 | 10 | 800 | 4 | 96.2% |
+
+**Pillar Performance Summary**:
+
+- **1. IAM Pillar Average**: ~87% (weighted by findings across Authentication, Authorization, and Privilege Escalation subpillars)
+- **2. Attack Surface Pillar Average**: ~77% (weighted across Network, Storage, and Application subpillars)
+    - 2.1 Network subpillar: ~80% average
+    - 2.2 Storage subpillar: 75%
+    - 2.3 Application subpillar: 75%
+- **3. Logging and Monitoring Average**: ~87% (weighted by findings across Logging and Monitoring subpillars)
+- **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
+
+**Overall ThreatScore**: ~85.3%
+
+This comprehensive example demonstrates how:
+
+- High-performing, high-weight pillars (4. Encryption, 1. IAM) significantly boost the score
+- The 2. Attack Surface pillar shows how diverse subpillars (Network, Storage, Application) are aggregated
+- Multiple requirements within pillars provide detailed granular assessment
+- Cross-pillar balance prevents single points of failure in security posture
+
+### Example 4: Impact of Parameter Changes
+
+Using the scenario, let's see how parameter changes affect the score:
+
+#### Scenario A: Increase Encryption Risk Level
+
+Change Encryption risk from 5 to 3:
+
+- **New ThreatScore: 77.8%** (decrease of 3.4 points)
+- **Impact**: Lower risk weighting reduces the influence of high-performing critical controls
+
+#### Scenario B: Improve Access Controls Pass Rate
+
+Change Access Controls from 70% to 90% pass rate:
+
+- **New ThreatScore: 85.1%** (increase of 3.9 points)
+- **Impact**: Improving performance on high-weight requirements has significant score impact
+
+#### Scenario C: Add New Low-Weight Requirement
+
+Add "Documentation Completeness" (50 PASS, 10 FAIL, weight=100, risk=1):
+
+- **New ThreatScore: 81.3%** (minimal change of 0.1 points)
+- **Impact**: Low-weight requirements have minimal impact on overall score
+
+## Implementation Details
+
+### Edge Cases and Special Conditions
+
+#### Zero Findings Scenario
+When a requirement has `total_i = 0` (no findings):
+
+- **Behavior**: Requirement is completely excluded from calculation
+- **Rationale**: No evidence means no contribution to confidence in the score
+- **Impact**: Other requirements receive proportionally more influence
+
+#### Perfect Score Scenario
+When all requirements have 100% pass rate:
+
+- **Result**: ThreatScore = 100%
+- **Interpretation**: All implemented security checks are passing
+
+#### Zero Pass Rate Scenario
+When all requirements have 0% pass rate:
+
+- **Result**: ThreatScore = 0%
+- **Interpretation**: Critical security failures across all requirements
+
+#### Single Requirement Framework
+For frameworks with only one requirement:
+
+- **Formula simplification**: ThreatScore = pass_rate × 100
+- **Impact**: Weight and risk values become irrelevant for score calculation
+
+### Performance Considerations
+
+#### Computational Complexity
+- **Time Complexity**: O(n) where n = number of requirements
+- **Space Complexity**: O(1) - constant space for accumulation
+- **Scalability**: Efficiently handles frameworks with thousands of requirements
+
+#### Calculation Precision
+- **Floating Point**: Use double precision for intermediate calculations
+- **Rounding**: Final score rounded to 1 decimal place for display
+- **Overflow Protection**: Validate that weight × risk × total values don't exceed system limits
+
+### Data Requirements
+
+#### Minimum Data Set
+For each requirement, the following data must be available:
+
+- **pass_count**: Number of PASS findings (integer ≥ 0)
+- **fail_count**: Number of FAIL findings (integer ≥ 0)
+- **weight**: Business importance (integer 1-1000)
+- **risk**: Risk level (integer 1-5)
+
+#### Data Validation Rules
+```
+total_i = pass_i + fail_i
+rate_i = pass_i / total_i (when total_i > 0)
+1 ≤ weight_i ≤ 1000
+1 ≤ risk_i ≤ 5
+```
+
+#### Handling Invalid Data
+- **Negative values**: Treat as 0 and log warning
+- **Out-of-range weights/risk**: Clamp to valid range and log warning
+- **Missing data**: Exclude requirement from calculation and log warning
+
+## Best Practices
+
+### Monitoring and Trending
+
+1. **Establish Baseline**
+    - Record initial ThreatScore after implementing measurement
+    - Set realistic improvement targets based on organizational capacity
+    - Track score changes over time to identify trends
+
+2. **Regular Reporting**
+    - Generate monthly ThreatScore reports for stakeholders
+    - Highlight significant score changes and their causes
+    - Include requirement-level breakdowns for detailed analysis
+
+3. **Continuous Improvement**
+    - Use score trends to identify systematic issues
+    - Correlate score changes with security incidents or changes
+    - Adjust weights and risk levels based on lessons learned

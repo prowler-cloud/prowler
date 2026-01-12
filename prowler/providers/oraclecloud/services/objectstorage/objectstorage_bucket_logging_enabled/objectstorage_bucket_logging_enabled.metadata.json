@@ -1,0 +1,33 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "objectstorage_bucket_logging_enabled",
+  "CheckTitle": "Ensure write level Object Storage logging is enabled for all buckets",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OciObjectStorageBucket",
+  "ResourceGroup": "storage",
+  "Description": "Write-level logging for Object Storage buckets provides an audit trail of all write operations (PUT, POST, DELETE) performed on buckets, enabling security monitoring and compliance requirements.",
+  "Risk": "Without write-level logging, unauthorized or malicious modifications to Object Storage data cannot be detected or investigated.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci logging log create --log-group-id <log-group-ocid> --display-name 'ObjectStorage-Write-Logs' --log-type SERVICE --configuration '{\"compartmentId\":\"<compartment-ocid>\",\"source\":{\"service\":\"objectstorage\",\"resource\":\"<bucket-name>\",\"category\":\"write\",\"sourceType\":\"OCISERVICE\"}}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-write-level-logging.html",
+      "Terraform": "resource \"oci_logging_log\" \"objectstorage_write_log\" {\n  display_name = \"ObjectStorage-Write-Logs\"\n  log_group_id = oci_logging_log_group.log_group.id\n  log_type = \"SERVICE\"\n  configuration {\n    source {\n      category = \"write\"\n      resource = oci_objectstorage_bucket.bucket.name\n      service = \"objectstorage\"\n      source_type = \"OCISERVICE\"\n    }\n    compartment_id = var.compartment_id\n  }\n  is_enabled = true\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable write-level logging for all Object Storage buckets to maintain audit trails of data modifications.",
+      "Url": "https://docs.prowler.com/checks/oci/oci-logging/objectstorage_bucket_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -8,9 +8,14 @@ def extract_auth_info(request) -> dict:
     if getattr(request, "auth", None) is not None:
         tenant_id = request.auth.get("tenant_id", "N/A")
         user_id = request.auth.get("sub", "N/A")
+        api_key_prefix = request.auth.get("api_key_prefix", "N/A")
     else:
-        tenant_id, user_id = "N/A", "N/A"
-    return {"tenant_id": tenant_id, "user_id": user_id}
+        tenant_id, user_id, api_key_prefix = "N/A", "N/A", "N/A"
+    return {
+        "tenant_id": tenant_id,
+        "user_id": user_id,
+        "api_key_prefix": api_key_prefix,
+    }
 
 
 class APILoggingMiddleware:
@@ -38,6 +43,7 @@ class APILoggingMiddleware:
             extra={
                 "user_id": auth_info["user_id"],
                 "tenant_id": auth_info["tenant_id"],
+                "api_key_prefix": auth_info["api_key_prefix"],
                 "method": request.method,
                 "path": request.path,
                 "query_params": request.GET.dict(),

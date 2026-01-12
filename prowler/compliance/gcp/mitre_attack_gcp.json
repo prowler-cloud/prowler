@@ -365,7 +365,32 @@
       "Description": "Adversaries may abuse serverless computing, integration, and automation services to execute arbitrary code in cloud environments. Many cloud providers offer a variety of serverless resources, including compute engines, application integration services, and web servers.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1648/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all administrative operations including Cloud Functions deployment, Cloud Run service creation, and Workflows execution. This provides Significant detection capability for identifying when serverless resources are created, modified, or invoked, which could indicate adversaries establishing serverless execution capabilities. Admin Activity logs record who performed actions, what resources were affected, and when operations occurred."
+        },
+        {
+          "GCPService": "Cloud Functions",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Cloud Functions can be protected through IAM policies, VPC Service Controls, and ingress settings that restrict function invocation. Functions can require authentication and be limited to internal traffic only. However, protection is Partial because authorized users with deployment permissions can still create and execute malicious functions, and security configurations must be explicitly enforced and are not always set by default."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect suspicious serverless activity through findings related to unusual function deployments, anomalous Cloud Run executions, and misconfigurations in serverless resources. SCC provides security recommendations and detects known attack patterns. Coverage is Partial as it focuses on misconfigurations and known malicious patterns rather than all possible serverless abuse scenarios."
+        },
+        {
+          "GCPService": "Organization Policy Service",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Organization Policy Service can enforce constraints on serverless resources, such as restricting Cloud Functions deployment regions, requiring VPC connectivity, or limiting service account usage. However, protection is Minimal against serverless execution abuse as policies focus on configuration governance rather than preventing malicious code execution within properly configured serverless resources."
+        }
+      ]
     },
     {
       "Name": "User Execution",
@@ -749,7 +774,32 @@
       "Description": "Adversaries may abuse cloud management services to execute commands within virtual machines or hybrid-joined devices. Resources such as AWS Systems Manager, Azure RunCommand, and Runbooks allow users to remotely run scripts in virtual machines by leveraging installed virtual machine agents. Similarly, in Azure AD environments, Microsoft Endpoint Manager allows Global or Intune Administrators to run scripts as SYSTEM on on-premises devices joined to the Azure AD.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1651/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all OS Login activities, Compute Engine instance operations, and Cloud Workstations command executions. This provides Significant detection capability for identifying remote command execution through GCP management services. Audit logs record detailed information about who executed commands, on which instances, and what actions were performed, enabling effective monitoring of cloud administration command abuse."
+        },
+        {
+          "GCPService": "OS Login",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "OS Login provides centralized SSH key management and can be protected through IAM policies and organization-level constraints. OS Login can enforce two-factor authentication and manage access to VM instances. However, protection is Partial because authorized administrators with proper IAM permissions can still execute commands on instances, and distinguishing malicious from legitimate administrative activity is challenging."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect suspicious patterns related to instance access and unusual command execution through security findings. SCC identifies anomalous SSH access patterns and suspicious instance operations. Coverage is Partial as detection relies on known malicious patterns and baseline behavior, and may not catch all forms of cloud administration command abuse, especially by authorized administrators."
+        },
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC Service Controls can restrict which services and resources can be accessed from specific networks, providing some protection against unauthorized command execution from external networks. However, protection is Minimal against cloud administration command abuse as VPC Service Controls focus on network perimeter security rather than preventing malicious commands from authorized administrators within the perimeter."
+        }
+      ]
     },
     {
       "Name": "Implant Internal Image",
@@ -1029,7 +1079,32 @@
       "Description": "Adversaries may create cloud instances in unused geographic service regions in order to evade detection. Access is usually obtained through compromising accounts used to manage cloud infrastructure.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1535/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Organization Policy Service",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Organization Policy Service can effectively prevent resource creation in unused or unsupported regions through resource location restrictions. The 'gcp.resourceLocations' constraint can whitelist or blacklist specific regions for resource deployment. This provides Significant protection as organization policies are enforced at the org/folder/project level and cannot be bypassed by individual user permissions."
+        },
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all resource creation events across all GCP regions, providing visibility into any resource deployment in unexpected geographic regions. Audit logs include region information for all operations, making it easy to identify and alert on activity in regions that should not be used. This enables Significant detection capability for identifying resources created in unusual locations."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect resources created in unexpected regions through asset inventory and security findings. SCC provides visibility into all GCP resources and their locations, enabling detection of anomalous regional deployments. Coverage is Partial as it requires configuration of custom detectors or manual review of asset inventory to identify resources in unexpected regions."
+        },
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Asset Inventory maintains a comprehensive inventory of all GCP resources including their locations, enabling detection of resources in unused regions. Asset Inventory can be queried to find resources deployed in specific regions. However, this is reactive detection after resources are created, providing only Partial coverage. Real-time alerting requires integration with Cloud Monitoring or other tools."
+        }
+      ]
     },
     {
       "Name": "Use Alternate Authentication Material",
@@ -1248,7 +1323,32 @@
         "iam_role_sa_enforce_separation_of_duties",
         "iam_sa_no_administrative_privileges"
       ],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Audit Logs capture authentication and authorization events including service account key usage, OAuth token generation, and API key access. These logs can reveal suspicious credential usage patterns that may indicate forged credentials. However, detection is Partial because Cloud Audit Logs record credential usage but cannot directly determine if credentials are legitimate or forged without additional analysis and correlation."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Cloud Identity provides identity and access management capabilities including enforcement of strong authentication, session management, and credential policies. Cloud Identity can enforce short-lived tokens and require re-authentication. However, protection is Partial as Cloud Identity cannot prevent adversaries with sufficient access from forging valid session tokens or service account credentials if proper secrets management is not enforced."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Security Command Center can detect some indicators of credential forgery through findings related to anomalous authentication patterns and suspicious service account activities. However, SCC provides only Minimal direct detection of web credential forgery as it focuses on broader security issues rather than specifically identifying forged tokens or session credentials."
+        },
+        {
+          "GCPService": "Identity-Aware Proxy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Identity-Aware Proxy (IAP) provides application-level access control and can verify user identity before granting access to applications. IAP enforces authentication and authorization policies. However, protection is Minimal against web credential forgery as IAP operates at the application layer and may not detect if credentials presented are legitimate or forged, especially if adversaries have compromised signing keys."
+        }
+      ]
     },
     {
       "Name": "Multi-Factor Authentication Request Generation",
@@ -1270,7 +1370,32 @@
       "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Identity Sign-in Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Identity captures all authentication events including MFA challenges and responses through sign-in logs. These logs provide Significant detection capability for MFA fatigue attacks by recording detailed information about repeated MFA prompts, failed MFA attempts, and unusual authentication patterns. Analysis of sign-in logs can reveal MFA bombing attempts where adversaries generate excessive MFA requests."
+        },
+        {
+          "GCPService": "Cloud Identity",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Cloud Identity supports various MFA methods including security keys (FIDO2), authenticator apps, and phone prompts. Organizations can enforce MFA policies and use phishing-resistant methods. However, protection is Partial because Cloud Identity cannot prevent adversaries with valid credentials from generating MFA requests, and user awareness remains critical. Push notification fatigue is still a risk with app-based MFA."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect unusual authentication patterns through security findings related to repeated MFA attempts and suspicious sign-in activities. SCC identifies anomalous authentication behavior that may indicate MFA fatigue attacks. Coverage is Partial as detection relies on behavioral analytics and may not catch all forms of MFA request generation, especially when patterns are subtle."
+        },
+        {
+          "GCPService": "Context-Aware Access",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Context-Aware Access can enforce additional access controls based on context such as device status, IP address, and other signals beyond just MFA. However, protection is Minimal against MFA request generation attacks as Context-Aware Access evaluates authentication context but cannot prevent adversaries from generating MFA prompts if they have valid credentials. It adds defense in depth but doesn't eliminate MFA fatigue risks."
+        }
+      ]
     },
     {
       "Name": "Network Sniffing",
@@ -1532,7 +1657,32 @@
       "Description": "Once established within a system or network, an adversary may use automated techniques for collecting internal data. Methods for performing this technique could include use of a Command and Scripting Interpreter to search for and copy information fitting set criteria such as file type, location, or name at specific time intervals. In cloud-based environments, adversaries may also use cloud APIs, command line interfaces, or extract, transform, and load (ETL) services to automatically collect data. This functionality could also be built into remote access tools.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1119/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all data access operations across GCP services including Cloud Storage reads, BigQuery queries, and Compute Engine snapshots. This provides Significant detection capability for identifying automated data collection activities through unusual patterns of bulk data access, rapid sequential operations, or anomalous query patterns. Data Access logs record what data was accessed, by whom, and when."
+        },
+        {
+          "GCPService": "Cloud Data Loss Prevention",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Data Loss Prevention (DLP) can detect when sensitive data is being accessed or exfiltrated by scanning data in transit and at rest. DLP identifies patterns of sensitive data access that may indicate automated collection. However, coverage is Partial as DLP requires configuration to scan specific data stores and may not detect all automated collection activities, especially if adversaries target data that isn't classified as sensitive."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect unusual data access patterns and bulk operations through security findings. SCC identifies anomalous behavior related to automated data collection such as unusual API call volumes or suspicious data transfers. Coverage is Partial as detection relies on behavioral analytics and may not identify all automated collection activities, especially if performed gradually over time."
+        },
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC Service Controls can limit data exfiltration by restricting which services can be accessed from specific networks and preventing data from leaving authorized perimeters. However, protection is Minimal against automated collection as VPC Service Controls focus on network boundaries and cannot prevent authorized users from collecting data within the security perimeter using legitimate tools and permissions."
+        }
+      ]
     },
     {
       "Name": "Data from Cloud Storage",
@@ -1684,7 +1834,32 @@
       "Description": "Adversaries may stage collected data in a central location or directory prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as Archive Collected Data. Interactive command shells may be used, and common functionality within cmd and bash may be used to copy data into a staging location.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1074/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all data movement operations including Cloud Storage uploads, Compute Engine snapshot creation, and data transfers between services. This provides Significant detection capability for identifying data staging activities through patterns of bulk data uploads, snapshot creation, or unusual data aggregation in temporary storage locations. Audit logs reveal who staged data, where, and when."
+        },
+        {
+          "GCPService": "Cloud Storage",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Storage access logs can reveal data staging activities by showing patterns of object uploads, copies, and bucket access. Monitoring for unusual patterns of data being written to staging buckets can indicate adversaries aggregating data before exfiltration. However, detection is Partial because Cloud Storage operations may be legitimate and difficult to distinguish from normal data management activities without additional context."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect suspicious data staging activities through findings related to unusual storage access patterns, anomalous bucket creations, and suspicious data transfers. SCC identifies behavioral anomalies that may indicate data staging. Coverage is Partial as it focuses on known malicious patterns and may not detect all forms of data staging, especially when performed gradually or using legitimate services."
+        },
+        {
+          "GCPService": "Cloud Data Loss Prevention",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Data Loss Prevention can help detect data staging by identifying when sensitive data is being aggregated in unusual locations or transferred to temporary storage areas. DLP can scan staged data to determine if sensitive information is being prepared for exfiltration. However, coverage is Partial as DLP requires configuration and may not detect staging of non-sensitive data or encrypted staged content."
+        }
+      ]
     },
     {
       "Name": "Data Destruction",
@@ -1885,7 +2060,32 @@
         "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
         "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
       ],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Monitoring",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Monitoring provides comprehensive metrics for resource utilization including CPU, memory, network, and API usage across all GCP services. This enables Significant detection of resource hijacking through alerts on unusual resource consumption patterns, unexpected instance launches, or anomalous workload behavior. Monitoring can reveal cryptomining, distributed computing abuse, and other resource hijacking activities."
+        },
+        {
+          "GCPService": "Cloud Billing",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Billing provides detailed cost tracking and budget alerts that can detect resource hijacking through unexpected cost increases, unusual spending patterns, or anomalous resource usage charges. Billing data can reveal unauthorized resource consumption before it becomes financially significant. This provides Significant detection capability as resource hijacking typically causes measurable cost impacts."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect resource hijacking through findings related to suspicious instance launches, anomalous API activity, and cryptocurrency mining indicators. SCC identifies known resource hijacking patterns and misconfigurations that could enable abuse. Coverage is Partial as detection focuses on known attack patterns and may not identify all forms of resource hijacking, especially novel or low-volume abuse."
+        },
+        {
+          "GCPService": "Compute Engine",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Compute Engine can be protected through IAM policies, resource quotas, and organization policies that limit instance creation and resource consumption. However, protection is Minimal against resource hijacking as these controls focus on access management rather than preventing abuse by authorized users. Resource quotas can limit impact but don't prevent hijacking if within quotas."
+        }
+      ]
     },
     {
       "Name": "Network Denial of Service",
@@ -2133,7 +2333,32 @@
       "Description": "An adversary may attempt to enumerate the cloud services running on a system after gaining access. These methods can differ from platform-as-a-service (PaaS), to infrastructure-as-a-service (IaaS), or software-as-a-service (SaaS). Many services exist throughout the various cloud providers and can include Continuous Integration and Continuous Delivery (CI/CD), Lambda Functions, Azure AD, etc. They may also include security services, such as AWS GuardDuty and Microsoft Defender for Cloud, and logging services, such as AWS CloudTrail and Google Cloud Audit Logs.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1526/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Cloud Audit Logs capture all service discovery operations including API calls to list resources, enumerate services, and query project configurations. Logs record operations like compute.instances.list, storage.buckets.list, and resourcemanager.projects.get that indicate service discovery activities. This provides Significant detection capability for identifying when adversaries are enumerating cloud infrastructure."
+        },
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Asset Inventory maintains a comprehensive view of all GCP resources, which is the same information adversaries seek during cloud service discovery. Monitoring Asset Inventory API usage can reveal reconnaissance activities. However, detection is Partial as Asset Inventory access is often legitimate for operational and security purposes, making it difficult to distinguish malicious from normal discovery activities."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Security Command Center can detect suspicious service discovery patterns through findings related to unusual API activity, anomalous resource enumeration, and reconnaissance behavior. SCC identifies patterns that may indicate adversary discovery activities. Coverage is Partial as detection relies on behavioral anomalies and may not catch all service discovery, especially when performed by authorized users or conducted gradually."
+        },
+        {
+          "GCPService": "VPC Service Controls",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC Service Controls can restrict access to GCP APIs from specific networks, limiting service discovery capabilities from external or untrusted networks. However, protection is Minimal as VPC Service Controls cannot prevent service discovery by users within the security perimeter, and many legitimate operations require service discovery capabilities, making it difficult to restrict without impacting functionality."
+        }
+      ]
     },
     {
       "Name": "Cloud Storage Object Discovery",
@@ -2273,7 +2498,32 @@
       "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Audit Logs capture API calls that reveal location information such as compute.zones.list, compute.regions.list, and metadata server queries. These operations can indicate adversaries attempting to determine the geographic location of GCP resources. However, detection is Partial because Audit Logs capture API-level activities but cannot monitor instance-level metadata queries without additional logging agents."
+        },
+        {
+          "GCPService": "Cloud Monitoring",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Cloud Monitoring can collect logs from Compute Engine instances through the Ops Agent that may capture location discovery commands if properly configured. However, this provides only Minimal detection as it requires agent installation and log forwarding configuration. Adversaries can query location through the metadata server in ways that may not be captured by standard monitoring."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Security Command Center provides Minimal direct detection for system location discovery activities. SCC focuses on detecting security threats and misconfigurations rather than reconnaissance queries about geographic location. Detection of location discovery would be indirect, potentially through identifying compromised instances that may be performing broader reconnaissance activities."
+        },
+        {
+          "GCPService": "VPC",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC provides Minimal protection against system location discovery. While VPC firewall rules and network configurations can restrict network access, adversaries with instance access can still query location information through GCP APIs and the Compute Engine metadata server. Network controls focus on connectivity isolation rather than preventing location enumeration."
+        }
+      ]
     },
     {
       "Name": "System Information Discovery",
@@ -2325,7 +2575,32 @@
       "Description": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from Software Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1518/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "GCPService": "Cloud Asset Inventory",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Asset Inventory maintains inventory of software packages and OS information for Compute Engine instances when the Ops Agent is installed. This inventory reveals what software adversaries might discover. However, Asset Inventory provides only Partial detection as it focuses on maintaining inventory rather than detecting active software enumeration by adversaries. It's useful for understanding the software attack surface."
+        },
+        {
+          "GCPService": "Cloud Audit Logs",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Cloud Audit Logs capture API calls related to software and image discovery such as compute.images.list, compute.diskTypes.list, and container image queries. These operations can indicate adversaries attempting to enumerate software in the cloud environment. However, detection is Partial because Audit Logs cannot monitor instance-level software enumeration commands without additional logging agents."
+        },
+        {
+          "GCPService": "Security Command Center",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Security Command Center provides Minimal direct detection for software discovery activities. SCC focuses on detecting vulnerabilities and misconfigurations in deployed software rather than reconnaissance activities. Detection would be indirect, potentially identifying compromised instances that may be performing software enumeration as part of broader attack patterns."
+        },
+        {
+          "GCPService": "Cloud Monitoring",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Cloud Monitoring can collect logs from instances through the Ops Agent that may capture software enumeration commands if properly configured. However, this provides only Minimal detection as it requires agent deployment and log forwarding setup. Adversaries may use various methods to enumerate software that bypass or evade standard monitoring configurations."
+        }
+      ]
     },
     {
       "Name": "Permission Groups Discovery",

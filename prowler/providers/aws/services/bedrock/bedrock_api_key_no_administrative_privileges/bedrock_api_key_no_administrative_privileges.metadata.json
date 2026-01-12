@@ -13,18 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamAccessKey",
-  "Description": "**Amazon Bedrock API keys** linked to IAM users are evaluated for excessive permissions, including policies that grant full access (`*` or `bedrock:*`) or enable **privilege escalation**. The finding highlights keys whose attached or inline policies provide broad or escalating capabilities.",
+  "ResourceGroup": "IAM",
+  "Description": "**Bedrock API keys** linked to IAM users are evaluated for excessive permissions, including policies that grant full access (`*` or `bedrock:*`) or enable **privilege escalation**. The finding highlights keys whose attached or inline policies provide broad or escalating capabilities.",
   "Risk": "Over-privileged Bedrock API keys weaken confidentiality, integrity, and availability. If compromised, an attacker could:\n- Escalate IAM rights and persist access\n- Invoke models at scale to exfiltrate data or incur high costs\n- Modify Bedrock settings, disrupting operations",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started-reduce-permissions.html",
-    "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html",
-    "https://cloudsec.cybr.com/aws/iam/least-privilege/",
-    "https://www.datadoghq.com/blog/iam-least-privilege/",
-    "https://docs.anythingllm.com/setup/llm-configuration/cloud/aws-bedrock",
-    "https://medium.com/@piyushkashyap045/a-guide-to-creating-identity-based-policies-for-amazon-bedrock-to-prevent-unnecessary-costs-eaf12cce5442",
-    "https://readmedium.com/aws-iam-permission-boundaries-83180a50c89e"
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html"
   ],
   "Remediation": {
     "Code": {

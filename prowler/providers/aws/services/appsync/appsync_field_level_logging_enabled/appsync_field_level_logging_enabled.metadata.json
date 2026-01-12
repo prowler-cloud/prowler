@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAppSyncGraphQLApi",
+  "ResourceGroup": "api_gateway",
   "Description": "**AWS AppSync GraphQL APIs** have **field-level logging** configured at the resolver level. The check looks for log levels of `ERROR` or `ALL` to confirm field resolution events are recorded.",
   "Risk": "Without **field-level logs**, resolver access and mutations lack **auditability**, reducing detection of data exfiltration and tampering (**confidentiality and integrity**). Limited traces hinder incident response and root-cause analysis, increasing recovery time.",
   "RelatedUrl": "",

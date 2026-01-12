@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "integration_instance_access_restricted",
+  "CheckTitle": "Ensure Oracle Integration Cloud (OIC) access is restricted to allowed sources",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "integration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:integration:instance",
+  "Severity": "high",
+  "ResourceType": "IntegrationInstance",
+  "ResourceGroup": "compute",
+  "Description": "Oracle Integration Cloud access should be restricted to allowed sources.",
+  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure Oracle Integration Cloud (OIC) access is restricted to allowed sources",
+      "Url": "https://hub.prowler.com/check/oci/integration_instance_access_restricted"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

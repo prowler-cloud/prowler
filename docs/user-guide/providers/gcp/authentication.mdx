@@ -1,0 +1,196 @@
+---
+title: 'GCP Authentication in Prowler'
+---
+
+Prowler for Google Cloud supports multiple authentication methods. To use a specific method, configure the appropriate credentials during execution:
+
+- [**User Credentials** (Application Default Credentials)](#application-default-credentials-user-credentials)
+- [**Service Account Key File**](#service-account-key-file)
+- [**Access Token**](#access-token)
+- [**Service Account Impersonation**](#service-account-impersonation)
+
+## Required Permissions
+
+Prowler for Google Cloud requires the following permissions:
+
+### IAM Roles
+- **Viewer (`roles/viewer`)** – Must be granted at the **project, folder, or organization** level to allow scanning of target projects.
+- **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)** IAM Role – Required for resource scanning.
+- **Custom `ProwlerRole`** – Include granular permissions that are not included in the Viewer role:
+    - `storage.buckets.getIamPolicy`
+
+### Project-Level Settings
+
+At least one project must have the following configurations:
+
+- **Identity and Access Management (IAM) API (`iam.googleapis.com`)** – Must be enabled via:
+
+    - The [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics), or
+    - The `gcloud` CLI:
+    ```sh
+    gcloud services enable iam.googleapis.com --project <your-project-id>
+    ```
+
+- **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)** IAM Role – Required for resource scanning.
+
+- **Quota Project Setting** – Define a quota project using either:
+
+    - The `gcloud` CLI:
+    ```sh
+    gcloud auth application-default set-quota-project <project-id>
+    ```
+    - Setting an environment variable:
+    ```sh
+    export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>
+    ```
+
+<Note>
+Prowler will scan the GCP project associated with the credentials.
+
+
+</Note>
+## Application Default Credentials (User Credentials)
+
+This method uses the Google Cloud CLI to authenticate and is suitable for development and testing environments.
+
+### Setup Application Default Credentials
+
+1. In the [GCP Console](https://console.cloud.google.com/), click on "Activate Cloud Shell"
+
+    ![Activate Cloud Shell](/images/providers/access-console.png)
+
+2. Click "Authorize Cloud Shell"
+
+    ![Authorize Cloud Shell](/images/providers/authorize-cloud-shell.png)
+
+3. Run the following command:
+
+    ```bash
+    gcloud auth application-default login
+    ```
+
+    - Type `Y` when prompted
+
+    ![Run Gcloud Auth](/images/providers/run-gcloud-auth.png)
+
+4. Open the authentication URL provided in a browser and select your Google account
+
+    ![Choose the account](/images/providers/take-account-email.png)
+
+5. Follow the steps to obtain the authentication code
+
+    ![Copy auth code](/images/providers/copy-auth-code.png)
+
+6. Paste the authentication code back in Cloud Shell
+
+    ![Enter Auth Code](/images/providers/enter-auth-code.png)
+
+7. Use `cat <file_name>` to view the temporary credentials file
+
+    ![Get the FileName](/images/providers/get-temp-file-credentials.png)
+
+8. Extract the following values for Prowler Cloud/App:
+
+    - `client_id`
+    - `client_secret`
+    - `refresh_token`
+
+    ![Get the values](/images/providers/get-needed-values-auth.png)
+
+### Using with Prowler CLI
+
+Once application default credentials are set up, run Prowler directly:
+
+```console
+prowler gcp --project-ids <project-id>
+```
+
+## Service Account Key File
+
+This method uses a service account with a downloaded key file for authentication.
+
+### Step 1: Create ProwlerRole
+
+To keep permissions focused:
+1. Create a custom role named **ProwlerRole** that explicitly includes the permissions your compliance team approves. Click **Create role**, set the title to *ProwlerRole*, keep the ID readable (for example, `prowler_role`)
+2. Add the required permission `storage.buckets.getIamPolicy` (the permission highlighted in the screenshots). To make it easier, filter the permissions by `Storage Admin` role.
+
+![Create a custom Prowler role](/user-guide/providers/gcp/img/roles-section.png)
+
+![Sample permissions for a custom Prowler role](/user-guide/providers/gcp/img/prowler-role.png)
+
+### Step 2: Create the Service Account
+
+1. Navigate to **IAM & Admin > Service Accounts** and make sure the correct project is selected.
+
+    ![Service accounts landing page](/user-guide/providers/gcp/img/service-account-page.png)
+
+2. Select **Create service account**, provide a name, ID, and a short description that states the purpose (for example, “Service account to execute Prowler”), then click **Create and continue**.
+
+    ![Create service account wizard](/user-guide/providers/gcp/img/create-service-account.png)
+
+3. Assign the roles you prepared earlier:
+    - **ProwlerRole** for `cloudstorage` service checks.
+    - **Viewer** for broad read-only visibility.
+    - **Service Usage Consumer** so Prowler can inspect API states.
+
+    ![Assign roles to the service account](/user-guide/providers/gcp/img/service-account-permissions.png)
+
+4. Continue through the wizard and finish. No principals need to be granted access in step 3 unless you want other identities to impersonate this account.
+
+### Step 3: Generate a JSON Key
+
+1. Open the newly created service account, move to the **Keys** tab, and choose **Add key > Create new key**.
+
+    ![Add a new key to the service account](/user-guide/providers/gcp/img/create-new-key.png)
+
+2. Select **JSON** as the key type and click **Create**. The browser downloads the file exactly once.
+
+    ![Select JSON as the key type](/user-guide/providers/gcp/img/json-key.png)
+
+3. Once created, make sure to store the Key securely.
+
+### Using with Prowler CLI
+
+Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable:
+
+```console
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+prowler gcp --project-ids <project-id>
+```
+
+## Access Token
+
+For existing access tokens (e.g., generated with `gcloud auth print-access-token`), run Prowler with:
+
+```bash
+export CLOUDSDK_AUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
+prowler gcp --project-ids <project-id>
+```
+
+<Note>
+When using this method, also set the default project explicitly:
+```bash
+export GOOGLE_CLOUD_PROJECT=<project-id>
+```
+
+</Note>
+## Service Account Impersonation
+
+To impersonate a GCP service account, use the `--impersonate-service-account` argument followed by the service account email:
+
+```console
+prowler gcp --impersonate-service-account <service-account-email>
+```
+
+This command leverages the default credentials to impersonate the specified service account.
+
+### Prerequisites for Impersonation
+
+The identity running Prowler must have the following permission on the target service account:
+
+- `roles/iam.serviceAccountTokenCreator`
+
+Or the more specific permission:
+
+- `iam.serviceAccounts.generateAccessToken`

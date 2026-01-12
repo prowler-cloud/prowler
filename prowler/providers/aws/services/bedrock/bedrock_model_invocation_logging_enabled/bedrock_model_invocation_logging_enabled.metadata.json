@@ -11,7 +11,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "**Amazon Bedrock** model invocation logging captures request, response, and metadata for `Converse`, `ConverseStream`, `InvokeModel`, and `InvokeModelWithResponseStream` calls per Region, delivering records to **CloudWatch Logs** and/or **S3** when configured.",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock** model invocation logging captures request, response, and metadata for `Converse`, `ConverseStream`, `InvokeModel`, and `InvokeModelWithResponseStream` calls per Region, delivering records to **CloudWatch Logs** and/or **S3** when configured.",
   "Risk": "Without **invocation logs**, you lose **auditability** and **forensic visibility** into model activity.\n\nCredential misuse or **prompt injection/jailbreak** attempts may go unnoticed, enabling data exfiltration and unauthorized spend. Missing traceability weakens **integrity** controls and slows incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [

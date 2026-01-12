@@ -1,0 +1,33 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_immutable_releases_enabled",
+  "CheckTitle": "Repository has immutable releases enabled",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "high",
+  "ResourceType": "GitHubRepository",
+  "ResourceGroup": "devops",
+  "Description": "Immutable releases prevent modification or replacement of published artifacts after publication. When enabled, release assets and binaries become tamper-proof, ensuring artifact integrity throughout the software supply chain.",
+  "Risk": "If immutable releases are disabled, release assets can be tampered with after publication, allowing attackers to substitute malicious binaries and undermining supply chain integrity.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#preventing-changes-to-releases",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable immutable releases in the repository settings so release artifacts cannot be altered once published.",
+      "Url": "https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases"
+    }
+  },
+  "Categories": [
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
