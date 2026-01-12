@@ -48,6 +48,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
+- Fixup AWS EC2 SG library [(#9216)](https://github.com/prowler-cloud/prowler/pull/9216)
 
 ---
 
