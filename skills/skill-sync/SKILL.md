@@ -18,14 +18,23 @@ Keeps AGENTS.md Auto-invoke sections in sync with skill metadata. When you creat
 
 ## Required Skill Metadata
 
-Each skill that should appear in Auto-invoke sections needs these fields in `metadata`:
+Each skill that should appear in Auto-invoke sections needs these fields in `metadata`.
+
+`auto_invoke` can be either a single string **or** a list of actions:
 
 ```yaml
 metadata:
   author: prowler-cloud
   version: "1.0"
   scope: [ui]                                    # Which AGENTS.md: ui, api, sdk, root
-  auto_invoke: "Creating/modifying components"   # When to invoke (action description)
+
+  # Option A: single action
+  auto_invoke: "Creating/modifying components"
+
+  # Option B: multiple actions
+  # auto_invoke:
+  #   - "Creating/modifying components"
+  #   - "Refactoring component folder placement"
 ```
 
 ### Scope Values

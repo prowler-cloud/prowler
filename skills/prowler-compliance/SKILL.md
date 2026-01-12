@@ -2,13 +2,15 @@
 name: prowler-compliance
 description: >
   Creates and manages Prowler compliance frameworks.
-  Trigger: When working with compliance frameworks (CIS, NIST, PCI-DSS, SOC2, GDPR).
+  Trigger: When creating or updating compliance frameworks (adding requirements, mapping checks to controls) under prowler/compliance/{provider}/.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [sdk]
-  auto_invoke: "Adding compliance frameworks"
+  scope: [root, sdk]
+  auto_invoke:
+    - "Creating/updating compliance frameworks"
+    - "Mapping checks to compliance controls"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

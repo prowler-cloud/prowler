@@ -2,11 +2,14 @@
 name: prowler-mcp
 description: >
   Creates MCP tools for Prowler MCP Server. Covers BaseTool pattern, model design,
-  and API client usage. Use when working on mcp_server/ directory.
+  and API client usage.
+  Trigger: When working in mcp_server/ on tools (BaseTool), models (MinimalSerializerMixin/from_api_response), or API client patterns.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root]
+  auto_invoke: "Working on MCP server tools"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
