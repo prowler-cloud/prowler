@@ -35,6 +35,7 @@ interface AttackPathGraphProps {
   data: AttackPathGraphData;
   onNodeClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
+  isFilteredView?: boolean;
   ref?: Ref<AttackPathGraphRef>;
 }
 
@@ -57,7 +58,7 @@ const HEXAGON_HEIGHT = 55; // Height for finding hexagons
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
   AttackPathGraphProps
->(({ data, onNodeClick, selectedNodeId }, ref) => {
+>(({ data, onNodeClick, selectedNodeId, isFilteredView = false }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
@@ -166,12 +167,26 @@ const AttackPathGraphComponent = forwardRef<
             label.toLowerCase().includes("finding"),
           );
           const hasFindings = resourcesWithFindingsRef.current.has(d.id);
+          const isSelected = d.id === selectedNodeId;
 
-          // Resources with findings keep their wider stroke
-          if (!isFinding && hasFindings) {
-            return 2.5;
-          }
-          return d.id === selectedNodeId ? 3 : isFinding ? 2 : 1.5;
+          if (isSelected) return 4;
+          if (!isFinding && hasFindings) return 2.5;
+          return isFinding ? 2 : 1.5;
+        })
+        .attr("filter", (d: NodeData) => {
+          const isFinding = d.data.labels.some((label) =>
+            label.toLowerCase().includes("finding"),
+          );
+          const hasFindings = resourcesWithFindingsRef.current.has(d.id);
+          const isSelected = d.id === selectedNodeId;
+
+          if (isSelected) return "url(#selectedGlow)";
+          if (!isFinding && hasFindings) return "url(#redGlow)";
+          return isFinding ? "url(#glow)" : null;
+        })
+        .attr("class", (d: NodeData) => {
+          const isSelected = d.id === selectedNodeId;
+          return isSelected ? "node-shape selected-node" : "node-shape";
         });
     }
 
@@ -287,16 +302,18 @@ const AttackPathGraphComponent = forwardRef<
     });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // Initially hide finding nodes
+    // Initially hide finding nodes (but not when in filtered view)
     const initialHiddenNodes = new Set<string>();
-    data.nodes.forEach((node) => {
-      const isFinding = node.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
-      if (isFinding) {
-        initialHiddenNodes.add(node.id);
-      }
-    });
+    if (!isFilteredView) {
+      data.nodes.forEach((node) => {
+        const isFinding = node.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+        if (isFinding) {
+          initialHiddenNodes.add(node.id);
+        }
+      });
+    }
     hiddenNodeIdsRef.current = initialHiddenNodes;
 
     // Create a map to store original node data
@@ -415,6 +432,16 @@ const AttackPathGraphComponent = forwardRef<
       .attr("flood-color", "#ef4444")
       .attr("flood-opacity", "0.6");
 
+    // Orange glow filter for selected/filtered node
+    const selectedGlowFilter = defs.append("filter").attr("id", "selectedGlow");
+    selectedGlowFilter
+      .append("feDropShadow")
+      .attr("dx", "0")
+      .attr("dy", "0")
+      .attr("stdDeviation", "6")
+      .attr("flood-color", GRAPH_EDGE_HIGHLIGHT_COLOR)
+      .attr("flood-opacity", "0.8");
+
     // Arrow marker (default white) - refX=10 places the arrow tip exactly at the line endpoint
     defs
       .append("marker")
@@ -443,7 +470,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("d", "M 0 0 L 10 5 L 0 10 z")
       .attr("fill", GRAPH_EDGE_HIGHLIGHT_COLOR);
 
-    // Add CSS animation for dashed lines and resource edge styles
+    // Add CSS animation for dashed lines, resource edge styles, and selected node pulse
     svg.append("style").text(`
       @keyframes dash {
         to {
@@ -455,6 +482,20 @@ const AttackPathGraphComponent = forwardRef<
       }
       .resource-edge {
         stroke-opacity: 1;
+      }
+      @keyframes selectedPulse {
+        0%, 100% {
+          stroke-opacity: 1;
+          stroke-width: 4px;
+        }
+        50% {
+          stroke-opacity: 0.6;
+          stroke-width: 6px;
+        }
+      }
+      .selected-node {
+        animation: selectedPulse 1.2s ease-in-out infinite;
+        filter: url(#selectedGlow);
       }
     `);
 
@@ -900,30 +941,40 @@ const AttackPathGraphComponent = forwardRef<
           L ${-w / 2} 0
           Z
         `;
+        const isSelected = d.id === selectedNodeId;
         group
           .append("path")
           .attr("d", hexPath)
           .attr("fill", nodeColor)
           .attr("fill-opacity", 0.85)
-          .attr(
-            "stroke",
-            d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : borderColor,
-          )
-          .attr("stroke-width", d.id === selectedNodeId ? 3 : 2)
-          .attr("filter", "url(#glow)")
-          .attr("class", "node-shape");
+          .attr("stroke", isSelected ? GRAPH_EDGE_HIGHLIGHT_COLOR : borderColor)
+          .attr("stroke-width", isSelected ? 4 : 2)
+          .attr("filter", isSelected ? "url(#selectedGlow)" : "url(#glow)")
+          .attr("class", isSelected ? "node-shape selected-node" : "node-shape");
       } else {
         // Check if this is an Internet node
         const isInternet = d.data.labels.some(
           (label) => label.toLowerCase() === "internet",
         );
 
+        const isSelected = d.id === selectedNodeId;
+
         // Resources with findings get red border and red glow (even when selected)
+        // Selected nodes get orange border
         const strokeColor = hasFindings
           ? ALERT_BORDER_COLOR
-          : d.id === selectedNodeId
-            ? GRAPH_SELECTION_COLOR
+          : isSelected
+            ? GRAPH_EDGE_HIGHLIGHT_COLOR
             : borderColor;
+
+        // Determine filter: selected takes priority, then hasFindings, then default
+        const nodeFilter = isSelected
+          ? "url(#selectedGlow)"
+          : hasFindings
+            ? "url(#redGlow)"
+            : "url(#glow)";
+
+        const nodeClass = isSelected ? "node-shape selected-node" : "node-shape";
 
         if (isInternet) {
           // Globe shape for Internet nodes - larger than regular nodes
@@ -938,12 +989,9 @@ const AttackPathGraphComponent = forwardRef<
             .attr("fill", nodeColor)
             .attr("fill-opacity", 0.85)
             .attr("stroke", strokeColor)
-            .attr(
-              "stroke-width",
-              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
-            )
-            .attr("filter", hasFindings ? "url(#redGlow)" : "url(#glow)")
-            .attr("class", "node-shape");
+            .attr("stroke-width", isSelected ? 4 : hasFindings ? 2.5 : 1.5)
+            .attr("filter", nodeFilter)
+            .attr("class", nodeClass);
 
           // Horizontal ellipse (equator)
           group
@@ -981,12 +1029,9 @@ const AttackPathGraphComponent = forwardRef<
             .attr("fill", nodeColor)
             .attr("fill-opacity", 0.85)
             .attr("stroke", strokeColor)
-            .attr(
-              "stroke-width",
-              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
-            )
-            .attr("filter", hasFindings ? "url(#redGlow)" : null)
-            .attr("class", "node-shape");
+            .attr("stroke-width", isSelected ? 4 : hasFindings ? 2.5 : 1.5)
+            .attr("filter", nodeFilter)
+            .attr("class", nodeClass);
         }
       }
     });
@@ -1181,7 +1226,7 @@ const AttackPathGraphComponent = forwardRef<
       }
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [data, isFilteredView]);
 
   return (
     <svg
