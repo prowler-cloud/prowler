@@ -41,6 +41,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
 - Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
 - Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
+- Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
 
 ---
 
