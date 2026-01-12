@@ -11,7 +11,7 @@ import type {
 interface FilteredViewState {
   isFilteredView: boolean;
   filteredNodeId: string | null;
-  visibleNodeIds: Set<string> | null; // null means all nodes visible
+  fullData: AttackPathGraphData | null; // Original data before filtering
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
@@ -24,7 +24,8 @@ interface GraphStore extends GraphState, FilteredViewState {
   setFilteredView: (
     isFiltered: boolean,
     nodeId: string | null,
-    visibleNodeIds: Set<string> | null,
+    filteredData: AttackPathGraphData | null,
+    fullData: AttackPathGraphData | null,
   ) => void;
   reset: () => void;
 }
@@ -39,19 +40,19 @@ const initialState: GraphState & FilteredViewState = {
   panY: 0,
   isFilteredView: false,
   filteredNodeId: null,
-  visibleNodeIds: null,
+  fullData: null,
 };
 
 const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
-  setGraphData: (data) => set({ data, error: null, isFilteredView: false, filteredNodeId: null, visibleNodeIds: null }),
+  setGraphData: (data) => set({ data, fullData: null, error: null, isFilteredView: false, filteredNodeId: null }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setZoom: (zoomLevel) => set({ zoomLevel }),
   setPan: (panX, panY) => set({ panX, panY }),
-  setFilteredView: (isFiltered, nodeId, visibleNodeIds) =>
-    set({ isFilteredView: isFiltered, filteredNodeId: nodeId, visibleNodeIds, selectedNodeId: nodeId }),
+  setFilteredView: (isFiltered, nodeId, filteredData, fullData) =>
+    set({ isFilteredView: isFiltered, filteredNodeId: nodeId, data: filteredData, fullData, selectedNodeId: nodeId }),
   reset: () => set(initialState),
 }));
 
@@ -66,16 +67,16 @@ function getEdgeNodeId(nodeRef: string | object): string {
 }
 
 /**
- * Compute the set of visible node IDs for a filtered view.
+ * Compute a filtered subgraph containing only the path through the target node.
  * This follows the directed graph structure of attack paths:
  * - Upstream: traces back to the root (AWS Account)
  * - Downstream: traces forward to leaf nodes
  * - Also includes findings connected to the selected node
  */
-function computeVisibleNodeIds(
+function computeFilteredSubgraph(
   fullData: AttackPathGraphData,
   targetNodeId: string,
-): Set<string> {
+): AttackPathGraphData {
   const nodes = fullData.nodes;
   const edges = fullData.edges || [];
 
@@ -94,16 +95,16 @@ function computeVisibleNodeIds(
     backwardEdges.get(targetId)?.add(sourceId);
   });
 
-  const visibleNodes = new Set<string>();
-  visibleNodes.add(targetNodeId);
+  const visibleNodeIds = new Set<string>();
+  visibleNodeIds.add(targetNodeId);
 
   // Traverse upstream (backward) - find all ancestors
   const traverseUpstream = (nodeId: string) => {
     const sources = backwardEdges.get(nodeId);
     if (sources) {
       sources.forEach((sourceId) => {
-        if (!visibleNodes.has(sourceId)) {
-          visibleNodes.add(sourceId);
+        if (!visibleNodeIds.has(sourceId)) {
+          visibleNodeIds.add(sourceId);
           traverseUpstream(sourceId);
         }
       });
@@ -115,8 +116,8 @@ function computeVisibleNodeIds(
     const targets = forwardEdges.get(nodeId);
     if (targets) {
       targets.forEach((targetId) => {
-        if (!visibleNodes.has(targetId)) {
-          visibleNodes.add(targetId);
+        if (!visibleNodeIds.has(targetId)) {
+          visibleNodeIds.add(targetId);
           traverseDownstream(targetId);
         }
       });
@@ -143,14 +144,25 @@ function computeVisibleNodeIds(
 
     // Include findings connected to the selected node
     if (sourceId === targetNodeId && targetIsFinding) {
-      visibleNodes.add(targetId);
+      visibleNodeIds.add(targetId);
     }
     if (targetId === targetNodeId && sourceIsFinding) {
-      visibleNodes.add(sourceId);
+      visibleNodeIds.add(sourceId);
     }
   });
 
-  return visibleNodes;
+  // Filter nodes and edges to only include visible ones
+  const filteredNodes = nodes.filter((node) => visibleNodeIds.has(node.id));
+  const filteredEdges = edges.filter((edge) => {
+    const sourceId = getEdgeNodeId(edge.source);
+    const targetId = getEdgeNodeId(edge.target);
+    return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
+  });
+
+  return {
+    nodes: filteredNodes,
+    edges: filteredEdges,
+  };
 }
 
 /**
@@ -200,41 +212,46 @@ export const useGraphState = () => {
   const clearGraph = () => {
     store.setGraphData({ nodes: [], edges: [] });
     store.setSelectedNodeId(null);
-    store.setFilteredView(false, null, null);
+    store.setFilteredView(false, null, null, null);
   };
 
   /**
-   * Enter filtered view mode - computes visible nodes without changing graph data
-   * This allows D3 to animate visibility changes instead of rebuilding the DOM
+   * Enter filtered view mode - redraws graph with only the selected path
+   * Stores full data so we can restore it when exiting filtered view
    */
   const enterFilteredView = (nodeId: string) => {
     if (!store.data) return;
 
-    const visibleNodeIds = computeVisibleNodeIds(store.data, nodeId);
-    store.setFilteredView(true, nodeId, visibleNodeIds);
+    // Use fullData if we're already in filtered view, otherwise use current data
+    const sourceData = store.fullData || store.data;
+    const filteredData = computeFilteredSubgraph(sourceData, nodeId);
+    store.setFilteredView(true, nodeId, filteredData, sourceData);
   };
 
   /**
-   * Exit filtered view mode - show all nodes again
+   * Exit filtered view mode - restore full graph data
    */
   const exitFilteredView = () => {
-    if (!store.isFilteredView) return;
-    store.setFilteredView(false, null, null);
+    if (!store.isFilteredView || !store.fullData) return;
+    store.setFilteredView(false, null, store.fullData, null);
   };
 
   /**
    * Get the node that was used to filter the view
    */
   const getFilteredNode = (): GraphNode | null => {
-    if (!store.isFilteredView || !store.filteredNodeId || !store.data)
-      return null;
+    if (!store.isFilteredView || !store.filteredNodeId) return null;
+    // Look in fullData since that's where the original node data is
+    const sourceData = store.fullData || store.data;
+    if (!sourceData) return null;
     return (
-      store.data.nodes.find((node) => node.id === store.filteredNodeId) || null
+      sourceData.nodes.find((node) => node.id === store.filteredNodeId) || null
     );
   };
 
   return {
     data: store.data,
+    fullData: store.fullData,
     selectedNodeId: store.selectedNodeId,
     selectedNode: getSelectedNode(),
     loading: store.loading,
@@ -244,7 +261,6 @@ export const useGraphState = () => {
     panY: store.panY,
     isFilteredView: store.isFilteredView,
     filteredNodeId: store.filteredNodeId,
-    visibleNodeIds: store.visibleNodeIds,
     filteredNode: getFilteredNode(),
     updateGraphData,
     selectNode,
