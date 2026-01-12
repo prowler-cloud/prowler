@@ -3,7 +3,28 @@ from prowler.providers.cloudflare.services.zones.zones_client import zones_clien
 
 
 class zones_hsts_enabled(Check):
+    """Ensure that HSTS is enabled with secure settings for Cloudflare zones.
+
+    HTTP Strict Transport Security (HSTS) forces browsers to only connect via
+    HTTPS, preventing protocol downgrade attacks and cookie hijacking. This check
+    verifies that HSTS is enabled with a minimum max-age of 6 months (15768000
+    seconds) and includes subdomains for complete protection.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the HSTS enabled check.
+
+        Iterates through all Cloudflare zones and validates HSTS configuration
+        against security best practices. The check verifies three conditions:
+        1. HSTS is enabled for the zone
+        2. The includeSubdomains directive is set to protect all subdomains
+        3. The max-age is at least 6 months (15768000 seconds)
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if all
+            HSTS requirements are met, or FAIL status if HSTS is disabled,
+            missing subdomain inclusion, or has insufficient max-age.
+        """
         findings = []
         # Recommended minimum max-age is 6 months (15768000 seconds)
         recommended_max_age = 15768000

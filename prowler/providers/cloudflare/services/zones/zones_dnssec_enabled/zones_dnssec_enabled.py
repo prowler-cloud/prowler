@@ -3,7 +3,25 @@ from prowler.providers.cloudflare.services.zones.zones_client import zones_clien
 
 
 class zones_dnssec_enabled(Check):
+    """Ensure that DNSSEC is enabled for Cloudflare zones.
+
+    DNSSEC (Domain Name System Security Extensions) adds cryptographic signatures
+    to DNS records, protecting against DNS spoofing and cache poisoning attacks.
+    When enabled, it ensures that DNS responses are authentic and have not been
+    tampered with during transit.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the DNSSEC enabled check.
+
+        Iterates through all Cloudflare zones and verifies that DNSSEC status
+        is set to 'active'. A zone passes the check if DNSSEC is actively
+        protecting its DNS records; otherwise, it fails.
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if DNSSEC
+            is active, or FAIL status if DNSSEC is not enabled for the zone.
+        """
         findings = []
         for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
