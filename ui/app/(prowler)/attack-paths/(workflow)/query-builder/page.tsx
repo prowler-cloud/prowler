@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, X } from "lucide-react";
+import { ArrowLeft, Maximize2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -233,15 +233,15 @@ export default function AttackPathAnalysisPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    graphState.selectNode(node.id);
+    // Enter filtered view showing only paths containing this node
+    graphState.enterFilteredView(node.id);
 
-    // Only scroll to details if it's a finding node
+    // For findings, also scroll to the details section
     const isFinding = node.labels.some((label) =>
       label.toLowerCase().includes("finding"),
     );
 
     if (isFinding) {
-      // Scroll to node details section after a short delay
       setTimeout(() => {
         nodeDetailsRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -249,6 +249,10 @@ export default function AttackPathAnalysisPage() {
         });
       }, 100);
     }
+  };
+
+  const handleBackToFullView = () => {
+    graphState.exitFilteredView();
   };
 
   const handleCloseDetails = () => {
@@ -371,18 +375,50 @@ export default function AttackPathAnalysisPage() {
           <>
             {/* Info message and controls */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div
-                className="bg-button-primary inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-black shadow-sm sm:px-4 sm:text-sm"
-                role="status"
-                aria-label="Graph interaction instructions"
-              >
-                <span className="flex-shrink-0" aria-hidden="true">
-                  💡
-                </span>
-                <span className="flex-1">
-                  Click on any resource node to view its related findings
-                </span>
-              </div>
+              {graphState.isFilteredView ? (
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleBackToFullView}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    aria-label="Return to full graph view"
+                  >
+                    <ArrowLeft size={16} />
+                    Back to Full View
+                  </Button>
+                  <div
+                    className="bg-bg-info-secondary text-text-info inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium shadow-sm sm:px-4 sm:text-sm"
+                    role="status"
+                    aria-label="Filtered view active"
+                  >
+                    <span className="flex-shrink-0" aria-hidden="true">
+                      🔍
+                    </span>
+                    <span className="flex-1">
+                      Showing paths for:{" "}
+                      <strong>
+                        {graphState.filteredNode?.properties?.name ||
+                          graphState.filteredNode?.properties?.id ||
+                          "Selected node"}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="bg-button-primary inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-black shadow-sm sm:px-4 sm:text-sm"
+                  role="status"
+                  aria-label="Graph interaction instructions"
+                >
+                  <span className="flex-shrink-0" aria-hidden="true">
+                    💡
+                  </span>
+                  <span className="flex-1">
+                    Click on any node to filter and view its connected paths
+                  </span>
+                </div>
+              )}
 
               {/* Graph controls and fullscreen button together */}
               <div className="flex items-center gap-2">
