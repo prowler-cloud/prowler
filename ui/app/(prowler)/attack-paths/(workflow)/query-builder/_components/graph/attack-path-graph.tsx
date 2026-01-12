@@ -35,6 +35,7 @@ interface AttackPathGraphProps {
   data: AttackPathGraphData;
   onNodeClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
+  isFilteredView?: boolean;
   ref?: Ref<AttackPathGraphRef>;
 }
 
@@ -57,7 +58,7 @@ const HEXAGON_HEIGHT = 55; // Height for finding hexagons
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
   AttackPathGraphProps
->(({ data, onNodeClick, selectedNodeId }, ref) => {
+>(({ data, onNodeClick, selectedNodeId, isFilteredView = false }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
@@ -300,15 +301,18 @@ const AttackPathGraphComponent = forwardRef<
     g.setDefaultEdgeLabel(() => ({}));
 
     // Initially hide finding nodes - they are shown when user clicks on a node
+    // In filtered view, show all nodes since they're already filtered to the selected path
     const initialHiddenNodes = new Set<string>();
-    data.nodes.forEach((node) => {
-      const isFinding = node.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
-      if (isFinding) {
-        initialHiddenNodes.add(node.id);
-      }
-    });
+    if (!isFilteredView) {
+      data.nodes.forEach((node) => {
+        const isFinding = node.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+        if (isFinding) {
+          initialHiddenNodes.add(node.id);
+        }
+      });
+    }
     hiddenNodeIdsRef.current = initialHiddenNodes;
 
     // Create a map to store original node data
