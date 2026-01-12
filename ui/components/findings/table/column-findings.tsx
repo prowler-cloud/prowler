@@ -6,11 +6,10 @@ import { useSearchParams } from "next/navigation";
 
 import {
   DataTableRowActions,
-  DataTableRowDetails,
+  FindingDetail,
 } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
 import { DateWithTime, SnippetChip } from "@/components/ui/entities";
-import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -51,7 +50,7 @@ const getProviderData = (
   );
 };
 
-// Component for finding title that opens the detail sheet
+// Component for finding title that opens the detail drawer
 const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   const searchParams = useSearchParams();
   const findingId = searchParams.get("id");
@@ -71,24 +70,18 @@ const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   };
 
   return (
-    <TriggerSheet
-      triggerComponent={
+    <FindingDetail
+      findingDetails={row.original}
+      defaultOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      trigger={
         <div className="max-w-[500px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
             {checktitle}
           </p>
         </div>
       }
-      title="Finding Details"
-      description="View the finding details"
-      defaultOpen={isOpen}
-      onOpenChange={handleOpenChange}
-    >
-      <DataTableRowDetails
-        entityId={row.original.id}
-        findingDetails={row.original}
-      />
-    </TriggerSheet>
+    />
   );
 };
 
