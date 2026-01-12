@@ -2,14 +2,45 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.17.0] (Prowler UNRELEASED)
+## [1.18.0] (Prowler UNRELEASED)
+
+### Added
+- Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
+
+---
+
+## [1.17.2] (Prowler v5.16.2)
+
+### Security
+- Updated dependencies to patch security vulnerabilities: Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
+
+---
+
+## [1.17.1] (Prowler v5.16.1)
+
+### Changed
+- Security Hub integration error when no regions [(#9635)](https://github.com/prowler-cloud/prowler/pull/9635)
+
+### Fixed
+- Orphan scheduled scans caused by transaction isolation during provider creation [(#9633)](https://github.com/prowler-cloud/prowler/pull/9633)
+
+---
+
+## [1.17.0] (Prowler v5.16.0)
 
 ### Added
 - New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - Endpoints `GET /findings` and `GET /findings/latests` can now use the category filter [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- Account id, alias and provider name to PDF reporting table [(#9574)](https://github.com/prowler-cloud/prowler/pull/9574)
 
 ### Changed
 - Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
+- OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
+- Increased execution delay for the first scheduled scan tasks to 5 seconds[(#9558)](https://github.com/prowler-cloud/prowler/pull/9558)
+
+### Fixed
+- Made `scan_id` a required filter in the compliance overview endpoint [(#9560)](https://github.com/prowler-cloud/prowler/pull/9560)
+- Reduced unnecessary UPDATE resources operations by only saving when tag mappings change, lowering write load during scans [(#9569)](https://github.com/prowler-cloud/prowler/pull/9569)
 
 ---
 

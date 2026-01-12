@@ -11,7 +11,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "**Amazon RDS clusters** are covered by an **AWS Backup backup plan** when resource assignments include the cluster, either explicitly, by tags, or via an appropriate resource scope.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB clusters** are covered by an **AWS Backup backup plan** when resource assignments include the cluster, either explicitly, by tags, or via an appropriate resource scope.",
   "Risk": "Lack of centralized backups enables irreversible **data loss** and **corruption**, reducing **availability** and **integrity**. Accidental deletion, ransomware, or bad changes may become unrecoverable. Weak retention or no immutability undermines rollback and can breach recovery objectives.",
   "RelatedUrl": "",
   "AdditionalURLs": [

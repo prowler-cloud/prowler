@@ -11,7 +11,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Amazon RDS DB instances use a **supported, non-deprecated engine version** for MariaDB, MySQL, or PostgreSQL. The instance's `engine` and `engine_version` are evaluated against versions currently supported in the region.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** use a **supported, non-deprecated engine version** for MariaDB, MySQL, or PostgreSQL. The instance's `engine` and `engine_version` are evaluated against versions currently supported in the region.",
   "Risk": "Deprecated engine versions lack security fixes and support, enabling exploitation of known flaws impacting **confidentiality** and **integrity**. **Availability** can suffer from forced maintenance or failed upgrades.\n- Unpatched CVEs\n- TLS/client incompatibilities\n- Replication or backup/restore issues",
   "RelatedUrl": "",
   "AdditionalURLs": [

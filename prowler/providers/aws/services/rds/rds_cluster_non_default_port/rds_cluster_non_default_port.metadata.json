@@ -11,7 +11,8 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "**RDS clusters** are assessed for use of a **non-default database port**.\n\nEvaluation focuses on whether the cluster listens on the engine's well-known default port (e.g., `3306`, `5432`, `1433`, `1521`, `50000`) or on a custom port.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB clusters** are assessed for use of a **non-default database port**.\n\nEvaluation focuses on whether the cluster listens on the engine's well-known default port (e.g., `3306`, `5432`, `1433`, `1521`, `50000`) or on a custom port.",
   "Risk": "Using a **default DB port** eases discovery via mass scans and banner-grabbing, enabling:\n- Engine-specific exploit attempts\n- Brute-force/credential-stuffing of logins\n- Targeted DDoS on the service\n\nImpacts: **confidentiality** (unauthorized reads), **integrity** (data changes), **availability** (service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -16,20 +16,16 @@
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS DB instances** are assessed for **KMS-based encryption at rest** (`StorageEncrypted=true`), covering instance storage and derived artifacts such as snapshots, automated backups, and read replicas.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are assessed for **KMS-based encryption at rest** (`StorageEncrypted=true`), covering instance storage and derived artifacts such as snapshots, automated backups, and read replicas.",
   "Risk": "Without **encryption at rest**, database files, snapshots, and automated backups remain in plaintext. An attacker with access to copied snapshots, compromised backups, or underlying storage can read sensitive data, causing loss of **confidentiality** and enabling large-scale exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-encryption-enabled.html",
     "https://aws.amazon.com/blogs/storage/protecting-amazon-rds-db-instances-encrypted-using-kms-aws-managed-key-with-cross-account-and-cross-region-backups/",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html",
-    "https://docs.prowler.com/checks/aws/general-policies/general_4#terraform",
-    "https://samirbehara.com/2018/04/03/implementing-encryption-at-rest-for-amazon-aurora-using-cloudformation/",
-    "https://pyongwonlee.com/2021/05/23/aws-relational-database-service-rds/",
-    "https://percona.community/blog/2018/06/08/enabling-kms-encryption-running-amazon-rds-instance/",
-    "https://medium.com/programmingnotes/aws-database-rds-1836b275f525"
+    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html"
   ],
   "Remediation": {
     "Code": {

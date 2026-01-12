@@ -11,17 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS DB instances** are evaluated for **Enhanced Monitoring** being enabled, which publishes real-time **OS-level metrics** (CPU, memory, disk, network) to CloudWatch Logs for each instance.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are evaluated for **Enhanced Monitoring** being enabled, which publishes real-time **OS-level metrics** (CPU, memory, disk, network) to CloudWatch Logs for each instance.",
   "Risk": "Without **Enhanced Monitoring**, you lack **real-time OS telemetry**, delaying detection of resource saturation and abnormal activity.\n\nThis raises MTTR and risks **availability** impacts (timeouts, failovers), reduces **integrity** assurance during incidents, and weakens forensic visibility.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://techguys2go.com/blog/2024/06/how-to-enable-enhanced-monitoring-for-aws-rds/",
-    "https://docs.prowler.com/checks/aws/logging-policies/ensure-that-enhanced-monitoring-is-enabled-for-amazon-rds-instances#terraform",
-    "https://www.techtarget.com/searchCloudComputing/tip/Gain-insights-with-Enhanced-Monitoring-in-Amazon-RDS",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233699-ensu-rds-instances-has-enhanced-monitoring-enabled",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.Enabling.html",
-    "https://www.blinkops.com/blog/rds-enhanced-monitoring"
+    "https://support.icompaas.com/support/solutions/articles/62000233699-ensu-rds-instances-has-enhanced-monitoring-enabled"
   ],
   "Remediation": {
     "Code": {

@@ -12,11 +12,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS DB instances** are evaluated for **automated backups** by confirming the backup retention period is greater than `0` days, indicating point-in-time recovery is configured.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are evaluated for **automated backups** by confirming the backup retention period is greater than `0` days, indicating point-in-time recovery is configured.",
   "Risk": "Without automated backups, you lose **point-in-time recovery**, impacting **availability** and **integrity**.\n\nAccidental deletes, destructive queries, or compromised accounts can cause unrecoverable data loss and prolonged outages, preventing reliable rollback during incidents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-instances-have-backup-policy#terraform",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-automated-backups-enabled.html"
   ],

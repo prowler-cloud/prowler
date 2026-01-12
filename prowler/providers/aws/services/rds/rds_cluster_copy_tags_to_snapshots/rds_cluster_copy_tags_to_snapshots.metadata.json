@@ -8,8 +8,9 @@
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**RDS DB clusters** are evaluated for the `CopyTagsToSnapshot` setting that propagates cluster tags to their DB snapshots.\n\n*Aurora tagging is configured at the cluster level; instance-level copying isn't supported.*",
   "Risk": "**Missing tag propagation** leaves snapshots without consistent metadata, weakening **ABAC**, ownership tracking, and retention controls. This can allow overly broad access to backups, hinder incident scoping, and inflate costs-impacting **confidentiality** and operational governance.",
   "RelatedUrl": "",
@@ -29,9 +30,7 @@
       "Url": "https://hub.prowler.com/check/rds_cluster_copy_tags_to_snapshots"
     }
   },
-  "Categories": [
-    "identity-access"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

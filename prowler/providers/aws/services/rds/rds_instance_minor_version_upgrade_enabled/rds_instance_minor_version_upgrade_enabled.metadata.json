@@ -10,11 +10,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS DB instances** are evaluated for the `auto_minor_version_upgrade` setting that enables **automatic minor engine updates** during maintenance windows.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are evaluated for the `auto_minor_version_upgrade` setting that enables **automatic minor engine updates** during maintenance windows.",
   "Risk": "Without automatic minor upgrades, databases miss **security patches**, leaving known vulnerabilities exploitable and risking **unauthorized data access**. Unapplied fixes can cause **data corruption** and outages, harming **integrity** and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform",
     "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
   ],

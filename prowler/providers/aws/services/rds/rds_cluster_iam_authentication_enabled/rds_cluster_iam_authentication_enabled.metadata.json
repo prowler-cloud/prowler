@@ -12,19 +12,15 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "**RDS/Aurora DB clusters** on supported engines (MySQL/MariaDB/PostgreSQL/Aurora) have **IAM database authentication** enabled for database logins, indicating token-based access managed by IAM instead of static passwords.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB clusters** on supported engines (MySQL/MariaDB/PostgreSQL/Aurora) have **IAM database authentication** enabled for database logins, indicating token-based access managed by IAM instead of static passwords.",
   "Risk": "Without **IAM DB authentication**, databases depend on long-lived passwords. Stolen or reused creds can enable unauthorized connections, data exfiltration, and tampering, harming **confidentiality** and **integrity**. Lacking short-lived tokens and centralized revocation expands blast radius and weakens **access control**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
-    "https://clickhouse.com/docs/integrations/clickpipes/secure-rds",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
     "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
-    "https://repost.aws/knowledge-center/rds-postgresql-connect-using-iam",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-12",
-    "https://documentation.red-gate.com/monitor14/enabling-aws-iam-postgresql-authentication-246972466.html",
-    "https://www.datavail.com/blog/aws-iam-to-authenticate-against-rds-instances-aurora-clusters/?noamp=mobile"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-12"
   ],
   "Remediation": {
     "Code": {

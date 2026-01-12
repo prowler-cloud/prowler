@@ -8,21 +8,16 @@
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS DB instances** are assessed for propagating instance tags to their **DB snapshots** using `CopyTagsToSnapshot`.\n\n*Aurora engines manage this at the cluster level and aren't evaluated per instance.*",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are assessed for propagating instance tags to their **DB snapshots** using `CopyTagsToSnapshot`.\n\n*Aurora engines manage this at the cluster level and aren't evaluated per instance.*",
   "Risk": "Snapshots without inherited tags lose ownership, environment, and sensitivity context, degrading visibility and governance. Missing metadata weakens **ABAC**, cost allocation, and lifecycle policies, enabling unintended backup access, orphaned snapshots, and retention drift that impact confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/UserGuide/USER_Tagging.html",
-    "https://www.stream.security/rules/ensure-rds-database-instances-have-copy-tags-to-snapshots-enabled",
     "https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-aws-enable-tags-snapshot-rds-instance.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-17",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html#USER_Tagging.CopyTags",
-    "https://km.oslo.systems/updates/update-guides/946-copy-rds-tags-to-snapshot/",
-    "https://support.icompaas.com/support/solutions/articles/62000233711-ensure-rds-db-instances-have-copy-tags-to-snapshots-enabled",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/copy-tags-to-snapshot.html",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/copy-tags-to-snapshot.html"
   ],
   "Remediation": {
     "Code": {
@@ -36,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/rds_instance_copy_tags_to_snapshots"
     }
   },
-  "Categories": [
-    "identity-access"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

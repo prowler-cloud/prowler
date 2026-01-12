@@ -11,14 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbInstance",
+  "ResourceGroup": "database",
   "Description": "**RDS DB instances** are evaluated for use of a port that differs from the engine's default. Matching an engine with its default port-`3306` (MySQL/MariaDB/Aurora MySQL), `5432` (PostgreSQL/Aurora), `1521` (Oracle), `1433` (SQL Server), `50000` (Db2)-indicates the instance uses the default listener.",
   "Risk": "Using a **default DB port** increases exposure to broad scans and eases **service fingerprinting**. With weak network controls, attackers can run **credential brute force**, target known **engine exploits**, or trigger **DoS** on the predictable port, threatening confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-default-port.html",
-    "https://fig.io/manual/aws/rds/modify-db-instance",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html",
     "https://docs.aws.amazon.com/cli/latest/reference/rds/modify-db-instance.html"
   ],
   "Remediation": {

@@ -2,17 +2,92 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.16.0] (Prowler UNRELEASED)
+## [5.17.0] (Prowler UNRELEASED)
 
 ### Added
+- Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
+- `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
+- `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
+- Support AWS European Sovereign Cloud [(#9649)](https://github.com/prowler-cloud/prowler/pull/9649)
+- `compute_instance_disk_auto_delete_disabled` check for GCP provider [(#9604)](https://github.com/prowler-cloud/prowler/pull/9604)
+- Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
+- `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
+- `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
+- `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
+- `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
 
-- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+### Changed
+- Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
+- Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
+- Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
+- Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
+- Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
+- Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
+- Update AWS Redshift service metadata to new format [(#9385)](https://github.com/prowler-cloud/prowler/pull/9385)
+- Update AWS Storage Gateway service metadata to new format [(#9433)](https://github.com/prowler-cloud/prowler/pull/9433)
+- Update AWS Well-Architected service metadata to new format [(#9482)](https://github.com/prowler-cloud/prowler/pull/9482)
+- Update AWS SSM service metadata to new format [(#9430)](https://github.com/prowler-cloud/prowler/pull/9430)
+- Update AWS Organizations service metadata to new format [(#9384)](https://github.com/prowler-cloud/prowler/pull/9384)
+- Update AWS Resource Explorer v2 service metadata to new format [(#9386)](https://github.com/prowler-cloud/prowler/pull/9386)
+- Update AWS SageMaker service metadata to new format [(#9407)](https://github.com/prowler-cloud/prowler/pull/9407)
+- Update AWS Security Hub service metadata to new format [(#9409)](https://github.com/prowler-cloud/prowler/pull/9409)
+- Update AWS SES service metadata to new format [(#9411)](https://github.com/prowler-cloud/prowler/pull/9411)
+- Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
+- Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
+- Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
+- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
+- Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
+- Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
+- Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
+- Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
 
-## [5.15.1] (Prowler UNRELEASED)
+---
+
+## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### Fixed
+- Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
+
+---
+
+## [5.16.1] (Prowler v5.16.1)
+
+### Fixed
+- ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
+
+---
+
+## [5.16.0] (Prowler v5.16.0)
+
+### Added
+- `privilege-escalation` and `ec2-imdsv1` categories for AWS checks [(#9537)](https://github.com/prowler-cloud/prowler/pull/9537)
+- Supported IaC formats and scanner documentation for the IaC provider [(#9553)](https://github.com/prowler-cloud/prowler/pull/9553)
+
+### Changed
+- Update AWS Glue service metadata to new format [(#9258)](https://github.com/prowler-cloud/prowler/pull/9258)
+- Update AWS Kafka service metadata to new format [(#9261)](https://github.com/prowler-cloud/prowler/pull/9261)
+- Update AWS KMS service metadata to new format [(#9263)](https://github.com/prowler-cloud/prowler/pull/9263)
+- Update AWS MemoryDB service metadata to new format [(#9266)](https://github.com/prowler-cloud/prowler/pull/9266)
+- Update AWS Inspector v2 service metadata to new format [(#9260)](https://github.com/prowler-cloud/prowler/pull/9260)
+- Update AWS Service Catalog service metadata to new format [(#9410)](https://github.com/prowler-cloud/prowler/pull/9410)
+- Update AWS SNS service metadata to new format [(#9428)](https://github.com/prowler-cloud/prowler/pull/9428)
+- Update AWS Trusted Advisor service metadata to new format [(#9435)](https://github.com/prowler-cloud/prowler/pull/9435)
+- Update AWS WAF service metadata to new format [(#9480)](https://github.com/prowler-cloud/prowler/pull/9480)
+- Update AWS WAF v2 service metadata to new format [(#9481)](https://github.com/prowler-cloud/prowler/pull/9481)
+
+### Fixed
+- Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+- Fix incorrect `bedrock-agent` regional availability, now using official AWS docs instead of copying from `bedrock`
+- Store MongoDB Atlas provider regions as lowercase [(#9554)](https://github.com/prowler-cloud/prowler/pull/9554)
+- Store GCP Cloud Storage bucket regions as lowercase [(#9567)](https://github.com/prowler-cloud/prowler/pull/9567)
+
+---
+
+## [5.15.1] (Prowler v5.15.1)
 
 ### Fixed
 - Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
-- Fix typo `trustboundaries` category to `trust-boundaries` [(#9536)](https://github.com/prowler-cloud/prowler/pull/9536)
+
 ---
 
 ## [5.15.0] (Prowler v5.15.0)
@@ -24,6 +99,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_preemptible_vm_disabled` check for GCP provider [(#9342)](https://github.com/prowler-cloud/prowler/pull/9342)
 - `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
 - `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
+- Add needed changes to AlibabaCloud provider from the API [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
 - Update SOC2 - Azure with Processing Integrity requirements [(#9463)](https://github.com/prowler-cloud/prowler/pull/9463)
 - Update SOC2 - GCP with Processing Integrity requirements [(#9464)](https://github.com/prowler-cloud/prowler/pull/9464)
 - Update SOC2 - AWS with Processing Integrity requirements [(#9462)](https://github.com/prowler-cloud/prowler/pull/9462)
@@ -37,8 +113,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
 - Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
-- Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
-
 
 ### Fixed
 - Fix duplicate requirement IDs in ISO 27001:2013 AWS compliance framework by adding unique letter suffixes

@@ -12,11 +12,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**RDS DB clusters** have **deletion protection** enabled (`deletion_protection=true`).",
   "Risk": "Without **deletion protection**, a cluster can be removed by error or misuse, causing sudden **availability** loss and potential **data loss** if backups are outdated. Compromised identities or faulty automation can trigger destructive deletes, degrading **recoverability** and data **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-7"
   ],

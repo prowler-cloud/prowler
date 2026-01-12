@@ -11,18 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "**Amazon RDS DB clusters** are assessed for deployment across **multiple Availability Zones** (*Multi-AZ*), verifying that redundant instances exist to support **automatic failover** instead of a single-AZ configuration.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB clusters** are assessed for deployment across **multiple Availability Zones** (*Multi-AZ*), verifying that redundant instances exist to support **automatic failover** instead of a single-AZ configuration.",
   "Risk": "A **single-AZ cluster** is a single point of failure. AZ outages, instance/storage faults, or maintenance can cause extended **downtime**, failed transactions, and worse **RTO/RPO**. Without cross-AZ replicas, recovery may require restores, increasing outage duration and risking service disruption and data consistency impacts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.pulumi.com/registry/packages/aws/api-docs/rds/cluster/",
-    "https://library.tf/providers/hashicorp/aws/latest/docs/resources/rds_cluster",
-    "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-15",
     "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html",
-    "https://medium.com/@gwladysgodem/create-an-amazon-aurora-database-with-multi-az-enabled-and-add-data-using-sql-650a4baed8d2",
-    "https://aws.amazon.com/rds/features/multi-az/",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/create-multi-az-db-cluster.html"
+    "https://aws.amazon.com/rds/features/multi-az/"
   ],
   "Remediation": {
     "Code": {

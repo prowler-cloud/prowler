@@ -12,7 +12,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS instances** using MySQL, MariaDB, or PostgreSQL engines (including Aurora variants) have **IAM database authentication** enabled at the instance level or, when part of a cluster, evaluated for cluster-level enablement.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** using MySQL, MariaDB, or PostgreSQL engines (including Aurora variants) have **IAM database authentication** enabled at the instance level or, when part of a cluster, evaluated for cluster-level enablement.",
   "Risk": "Absent **IAM-based, short-lived tokens**, databases rely on **static passwords** in code and configs, increasing theft and reuse.\n\nCompromised DB creds enable unauthorized queries, leading to **data exfiltration** and tampering, and weaken **centralized access control** and rotation.",
   "RelatedUrl": "",
   "AdditionalURLs": [

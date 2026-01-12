@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
+  "ResourceGroup": "database",
   "Description": "**RDS DB instances** are assessed for **VPC placement** by the presence of a `vpc_id` indicating deployment within a VPC.\n\nInstances without this association are treated as outside VPC networking.",
   "Risk": "Without VPC isolation, databases may expose internet-reachable endpoints and lack granular network controls. This degrades **confidentiality** and **availability** via scanning/brute force and data exfiltration, and threatens **integrity** through unauthorized connections and lateral movement.",
   "RelatedUrl": "",

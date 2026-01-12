@@ -769,7 +769,7 @@ class RoleFilter(FilterSet):
 
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    scan_id = UUIDFilter(field_name="scan_id")
+    scan_id = UUIDFilter(field_name="scan_id", required=True)
     region = CharFilter(field_name="region")
 
     class Meta:

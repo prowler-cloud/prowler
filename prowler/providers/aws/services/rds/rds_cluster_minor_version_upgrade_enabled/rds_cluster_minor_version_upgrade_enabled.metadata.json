@@ -12,16 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**RDS Multi-AZ DB clusters** are configured for **automatic minor engine upgrades** via `auto_minor_version_upgrade`.\n\nThe evaluation checks these clusters to see if this setting is enabled so preferred minor releases are applied during the maintenance window.",
   "Risk": "Without automatic minor upgrades, clusters can miss **security patches**, enabling exploitation of known flaws (confidentiality). Unfixed defects may corrupt data (**integrity**) or trigger crashes and failovers (**availability**). Emergency patching raises downtime and operational risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/modify-multi-az-db-cluster.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform",
     "https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/RDS/Types/CreateDBClusterMessage.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-35",
-    "https://www.rubenortiz.es/2019/11/07/aws-solutions-architect-associate-saa-2018-iv/"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-35"
   ],
   "Remediation": {
     "Code": {

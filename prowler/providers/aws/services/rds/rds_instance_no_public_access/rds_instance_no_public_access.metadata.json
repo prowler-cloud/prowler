@@ -13,11 +13,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Amazon RDS instances are assessed for **internet exposure** using the `PubliclyAccessible` setting, security group ingress to the DB port from any address, and whether subnets are **public**. Instances that combine an internet-facing endpoint, open ingress, and public subnets are identified.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are assessed for **internet exposure** using the `PubliclyAccessible` setting, security group ingress to the DB port from any address, and whether subnets are **public**. Instances that combine an internet-facing endpoint, open ingress, and public subnets are identified.",
   "Risk": "An internet-reachable database invites:\n- Brute-force and vulnerability probing, risking **availability** and **integrity**\n- Unauthorized queries and dumps leading to **confidentiality** loss\n\nCompromise can enable **lateral movement** and persistence within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/public-policies/public_2#terraform",
     "https://docs.aws.amazon.com/config/latest/developerguide/rds-instance-public-access-check.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html"

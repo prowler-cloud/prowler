@@ -10,19 +10,15 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsEventSubscription",
-  "Description": "**Amazon RDS event subscriptions** for DB instances are assessed for coverage of the critical categories `maintenance`, `configuration change`, and `failure`.\n\nThe evaluation looks for enabled `db-instance` subscriptions and confirms these categories are included or that all events are selected.",
+  "ResourceGroup": "database",
+  "Description": "**RDS event subscriptions** for DB instances are assessed for coverage of the critical categories `maintenance`, `configuration change`, and `failure`.\n\nThe evaluation looks for enabled `db-instance` subscriptions and confirms these categories are included or that all events are selected.",
   "Risk": "Without these notifications, critical DB events go unseen, undermining **availability** and **integrity**. Missed outages, unexpected restarts, or silent parameter changes can delay response, prolong downtime, corrupt data flows, and leave misconfigurations unaddressed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
-    "https://repost.aws/questions/QU53S7OYh-Tni0zF0NPR3o9w/unexpected-az-change-in-singleaz-installations",
-    "https://trustedinstitute.com/concept/aws-solution-architect/amazon-rds/amazon-rds-event-subscriptions/",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html",
-    "https://www.cloudquery.io/docs/plugins/sources/aws/tables/aws_rds_event_subscriptions",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-instance-level-events.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-20",
-    "https://github.com/devsecops-studio/terraform-aws-rds-event-notification"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-20"
   ],
   "Remediation": {
     "Code": {

@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbSnapshot",
+  "ResourceGroup": "database",
   "Description": "**RDS DB snapshots** and **DB cluster snapshots** are evaluated for **encryption at rest**, identifying snapshots created with a KMS key versus unencrypted ones.",
   "Risk": "Unencrypted snapshots enable direct access to full database data if backups are leaked, cross-account shared, or stolen. Adversaries can harvest data offline, bypassing network controls, leading to **loss of confidentiality**. Restores from such snapshots propagate the exposure to new instances.",
   "RelatedUrl": "",

@@ -10,9 +10,10 @@
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Amazon RDS and Aurora DB instances are evaluated for **server certificate validity** windows, including default and **customer-managed certificates**. Certificates **expired** or **approaching expiration** (e.g., `<1 month`, `<3 months`, `3-6 months`, `>6 months`) are identified using the certificate `valid_till` date.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are evaluated for **server certificate validity** windows, including default and **customer-managed certificates**. Certificates **expired** or **approaching expiration** (e.g., `<1 month`, `<3 months`, `3-6 months`, `>6 months`) are identified using the certificate `valid_till` date.",
   "Risk": "Without timely rotation:\n- TLS failures block DB connections, impacting **availability**\n- Bypassed or weak validation enables **MITM**, risking **confidentiality** and **integrity**\n- Emergency changes increase **operational risk** and error rates",
   "RelatedUrl": "",
   "AdditionalURLs": [

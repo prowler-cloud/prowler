@@ -9,20 +9,15 @@
   "ServiceName": "rds",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsRdsEventSubscription",
+  "ResourceGroup": "database",
   "Description": "**RDS event subscriptions** for **DB parameter groups** notify on `configuration change` events (or all categories) when the subscription is enabled",
   "Risk": "Missing alerts on parameter changes erodes visibility. Attackers or mistakes can lower TLS requirements, disable auditing, or relax auth, enabling data exposure (**confidentiality**), unauthorized writes (**integrity**), or outages from unsafe settings (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
-    "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/UserGuide/USER_Events.Messages.html",
-    "https://www.anujvarma.com/aws-rds-deeper-dive-rds-snapshots-failover-and-rds-monitoring/",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-6e8/",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-21",
-    "https://www.cloudquery.io/docs/plugins/sources/aws/tables/aws_rds_event_subscriptions",
-    "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.overview.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-21"
   ],
   "Remediation": {
     "Code": {

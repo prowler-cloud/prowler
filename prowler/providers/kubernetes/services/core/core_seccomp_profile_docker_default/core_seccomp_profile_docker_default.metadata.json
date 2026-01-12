@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the docker/default seccomp profile is enabled in pod definitions. Enabling seccomp profiles helps restrict the set of system calls applications can make, enhancing the security of workloads in the cluster.",
   "Risk": "Not using or incorrectly configuring seccomp profiles can leave containers with broader permissions, increasing the risk of malicious actions.",
   "RelatedUrl": "https://kubernetes.io/docs/tutorials/clusters/seccomp/",

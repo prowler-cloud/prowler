@@ -10,12 +10,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "Amazon RDS instances are evaluated for **Multi-AZ** configuration, either enabled on the instance or inherited from the associated DB cluster.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are evaluated for **Multi-AZ** configuration, either enabled on the instance or inherited from the associated DB cluster.",
   "Risk": "Without **Multi-AZ**, an Availability Zone or instance failure can cause extended downtime and rely on restores, risking loss of recent writes. This degrades **availability** and may affect **integrity**, interrupting applications and breaching SLAs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
-    "https://docs.prowler.com/checks/aws/general-policies/general_73#terraform",
     "https://aws.amazon.com/rds/features/multi-az/"
   ],
   "Remediation": {

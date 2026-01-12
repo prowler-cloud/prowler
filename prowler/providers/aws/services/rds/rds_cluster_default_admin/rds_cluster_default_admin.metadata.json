@@ -12,7 +12,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Amazon RDS DB clusters are evaluated for use of a **custom administrator username**, flagging clusters that use defaults such as `admin` or `postgres`.",
+  "ResourceGroup": "database",
+  "Description": "RDS DB clusters are evaluated for use of a **custom administrator username**, flagging clusters that use defaults such as `admin` or `postgres`.",
   "Risk": "Using a well-known admin username simplifies **credential stuffing** and **brute-force** attempts. Attackers can focus on password guessing, increasing chances of compromise. A successful login enables data theft (**confidentiality**), unauthorized changes (**integrity**), and destructive operations or outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [

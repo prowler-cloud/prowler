@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsEventSubscription",
+  "ResourceGroup": "database",
   "Description": "**RDS event subscriptions** for the `db-cluster` source type are enabled and cover critical cluster event categories: **`maintenance`** and **`failure`** (or all cluster events).",
   "Risk": "Without notifications for **cluster maintenance** and **failure**, teams may miss engine updates, failovers, or node crashes, impacting **availability** and increasing MTTR. Prolonged degraded states can cause replication lag and potential **data integrity** issues, hindering timely containment.",
   "RelatedUrl": "",
@@ -31,8 +32,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "resilience"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

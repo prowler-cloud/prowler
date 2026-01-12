@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "CryptoKey",
+  "ResourceGroup": "security",
   "Description": "Check for Publicly Accessible Cloud KMS Keys",
   "Risk": "Ensure that the IAM policy associated with your Cloud Key Management Service (KMS) keys is restricting anonymous and/or public access",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "Alibaba Cloud **ENI (Elastic Network Interface)** supports assigning ranges of internal IP addresses as aliases to a single virtual machine's ENI network interfaces.\n\nWith **ENI multiple IP mode**, Kubernetes Engine clusters can allocate IP addresses from a CIDR block known to **Terway** network plugin. This makes your cluster more scalable and allows better interaction with other Alibaba Cloud products.",
   "Risk": "Without **ENI multiple IP mode** (provided by Terway), pods share the node's network interface in a less scalable way.\n\nUsing ENI multiple IPs allows pod IPs to be reserved within the network ahead of time, preventing conflict with other compute resources, and allows firewall controls for Pods to be applied separately from their nodes.",
   "RelatedUrl": "",

@@ -10,18 +10,15 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**Aurora MySQL DB clusters** have **Backtrack** configured with a non-zero `BacktrackWindow`, retaining change records to allow rewinding to a consistent earlier time. *Applies to `aurora-mysql` engines only.*",
   "Risk": "Without **Backtrack**, destructive queries or admin mistakes can't be quickly undone, forcing snapshot/point-in-time restores. This increases recovery time, disrupts availability, and risks data **integrity** from partial restores or rollbacks.\n\nAdversaries who alter data can cause longer impact windows before containment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.examtopics.com/discussions/amazon/view/25405-exam-aws-certified-database-specialty-topic-1-question-25/",
-    "https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/Aurora.Modifying.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/aurora-mysql-backtracking-enabled.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
     "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
-    "https://github.com/aws-cloudformation/aws-guard-rules-registry/blob/main/rules/aws/amazon_rds/aurora_mysql_backtracking_enabled.guard",
-    "https://docs.aws.amazon.com/en_us/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.Configuring.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#"
   ],
   "Remediation": {
     "Code": {

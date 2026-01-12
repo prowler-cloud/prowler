@@ -11,7 +11,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsEventSubscription",
-  "Description": "**Amazon RDS event subscriptions** are evaluated for **database security group** events. The check expects an enabled subscription with source type `db-security-group` that includes the `configuration change` and `failure` event categories.",
+  "ResourceGroup": "database",
+  "Description": "**RDS event subscriptions** are evaluated for **database security group** events. The check expects an enabled subscription with source type `db-security-group` that includes the `configuration change` and `failure` event categories.",
   "Risk": "Missing alerts on **security group changes** or **failures** reduces visibility and slows response. Undetected rule changes can expose databases, while unnoticed failures prolong outages, impacting **confidentiality** and **availability** through unauthorized access or service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [

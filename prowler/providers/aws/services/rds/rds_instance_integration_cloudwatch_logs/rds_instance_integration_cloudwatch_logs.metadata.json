@@ -11,18 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbInstance",
-  "Description": "**Amazon RDS instances** are configured to **publish database logs** to **CloudWatch Logs** (e.g., `error`, `general`, `slowquery`, `audit`).\n\nThe evaluation identifies instances that have log exports enabled to a CloudWatch log group.",
+  "ResourceGroup": "database",
+  "Description": "**RDS DB instances** are configured to **publish database logs** to **CloudWatch Logs** (e.g., `error`, `general`, `slowquery`, `audit`).\n\nThe evaluation identifies instances that have log exports enabled to a CloudWatch log group.",
   "Risk": "Without centralized RDS logs, database activity lacks visibility, hindering detection and response. Credential misuse, SQL injection, data exfiltration, and privilege abuse may go unnoticed, risking **confidentiality** and **integrity**. Unseen errors and slow queries can lead to outages, impacting **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://awsvideocatalog.com/database/rds/how-do-i-enable-audit-logging-for-amazon-rds-mariadb-or-mysql-and-publish-the-logs-to-cloudwatch-efS-NaTf_Fc/",
-    "https://mohitepramod.wordpress.com/2021/12/26/amazon-rds-database-monitoring-with-amazon-cloudwatch-logs-aws-lambda-and-amazon-sns-to-send-logs-over-email/",
-    "https://dev.to/aws-builders/how-to-scan-thru-amazon-rds-for-sqlserver-error-logs-using-metric-filters-18ld",
-    "https://docs.prowler.com/checks/aws/iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/log-exports.html",
-    "https://medium.com/@tarunsraina483/real-time-slow-query-alerts-across-aws-rds-to-slack-39dd231d361c",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html",
-    "https://docs.aws.amazon.com/en_us/AmazonRDS/latest/UserGuide/USER_LogAccess.MariaDB.PublishtoCloudWatchLogs.html",
     "https://repost.aws/knowledge-center/rds-aurora-mysql-logs-cloudwatch"
   ],
   "Remediation": {

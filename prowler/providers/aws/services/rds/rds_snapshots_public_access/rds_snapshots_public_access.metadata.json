@@ -13,14 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbSnapshot",
+  "ResourceGroup": "database",
   "Description": "**RDS DB snapshots** and **DB cluster snapshots** with **public visibility** (shared with `all` AWS accounts) are detected.\n\nSnapshots limited to specific accounts or kept private are identified as restricted.",
   "Risk": "Public RDS snapshots expose full database copies to all AWS accounts, risking:\n- Loss of confidentiality via data exfiltration (PII, secrets)\n- Offline cracking of hashes and schema reconnaissance\n- Credential harvesting from dumps enabling lateral movement\nThis directly compromises confidentiality and fuels targeted attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/public-snapshots.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html",
-    "https://support.icompaas.com/support/solutions/articles/62000127056-ensure-rds-snapshots-and-cluster-snapshots-are-not-public",
-    "https://fig.io/manual/aws/rds/describe-db-cluster-snapshot-attributes"
+    "https://support.icompaas.com/support/solutions/articles/62000127056-ensure-rds-snapshots-and-cluster-snapshots-are-not-public"
   ],
   "Remediation": {
     "Code": {

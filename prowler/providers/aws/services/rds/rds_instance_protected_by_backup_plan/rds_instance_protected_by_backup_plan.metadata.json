@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRdsDbInstance",
+  "ResourceGroup": "database",
   "Description": "**RDS DB instances** (non-Aurora) are included in an **AWS Backup plan**, indicating scheduled backups and retention are applied to the resource.\n\n*Aurora engines are evaluated separately.*",
   "Risk": "Without an **AWS Backup plan**, databases lack assured recovery, degrading **availability** and **integrity**. Likely outcomes: accidental deletion, corruption, or malicious wipes with no recent restore point. Expect missed `RPO/RTO`, extended outages, and data inconsistency after incidents.",
   "RelatedUrl": "",

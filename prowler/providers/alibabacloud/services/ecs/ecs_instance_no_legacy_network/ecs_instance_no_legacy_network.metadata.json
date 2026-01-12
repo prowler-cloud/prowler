@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudECSInstance",
+  "ResourceGroup": "compute",
   "Description": "In order to prevent use of **legacy networks**, ECS instances should not have a legacy network configured.\n\nLegacy networks have a single network IPv4 prefix range and a single gateway IP address for the whole network. With legacy networks, you cannot create subnetworks or switch from legacy to auto or custom subnet networks.",
   "Risk": "**Legacy networks** can have an impact on high network traffic ECS instances and are subject to a **single point of failure**.\n\nThey also lack the security isolation and network segmentation capabilities provided by **VPCs**.",
   "RelatedUrl": "",
