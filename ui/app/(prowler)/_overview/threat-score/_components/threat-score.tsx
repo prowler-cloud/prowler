@@ -116,7 +116,7 @@ export function ThreatScore({
       className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
     >
       <CardHeader>
-        <CardTitle>Prowler Threat Score</CardTitle>
+        <CardTitle>Prowler ThreatScore</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col justify-between space-y-4">
@@ -133,7 +133,6 @@ export function ThreatScore({
               outerRadius={115}
               startAngle={200}
               endAngle={-20}
-              hasDots
               tooltipData={tooltipData}
             />
           </div>
@@ -165,7 +164,7 @@ export function ThreatScore({
                       className="mt-0.5 min-h-4 min-w-4 shrink-0"
                     />
                     <p>
-                      Threat score has{" "}
+                      Prowler ThreatScore has{" "}
                       {scoreDelta > 0 ? "improved" : "decreased"} by{" "}
                       {Math.abs(scoreDelta)}%
                     </p>
@@ -194,7 +193,7 @@ export function ThreatScore({
             className="items-center justify-center"
           >
             <p className="text-text-neutral-secondary text-sm">
-              Threat Score Data Unavailable
+              Prowler ThreatScore Data Unavailable
             </p>
           </Card>
         )}

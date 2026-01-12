@@ -112,6 +112,7 @@ class CheckMetadata(BaseModel):
     ResourceIdTemplate: str
     Severity: Severity
     ResourceType: str
+    ResourceGroup: str = Field(default="")
     Description: str
     Risk: str
     RelatedUrl: str

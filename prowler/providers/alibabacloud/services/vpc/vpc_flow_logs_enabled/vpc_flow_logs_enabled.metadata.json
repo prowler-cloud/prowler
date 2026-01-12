@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:vpc:region:account-id:vpc/{vpc-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudVPC",
+  "ResourceGroup": "network",
   "Description": "You can use the **flow log function** to monitor the IP traffic information for an ENI, a VSwitch, or a VPC.\n\nIf you create a flow log for a VSwitch or a VPC, all the **Elastic Network Interfaces**, including the newly created ones, are monitored. Such flow log data is stored in **Log Service**, where you can view and analyze IP traffic information. It is recommended that VPC Flow Logs be enabled for packet \"Rejects\" for VPCs.",
   "Risk": "**VPC Flow Logs** provide visibility into network traffic that traverses the VPC and can be used to detect **anomalous traffic** or provide insight during security workflows.\n\nWithout flow logs, it is difficult to investigate network-based security incidents.",
   "RelatedUrl": "",

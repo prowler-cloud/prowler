@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCertificateManagerCertificate",
+  "ResourceGroup": "security",
   "Description": "**ACM-issued certificates** are checked for **Certificate Transparency (CT) logging** being enabled. Certificates with type `IMPORTED` are excluded from evaluation.",
   "Risk": "Disabling **CT logging** reduces visibility into **misissued or rogue certificates**, weakening confidentiality and integrity. Attackers can **impersonate sites** or run **TLS man-in-the-middle** without timely detection. Unlogged public certs may be distrusted by browsers, impacting availability and user trust.",
   "RelatedUrl": "",

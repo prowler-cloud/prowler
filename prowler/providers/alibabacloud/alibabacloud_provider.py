@@ -75,6 +75,9 @@ class AlibabacloudProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         fixer_config: dict = {},
+        access_key_id: str = None,
+        access_key_secret: str = None,
+        security_token: str = None,
     ):
         """
         Initialize the AlibabaCloudProvider.
@@ -91,6 +94,9 @@ class AlibabacloudProvider(Provider):
             mutelist_path: Path to the mutelist file
             mutelist_content: Content of the mutelist file
             fixer_config: Fixer configuration dictionary
+            access_key_id: Alibaba Cloud Access Key ID
+            access_key_secret: Alibaba Cloud Access Key Secret
+            security_token: STS Security Token (for temporary credentials)
 
         Raises:
             AlibabaCloudSetUpSessionError: If an error occurs during the setup process.
@@ -107,6 +113,7 @@ class AlibabacloudProvider(Provider):
                     - alibabacloud = AlibabacloudProvider(regions=["cn-hangzhou", "cn-shanghai"])  # Specific regions
                     - alibabacloud = AlibabacloudProvider(role_arn="acs:ram::...:role/ProwlerRole")
                     - alibabacloud = AlibabacloudProvider(ecs_ram_role="ECS-Prowler-Role")
+                    - alibabacloud = AlibabacloudProvider(access_key_id="LTAI...", access_key_secret="...")
         """
         logger.info("Initializing Alibaba Cloud Provider ...")
 
@@ -118,6 +125,9 @@ class AlibabacloudProvider(Provider):
             ecs_ram_role=ecs_ram_role,
             oidc_role_arn=oidc_role_arn,
             credentials_uri=credentials_uri,
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret,
+            security_token=security_token,
         )
         logger.info("Alibaba Cloud session configured successfully")
 
@@ -234,6 +244,9 @@ class AlibabacloudProvider(Provider):
         ecs_ram_role: str = None,
         oidc_role_arn: str = None,
         credentials_uri: str = None,
+        access_key_id: str = None,
+        access_key_secret: str = None,
+        security_token: str = None,
     ) -> AlibabaCloudSession:
         """
         Set up the Alibaba Cloud session.
@@ -244,6 +257,9 @@ class AlibabacloudProvider(Provider):
             ecs_ram_role: Name of the RAM role attached to an ECS instance
             oidc_role_arn: ARN of the RAM role for OIDC authentication
             credentials_uri: URI to retrieve credentials from an external service
+            access_key_id: Alibaba Cloud Access Key ID
+            access_key_secret: Alibaba Cloud Access Key Secret
+            security_token: STS Security Token (for temporary credentials)
 
         Returns:
             AlibabaCloudSession object
@@ -275,25 +291,22 @@ class AlibabacloudProvider(Provider):
             if not ecs_ram_role and "ALIBABA_CLOUD_ECS_METADATA" in os.environ:
                 ecs_ram_role = os.environ["ALIBABA_CLOUD_ECS_METADATA"]
 
-            # Check for access key credentials from environment variables only
+            # Check for access key credentials from parameters first, then fall back to environment variables
             # Support both ALIBABA_CLOUD_* and ALIYUN_* prefixes for compatibility
-            # Note: We intentionally do NOT support credentials via CLI arguments for security reasons
-            access_key_id = None
-            access_key_secret = None
-            security_token = None
+            if not access_key_id:
+                if "ALIBABA_CLOUD_ACCESS_KEY_ID" in os.environ:
+                    access_key_id = os.environ["ALIBABA_CLOUD_ACCESS_KEY_ID"]
+                elif "ALIYUN_ACCESS_KEY_ID" in os.environ:
+                    access_key_id = os.environ["ALIYUN_ACCESS_KEY_ID"]
 
-            if "ALIBABA_CLOUD_ACCESS_KEY_ID" in os.environ:
-                access_key_id = os.environ["ALIBABA_CLOUD_ACCESS_KEY_ID"]
-            elif "ALIYUN_ACCESS_KEY_ID" in os.environ:
-                access_key_id = os.environ["ALIYUN_ACCESS_KEY_ID"]
-
-            if "ALIBABA_CLOUD_ACCESS_KEY_SECRET" in os.environ:
-                access_key_secret = os.environ["ALIBABA_CLOUD_ACCESS_KEY_SECRET"]
-            elif "ALIYUN_ACCESS_KEY_SECRET" in os.environ:
-                access_key_secret = os.environ["ALIYUN_ACCESS_KEY_SECRET"]
+            if not access_key_secret:
+                if "ALIBABA_CLOUD_ACCESS_KEY_SECRET" in os.environ:
+                    access_key_secret = os.environ["ALIBABA_CLOUD_ACCESS_KEY_SECRET"]
+                elif "ALIYUN_ACCESS_KEY_SECRET" in os.environ:
+                    access_key_secret = os.environ["ALIYUN_ACCESS_KEY_SECRET"]
 
             # Check for STS security token (for temporary credentials)
-            if "ALIBABA_CLOUD_SECURITY_TOKEN" in os.environ:
+            if not security_token and "ALIBABA_CLOUD_SECURITY_TOKEN" in os.environ:
                 security_token = os.environ["ALIBABA_CLOUD_SECURITY_TOKEN"]
 
             # Check for RAM role assumption from CLI arguments or environment
@@ -695,6 +708,9 @@ class AlibabacloudProvider(Provider):
 
     @staticmethod
     def test_connection(
+        access_key_id: str = None,
+        access_key_secret: str = None,
+        security_token: str = None,
         role_arn: str = None,
         role_session_name: str = None,
         ecs_ram_role: str = None,
@@ -707,6 +723,9 @@ class AlibabacloudProvider(Provider):
         Test the connection to Alibaba Cloud with the provided credentials.
 
         Args:
+            access_key_id: Alibaba Cloud Access Key ID (for static credentials)
+            access_key_secret: Alibaba Cloud Access Key Secret (for static credentials)
+            security_token: STS Security Token (for temporary credentials)
             role_arn: ARN of the RAM role to assume
             role_session_name: Session name when assuming the RAM role
             ecs_ram_role: Name of the RAM role attached to an ECS instance
@@ -734,17 +753,24 @@ class AlibabacloudProvider(Provider):
                     raise_on_exception=False
                 )
             Connection(is_connected=True, Error=None)
+            >>> AlibabacloudProvider.test_connection(
+                    access_key_id="LTAI...",
+                    access_key_secret="...",
+                    raise_on_exception=False
+                )
+            Connection(is_connected=True, Error=None)
         """
         try:
-            session = None
-
-            # Setup session
+            # Setup session - pass credentials directly instead of using env vars
             session = AlibabacloudProvider.setup_session(
                 role_arn=role_arn,
                 role_session_name=role_session_name,
                 ecs_ram_role=ecs_ram_role,
                 oidc_role_arn=oidc_role_arn,
                 credentials_uri=credentials_uri,
+                access_key_id=access_key_id,
+                access_key_secret=access_key_secret,
+                security_token=security_token,
             )
 
             # Validate credentials
@@ -755,10 +781,6 @@ class AlibabacloudProvider(Provider):
 
             # Validate provider_id if provided
             if provider_id and caller_identity.account_id != provider_id:
-                from prowler.providers.alibabacloud.exceptions.exceptions import (
-                    AlibabaCloudInvalidCredentialsError,
-                )
-
                 raise AlibabaCloudInvalidCredentialsError(
                     file=pathlib.Path(__file__).name,
                     message=f"Provider ID mismatch: expected '{provider_id}', got '{caller_identity.account_id}'",
