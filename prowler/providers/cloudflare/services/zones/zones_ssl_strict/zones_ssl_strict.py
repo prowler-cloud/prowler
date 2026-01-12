@@ -37,6 +37,6 @@ class zones_ssl_strict(Check):
                 report.status_extended = f"SSL/TLS encryption mode is set to {ssl_mode} for zone {zone.name}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"SSL/TLS encryption mode is set to {ssl_mode} for zone {zone.name}."
+                report.status_extended = f"SSL/TLS encryption mode is set to {ssl_mode} for zone {zone.name}, which is not strict or full."
             findings.append(report)
         return findings

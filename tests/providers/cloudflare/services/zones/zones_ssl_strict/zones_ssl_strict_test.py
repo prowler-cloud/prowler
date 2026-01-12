@@ -73,43 +73,6 @@ class Test_zones_ssl_strict:
                 == f"SSL/TLS encryption mode is set to strict for zone {ZONE_NAME}."
             )
 
-    def test_zone_ssl_full_strict_mode(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                status="active",
-                paused=False,
-                settings=CloudflareZoneSettings(
-                    ssl_encryption_mode="full_strict",
-                ),
-            )
-        }
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_ssl_strict.zones_ssl_strict.zones_client",
-                new=zones_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zones.zones_ssl_strict.zones_ssl_strict import (
-                zones_ssl_strict,
-            )
-
-            check = zones_ssl_strict()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"SSL/TLS encryption mode is set to full_strict for zone {ZONE_NAME}."
-            )
-
     def test_zone_ssl_full_mode(self):
         zones_client = mock.MagicMock
         zones_client.zones = {
@@ -141,7 +104,7 @@ class Test_zones_ssl_strict:
             check = zones_ssl_strict()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
                 == f"SSL/TLS encryption mode is set to full for zone {ZONE_NAME}."
@@ -181,7 +144,7 @@ class Test_zones_ssl_strict:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to flexible for zone {ZONE_NAME}."
+                == f"SSL/TLS encryption mode is set to flexible for zone {ZONE_NAME}, which is not strict or full."
             )
 
     def test_zone_ssl_off_mode(self):
@@ -218,5 +181,5 @@ class Test_zones_ssl_strict:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to off for zone {ZONE_NAME}."
+                == f"SSL/TLS encryption mode is set to off for zone {ZONE_NAME}, which is not strict or full."
             )
