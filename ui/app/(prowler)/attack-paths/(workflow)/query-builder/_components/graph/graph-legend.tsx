@@ -175,63 +175,46 @@ function generateLegendItems(
   hasFindings: boolean,
 ): LegendItem[] {
   const items: LegendItem[] = [];
-  const seenTypes = new Set<string>();
 
   // Add severity items if there are findings
   if (hasFindings) {
     items.push(...severityLegendItems);
   }
 
-  // Helper to format unknown node types (e.g., "AWSPolicyStatement" -> "AWS Policy Statement")
-  const formatNodeTypeName = (nodeType: string): string => {
-    return nodeType
-      .replace(/([A-Z])/g, " $1") // Add space before capitals
-      .replace(/^ /, "") // Remove leading space
-      .replace(/AWS /g, "AWS ") // Keep AWS together
-      .replace(/EC2 /g, "EC2 ") // Keep EC2 together
-      .replace(/S3 /g, "S3 ") // Keep S3 together
-      .replace(/IAM /g, "IAM ") // Keep IAM together
-      .replace(/IP /g, "IP ") // Keep IP together
-      .trim();
-  };
+  // Check for Internet node
+  const hasInternet = nodeTypes.some(
+    (type) => type.toLowerCase() === "internet",
+  );
 
-  nodeTypes.forEach((nodeType) => {
-    if (seenTypes.has(nodeType)) return;
-    seenTypes.add(nodeType);
-
-    // Skip findings and privilege escalations - we show severity colors instead
-    const isFinding = nodeType.toLowerCase().includes("finding");
-    const isPrivilegeEscalation = nodeType === "PrivilegeEscalation";
-    if (isFinding || isPrivilegeEscalation) return;
-
-    const description = nodeTypeDescriptions[nodeType];
-
-    // Determine shape based on node type
-    const isInternet = nodeType.toLowerCase() === "internet";
-    const shape: "rectangle" | "hexagon" | "cloud" = isInternet
-      ? "cloud"
-      : "rectangle";
-
-    if (description) {
-      items.push({
-        label: description.name,
-        color: getNodeColor([nodeType]),
-        borderColor: getNodeBorderColor([nodeType]),
-        description: description.description,
-        shape,
-      });
-    } else {
-      // Format unknown node types nicely
-      const formattedName = formatNodeTypeName(nodeType);
-      items.push({
-        label: formattedName,
-        color: getNodeColor([nodeType]),
-        borderColor: getNodeBorderColor([nodeType]),
-        description: `${formattedName} node`,
-        shape,
-      });
-    }
+  // Check for any resource nodes (non-finding, non-internet)
+  const hasResources = nodeTypes.some((type) => {
+    const isFinding = type.toLowerCase().includes("finding");
+    const isPrivilegeEscalation = type === "PrivilegeEscalation";
+    const isInternet = type.toLowerCase() === "internet";
+    return !isFinding && !isPrivilegeEscalation && !isInternet;
   });
+
+  // Add a single "Resource" item for all resource types
+  if (hasResources) {
+    items.push({
+      label: "Resource",
+      color: GRAPH_NODE_COLORS.default,
+      borderColor: GRAPH_NODE_BORDER_COLORS.default,
+      description: "Cloud infrastructure resource",
+      shape: "rectangle",
+    });
+  }
+
+  // Add Internet node if present
+  if (hasInternet) {
+    items.push({
+      label: "Internet",
+      color: getNodeColor(["Internet"]),
+      borderColor: getNodeBorderColor(["Internet"]),
+      description: "Internet gateway or public access",
+      shape: "cloud",
+    });
+  }
 
   return items;
 }
