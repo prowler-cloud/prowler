@@ -2,6 +2,7 @@
 
 import { Snippet } from "@heroui/snippet";
 import { ExternalLink, Link, X } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -84,10 +85,15 @@ export const FindingDetail = ({
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
   const providerDetails = finding.relationships.provider.attributes;
-  const currentUrl = new URL(window.location.href);
-  const params = new URLSearchParams(currentUrl.search);
-  params.set("id", findingDetails.id);
-  const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const copyFindingUrl = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("id", findingDetails.id);
+    const url = `${window.location.origin}${pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+  };
 
   // Build Git URL for IaC findings
   const gitUrl =
@@ -123,12 +129,12 @@ export const FindingDetail = ({
         </div>
 
         {/* Row 2: Title with copy link */}
-        <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium text-gray-800">
+        <h2 className="text-text-neutral-primary line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium">
           {renderValue(attributes.check_metadata.checktitle)}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => navigator.clipboard.writeText(url)}
+                onClick={copyFindingUrl}
                 className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
                 aria-label="Copy finding link to clipboard"
               >
@@ -211,7 +217,7 @@ export const FindingDetail = ({
 
           {attributes.check_metadata.remediation && (
             <div className="flex flex-col gap-4">
-              <h4 className="dark:text-prowler-theme-pale/90 text-sm font-bold text-gray-700">
+              <h4 className="text-text-neutral-primary text-sm font-bold">
                 Remediation Details
               </h4>
 
@@ -346,7 +352,7 @@ export const FindingDetail = ({
 
           {resource.tags && Object.entries(resource.tags).length > 0 && (
             <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+              <h4 className="text-text-neutral-secondary text-sm font-bold">
                 Tags
               </h4>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
