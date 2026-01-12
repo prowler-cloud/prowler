@@ -284,8 +284,9 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse",
-              "developer-guide/mcp-server"
+              "developer-guide/lighthouse-architecture",
+              "developer-guide/mcp-server",
+              "developer-guide/ai-skills"
             ]
           },
           {

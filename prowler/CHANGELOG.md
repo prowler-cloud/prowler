@@ -5,6 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.17.0] (Prowler UNRELEASED)
 
 ### Added
+- AI Skills pack for AI coding assistants (Claude Code, OpenCode, Codex) following agentskills.io standard [(#9728)](https://github.com/prowler-cloud/prowler/pull/9728)
 - Add Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
 - `compute_instance_group_autohealing_enabled` check for GCP provider [(#9690)](https://github.com/prowler-cloud/prowler/pull/9690)
@@ -13,6 +14,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Bedrock service pagination [(#9606)](https://github.com/prowler-cloud/prowler/pull/9606)
 - `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
 - `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
+- `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
+- `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
@@ -33,6 +36,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
 - Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
 - Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
+- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
+- Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
+- Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
+- Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
+
+---
+
+## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### Fixed
+- Fix OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
 
 ---
 

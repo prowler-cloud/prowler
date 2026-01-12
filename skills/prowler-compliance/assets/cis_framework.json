@@ -1,0 +1,76 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Amazon Web Services Foundations Benchmark v5.0.0",
+  "Version": "5.0",
+  "Provider": "AWS",
+  "Description": "The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services.",
+  "Requirements": [
+    {
+      "Id": "1.1",
+      "Description": "Maintain current contact details",
+      "Checks": [
+        "account_maintain_current_contact_details"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization.",
+          "RationaleStatement": "If an AWS account is observed to be behaving in a prohibited or suspicious manner, AWS will attempt to contact the account owner by email and phone using the contact details listed.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "This activity can only be performed via the AWS Console. Navigate to Account Settings and update contact information.",
+          "AuditProcedure": "This activity can only be performed via the AWS Console. Navigate to Account Settings and verify contact information is current.",
+          "AdditionalInformation": "",
+          "References": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
+          "DefaultValue": ""
+        }
+      ]
+    },
+    {
+      "Id": "1.3",
+      "Description": "Ensure no 'root' user account access key exists",
+      "Checks": [
+        "iam_no_root_access_key"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "The 'root' user account is the most privileged user in an AWS account. AWS Access Keys provide programmatic access to a given AWS account.",
+          "RationaleStatement": "Deleting access keys associated with the 'root' user account limits vectors by which the account can be compromised.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Navigate to IAM console, select root user, Security credentials tab, and delete any access keys.",
+          "AuditProcedure": "Run: aws iam get-account-summary | grep 'AccountAccessKeysPresent'",
+          "AdditionalInformation": "IAM User account root for us-gov cloud regions is not enabled by default.",
+          "References": "https://docs.aws.amazon.com/general/latest/gr/aws-access-keys-best-practices.html",
+          "DefaultValue": ""
+        }
+      ]
+    },
+    {
+      "Id": "1.11",
+      "Description": "Ensure credentials unused for 45 days or more are disabled",
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "AWS IAM users can access AWS resources using different types of credentials. It is recommended that all credentials unused for 45 days or more be deactivated or removed.",
+          "RationaleStatement": "Disabling or removing unnecessary credentials reduces the window of opportunity for compromised accounts.",
+          "ImpactStatement": "Users with deactivated credentials will lose access until re-enabled.",
+          "RemediationProcedure": "Use IAM console or CLI to deactivate unused access keys and remove unused passwords.",
+          "AuditProcedure": "Generate credential report and review password_last_used and access_key_last_used fields.",
+          "AdditionalInformation": "",
+          "References": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
+          "DefaultValue": ""
+        }
+      ]
+    }
+  ]
+}

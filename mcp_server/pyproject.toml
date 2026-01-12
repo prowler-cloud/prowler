@@ -4,7 +4,7 @@ requires = ["setuptools>=61.0", "wheel"]
 
 [project]
 dependencies = [
-  "fastmcp==2.13.1",
+  "fastmcp==2.14.0",
   "httpx>=0.28.0"
 ]
 description = "MCP server for Prowler ecosystem"
