@@ -288,4 +288,3 @@ class Test_s3_bucket_server_access_logging_enabled:
                     result[0].status_extended
                     == f"S3 Bucket {bucket_name} has server access logging disabled."
                 )
-
