@@ -477,6 +477,7 @@ export default function AttackPathAnalysisPage() {
                             data={graphState.data}
                             onNodeClick={handleNodeClick}
                             selectedNodeId={graphState.selectedNodeId}
+                            isFilteredView={graphState.isFilteredView}
                           />
                         </div>
                         {/* Node Detail Panel - Side by side */}
@@ -545,6 +546,7 @@ export default function AttackPathAnalysisPage() {
                 data={graphState.data}
                 onNodeClick={handleNodeClick}
                 selectedNodeId={graphState.selectedNodeId}
+                isFilteredView={graphState.isFilteredView}
               />
             </div>
 
