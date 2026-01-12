@@ -9,7 +9,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0064_finding_categories"),
+        ("api", "0065_alibabacloud_provider"),
     ]
 
     operations = [
