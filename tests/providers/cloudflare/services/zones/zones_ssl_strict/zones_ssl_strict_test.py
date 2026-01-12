@@ -70,7 +70,7 @@ class Test_zones_ssl_strict:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to strict for zone {ZONE_NAME}."
+                == f"SSL/TLS encryption mode is set to Full (Strict) for zone {ZONE_NAME}."
             )
 
     def test_zone_ssl_full_mode(self):
@@ -104,10 +104,10 @@ class Test_zones_ssl_strict:
             check = zones_ssl_strict()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to full for zone {ZONE_NAME}."
+                == f"SSL/TLS encryption mode is set to Full for zone {ZONE_NAME}, which is not Full (Strict)."
             )
 
     def test_zone_ssl_flexible_mode(self):
@@ -144,7 +144,7 @@ class Test_zones_ssl_strict:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to flexible for zone {ZONE_NAME}, which is not strict or full."
+                == f"SSL/TLS encryption mode is set to Flexible for zone {ZONE_NAME}, which is not Full (Strict)."
             )
 
     def test_zone_ssl_off_mode(self):
@@ -181,5 +181,5 @@ class Test_zones_ssl_strict:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SSL/TLS encryption mode is set to off for zone {ZONE_NAME}, which is not strict or full."
+                == f"SSL/TLS encryption mode is set to Off for zone {ZONE_NAME}, which is not Full (Strict)."
             )
