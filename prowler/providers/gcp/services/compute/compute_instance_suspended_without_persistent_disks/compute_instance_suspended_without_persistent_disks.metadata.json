@@ -1,0 +1,39 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_suspended_without_persistent_disks",
+  "CheckTitle": "VM instance in suspended state does not have persistent disks attached",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "This check identifies VM instances that are in a **SUSPENDED** or **SUSPENDING** state with persistent disks still attached.\n\nSuspended VMs with attached disks represent unused infrastructure that continues to incur storage costs without providing any compute value.",
+  "Risk": "Persistent disks attached to suspended VM instances continue to accrue **storage charges** regardless of whether the VM is running.\n\nThis could result in:\n- **Unnecessary cloud costs** from forgotten or abandoned infrastructure\n- **Resource waste** from provisioned storage not being utilized\n- **Budget overruns** if suspended instances accumulate over time",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/icompute/docs/instances/suspend-resume-instance",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/persistent-disks-attached-to-suspended-vms.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances delete INSTANCE_NAME --zone=ZONE",
+      "NativeIaC": "",
+      "Other": "1. Open the Google Cloud Console\n2. Navigate to Compute Engine > VM instances\n3. Identify suspended instances with attached disks\n4. If the instance is no longer needed, select it and click DELETE\n5. If the instance will be resumed, take no action or resume it with: gcloud compute instances resume INSTANCE_NAME --zone=ZONE",
+      "Terraform": "```hcl\n# To remediate, either delete the suspended instance or resume it\n# Delete by removing the resource from your Terraform configuration\n# Or resume by changing the desired_status\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  # Set desired_status to RUNNING to resume the instance\n  desired_status = \"RUNNING\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Regularly review suspended VM instances and either **resume** them if needed or **delete** them along with their attached disks to eliminate unnecessary storage costs. Implement automated policies to detect and alert on long-suspended instances.",
+      "Url": "https://hub.prowler.com/check/compute_instance_suspended_without_persistent_disks"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "compute_instance_disk_auto_delete_disabled"
+  ],
+  "Notes": ""
+}
