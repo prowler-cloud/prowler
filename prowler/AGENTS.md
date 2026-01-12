@@ -7,6 +7,19 @@
 > - [`prowler-compliance`](../skills/prowler-compliance/SKILL.md) - Compliance framework structure
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Adding compliance frameworks | `prowler-compliance` |
+| Adding new providers | `prowler-provider` |
+| Creating new checks | `prowler-sdk-check` |
+| Writing SDK tests | `prowler-test-sdk` |
+
+---
+
 ## Project Overview
 
 The Prowler SDK is the core Python engine powering cloud security assessments across AWS, Azure, GCP, Kubernetes, GitHub, M365, and more. It includes 1000+ security checks and 30+ compliance frameworks.

@@ -7,6 +7,8 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [ui]
+  auto_invoke: "Working with Tailwind classes"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

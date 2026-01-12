@@ -47,14 +47,10 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Creating a PR | `prowler-pr` |
-| Writing SDK tests | `prowler-test-sdk` |
-| Writing API tests | `prowler-test-api` |
-| Writing UI/E2E tests | `prowler-test-ui` |
-| Creating a new check | `prowler-sdk-check` |
-| Adding a new provider | `prowler-provider` |
 | Writing documentation | `prowler-docs` |
-| Adding compliance framework | `prowler-compliance` |
+| Creating a PR | `prowler-pr` |
+| Creating new skills | `skill-creator` |
+| After creating/modifying a skill | `skill-sync` |
 
 ---
 

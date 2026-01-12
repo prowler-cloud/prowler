@@ -12,6 +12,21 @@
 > - [`ai-sdk-5`](../skills/ai-sdk-5/SKILL.md) - UIMessage, sendMessage
 > - [`playwright`](../skills/playwright/SKILL.md) - Page Object Model, selectors
 
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| App Router / Server Actions | `nextjs-15` |
+| Writing E2E/Playwright tests | `prowler-test-ui` |
+| Creating/modifying React components | `prowler-ui` |
+| Working with Tailwind classes | `tailwind-4` |
+| Creating Zod schemas | `zod-4` |
+| Using Zustand stores | `zustand-5` |
+
+---
+
 ## CRITICAL RULES - NON-NEGOTIABLE
 
 ### React

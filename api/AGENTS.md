@@ -6,6 +6,18 @@
 > - [`django-drf`](../skills/django-drf/SKILL.md) - Generic DRF patterns
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Generic DRF patterns | `django-drf` |
+| Creating/modifying models, views, serializers | `prowler-api` |
+| Writing API tests | `prowler-test-api` |
+
+---
+
 ## CRITICAL RULES - NON-NEGOTIABLE
 
 ### Models
