@@ -3848,3 +3848,126 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         if getattr(obj, "_aggregated", False):
             return "n/a"
         return str(obj.id)
+
+
+# Scan Import
+
+
+class ScanImportSerializer(BaseSerializerV1):
+    """
+    Serializer for scan import requests.
+
+    Accepts either a file upload or inline JSON data containing Prowler
+    scan results in JSON/OCSF or CSV format.
+    """
+
+    # Maximum file size: 1GB (1,073,741,824 bytes)
+    # This limit accommodates large enterprise scan imports that may contain
+    # thousands of findings. Must match the Django settings:
+    # - DATA_UPLOAD_MAX_MEMORY_SIZE
+    # - FILE_UPLOAD_MAX_MEMORY_SIZE
+    # See: api/docs/configuration.md for related configuration details.
+    MAX_FILE_SIZE = 1024 * 1024 * 1024
+
+    file = serializers.FileField(
+        required=False,
+        help_text="Prowler scan output file (JSON/OCSF or CSV format).",
+    )
+    data = serializers.JSONField(
+        required=False,
+        help_text="Inline JSON/OCSF scan data (alternative to file upload).",
+    )
+    provider_id = serializers.UUIDField(
+        required=False,
+        help_text="UUID of existing provider to associate with the import. "
+        "If not provided, provider will be resolved from scan data.",
+    )
+    create_provider = serializers.BooleanField(
+        default=True,
+        help_text="If True, create a new provider if one is not found. Default is True.",
+    )
+
+    class JSONAPIMeta:
+        resource_name = "scan-imports"
+
+    def validate(self, attrs):
+        """
+        Validate that either file or data is provided, but not both.
+        """
+        file = attrs.get("file")
+        data = attrs.get("data")
+
+        if not file and not data:
+            raise ValidationError(
+                {"detail": "Either 'file' or 'data' must be provided."}
+            )
+
+        if file and data:
+            raise ValidationError(
+                {"detail": "Provide either 'file' or 'data', not both."}
+            )
+
+        # Validate file size if file is provided
+        if file:
+            if file.size > self.MAX_FILE_SIZE:
+                raise ValidationError(
+                    {
+                        "file": f"File size exceeds maximum of "
+                        f"{self.MAX_FILE_SIZE // (1024 * 1024)}MB."
+                    }
+                )
+
+        return attrs
+
+    def get_file_content(self) -> bytes:
+        """
+        Get the file content from either file upload or inline data.
+
+        Returns:
+            bytes: The raw file content.
+        """
+        file = self.validated_data.get("file")
+        data = self.validated_data.get("data")
+
+        if file:
+            return file.read()
+        elif data:
+            # Convert JSON data back to bytes
+            return json.dumps(data).encode("utf-8")
+        return b""
+
+
+class ScanImportResponseSerializer(BaseSerializerV1):
+    """
+    Response serializer for scan import results.
+
+    Returns details about the imported scan including counts of findings
+    and resources, the associated provider, and any errors encountered.
+    """
+
+    scan_id = serializers.UUIDField(
+        help_text="UUID of the created scan.",
+    )
+    provider_id = serializers.UUIDField(
+        help_text="UUID of the associated provider.",
+    )
+    findings_count = serializers.IntegerField(
+        help_text="Number of findings imported.",
+    )
+    resources_count = serializers.IntegerField(
+        help_text="Number of unique resources imported.",
+    )
+    status = serializers.CharField(
+        help_text="Status of the import operation (e.g., 'completed').",
+    )
+    provider_created = serializers.BooleanField(
+        help_text="Whether a new provider was created during import.",
+    )
+    errors = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        help_text="List of error details if any issues occurred during import.",
+    )
+
+    class JSONAPIMeta:
+        resource_name = "scan-imports"

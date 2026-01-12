@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
+- Scan import UI with drag-and-drop file upload for importing Prowler CLI scan results (JSON/OCSF and CSV formats) [(#8972)](https://github.com/prowler-cloud/prowler/issues/8972)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 
 ### 🔄 Changed
