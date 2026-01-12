@@ -6,6 +6,7 @@ import {
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import {
   ClientAccordionWrapper,
   ComplianceDownloadButton,
@@ -15,6 +16,8 @@ import {
   // SectionsFailureRateCard,
   // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  ThreatScoreBreakdownCard,
+  ThreatScoreBreakdownCardSkeleton,
   TopFailedSectionsCard,
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
@@ -86,6 +89,25 @@ export default async function ComplianceDetail({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Detect if this is a ThreatScore compliance view
+  const isThreatScore = complianceId?.includes("prowler_threatscore");
+
+  // Fetch ThreatScore data if applicable
+  let threatScoreData = null;
+  if (isThreatScore && selectedScanId) {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
+
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        overallScore: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
+  }
+
   // Use compliance_name from attributes if available, otherwise fallback to formatted title
   const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
   const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
@@ -125,6 +147,7 @@ export default async function ComplianceDetail({
         fallback={
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+              {isThreatScore && <ThreatScoreBreakdownCardSkeleton />}
               <RequirementsStatusCardSkeleton />
               <TopFailedSectionsCardSkeleton />
               {/* <SectionsFailureRateCardSkeleton /> */}
@@ -139,6 +162,7 @@ export default async function ComplianceDetail({
           region={regionFilter}
           filter={cisProfileFilter}
           attributesData={attributesData}
+          threatScoreData={threatScoreData}
         />
       </Suspense>
     </ContentLayout>
@@ -151,12 +175,17 @@ const SSRComplianceContent = async ({
   region,
   filter,
   attributesData,
+  threatScoreData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   attributesData: AttributesData;
+  threatScoreData: {
+    overallScore: number;
+    sectionScores: Record<string, number>;
+  } | null;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
@@ -200,6 +229,12 @@ const SSRComplianceContent = async ({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
+        {threatScoreData && (
+          <ThreatScoreBreakdownCard
+            overallScore={threatScoreData.overallScore}
+            sectionScores={threatScoreData.sectionScores}
+          />
+        )}
         <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}

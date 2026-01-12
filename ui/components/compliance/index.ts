@@ -7,6 +7,7 @@ export * from "./compliance-charts/chart-skeletons";
 export * from "./compliance-charts/heatmap-chart";
 export * from "./compliance-charts/requirements-status-card";
 export * from "./compliance-charts/sections-failure-rate-card";
+export * from "./compliance-charts/threatscore-breakdown-card";
 export * from "./compliance-charts/top-failed-sections-card";
 export * from "./compliance-custom-details/cis-details";
 export * from "./compliance-custom-details/ens-details";

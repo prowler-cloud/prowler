@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 
 import {
-  getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
-  getComplianceRequirements,
   getCompliancesOverview,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
@@ -15,7 +14,6 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
-import { calculateThreatScore } from "@/lib/compliance/threatscore-calculator";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -113,24 +111,20 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  // Fetch ThreatScore data if we have a selected scan
+  // Fetch ThreatScore data from API if we have a selected scan
   let threatScoreData = null;
-  if (
-    selectedScanId &&
-    typeof selectedScanId === "string" &&
-    selectedScan?.providerInfo?.provider
-  ) {
-    const complianceId = `prowler_threatscore_${selectedScan.providerInfo.provider.toLowerCase()}`;
+  if (selectedScanId && typeof selectedScanId === "string") {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
 
-    const [attributesData, requirementsData] = await Promise.all([
-      getComplianceAttributes(complianceId),
-      getComplianceRequirements({
-        complianceId,
-        scanId: selectedScanId,
-      }),
-    ]);
-
-    threatScoreData = calculateThreatScore(attributesData, requirementsData);
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        score: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
   }
 
   return (
@@ -154,6 +148,7 @@ export default async function Compliance({
                       scanId={selectedScanId}
                       provider={selectedScan.providerInfo.provider}
                       selectedScan={selectedScanData}
+                      sectionScores={threatScoreData.sectionScores}
                     />
                   </div>
                 )}
