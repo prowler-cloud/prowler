@@ -742,7 +742,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Principal can assume roles (up to 2 hops for flexibility)
                 OPTIONAL MATCH path_assume = (principal)-[:STS_ASSUMEROLE_ALLOW*0..2]->(acting_as:AWSRole)
-                WITH escalation_outcome, principal, path_principal, path_assume,
+                WITH escalation_outcome, aws, principal, path_principal, path_assume,
                      CASE WHEN path_assume IS NULL THEN principal ELSE acting_as END AS effective_principal
 
                 // Find iam:PassRole permission
@@ -760,6 +760,9 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         any(action IN ecs_stmt.action WHERE toLower(action) = 'ecs:createservice' OR toLower(action) = 'ecs:runtask' OR action = '*' OR toLower(action) = 'ecs:*')
                     )
 
+                // Deduplicate principals FIRST (before matching target roles)
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal
+
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
@@ -768,13 +771,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal (merge into one node)
+                // Collect all target roles per principal
                 WITH escalation_outcome, aws, principal, effective_principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
-
-                // Deduplicate to one node per principal
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_roles, target_count
 
                 // Create single virtual ECS task node per principal
                 CALL apoc.create.vNode(['ECSTask'], {
