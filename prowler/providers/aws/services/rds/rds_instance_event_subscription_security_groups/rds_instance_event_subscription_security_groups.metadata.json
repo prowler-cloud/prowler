@@ -21,7 +21,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds create-event-subscription --subscription-name <SUBSCRIPTION_NAME> --sns-topic-arn <SNS_TOPIC_ARN> --source-type db-security-group --event-categories \"configuration change\" failure",
+      "CLI": "aws rds create-event-subscription --subscription-name <SUBSCRIPTION_NAME> --sns-topic-arn <SNS_TOPIC_ARN> --source-type db-security-group --event-categories \"configuration change\" \"failure\"",
       "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::EventSubscription\n    Properties:\n      SnsTopicArn: <SNS_TOPIC_ARN>\n      SourceType: db-security-group  # Critical: subscribe to DB security group events\n      EventCategories:               # Critical: required categories\n        - configuration change\n        - failure\n```",
       "Other": "1. Open the AWS Console > RDS > Event subscriptions\n2. Click Create event subscription\n3. Set Name to <SUBSCRIPTION_NAME> and select an existing SNS topic\n4. Set Source type to Security group\n5. Under Event categories, select Configuration change and Failure\n6. Leave Targets as All security groups (no specific IDs)\n7. Ensure Enabled is On and click Create",
       "Terraform": "```hcl\nresource \"aws_db_event_subscription\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  sns_topic       = \"<SNS_TOPIC_ARN>\"\n  source_type     = \"db-security-group\"        # Critical: DB security group events\n  event_categories = [\"configuration change\", \"failure\"]  # Critical: required categories\n}\n```"

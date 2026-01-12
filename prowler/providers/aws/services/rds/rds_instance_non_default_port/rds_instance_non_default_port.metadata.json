@@ -22,7 +22,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws rds modify-db-instance --db-instance-identifier <db-instance-id> --db-port-number <non-default-port>",
+      "CLI": "aws rds modify-db-instance --db-instance-identifier <db-instance-id> --db-port <non-default-port>",
       "NativeIaC": "```yaml\n# CloudFormation: set a non-default port on an RDS instance\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      Port: <non-default_port>  # Critical: use a non-default DB engine port to pass the check\n```",
       "Other": "1. In the AWS Console, go to Amazon RDS > Databases\n2. Select the DB instance and click Modify\n3. Set \"Database port\" to a non-default value for the engine (e.g., not 3306, 5432, 1521, 1433, or 50000)\n4. Click Continue, then Modify DB instance",
       "Terraform": "```hcl\n# Terraform: set a non-default port on an RDS instance\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  port = <non-default-port>  # Critical: use a non-default DB engine port to pass the check\n}\n```"
