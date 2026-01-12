@@ -33,8 +33,6 @@
     "logging"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
-  ],
+  "RelatedTo": [],
   "Notes": ""
 }
