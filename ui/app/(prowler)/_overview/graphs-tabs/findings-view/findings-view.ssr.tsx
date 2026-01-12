@@ -8,7 +8,6 @@ import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
-import { mapProviderFiltersForFindingsObject } from "@/lib/provider-helpers";
 import { FindingProps, SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
@@ -27,8 +26,7 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   const filters = pickFilterParams(searchParams);
-  const mappedFilters = mapProviderFiltersForFindingsObject(filters);
-  const combinedFilters = { ...defaultFilters, ...mappedFilters };
+  const combinedFilters = { ...defaultFilters, ...filters };
 
   const findingsData = await getLatestFindings({
     query: undefined,

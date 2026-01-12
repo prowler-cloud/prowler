@@ -880,11 +880,27 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -894,7 +910,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -912,8 +927,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -923,7 +939,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1437,11 +1452,27 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -1451,7 +1482,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1469,8 +1499,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -1480,7 +1511,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1902,11 +1932,27 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -1916,7 +1962,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1934,8 +1979,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -1945,7 +1991,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2365,11 +2410,27 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -2379,7 +2440,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2397,8 +2457,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -2408,7 +2469,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2816,11 +2876,27 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -2830,7 +2906,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2848,8 +2923,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -2859,7 +2935,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4627,8 +4702,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -4648,14 +4724,16 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -4677,6 +4755,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -4782,8 +4861,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -4803,14 +4883,16 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -4832,6 +4914,7 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -4956,8 +5039,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -4967,7 +5051,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4985,8 +5068,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -4996,7 +5080,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5149,8 +5232,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5160,7 +5244,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5178,8 +5261,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5189,7 +5273,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5338,6 +5421,7 @@ paths:
         schema:
           type: string
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5347,7 +5431,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5366,6 +5449,7 @@ paths:
           items:
             type: string
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5375,7 +5459,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5564,8 +5647,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5575,7 +5659,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5593,8 +5676,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5604,7 +5688,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5740,8 +5823,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5751,7 +5835,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5769,8 +5852,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5780,7 +5864,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6563,8 +6646,9 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -6574,7 +6658,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6592,8 +6675,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -6603,7 +6687,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6623,8 +6706,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -6634,7 +6718,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6652,8 +6735,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -6663,7 +6747,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7277,8 +7360,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -7288,7 +7372,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7306,8 +7389,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -7317,7 +7401,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7664,8 +7747,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -7675,7 +7759,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7693,8 +7776,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -7704,7 +7788,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7946,8 +8029,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -7957,7 +8041,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7975,8 +8058,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -7986,7 +8070,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -8234,8 +8317,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -8245,7 +8329,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8263,8 +8346,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -8274,7 +8358,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -9085,8 +9168,9 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: eca8c51e6bd28935
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
@@ -9096,7 +9180,6 @@ paths:
           - m365
           - mongodbatlas
           - oraclecloud
-          - alibabacloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9114,8 +9197,9 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: eca8c51e6bd28935
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
@@ -9125,7 +9209,6 @@ paths:
             - m365
             - mongodbatlas
             - oraclecloud
-            - alibabacloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -15637,6 +15720,44 @@ components:
                     required:
                     - atlas_public_key
                     - atlas_private_key
+                  - type: object
+                    title: Alibaba Cloud Static Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID for authentication.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret for authentication.
+                      security_token:
+                        type: string
+                        description: The STS security token for temporary credentials
+                          (optional).
+                    required:
+                    - access_key_id
+                    - access_key_secret
+                  - type: object
+                    title: Alibaba Cloud RAM Role Assumption
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID of the RAM user
+                          that will assume the role.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret of the RAM
+                          user that will assume the role.
+                      role_session_name:
+                        type: string
+                        description: An identifier for the role session (optional,
+                          defaults to 'ProwlerSession').
+                    required:
+                    - role_arn
+                    - access_key_id
+                    - access_key_secret
                   writeOnly: true
               required:
               - secret
@@ -16647,7 +16768,7 @@ components:
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
-              x-spec-enum-id: eca8c51e6bd28935
+              x-spec-enum-id: 684bf4173d2b754f
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -16764,7 +16885,7 @@ components:
               - oraclecloud
               - alibabacloud
               type: string
-              x-spec-enum-id: eca8c51e6bd28935
+              x-spec-enum-id: 684bf4173d2b754f
               description: |-
                 Type of provider to create.
 
@@ -16826,7 +16947,7 @@ components:
                   - oraclecloud
                   - alibabacloud
                   type: string
-                  x-spec-enum-id: eca8c51e6bd28935
+                  x-spec-enum-id: 684bf4173d2b754f
                   description: |-
                     Type of provider to create.
 
@@ -17602,6 +17723,44 @@ components:
                 required:
                 - atlas_public_key
                 - atlas_private_key
+              - type: object
+                title: Alibaba Cloud Static Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID for authentication.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret for authentication.
+                  security_token:
+                    type: string
+                    description: The STS security token for temporary credentials
+                      (optional).
+                required:
+                - access_key_id
+                - access_key_secret
+              - type: object
+                title: Alibaba Cloud RAM Role Assumption
+                properties:
+                  role_arn:
+                    type: string
+                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID of the RAM user that
+                      will assume the role.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret of the RAM user
+                      that will assume the role.
+                  role_session_name:
+                    type: string
+                    description: An identifier for the role session (optional, defaults
+                      to 'ProwlerSession').
+                required:
+                - role_arn
+                - access_key_id
+                - access_key_secret
               writeOnly: true
           required:
           - secret_type
@@ -17927,6 +18086,44 @@ components:
                     required:
                     - atlas_public_key
                     - atlas_private_key
+                  - type: object
+                    title: Alibaba Cloud Static Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID for authentication.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret for authentication.
+                      security_token:
+                        type: string
+                        description: The STS security token for temporary credentials
+                          (optional).
+                    required:
+                    - access_key_id
+                    - access_key_secret
+                  - type: object
+                    title: Alibaba Cloud RAM Role Assumption
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID of the RAM user
+                          that will assume the role.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret of the RAM
+                          user that will assume the role.
+                      role_session_name:
+                        type: string
+                        description: An identifier for the role session (optional,
+                          defaults to 'ProwlerSession').
+                    required:
+                    - role_arn
+                    - access_key_id
+                    - access_key_secret
                   writeOnly: true
               required:
               - secret_type
@@ -18266,6 +18463,44 @@ components:
                 required:
                 - atlas_public_key
                 - atlas_private_key
+              - type: object
+                title: Alibaba Cloud Static Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID for authentication.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret for authentication.
+                  security_token:
+                    type: string
+                    description: The STS security token for temporary credentials
+                      (optional).
+                required:
+                - access_key_id
+                - access_key_secret
+              - type: object
+                title: Alibaba Cloud RAM Role Assumption
+                properties:
+                  role_arn:
+                    type: string
+                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID of the RAM user that
+                      will assume the role.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret of the RAM user
+                      that will assume the role.
+                  role_session_name:
+                    type: string
+                    description: An identifier for the role session (optional, defaults
+                      to 'ProwlerSession').
+                required:
+                - role_arn
+                - access_key_id
+                - access_key_secret
               writeOnly: true
           required:
           - secret
