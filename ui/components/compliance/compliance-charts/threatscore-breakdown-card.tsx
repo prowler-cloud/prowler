@@ -11,6 +11,11 @@ interface ThreatScoreBreakdownCardProps {
   sectionScores: SectionScores;
 }
 
+const SCORE_THRESHOLDS = {
+  SUCCESS: 80,
+  WARNING: 40,
+} as const;
+
 const SCORE_COLORS = {
   DANGER: "var(--bg-fail-primary)",
   WARNING: "var(--bg-warning-primary)",
@@ -19,20 +24,26 @@ const SCORE_COLORS = {
 } as const;
 
 function getScoreLevel(score: number): "SUCCESS" | "WARNING" | "DANGER" {
-  if (score >= 80) return "SUCCESS";
-  if (score >= 40) return "WARNING";
+  if (score >= SCORE_THRESHOLDS.SUCCESS) return "SUCCESS";
+  if (score >= SCORE_THRESHOLDS.WARNING) return "WARNING";
   return "DANGER";
 }
 
 function getScoreColor(score: number): "success" | "warning" | "danger" {
-  if (score >= 80) return "success";
-  if (score >= 40) return "warning";
+  if (score >= SCORE_THRESHOLDS.SUCCESS) return "success";
+  if (score >= SCORE_THRESHOLDS.WARNING) return "warning";
   return "danger";
 }
 
+function getScoreTextClass(score: number): string {
+  if (score >= SCORE_THRESHOLDS.SUCCESS) return "text-success";
+  if (score >= SCORE_THRESHOLDS.WARNING) return "text-warning";
+  return "text-danger";
+}
+
 function getScoreLabel(score: number): string {
-  if (score >= 80) return "Secure";
-  if (score >= 40) return "Moderate Risk";
+  if (score >= SCORE_THRESHOLDS.SUCCESS) return "Secure";
+  if (score >= SCORE_THRESHOLDS.WARNING) return "Moderate Risk";
   return "Critical Risk";
 }
 
@@ -84,13 +95,7 @@ export function ThreatScoreBreakdownCard({
           <div className="flex flex-col">
             <span className="text-default-500 text-xs">Overall Score</span>
             <span
-              className={`text-2xl font-bold ${
-                overallScore >= 80
-                  ? "text-success"
-                  : overallScore >= 40
-                    ? "text-warning"
-                    : "text-danger"
-              }`}
+              className={`text-2xl font-bold ${getScoreTextClass(overallScore)}`}
             >
               {overallScore.toFixed(1)}%
             </span>
@@ -114,15 +119,7 @@ export function ThreatScoreBreakdownCard({
                   <span className="text-default-700 truncate pr-2">
                     {section}
                   </span>
-                  <span
-                    className={`font-semibold ${
-                      score >= 80
-                        ? "text-success"
-                        : score >= 40
-                          ? "text-warning"
-                          : "text-danger"
-                    }`}
-                  >
+                  <span className={`font-semibold ${getScoreTextClass(score)}`}>
                     {score.toFixed(1)}%
                   </span>
                 </div>

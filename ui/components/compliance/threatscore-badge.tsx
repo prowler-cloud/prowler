@@ -35,6 +35,23 @@ interface ThreatScoreBadgeProps {
   sectionScores?: SectionScores;
 }
 
+const SCORE_THRESHOLDS = {
+  SUCCESS: 80,
+  WARNING: 40,
+} as const;
+
+function getScoreColor(value: number): "success" | "warning" | "danger" {
+  if (value >= SCORE_THRESHOLDS.SUCCESS) return "success";
+  if (value >= SCORE_THRESHOLDS.WARNING) return "warning";
+  return "danger";
+}
+
+function getScoreTextClass(value: number): string {
+  if (value >= SCORE_THRESHOLDS.SUCCESS) return "text-success";
+  if (value >= SCORE_THRESHOLDS.WARNING) return "text-warning";
+  return "text-danger";
+}
+
 export const ThreatScoreBadge = ({
   score,
   scanId,
@@ -49,20 +66,6 @@ export const ThreatScoreBadge = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const complianceId = `prowler_threatscore_${provider.toLowerCase()}`;
-
-  const getScoreColor = (
-    value: number = score,
-  ): "success" | "warning" | "danger" => {
-    if (value >= 80) return "success";
-    if (value >= 40) return "warning";
-    return "danger";
-  };
-
-  const getTextColor = () => {
-    if (score >= 80) return "text-success";
-    if (score >= 40) return "text-warning";
-    return "text-danger";
-  };
 
   const handleCardClick = () => {
     const title = "ProwlerThreatScore";
@@ -130,13 +133,13 @@ export const ThreatScoreBadge = ({
           <ThreatScoreLogo />
 
           <div className="flex flex-col items-end gap-1">
-            <span className={`text-2xl font-bold ${getTextColor()}`}>
+            <span className={`text-2xl font-bold ${getScoreTextClass(score)}`}>
               {score}%
             </span>
             <Progress
               aria-label="ThreatScore progress"
               value={score}
-              color={getScoreColor()}
+              color={getScoreColor(score)}
               size="sm"
               className="w-24"
             />
@@ -145,7 +148,12 @@ export const ThreatScoreBadge = ({
 
         {sectionScores && Object.keys(sectionScores).length > 0 && (
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-            <CollapsibleTrigger className="text-default-500 hover:text-default-700 flex w-full items-center justify-center gap-1 py-1 text-xs transition-colors">
+            <CollapsibleTrigger
+              aria-label={
+                isExpanded ? "Hide pillar breakdown" : "Show pillar breakdown"
+              }
+              className="text-default-500 hover:text-default-700 flex w-full items-center justify-center gap-1 py-1 text-xs transition-colors"
+            >
               {isExpanded ? (
                 <>
                   <ChevronUp size={14} />
@@ -177,13 +185,7 @@ export const ThreatScoreBadge = ({
                       className="w-16"
                     />
                     <span
-                      className={`w-12 text-right font-medium ${
-                        sectionScore >= 80
-                          ? "text-success"
-                          : sectionScore >= 40
-                            ? "text-warning"
-                            : "text-danger"
-                      }`}
+                      className={`w-12 text-right font-medium ${getScoreTextClass(sectionScore)}`}
                     >
                       {sectionScore.toFixed(1)}%
                     </span>
