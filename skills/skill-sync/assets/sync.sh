@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Sync skill metadata to AGENTS.md Auto-invoke sections
 # Usage: ./sync.sh [--dry-run] [--scope <scope>]
 
@@ -85,18 +85,71 @@ extract_field() {
 }
 
 # Extract nested metadata field
+#
+# Supports either:
+#   auto_invoke: "Single Action"
+# or:
+#   auto_invoke:
+#     - "Action A"
+#     - "Action B"
+#
+# For list values, this returns a pipe-delimited string: "Action A|Action B"
 extract_metadata() {
     local file="$1"
     local field="$2"
+
     awk -v field="$field" '
+        function trim(s) {
+            sub(/^[[:space:]]+/, "", s)
+            sub(/[[:space:]]+$/, "", s)
+            return s
+        }
+
         /^---$/ { in_frontmatter = !in_frontmatter; next }
+
         in_frontmatter && /^metadata:/ { in_metadata = 1; next }
         in_frontmatter && in_metadata && /^[a-z]/ && !/^[[:space:]]/ { in_metadata = 0 }
+
         in_frontmatter && in_metadata && $1 == field":" {
+            # Remove "field:" prefix
             sub(/^[^:]+:[[:space:]]*/, "")
-            gsub(/^["'\'']|["'\'']$/, "")
-            gsub(/^\[|\]$/, "")  # Remove array brackets
-            print
+
+            # Single-line scalar: auto_invoke: "Action"
+            if ($0 != "") {
+                v = $0
+                gsub(/^["'\'']|["'\'']$/, "", v)
+                gsub(/^\[|\]$/, "", v)  # legacy: allow inline [a, b]
+                print trim(v)
+                exit
+            }
+
+            # Multi-line list:
+            # auto_invoke:
+            #   - "Action A"
+            #   - "Action B"
+            out = ""
+            while (getline) {
+                # Stop when leaving metadata block
+                if (!in_frontmatter) break
+                if (!in_metadata) break
+                if ($0 ~ /^[a-z]/ && $0 !~ /^[[:space:]]/) break
+
+                # On multi-line list, only accept "- item" lines. Anything else ends the list.
+                line = $0
+                if (line ~ /^[[:space:]]*-[[:space:]]*/) {
+                    sub(/^[[:space:]]*-[[:space:]]*/, "", line)
+                    line = trim(line)
+                    gsub(/^["'\'']|["'\'']$/, "", line)
+                    if (line != "") {
+                        if (out == "") out = line
+                        else out = out "|" line
+                    }
+                } else {
+                    break
+                }
+            }
+
+            if (out != "") print out
             exit
         }
     ' "$file"
@@ -109,12 +162,20 @@ echo ""
 # Collect skills by scope
 declare -A SCOPE_SKILLS  # scope -> "skill1:action1|skill2:action2|..."
 
-for skill_file in "$SKILLS_DIR"/*/SKILL.md; do
+# Deterministic iteration order (stable diffs)
+# Note: macOS ships BSD find; avoid GNU-only flags.
+while IFS= read -r skill_file; do
     [ -f "$skill_file" ] || continue
 
     skill_name=$(extract_field "$skill_file" "name")
     scope_raw=$(extract_metadata "$skill_file" "scope")
-    auto_invoke=$(extract_metadata "$skill_file" "auto_invoke")
+
+    auto_invoke_raw=$(extract_metadata "$skill_file" "auto_invoke")
+    # extract_metadata() returns:
+    # - single action: "Action"
+    # - multiple actions: "Action A|Action B" (pipe-delimited)
+    # But SCOPE_SKILLS also uses '|' to separate entries, so we protect it.
+    auto_invoke=${auto_invoke_raw//|/;;}
 
     # Skip if no scope or auto_invoke defined
     [ -z "$scope_raw" ] || [ -z "$auto_invoke" ] && continue
@@ -136,10 +197,16 @@ for skill_file in "$SKILLS_DIR"/*/SKILL.md; do
             SCOPE_SKILLS[$scope]="${SCOPE_SKILLS[$scope]}|$skill_name:$auto_invoke"
         fi
     done
-done
+done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort)
 
 # Generate Auto-invoke section for each scope
-for scope in "${!SCOPE_SKILLS[@]}"; do
+# Deterministic scope order (stable diffs)
+scopes_sorted=()
+while IFS= read -r scope; do
+    scopes_sorted+=("$scope")
+done < <(printf "%s\n" "${!SCOPE_SKILLS[@]}" | sort)
+
+for scope in "${scopes_sorted[@]}"; do
     agents_path=$(get_agents_path "$scope")
 
     if [ -z "$agents_path" ] || [ ! -f "$agents_path" ]; then
@@ -157,13 +224,29 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|"
 
+    # Expand into sortable rows: "action<TAB>skill"
+    rows=()
+
     IFS='|' read -ra skill_entries <<< "${SCOPE_SKILLS[$scope]}"
     for entry in "${skill_entries[@]}"; do
         skill_name="${entry%%:*}"
-        action="${entry#*:}"
+        actions_raw="${entry#*:}"
+
+        actions_raw=${actions_raw//;;/|}
+        IFS='|' read -ra actions <<< "$actions_raw"
+        for action in "${actions[@]}"; do
+            action="$(echo "$action" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+            [ -z "$action" ] && continue
+            rows+=("$action	$skill_name")
+        done
+    done
+
+    # Deterministic row order: Action then Skill
+    while IFS=$'\t' read -r action skill_name; do
+        [ -z "$action" ] && continue
         auto_invoke_section="$auto_invoke_section
 | $action | \`$skill_name\` |"
-    done
+    done < <(printf "%s\n" "${rows[@]}" | LC_ALL=C sort -t $'\t' -k1,1 -k2,2)
 
     if $DRY_RUN; then
         echo -e "${YELLOW}[DRY RUN] Would update $agents_path with:${NC}"
@@ -216,17 +299,18 @@ echo -e "${GREEN}Done!${NC}"
 echo ""
 echo -e "${BLUE}Skills missing sync metadata:${NC}"
 missing=0
-for skill_file in "$SKILLS_DIR"/*/SKILL.md; do
+while IFS= read -r skill_file; do
     [ -f "$skill_file" ] || continue
     skill_name=$(extract_field "$skill_file" "name")
     scope_raw=$(extract_metadata "$skill_file" "scope")
-    auto_invoke=$(extract_metadata "$skill_file" "auto_invoke")
+    auto_invoke_raw=$(extract_metadata "$skill_file" "auto_invoke")
+    auto_invoke=${auto_invoke_raw//|/;;}
 
     if [ -z "$scope_raw" ] || [ -z "$auto_invoke" ]; then
         echo -e "  ${YELLOW}$skill_name${NC} - missing: ${scope_raw:+}${scope_raw:-scope} ${auto_invoke:+}${auto_invoke:-auto_invoke}"
         missing=$((missing + 1))
     fi
-done
+done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort)
 
 if [ $missing -eq 0 ]; then
     echo -e "  ${GREEN}All skills have sync metadata${NC}"

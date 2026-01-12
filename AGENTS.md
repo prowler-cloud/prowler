@@ -47,10 +47,37 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Writing documentation | `prowler-docs` |
-| Creating a PR | `prowler-pr` |
-| Creating new skills | `skill-creator` |
+| Adding new providers | `prowler-provider` |
+| Adding services to existing providers | `prowler-provider` |
 | After creating/modifying a skill | `skill-sync` |
+| App Router / Server Actions | `nextjs-15` |
+| Building AI chat features | `ai-sdk-5` |
+| Creating Zod schemas | `zod-4` |
+| Creating a PR | `prowler-pr` |
+| Creating new checks | `prowler-sdk-check` |
+| Creating new skills | `skill-creator` |
+| Creating/modifying Prowler UI components | `prowler-ui` |
+| Creating/modifying models, views, serializers | `prowler-api` |
+| Creating/updating compliance frameworks | `prowler-compliance` |
+| General Prowler development questions | `prowler` |
+| Generic DRF patterns | `django-drf` |
+| Mapping checks to compliance controls | `prowler-compliance` |
+| Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Testing RLS tenant isolation | `prowler-test-api` |
+| Updating existing checks and metadata | `prowler-sdk-check` |
+| Using Zustand stores | `zustand-5` |
+| Working on MCP server tools | `prowler-mcp` |
+| Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working with Prowler UI test helpers/pages | `prowler-test-ui` |
+| Working with Tailwind classes | `tailwind-4` |
+| Writing Playwright E2E tests | `playwright` |
+| Writing Prowler API tests | `prowler-test-api` |
+| Writing Prowler SDK tests | `prowler-test-sdk` |
+| Writing Prowler UI E2E tests | `prowler-test-ui` |
+| Writing Python tests with pytest | `pytest` |
+| Writing React components | `react-19` |
+| Writing TypeScript types/interfaces | `typescript` |
+| Writing documentation | `prowler-docs` |
 
 ---
 

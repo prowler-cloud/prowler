@@ -19,11 +19,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | App Router / Server Actions | `nextjs-15` |
-| Writing E2E/Playwright tests | `prowler-test-ui` |
-| Creating/modifying React components | `prowler-ui` |
-| Working with Tailwind classes | `tailwind-4` |
+| Building AI chat features | `ai-sdk-5` |
 | Creating Zod schemas | `zod-4` |
+| Creating/modifying Prowler UI components | `prowler-ui` |
 | Using Zustand stores | `zustand-5` |
+| Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working with Prowler UI test helpers/pages | `prowler-test-ui` |
+| Working with Tailwind classes | `tailwind-4` |
+| Writing Playwright E2E tests | `playwright` |
+| Writing Prowler UI E2E tests | `prowler-test-ui` |
+| Writing React components | `react-19` |
+| Writing TypeScript types/interfaces | `typescript` |
 
 ---
 

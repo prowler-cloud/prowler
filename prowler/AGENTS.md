@@ -13,10 +13,15 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Adding compliance frameworks | `prowler-compliance` |
 | Adding new providers | `prowler-provider` |
+| Adding services to existing providers | `prowler-provider` |
 | Creating new checks | `prowler-sdk-check` |
-| Writing SDK tests | `prowler-test-sdk` |
+| Creating/updating compliance frameworks | `prowler-compliance` |
+| Mapping checks to compliance controls | `prowler-compliance` |
+| Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Updating existing checks and metadata | `prowler-sdk-check` |
+| Writing Prowler SDK tests | `prowler-test-sdk` |
+| Writing Python tests with pytest | `pytest` |
 
 ---
 

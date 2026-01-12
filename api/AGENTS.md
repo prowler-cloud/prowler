@@ -12,9 +12,11 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Generic DRF patterns | `django-drf` |
 | Creating/modifying models, views, serializers | `prowler-api` |
-| Writing API tests | `prowler-test-api` |
+| Generic DRF patterns | `django-drf` |
+| Testing RLS tenant isolation | `prowler-test-api` |
+| Writing Prowler API tests | `prowler-test-api` |
+| Writing Python tests with pytest | `pytest` |
 
 ---
 
