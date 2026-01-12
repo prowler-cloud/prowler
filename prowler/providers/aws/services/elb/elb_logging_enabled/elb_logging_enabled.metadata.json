@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Elastic Load Balancers** have **access logs** configured to deliver request metadata (client IPs, paths, status, TLS details) to **Amazon S3**",
   "Risk": "Without **ELB access logs**, you lose **visibility** into edge traffic, reducing detection of reconnaissance, brute-force, and exploitation attempts. This hampers forensics and incident timelines, risking undetected data exfiltration (confidentiality), untraceable changes (integrity), and delayed response to outages or DDoS (availability).",
   "RelatedUrl": "",

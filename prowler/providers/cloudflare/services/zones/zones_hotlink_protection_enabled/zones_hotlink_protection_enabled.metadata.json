@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_hotlink_protection_enabled",
-  "CheckTitle": "Hotlink Protection is enabled to prevent bandwidth theft",
+  "CheckTitle": "Hotlink Protection is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

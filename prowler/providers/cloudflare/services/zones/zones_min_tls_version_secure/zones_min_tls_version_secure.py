@@ -5,8 +5,6 @@ from prowler.providers.cloudflare.services.zones.zones_client import zones_clien
 class zones_min_tls_version_secure(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         findings = []
-        min_tls_version = zones_client.audit_config.get("min_tls_version", "1.2")
-        required_version = float(min_tls_version)
 
         for zone in zones_client.zones.values():
             report = CheckReportCloudflare(
@@ -18,11 +16,12 @@ class zones_min_tls_version_secure(Check):
                 current = float(current_version)
             except ValueError:
                 current = 0
-            if current >= required_version:
+
+            if current >= 1.2:
                 report.status = "PASS"
                 report.status_extended = f"Minimum TLS version for zone {zone.name} is set to {current_version}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Minimum TLS version for zone {zone.name} is {current_version}, below the recommended {min_tls_version}."
+                report.status_extended = f"Minimum TLS version for zone {zone.name} is {current_version}, below the recommended 1.2."
             findings.append(report)
         return findings

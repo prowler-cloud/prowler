@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_ip_geolocation_enabled",
-  "CheckTitle": "IP Geolocation is enabled for geographic-based security controls",
+  "CheckTitle": "IP Geolocation is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

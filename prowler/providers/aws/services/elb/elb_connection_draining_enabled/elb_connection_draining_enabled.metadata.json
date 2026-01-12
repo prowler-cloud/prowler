@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Classic Load Balancer** has **connection draining** enabled, so deregistering or unhealthy instances stop receiving new requests while existing connections are allowed to complete within the configured drain window.",
   "Risk": "Without **connection draining**, instance removals or health failures can terminate in-flight requests, leading to partial transactions, broken sessions, and inconsistent application state. This reduces **availability** and can impact **data integrity** during deployments, scaling, or failover events.",
   "RelatedUrl": "",

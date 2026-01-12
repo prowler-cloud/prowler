@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Elastic Load Balancers** are assessed for client-facing listener protocols. Only `HTTPS` or `SSL` are considered encrypted; any `HTTP` or `TCP` listener indicates plaintext between clients and the load balancer.",
   "Risk": "Plaintext listeners enable network eavesdropping and content injection, compromising **confidentiality** and **integrity**. Attackers on public or untrusted paths can harvest credentials and session tokens or alter traffic via MITM, leading to data exposure and unauthorized access.",
   "RelatedUrl": "",

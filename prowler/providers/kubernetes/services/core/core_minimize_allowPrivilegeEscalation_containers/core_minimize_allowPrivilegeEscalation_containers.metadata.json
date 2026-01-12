@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that have the allowPrivilegeEscalation flag set to true, preventing processes within containers from gaining additional privileges.",
   "Risk": "Allowing containers with allowPrivilegeEscalation can lead to elevated privileges within the container's context, posing a security risk.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

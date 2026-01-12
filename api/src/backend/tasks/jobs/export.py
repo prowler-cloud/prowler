@@ -27,6 +27,7 @@ from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
+from prowler.lib.outputs.compliance.cis.cis_alibabacloud import AlibabaCloudCIS
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -50,6 +51,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
+    ProwlerThreatScoreAlibaba,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
@@ -127,6 +131,13 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "oraclecloud": [
         (lambda name: name.startswith("cis_"), OracleCloudCIS),
+    ],
+    "alibabacloud": [
+        (lambda name: name.startswith("cis_"), AlibabaCloudCIS),
+        (
+            lambda name: name == "prowler_threatscore_alibabacloud",
+            ProwlerThreatScoreAlibaba,
+        ),
     ],
 }
 

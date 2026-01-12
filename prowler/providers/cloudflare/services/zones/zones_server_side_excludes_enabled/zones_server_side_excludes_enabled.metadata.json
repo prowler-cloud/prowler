@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "zones_server_side_excludes_enabled",
-  "CheckTitle": "Server Side Excludes is enabled to hide sensitive content from bots",
+  "CheckTitle": "Server Side Excludes is enabled",
   "CheckType": [],
   "ServiceName": "zones",
   "SubServiceName": "",

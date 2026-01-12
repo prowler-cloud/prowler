@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureEmailNotifications",
+  "ResourceGroup": "monitoring",
   "Description": "Enable security alert emails to subscription owners.",
   "Risk": "Enabling security alert emails to subscription owners ensures that they receive security alert emails from Microsoft. This ensures that they are aware of any potential security issues and can mitigate the risk in a timely fashion.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",

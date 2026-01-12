@@ -68,7 +68,10 @@ class Test_zones_ssl_strict:
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "strict" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"SSL/TLS encryption mode is set to strict for zone {ZONE_NAME}."
+            )
 
     def test_zone_ssl_full_strict_mode(self):
         zones_client = mock.MagicMock
@@ -102,7 +105,10 @@ class Test_zones_ssl_strict:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "full_strict" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"SSL/TLS encryption mode is set to full_strict for zone {ZONE_NAME}."
+            )
 
     def test_zone_ssl_full_mode(self):
         zones_client = mock.MagicMock
@@ -136,7 +142,10 @@ class Test_zones_ssl_strict:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "full" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"SSL/TLS encryption mode is set to full for zone {ZONE_NAME}."
+            )
 
     def test_zone_ssl_flexible_mode(self):
         zones_client = mock.MagicMock
@@ -170,7 +179,10 @@ class Test_zones_ssl_strict:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "flexible" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"SSL/TLS encryption mode is set to flexible for zone {ZONE_NAME}."
+            )
 
     def test_zone_ssl_off_mode(self):
         zones_client = mock.MagicMock
@@ -204,3 +216,7 @@ class Test_zones_ssl_strict:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"SSL/TLS encryption mode is set to off for zone {ZONE_NAME}."
+            )

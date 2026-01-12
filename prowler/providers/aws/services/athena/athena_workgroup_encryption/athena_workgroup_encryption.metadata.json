@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAthenaWorkGroup",
+  "ResourceGroup": "analytics",
   "Description": "**Athena workgroups** are evaluated for **encryption of query results** to confirm result data is stored encrypted at rest, whether saved in Amazon S3 or via managed query results",
   "Risk": "Unencrypted query outputs can be read at rest by unintended principals through S3 misconfigurations or cross-account access.\n\nImpact: **Confidentiality loss**, enabling **data exfiltration** and supporting **lateral movement** by exposing sensitive fields outside intended boundaries.",
   "RelatedUrl": "",

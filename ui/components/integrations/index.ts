@@ -1,4 +1,5 @@
 export * from "../providers/enhanced-provider-selector";
+export * from "./api-key/api-key-link-card";
 export * from "./jira/jira-integration-card";
 export * from "./jira/jira-integration-form";
 export * from "./jira/jira-integrations-manager";
@@ -11,3 +12,4 @@ export * from "./security-hub/security-hub-integration-card";
 export * from "./security-hub/security-hub-integration-form";
 export * from "./security-hub/security-hub-integrations-manager";
 export * from "./shared";
+export * from "./sso/sso-link-card";

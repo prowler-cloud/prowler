@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
+  "ResourceGroup": "network",
   "Description": "**VPCs** with an **AWS Network Firewall** associated to the same VPC to inspect and filter network traffic.\n\nIdentifies VPCs that do not have a Network Firewall resource linked to them.",
   "Risk": "Without a **Network Firewall**, VPC traffic can bypass deep inspection and centralized policy enforcement, enabling **data exfiltration**, **command-and-control**, and **lateral movement**. Confidentiality is reduced by unmonitored flows; integrity and availability are threatened by malware and disruptive traffic.",
   "RelatedUrl": "",

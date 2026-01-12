@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
+  "ResourceGroup": "database",
   "Description": "**DynamoDB tables** are evaluated for **resource-based policies** that permit cross-account or public principals.\n\nTables without a resource policy, or with policies restricted to the same account, are identified as isolated configurations.",
   "Risk": "Allowing other accounts to access a table affects:\n- **Confidentiality**: unauthorized reads/data exfiltration\n- **Integrity**: writes or deletes by external principals\n- **Availability**: capacity exhaustion and throttling\n- **Cost**: owner pays for external requests\n\nIf public principals are allowed, exposure can be unrestricted.",
   "RelatedUrl": "",
