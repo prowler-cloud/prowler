@@ -4110,6 +4110,37 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
 
+    def test_finding_filter_by_provider_id_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id filter alias works identically to provider filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_provider_id_in_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id__in filter alias works identically to provider__in filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id__in]": [
+                    findings_fixture[0].scan.provider.id,
+                    findings_fixture[1].scan.provider.id,
+                ],
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
     @pytest.mark.parametrize(
         "filter_name",
         (
@@ -4330,6 +4361,28 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == latest_scan_finding.status
         )
+
+    def test_findings_latest_filter_by_provider_id_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id]": latest_scan_finding.scan.provider.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_findings_latest_filter_by_provider_id_in_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id__in filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id__in]": str(latest_scan_finding.scan.provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
 
     def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
         response = authenticated_client.get(
