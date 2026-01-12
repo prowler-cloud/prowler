@@ -249,3 +249,42 @@ class Test_s3_bucket_server_access_logging_enabled:
                     by_id[bucket_pass].resource_arn
                     == f"arn:{aws_provider.identity.partition}:s3:::{bucket_pass}"
                 )
+
+    @mock_aws
+    def test_bucket_logging_config_missing_loggingenabled_key(self):
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket_test_logging_empty"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+
+        # Explicitly set empty logging status (no LoggingEnabled)
+        s3_client_us_east_1.put_bucket_logging(
+            Bucket=bucket_name,
+            BucketLoggingStatus={},
+        )
+
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_server_access_logging_enabled.s3_bucket_server_access_logging_enabled.s3_client",
+                new=S3(aws_provider),
+            ):
+                from prowler.providers.aws.services.s3.s3_bucket_server_access_logging_enabled.s3_bucket_server_access_logging_enabled import (
+                    s3_bucket_server_access_logging_enabled,
+                )
+
+                check = s3_bucket_server_access_logging_enabled()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].resource_id == bucket_name
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"S3 Bucket {bucket_name} has server access logging disabled."
+                )
