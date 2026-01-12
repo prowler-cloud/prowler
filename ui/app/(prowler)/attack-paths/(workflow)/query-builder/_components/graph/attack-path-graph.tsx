@@ -35,7 +35,7 @@ interface AttackPathGraphProps {
   data: AttackPathGraphData;
   onNodeClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
-  isFilteredView?: boolean;
+  visibleNodeIds?: Set<string> | null; // null means all nodes visible
   ref?: Ref<AttackPathGraphRef>;
 }
 
@@ -58,7 +58,7 @@ const HEXAGON_HEIGHT = 55; // Height for finding hexagons
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
   AttackPathGraphProps
->(({ data, onNodeClick, selectedNodeId, isFilteredView = false }, ref) => {
+>(({ data, onNodeClick, selectedNodeId, visibleNodeIds = null }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
@@ -75,11 +75,15 @@ const AttackPathGraphComponent = forwardRef<
   const nodeShapesRef = useRef<ReturnType<
     typeof select<SVGRectElement, NodeData>
   > | null>(null);
+  const nodeElementsRef = useRef<ReturnType<
+    typeof select<SVGGElement, NodeData>
+  > | null>(null);
   const linkElementsRef = useRef<ReturnType<
     typeof select<SVGLineElement, unknown>
   > | null>(null);
   const resourcesWithFindingsRef = useRef<Set<string>>(new Set());
   const selectedNodeIdRef = useRef<string | null>(null);
+  const nodeDataMapRef = useRef<Map<string, GraphNode>>(new Map());
   const edgesDataRef = useRef<
     Array<{
       sourceId: string;
@@ -209,6 +213,71 @@ const AttackPathGraphComponent = forwardRef<
     }
   }, [selectedNodeId]);
 
+  // Animate visibility changes when filtering (without rebuilding DOM)
+  useEffect(() => {
+    if (!nodeElementsRef.current || !linkElementsRef.current) return;
+
+    const TRANSITION_DURATION = 300;
+
+    // Helper to check if a node is a finding
+    const isNodeFinding = (nodeId: string) => {
+      const node = nodeDataMapRef.current.get(nodeId);
+      return node?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+    };
+
+    // Determine visibility for each node
+    nodeElementsRef.current.each(function (d: NodeData) {
+      const nodeSelection = select(this);
+      const isFinding = d.data.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+
+      let shouldBeVisible: boolean;
+      if (visibleNodeIds === null) {
+        // No filter active - hide findings, show resources
+        shouldBeVisible = !isFinding;
+      } else {
+        // Filter active - show only nodes in visibleNodeIds
+        shouldBeVisible = visibleNodeIds.has(d.id);
+      }
+
+      // Animate opacity transition
+      nodeSelection
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", shouldBeVisible ? 1 : 0.15)
+        .style("pointer-events", shouldBeVisible ? "auto" : "none");
+    });
+
+    // Update edge visibility with animation
+    linkElementsRef.current.each(function (edgeData: {
+      sourceId: string;
+      targetId: string;
+    }) {
+      const edgeSelection = select(this);
+      const sourceIsFinding = isNodeFinding(edgeData.sourceId);
+      const targetIsFinding = isNodeFinding(edgeData.targetId);
+
+      let shouldBeVisible: boolean;
+      if (visibleNodeIds === null) {
+        // No filter - hide edges connected to findings
+        shouldBeVisible = !sourceIsFinding && !targetIsFinding;
+      } else {
+        // Filter active - show edges where both endpoints are visible
+        shouldBeVisible =
+          visibleNodeIds.has(edgeData.sourceId) &&
+          visibleNodeIds.has(edgeData.targetId);
+      }
+
+      edgeSelection
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", shouldBeVisible ? 1 : 0.1);
+    });
+  }, [visibleNodeIds]);
+
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
       if (svgSelectionRef.current && zoomBehaviorRef.current) {
@@ -302,9 +371,10 @@ const AttackPathGraphComponent = forwardRef<
     });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // Initially hide finding nodes (but not when in filtered view)
+    // Initially hide finding nodes (but not when filtering by visibleNodeIds)
     const initialHiddenNodes = new Set<string>();
-    if (!isFilteredView) {
+    if (!visibleNodeIds) {
+      // Only hide findings when not in filtered view
       data.nodes.forEach((node) => {
         const isFinding = node.labels.some((label) =>
           label.toLowerCase().includes("finding"),
@@ -318,6 +388,7 @@ const AttackPathGraphComponent = forwardRef<
 
     // Create a map to store original node data
     const nodeDataMap = new Map(data.nodes.map((node) => [node.id, node]));
+    nodeDataMapRef.current = nodeDataMap;
 
     // Add nodes to dagre graph with appropriate sizes
     data.nodes.forEach((node) => {
@@ -593,20 +664,22 @@ const AttackPathGraphComponent = forwardRef<
         return hasFinding ? "animated-edge" : "resource-edge";
       })
       .attr("marker-end", "url(#arrowhead)")
-      .each(function (d) {
-        // Resource-to-resource edges are ALWAYS visible
-        // Finding edges are only visible when the finding node is visible
+      .style("opacity", (d) => {
         const sourceIsFinding = isNodeFinding(d.sourceId);
         const targetIsFinding = isNodeFinding(d.targetId);
 
-        let visibility = "visible";
-        if (sourceIsFinding || targetIsFinding) {
-          const sourceHidden = hiddenNodeIdsRef.current.has(d.sourceId);
-          const targetHidden = hiddenNodeIdsRef.current.has(d.targetId);
-          visibility = sourceHidden || targetHidden ? "hidden" : "visible";
+        if (visibleNodeIds !== null) {
+          // Filter active - show edges where both endpoints are visible
+          const bothVisible =
+            visibleNodeIds.has(d.sourceId) && visibleNodeIds.has(d.targetId);
+          return bothVisible ? 1 : 0.1;
         }
 
-        select(this).style("visibility", visibility);
+        // No filter - hide edges connected to findings
+        if (sourceIsFinding || targetIsFinding) {
+          return 0.1;
+        }
+        return 1;
       });
 
     // Store linkElements reference for hover interactions
@@ -635,9 +708,19 @@ const AttackPathGraphComponent = forwardRef<
       .attr("class", "node")
       .attr("transform", (d) => `translate(${d.x},${d.y})`)
       .attr("cursor", "pointer")
-      .style("display", (d) =>
-        hiddenNodeIdsRef.current.has(d.id) ? "none" : null,
-      )
+      .style("opacity", (d) => {
+        // Initial visibility based on visibleNodeIds or hidden findings
+        if (visibleNodeIds !== null) {
+          return visibleNodeIds.has(d.id) ? 1 : 0.15;
+        }
+        return hiddenNodeIdsRef.current.has(d.id) ? 0.15 : 1;
+      })
+      .style("pointer-events", (d) => {
+        if (visibleNodeIds !== null) {
+          return visibleNodeIds.has(d.id) ? "auto" : "none";
+        }
+        return hiddenNodeIdsRef.current.has(d.id) ? "none" : "auto";
+      })
       .on("mouseenter", function (_event: PointerEvent, d) {
         // Highlight entire path from this node
         const pathEdges = getPathEdges(d.id, edgesData);
@@ -1036,10 +1119,13 @@ const AttackPathGraphComponent = forwardRef<
       }
     });
 
-    // Store reference for updating selection later (select all shapes)
+    // Store references for updating visibility and selection later
     const nodeShapes = nodeElements.selectAll(".node-shape");
     nodeShapesRef.current = nodeShapes as unknown as ReturnType<
       typeof select<SVGRectElement, NodeData>
+    >;
+    nodeElementsRef.current = nodeElements as unknown as ReturnType<
+      typeof select<SVGGElement, NodeData>
     >;
 
     // Add label text - white text on all nodes (backgrounds are dark enough)
@@ -1226,7 +1312,7 @@ const AttackPathGraphComponent = forwardRef<
       }
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isFilteredView]);
+  }, [data]);
 
   return (
     <svg
