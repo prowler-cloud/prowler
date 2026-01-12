@@ -2,13 +2,16 @@
 name: skill-sync
 description: >
   Syncs skill metadata to AGENTS.md Auto-invoke sections.
-  Trigger: After creating/modifying a skill, run sync to update AGENTS.md files.
+  Trigger: When updating skill metadata (metadata.scope/metadata.auto_invoke), regenerating Auto-invoke tables, or running ./skills/skill-sync/assets/sync.sh (including --dry-run/--scope).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
   scope: [root]
-  auto_invoke: "After creating/modifying a skill"
+  auto_invoke:
+    - "After creating/modifying a skill"
+    - "Regenerate AGENTS.md Auto-invoke tables (sync.sh)"
+    - "Troubleshoot why a skill is missing from AGENTS.md auto-invoke"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 

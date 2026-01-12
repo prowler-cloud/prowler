@@ -37,6 +37,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/prowler-test-ui/SKILL.md) |
 | `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
+| `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
@@ -52,18 +53,29 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
+| Create a PR with gh pr create | `prowler-pr` |
 | Creating Zod schemas | `zod-4` |
-| Creating a PR | `prowler-pr` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
+| Debug why a GitHub Actions job is failing | `prowler-ci` |
+| Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | General Prowler development questions | `prowler` |
 | Generic DRF patterns | `django-drf` |
+| Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
+| Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
+| Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Testing RLS tenant isolation | `prowler-test-api` |
+| Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
+| Understand CODEOWNERS/labeler-based automation | `prowler-ci` |
+| Understand PR title conventional-commit validation | `prowler-ci` |
+| Understand changelog gate and no-changelog label behavior | `prowler-ci` |
+| Understand review ownership with CODEOWNERS | `prowler-pr` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |
