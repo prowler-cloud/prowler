@@ -5,7 +5,7 @@ import sys
 import tempfile
 from fnmatch import fnmatch
 from os import environ
-from typing import List
+from typing import List, Optional
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -169,7 +169,7 @@ class GithubActionsProvider(Provider):
 
         return False
 
-    def _extract_workflow_file_from_location(self, location: dict) -> str | None:
+    def _extract_workflow_file_from_location(self, location: dict) -> Optional[str]:
         """
         Extract the workflow file path from a location object.
         Supports zizmor v1.x+ JSON format.
