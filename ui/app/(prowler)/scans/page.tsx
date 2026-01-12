@@ -1,7 +1,7 @@
 import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
-import { getAllProviders } from "@/actions/providers";
+import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
 import { auth } from "@/auth.config";
 import { MutedFindingsConfigButton } from "@/components/providers";
@@ -33,7 +33,9 @@ export default async function Scans({
   const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
 
-  const providersData = await getAllProviders();
+  const providersData = await getProviders({
+    pageSize: 50,
+  });
 
   const providerInfo =
     providersData?.data
