@@ -3,30 +3,33 @@
 import { filterFindings } from "@/components/filters/data-filters";
 import { FilterControls } from "@/components/filters/filter-controls";
 import { useRelatedFilters } from "@/hooks";
+import { getCategoryLabel } from "@/lib/categories";
 import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
 
 interface FindingsFiltersProps {
-  providerUIDs: string[];
-  providerDetails: { [uid: string]: FilterEntity }[];
+  providerIds: string[];
+  providerDetails: { [id: string]: FilterEntity }[];
   completedScans: ScanProps[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
   uniqueRegions: string[];
   uniqueServices: string[];
   uniqueResourceTypes: string[];
+  uniqueCategories: string[];
 }
 
 export const FindingsFilters = ({
-  providerUIDs,
+  providerIds,
   providerDetails,
   completedScanIds,
   scanDetails,
   uniqueRegions,
   uniqueServices,
   uniqueResourceTypes,
+  uniqueCategories,
 }: FindingsFiltersProps) => {
-  const { availableProviderUIDs, availableScans } = useRelatedFilters({
-    providerUIDs,
+  const { availableProviderIds, availableScans } = useRelatedFilters({
+    providerIds,
     providerDetails,
     completedScanIds,
     scanDetails,
@@ -42,9 +45,9 @@ export const FindingsFilters = ({
         customFilters={[
           ...filterFindings,
           {
-            key: FilterType.PROVIDER_UID,
-            labelCheckboxGroup: "Provider UID",
-            values: availableProviderUIDs,
+            key: FilterType.PROVIDER,
+            labelCheckboxGroup: "Provider",
+            values: availableProviderIds,
             valueLabelMapping: providerDetails,
             index: 6,
           },
@@ -65,6 +68,13 @@ export const FindingsFilters = ({
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
             index: 8,
+          },
+          {
+            key: FilterType.CATEGORY,
+            labelCheckboxGroup: "Category",
+            values: uniqueCategories,
+            labelFormatter: getCategoryLabel,
+            index: 5,
           },
           {
             key: FilterType.SCAN,

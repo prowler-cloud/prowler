@@ -4,7 +4,7 @@ import { Chip } from "@heroui/chip";
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button, Card } from "@/components/shadcn";
 import { getRolePermissions } from "@/lib/permissions";
 import { RoleData, RoleDetail } from "@/types/users";
 
@@ -53,7 +53,7 @@ export const RoleItem = ({
   const permissions = getRolePermissions(attributes);
 
   return (
-    <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+    <Card variant="inner">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Chip size="sm" variant="flat" color="primary">
@@ -64,21 +64,19 @@ export const RoleItem = ({
           </span>
         </div>
 
-        <CustomButton
-          ariaLabel={isExpanded ? "Hide Details" : "Show Details"}
-          onPress={() => setIsExpanded(!isExpanded)}
-          className="text-blue-500"
-          color="transparent"
+        <Button
+          variant="ghost"
           size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? "Hide details" : "Show details"}
-        </CustomButton>
+        </Button>
       </div>
 
       {isExpanded && (
         <div
           id={detailsId}
-          className="animate-fadeIn mt-3 border-t pt-3"
+          className="animate-fadeIn border-border-neutral-primary border-t pt-4"
           role="region"
           aria-label={`Details for role ${roleName}`}
         >
@@ -89,6 +87,6 @@ export const RoleItem = ({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 };

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Role/ClusterRole",
+  "ResourceGroup": "IAM",
   "Description": "This check ensures that Roles and ClusterRoles in Kubernetes minimize the use of wildcards. Restricting wildcards enhances security by enforcing the principle of least privilege, ensuring users have only the access required for their role.",
   "Risk": "Use of wildcards can lead to excessive rights being granted, potentially allowing users to access or modify resources beyond their scope of responsibility.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",

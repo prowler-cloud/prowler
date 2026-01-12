@@ -1,16 +1,13 @@
 import {
-  Bookmark,
   CloudCog,
   Cog,
   Group,
-  LayoutGrid,
   Mail,
   MessageCircleQuestion,
   Puzzle,
   Settings,
   ShieldCheck,
   SquareChartGantt,
-  SquarePen,
   Tag,
   Timer,
   User,
@@ -19,59 +16,42 @@ import {
   VolumeX,
   Warehouse,
 } from "lucide-react";
-import type { MouseEvent } from "react";
 
 import { ProwlerShort } from "@/components/icons";
 import {
   APIdocIcon,
-  AWSIcon,
-  AzureIcon,
   DocIcon,
-  GCPIcon,
   GithubIcon,
-  KubernetesIcon,
   LighthouseIcon,
-  M365Icon,
   SupportIcon,
 } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
-  hasProviders?: boolean;
-  openMutelistModal?: () => void;
-  requestMutelistModalOpen?: () => void;
 }
 
-export const getMenuList = ({
-  pathname,
-  hasProviders,
-  openMutelistModal,
-  requestMutelistModalOpen,
-}: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
   return [
     {
       groupLabel: "",
       menus: [
         {
-          href: "",
-          label: "Analytics",
-          icon: LayoutGrid,
-          submenus: [
-            {
-              href: "/",
-              label: "Overview",
-              icon: SquareChartGantt,
-              active: pathname === "/",
-            },
-            {
-              href: "/compliance",
-              label: "Compliance",
-              icon: ShieldCheck,
-              active: pathname === "/compliance",
-            },
-          ],
-          defaultOpen: true,
+          href: "/",
+          label: "Overview",
+          icon: SquareChartGantt,
+          active: pathname === "/",
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/compliance",
+          label: "Compliance",
+          icon: ShieldCheck,
+          active: pathname === "/compliance",
         },
       ],
     },
@@ -90,59 +70,8 @@ export const getMenuList = ({
       groupLabel: "",
       menus: [
         {
-          href: "",
-          label: "Top failed findings",
-          icon: Bookmark,
-          submenus: [
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
-              label: "IAM Issues",
-              icon: ShieldCheck,
-            },
-          ],
-          defaultOpen: false,
-        },
-        {
-          href: "",
-          label: "High-risk findings",
-          icon: SquarePen,
-          submenus: [
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity,-inserted_at",
-              label: "Amazon Web Services",
-              icon: AWSIcon,
-            },
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
-              label: "Microsoft Azure",
-              icon: AzureIcon,
-            },
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=m365&sort=severity,-inserted_at",
-              label: "Microsoft 365",
-              icon: M365Icon,
-            },
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",
-              label: "Google Cloud",
-              icon: GCPIcon,
-            },
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
-              label: "Kubernetes",
-              icon: KubernetesIcon,
-            },
-            {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=github&sort=severity,-inserted_at",
-              label: "Github",
-              icon: GithubIcon,
-            },
-          ],
-          defaultOpen: false,
-        },
-        {
-          href: "/findings",
-          label: "Browse all findings",
+          href: "/findings?filter[muted]=false",
+          label: "Findings",
           icon: Tag,
         },
       ],
@@ -167,28 +96,10 @@ export const getMenuList = ({
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
             {
-              href: "/providers",
+              href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
-              disabled: hasProviders === false,
-              active: false,
-              onClick: (event: MouseEvent<HTMLAnchorElement>) => {
-                if (hasProviders === false) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  return;
-                }
-
-                requestMutelistModalOpen?.();
-
-                if (pathname !== "/providers") {
-                  return;
-                }
-
-                event.preventDefault();
-                event.stopPropagation();
-                openMutelistModal?.();
-              },
+              active: pathname === "/mutelist",
             },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
@@ -212,18 +123,6 @@ export const getMenuList = ({
             { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
-        },
-      ],
-    },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "https://hub.prowler.com/",
-          label: "Prowler Hub",
-          icon: ProwlerShort,
-          target: "_blank",
-          tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },
@@ -264,6 +163,18 @@ export const getMenuList = ({
             },
           ],
           defaultOpen: false,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "https://hub.prowler.com/",
+          label: "Prowler Hub",
+          icon: ProwlerShort,
+          target: "_blank",
+          tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },

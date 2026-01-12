@@ -99,7 +99,7 @@ export const CreateApiKeyModal = ({
         >
           <p className="text-xs text-gray-500">
             Need help configuring API Keys?{" "}
-            <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+            <CustomLink href="https://docs.prowler.com/user-guide/tutorials/prowler-app-api-keys">
               Read the docs
             </CustomLink>
           </p>
@@ -114,7 +114,6 @@ export const CreateApiKeyModal = ({
               placeholder="My API Key"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.name}
             />
           </div>
 
@@ -128,7 +127,6 @@ export const CreateApiKeyModal = ({
               placeholder="365"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.expiresInDays}
             />
           </div>
 

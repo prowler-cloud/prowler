@@ -1024,7 +1024,7 @@
       "Attributes": [
         {
           "Title": "AuditDisabled organizationally is set to False",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The setting “Mailbox auditing on by default” determines whether mailbox auditing is automatically enabled across all mailboxes in the organization, regardless of their individual auditing configuration. When this setting is configured as False, it enables auditing at the organization level, overriding the AuditEnabled property for individual mailboxes—even if it is explicitly set to False. With this setting enabled, default audit actions are automatically recorded for all mailboxes without requiring manual configuration. Conversely, disabling this setting (True) effectively turns off mailbox auditing across the organization and overrides any mailbox-level auditing settings. The consequences of disabling this setting include: • Mailbox auditing is completely disabled organization-wide. • No mailbox actions are logged, even if AuditEnabled is set to True for individual mailboxes. • New mailboxes do not inherit auditing, and setting AuditEnabled=True has no effect. • Bypass audit rules set via Set-MailboxAuditBypassAssociation are ignored. • Existing audit records remain in place until they expire based on the audit log retention policy. The recommended configuration is to set this value to False at the organization level to ensure auditing is enforced consistently.",
           "AdditionalInformation": "Enforcing mailbox auditing by default ensures that audit logging cannot be unintentionally or maliciously disabled on individual mailboxes. This setting provides vital visibility for forensic investigations and incident response (IR) teams, allowing them to trace suspicious or malicious activity—such as unauthorized inbox access, message deletion, or rule manipulation—that may signal account compromise. Consistent auditing across all mailboxes is critical for detecting threat actor behaviors (TTPs) and correlating events across users. While organizations without Microsoft 365 E5 licenses are limited to 90 days of audit log retention, enabling this setting still significantly improves detection and accountability within that window.",
@@ -1042,7 +1042,7 @@
       "Attributes": [
         {
           "Title": "Mailbox auditing for E3 users is Enabled",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.1 Logging",
           "AttributeDescription": "As of January 2019, Microsoft enables mailbox audit logging by default across all organizations. This feature ensures that specific actions performed by mailbox owners, delegates, and administrators are automatically captured and recorded. These audit records can then be searched by administrators through the mailbox audit log in Microsoft 365. Each mailbox type—whether user, shared, resource, or public folder—can have tailored audit settings to track activities that are most relevant to the organization. While audit logging is enabled by default at the organizational level, it is important to explicitly configure the AuditEnabled property to True on all user mailboxes, and to expand the list of audited actions beyond the Microsoft defaults to meet specific visibility or compliance needs. Note: This recommendation is particularly relevant to users with Microsoft 365 E3 licenses, where audit actions differ slightly from the default configurations in E5.",
           "AdditionalInformation": "Mailbox auditing plays a critical role in supporting both regulatory compliance and security monitoring. Whether investigating unauthorized configuration changes, potential account compromise, or insider threats, detailed mailbox audit logs provide essential evidence for security operations, forensic analysis, and general administrative oversight. While mailbox auditing is enabled by default for most user mailboxes, certain mailbox types—such as Resource Mailboxes, Public Folder Mailboxes, and the DiscoverySearch Mailbox—do not inherit the organizational auditing default. For these mailboxes, AuditEnabled must be manually set to True to ensure relevant activities are captured. Note: Organizations without Microsoft 365 E5 licenses are subject to a 90-day audit log retention limit, but enabling comprehensive mailbox auditing remains a best practice for operational readiness and incident response.",
@@ -1060,7 +1060,7 @@
       "Attributes": [
         {
           "Title": "Mailbox auditing for E5 users is Enabled",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.1 Logging",
           "AttributeDescription": "Since January 2019, mailbox audit logging has been enabled by default in all Microsoft 365 organizations. This feature ensures that specific actions performed by mailbox owners, delegates, and administrators are automatically captured and stored as audit records. These logs are accessible to administrators through the Microsoft 365 mailbox audit log, enabling visibility into key mailbox-level activity. Although logging is enabled by default, each mailbox—particularly user and shared mailboxes—can have custom audit actions assigned to capture the specific types of events deemed valuable by the organization. For environments with Microsoft 365 E5 licenses or the advanced auditing add-on, it is recommended to explicitly set AuditEnabled to True on all user mailboxes and to configure additional audit actions beyond Microsoft’s default settings for enhanced visibility. Note: This recommendation specifically applies to E5 or equivalent auditing-enabled license holders, as the available audit depth and event coverage differ from E3.",
           "AdditionalInformation": "Mailbox audit logging is essential for supporting security investigations, regulatory compliance, and operational forensics in Microsoft 365. Whether you’re tracking unauthorized changes, detecting suspicious access, or conducting post-incident analysis, having a complete and accurate mailbox audit trail is critical. While audit logging is broadly applied by default, certain mailbox types bypass the organizational setting and require manual configuration to enable auditing. These include: • Resource Mailboxes • Public Folder Mailboxes • DiscoverySearch Mailboxes For these mailbox types, the AuditEnabled property must be explicitly set to True to ensure that audit events are captured. Important: Without advanced auditing (included in E5 or via add-on), mailbox audit logs are retained for only 90 days, limiting the historical window for investigations. Nonetheless, enabling detailed auditing remains a key best practice for maintaining strong visibility and compliance readiness.",
@@ -1078,7 +1078,7 @@
       "Attributes": [
         {
           "Title": "AuditBypassEnabled is not enabled on mailboxes",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.1 Logging",
           "AttributeDescription": "The AuditBypassEnabled setting in Microsoft 365 allows specific user or computer accounts to bypass mailbox audit logging, meaning that any actions they perform on mailboxes will not be recorded in the audit logs. This includes actions such as reading, deleting, moving, or modifying messages.",
           "AdditionalInformation": "Allowing an account to bypass mailbox audit logging creates a blind spot in security monitoring. If the account is compromised, misused, or maliciously configured, it can access and interact with mailboxes without leaving any trace in the logs. This significantly undermines the organization’s ability to conduct forensic investigations, detect insider threats, or comply with audit requirements.",
@@ -1096,7 +1096,7 @@
       "Attributes": [
         {
           "Title": "Microsoft 365 audit log search is Enabled ",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.2 Retention",
           "AttributeDescription": "Audit log search in the Microsoft Purview compliance portal allows organizations to track and retain user and administrator activities across Microsoft 365 services. When enabled, audit events—such as sign-ins, file access, configuration changes, and other operational actions—are captured and stored for up to 90 days by default. While some organizations may choose to integrate auditing data with third-party Security Information and Event Management (SIEM) systems, audit log search in Microsoft Purview remains a critical native capability for centralized visibility and incident response. Although global administrators have the ability to disable audit log search, it is generally recommended to keep it enabled to maintain full visibility into user and system activity.",
           "AdditionalInformation": "Activating audit log search provides essential forensic and compliance value. It enables organizations to detect anomalous behavior, investigate potential security incidents, and demonstrate adherence to regulatory and legal requirements. In addition, it supports operational monitoring, internal audits, and proactive threat detection. By retaining and centralizing audit data within the Microsoft 365 ecosystem, security and compliance teams gain faster access to actionable insights, reducing response times and strengthening the organization’s overall security posture.",
@@ -1114,7 +1114,7 @@
       "Attributes": [
         {
           "Title": "Notifications for internal users sending malware is Enabled",
-          "Section": "3. Logging and monitoring",
+          "Section": "3. Logging and Monitoring",
           "SubSection": "3.3 Monitoring",
           "AttributeDescription": "Exchange Online Protection (EOP) is Microsoft’s cloud-based email filtering service designed to safeguard organizations against spam, malware, and other email-borne threats. It is included by default in all Microsoft 365 tenants with Exchange Online mailboxes. EOP provides customizable anti-malware policies that allow administrators to define protection settings and configure alerts for detected malicious activity.",
           "AdditionalInformation": "Enabling notifications for malware detections ensures that administrators are alerted when an internal user sends a message containing malware. Such incidents may signal a compromised user account or infected device, requiring immediate investigation to mitigate potential security breaches.",

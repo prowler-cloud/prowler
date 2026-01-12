@@ -5,7 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { EntityInfoShort, SnippetChip } from "@/components/ui/entities";
+import { EntityInfo, SnippetChip } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderType, ResourceProps } from "@/types";
@@ -43,7 +43,9 @@ const ResourceDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex w-9 items-center justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon className="text-button-primary" size={16} />
+        }
         title="Resource Details"
         description="View the Resource details"
         defaultOpen={isOpen}
@@ -60,12 +62,17 @@ const ResourceDetailsCell = ({ row }: { row: any }) => {
 export const ColumnResources: ColumnDef<ResourceProps>[] = [
   {
     id: "moreInfo",
-    header: "Details",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Details" />
+    ),
     cell: ({ row }) => <ResourceDetailsCell row={row} />,
+    enableSorting: false,
   },
   {
     accessorKey: "resourceName",
-    header: "Resource name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Resource name" />
+    ),
     cell: ({ row }) => {
       const resourceName = getResourceData(row, "name");
       const displayName =
@@ -81,10 +88,13 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
         />
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "failedFindings",
-    header: () => <div className="text-center">Failed Findings</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Failed Findings" />
+    ),
     cell: ({ row }) => {
       const failedFindingsCount = getResourceData(
         row,
@@ -92,17 +102,14 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       ) as number;
 
       return (
-        <>
-          <p className="text-center">
-            <span
-              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(failedFindingsCount)}`}
-            >
-              {failedFindingsCount}
-            </span>
-          </p>
-        </>
+        <span
+          className={`ml-10 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(failedFindingsCount)}`}
+        >
+          {failedFindingsCount}
+        </span>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "region",
@@ -155,14 +162,16 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
   },
   {
     accessorKey: "provider",
-    header: "Cloud Provider",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Cloud Provider" />
+    ),
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
       const uid = getProviderData(row, "uid");
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias && typeof alias === "string" ? alias : undefined}
             entityId={uid && typeof uid === "string" ? uid : undefined}
@@ -170,5 +179,6 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
         </>
       );
     },
+    enableSorting: false,
   },
 ];
