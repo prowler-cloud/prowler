@@ -2,11 +2,15 @@
 name: prowler-provider
 description: >
   Creates new Prowler cloud providers or adds services to existing providers.
-  Trigger: When adding a new cloud provider or service to Prowler SDK.
+  Trigger: When extending Prowler SDK provider architecture (adding a new provider or a new service to an existing provider).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, sdk]
+  auto_invoke:
+    - "Adding new providers"
+    - "Adding services to existing providers"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

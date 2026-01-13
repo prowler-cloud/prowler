@@ -2,11 +2,15 @@
 name: prowler-test-ui
 description: >
   E2E testing patterns for Prowler UI (Playwright).
-  Trigger: When writing E2E tests for the Next.js frontend.
+  Trigger: When writing Playwright E2E tests under ui/tests in the Prowler UI (Prowler-specific base page/helpers, tags, flows).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, ui]
+  auto_invoke:
+    - "Writing Prowler UI E2E tests"
+    - "Working with Prowler UI test helpers/pages"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

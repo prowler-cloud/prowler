@@ -47,6 +47,7 @@ jobs:
             ui/**
             dashboard/**
             mcp_server/**
+            skills/**
             README.md
             mkdocs.yml
             .backportrc.json
@@ -55,6 +56,7 @@ jobs:
             examples/**
             .gitignore
             contrib/**
+            **/AGENTS.md
 
       - name: Install Poetry
         if: steps.check-changes.outputs.any_changed == 'true'

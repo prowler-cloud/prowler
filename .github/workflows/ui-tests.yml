@@ -42,6 +42,7 @@ jobs:
           files_ignore: |
             ui/CHANGELOG.md
             ui/README.md
+            ui/AGENTS.md
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         if: steps.check-changes.outputs.any_changed == 'true'
