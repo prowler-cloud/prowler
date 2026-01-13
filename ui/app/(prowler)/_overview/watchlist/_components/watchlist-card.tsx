@@ -90,7 +90,7 @@ export const WatchlistCard = ({
         <CardTitle>{title}</CardTitle>
         {headerAction}
       </div>
-      <CardContent className="flex flex-col">
+      <CardContent className="flex flex-1 flex-col">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">
             {/* Icon and message */}
@@ -102,19 +102,15 @@ export const WatchlistCard = ({
             </div>
 
             {/* Description with link */}
-            <p className="text-text-neutral-tertiary w-full text-sm leading-6">
-              {emptyState?.description && ctaHref && (
-                <>
-                  Visit the{" "}
-                  <Button variant="link" size="link-sm" asChild>
-                    <Link href={ctaHref}>
-                      {emptyState.linkText || ctaLabel}
-                    </Link>
-                  </Button>{" "}
-                  {emptyState.description}
-                </>
-              )}
-            </p>
+            {emptyState?.description && ctaHref && (
+              <p className="text-text-neutral-tertiary w-full text-sm leading-6">
+                Visit the{" "}
+                <Button variant="link" size="link-sm" asChild>
+                  <Link href={ctaHref}>{emptyState.linkText || ctaLabel}</Link>
+                </Button>{" "}
+                {emptyState.description}
+              </p>
+            )}
           </div>
         ) : (
           <>

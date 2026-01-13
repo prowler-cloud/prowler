@@ -55,10 +55,10 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
           descendingLabel="Sort by lowest score"
         />
       }
+      // TODO: Enable full emptyState with description once API endpoint is implemented
+      // Full emptyState: { message: "...", description: "to add compliance frameworks to your watchlist.", linkText: "Compliance Dashboard" }
       emptyState={{
-        message: "This space is looking empty.",
-        description: "to add compliance frameworks to your watchlist.",
-        linkText: "Compliance Dashboard",
+        message: "No compliance data available.",
       }}
     />
   );
