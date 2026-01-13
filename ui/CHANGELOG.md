@@ -17,6 +17,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 
+### 🐞 Fixed
+- Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
+
 ---
 
 ## [1.16.1] (Prowler v5.16.1)
