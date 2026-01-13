@@ -167,7 +167,6 @@ const AttackPathGraphComponent = forwardRef<
     }
   }, [selectedNodeId]);
 
-
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
       if (svgSelectionRef.current && zoomBehaviorRef.current) {
@@ -1146,6 +1145,9 @@ const AttackPathGraphComponent = forwardRef<
         );
       }
     }, 100);
+    // D3's imperative rendering model requires controlled re-renders.
+    // We intentionally only re-render on data/view changes, not on callback refs
+    // (onNodeClick, selectedNodeId) which would cause unnecessary D3 re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isFilteredView]);
 

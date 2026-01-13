@@ -8,6 +8,8 @@ import type {
   GraphState,
 } from "@/types/attack-paths";
 
+import { computeFilteredSubgraph } from "../_lib";
+
 interface FilteredViewState {
   isFilteredView: boolean;
   filteredNodeId: string | null;
@@ -55,115 +57,6 @@ const useGraphStore = create<GraphStore>((set) => ({
     set({ isFilteredView: isFiltered, filteredNodeId: nodeId, data: filteredData, fullData, selectedNodeId: nodeId }),
   reset: () => set(initialState),
 }));
-
-/**
- * Helper to get edge source/target ID from string or object
- */
-function getEdgeNodeId(nodeRef: string | object): string {
-  if (typeof nodeRef === "string") {
-    return nodeRef;
-  }
-  return (nodeRef as GraphNode).id;
-}
-
-/**
- * Compute a filtered subgraph containing only the path through the target node.
- * This follows the directed graph structure of attack paths:
- * - Upstream: traces back to the root (AWS Account)
- * - Downstream: traces forward to leaf nodes
- * - Also includes findings connected to the selected node
- */
-function computeFilteredSubgraph(
-  fullData: AttackPathGraphData,
-  targetNodeId: string,
-): AttackPathGraphData {
-  const nodes = fullData.nodes;
-  const edges = fullData.edges || [];
-
-  // Build directed adjacency lists
-  const forwardEdges = new Map<string, Set<string>>(); // source -> targets
-  const backwardEdges = new Map<string, Set<string>>(); // target -> sources
-  nodes.forEach((node) => {
-    forwardEdges.set(node.id, new Set());
-    backwardEdges.set(node.id, new Set());
-  });
-
-  edges.forEach((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    forwardEdges.get(sourceId)?.add(targetId);
-    backwardEdges.get(targetId)?.add(sourceId);
-  });
-
-  const visibleNodeIds = new Set<string>();
-  visibleNodeIds.add(targetNodeId);
-
-  // Traverse upstream (backward) - find all ancestors
-  const traverseUpstream = (nodeId: string) => {
-    const sources = backwardEdges.get(nodeId);
-    if (sources) {
-      sources.forEach((sourceId) => {
-        if (!visibleNodeIds.has(sourceId)) {
-          visibleNodeIds.add(sourceId);
-          traverseUpstream(sourceId);
-        }
-      });
-    }
-  };
-
-  // Traverse downstream (forward) - find all descendants
-  const traverseDownstream = (nodeId: string) => {
-    const targets = forwardEdges.get(nodeId);
-    if (targets) {
-      targets.forEach((targetId) => {
-        if (!visibleNodeIds.has(targetId)) {
-          visibleNodeIds.add(targetId);
-          traverseDownstream(targetId);
-        }
-      });
-    }
-  };
-
-  // Start traversal from the target node
-  traverseUpstream(targetNodeId);
-  traverseDownstream(targetNodeId);
-
-  // Also include findings directly connected to the selected node
-  edges.forEach((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    const sourceNode = nodes.find((n) => n.id === sourceId);
-    const targetNode = nodes.find((n) => n.id === targetId);
-
-    const sourceIsFinding = sourceNode?.labels.some((l) =>
-      l.toLowerCase().includes("finding"),
-    );
-    const targetIsFinding = targetNode?.labels.some((l) =>
-      l.toLowerCase().includes("finding"),
-    );
-
-    // Include findings connected to the selected node
-    if (sourceId === targetNodeId && targetIsFinding) {
-      visibleNodeIds.add(targetId);
-    }
-    if (targetId === targetNodeId && sourceIsFinding) {
-      visibleNodeIds.add(sourceId);
-    }
-  });
-
-  // Filter nodes and edges to only include visible ones
-  const filteredNodes = nodes.filter((node) => visibleNodeIds.has(node.id));
-  const filteredEdges = edges.filter((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
-  });
-
-  return {
-    nodes: filteredNodes,
-    edges: filteredEdges,
-  };
-}
 
 /**
  * Custom hook for managing graph visualization state
