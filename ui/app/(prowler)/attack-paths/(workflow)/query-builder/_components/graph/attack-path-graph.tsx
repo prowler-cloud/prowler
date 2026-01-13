@@ -18,6 +18,8 @@ import {
   formatNodeLabel,
   getNodeBorderColor,
   getNodeColor,
+  getPathEdges,
+  GRAPH_ALERT_BORDER_COLOR,
   GRAPH_EDGE_COLOR,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_SELECTION_COLOR,
@@ -91,49 +93,6 @@ const AttackPathGraphComponent = forwardRef<
     selectedNodeIdRef.current = selectedNodeId ?? null;
   }, [selectedNodeId]);
 
-  // Helper function to find edges in the path from a given node
-  // Upstream: follows only ONE parent path (first parent at each level) to avoid lighting up siblings
-  // Downstream: follows ALL children recursively
-  const getPathEdges = (
-    nodeId: string,
-    edges: Array<{ sourceId: string; targetId: string }>,
-  ): Set<string> => {
-    const pathEdgeIds = new Set<string>();
-    const visitedNodes = new Set<string>();
-
-    // Traverse upstream - only follow ONE parent at each level (first found)
-    // This creates a single path to the root, not all paths
-    const traverseUpstream = (currentNodeId: string) => {
-      if (visitedNodes.has(`up-${currentNodeId}`)) return;
-      visitedNodes.add(`up-${currentNodeId}`);
-
-      // Find the first parent edge only
-      const parentEdge = edges.find((edge) => edge.targetId === currentNodeId);
-      if (parentEdge) {
-        pathEdgeIds.add(`${parentEdge.sourceId}-${parentEdge.targetId}`);
-        traverseUpstream(parentEdge.sourceId);
-      }
-    };
-
-    // Traverse downstream (find ALL targets from this node)
-    const traverseDownstream = (currentNodeId: string) => {
-      if (visitedNodes.has(`down-${currentNodeId}`)) return;
-      visitedNodes.add(`down-${currentNodeId}`);
-
-      edges.forEach((edge) => {
-        if (edge.sourceId === currentNodeId) {
-          pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
-          traverseDownstream(edge.targetId);
-        }
-      });
-    };
-
-    traverseUpstream(nodeId);
-    traverseDownstream(nodeId);
-
-    return pathEdgeIds;
-  };
-
   // Update ref when onNodeClick changes
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -142,7 +101,6 @@ const AttackPathGraphComponent = forwardRef<
   // Update selected node styling and edge highlighting without re-rendering
   useEffect(() => {
     if (nodeShapesRef.current) {
-      const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
       nodeShapesRef.current
         .attr("stroke", (d: NodeData) => {
           const isFinding = d.data.labels.some((label) =>
@@ -152,7 +110,7 @@ const AttackPathGraphComponent = forwardRef<
 
           // Resources with findings always keep red border
           if (!isFinding && hasFindings) {
-            return ALERT_BORDER_COLOR;
+            return GRAPH_ALERT_BORDER_COLOR;
           }
           // Selected nodes get highlight color (orange)
           if (d.id === selectedNodeId) {
@@ -412,7 +370,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("dx", "0")
       .attr("dy", "0")
       .attr("stdDeviation", "4")
-      .attr("flood-color", "#ef4444")
+      .attr("flood-color", GRAPH_ALERT_BORDER_COLOR)
       .attr("flood-opacity", "0.6");
 
     // Arrow marker (default white) - refX=10 places the arrow tip exactly at the line endpoint
@@ -569,6 +527,7 @@ const AttackPathGraphComponent = forwardRef<
       });
 
     // Store linkElements reference for hover interactions
+    // D3 selection types don't match our ref type exactly; safe cast for internal use
     linkElementsRef.current = linkElements as unknown as ReturnType<
       typeof select<SVGLineElement, unknown>
     >;
@@ -650,11 +609,10 @@ const AttackPathGraphComponent = forwardRef<
           label.toLowerCase().includes("finding"),
         );
         const hasFindings = resourcesWithFindings.has(d.id);
-        const ALERT_BORDER_COLOR = "#ef4444";
 
         // Determine the correct border color
         if (!isFinding && hasFindings) {
-          nodeShape.attr("stroke", ALERT_BORDER_COLOR);
+          nodeShape.attr("stroke", GRAPH_ALERT_BORDER_COLOR);
         } else if (d.id === selectedId) {
           nodeShape.attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR);
         } else {
@@ -870,9 +828,6 @@ const AttackPathGraphComponent = forwardRef<
     // Store in ref for use in selection updates
     resourcesWithFindingsRef.current = resourcesWithFindings;
 
-    // Red alert color for resources with findings
-    const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
-
     // Add shapes - hexagons for findings, rounded pill shapes for resources
     nodeElements.each(function (d) {
       const group = select(this);
@@ -917,7 +872,7 @@ const AttackPathGraphComponent = forwardRef<
 
         // Resources with findings get red border and red glow (even when selected)
         const strokeColor = hasFindings
-          ? ALERT_BORDER_COLOR
+          ? GRAPH_ALERT_BORDER_COLOR
           : d.id === selectedNodeId
             ? GRAPH_SELECTION_COLOR
             : borderColor;
