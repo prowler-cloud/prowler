@@ -15,9 +15,8 @@ export default defineConfig({
   // CI: Use 2 workers for parallelism (provider tests are serial anyway)
   // Local: Use half of available CPUs
   workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
-  reporter: process.env.CI
-    ? [["github"], ["html", { open: "never" }]]
-    : [["list"]],
+  // Use GitHub reporter in CI for annotations, list reporter locally
+  reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
   outputDir: "/tmp/playwright-tests",
   // Reduce default timeout - most actions should complete in 10s
   timeout: process.env.CI ? 60000 : 30000,
@@ -29,8 +28,9 @@ export default defineConfig({
     baseURL: process.env.AUTH_URL
       ? process.env.AUTH_URL
       : "http://localhost:3000",
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    // Disable artifacts in CI to speed up tests and reduce storage
+    trace: "off",
+    screenshot: "off",
     video: "off",
     // Reduce action timeout for faster failure detection
     actionTimeout: 10000,

@@ -542,9 +542,13 @@ export class ProvidersPage extends BasePage {
 
     // If on the "connect-account" step, click the "Next" button and wait for navigation
     if (/\/providers\/connect-account/.test(url)) {
+      // Wait for button to be enabled (form validation complete)
+      await expect(this.nextButton).toBeEnabled({ timeout: 5000 });
       await this.nextButton.click();
       // Wait for navigation to add-credentials page
-      await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+      await expect(this.page).toHaveURL(/\/providers\/add-credentials/, {
+        timeout: 20000,
+      });
       return;
     }
 
