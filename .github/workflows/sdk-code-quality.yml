@@ -85,7 +85,7 @@ jobs:
 
       - name: Check format with black
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run black --exclude api ui skills --check .
+        run: poetry run black --exclude "api|ui|skills" --check .
 
       - name: Lint with pylint
         if: steps.check-changes.outputs.any_changed == 'true'
