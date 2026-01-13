@@ -34,7 +34,9 @@ def find_project_root():
 def get_existing_checks(project_root: Path, provider: str) -> set:
     """Find all existing checks for a provider in the codebase."""
     checks = set()
-    services_path = project_root / "prowler" / "providers" / provider.lower() / "services"
+    services_path = (
+        project_root / "prowler" / "providers" / provider.lower() / "services"
+    )
 
     if not services_path.exists():
         return checks
@@ -52,12 +54,7 @@ def get_existing_checks(project_root: Path, provider: str) -> set:
 
 def validate_compliance_framework(json_path: str) -> dict:
     """Validate a compliance framework JSON file."""
-    results = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-        "stats": {}
-    }
+    results = {"valid": True, "errors": [], "warnings": [], "stats": {}}
 
     # 1. Check file exists
     if not os.path.exists(json_path):
@@ -75,7 +72,14 @@ def validate_compliance_framework(json_path: str) -> dict:
         return results
 
     # 3. Check required top-level fields
-    required_fields = ["Framework", "Name", "Version", "Provider", "Description", "Requirements"]
+    required_fields = [
+        "Framework",
+        "Name",
+        "Version",
+        "Provider",
+        "Description",
+        "Requirements",
+    ]
     for field in required_fields:
         if field not in data:
             results["valid"] = False
@@ -93,7 +97,9 @@ def validate_compliance_framework(json_path: str) -> dict:
         existing_checks = get_existing_checks(project_root, provider)
     else:
         existing_checks = set()
-        results["warnings"].append("Could not find project root - skipping check existence validation")
+        results["warnings"].append(
+            "Could not find project root - skipping check existence validation"
+        )
 
     # 6. Validate requirements
     requirements = data.get("Requirements", [])
@@ -139,11 +145,15 @@ def validate_compliance_framework(json_path: str) -> dict:
         missing_checks = all_checks - existing_checks
         if missing_checks:
             results["valid"] = False
-            results["errors"].append(f"Missing checks in codebase ({len(missing_checks)}): {sorted(missing_checks)}")
+            results["errors"].append(
+                f"Missing checks in codebase ({len(missing_checks)}): {sorted(missing_checks)}"
+            )
 
     # 9. Warn about empty automated
     if empty_automated:
-        results["warnings"].append(f"Automated requirements with no checks: {empty_automated}")
+        results["warnings"].append(
+            f"Automated requirements with no checks: {empty_automated}"
+        )
 
     # 10. Compile statistics
     results["stats"] = {
@@ -155,8 +165,14 @@ def validate_compliance_framework(json_path: str) -> dict:
         "automated_requirements": automated_count,
         "manual_requirements": manual_count,
         "unique_checks_referenced": len(all_checks),
-        "checks_found_in_codebase": len(all_checks - (all_checks - existing_checks)) if existing_checks else "N/A",
-        "missing_checks": len(all_checks - existing_checks) if existing_checks else "N/A"
+        "checks_found_in_codebase": (
+            len(all_checks - (all_checks - existing_checks))
+            if existing_checks
+            else "N/A"
+        ),
+        "missing_checks": (
+            len(all_checks - existing_checks) if existing_checks else "N/A"
+        ),
     }
 
     return results
@@ -204,7 +220,9 @@ def print_report(results: dict):
 def main():
     if len(sys.argv) < 2:
         print("Usage: python validate_compliance.py <path_to_compliance_json>")
-        print("Example: python validate_compliance.py prowler/compliance/azure/cis_5.0_azure.json")
+        print(
+            "Example: python validate_compliance.py prowler/compliance/azure/cis_5.0_azure.json"
+        )
         sys.exit(1)
 
     json_path = sys.argv[1]
