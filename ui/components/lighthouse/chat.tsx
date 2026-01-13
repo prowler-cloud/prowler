@@ -2,17 +2,53 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Copy, Play, Plus, RotateCcw, Square } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 
-import { Action, Actions } from "@/components/lighthouse/actions";
+import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputTools,
+} from "@/components/lighthouse/ai-elements/prompt-input";
+import {
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+} from "@/components/lighthouse/chat-utils";
 import { Loader } from "@/components/lighthouse/loader";
-import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
+import { MessageItem } from "@/components/lighthouse/message-item";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Combobox,
+} from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomTextarea } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
+import type { LighthouseProvider } from "@/types/lighthouse";
+
+interface Model {
+  id: string;
+  name: string;
+}
+
+interface Provider {
+  id: LighthouseProvider;
+  name: string;
+  models: Model[];
+}
 
 interface SuggestedAction {
   title: string;
@@ -22,239 +58,323 @@ interface SuggestedAction {
 
 interface ChatProps {
   hasConfig: boolean;
-  isActive: boolean;
+  providers: Provider[];
+  defaultProviderId?: LighthouseProvider;
+  defaultModelId?: string;
 }
 
-interface ChatFormData {
-  message: string;
+interface SelectedModel {
+  providerType: LighthouseProvider | "";
+  modelId: string;
+  modelName: string;
 }
 
-export const Chat = ({ hasConfig, isActive }: ChatProps) => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+interface ExtendedError extends Error {
+  status?: number;
+  body?: Record<string, unknown>;
+}
+
+const SUGGESTED_ACTIONS: SuggestedAction[] = [
+  {
+    title: "Are there any exposed S3",
+    label: "buckets in my AWS accounts?",
+    action: "List exposed S3 buckets in my AWS accounts",
+  },
+  {
+    title: "What is the risk of having",
+    label: "RDS databases unencrypted?",
+    action: "What is the risk of having RDS databases unencrypted?",
+  },
+  {
+    title: "What is the CIS 1.10 compliance status",
+    label: "of my Kubernetes cluster?",
+    action: "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
+  },
+  {
+    title: "List my highest privileged",
+    label: "AWS IAM users with full admin access?",
+    action: "List my highest privileged AWS IAM users with full admin access",
+  },
+];
+
+export const Chat = ({
+  hasConfig,
+  providers: initialProviders,
+  defaultProviderId,
+  defaultModelId,
+}: ChatProps) => {
   const { toast } = useToast();
 
-  const { messages, sendMessage, status, error, setMessages, regenerate } =
-    useChat({
-      transport: new DefaultChatTransport({
-        api: "/api/lighthouse/analyst",
-        credentials: "same-origin",
-      }),
-      experimental_throttle: 100,
-      onFinish: ({ message }) => {
-        // There is no specific way to output the error message from langgraph supervisor
-        // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
-        // Detect error messages sent from backend using specific prefix and display the error
-        const firstTextPart = message.parts.find((p) => p.type === "text");
-        if (
-          firstTextPart &&
-          "text" in firstTextPart &&
-          firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-        ) {
-          const errorText = firstTextPart.text
-            .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
-            .trim();
-          setErrorMessage(errorText);
-          // Remove error message from chat history
-          setMessages((prev) =>
-            prev.filter((m) => {
-              const textPart = m.parts.find((p) => p.type === "text");
-              return !(
-                textPart &&
-                "text" in textPart &&
-                textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-              );
-            }),
-          );
-        }
-      },
-      onError: (error) => {
-        console.error("Chat error:", error);
-
-        if (
-          error?.message?.includes("<html>") &&
-          error?.message?.includes("<title>403 Forbidden</title>")
-        ) {
-          setErrorMessage("403 Forbidden");
-          return;
-        }
-
-        setErrorMessage(
-          error?.message || "An error occurred. Please retry your message.",
-        );
-      },
-    });
-
-  const form = useForm<ChatFormData>({
-    defaultValues: {
-      message: "",
-    },
+  // Consolidated UI state
+  const [uiState, setUiState] = useState<{
+    inputValue: string;
+  }>({
+    inputValue: "",
   });
 
-  const messageValue = form.watch("message");
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
-  const messageValueRef = useRef<string>("");
+  // Error handling
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Keep ref in sync with current value
-  messageValueRef.current = messageValue;
+  // Provider and model management
+  const [providers, setProviders] = useState<Provider[]>(initialProviders);
+  const loadedProvidersRef = useRef<Set<LighthouseProvider>>(new Set());
+  const [loadingProviders, setLoadingProviders] = useState<
+    Set<LighthouseProvider>
+  >(new Set());
 
-  // Restore last user message to input when any error occurs
+  // Initialize selectedModel with defaults from props
+  const [selectedModel, setSelectedModel] = useState<SelectedModel>(() => {
+    const defaultProvider =
+      initialProviders.find((p) => p.id === defaultProviderId) ||
+      initialProviders[0];
+    const defaultModel =
+      defaultProvider?.models.find((m) => m.id === defaultModelId) ||
+      defaultProvider?.models[0];
+
+    return {
+      providerType: defaultProvider?.id || "",
+      modelId: defaultModel?.id || "",
+      modelName: defaultModel?.name || "",
+    };
+  });
+
+  // Keep ref in sync with selectedModel for stable access in callbacks
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
+
+  // Load models for all providers on mount
   useEffect(() => {
-    if (errorMessage) {
-      // Capture current messages to avoid dependency issues
-      setMessages((currentMessages) => {
-        const lastUserMessage = currentMessages
-          .filter((m) => m.role === "user")
-          .pop();
+    initialProviders.forEach((provider) => {
+      loadModelsForProvider(provider.id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        if (lastUserMessage) {
-          const textPart = lastUserMessage.parts.find((p) => p.type === "text");
-          if (textPart && "text" in textPart) {
-            form.setValue("message", textPart.text);
-          }
-          // Remove the last user message from history since it's now in the input
-          return currentMessages.slice(0, -1);
-        }
-
-        return currentMessages;
-      });
-    }
-  }, [errorMessage, form, setMessages]);
-
-  // Reset form when message is sent
-  useEffect(() => {
-    if (status === "submitted") {
-      form.reset({ message: "" });
-    }
-  }, [status, form]);
-
-  // Auto-scroll to bottom when new messages arrive or when streaming
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, status]);
-
-  const onFormSubmit = form.handleSubmit((data) => {
-    // Block submission while streaming or submitted
-    if (status === "streaming" || status === "submitted") {
+  // Load all models for a specific provider
+  const loadModelsForProvider = async (providerType: LighthouseProvider) => {
+    // Skip if already loaded
+    if (loadedProvidersRef.current.has(providerType)) {
       return;
     }
 
-    if (data.message.trim()) {
-      // Clear error on new submission
-      setErrorMessage(null);
-      sendMessage({ text: data.message });
-      form.reset();
+    // Mark as loaded
+    loadedProvidersRef.current.add(providerType);
+    setLoadingProviders((prev) => new Set(prev).add(providerType));
+
+    try {
+      const response = await getLighthouseModelIds(providerType);
+
+      if (response.errors) {
+        console.error(
+          `Error loading models for ${providerType}:`,
+          response.errors,
+        );
+        return;
+      }
+
+      if (response.data && Array.isArray(response.data)) {
+        // Use the model data directly from the API
+        const models: Model[] = response.data;
+
+        // Update the provider's models
+        setProviders((prev) =>
+          prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
+        );
+      }
+    } catch (error) {
+      console.error(`Error loading models for ${providerType}:`, error);
+      // Remove from loaded on error so it can be retried
+      loadedProvidersRef.current.delete(providerType);
+    } finally {
+      setLoadingProviders((prev) => {
+        const next = new Set(prev);
+        next.delete(providerType);
+        return next;
+      });
     }
+  };
+
+  const {
+    messages,
+    sendMessage,
+    status,
+    error,
+    setMessages,
+    regenerate,
+    stop,
+  } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/lighthouse/analyst",
+      credentials: "same-origin",
+      body: () => ({
+        model: selectedModelRef.current.modelId,
+        provider: selectedModelRef.current.providerType,
+      }),
+    }),
+    experimental_throttle: 100,
+    onFinish: ({ message }) => {
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
+      // Use includes() instead of startsWith() to catch errors that occur mid-stream (after text has been sent)
+      const firstTextPart = message.parts.find((p) => p.type === "text");
+      if (
+        firstTextPart &&
+        "text" in firstTextPart &&
+        firstTextPart.text.includes(ERROR_PREFIX)
+      ) {
+        // Extract error text - handle both start-of-message and mid-stream errors
+        const fullText = firstTextPart.text;
+        const errorIndex = fullText.indexOf(ERROR_PREFIX);
+        const errorText = fullText
+          .substring(errorIndex + ERROR_PREFIX.length)
+          .trim();
+        setErrorMessage(errorText);
+        // Remove error message from chat history
+        setMessages((prev) =>
+          prev.filter((m) => {
+            const textPart = m.parts.find((p) => p.type === "text");
+            return !(
+              textPart &&
+              "text" in textPart &&
+              textPart.text.includes(ERROR_PREFIX)
+            );
+          }),
+        );
+        restoreLastUserMessage();
+      }
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        restoreLastUserMessage();
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
+      restoreLastUserMessage();
+      setErrorMessage(
+        error?.message || "An error occurred. Please retry your message.",
+      );
+    },
   });
 
-  // Global keyboard shortcut handler
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        // Block enter key while streaming or submitted
-        if (
-          messageValue?.trim() &&
-          status !== "streaming" &&
-          status !== "submitted"
-        ) {
-          onFormSubmit();
+  const restoreLastUserMessage = () => {
+    let restoredText = "";
+
+    setMessages((currentMessages) => {
+      const nextMessages = [...currentMessages];
+
+      for (let index = nextMessages.length - 1; index >= 0; index -= 1) {
+        const current = nextMessages[index];
+
+        if (current.role !== "user") {
+          continue;
         }
+
+        const textPart = current.parts.find(
+          (part): part is { type: "text"; text: string } =>
+            part.type === "text" && "text" in part,
+        );
+
+        if (textPart) {
+          restoredText = textPart.text;
+        }
+
+        nextMessages.splice(index, 1);
+        break;
       }
-    };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [messageValue, onFormSubmit, status]);
+      return nextMessages;
+    });
 
-  const suggestedActions: SuggestedAction[] = [
-    {
-      title: "Are there any exposed S3",
-      label: "buckets in my AWS accounts?",
-      action: "List exposed S3 buckets in my AWS accounts",
-    },
-    {
-      title: "What is the risk of having",
-      label: "RDS databases unencrypted?",
-      action: "What is the risk of having RDS databases unencrypted?",
-    },
-    {
-      title: "What is the CIS 1.10 compliance status",
-      label: "of my Kubernetes cluster?",
-      action:
-        "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
-    },
-    {
-      title: "List my highest privileged",
-      label: "AWS IAM users with full admin access?",
-      action: "List my highest privileged AWS IAM users with full admin access",
-    },
-  ];
+    if (restoredText) {
+      setUiState((prev) => ({ ...prev, inputValue: restoredText }));
+    }
+  };
 
-  // Determine if chat should be disabled
-  const shouldDisableChat = !hasConfig || !isActive;
+  const stopGeneration = () => {
+    if (
+      status === MESSAGE_STATUS.STREAMING ||
+      status === MESSAGE_STATUS.SUBMITTED
+    ) {
+      stop();
+    }
+  };
 
+  // Handlers
   const handleNewChat = () => {
     setMessages([]);
     setErrorMessage(null);
-    form.reset({ message: "" });
+    setUiState((prev) => ({ ...prev, inputValue: "" }));
+  };
+
+  const handleModelSelect = (
+    providerType: LighthouseProvider,
+    modelId: string,
+    modelName: string,
+  ) => {
+    setSelectedModel({ providerType, modelId, modelName });
   };
 
   return (
-    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
+    <div className="relative flex h-full min-w-0 flex-col overflow-hidden">
       {/* Header with New Chat button */}
       {messages.length > 0 && (
-        <div className="border-default-200 dark:border-default-100 border-b px-4 py-3">
+        <div className="border-default-200 dark:border-default-100 border-b px-2 py-3 sm:px-4">
           <div className="flex items-center justify-end">
-            <CustomButton
-              ariaLabel="Start new chat"
-              variant="bordered"
+            <Button
+              aria-label="Start new chat"
+              variant="outline"
               size="sm"
-              startContent={<Plus className="h-4 w-4" />}
-              onPress={handleNewChat}
+              onClick={handleNewChat}
               className="gap-1"
             >
+              <Plus className="h-4 w-4" />
               New Chat
-            </CustomButton>
+            </Button>
           </div>
         </div>
       )}
 
-      {shouldDisableChat && (
+      {!hasConfig && (
         <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
-            <h3 className="mb-2 text-lg font-semibold">
-              {!hasConfig
-                ? "OpenAI API Key Required"
-                : "OpenAI API Key Invalid"}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {!hasConfig
-                ? "Please configure your OpenAI API key to use Lighthouse AI."
-                : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
-            </p>
-            <CustomLink
-              href="/lighthouse/config"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
-              target="_self"
-              size="sm"
-            >
-              Configure API Key
-            </CustomLink>
-          </div>
+          <Card
+            variant="base"
+            padding="lg"
+            className="max-w-md text-center shadow-lg"
+          >
+            <CardHeader>
+              <CardTitle>LLM Provider Configuration Required</CardTitle>
+              <CardDescription>
+                Please configure an LLM provider to use Lighthouse AI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomLink
+                href="/lighthouse/config"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
+                target="_self"
+                size="sm"
+              >
+                Configure Provider
+              </CustomLink>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Error Banner */}
       {(error || errorMessage) && (
-        <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="border-border-error-primary bg-bg-fail-secondary mx-2 mt-4 rounded-lg border p-4 sm:mx-4">
           <div className="flex items-start">
             <div className="shrink-0">
               <svg
-                className="h-5 w-5 text-red-400"
+                className="text-text-error h-5 w-5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -266,27 +386,25 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                Error
-              </h3>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+              <h3 className="text-text-error text-sm font-medium">Error</h3>
+              <p className="text-text-neutral-secondary mt-1 text-sm">
                 {errorMessage ||
                   error?.message ||
                   "An error occurred. Please retry your message."}
               </p>
               {/* Original error details for native errors */}
-              {error && (error as any).status && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                  Status: {(error as any).status}
+              {error && (error as ExtendedError).status && (
+                <p className="text-text-neutral-tertiary mt-1 text-xs">
+                  Status: {(error as ExtendedError).status}
                 </p>
               )}
-              {error && (error as any).body && (
+              {error && (error as ExtendedError).body && (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                  <summary className="text-text-neutral-tertiary hover:text-text-neutral-secondary cursor-pointer text-xs">
                     Show details
                   </summary>
-                  <pre className="mt-1 max-h-20 overflow-auto rounded bg-red-100 p-2 text-xs text-red-800 dark:bg-red-900/30 dark:text-red-200">
-                    {JSON.stringify((error as any).body, null, 2)}
+                  <pre className="bg-bg-neutral-tertiary text-text-neutral-secondary mt-1 max-h-20 overflow-auto rounded p-2 text-xs">
+                    {JSON.stringify((error as ExtendedError).body, null, 2)}
                   </pre>
                 </details>
               )}
@@ -296,174 +414,160 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       )}
 
       {messages.length === 0 && !errorMessage && !error ? (
-        <div className="flex flex-1 items-center justify-center p-4">
+        <div className="flex flex-1 items-center justify-center px-2 py-4 sm:p-4">
           <div className="w-full max-w-2xl">
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
             <div className="grid gap-2 sm:grid-cols-2">
-              {suggestedActions.map((action, index) => (
-                <CustomButton
+              {SUGGESTED_ACTIONS.map((action, index) => (
+                <Button
                   key={`suggested-action-${index}`}
-                  ariaLabel={`Send message: ${action.action}`}
-                  onPress={() => {
+                  aria-label={`Send message: ${action.action}`}
+                  onClick={() => {
                     sendMessage({
                       text: action.action,
                     });
                   }}
-                  className="hover:bg-muted flex h-auto w-full flex-col items-start justify-start rounded-xl border bg-gray-50 px-4 py-3.5 text-left font-sans text-sm dark:bg-gray-900"
+                  variant="outline"
+                  className="flex h-auto w-full flex-col items-start justify-start rounded-xl px-4 py-3.5 text-left font-sans text-sm"
                 >
                   <span>{action.title}</span>
                   <span className="text-muted-foreground">{action.label}</span>
-                </CustomButton>
+                </Button>
               ))}
             </div>
           </div>
         </div>
       ) : (
-        <div
-          className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto p-4"
-          ref={messagesContainerRef}
-        >
-          {messages.map((message, idx) => {
-            const lastUserIdx = messages
-              .map((m, i) => (m.role === "user" ? i : -1))
-              .filter((i) => i !== -1)
-              .pop();
-            const isLatestUserMsg =
-              message.role === "user" && lastUserIdx === idx;
-            const isLastMessage = idx === messages.length - 1;
-            const messageText = message.parts
-              .filter((p) => p.type === "text")
-              .map((p) => ("text" in p ? p.text : ""))
-              .join("");
-
-            // Check if this is the streaming assistant message (last message, assistant role, while streaming)
-            const isStreamingAssistant =
-              isLastMessage &&
-              message.role === "assistant" &&
-              status === "streaming";
-
-            // Use a composite key to ensure uniqueness even if IDs are duplicated temporarily
-            const uniqueKey = `${message.id}-${idx}-${message.role}`;
-
-            return (
-              <div key={uniqueKey}>
-                <div
-                  ref={isLatestUserMsg ? latestUserMsgRef : undefined}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground dark:text-black!"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {/* Show loader before text appears or while streaming empty content */}
-                    {isStreamingAssistant && !messageText ? (
-                      <Loader size="default" text="Thinking..." />
-                    ) : (
-                      <div
-                        className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
-                      >
-                        <MemoizedMarkdown
-                          id={message.id}
-                          content={messageText}
-                        />
-                      </div>
-                    )}
+        <Conversation className="flex-1">
+          <ConversationContent className="gap-4 px-2 py-4 sm:p-4">
+            {messages.map((message, idx) => (
+              <MessageItem
+                key={`${message.id}-${idx}-${message.role}`}
+                message={message}
+                index={idx}
+                isLastMessage={idx === messages.length - 1}
+                status={status}
+                onCopy={(text) => {
+                  navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                onRegenerate={regenerate}
+              />
+            ))}
+            {/* Show loader only if no assistant message exists yet */}
+            {(status === MESSAGE_STATUS.SUBMITTED ||
+              status === MESSAGE_STATUS.STREAMING) &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
+                <div className="flex justify-start">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                    <Loader size="default" text="Thinking..." />
                   </div>
                 </div>
-
-                {/* Actions for assistant messages */}
-                {message.role === "assistant" &&
-                  isLastMessage &&
-                  messageText &&
-                  status !== "streaming" && (
-                    <div className="mt-2 flex justify-start">
-                      <Actions className="max-w-[80%]">
-                        <Action
-                          label="Copy"
-                          icon={<Copy className="h-3 w-3" />}
-                          onClick={() => {
-                            navigator.clipboard.writeText(messageText);
-                            toast({
-                              title: "Copied",
-                              description: "Message copied to clipboard",
-                            });
-                          }}
-                        />
-                        <Action
-                          label="Retry"
-                          icon={<RotateCcw className="h-3 w-3" />}
-                          onClick={() => regenerate()}
-                        />
-                      </Actions>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
-          {/* Show loader only if no assistant message exists yet */}
-          {(status === "submitted" || status === "streaming") &&
-            messages.length > 0 &&
-            messages[messages.length - 1].role === "user" && (
-              <div className="flex justify-start">
-                <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                  <Loader size="default" text="Thinking..." />
-                </div>
-              </div>
-            )}
-        </div>
+              )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       )}
 
-      <Form {...form}>
-        <form
-          onSubmit={onFormSubmit}
-          className="mx-auto flex w-full gap-2 px-4 pb-16 md:max-w-3xl md:pb-16"
+      <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
+        <PromptInput
+          onSubmit={(message) => {
+            if (
+              status === MESSAGE_STATUS.STREAMING ||
+              status === MESSAGE_STATUS.SUBMITTED
+            ) {
+              return;
+            }
+            if (message.text?.trim()) {
+              setErrorMessage(null);
+              sendMessage({
+                text: message.text,
+              });
+              setUiState((prev) => ({ ...prev, inputValue: "" }));
+            }
+          }}
         >
-          <div className="flex w-full items-end gap-2">
-            <div className="w-full flex-1">
-              <CustomTextarea
-                control={form.control}
-                name="message"
-                label=""
-                placeholder={
-                  error || errorMessage
-                    ? "Edit your message and try again..."
-                    : "Type your message..."
-                }
-                variant="bordered"
-                minRows={1}
-                maxRows={6}
-                fullWidth={true}
-                disableAutosize={false}
+          <PromptInputBody>
+            <PromptInputTextarea
+              placeholder={
+                error || errorMessage
+                  ? "Edit your message and try again..."
+                  : "Type your message..."
+              }
+              value={uiState.inputValue}
+              onChange={(e) =>
+                setUiState((prev) => ({ ...prev, inputValue: e.target.value }))
+              }
+            />
+          </PromptInputBody>
+
+          <PromptInputToolbar>
+            <PromptInputTools>
+              {/* Model Selector - Combobox */}
+              <Combobox
+                value={`${selectedModel.providerType}:${selectedModel.modelId}`}
+                onValueChange={(value) => {
+                  const separatorIndex = value.indexOf(":");
+                  if (separatorIndex === -1) return;
+
+                  const providerType = value.slice(
+                    0,
+                    separatorIndex,
+                  ) as LighthouseProvider;
+                  const modelId = value.slice(separatorIndex + 1);
+                  const provider = providers.find((p) => p.id === providerType);
+                  const model = provider?.models.find((m) => m.id === modelId);
+                  if (provider && model) {
+                    handleModelSelect(providerType, modelId, model.name);
+                  }
+                }}
+                groups={providers.map((provider) => ({
+                  heading: provider.name,
+                  options: provider.models.map((model) => ({
+                    value: `${provider.id}:${model.id}`,
+                    label: model.name,
+                  })),
+                }))}
+                loading={loadingProviders.size > 0}
+                loadingMessage="Loading models..."
+                placeholder={selectedModel.modelName || "Select model..."}
+                searchPlaceholder="Search models..."
+                emptyMessage="No model found."
+                showSelectedFirst={true}
               />
-            </div>
-            <CustomButton
-              type="submit"
-              ariaLabel={
-                status === "streaming" || status === "submitted"
-                  ? "Generating response..."
-                  : "Send message"
+            </PromptInputTools>
+
+            {/* Submit Button */}
+            <PromptInputSubmit
+              status={status}
+              type={
+                status === MESSAGE_STATUS.STREAMING ||
+                status === MESSAGE_STATUS.SUBMITTED
+                  ? "button"
+                  : "submit"
               }
-              isDisabled={
-                status === "streaming" ||
-                status === "submitted" ||
-                !messageValue?.trim()
+              onClick={(event) => {
+                if (
+                  status === MESSAGE_STATUS.STREAMING ||
+                  status === MESSAGE_STATUS.SUBMITTED
+                ) {
+                  event.preventDefault();
+                  stopGeneration();
+                }
+              }}
+              disabled={
+                !uiState.inputValue?.trim() &&
+                status !== MESSAGE_STATUS.STREAMING &&
+                status !== MESSAGE_STATUS.SUBMITTED
               }
-              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
-            >
-              {status === "streaming" || status === "submitted" ? (
-                <Square className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </CustomButton>
-          </div>
-        </form>
-      </Form>
+            />
+          </PromptInputToolbar>
+        </PromptInput>
+      </div>
     </div>
   );
 };

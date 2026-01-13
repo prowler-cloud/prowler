@@ -2,11 +2,8 @@
 
 import { Snippet } from "@heroui/snippet";
 
-import {
-  DateWithTime,
-  EntityInfoShort,
-  InfoField,
-} from "@/components/ui/entities";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
 
@@ -27,21 +24,6 @@ const formatDuration = (seconds: number) => {
 
   return parts.join(" ");
 };
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <div className="dark:bg-prowler-blue-400 flex flex-col gap-4 rounded-lg p-4 shadow">
-    <h3 className="text-md dark:text-prowler-theme-pale/90 font-medium text-gray-800">
-      {title}
-    </h3>
-    {children}
-  </div>
-);
 
 export const ScanDetail = ({
   scanDetails,
@@ -68,7 +50,7 @@ export const ScanDetail = ({
             loadingProgress={scan.progress}
           />
         </div>
-        <EntityInfoShort
+        <EntityInfo
           cloudProvider={providerDetails?.provider as ProviderType}
           entityAlias={providerDetails?.alias}
           entityId={providerDetails?.uid}
@@ -77,63 +59,63 @@ export const ScanDetail = ({
       </div>
 
       {/* Scan Details */}
-      <Section title="Scan Details">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Scan Name">{renderValue(scan.name)}</InfoField>
-          <InfoField label="Resources Scanned">
-            {scan.unique_resource_count}
-          </InfoField>
-          <InfoField label="Progress">{scan.progress}%</InfoField>
-        </div>
+      <Card variant="base" padding="lg">
+        <CardHeader>
+          <CardTitle>Scan Details</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <InfoField label="Scan Name">{renderValue(scan.name)}</InfoField>
+            <InfoField label="Resources Scanned">
+              {scan.unique_resource_count}
+            </InfoField>
+            <InfoField label="Progress">{scan.progress}%</InfoField>
+          </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Trigger">{renderValue(scan.trigger)}</InfoField>
-          <InfoField label="State">{renderValue(scan.state)}</InfoField>
-          <InfoField label="Duration">
-            {formatDuration(scan.duration)}
-          </InfoField>
-        </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <InfoField label="Trigger">{renderValue(scan.trigger)}</InfoField>
+            <InfoField label="State">{renderValue(scan.state)}</InfoField>
+            <InfoField label="Duration">
+              {formatDuration(scan.duration)}
+            </InfoField>
+          </div>
 
-        <InfoField label="Scan ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            {scanDetails.id}
-          </Snippet>
-        </InfoField>
+          <InfoField label="Scan ID" variant="simple">
+            <Snippet hideSymbol>{scanDetails.id}</Snippet>
+          </InfoField>
 
-        {scan.state === "failed" && taskDetails?.attributes.result && (
-          <>
-            {taskDetails.attributes.result.exc_message && (
-              <InfoField label="Error Message" variant="simple">
-                <Snippet
-                  className="bg-gray-50 py-1 dark:bg-slate-800"
-                  hideSymbol
-                >
-                  <span className="text-xs whitespace-pre-line">
-                    {taskDetails.attributes.result.exc_message.join("\n")}
-                  </span>
-                </Snippet>
-              </InfoField>
-            )}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <InfoField label="Error Type">
-                {renderValue(taskDetails.attributes.result.exc_type)}
-              </InfoField>
-            </div>
-          </>
-        )}
+          {scan.state === "failed" && taskDetails?.attributes.result && (
+            <>
+              {taskDetails.attributes.result.exc_message && (
+                <InfoField label="Error Message" variant="simple">
+                  <Snippet hideSymbol>
+                    <span className="text-xs whitespace-pre-line">
+                      {taskDetails.attributes.result.exc_message.join("\n")}
+                    </span>
+                  </Snippet>
+                </InfoField>
+              )}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Error Type">
+                  {renderValue(taskDetails.attributes.result.exc_type)}
+                </InfoField>
+              </div>
+            </>
+          )}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Started At">
-            <DateWithTime inline dateTime={scan.started_at || "-"} />
-          </InfoField>
-          <InfoField label="Completed At">
-            <DateWithTime inline dateTime={scan.completed_at || "-"} />
-          </InfoField>
-          <InfoField label="Scheduled At">
-            <DateWithTime inline dateTime={scan.scheduled_at || "-"} />
-          </InfoField>
-        </div>
-      </Section>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <InfoField label="Started At">
+              <DateWithTime inline dateTime={scan.started_at || "-"} />
+            </InfoField>
+            <InfoField label="Completed At">
+              <DateWithTime inline dateTime={scan.completed_at || "-"} />
+            </InfoField>
+            <InfoField label="Scheduled At">
+              <DateWithTime inline dateTime={scan.scheduled_at || "-"} />
+            </InfoField>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

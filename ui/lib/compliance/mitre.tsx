@@ -9,8 +9,11 @@ import {
   Framework,
   MITREAttributesMetadata,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
+  TOP_FAILED_DATA_TYPE,
+  TopFailedResult,
 } from "@/types/compliance";
 
 import {
@@ -19,21 +22,26 @@ import {
   findOrCreateFramework,
 } from "./commons";
 
+// Type for the internal map used in getTopFailedSections
+interface FailedSectionData {
+  total: number;
+  types: Record<string, number>;
+}
+
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
 ): Framework[] => {
   const attributes = attributesData?.data || [];
   const requirementsMap = createRequirementsMap(requirementsData);
+
   const frameworks: Framework[] = [];
 
-  // Process attributes and merge with requirements data
+  // Process ALL attributes to ensure consistent counters for charts
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
     const metadataArray = attributeItem.attributes?.attributes
       ?.metadata as unknown as MITREAttributesMetadata[];
-
-    if (!metadataArray || metadataArray.length === 0) continue;
 
     // Get corresponding requirement data
     const requirementData = requirementsMap.get(id);
@@ -56,15 +64,16 @@ export const mapComplianceData = (
     const framework = findOrCreateFramework(frameworks, frameworkName);
 
     // Create requirement directly (flat structure - no categories)
+    // Include ALL requirements, even those without metadata (for accurate chart counts)
     const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement: Requirement = {
       name: requirementName,
       description: description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       // MITRE specific fields
       technique_id: id,
       technique_name: techniqueName,
@@ -72,25 +81,28 @@ export const mapComplianceData = (
       subtechniques: subtechniques,
       platforms: platforms,
       technique_url: techniqueUrl,
-      cloud_services: metadataArray.map((m) => {
-        // Dynamically find the service field (AWSService, GCPService, AzureService, etc.)
-        const serviceKey = Object.keys(m).find((key) =>
-          key.toLowerCase().includes("service"),
-        );
-        const serviceName = serviceKey ? m[serviceKey] : "Unknown Service";
+      // Mark items without metadata so accordion can filter them out
+      hasMetadata: !!(metadataArray && metadataArray.length > 0),
+      cloud_services:
+        metadataArray?.map((m) => {
+          // Dynamically find the service field (AWSService, GCPService, AzureService, etc.)
+          const serviceKey = Object.keys(m).find((key) =>
+            key.toLowerCase().includes("service"),
+          );
+          const serviceName = serviceKey ? m[serviceKey] : "Unknown Service";
 
-        return {
-          service: serviceName,
-          category: m.Category,
-          value: m.Value,
-          comment: m.Comment,
-        };
-      }),
+          return {
+            service: serviceName,
+            category: m.Category,
+            value: m.Value,
+            comment: m.Comment,
+          };
+        }) || [],
     };
 
-    // Add requirement directly to framework (store in a special property)
-    (framework as any).requirements = (framework as any).requirements || [];
-    (framework as any).requirements.push(requirement);
+    // Add requirement directly to framework (flat structure - no categories)
+    framework.requirements = framework.requirements ?? [];
+    framework.requirements.push(requirement);
   }
 
   // Calculate counters using common helper (works with flat structure)
@@ -104,9 +116,14 @@ export const toAccordionItems = (
   scanId: string | undefined,
 ): AccordionItemProps[] => {
   return data.flatMap((framework) => {
-    const requirements = (framework as any).requirements || [];
+    const requirements = framework.requirements ?? [];
 
-    return requirements.map((requirement: Requirement, i: number) => {
+    // Filter out requirements without metadata (can't be displayed in accordion)
+    const displayableRequirements = requirements.filter(
+      (requirement) => requirement.hasMetadata !== false,
+    );
+
+    return displayableRequirements.map((requirement, i) => {
       const itemKey = `${framework.name}-req-${i}`;
 
       return {
@@ -120,6 +137,7 @@ export const toAccordionItems = (
         ),
         content: (
           <ClientAccordionContent
+            key={`content-${itemKey}`}
             requirement={requirement}
             scanId={scanId || ""}
             framework={framework.name}
@@ -137,22 +155,24 @@ export const toAccordionItems = (
 // Custom function for MITRE to get top failed sections grouped by tactics
 export const getTopFailedSections = (
   mappedData: Framework[],
-): FailedSection[] => {
-  const failedSectionMap = new Map();
+): TopFailedResult => {
+  const failedSectionMap = new Map<string, FailedSectionData>();
 
   mappedData.forEach((framework) => {
-    const requirements = (framework as any).requirements || [];
+    const requirements = framework.requirements ?? [];
 
-    requirements.forEach((requirement: Requirement) => {
-      if (requirement.status === "FAIL") {
-        const tactics = (requirement.tactics as string[]) || [];
+    requirements.forEach((requirement) => {
+      if (requirement.status === REQUIREMENT_STATUS.FAIL) {
+        const tactics = Array.isArray(requirement.tactics)
+          ? (requirement.tactics as string[])
+          : [];
 
         tactics.forEach((tactic) => {
           if (!failedSectionMap.has(tactic)) {
             failedSectionMap.set(tactic, { total: 0, types: {} });
           }
 
-          const sectionData = failedSectionMap.get(tactic);
+          const sectionData = failedSectionMap.get(tactic)!;
           sectionData.total += 1;
 
           const type = "Fails";
@@ -163,10 +183,13 @@ export const getTopFailedSections = (
   });
 
   // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
+  return {
+    items: Array.from(failedSectionMap.entries())
+      .map(([name, data]): FailedSection => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5),
+    type: TOP_FAILED_DATA_TYPE.SECTIONS,
+  };
 };
 
 // Custom function for MITRE to calculate category heatmap data grouped by tactics
@@ -185,10 +208,12 @@ export const calculateCategoryHeatmapData = (
 
     // Aggregate data by tactics
     complianceData.forEach((framework) => {
-      const requirements = (framework as any).requirements || [];
+      const requirements = framework.requirements ?? [];
 
-      requirements.forEach((requirement: Requirement) => {
-        const tactics = (requirement.tactics as string[]) || [];
+      requirements.forEach((requirement) => {
+        const tactics = Array.isArray(requirement.tactics)
+          ? (requirement.tactics as string[])
+          : [];
 
         tactics.forEach((tactic) => {
           const existing = tacticMap.get(tactic) || {

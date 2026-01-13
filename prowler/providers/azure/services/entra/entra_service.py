@@ -1,4 +1,5 @@
-from asyncio import gather, get_event_loop
+import asyncio
+from asyncio import gather
 from typing import List, Optional
 from uuid import UUID
 
@@ -15,7 +16,23 @@ class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
 
-        loop = get_event_loop()
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize Entra service while event loop is running"
+            )
 
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
@@ -38,36 +55,48 @@ class Entra(AzureService):
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
 
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
+
     async def _get_users(self):
         logger.info("Entra - Getting users...")
         users = {}
         try:
             for tenant, client in self.clients.items():
-                users_list = await client.users.get()
                 users.update({tenant: {}})
+                users_response = await client.users.get()
+
                 try:
-                    for user in users_list.value:
-                        users[tenant].update(
-                            {
-                                user.id: User(
-                                    id=user.id,
-                                    name=user.display_name,
-                                    authentication_methods=[
-                                        AuthMethod(
-                                            id=auth_method.id,
-                                            type=getattr(
-                                                auth_method, "odata_type", None
-                                            ),
-                                        )
-                                        for auth_method in (
-                                            await client.users.by_user_id(
-                                                user.id
-                                            ).authentication.methods.get()
-                                        ).value
-                                    ],
-                                )
-                            }
-                        )
+                    while users_response:
+                        for user in getattr(users_response, "value", []) or []:
+                            users[tenant].update(
+                                {
+                                    user.id: User(
+                                        id=user.id,
+                                        name=user.display_name,
+                                        authentication_methods=[
+                                            AuthMethod(
+                                                id=auth_method.id,
+                                                type=getattr(
+                                                    auth_method, "odata_type", None
+                                                ),
+                                            )
+                                            for auth_method in (
+                                                await client.users.by_user_id(
+                                                    user.id
+                                                ).authentication.methods.get()
+                                            ).value
+                                        ],
+                                    )
+                                }
+                            )
+
+                        next_link = getattr(users_response, "odata_next_link", None)
+                        if not next_link:
+                            break
+                        users_response = await client.users.with_url(next_link).get()
+
                 except Exception as error:
                     if (
                         error.__class__.__name__ == "ODataError"

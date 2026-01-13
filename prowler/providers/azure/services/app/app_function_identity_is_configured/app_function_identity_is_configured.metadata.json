@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Microsoft.Web/sites",
+  "ResourceGroup": "serverless",
   "Description": "Azure Functions should have managed identities configured for enhanced security and access control.",
   "Risk": "Not using managed identities can lead to less secure authentication and authorization practices, potentially exposing sensitive data.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",

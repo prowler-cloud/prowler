@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "network_vcn_subnet_flow_logs_enabled",
+  "CheckTitle": "Ensure VCN flow logging is enabled for all subnets",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:network:subnet",
+  "Severity": "medium",
+  "ResourceType": "OciSubnet",
+  "ResourceGroup": "network",
+  "Description": "VCN flow logging should be enabled for all subnets.",
+  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/enable-flow-logging.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure VCN flow logging is enabled for all subnets",
+      "Url": "https://hub.prowler.com/check/oci/network_vcn_subnet_flow_logs_enabled"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

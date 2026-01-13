@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2LaunchTemplate",
+  "ResourceGroup": "compute",
   "Description": "This control checks if Amazon EC2 launch templates are configured to assign public IP addresses to network interfaces upon launch. The control fails if an EC2 launch template is configured to assign a public IP address to network interfaces or if there is at least one network interface that has a public IP address.",
   "Risk": "A public IP address is reachable from the internet, making associated resources potentially accessible from the internet. EC2 resources should not be publicly accessible to avoid unintended access to workloads.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ec2-launch-template-public-ip-disabled.html",

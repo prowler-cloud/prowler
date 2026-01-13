@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pools** with **MFA** set to `ON`, indicating an additional factor is enforced during authentication",
   "Risk": "Without **MFA**, password-only sign-in increases **account takeover** via phishing, brute force, and credential stuffing. Compromised accounts yield valid tokens to access data and APIs, alter configurations, and move laterally, eroding **confidentiality** and **integrity**, and potentially affecting **availability** through abuse.",
   "RelatedUrl": "",

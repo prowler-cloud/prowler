@@ -1,0 +1,21 @@
+Mutelist:
+  Accounts:
+    "ocid1.tenancy.oc1..aaaaaaaexample":
+      Checks:
+        "identity_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+        "network_security_list_ingress_from_internet_to_ssh_port":
+          Regions:
+            - "us-ashburn-1"
+          Resources:
+            - "ocid1.securitylist.oc1.iad.aaaaaaaexample"
+        "objectstorage_bucket_not_publicly_accessible":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "Environment=Development"

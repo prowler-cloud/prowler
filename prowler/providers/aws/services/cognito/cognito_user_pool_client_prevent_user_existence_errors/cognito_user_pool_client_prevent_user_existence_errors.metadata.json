@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "Amazon Cognito app clients use `PreventUserExistenceErrors` to suppress **user-existence disclosures**, keeping authentication, confirmation, and recovery responses generic rather than indicating whether a username exists.",
   "Risk": "If responses reveal user existence, adversaries can **enumerate accounts**, enabling targeted **credential stuffing**, **brute force**, and **password-reset abuse**. This facilitates **account takeover**, leaks PII, and can degrade availability through automated lockouts.",
   "RelatedUrl": "",
@@ -20,9 +21,7 @@
     "https://repost.aws/knowledge-center/cognito-prevent-user-existence-errors",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-managing-errors.html",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/cognito-idp/create-user-pool-client.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cognito-userpoolclient.html",
-    "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_CreateUserPoolClient.html"
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cognito-userpoolclient.html"
   ],
   "Remediation": {
     "Code": {

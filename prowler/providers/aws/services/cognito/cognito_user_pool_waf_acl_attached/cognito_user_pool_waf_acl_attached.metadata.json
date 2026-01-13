@@ -12,17 +12,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "IAM",
   "Description": "Amazon Cognito user pools are evaluated for an association with an **AWS WAFv2 web ACL** that filters and controls requests to the hosted UI and public user pool API endpoints.",
   "Risk": "Without a web ACL, Cognito endpoints lack layer-7 filtering, enabling:\n- Credential stuffing and account enumeration\n- Bot abuse and high-rate requests degrading service\n- Malicious payload probes\n\nThis threatens **availability**, risks unauthorized access to user data (**confidentiality**), and undermines session **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/wafv2/associate-web-acl.html",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_association",
-    "https://stackoverflow.com/questions/76068360/how-to-add-waf-to-my-cognito-userpool-with-cdk",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl",
-    "https://github.com/aws-ss/terraform-aws-wafv2",
-    "https://medium.com/@umashankarn/deploying-waf-to-protect-cognito-resources-841ea24216d2"
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html"
   ],
   "Remediation": {
     "Code": {

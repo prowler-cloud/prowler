@@ -12,16 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pool** with **threat protection** in `ENFORCED` mode and **adaptive authentication** actions set to `BLOCK` for `low`, `medium`, and `high` account-takeover risk levels.\n\nEvaluates the user pool's risk configuration to confirm risky sign-in attempts are blocked across all severities.",
   "Risk": "Permitting risky sign-ins degrades **confidentiality** and **integrity**. Attackers with **stolen or guessed credentials** can achieve **account takeover**, access data, change credentials, and escalate privileges, enabling lateral movement and persistence.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.fusioncyber.co/blogs/cloud/using-amazon-cognito-for-secure-login-to-your-web-app",
-    "https://builder.aws.com/content/2kOUCPNB88CswrD3uyXCzTcdxtM/threat-protection-for-custom-authentication-flow-in-amazon-cognito",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/describe_risk_configuration.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233676-ensure-that-your-amazon-cognito-user-pool-blocks-potential-malicious-sign-in-attempts",
-    "https://builder.aws.com/content/2p7CHBirkTsrRezVJso3eiSi6Al/collecting-context-data-for-amazon-cognito-advanced-security-feature-adaptive-authentication"
+    "https://support.icompaas.com/support/solutions/articles/62000233676-ensure-that-your-amazon-cognito-user-pool-blocks-potential-malicious-sign-in-attempts"
   ],
   "Remediation": {
     "Code": {

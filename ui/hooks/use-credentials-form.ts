@@ -11,19 +11,22 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
+  ApiResponse,
   ProviderType,
 } from "@/types";
 
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
-  onSubmit: (formData: FormData) => Promise<any>;
+  providerUid?: string;
+  onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
 };
 
 export const useCredentialsForm = ({
   providerType,
   providerId,
+  providerUid,
   onSubmit,
   successNavigationUrl,
 }: UseCredentialsFormProps) => {
@@ -37,11 +40,14 @@ export const useCredentialsForm = ({
     if (providerType === "aws" && via === "role") {
       return addCredentialsRoleFormSchema(providerType);
     }
+    if (providerType === "alibabacloud" && via === "role") {
+      return addCredentialsRoleFormSchema(providerType);
+    }
     if (providerType === "gcp" && via === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
-    // For GitHub, we need to pass the via parameter to determine which fields are required
-    if (providerType === "github") {
+    // For GitHub and M365, we need to pass the via parameter to determine which fields are required
+    if (providerType === "github" || providerType === "m365") {
       return addCredentialsFormSchema(providerType, via);
     }
     return addCredentialsFormSchema(providerType);
@@ -99,13 +105,27 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.TENANT_ID]: "",
         };
       case "m365":
+        // M365 credentials based on via parameter
+        if (via === "app_client_secret") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLIENT_ID]: "",
+            [ProviderCredentialFields.CLIENT_SECRET]: "",
+            [ProviderCredentialFields.TENANT_ID]: "",
+          };
+        }
+        if (via === "app_certificate") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLIENT_ID]: "",
+            [ProviderCredentialFields.CERTIFICATE_CONTENT]: "",
+            [ProviderCredentialFields.TENANT_ID]: "",
+          };
+        }
         return {
           ...baseDefaults,
           [ProviderCredentialFields.CLIENT_ID]: "",
-          [ProviderCredentialFields.CLIENT_SECRET]: "",
           [ProviderCredentialFields.TENANT_ID]: "",
-          [ProviderCredentialFields.USER]: "",
-          [ProviderCredentialFields.PASSWORD]: "",
         };
       case "gcp":
         return {
@@ -141,14 +161,50 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
+      case "oraclecloud":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OCI_USER]: "",
+          [ProviderCredentialFields.OCI_FINGERPRINT]: "",
+          [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
+          [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
+          [ProviderCredentialFields.OCI_REGION]: "",
+          [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
+        };
+      case "mongodbatlas":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: "",
+          [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
+        };
+      case "alibabacloud":
+        if (via === "role") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: "",
+          };
+        }
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+        };
       default:
         return baseDefaults;
     }
   };
 
+  const defaultValues = getDefaultValues();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: getDefaultValues(),
+    defaultValues: defaultValues,
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    criteriaMode: "all", // Show all errors for each field
   });
 
   const { handleServerResponse } = useFormServerErrors(
@@ -169,6 +225,7 @@ export const useCredentialsForm = ({
 
     // Filter out empty values first, then append all remaining values
     const filteredValues = filterEmptyValues(values);
+
     Object.entries(filteredValues).forEach(([key, value]) => {
       formData.append(key, value);
     });
@@ -181,9 +238,12 @@ export const useCredentialsForm = ({
     }
   };
 
+  const { isSubmitting, errors } = form.formState;
+
   return {
     form,
-    isLoading: form.formState.isSubmitting,
+    isLoading: isSubmitting,
+    errors,
     handleSubmit,
     handleBackStep,
     searchParamsObj,

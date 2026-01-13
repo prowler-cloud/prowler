@@ -29,13 +29,17 @@ async def mock_sharepoint_get_settings(_):
 )
 class Test_SharePoint_Service:
     def test_get_client(self):
-        sharepoint_client = SharePoint(
-            set_mocked_m365_provider(identity=M365IdentityInfo(tenant_domain=DOMAIN))
-        )
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            sharepoint_client = SharePoint(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
         assert sharepoint_client.client.__class__.__name__ == "GraphServiceClient"
 
     def test_get_settings(self):
-        sharepoint_client = SharePoint(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            sharepoint_client = SharePoint(set_mocked_m365_provider())
         settings = sharepoint_client.settings
         assert settings.sharingCapability == "ExternalUserAndGuestSharing"
         assert settings.sharingAllowedDomainList == ["allowed-domain.com"]

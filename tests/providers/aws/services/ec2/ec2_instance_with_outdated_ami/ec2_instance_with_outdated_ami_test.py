@@ -103,6 +103,29 @@ def mock_make_api_call_outdated_ami(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_missing_ami(self, operation_name, kwarg):
+    if operation_name == "DescribeInstances":
+        return {
+            "Reservations": [
+                {
+                    "Instances": [
+                        {
+                            "InstanceId": "i-0123456789abcdef0",
+                            "State": {"Name": "running"},
+                            "InstanceType": "t2.micro",
+                            "ImageId": "ami-missing",
+                            "LaunchTime": "2026-11-12T11:34:56.000Z",
+                            "PrivateDnsName": "ip-172-31-32-101.ec2.internal",
+                        }
+                    ]
+                }
+            ]
+        }
+    elif operation_name == "DescribeImages":
+        return {"Images": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
 class Test_ec2_instance_with_outdated_ami:
     @mock_aws
     def test_ec2_no_instances(self):
@@ -219,3 +242,30 @@ class Test_ec2_instance_with_outdated_ami:
                 result[0].status_extended
                 == "EC2 Instance i-0123456789abcdef0 is using outdated AMI ami-87654321."
             )
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_missing_ami
+    )
+    def test_instance_missing_ami_details(self):
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_with_outdated_ami.ec2_instance_with_outdated_ami.ec2_client",
+                new=EC2(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_with_outdated_ami.ec2_instance_with_outdated_ami import (
+                ec2_instance_with_outdated_ami,
+            )
+
+            check = ec2_instance_with_outdated_ami()
+            result = check.execute()
+
+            assert result == []

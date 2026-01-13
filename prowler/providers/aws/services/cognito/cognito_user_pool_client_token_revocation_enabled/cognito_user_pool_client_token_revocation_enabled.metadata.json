@@ -12,14 +12,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pool app clients** are evaluated for **token revocation** being enabled via `EnableTokenRevocation`.\n\nThis identifies whether each client can invalidate refresh tokens and the access/ID tokens derived from them to end user sessions.",
   "Risk": "Without **token revocation**, stolen or residual refresh tokens remain valid until expiry, enabling continued access after sign-out or account disablement. This undermines **confidentiality** and **integrity** by permitting unauthorized API calls, data exfiltration, and session hijacking.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://repost.aws/knowledge-center/cognito-revoke-refresh-tokens",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/update_user_pool_client.html",
-    "https://www.pulumi.com/registry/packages/aws/api-docs/cognito/userpoolclient/",
-    "https://hackage.haskell.org/package/amazonka-cognito-idp-2.0/docs/Amazonka-CognitoIdentityProvider-CreateUserPoolClient.html",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html"
   ],
   "Remediation": {

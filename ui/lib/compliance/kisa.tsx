@@ -8,6 +8,7 @@ import {
   Framework,
   KISAAttributesMetadata,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -65,9 +66,9 @@ export const mapComplianceData = (
       description: description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       section: sectionName,
       audit_checklist: attrs.AuditChecklist,
       related_regulations: attrs.RelatedRegulations,
@@ -128,6 +129,7 @@ export const toAccordionItems = (
                 ),
                 content: (
                   <ClientAccordionContent
+                    key={`content-${itemKey}`}
                     requirement={requirement}
                     scanId={scanId || ""}
                     framework={framework.name}

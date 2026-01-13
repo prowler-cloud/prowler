@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "kms_key_rotation_enabled",
+  "CheckTitle": "Ensure customer created Customer Managed Key (CMK) is rotated at least annually",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:kms:resource",
+  "Severity": "medium",
+  "ResourceType": "OciKmsResource",
+  "ResourceGroup": "security",
+  "Description": "Customer Managed Keys should be rotated at least annually to reduce the risk of key compromise.",
+  "Risk": "Not meeting this requirement increases security risk.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-KMS/rotate-customer-managed-keys.html",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure customer created Customer Managed Key (CMK) is rotated at least annually",
+      "Url": "https://hub.prowler.com/check/oci/kms_key_rotation_enabled"
+    }
+  },
+  "Categories": [
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

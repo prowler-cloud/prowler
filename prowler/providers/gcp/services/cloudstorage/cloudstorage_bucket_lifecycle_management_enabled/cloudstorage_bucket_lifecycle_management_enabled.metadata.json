@@ -1,0 +1,35 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_lifecycle_management_enabled",
+  "CheckTitle": "Cloud Storage buckets have lifecycle management enabled",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Google Cloud Storage buckets** are evaluated for the presence of **lifecycle management** with at least one valid rule (supported action and non-empty condition) to automatically transition or delete objects and optimize storage costs.",
+  "Risk": "Buckets without lifecycle rules can accumulate stale data, increase storage costs, and fail to meet data retention and internal compliance requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-lifecycle-management.html",
+    "https://cloud.google.com/storage/docs/lifecycle"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --lifecycle-file=<PATH_TO_JSON>",
+      "NativeIaC": "",
+      "Other": "1) Open Google Cloud Console → Storage → Buckets → <BUCKET_NAME>\n2) Tab 'Lifecycle'\n3) Add rule(s) to delete or transition objects (e.g., delete after 365 days; transition STANDARD→NEARLINE after 90 days)\n4) Save",
+      "Terraform": "```hcl\n# Example: enable lifecycle to transition and delete objects\nresource \"google_storage_bucket\" \"example\" {\n  name     = var.bucket_name\n  location = var.location\n\n  # Transition STANDARD → NEARLINE after 90 days\n  lifecycle_rule {\n    action {\n      type          = \"SetStorageClass\"\n      storage_class = \"NEARLINE\"\n    }\n    condition {\n      age                   = 90\n      matches_storage_class = [\"STANDARD\"]\n    }\n  }\n\n  # Delete objects after 365 days\n  lifecycle_rule {\n    action {\n      type = \"Delete\"\n    }\n    condition {\n      age = 365\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure lifecycle rules to automatically delete stale objects or transition them to colder storage classes according to your organization's retention and cost-optimization policy.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_lifecycle_management_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

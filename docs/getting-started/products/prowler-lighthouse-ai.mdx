@@ -1,0 +1,108 @@
+---
+title: 'Overview'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.8.0" />
+
+Prowler Lighthouse AI is a Cloud Security Analyst chatbot that helps you understand, prioritize, and remediate security findings in your cloud environments. It's designed to provide security expertise for teams without dedicated resources, acting as your 24/7 virtual cloud security analyst.
+
+<img src="/images/prowler-app/lighthouse-intro.png" alt="Prowler Lighthouse" />
+
+<Card title="Set Up Lighthouse AI" icon="rocket" href="/user-guide/tutorials/prowler-app-lighthouse#set-up">
+  Learn how to configure Lighthouse AI with your preferred LLM provider
+</Card>
+
+## Capabilities
+
+Prowler Lighthouse AI is designed to be your AI security team member, with capabilities including:
+
+### Natural Language Querying
+
+Ask questions in plain English about your security findings. Examples:
+
+- "What are my highest risk findings?"
+- "Show me all S3 buckets with public access."
+- "What security issues were found in my production accounts?"
+
+<img src="/images/prowler-app/lighthouse-feature1.png" alt="Natural language querying" />
+
+### Detailed Remediation Guidance
+
+Get tailored step-by-step instructions for fixing security issues:
+
+- Clear explanations of the problem and its impact
+- Commands or console steps to implement fixes
+- Alternative approaches with different solutions
+
+<img src="/images/prowler-app/lighthouse-feature2.png" alt="Detailed Remediation" />
+
+### Enhanced Context and Analysis
+
+Lighthouse AI can provide additional context to help you understand the findings:
+
+- Explain security concepts related to findings in simple terms
+- Provide risk assessments based on your environment and context
+- Connect related findings to show broader security patterns
+
+<img src="/images/prowler-app/lighthouse-config.png" alt="Business Context" />
+
+<img src="/images/prowler-app/lighthouse-feature3.png" alt="Contextual Responses" />
+
+## Important Notes
+
+Prowler Lighthouse AI is powerful, but there are limitations:
+
+- **Continuous improvement**: Please report any issues, as the feature may make mistakes or encounter errors, despite extensive testing.
+- **Access limitations**: Lighthouse AI can only access data the logged-in user can view. If you can't see certain information, Lighthouse AI can't see it either.
+- **NextJS session dependence**: If your Prowler application session expires or logs out, Lighthouse AI will error out. Refresh and log back in to continue.
+- **Response quality**: The response quality depends on the selected LLM provider and model. Choose models with strong tool-calling capabilities for best results. We recommend `gpt-5` model from OpenAI.
+
+## Extending Lighthouse AI
+
+Lighthouse AI retrieves data through Prowler MCP. To add new capabilities, extend the Prowler MCP Server with additional tools and Lighthouse AI discovers them automatically.
+
+For development details, see:
+- [Lighthouse AI Architecture](/developer-guide/lighthouse-architecture) - Internal architecture and extension points
+- [Extending the MCP Server](/developer-guide/mcp-server) - Adding new tools to Prowler MCP
+
+### Getting Help
+
+If you encounter issues with Prowler Lighthouse AI or have suggestions for improvements, please [reach out through our Slack channel](https://goto.prowler.com/slack).
+
+### What Data Is Shared to LLM Providers?
+
+The following API endpoints are accessible to Prowler Lighthouse AI. Data from the following API endpoints could be shared with LLM provider depending on the scope of user's query:
+
+## FAQs
+
+**1. Which LLM providers are supported?**
+
+Lighthouse AI supports three providers:
+
+- **OpenAI** - GPT models (GPT-5, GPT-4o, etc.)
+- **Amazon Bedrock** - Claude, Llama, Titan, and other models via AWS
+- **OpenAI Compatible** - Custom endpoints like OpenRouter, Ollama, or any OpenAI-compatible service
+
+For detailed configuration instructions, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
+
+**2. Why some models don't appear in Lighthouse AI?**
+
+LLM providers offer different types of models. Not every model can be integrated with Lighthouse AI (for example, text-to-speech, vision, embedding, computer use, etc.).
+
+Lighthouse AI requires models that support:
+
+- Text input
+- Text output
+- Tool calling
+
+Lighthouse AI [automatically filters](https://github.com/prowler-cloud/prowler/blob/master/api/src/backend/tasks/jobs/lighthouse_providers.py#L341-L353) out models that do not support these capabilities, so some provider models may not appear in the Lighthouse AI model list.
+
+**3. Is my security data shared with LLM providers?**
+
+Minimal data is shared to generate useful responses. Agent can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to the Next.js server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc.) may be shared with the configured LLM provider based on query requirements.
+
+**4. Can the Lighthouse AI change my cloud environment?**
+
+No. The agent doesn't have the tools to make the changes, even if the configured cloud provider API keys contain permissions to modify resources.

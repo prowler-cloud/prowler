@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_rotate_access_key_90_days",
+  "CheckTitle": "Access keys are rotated every 90 days or less",
+  "CheckType": [
+    "Unusual logon",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}/accesskey/{access-key-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRAMAccessKey",
+  "ResourceGroup": "IAM",
+  "Description": "An **access key** consists of an access key ID and a secret, which are used to sign programmatic requests that you make to Alibaba Cloud.\n\nRAM users need their own access keys to make programmatic calls from SDKs, CLIs, or direct API calls. It is recommended that all access keys be **regularly rotated**.",
+  "Risk": "Access keys might be compromised by leaving them in code, configuration files, on-premise and cloud storages, and then stolen by attackers.\n\n**Rotating access keys** reduces the window of opportunity for a compromised access key to be used.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/116401.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/access-keys-rotation.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram CreateAccessKey --UserName <ram_user> && aliyun ram UpdateAccessKey --UserAccessKeyId <old_access_key_ID> --Status Inactive --UserName <ram_user> && aliyun ram DeleteAccessKey --UserAccessKeyId <old_access_key_ID> --UserName <ram_user>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Create a new **AccessKey pair** for rotation\n2. Update all applications and systems to use the new AccessKey pair\n3. **Disable** the original AccessKey pair\n4. Confirm that your applications and systems are working\n5. **Delete** the original AccessKey pair",
+      "Url": "https://hub.prowler.com/check/ram_rotate_access_key_90_days"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

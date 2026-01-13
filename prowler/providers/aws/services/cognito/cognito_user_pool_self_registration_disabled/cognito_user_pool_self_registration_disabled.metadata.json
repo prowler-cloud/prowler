@@ -11,19 +11,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsCognitoUserPool",
+  "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pools** are evaluated for **self-service sign-up**. The expected configuration is `AllowAdminCreateUserOnly=true` so only administrators create accounts.\n\n*When self sign-up is allowed*, the check also highlights any linked identity pools and the authenticated role(s) that new users could assume.",
   "Risk": "Open sign-up lets untrusted users gain **authenticated identities**, potentially assuming **identity pool roles**. This can expose data (**confidentiality**), enable unauthorized actions (**integrity**), and drive abuse or cost via resource use (**availability**). Mass registrations and token harvesting increase the chance of lateral access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/54782815/aws-cognito-remove-signup-in-login-page/76517044",
-    "https://runebook.dev/en/aws/cognito-user-identity-pools/AdminCreateUserConfigType",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html",
     "https://docs.amazonaws.cn/en_us/cognito/latest/developerguide/signing-up-users-in-your-app.html",
-    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-admin-create-user-policy.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_confirm_sign_up.html",
-    "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html",
-    "https://www.developerload.com/aws-cognitoremove-signup-in-login-page"
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-admin-create-user-policy.html"
   ],
   "Remediation": {
     "Code": {

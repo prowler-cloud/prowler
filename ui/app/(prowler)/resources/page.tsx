@@ -69,7 +69,6 @@ export default async function Resources({
             values: uniqueServices,
           },
         ]}
-        defaultOpen={true}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
@@ -116,6 +115,9 @@ const SSRDataTable = async ({
       "inserted_at",
       "updated_at",
       "uid",
+      "partition",
+      "details",
+      "metadata",
     ],
   });
 

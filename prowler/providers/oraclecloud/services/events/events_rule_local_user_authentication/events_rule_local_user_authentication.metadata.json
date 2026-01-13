@@ -1,0 +1,39 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "events_rule_local_user_authentication",
+  "CheckTitle": "Ensure a notification is configured for Local OCI User Authentication",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "events",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:events:rule",
+  "Severity": "medium",
+  "ResourceType": "OciEventRule",
+  "ResourceGroup": "messaging",
+  "Description": "Ensure that an Event Rule and Notification are configured to detect when a user authenticates via OCI local authentication. Event Rules are compartment-scoped and will detect events in child compartments. This Event rule is required to be created at the root compartment level.",
+  "Risk": "Without proper notification for local user authentication events, unauthorized access attempts or suspicious authentication activity may go undetected, increasing the risk of security breaches.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci events rule create --display-name user-authentication-rule --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.identitysignon.interactivelogin\"]}' --compartment-id <root-compartment-ocid> --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<topic-ocid>\"}]}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-oci-local-authentication.html",
+      "Terraform": "resource \"oci_events_rule\" \"user_auth_rule\" {\n  display_name    = \"user-authentication-events\"\n  is_enabled      = true\n  compartment_id  = var.tenancy_ocid\n  condition       = \"{\\\"eventType\\\":[\\\"com.oraclecloud.identitysignon.interactivelogin\\\"]}\"\n  actions {\n    actions {\n      action_type = \"ONS\"\n      is_enabled  = true\n      topic_id    = oci_ons_notification_topic.topic.id\n    }\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Create an Event Rule with notifications configured to monitor local OCI user authentication events (com.oraclecloud.identitysignon.interactivelogin)",
+      "Url": "https://hub.prowler.com/check/oci/events_rule_local_user_authentication"
+    }
+  },
+  "Categories": [
+    "logging",
+    "monitoring",
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

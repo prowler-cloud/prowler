@@ -11,11 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito identity pools** are evaluated for **guest access** to unauthenticated identities. The assessment considers the `allow_unauthenticated_identities` setting and whether an unauthenticated role can be assumed by guests.",
   "Risk": "With **guest access**, unauthenticated users receive temporary credentials, reducing **confidentiality** and **integrity** controls. Overly permissive unauthenticated roles enable data reads/writes, API abuse, and resource consumption, risking **data exposure**, unauthorized changes, and **cost amplification**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/location/latest/developerguide/authenticating-using-cognito.html"
+    "https://docs.aws.amazon.com/location/latest/developerguide/authenticating-using-cognito.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233674-ensure-cognito-identity-pool-has-guest-access-disabled"
   ],
   "Remediation": {
     "Code": {

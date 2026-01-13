@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_versioning_enabled",
+  "CheckTitle": "Cloud Storage buckets have Object Versioning enabled",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Google Cloud Storage buckets** are evaluated to ensure that **Object Versioning** is enabled. Object Versioning preserves older versions of objects, allowing data recovery, maintaining audit trails, and protecting against accidental deletions or overwrites.",
+  "Risk": "Buckets without Object Versioning enabled cannot recover previous object versions, which increases the risk of permanent data loss from accidental deletion or modification.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-versioning.html",
+    "https://cloud.google.com/storage/docs/object-versioning"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --versioning",
+      "NativeIaC": "",
+      "Other": "1) Open Google Cloud Console → Storage → Buckets → <BUCKET_NAME>\n2) Tab 'Configuration'\n3) Under 'Object versioning', click 'Enable Object Versioning'\n4) Save changes",
+      "Terraform": "```hcl\n# Example: enable Object Versioning on a Cloud Storage bucket\nresource \"google_storage_bucket\" \"example\" {\n  name     = var.bucket_name\n  location = var.location\n\n  versioning {\n    enabled = true\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable Object Versioning on Cloud Storage buckets to preserve previous object versions and improve data recoverability and auditability.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_versioning_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Buckets missing the 'versioning' block are treated as having Object Versioning disabled."
+}

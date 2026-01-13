@@ -1,0 +1,200 @@
+---
+title: 'Prowler Cloud'
+---
+
+**Prowler Cloud** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
+
+We refer to **Prowler App** as the self-hosted version of **Prowler Cloud**.
+
+## Accessing Prowler Cloud and API Documentation
+
+If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user, you can access API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
+
+<Note>
+**For Prowler App users**
+
+After [installing](/getting-started/installation/prowler-app) **Prowler App**, access it at [http://localhost:3000](http://localhost:3000).
+
+To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
+</Note>
+
+## **Step 1: Sign Up**
+
+### **Sign Up with Email**
+
+To get started, sign up using your email and password:
+
+<img src="/images/sign-up-button.png" alt="Sign Up Button" width="320" />
+<img src="/images/sign-up.png" alt="Sign Up" width="285" />
+
+### **Sign Up with Social Login**
+
+If Social Login is enabled, you can sign up using your preferred provider (e.g., Google, GitHub).
+
+<Note>
+**How Social Login Works**
+
+If your email is already registered, you will be logged in, and your social account will be linked.
+If your email is not registered, a new account will be created using your social account email.
+
+</Note>
+<Note>
+**Enable Social Login**
+
+See [how to configure Social Login for Prowler](/user-guide/tutorials/prowler-app-social-login) to enable this feature in your own deployments.
+
+</Note>
+## **Step 2: Log In**
+
+Once registered, log in with your email and password to access Prowler App.
+
+<img src="/images/log-in.png" alt="Log In" width="350" />
+
+Upon logging in, the Overview page will display. At this stage, no data is present: add a provider to begin scanning your cloud environment.
+
+## **Step 3: Add a Provider**
+
+To perform security scans, link a cloud provider account. Prowler supports the following providers and more:
+
+- **AWS**
+
+- **Azure**
+
+- **Google Cloud Platform (GCP)**
+
+- **Kubernetes**
+
+- **M365**
+
+- **GitHub**
+
+- **Oracle Cloud Infrastructure (OCI)**
+
+Steps to add a provider:
+
+1. Navigate to `Settings > Cloud Providers`.
+2. Click `Add Account` to set up a new provider and provide your credentials.
+
+<img src="/images/add-provider.png" alt="Add Provider" width="700" />
+
+## **Step 4: Configure the Provider**
+
+Select the cloud provider to scan and configure authentication credentials. Each provider has specific requirements and authentication methods.
+
+<img src="/images/select-provider.png" alt="Select a Provider" width="700" />
+
+For detailed instructions on configuring credentials for each provider, refer to the provider-specific getting started guides:
+
+<Columns cols={3}>
+  <Card title="AWS" icon="aws" href="/user-guide/providers/aws/getting-started-aws">
+    Configure AWS authentication using IAM Access Keys or Assumed Role credentials.
+  </Card>
+  <Card title="Azure" icon="microsoft" href="/user-guide/providers/azure/getting-started-azure">
+    Set up Azure authentication using Service Principal credentials.
+  </Card>
+  <Card title="Google Cloud" icon="google" href="/user-guide/providers/gcp/getting-started-gcp">
+    Configure GCP authentication with Service Account or Application Default Credentials.
+  </Card>
+  <Card title="Oracle Cloud Infrastructure" icon="cloud" href="/user-guide/providers/oci/getting-started-oci">
+    Connect OCI with API key credentials to scan compartments and regions.
+  </Card>
+  <Card title="Kubernetes" icon="cloud" href="/user-guide/providers/kubernetes/getting-started-k8s">
+    Set up Kubernetes authentication using kubeconfig files for cluster access.
+  </Card>
+  <Card title="Microsoft 365" icon="microsoft" href="/user-guide/providers/microsoft365/getting-started-m365">
+    Configure M365 authentication with Application Certificate or Client Secret.
+  </Card>
+  <Card title="GitHub" icon="github" href="/user-guide/providers/github/getting-started-github">
+    Set up GitHub authentication using Personal Access Token, OAuth App, or GitHub App.
+  </Card>
+  <Card title="Infrastructure as Code" icon="code" href="/user-guide/providers/iac/getting-started-iac">
+    Scan IaC public or private repositories for security issues.
+  </Card>
+</Columns>
+## **Step 5: Test Connection**
+
+After adding your credentials of your cloud account, click the `Launch` button to verify that Prowler App can successfully connect to your provider:
+
+<img src="/images/test-connection-button.png" alt="Test Connection" width="700" />
+
+## **Step 6: Scan started**
+
+After successfully adding and testing your credentials, Prowler will start scanning your cloud environment, click the `Go to Scans` button to see the progress:
+
+<img src="/images/provider-added.png" alt="Start Now" width="700" />
+
+<Note>
+Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
+
+</Note>
+## **Step 7: Monitor Scan Progress**
+
+Track the progress of your scan in the `Scans` section:
+
+<img src="/images/scan-progress.png" alt="Scan Progress" width="700" />
+
+
+## **Step 8: Analyze the Findings**
+
+While the scan is running, start exploring the findings in these sections:
+
+- **Overview**: High-level summary of the scans.
+
+    <img src="/images/products/overview.png" alt="Overview" width="700" />
+
+- **Compliance**: Insights into compliance status.
+
+    <img src="/images/compliance.png" alt="Compliance" width="700" />
+
+- **Issues**: Types of issues detected.
+
+    <img src="/images/issues.png" alt="Issues" width="300" />
+
+- **Browse All Findings**: Detailed list of findings detected, where you can filter by severity, service, and more.
+
+    <img src="/images/findings.png" alt="Findings" width="700" />
+
+To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.
+
+## **Step 9: Download the Outputs**
+
+Once a scan is complete, navigate to the Scan Jobs section to download the output files generated by Prowler:
+
+<img src="/images/scan_jobs_section.png" alt="Scan Jobs section" width="700" />
+
+You can download the output files generated by Prowler as a single `zip` file. This archive contains the CSV, JSON-OSCF, and HTML reports detailing the findings.
+
+To download these files, click the **Download** button. This button becomes available only after the scan has finished.
+
+<img src="/images/download_output.png" alt="Download output" width="700" />
+
+The `zip` file unpacks into a folder named like `prowler-output-<provider_id>-<timestamp>`, which includes all of the above outputs. In the example below, you can see the `.csv`, .`json`, and `.html` reports alongside a subfolder for detailed compliance checks.
+
+<img src="/images/output_folder.png" alt="Output folder" width="700" />
+
+<Note>
+**API Note**
+
+For more information about the API endpoint used by the UI to download the ZIP archive, refer to: [Prowler API Reference - Download Scan Output](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
+
+</Note>
+## **Step 10: Download specified compliance report**
+
+Once your scan has finished, you don’t need to grab the entire ZIP—just pull down the specific compliance report you want:
+
+- Navigate to the **Compliance** section of the UI.
+
+<img src="/images/compliance_section.png" alt="Compliance section" width="700" />
+
+- Find the Framework report you need.
+
+- Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
+
+<img src="/images/compliance_download.png" alt="Download compliance output" width="700" />
+
+<Note>
+**API Note**
+
+To fetch a single compliance report via API, see the Retrieve compliance report as CSV endpoint in the Prowler API Reference.[Prowler API Reference - Retrieve compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)
+
+</Note>

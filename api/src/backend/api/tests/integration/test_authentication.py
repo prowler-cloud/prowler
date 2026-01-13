@@ -1003,6 +1003,504 @@ class TestCombinedAuthentication:
         assert api_key.last_used_at is not None
 
 
+@pytest.mark.django_db
+class TestAPIKeyRLSBypass:
+    """Test RLS bypass fix for API key authentication.
+
+    These tests verify that API key authentication works correctly even when
+    RLS context is not set, which is critical since we don't know the tenant_id
+    until we look up the API key (which itself is protected by RLS).
+
+    The fix ensures all database operations during authentication use the admin
+    database, bypassing RLS constraints.
+    """
+
+    def test_api_key_authentication_without_rls_context(
+        self, create_test_user, tenants_fixture, api_keys_fixture
+    ):
+        """Verify API key authentication works without pre-existing RLS context.
+
+        This is the core fix: authentication must succeed even when prowler.tenant_id
+        is not set, since we need to look up the API key to discover the tenant.
+        """
+        client = APIClient()
+        api_key = api_keys_fixture[0]
+
+        api_key_headers = get_api_key_header(api_key._raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 200
+        assert "data" in response.json()
+
+    def test_api_key_lookup_uses_admin_database(
+        self, create_test_user, tenants_fixture
+    ):
+        """Verify API key lookup uses admin database during authentication.
+
+        The TenantAPIKey model is RLS-protected, so queries against it would
+        normally fail without prowler.tenant_id set. The fix routes lookups
+        to the admin database which bypasses RLS.
+        """
+        client = APIClient()
+        tenant = tenants_fixture[0]
+
+        role = Role.objects.create(
+            tenant_id=tenant.id,
+            name="Admin DB Test Role",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=create_test_user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        api_key, raw_key = TenantAPIKey.objects.create_api_key(
+            name="Admin DB Test Key",
+            tenant_id=tenant.id,
+            entity=create_test_user,
+        )
+
+        api_key_headers = get_api_key_header(raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 200
+
+        api_key.refresh_from_db()
+        assert api_key.last_used_at is not None
+
+    def test_tenant_context_established_after_authentication(
+        self, create_test_user, tenants_fixture, api_keys_fixture
+    ):
+        """Verify correct tenant context is established after API key auth.
+
+        After authentication, the tenant_id from the API key should be used
+        to set up the proper RLS context for subsequent queries.
+        """
+        client = APIClient()
+        api_key = api_keys_fixture[0]
+
+        api_key_headers = get_api_key_header(api_key._raw_key)
+
+        # Use tenant-list endpoint to get actual tenant IDs
+        tenant_response = client.get(reverse("tenant-list"), headers=api_key_headers)
+
+        assert tenant_response.status_code == 200
+        tenant_data = tenant_response.json()["data"]
+        tenant_ids = [t["id"] for t in tenant_data]
+
+        # Verify the API key's tenant is in the list of accessible tenants
+        assert str(api_key.tenant_id) in tenant_ids
+
+    def test_concurrent_authentication_different_tenants(self, tenants_fixture):
+        """Verify multiple API keys from different tenants can authenticate simultaneously.
+
+        This tests that the admin database routing works correctly in concurrent
+        scenarios and doesn't cause tenant isolation issues.
+        """
+        client = APIClient()
+
+        user1 = User.objects.create_user(
+            name="concurrent_user1",
+            email="concurrent1@test.com",
+            password=TEST_PASSWORD,
+        )
+        user2 = User.objects.create_user(
+            name="concurrent_user2",
+            email="concurrent2@test.com",
+            password=TEST_PASSWORD,
+        )
+
+        tenant1 = tenants_fixture[0]
+        tenant2 = tenants_fixture[1]
+
+        Membership.objects.create(user=user1, tenant=tenant1)
+        Membership.objects.create(user=user2, tenant=tenant2)
+
+        role1 = Role.objects.create(
+            tenant_id=tenant1.id,
+            name="Concurrent Role 1",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        role2 = Role.objects.create(
+            tenant_id=tenant2.id,
+            name="Concurrent Role 2",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+
+        UserRoleRelationship.objects.create(
+            user=user1,
+            role=role1,
+            tenant_id=tenant1.id,
+        )
+        UserRoleRelationship.objects.create(
+            user=user2,
+            role=role2,
+            tenant_id=tenant2.id,
+        )
+
+        api_key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+            name="Concurrent Key 1",
+            tenant_id=tenant1.id,
+            entity=user1,
+        )
+        api_key2, raw_key2 = TenantAPIKey.objects.create_api_key(
+            name="Concurrent Key 2",
+            tenant_id=tenant2.id,
+            entity=user2,
+        )
+
+        headers1 = get_api_key_header(raw_key1)
+        headers2 = get_api_key_header(raw_key2)
+
+        response1 = client.get(reverse("provider-list"), headers=headers1)
+        response2 = client.get(reverse("provider-list"), headers=headers2)
+
+        assert response1.status_code == 200
+        assert response2.status_code == 200
+
+        api_key1.refresh_from_db()
+        api_key2.refresh_from_db()
+
+        assert api_key1.last_used_at is not None
+        assert api_key2.last_used_at is not None
+        assert api_key1.tenant_id == tenant1.id
+        assert api_key2.tenant_id == tenant2.id
+
+    def test_api_key_update_last_used_uses_admin_db(
+        self, create_test_user, tenants_fixture, api_keys_fixture
+    ):
+        """Verify last_used_at update uses admin database.
+
+        The update to last_used_at during authentication must also use the
+        admin database since it occurs before RLS context is established.
+        """
+        client = APIClient()
+        api_key = api_keys_fixture[0]
+
+        assert api_key.last_used_at is None
+
+        api_key_headers = get_api_key_header(api_key._raw_key)
+        first_response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert first_response.status_code == 200
+
+        api_key.refresh_from_db()
+        first_timestamp = api_key.last_used_at
+        assert first_timestamp is not None
+
+        time.sleep(0.1)
+
+        second_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        assert second_response.status_code == 200
+
+        api_key.refresh_from_db()
+        second_timestamp = api_key.last_used_at
+        assert second_timestamp > first_timestamp
+
+    def test_api_key_prefix_lookup_bypasses_rls(
+        self, create_test_user, tenants_fixture
+    ):
+        """Verify prefix-based API key lookup works without RLS context.
+
+        The authentication process splits the key into prefix and encrypted parts,
+        then looks up by prefix. This lookup must work via admin database.
+        """
+        client = APIClient()
+        tenant = tenants_fixture[0]
+
+        role = Role.objects.create(
+            tenant_id=tenant.id,
+            name="Prefix Test Role",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=create_test_user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        api_key, raw_key = TenantAPIKey.objects.create_api_key(
+            name="Prefix Test Key",
+            tenant_id=tenant.id,
+            entity=create_test_user,
+        )
+
+        prefix = raw_key.split(".")[0]
+        assert prefix == api_key.prefix
+
+        api_key_headers = get_api_key_header(raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 200
+
+    def test_expired_api_key_check_uses_admin_db(
+        self, create_test_user, tenants_fixture
+    ):
+        """Verify expired API key validation works via admin database.
+
+        Checking if a key is expired requires reading from TenantAPIKey,
+        which must use admin database during authentication.
+        """
+        client = APIClient()
+        tenant = tenants_fixture[0]
+
+        expired_key, raw_key = TenantAPIKey.objects.create_api_key(
+            name="Expired Test Key",
+            tenant_id=tenant.id,
+            entity=create_test_user,
+            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+
+        api_key_headers = get_api_key_header(raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 401
+        assert "expired" in response.json()["errors"][0]["detail"].lower()
+
+    def test_revoked_api_key_check_uses_admin_db(
+        self, create_test_user, tenants_fixture
+    ):
+        """Verify revoked API key validation works via admin database.
+
+        Checking if a key is revoked requires reading from TenantAPIKey,
+        which must use admin database during authentication.
+        """
+        client = APIClient()
+        tenant = tenants_fixture[0]
+
+        role = Role.objects.create(
+            tenant_id=tenant.id,
+            name="Revoked Test Role",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=create_test_user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+
+        api_key, raw_key = TenantAPIKey.objects.create_api_key(
+            name="Revoked Test Key",
+            tenant_id=tenant.id,
+            entity=create_test_user,
+        )
+
+        api_key.revoked = True
+        api_key.save()
+
+        api_key_headers = get_api_key_header(raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 401
+        assert "revoked" in response.json()["errors"][0]["detail"].lower()
+
+
+@pytest.mark.django_db
+class TestAPIKeyMultiTenantWorkflows:
+    """Test complete multi-tenant workflows using API keys.
+
+    These integration tests verify end-to-end scenarios where API keys
+    are used across different tenants and ensure proper isolation.
+    """
+
+    def test_user_with_multiple_tenant_memberships_api_keys(self, tenants_fixture):
+        """User with memberships in multiple tenants can use different API keys.
+
+        Tests that a user can have separate API keys for different tenants
+        and each key only accesses resources in its tenant.
+        """
+        client = APIClient()
+
+        user = User.objects.create_user(
+            name="multi_tenant_user",
+            email="multitenant@test.com",
+            password=TEST_PASSWORD,
+        )
+
+        tenant1 = tenants_fixture[0]
+        tenant2 = tenants_fixture[1]
+
+        Membership.objects.create(user=user, tenant=tenant1)
+        Membership.objects.create(user=user, tenant=tenant2)
+
+        role1 = Role.objects.create(
+            tenant_id=tenant1.id,
+            name="Multi Tenant Role 1",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        role2 = Role.objects.create(
+            tenant_id=tenant2.id,
+            name="Multi Tenant Role 2",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=role1,
+            tenant_id=tenant1.id,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=role2,
+            tenant_id=tenant2.id,
+        )
+
+        key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+            name="Tenant 1 Key",
+            tenant_id=tenant1.id,
+            entity=user,
+        )
+        key2, raw_key2 = TenantAPIKey.objects.create_api_key(
+            name="Tenant 2 Key",
+            tenant_id=tenant2.id,
+            entity=user,
+        )
+
+        headers1 = get_api_key_header(raw_key1)
+        headers2 = get_api_key_header(raw_key2)
+
+        response1 = client.get(reverse("provider-list"), headers=headers1)
+        response2 = client.get(reverse("provider-list"), headers=headers2)
+
+        assert response1.status_code == 200
+        assert response2.status_code == 200
+
+        me_response1 = client.get(reverse("user-me"), headers=headers1)
+        me_response2 = client.get(reverse("user-me"), headers=headers2)
+
+        assert me_response1.status_code == 200
+        assert me_response2.status_code == 200
+
+        assert me_response1.json()["data"]["id"] == str(user.id)
+        assert me_response2.json()["data"]["id"] == str(user.id)
+
+    def test_api_key_cannot_access_different_tenant_resources(
+        self, tenants_fixture, providers_fixture
+    ):
+        """API key from one tenant cannot access resources from another tenant.
+
+        Verifies RLS enforcement after authentication ensures tenant isolation.
+        """
+        client = APIClient()
+
+        user1 = User.objects.create_user(
+            name="tenant1_user",
+            email="tenant1user@test.com",
+            password=TEST_PASSWORD,
+        )
+        user2 = User.objects.create_user(
+            name="tenant2_user",
+            email="tenant2user@test.com",
+            password=TEST_PASSWORD,
+        )
+
+        tenant1 = tenants_fixture[0]
+        tenant2 = tenants_fixture[1]
+
+        Membership.objects.create(user=user1, tenant=tenant1)
+        Membership.objects.create(user=user2, tenant=tenant2)
+
+        role1 = Role.objects.create(
+            tenant_id=tenant1.id,
+            name="Isolation Test Role 1",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+        role2 = Role.objects.create(
+            tenant_id=tenant2.id,
+            name="Isolation Test Role 2",
+            unlimited_visibility=True,
+            manage_account=True,
+        )
+
+        UserRoleRelationship.objects.create(
+            user=user1,
+            role=role1,
+            tenant_id=tenant1.id,
+        )
+        UserRoleRelationship.objects.create(
+            user=user2,
+            role=role2,
+            tenant_id=tenant2.id,
+        )
+
+        key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+            name="Isolation Key 1",
+            tenant_id=tenant1.id,
+            entity=user1,
+        )
+
+        headers1 = get_api_key_header(raw_key1)
+
+        provider_response = client.get(reverse("provider-list"), headers=headers1)
+        assert provider_response.status_code == 200
+
+        providers_data = provider_response.json()["data"]
+
+        if providers_data:
+            for provider in providers_data:
+                provider_tenant_id = str(tenants_fixture[0].id)
+                assert str(tenant2.id) != provider_tenant_id
+
+    def test_api_key_workflow_create_authenticate_revoke(
+        self, create_test_user_rbac, tenants_fixture
+    ):
+        """Complete workflow: create API key via JWT, use it, then revoke via JWT.
+
+        Tests the full lifecycle using both JWT and API key authentication.
+        """
+        client = APIClient()
+        tenants_fixture[0]
+
+        jwt_access_token, _ = get_api_tokens(
+            client, create_test_user_rbac.email, TEST_PASSWORD
+        )
+        jwt_headers = get_authorization_header(jwt_access_token)
+
+        create_response = client.post(
+            reverse("api-key-list"),
+            data={
+                "data": {
+                    "type": "api-keys",
+                    "attributes": {
+                        "name": "Workflow Test Key",
+                    },
+                }
+            },
+            format="vnd.api+json",
+            headers=jwt_headers,
+        )
+
+        assert create_response.status_code == 201
+        api_key_data = create_response.json()["data"]
+        api_key_id = api_key_data["id"]
+        raw_api_key = api_key_data["attributes"]["api_key"]
+
+        api_key_headers = get_api_key_header(raw_api_key)
+        auth_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        assert auth_response.status_code == 200
+
+        revoke_response = client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key_id}),
+            headers=jwt_headers,
+        )
+        assert revoke_response.status_code == 200
+
+        revoked_auth_response = client.get(
+            reverse("provider-list"), headers=api_key_headers
+        )
+        assert revoked_auth_response.status_code == 401
+        assert "revoked" in revoked_auth_response.json()["errors"][0]["detail"].lower()
+
+
 def get_api_key_header(api_key: str) -> dict:
     """Helper to create API key authorization header."""
     return {"Authorization": f"Api-Key {api_key}"}

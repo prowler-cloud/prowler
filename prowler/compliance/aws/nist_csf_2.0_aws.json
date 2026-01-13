@@ -1,0 +1,1781 @@
+{
+  "Framework": "NIST-CSF",
+  "Name": "National Institute of Standards and Technology (NIST) Cybersecurity Framework (CSF) v2.0",
+  "Version": "2.0",
+  "Provider": "AWS",
+  "Description": "The NIST Cybersecurity Framework (CSF) 2.0 offers a taxonomy of high-level cybersecurity outcomes that can be used by any organization regardless of its size, sector, or maturity to better understand, assess, prioritize, and communicate its cybersecurity efforts. The framework's core functions are organized into six key areas: Govern (new), Identify, Protect, Detect, Respond, and Recover. Together, these functions provide a comprehensive lifecycle approach to managing cybersecurity risk.",
+  "Requirements": [
+    {
+      "Id": "oc_1",
+      "Name": "GV.OC-1",
+      "Description": "The organization's role in the supply chain is identified and communicated.",
+      "Attributes": [
+        {
+          "ItemId": "oc_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Organizational Context (GV.OC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "oc_2",
+      "Name": "GV.OC-2",
+      "Description": "Legal, regulatory, and contractual requirements regarding cybersecurity including privacy and civil liberties obligations are understood and managed.",
+      "Attributes": [
+        {
+          "ItemId": "oc_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Organizational Context (GV.OC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "oc_3",
+      "Name": "GV.OC-3",
+      "Description": "The organization's place in critical infrastructure and its industry sector is identified and communicated.",
+      "Attributes": [
+        {
+          "ItemId": "oc_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Organizational Context (GV.OC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "rm_1",
+      "Name": "GV.RM-1",
+      "Description": "Organizational cybersecurity risk management strategy is established, communicated, and maintained.",
+      "Attributes": [
+        {
+          "ItemId": "rm_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Risk Management Strategy (GV.RM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role",
+        "organizations_account_part_of_organizations",
+        "organizations_scp_check_deny_regions",
+        "organizations_tags_policies_enabled_and_attached",
+        "organizations_delegated_administrators",
+        "organizations_opt_out_ai_services_policy",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "securityhub_enabled",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "servicecatalog_portfolio_shared_within_organization_only"
+      ]
+    },
+    {
+      "Id": "rm_2",
+      "Name": "GV.RM-2",
+      "Description": "Organizational risk tolerance is determined and clearly expressed.",
+      "Attributes": [
+        {
+          "ItemId": "rm_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Risk Management Strategy (GV.RM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "rm_3",
+      "Name": "GV.RM-3",
+      "Description": "The organization's determination of risk tolerance is informed by its role in critical infrastructure, sector-specific risk analysis, or organizational risk analysis.",
+      "Attributes": [
+        {
+          "ItemId": "rm_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Risk Management Strategy (GV.RM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "sc_1",
+      "Name": "GV.SC-1",
+      "Description": "Cybersecurity supply chain risk management processes are identified, established, assessed, managed, and agreed to by organizational stakeholders.",
+      "Attributes": [
+        {
+          "ItemId": "sc_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Cybersecurity Supply Chain Risk Management (GV.SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_no_secrets_in_variables"
+      ]
+    },
+    {
+      "Id": "sc_2",
+      "Name": "GV.SC-2",
+      "Description": "Supply chain risk management processes are established, managed, and agreed to by organizational stakeholders.",
+      "Attributes": [
+        {
+          "ItemId": "sc_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Cybersecurity Supply Chain Risk Management (GV.SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations"
+      ]
+    },
+    {
+      "Id": "sc_3",
+      "Name": "GV.SC-3",
+      "Description": "Suppliers and third-party partners are evaluated, assessed, and monitored using cybersecurity supply chain risk management processes.",
+      "Attributes": [
+        {
+          "ItemId": "sc_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Cybersecurity Supply Chain Risk Management (GV.SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_uses_allowed_github_organizations"
+      ]
+    },
+    {
+      "Id": "sc_4",
+      "Name": "GV.SC-4",
+      "Description": "Supply chain risk management processes are continuously improved.",
+      "Attributes": [
+        {
+          "ItemId": "sc_4",
+          "Section": "Govern (GV)",
+          "SubSection": "Cybersecurity Supply Chain Risk Management (GV.SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "rr_1",
+      "Name": "GV.RR-1",
+      "Description": "Cybersecurity roles and responsibilities are coordinated and aligned with internal roles and external partners.",
+      "Attributes": [
+        {
+          "ItemId": "rr_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Roles, Responsibilities, and Authorities (GV.RR)",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "organizations_scp_check_deny_regions",
+        "organizations_opt_out_ai_services_policy",
+        "vpc_endpoint_connections_trust_boundaries",
+        "iam_role_administratoraccess_policy",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_administrator_access_with_mfa",
+        "iam_root_mfa_enabled",
+        "iam_root_credentials_management_enabled",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_aws_attached_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "rr_2",
+      "Name": "GV.RR-2",
+      "Description": "Cybersecurity responsibilities are established and communicated.",
+      "Attributes": [
+        {
+          "ItemId": "rr_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Roles, Responsibilities, and Authorities (GV.RR)",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_user_administrator_access_policy",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "organizations_opt_out_ai_services_policy",
+        "organizations_scp_check_deny_regions",
+        "iam_root_credentials_management_enabled",
+        "iam_role_cross_account_readonlyaccess_policy"
+      ]
+    },
+    {
+      "Id": "rr_3",
+      "Name": "GV.RR-3",
+      "Description": "Senior executives are accountable for cybersecurity risk.",
+      "Attributes": [
+        {
+          "ItemId": "rr_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Roles, Responsibilities, and Authorities (GV.RR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "po_1",
+      "Name": "GV.PO-1",
+      "Description": "Cybersecurity policy is established, communicated, and enforced.",
+      "Attributes": [
+        {
+          "ItemId": "po_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Policies, Processes, and Procedures (GV.PO)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_inline_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_no_custom_policy_permissive_role_assumption"
+      ]
+    },
+    {
+      "Id": "po_2",
+      "Name": "GV.PO-2",
+      "Description": "Cybersecurity policy is updated as needed to reflect changes in organizational priorities, threat landscape, or technology.",
+      "Attributes": [
+        {
+          "ItemId": "po_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Policies, Processes, and Procedures (GV.PO)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "po_3",
+      "Name": "GV.PO-3",
+      "Description": "Legal and regulatory requirements regarding cybersecurity, including privacy and civil liberties obligations, are understood and managed.",
+      "Attributes": [
+        {
+          "ItemId": "po_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Policies, Processes, and Procedures (GV.PO)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "config_recorder_all_regions_enabled",
+        "organizations_account_part_of_organizations",
+        "organizations_opt_out_ai_services_policy",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "accessanalyzer_enabled",
+        "vpc_endpoint_connections_trust_boundaries",
+        "organizations_scp_check_deny_regions",
+        "servicecatalog_portfolio_shared_within_organization_only",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "organizations_delegated_administrators",
+        "organizations_tags_policies_enabled_and_attached"
+      ]
+    },
+    {
+      "Id": "po_4",
+      "Name": "GV.PO-4",
+      "Description": "Governance and risk management processes address cybersecurity risks.",
+      "Attributes": [
+        {
+          "ItemId": "po_4",
+          "Section": "Govern (GV)",
+          "SubSection": "Policies, Processes, and Procedures (GV.PO)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role",
+        "accessanalyzer_enabled",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "organizations_scp_check_deny_regions",
+        "organizations_account_part_of_organizations",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled",
+        "iam_root_mfa_enabled",
+        "iam_root_credentials_management_enabled"
+      ]
+    },
+    {
+      "Id": "po_5",
+      "Name": "GV.PO-5",
+      "Description": "Processes for managing cybersecurity requirements for suppliers and third-party partners are established.",
+      "Attributes": [
+        {
+          "ItemId": "po_5",
+          "Section": "Govern (GV)",
+          "SubSection": "Policies, Processes, and Procedures (GV.PO)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_no_secrets_in_variables"
+      ]
+    },
+    {
+      "Id": "ov_1",
+      "Name": "GV.OV-1",
+      "Description": "Cybersecurity risk management strategy outcomes are reviewed to inform and adjust organizational priorities.",
+      "Attributes": [
+        {
+          "ItemId": "ov_1",
+          "Section": "Govern (GV)",
+          "SubSection": "Oversight (GV.OV)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ov_2",
+      "Name": "GV.OV-2",
+      "Description": "Cybersecurity risk management performance is measured and reported.",
+      "Attributes": [
+        {
+          "ItemId": "ov_2",
+          "Section": "Govern (GV)",
+          "SubSection": "Oversight (GV.OV)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "accessanalyzer_enabled_without_findings",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "securityhub_enabled",
+        "inspector2_active_findings_exist",
+        "accessanalyzer_enabled",
+        "guardduty_no_high_severity_findings",
+        "trustedadvisor_errors_and_warnings"
+      ]
+    },
+    {
+      "Id": "ov_3",
+      "Name": "GV.OV-3",
+      "Description": "Cybersecurity risk management strategy and practices are reviewed and adjusted to adapt to changes in the threat landscape, technologies, or mission, business, or system environments.",
+      "Attributes": [
+        {
+          "ItemId": "ov_3",
+          "Section": "Govern (GV)",
+          "SubSection": "Oversight (GV.OV)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role",
+        "accessanalyzer_enabled",
+        "securityhub_enabled",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "vpc_endpoint_connections_trust_boundaries",
+        "organizations_scp_check_deny_regions",
+        "organizations_tags_policies_enabled_and_attached",
+        "organizations_delegated_administrators"
+      ]
+    },
+    {
+      "Id": "ov_4",
+      "Name": "GV.OV-4",
+      "Description": "Cybersecurity risk management processes are reviewed to ensure they meet legal and regulatory requirements.",
+      "Attributes": [
+        {
+          "ItemId": "ov_4",
+          "Section": "Govern (GV)",
+          "SubSection": "Oversight (GV.OV)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "am_1",
+      "Name": "ID.AM-1",
+      "Description": "Physical devices and systems within the organization are inventoried.",
+      "Attributes": [
+        {
+          "ItemId": "am_1",
+          "Section": "Identify (ID)",
+          "SubSection": "Asset Management (ID.AM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "am_2",
+      "Name": "ID.AM-2",
+      "Description": "Software platforms and applications within the organization are inventoried.",
+      "Attributes": [
+        {
+          "ItemId": "am_2",
+          "Section": "Identify (ID)",
+          "SubSection": "Asset Management (ID.AM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "am_3",
+      "Name": "ID.AM-3",
+      "Description": "Organizational communication and data flows are mapped.",
+      "Attributes": [
+        {
+          "ItemId": "am_3",
+          "Section": "Identify (ID)",
+          "SubSection": "Asset Management (ID.AM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "am_5",
+      "Name": "ID.AM-5",
+      "Description": "Resources (e.g., hardware, devices, data, time, personnel, and software) are prioritized based on their classification, criticality, and business value.",
+      "Attributes": [
+        {
+          "ItemId": "am_5",
+          "Section": "Identify (ID)",
+          "SubSection": "Asset Management (ID.AM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "am_6",
+      "Name": "ID.AM-6",
+      "Description": "Cybersecurity roles and responsibilities for the entire workforce and third-party stakeholders (e.g., suppliers, customers, partners) are established.",
+      "Attributes": [
+        {
+          "ItemId": "am_6",
+          "Section": "Identify (ID)",
+          "SubSection": "Asset Management (ID.AM)",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "iam_group_administrator_access_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_user_administrator_access_policy",
+        "iam_role_cross_account_readonlyaccess_policy"
+      ]
+    },
+    {
+      "Id": "be_5",
+      "Name": "ID.BE-5",
+      "Description": "Resilience requirements to support delivery of critical services are established for all operating states (e.g. under duress/attack, during recovery, normal operations)",
+      "Attributes": [
+        {
+          "ItemId": "be_5",
+          "Section": "Identify (ID)",
+          "SubSection": "Business Environment (ID.BE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "drs_job_exist",
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "dynamodb_table_protected_by_backup_plan",
+        "s3_bucket_cross_region_replication",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "vpc_endpoint_multi_az_enabled",
+        "directconnect_connection_redundancy",
+        "directconnect_virtual_interface_redundancy",
+        "vpc_subnet_different_az",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_cross_zone_load_balancing_enabled",
+        "efs_encryption_at_rest_enabled",
+        "firehose_stream_encrypted_at_rest",
+        "glue_ml_transform_encrypted_at_rest",
+        "kafka_cluster_encryption_at_rest_uses_cmk",
+        "kinesis_stream_encrypted_at_rest",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "redshift_cluster_encrypted_at_rest",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "ra_1",
+      "Name": "ID.RA-1",
+      "Description": "Asset vulnerabilities are identified and documented.",
+      "Attributes": [
+        {
+          "ItemId": "ra_1",
+          "Section": "Identify (ID)",
+          "SubSection": "Risk Assessment (ID.RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_with_secure_key_algorithms",
+        "acm_certificates_expiration_check",
+        "awslambda_function_no_secrets_in_variables",
+        "awslambda_function_no_secrets_in_code",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "ecr_repositories_not_publicly_accessible",
+        "rds_snapshots_public_access",
+        "route53_dangling_ip_subdomain_takeover",
+        "secretsmanager_not_publicly_accessible",
+        "s3_bucket_public_access",
+        "s3_bucket_public_write_acl",
+        "s3_bucket_cross_account_access",
+        "ssm_document_secrets",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_not_multi_region",
+        "glacier_vaults_policy_public_access",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "ssm_documents_set_as_public",
+        "s3_bucket_shadow_resource_vulnerability"
+      ]
+    },
+    {
+      "Id": "ra_2",
+      "Name": "ID.RA-2",
+      "Description": "Cyber threat intelligence is received from information sharing forums and sources.",
+      "Attributes": [
+        {
+          "ItemId": "ra_2",
+          "Section": "Identify (ID)",
+          "SubSection": "Risk Assessment (ID.RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ra_3",
+      "Name": "ID.RA-3",
+      "Description": "Threats, both internal and external, are identified and documented.",
+      "Attributes": [
+        {
+          "ItemId": "ra_3",
+          "Section": "Identify (ID)",
+          "SubSection": "Risk Assessment (ID.RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation"
+      ]
+    },
+    {
+      "Id": "ra_5",
+      "Name": "ID.RA-5",
+      "Description": "Threats, vulnerabilities, likelihoods, and impacts are used to determine risk.",
+      "Attributes": [
+        {
+          "ItemId": "ra_5",
+          "Section": "Identify (ID)",
+          "SubSection": "Risk Assessment (ID.RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "route53_dangling_ip_subdomain_takeover",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_endpoint_for_ec2_enabled"
+      ]
+    },
+    {
+      "Id": "id_sc_4",
+      "Name": "ID.SC-4",
+      "Description": "Suppliers and third-party partners are routinely assessed using audits, test results, or other forms of evaluations to confirm they are meeting their contractual obligations.",
+      "Attributes": [
+        {
+          "ItemId": "id_sc_4",
+          "Section": "Identify (ID)",
+          "SubSection": "Supply Chain Risk Management (ID.SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ac_1",
+      "Name": "PR.AC-1",
+      "Description": "Identities and credentials are issued, managed, verified, revoked, and audited for authorized devices, users and processes.",
+      "Attributes": [
+        {
+          "ItemId": "ac_1",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_user_console_access_unused",
+        "iam_user_accesskey_unused",
+        "iam_user_two_active_access_key",
+        "iam_root_credentials_management_enabled",
+        "accessanalyzer_enabled",
+        "cognito_user_pool_mfa_enabled",
+        "cognito_user_pool_password_policy_symbol",
+        "cognito_user_pool_password_policy_uppercase",
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "ac_3",
+      "Name": "PR.AC-3",
+      "Description": "Remote access is managed.",
+      "Attributes": [
+        {
+          "ItemId": "ac_3",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_launch_template_imdsv2_required",
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
+        "rds_instance_no_public_access",
+        "dms_instance_no_public_access",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "glacier_vaults_policy_public_access",
+        "rds_snapshots_public_access",
+        "redshift_cluster_public_access",
+        "s3_access_point_public_access_block",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_level_public_access_block",
+        "s3_bucket_public_access",
+        "s3_multi_region_access_point_public_access_block"
+      ]
+    },
+    {
+      "Id": "ac_4",
+      "Name": "PR.AC-4",
+      "Description": "Access permissions and authorizations are managed, incorporating the principles of least privilege and separation of duties.",
+      "Attributes": [
+        {
+          "ItemId": "ac_4",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_administrator_access_with_mfa",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "accessanalyzer_enabled_without_findings",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "ac_5",
+      "Name": "PR.AC-5",
+      "Description": "Network integrity is protected (e.g., network segregation, network segmentation).",
+      "Attributes": [
+        {
+          "ItemId": "ac_5",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_subnet_different_az",
+        "vpc_subnet_separate_private_public",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601"
+      ]
+    },
+    {
+      "Id": "ac_6",
+      "Name": "PR.AC-6",
+      "Description": "Identities are proofed and bound to credentials and asserted in interactions.",
+      "Attributes": [
+        {
+          "ItemId": "ac_6",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_rotate_access_key_90_days",
+        "iam_user_two_active_access_key",
+        "iam_user_with_temporary_credentials",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_group_administrator_access_policy",
+        "iam_role_cross_account_readonlyaccess_policy",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "accessanalyzer_enabled",
+        "cognito_user_pool_password_policy_symbol"
+      ]
+    },
+    {
+      "Id": "ac_7",
+      "Name": "PR.AC-7",
+      "Description": "Users, devices, and other assets are authenticated (e.g., single-factor, multi-factor) commensurate with the risk of the transaction (e.g., individuals' security and privacy risks and other organizational risks).",
+      "Attributes": [
+        {
+          "ItemId": "ac_7",
+          "Section": "Protect (PR)",
+          "SubSection": "Identity Management and Access Control (PR.AC)",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "cognito_user_pool_password_policy_symbol",
+        "cognito_user_pool_password_policy_number",
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_uppercase",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "cognito_user_pool_mfa_enabled",
+        "cognito_identity_pool_guest_access_disabled",
+        "apigatewayv2_api_authorizers_enabled",
+        "apigateway_restapi_authorizers_enabled",
+        "apigateway_restapi_public_with_authorizer",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_policy_allows_privilege_escalation",
+        "iam_check_saml_providers_sts"
+      ]
+    },
+    {
+      "Id": "ds_1",
+      "Name": "PR.DS-1",
+      "Description": "Data-at-rest is protected.",
+      "Attributes": [
+        {
+          "ItemId": "ds_1",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "s3_bucket_kms_encryption",
+        "s3_bucket_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_snapshots_encrypted",
+        "redshift_cluster_encrypted_at_rest",
+        "elasticache_redis_cluster_rest_encryption_enabled",
+        "neptune_cluster_storage_encrypted",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled",
+        "glue_data_catalogs_connection_passwords_encryption_enabled",
+        "glue_etl_jobs_amazon_s3_encryption_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_job_bookmark_encryption_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "firehose_stream_encrypted_at_rest",
+        "storagegateway_fileshare_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ds_2",
+      "Name": "PR.DS-2",
+      "Description": "Data-in-transit is protected.",
+      "Attributes": [
+        {
+          "ItemId": "ds_2",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "cloudfront_distributions_https_enabled",
+        "s3_bucket_secure_transport_policy",
+        "rds_instance_transport_encrypted",
+        "transfer_server_in_transit_encryption_enabled",
+        "kafka_cluster_in_transit_encryption_enabled",
+        "kafka_connector_in_transit_encryption_enabled",
+        "dms_endpoint_ssl_enabled",
+        "dms_endpoint_redis_in_transit_encryption_enabled",
+        "opensearch_service_domains_https_communications_enforced",
+        "opensearch_service_domains_node_to_node_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ds_3",
+      "Name": "PR.DS-3",
+      "Description": "Assets are formally managed throughout removal, transfers, and disposition.",
+      "Attributes": [
+        {
+          "ItemId": "ds_3",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_table_deletion_protection_enabled",
+        "eks_cluster_deletion_protection_enabled",
+        "rds_cluster_deletion_protection",
+        "elbv2_deletion_protection",
+        "cloudtrail_bucket_requires_mfa_delete",
+        "kms_cmk_not_deleted_unintentionally",
+        "dlm_ebs_snapshot_lifecycle_policy_exists",
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "backup_reportplans_exist",
+        "backup_recovery_point_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "s3_bucket_lifecycle_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption"
+      ]
+    },
+    {
+      "Id": "ds_4",
+      "Name": "PR.DS-4",
+      "Description": "Adequate capacity to ensure availability is maintained.",
+      "Attributes": [
+        {
+          "ItemId": "ds_4",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "dynamodb_table_deletion_protection_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "eks_cluster_deletion_protection_enabled",
+        "rds_instance_multi_az",
+        "rds_instance_backup_enabled",
+        "rds_cluster_deletion_protection",
+        "rds_instance_deletion_protection",
+        "redshift_cluster_multi_az_enabled",
+        "dynamodb_table_autoscaling_enabled",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "elb_cross_zone_load_balancing_enabled",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_is_in_multiple_az",
+        "directconnect_connection_redundancy",
+        "s3_bucket_cross_region_replication",
+        "s3_bucket_lifecycle_enabled",
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan"
+      ]
+    },
+    {
+      "Id": "ds_5",
+      "Name": "PR.DS-5",
+      "Description": "Protections against data leaks are implemented.",
+      "Attributes": [
+        {
+          "ItemId": "ds_5",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_public_access",
+        "s3_bucket_public_write_acl",
+        "s3_bucket_public_list_acl",
+        "s3_bucket_cross_account_access",
+        "s3_bucket_kms_encryption",
+        "s3_bucket_acl_prohibited",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "secretsmanager_not_publicly_accessible",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "ec2_ebs_public_snapshot",
+        "rds_snapshots_public_access",
+        "ec2_ami_public",
+        "ssm_document_secrets",
+        "ec2_instance_secrets_user_data",
+        "awslambda_function_no_secrets_in_variables",
+        "awslambda_function_no_secrets_in_code"
+      ]
+    },
+    {
+      "Id": "ds_6",
+      "Name": "PR.DS-6",
+      "Description": "Integrity checking mechanisms are used to verify software, firmware, and information integrity.",
+      "Attributes": [
+        {
+          "ItemId": "ds_6",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "cloudtrail"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled"
+      ]
+    },
+    {
+      "Id": "ds_7",
+      "Name": "PR.DS-7",
+      "Description": "The development and testing environment(s) are separate from the production environment.",
+      "Attributes": [
+        {
+          "ItemId": "ds_7",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ds_8",
+      "Name": "PR.DS-8",
+      "Description": "Integrity checking mechanisms are used to verify hardware integrity.",
+      "Attributes": [
+        {
+          "ItemId": "ds_8",
+          "Section": "Protect (PR)",
+          "SubSection": "Data Security (PR.DS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ip_1",
+      "Name": "PR.IP-1",
+      "Description": "A baseline configuration of information technology/industrial control systems is created and maintained incorporating security principles (e.g. concept of least functionality).",
+      "Attributes": [
+        {
+          "ItemId": "ip_1",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_not_used",
+        "ec2_instance_public_ip",
+        "iam_root_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_allows_privilege_escalation",
+        "s3_bucket_public_access",
+        "s3_bucket_cross_account_access"
+      ]
+    },
+    {
+      "Id": "ip_2",
+      "Name": "PR.IP-2",
+      "Description": "A System Development Life Cycle to manage systems is implemented.",
+      "Attributes": [
+        {
+          "ItemId": "ip_2",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codepipeline_project_repo_private",
+        "codebuild_project_not_publicly_accessible",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_no_secrets_in_variables",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_older_90_days"
+      ]
+    },
+    {
+      "Id": "ip_3",
+      "Name": "PR.IP-3",
+      "Description": "Configuration change control processes are in place.",
+      "Attributes": [
+        {
+          "ItemId": "ip_3",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "elb"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ip_4",
+      "Name": "PR.IP-4",
+      "Description": "Backups of information are conducted, maintained, and tested periodically.",
+      "Attributes": [
+        {
+          "ItemId": "ip_4",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_plans_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan"
+      ]
+    },
+    {
+      "Id": "ip_7",
+      "Name": "PR.IP-7",
+      "Description": "Protection processes are improved.",
+      "Attributes": [
+        {
+          "ItemId": "ip_7",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "ec2"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "guardduty_is_enabled",
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_secret_rotated_periodically"
+      ]
+    },
+    {
+      "Id": "ip_8",
+      "Name": "PR.IP-8",
+      "Description": "Effectiveness of protection technologies is shared.",
+      "Attributes": [
+        {
+          "ItemId": "ip_8",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_alarm_actions_enabled",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_authentication_failures"
+      ]
+    },
+    {
+      "Id": "ip_9",
+      "Name": "PR.IP-9",
+      "Description": "Response plans (Incident Response and Business Continuity) and recovery plans (Incident Recovery and Disaster Recovery) are in place and managed.",
+      "Attributes": [
+        {
+          "ItemId": "ip_9",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ssmincidents_enabled_with_plans",
+        "drs_job_exist"
+      ]
+    },
+    {
+      "Id": "ip_12",
+      "Name": "PR.IP-12",
+      "Description": "A vulnerability management plan is developed and implemented.",
+      "Attributes": [
+        {
+          "ItemId": "ip_12",
+          "Section": "Protect (PR)",
+          "SubSection": "Information Protection Processes and Procedures (PR.IP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "guardduty_is_enabled",
+        "inspector2_active_findings_exist"
+      ]
+    },
+    {
+      "Id": "ma_2",
+      "Name": "PR.MA-2",
+      "Description": "Remote maintenance of organizational assets is approved, logged, and performed in a manner that prevents unauthorized access.",
+      "Attributes": [
+        {
+          "ItemId": "ma_2",
+          "Section": "Protect (PR)",
+          "SubSection": "Maintenance (PR.MA)",
+          "Service": "cloudtrail"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "pt_1",
+      "Name": "PR.PT-1",
+      "Description": "Audit/log records are determined, documented, implemented, and reviewed in accordance with policy.",
+      "Attributes": [
+        {
+          "ItemId": "pt_1",
+          "Section": "Protect (PR)",
+          "SubSection": "Protective Technology (PR.PT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "vpc_flow_logs_enabled",
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role"
+      ]
+    },
+    {
+      "Id": "pt_3",
+      "Name": "PR.PT-3",
+      "Description": "The principle of least functionality is incorporated by configuring systems to provide only essential capabilities.",
+      "Attributes": [
+        {
+          "ItemId": "pt_3",
+          "Section": "Protect (PR)",
+          "SubSection": "Protective Technology (PR.PT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "pt_4",
+      "Name": "PR.PT-4",
+      "Description": "Communications and control networks are protected.",
+      "Attributes": [
+        {
+          "ItemId": "pt_4",
+          "Section": "Protect (PR)",
+          "SubSection": "Protective Technology (PR.PT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudfront_distributions_https_enabled",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "apigateway_restapi_public_with_authorizer",
+        "apigateway_restapi_authorizers_enabled",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_kms_encryption",
+        "cloudtrail_kms_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "pt_5",
+      "Name": "PR.PT-5",
+      "Description": "Mechanisms (e.g., failsafe, load balancing, hot swap) are implemented to achieve resilience requirements in normal and adverse situations.",
+      "Attributes": [
+        {
+          "ItemId": "pt_5",
+          "Section": "Protect (PR)",
+          "SubSection": "Protective Technology (PR.PT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "eks_cluster_deletion_protection_enabled",
+        "rds_cluster_deletion_protection",
+        "rds_instance_deletion_protection",
+        "dynamodb_table_deletion_protection_enabled",
+        "directconnect_connection_redundancy",
+        "vpc_endpoint_multi_az_enabled",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_cross_zone_load_balancing_enabled",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "vpc_vpn_connection_tunnels_up",
+        "cloudfront_distributions_multiple_origin_failover_configured",
+        "s3_bucket_cross_region_replication"
+      ]
+    },
+    {
+      "Id": "ae_1",
+      "Name": "DE.AE-1",
+      "Description": "A baseline of network operations and expected data flows for users and systems is established and managed.",
+      "Attributes": [
+        {
+          "ItemId": "ae_1",
+          "Section": "Detect (DE)",
+          "SubSection": "Anomalies and Events (DE.AE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ]
+    },
+    {
+      "Id": "ae_2",
+      "Name": "DE.AE-2",
+      "Description": "Detected events are analyzed to understand attack targets and methods.",
+      "Attributes": [
+        {
+          "ItemId": "ae_2",
+          "Section": "Detect (DE)",
+          "SubSection": "Anomalies and Events (DE.AE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk"
+      ]
+    },
+    {
+      "Id": "ae_3",
+      "Name": "DE.AE-3",
+      "Description": "Event data are collected and correlated from multiple sources and sensors.",
+      "Attributes": [
+        {
+          "ItemId": "ae_3",
+          "Section": "Detect (DE)",
+          "SubSection": "Anomalies and Events (DE.AE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events"
+      ]
+    },
+    {
+      "Id": "ae_4",
+      "Name": "DE.AE-4",
+      "Description": "Impact of events is determined.",
+      "Attributes": [
+        {
+          "ItemId": "ae_4",
+          "Section": "Detect (DE)",
+          "SubSection": "Anomalies and Events (DE.AE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ae_5",
+      "Name": "DE.AE-5",
+      "Description": "Incident alert thresholds are established.",
+      "Attributes": [
+        {
+          "ItemId": "ae_5",
+          "Section": "Detect (DE)",
+          "SubSection": "Anomalies and Events (DE.AE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cm_1",
+      "Name": "DE.CM-1",
+      "Description": "The network is monitored to detect potential cybersecurity events.",
+      "Attributes": [
+        {
+          "ItemId": "cm_1",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_insights_exist",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "vpc_flow_logs_enabled",
+        "guardduty_is_enabled",
+        "inspector2_is_enabled",
+        "accessanalyzer_enabled_without_findings"
+      ]
+    },
+    {
+      "Id": "cm_2",
+      "Name": "DE.CM-2",
+      "Description": "The physical environment is monitored to detect potential cybersecurity events.",
+      "Attributes": [
+        {
+          "ItemId": "cm_2",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cm_3",
+      "Name": "DE.CM-3",
+      "Description": "Personnel activity is monitored to detect potential cybersecurity events.",
+      "Attributes": [
+        {
+          "ItemId": "cm_3",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "cm_4",
+      "Name": "DE.CM-4",
+      "Description": "Malicious code is detected.",
+      "Attributes": [
+        {
+          "ItemId": "cm_4",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_no_secrets_in_variables"
+      ]
+    },
+    {
+      "Id": "cm_5",
+      "Name": "DE.CM-5",
+      "Description": "Unauthorized mobile code is detected.",
+      "Attributes": [
+        {
+          "ItemId": "cm_5",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cm_6",
+      "Name": "DE.CM-6",
+      "Description": "External service provider activity is monitored to detect potential cybersecurity events.",
+      "Attributes": [
+        {
+          "ItemId": "cm_6",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation"
+      ]
+    },
+    {
+      "Id": "cm_7",
+      "Name": "DE.CM-7",
+      "Description": "Monitoring for unauthorized personnel, connections, devices, and software is performed.",
+      "Attributes": [
+        {
+          "ItemId": "cm_7",
+          "Section": "Detect (DE)",
+          "SubSection": "Security Continuous Monitoring (DE.CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "guardduty_is_enabled",
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_s3_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_eks_runtime_monitoring_enabled"
+      ]
+    },
+    {
+      "Id": "dp_4",
+      "Name": "DE.DP-4",
+      "Description": "Event detection information is communicated.",
+      "Attributes": [
+        {
+          "ItemId": "dp_4",
+          "Section": "Detect (DE)",
+          "SubSection": "Detection Processes (DE.DP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_insights_exist",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "cloudwatch_alarm_actions_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "route53_dangling_ip_subdomain_takeover",
+        "s3_bucket_event_notifications_enabled",
+        "sns_subscription_not_using_http_endpoints"
+      ]
+    },
+    {
+      "Id": "dp_5",
+      "Name": "DE.DP-5",
+      "Description": "Detection processes are continuously improved.",
+      "Attributes": [
+        {
+          "ItemId": "dp_5",
+          "Section": "Detect (DE)",
+          "SubSection": "Detection Processes (DE.DP)",
+          "Service": "ec2"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "an_2",
+      "Name": "RS.AN-2",
+      "Description": "The impact of the incident is understood.",
+      "Attributes": [
+        {
+          "ItemId": "an_2",
+          "Section": "Respond (RS)",
+          "SubSection": "Analysis (RS.AN)",
+          "Service": "guardduty"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mi_3",
+      "Name": "RS.MI-3",
+      "Description": "Newly identified vulnerabilities are mitigated or documented as accepted risks.",
+      "Attributes": [
+        {
+          "ItemId": "mi_3",
+          "Section": "Respond (RS)",
+          "SubSection": "Mitigation (RS.MI)",
+          "Service": "guardduty"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "rp_1",
+      "Name": "RS.RP-1",
+      "Description": "Response plan is executed during or after an incident.",
+      "Attributes": [
+        {
+          "ItemId": "rp_1",
+          "Section": "Respond (RS)",
+          "SubSection": "Response Planning (RS.RP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ssmincidents_enabled_with_plans"
+      ]
+    },
+    {
+      "Id": "rc_rp_1",
+      "Name": "RC.RP-1",
+      "Description": "Recovery plan is executed during or after a cybersecurity incident.",
+      "Attributes": [
+        {
+          "ItemId": "rc_rp_1",
+          "Section": "Recover (RC)",
+          "SubSection": "Recovery Planning (RC.RP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_plans_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan"
+      ]
+    }
+  ]
+}

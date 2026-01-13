@@ -1,0 +1,276 @@
+---
+title: "Installation"
+---
+
+There are **two ways** to use Prowler MCP Server:
+
+<CardGroup cols={2}>
+  <Card title="Option 1: Managed by Prowler" icon="cloud" color="#10B981">
+    **No installation required** - Just configuration
+
+    Use `https://mcp.prowler.com/mcp`
+  </Card>
+  <Card title="Option 2: Run Locally" icon="server" color="#6366F1">
+    **Local installation** - Full control
+
+    Install via Docker, PyPI, or source code
+  </Card>
+</CardGroup>
+
+
+For "Option 1: Managed by Prowler", go directly to the [Configuration Guide](/getting-started/basic-usage/prowler-mcp#hosted-server-configuration-recommended) to set up your Claude Desktop, Cursor, or other MCP client.
+**This guide is focused on local installation, "Option 2: Run Locally"**.
+
+## Installation Methods
+
+Choose one of the following installation methods:
+
+<Tabs>
+  <Tab title="Docker (Recommended)">
+    ### Pull from Docker Hub
+
+    The easiest way to run locally is using the official Docker image:
+
+    ```bash
+    docker pull prowlercloud/prowler-mcp
+    ```
+
+    ### Run the Container
+
+    ```bash
+    # STDIO mode (for local MCP clients)
+    docker run --rm -i prowlercloud/prowler-mcp
+
+    # HTTP mode (for remote access)
+    docker run --rm -p 8000:8000 \
+      prowlercloud/prowler-mcp \
+      --transport http --host 0.0.0.0 --port 8000
+    ```
+
+    ### With Environment Variables
+
+    ```bash
+    docker run --rm -i \
+      -e PROWLER_APP_API_KEY="pk_your_api_key" \
+      -e API_BASE_URL="https://api.prowler.com/api/v1" \
+      prowlercloud/prowler-mcp
+    ```
+
+    <Info>
+    **Docker Hub:** [prowlercloud/prowler-mcp](https://hub.docker.com/r/prowlercloud/prowler-mcp)
+    </Info>
+
+  </Tab>
+
+  <Tab title="PyPI Package">
+    ### Install via pip
+
+    <Warning>
+    **Coming Soon** - PyPI package will be available shortly
+    </Warning>
+  </Tab>
+
+  <Tab title="From Source (Development)">
+    ### Install uv
+
+    If `uv` is not installed, install it first. Visit [uv documentation](https://docs.astral.sh/uv/) for more installation options.
+
+    ### Clone the Repository
+
+    ```bash
+    git clone https://github.com/prowler-cloud/prowler.git
+    cd prowler/mcp_server
+    ```
+
+    ### Install Dependencies
+
+    The MCP server uses `uv` for dependency management. Install dependencies with:
+
+    ```bash
+    uv sync
+    ```
+
+    ### Verify Installation
+
+    Test that the server is properly installed:
+
+    ```bash
+    uv run prowler-mcp --help
+    ```
+
+    The help message with available command-line options should appear.
+
+    <Note>
+    **For Development:** This method is recommended if you're developing or contributing to the MCP server.
+    </Note>
+
+  </Tab>
+
+  <Tab title="Build Docker Image">
+    ### Prerequisites
+
+    Ensure Docker is installed on your system. Visit [Docker documentation](https://docs.docker.com/get-docker/) for more installation options.
+
+    ### Clone the Repository
+
+    ```bash
+    git clone https://github.com/prowler-cloud/prowler.git
+    cd prowler/mcp_server
+    ```
+
+    ### Build the Docker Image
+
+    ```bash
+    docker build -t prowler-mcp .
+    ```
+
+    This creates a Docker image named `prowler-mcp` with all necessary dependencies.
+
+    ### Verify Installation
+
+    Test that the Docker image was built successfully:
+
+    ```bash
+    docker run --rm prowler-mcp --help
+    ```
+
+    The help message with available command-line options should appear.
+
+  </Tab>
+</Tabs>
+
+---
+
+## Command Line Options
+
+The Prowler MCP Server supports the following command-line arguments:
+
+```bash
+prowler-mcp [--transport {stdio,http}] [--host HOST] [--port PORT]
+```
+
+| Argument | Values | Default | Description |
+|----------|--------|---------|-------------|
+| `--transport` | `stdio`, `http` | `stdio` | Transport method for MCP communication |
+| `--host` | Any valid hostname/IP | `127.0.0.1` | Host to bind to (HTTP mode only) |
+| `--port` | Port number | `8000` | Port to bind to (HTTP mode only) |
+
+### Examples
+
+```bash
+# Default STDIO mode for local MCP client integration
+prowler-mcp
+
+# Explicit STDIO mode
+prowler-mcp --transport stdio
+
+# HTTP mode on default host and port (127.0.0.1:8000)
+prowler-mcp --transport http
+
+# HTTP mode accessible from any network interface
+prowler-mcp --transport http --host 0.0.0.0
+
+# HTTP mode with custom port
+prowler-mcp --transport http --host 0.0.0.0 --port 8080
+```
+
+## Environment Variables
+
+Configure the server using environment variables:
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `PROWLER_APP_API_KEY` | Prowler API key | Only for STDIO mode | - |
+| `API_BASE_URL` | Custom Prowler API endpoint | No | `https://api.prowler.com/api/v1` |
+| `PROWLER_MCP_TRANSPORT_MODE` | Default transport mode (overwritten by `--transport` argument) | No | `stdio` |
+
+<CodeGroup>
+```bash macOS/Linux
+export PROWLER_APP_API_KEY="pk_your_api_key_here"
+export API_BASE_URL="https://api.prowler.com/api/v1"
+export PROWLER_MCP_TRANSPORT_MODE="http"
+```
+
+```bash Windows PowerShell
+$env:PROWLER_APP_API_KEY="pk_your_api_key_here"
+$env:API_BASE_URL="https://api.prowler.com/api/v1"
+$env:PROWLER_MCP_TRANSPORT_MODE="http"
+```
+</CodeGroup>
+
+<Warning>
+Never commit your API key to version control. Use environment variables or secure secret management solutions.
+</Warning>
+
+### Using Environment Files
+
+For convenience, create a `.env` file in the `mcp_server` directory:
+
+```bash .env
+PROWLER_APP_API_KEY=pk_your_api_key_here
+API_BASE_URL=https://api.prowler.com/api/v1
+PROWLER_MCP_TRANSPORT_MODE=stdio
+```
+
+When using Docker, pass the environment file:
+
+```bash
+docker run --rm --env-file .env -it prowler-mcp
+```
+
+## Running from Any Location
+
+Run the MCP server from anywhere using `uvx`:
+
+```bash
+uvx /path/to/prowler/mcp_server/
+```
+
+This is particularly useful when configuring MCP clients that need to launch the server from a specific path.
+
+## Production Deployment
+
+For production deployments that require customization, it is recommended to use the ASGI application that can be found in `prowler_mcp_server.server`. This can be run with uvicorn:
+
+```bash
+uvicorn prowler_mcp_server.server:app --host 0.0.0.0 --port 8000
+```
+
+For more details on production deployment options, see the [FastMCP production deployment guide](https://gofastmcp.com/deployment/http#production-deployment) and [uvicorn settings](https://www.uvicorn.org/settings/).
+
+### Entrypoint Script
+
+The source tree includes `entrypoint.sh` to simplify switching between the
+standard CLI runner and the ASGI app. The first argument selects the mode and
+any additional flags are passed straight through:
+
+```bash
+# Default CLI experience (prowler-mcp console script)
+./entrypoint.sh main --transport http --host 0.0.0.0
+
+# ASGI app via uvicorn
+./entrypoint.sh uvicorn --host 0.0.0.0 --port 9000
+```
+
+Omitting the mode defaults to `main`, matching the `prowler-mcp` console script.
+When `uvicorn` mode is selected, the script exports `PROWLER_MCP_TRANSPORT_MODE=http` automatically.
+
+This is the default entrypoint for the Docker container.
+
+## Next Steps
+
+Now that you have the Prowler MCP Server installed, proceed to configure your MCP client:
+
+<CardGroup cols={1}>
+  <Card title="Configuration" icon="gear" href="/getting-started/basic-usage/prowler-mcp">
+    Configure Claude Desktop, Cursor, or other MCP clients
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues during installation:
+
+- Search for existing [GitHub issues](https://github.com/prowler-cloud/prowler/issues)
+- Ask for help in our [Slack community](https://goto.prowler.com/slack)
+- Report a new issue on [GitHub](https://github.com/prowler-cloud/prowler/issues/new)

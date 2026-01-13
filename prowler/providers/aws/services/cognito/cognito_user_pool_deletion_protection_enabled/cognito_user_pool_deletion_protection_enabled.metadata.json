@@ -12,17 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pools** have **deletion protection** set to `ACTIVE`. The evaluation inspects each user pool's deletion protection status.",
   "Risk": "Without **deletion protection**, any principal with delete rights can remove a user pool in one action, causing immediate **authentication outages**. Identities and configurations are lost, breaking sign-ins and tokens, harming **availability** and **integrity**, and prolonging recovery if exports/backups are stale.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-deletion-protection.html",
     "https://repost.aws/questions/QUDX0aXegdThit0uD5kB_Fjw/cognito-user-pool-cannot-be-deleted-from-aws-console",
-    "https://alexanderhose.com/how-to-secure-amazon-cognito-using-deletion-protection/",
-    "https://github.com/hashicorp/terraform-provider-aws/issues/27435",
-    "https://support.icompaas.com/support/solutions/articles/62000233677-ensure-cognito-user-pools-deletion-protection-enabled-to-prevent-accidental-deletion",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user_pool",
-    "https://stackzonecom.tawk.help/article/aws-config-rule-cognito-user-pool-deletion-protection"
+    "https://support.icompaas.com/support/solutions/articles/62000233677-ensure-cognito-user-pools-deletion-protection-enabled-to-prevent-accidental-deletion"
   ],
   "Remediation": {
     "Code": {

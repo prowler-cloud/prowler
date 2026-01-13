@@ -1,0 +1,33 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "identity_no_resources_in_root_compartment",
+  "CheckTitle": "Ensure no resources are created in the root compartment",
+  "CheckType": [],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:identity:tenancy",
+  "Severity": "high",
+  "ResourceType": "OciTenancy",
+  "ResourceGroup": "governance",
+  "Description": "The root compartment is the top-level compartment in your tenancy and should be used only for management purposes. All other cloud resources should be created in child compartments to maintain proper organization, access control, and resource isolation.",
+  "Risk": "Creating resources in the root compartment bypasses the benefits of compartmentalization, makes access control management difficult, violates the principle of least privilege, and increases the risk of unauthorized access to resources. It also makes it harder to implement effective IAM policies and resource governance.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/check-for-root-compartment-resources.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Move all resources from the root compartment to appropriate child compartments. From OCI Console: 1. Identify resources in the root compartment. 2. Create or select appropriate child compartments. 3. Move resources to child compartments using the 'Move Resource' option available for most resource types. 4. Update any policies or automation that reference root compartment resources.",
+      "Url": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

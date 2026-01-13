@@ -1,10 +1,11 @@
 import json
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from os import environ
-from typing import List
+from typing import Generator, List
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -17,7 +18,7 @@ from prowler.config.config import (
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
 
@@ -44,11 +45,12 @@ class IacProvider(Provider):
         self.scan_repository_url = scan_repository_url
         self.scanners = scanners
         self.exclude_path = exclude_path
-        self.region = "global"
+        self.region = "branch"
         self.audited_account = "local-iac"
         self._session = None
         self._identity = "prowler"
         self._auth_method = "No auth"
+        self._temp_clone_dir = None  # Track temporary directory for cleanup
 
         if scan_repository_url:
             oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
@@ -78,6 +80,20 @@ class IacProvider(Provider):
                 logger.debug(
                     "No GitHub authentication method provided; proceeding without authentication."
                 )
+
+            # Clone repository and detect branch during initialization
+            # This ensures the branch is detected for both CLI and API usage
+            self._temp_clone_dir, branch_name = self._clone_repository(
+                self.scan_repository_url,
+                self.github_username,
+                self.personal_access_token,
+                self.oauth_app_token,
+            )
+            # Update scan_path to point to the cloned repository
+            self.scan_path = self._temp_clone_dir
+            # Update region with the detected branch name
+            self.region = branch_name
+            logger.info(f"Updated region to branch: {branch_name}")
 
         # Audit Config
         if config_content:
@@ -130,6 +146,20 @@ class IacProvider(Provider):
     def fixer_config(self):
         return self._fixer_config
 
+    def __del__(self):
+        """Cleanup temporary directory when provider is destroyed"""
+        self.cleanup()
+
+    def cleanup(self):
+        """Remove temporary cloned repository if it exists"""
+        if self._temp_clone_dir:
+            try:
+                logger.info(f"Removing temporary directory {self._temp_clone_dir}...")
+                shutil.rmtree(self._temp_clone_dir)
+                self._temp_clone_dir = None
+            except Exception as error:
+                logger.warning(f"Failed to remove temporary directory: {error}")
+
     def setup_session(self):
         """IAC provider doesn't need a session since it uses Trivy directly"""
         return None
@@ -173,7 +203,7 @@ class IacProvider(Provider):
                 "Severity": finding["Severity"],
                 "ResourceType": "iac",
                 "Description": finding_description,
-                "Risk": "",
+                "Risk": "This provider has not defined a risk for this check.",
                 "RelatedUrl": finding.get("PrimaryURL", ""),
                 "Remediation": {
                     "Code": {
@@ -207,6 +237,8 @@ class IacProvider(Provider):
             )
             if finding_status == "MUTED":
                 report.muted = True
+            # Set the region from the provider
+            report.region = self.region
             return report
         except Exception as error:
             logger.critical(
@@ -214,15 +246,50 @@ class IacProvider(Provider):
             )
             sys.exit(1)
 
+    def _detect_branch_name(self, repo_path: str) -> str:
+        """
+        Detect the current branch name from a cloned repository.
+
+        Args:
+            repo_path: Path to the cloned repository
+
+        Returns:
+            str: The branch name, defaulting to "main" if detection fails
+        """
+        try:
+            import os
+
+            # Read .git/HEAD to detect the current branch
+            head_file = os.path.join(repo_path, ".git", "HEAD")
+            if os.path.exists(head_file):
+                with open(head_file, "r") as f:
+                    content = f.read().strip()
+                    # Format: "ref: refs/heads/branch-name"
+                    if content.startswith("ref: refs/heads/"):
+                        branch_name = content[16:]  # Remove "ref: refs/heads/"
+                        logger.info(f"Detected branch: {branch_name}")
+                        return branch_name
+
+            # Fallback: return "main" as default
+            logger.warning("Could not detect branch name, defaulting to 'main'")
+            return "main"
+
+        except Exception as error:
+            logger.error(f"Error detecting branch name: {error}")
+            return "main"  # Safe fallback
+
     def _clone_repository(
         self,
         repository_url: str,
         github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         Clone a git repository to a temporary directory, supporting GitHub authentication.
+
+        Returns:
+            tuple[str, str]: (temporary_directory, branch_name)
         """
         try:
             original_url = repository_url
@@ -242,50 +309,75 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Cloning {original_url}..."
+
+            # Check if we're in an environment with a TTY
+            # Celery workers and other non-interactive environments don't have TTY
+            #   and cannot use the alive_bar
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Cloning {original_url}..."
+                            porcelain.clone(
+                                repository_url, temporary_directory, depth=1
+                            )
+                            bar.title = "-> Repository cloned successfully!"
+                        except Exception as clone_error:
+                            bar.title = "-> Cloning failed!"
+                            raise clone_error
+                else:
+                    # No TTY, just clone without progress bar
+                    logger.info(f"Cloning {original_url}...")
                     porcelain.clone(repository_url, temporary_directory, depth=1)
-                    bar.title = "-> Repository cloned successfully!"
-                except Exception as clone_error:
-                    bar.title = "-> Cloning failed!"
-                    raise clone_error
-            return temporary_directory
+                    logger.info("Repository cloned successfully!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Cloning {original_url}...")
+                porcelain.clone(repository_url, temporary_directory, depth=1)
+                logger.info("Repository cloned successfully!")
+
+            # Detect the branch name from the cloned repository
+            branch_name = self._detect_branch_name(temporary_directory)
+
+            return temporary_directory, branch_name
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
     def run(self) -> List[CheckReportIAC]:
-        temp_dir = None
-        if self.scan_repository_url:
-            scan_dir = temp_dir = self._clone_repository(
-                self.scan_repository_url,
-                getattr(self, "github_username", None),
-                getattr(self, "personal_access_token", None),
-                getattr(self, "oauth_app_token", None),
-            )
-        else:
-            scan_dir = self.scan_path
+        """
+        Execute the IaC scan.
 
+        Note: Repository cloning and branch detection now happen in __init__(),
+        so this method just runs the scan and returns results.
+        For CLI compatibility, cleanup is still performed at the end.
+        """
         try:
-            reports = self.run_scan(scan_dir, self.scanners, self.exclude_path)
+            # Collect all batches from the generator
+            # scan_path now points to either the local directory or the cloned repo
+            reports = []
+            for batch in self.run_scan(
+                self.scan_path, self.scanners, self.exclude_path
+            ):
+                reports.extend(batch)
         finally:
-            if temp_dir:
-                logger.info(f"Removing temporary directory {temp_dir}...")
-                shutil.rmtree(temp_dir)
+            # Clean up temporary directory if this was a repository scan
+            # This ensures CLI usage cleans up immediately after run()
+            if self._temp_clone_dir:
+                self.cleanup()
 
         return reports
 
     def run_scan(
         self, directory: str, scanners: list[str], exclude_path: list[str]
-    ) -> List[CheckReportIAC]:
+    ) -> Generator[List[CheckReportIAC], None, None]:
         try:
             logger.info(f"Running IaC scan on {directory} ...")
             trivy_command = [
@@ -302,25 +394,47 @@ class IacProvider(Provider):
             ]
             if exclude_path:
                 trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Running IaC scan on {directory} ..."
-                    # Run Trivy with JSON output
+
+            # Check if we're in an environment with a TTY
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Running IaC scan on {directory} ..."
+                            # Run Trivy with JSON output
+                            process = subprocess.run(
+                                trivy_command,
+                                capture_output=True,
+                                text=True,
+                            )
+                            bar.title = "-> Scan completed!"
+                        except Exception as error:
+                            bar.title = "-> Scan failed!"
+                            raise error
+                else:
+                    # No TTY, just run without progress bar
+                    logger.info(f"Running Trivy scan on {directory}...")
                     process = subprocess.run(
                         trivy_command,
                         capture_output=True,
                         text=True,
                     )
-                    bar.title = "-> Scan completed!"
-                except Exception as error:
-                    bar.title = "-> Scan failed!"
-                    raise error
+                    logger.info("Trivy scan completed!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Running Trivy scan on {directory}...")
+                process = subprocess.run(
+                    trivy_command,
+                    capture_output=True,
+                    text=True,
+                )
+                logger.info("Trivy scan completed!")
             # Log Trivy's stderr output with preserved log levels
             if process.stderr:
                 for line in process.stderr.strip().split("\n"):
@@ -354,14 +468,15 @@ class IacProvider(Provider):
 
                 if not output:
                     logger.warning("No findings returned from Trivy scan")
-                    return []
+                    return
             except Exception as error:
                 logger.critical(
                     f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                 )
                 sys.exit(1)
 
-            reports = []
+            batch = []
+            batch_size = 100
 
             # Process all trivy findings
             for finding in output:
@@ -371,27 +486,44 @@ class IacProvider(Provider):
                     report = self._process_finding(
                         misconfiguration, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Vulnerabilities
                 for vulnerability in finding.get("Vulnerabilities", []):
                     report = self._process_finding(
                         vulnerability, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Secrets
                 for secret in finding.get("Secrets", []):
                     report = self._process_finding(
                         secret, finding["Target"], finding["Class"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Licenses
                 for license in finding.get("Licenses", []):
                     report = self._process_finding(
                         license, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
 
-            return reports
+            # Yield any remaining findings in the last batch
+            if batch:
+                yield batch
 
         except Exception as error:
             if "No such file or directory: 'trivy'" in str(error):
@@ -434,3 +566,95 @@ class IacProvider(Provider):
         )
 
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        scan_repository_url: str = None,
+        oauth_app_token: str = None,
+        access_token: str = None,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> "Connection":
+        """Test connection to IaC repository.
+
+        Test the connection to the IaC repository using the provided credentials.
+
+        Args:
+            scan_repository_url (str): Repository URL to scan.
+            oauth_app_token (str): OAuth App token for authentication.
+            access_token (str): Access token for authentication (alias for oauth_app_token).
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID, in this case it's the repository URL.
+
+        Returns:
+            Connection: Connection object with success status or error information.
+
+        Raises:
+            Exception: If failed to test the connection to the repository.
+
+        Examples:
+            >>> IacProvider.test_connection(scan_repository_url="https://github.com/user/repo")
+            Connection(is_connected=True)
+        """
+        try:
+            # If provider_id is provided and scan_repository_url is not, use provider_id as the repository URL
+            if provider_id and not scan_repository_url:
+                scan_repository_url = provider_id
+
+            # Handle both oauth_app_token and access_token parameters
+            if access_token and not oauth_app_token:
+                oauth_app_token = access_token
+
+            if not scan_repository_url:
+                return Connection(
+                    is_connected=False, error="Repository URL is required"
+                )
+
+            # Try to clone the repository to test the connection
+            with tempfile.TemporaryDirectory():
+                try:
+                    if oauth_app_token:
+                        # If token is provided, use it for authentication
+                        # Extract the domain and path from the URL
+                        url_pattern = r"(https?://)([^/]+)/(.+)"
+                        match = re.match(url_pattern, scan_repository_url)
+                        if match:
+                            protocol, domain, path = match.groups()
+                            # Construct URL with token
+                            auth_url = f"{protocol}x-access-token:{oauth_app_token}@{domain}/{path}"
+                        else:
+                            auth_url = scan_repository_url
+                    else:
+                        # Public repository
+                        auth_url = scan_repository_url
+
+                    # Use dulwich to test the connection
+                    porcelain.ls_remote(auth_url)
+
+                    return Connection(is_connected=True)
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if "authentication" in error_msg.lower() or "401" in error_msg:
+                        return Connection(
+                            is_connected=False,
+                            error="Authentication failed. Please check your access token.",
+                        )
+                    elif "404" in error_msg or "not found" in error_msg.lower():
+                        return Connection(
+                            is_connected=False,
+                            error="Repository not found or not accessible.",
+                        )
+                    else:
+                        return Connection(
+                            is_connected=False,
+                            error=f"Failed to connect to repository: {error_msg}",
+                        )
+
+        except Exception as error:
+            if raise_on_exception:
+                raise
+            return Connection(
+                is_connected=False,
+                error=f"Unexpected error testing connection: {str(error)}",
+            )

@@ -25,7 +25,7 @@ for page in get_parameters_by_path_paginator.paginate(
     for service in page["Parameters"]:
         regions_by_service["services"][service["Value"]] = {}
         # Get all AWS Regions for the specific service
-        regions = {"aws": [], "aws-cn": [], "aws-us-gov": []}
+        regions = {"aws": [], "aws-cn": [], "aws-eusc": [], "aws-us-gov": []}
         for page in get_parameters_by_path_paginator.paginate(
             Path="/aws/service/global-infrastructure/services/"
             + service["Value"]
@@ -34,6 +34,8 @@ for page in get_parameters_by_path_paginator.paginate(
             for region in page["Parameters"]:
                 if "cn" in region["Value"]:
                     regions["aws-cn"].append(region["Value"])
+                elif "eusc" in region["Value"]:
+                    regions["aws-eusc"].append(region["Value"])
                 elif "gov" in region["Value"]:
                     regions["aws-us-gov"].append(region["Value"])
                 else:
@@ -41,6 +43,7 @@ for page in get_parameters_by_path_paginator.paginate(
                 # Sort regions per partition
                 regions["aws"] = sorted(regions["aws"])
                 regions["aws-cn"] = sorted(regions["aws-cn"])
+                regions["aws-eusc"] = sorted(regions["aws-eusc"])
                 regions["aws-us-gov"] = sorted(regions["aws-us-gov"])
         regions_by_service["services"][service["Value"]]["regions"] = regions
 
@@ -48,10 +51,33 @@ for page in get_parameters_by_path_paginator.paginate(
 logging.info("Updating subservices and the services not present in the original matrix")
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
-# bedrock-agent --> bedrock
-regions_by_service["services"]["bedrock-agent"] = regions_by_service["services"][
-    "bedrock"
-]
+# bedrock-agent is not in SSM, and has different availability than bedrock
+# See: https://docs.aws.amazon.com/bedrock/latest/userguide/agents-supported.html
+regions_by_service["services"]["bedrock-agent"] = {
+    "regions": {
+        "aws": [
+            "ap-northeast-1",
+            "ap-northeast-2",
+            "ap-south-1",
+            "ap-southeast-1",
+            "ap-southeast-2",
+            "ca-central-1",
+            "eu-central-1",
+            "eu-central-2",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-west-3",
+            "sa-east-1",
+            "us-east-1",
+            "us-west-2",
+        ],
+        "aws-cn": [],
+        "aws-eusc": [],
+        "aws-us-gov": [
+            "us-gov-west-1",
+        ],
+    }
+}
 # cognito --> cognito-idp
 regions_by_service["services"]["cognito"] = regions_by_service["services"][
     "cognito-idp"

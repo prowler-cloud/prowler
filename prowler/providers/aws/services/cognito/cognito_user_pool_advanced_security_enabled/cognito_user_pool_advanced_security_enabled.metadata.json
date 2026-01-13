@@ -11,17 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon Cognito user pools** are evaluated for **Threat protection (advanced security)** mode: `ENFORCED` (full-function) vs `AUDIT` or disabled. This indicates whether adaptive risk responses and compromised-credential checks are applied during authentication.",
   "Risk": "Without enforced threat protection, risky sign-ins aren't blocked-only logged-enabling credential stuffing, brute force, and account takeover. This threatens confidentiality and integrity via unauthorized access and token misuse, and can degrade availability through automated abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.pulumi.com/registry/packages/aws/api-docs/cognito/userpool/",
-    "https://github.com/aws/aws-cdk/issues/33393",
-    "https://github.com/aws/aws-cdk/issues/7405",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.14.0/reference/services/cognito-idp.html",
     "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",
-    "https://registry.terraform.io/modules/lgallard/cognito-user-pool/aws/latest",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user_pool"
+    "https://support.icompaas.com/support/solutions/articles/62000233667-ensure-cognito-user-pools-has-advanced-security-enabled-with-full-function"
   ],
   "Remediation": {
     "Code": {

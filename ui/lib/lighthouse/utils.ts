@@ -34,7 +34,11 @@ export const convertVercelMessageToLangChainMessage = (
   }
 };
 
-export const getModelParams = (config: any): ModelParams => {
+export const getModelParams = (config: {
+  model: string;
+  max_tokens?: number;
+  temperature?: number;
+}): ModelParams => {
   const modelId = config.model;
 
   const params: ModelParams = {
@@ -46,6 +50,7 @@ export const getModelParams = (config: any): ModelParams => {
   if (modelId.startsWith("gpt-5")) {
     params.temperature = undefined;
     params.reasoningEffort = "minimal" as const;
+    params.maxTokens = undefined;
   }
 
   return params;

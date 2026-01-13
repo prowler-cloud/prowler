@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from tasks.utils import batched
 
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
@@ -18,6 +19,9 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
+    SecurityHubNoEnabledRegionsError,
+)
 
 logger = get_task_logger(__name__)
 
@@ -178,7 +182,7 @@ def get_security_hub_client_from_integration(
         if the connection was successful and the SecurityHub client or connection object.
     """
     # Get the provider associated with this integration
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         provider_relationship = integration.integrationproviderrelationship_set.first()
         if not provider_relationship:
             return Connection(
@@ -207,7 +211,7 @@ def get_security_hub_client_from_integration(
             regions_status[region] = region in connection.enabled_regions
 
         # Save regions information in the integration configuration
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
             integration.configuration["regions"] = regions_status
             integration.save()
 
@@ -221,8 +225,9 @@ def get_security_hub_client_from_integration(
         )
         return True, security_hub
     else:
-        # Reset regions information if connection fails
-        with rls_transaction(tenant_id):
+        # Reset regions information if connection fails and integration is not connected
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
+            integration.connected = False
             integration.configuration["regions"] = {}
             integration.save()
 
@@ -289,7 +294,7 @@ def upload_security_hub_integration(
                 has_findings = False
                 batch_number = 0
 
-                with rls_transaction(tenant_id):
+                with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
                     qs = (
                         Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
                         .order_by("uid")
@@ -329,12 +334,18 @@ def upload_security_hub_integration(
                                 )
 
                                 if not connected:
-                                    logger.error(
-                                        f"Security Hub connection failed for integration {integration.id}: "
-                                        f"{security_hub.error}"
-                                    )
-                                    integration.connected = False
-                                    integration.save()
+                                    if isinstance(
+                                        security_hub.error,
+                                        SecurityHubNoEnabledRegionsError,
+                                    ):
+                                        logger.warning(
+                                            f"Security Hub integration {integration.id} has no enabled regions"
+                                        )
+                                    else:
+                                        logger.error(
+                                            f"Security Hub connection failed for integration {integration.id}: "
+                                            f"{security_hub.error}"
+                                        )
                                     break  # Skip this integration
 
                                 security_hub_client = security_hub
@@ -405,21 +416,15 @@ def upload_security_hub_integration(
                             logger.warning(
                                 f"Failed to archive previous findings: {str(archive_error)}"
                             )
-
             except Exception as e:
                 logger.error(
                     f"Security Hub integration {integration.id} failed: {str(e)}"
                 )
-                continue
 
         result = integration_executions == len(integrations)
         if result:
             logger.info(
                 f"All Security Hub integrations completed successfully for provider {provider_id}"
-            )
-        else:
-            logger.error(
-                f"Some Security Hub integrations failed for provider {provider_id}"
             )
 
         return result

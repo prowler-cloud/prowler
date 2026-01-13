@@ -38,13 +38,13 @@ git clone git@github.com:prowler-cloud/ui.git
 #### Build the project
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 #### Run the production server
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## 🧪 Development deployment
@@ -81,27 +81,21 @@ git clone git@github.com:prowler-cloud/ui.git
 
 #### Install dependencies
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+```bash
+pnpm install
+```
+
+**Note:** The `pnpm install` command will automatically configure Git hooks for code quality checks. If you experience issues, you can manually configure them:
 
 ```bash
-npm install
+git config core.hooksPath "ui/.husky"
 ```
 
 #### Run the development server
 
 ```bash
-npm run dev
+pnpm run dev
 ```
-
-## Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
-
-```bash
-public-hoist-pattern[]=*@nextui-org/*
-```
-
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
 
 ## Technologies Used
 
@@ -112,3 +106,48 @@ After modifying the `.npmrc` file, you need to run `pnpm install` again to ensur
 - [TypeScript](https://www.typescriptlang.org/)
 - [Framer Motion](https://www.framer.com/motion/)
 - [next-themes](https://github.com/pacocoursey/next-themes)
+
+## Git Hooks & Code Review
+
+This project uses Git hooks to maintain code quality. When you commit changes to TypeScript/JavaScript files, the pre-commit hook can optionally validate them against our coding standards using Claude Code.
+
+### Enabling Code Review
+
+To enable automatic code review on commits, add this to your `.env` file in the project root:
+
+```bash
+CODE_REVIEW_ENABLED=true
+```
+
+When enabled, the hook will:
+- ✅ Validate your staged changes against `AGENTS.md` standards
+- ✅ Check for common issues (any types, incorrect imports, styling violations, etc.)
+- ✅ Block commits that don't comply with the standards
+- ✅ Provide helpful feedback on how to fix issues
+
+### Disabling Code Review
+
+To disable code review (faster commits, useful for quick iterations):
+
+```bash
+CODE_REVIEW_ENABLED=false
+```
+
+Or remove the variable from your `.env` file.
+
+### Requirements
+
+- [Claude Code CLI](https://github.com/anthropics/claude-code) installed and authenticated
+- `.env` file in the project root with `CODE_REVIEW_ENABLED` set
+
+### Troubleshooting
+
+If hooks aren't running after commits:
+
+```bash
+# Verify hooks are configured
+git config --get core.hooksPath  # Should output: ui/.husky
+
+# Reconfigure if needed
+git config core.hooksPath "ui/.husky"
+```

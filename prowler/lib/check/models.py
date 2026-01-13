@@ -112,6 +112,7 @@ class CheckMetadata(BaseModel):
     ResourceIdTemplate: str
     Severity: Severity
     ResourceType: str
+    ResourceGroup: str = Field(default="")
     Description: str
     Risk: str
     RelatedUrl: str
@@ -457,7 +458,8 @@ class Check(ABC, CheckMetadata):
         # Verify names consistency
         check_id = self.CheckID
         class_name = self.__class__.__name__
-        file_name = file_path.split(sep="/")[-1]
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
 
         errors = []
         if check_id != class_name:
@@ -588,8 +590,17 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
+
+        # Prefer the explicit resource_name argument, otherwise look for a name attribute on the resource
+        resource_name_candidate = resource_name or getattr(resource, "name", None)
+        if not resource_name_candidate and isinstance(resource, dict):
+            # Some callers pass a dict, so fall back to the dict entry if available
+            resource_name_candidate = resource.get("name")
+        if isinstance(resource_name_candidate, str):
+            # Trim whitespace so empty strings collapse to the default
+            resource_name_candidate = resource_name_candidate.strip()
         self.resource_name = (
-            resource_name or getattr(resource, "name", "") or "GCP Project"
+            str(resource_name_candidate) if resource_name_candidate else "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
@@ -597,6 +608,69 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "location", "")
             or getattr(resource, "region", "")
         )
+
+
+@dataclass
+class Check_Report_OCI(Check_Report):
+    """Contains the OCI Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    compartment_id: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        region: str = None,
+        resource_name: str = None,
+        resource_id: str = None,
+        compartment_id: str = None,
+    ) -> None:
+        """Initialize the OCI Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            region: The region of the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The OCID of the resource related with the finding.
+            compartment_id: The compartment OCID of the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            resource_id
+            or getattr(resource, "id", None)
+            or getattr(resource, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.compartment_id = compartment_id or getattr(resource, "compartment_id", "")
+        self.region = region or getattr(resource, "region", "")
+
+
+@dataclass
+class CheckReportAlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
 
 
 @dataclass
@@ -652,6 +726,74 @@ class CheckReportGithub(Check_Report):
             or getattr(resource, "owner", "")  # For Repositories
             or getattr(resource, "name", "")  # For Organizations
         )
+
+
+@dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information.
+
+    Cloudflare is a global service - zones are resources, not regional contexts.
+    All zone-related attributes are derived from the zone object passed as resource.
+    """
+
+    resource_name: str
+    resource_id: str
+    _zone: Any  # CloudflareZone object
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The CloudflareZone resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+        """
+        super().__init__(metadata, resource)
+
+        # Zone is the resource being checked
+        self._zone = resource
+
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+
+    @property
+    def zone(self) -> Any:
+        """The CloudflareZone object."""
+        return self._zone
+
+    @property
+    def zone_id(self) -> str:
+        """Zone ID."""
+        return getattr(self._zone, "id", "")
+
+    @property
+    def zone_name(self) -> str:
+        """Zone name."""
+        return getattr(self._zone, "name", "")
+
+    @property
+    def account_id(self) -> str:
+        """Account ID derived from zone's account."""
+        zone_account = getattr(self._zone, "account", None)
+        if zone_account:
+            return getattr(zone_account, "id", "")
+        return ""
+
+    @property
+    def region(self) -> str:
+        """Cloudflare is a global service."""
+        return "global"
 
 
 @dataclass

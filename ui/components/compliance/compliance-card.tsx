@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
+import { Card, CardContent } from "@/components/shadcn/card/card";
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
 import { ScanEntity } from "@/types/scans";
@@ -47,23 +47,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const ratingPercentage = Math.floor(
     (passingRequirements / totalRequirements) * 100,
   );
-
-  // Calculates the percentage change in passing requirements compared to the previous scan.
-  //
-  // const prevRatingPercentage = Math.floor(
-  //   (prevPassingRequirements / prevTotalRequirements) * 100,
-  // );
-
-  // const getScanChange = () => {
-  //   const scanDifference = ratingPercentage - prevRatingPercentage;
-  //   if (scanDifference < 0 && scanDifference <= -1) {
-  //     return `${scanDifference}% from last scan`;
-  //   }
-  //   if (scanDifference > 0 && scanDifference >= 1) {
-  //     return `+${scanDifference}% from last scan`;
-  //   }
-  //   return "No changes from last scan";
-  // };
 
   const getRatingColor = (ratingPercentage: number) => {
     if (ratingPercentage <= 10) {
@@ -112,17 +95,21 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   return (
-    <Card fullWidth isHoverable shadow="sm">
-      <CardBody
-        className="dark:bg-prowler-blue-800 flex cursor-pointer flex-row items-center justify-between gap-4"
-        onClick={navigateToDetail}
-      >
+    <Card
+      variant="base"
+      padding="md"
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      onClick={navigateToDetail}
+    >
+      <CardContent className="p-0">
         <div className="flex w-full items-center gap-4">
-          <Image
-            src={getComplianceIcon(title)}
-            alt={`${title} logo`}
-            className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
-          />
+          {getComplianceIcon(title) && (
+            <Image
+              src={getComplianceIcon(title)}
+              alt={`${title} logo`}
+              className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
+            />
+          )}
           <div className="flex w-full flex-col">
             <h4 className="text-small mb-1 leading-5 font-bold">
               {formatTitle(title)}
@@ -167,11 +154,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                   isDownloading={isDownloading}
                 />
               </div>
-              {/* <small>{getScanChange()}</small> */}
             </div>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };
