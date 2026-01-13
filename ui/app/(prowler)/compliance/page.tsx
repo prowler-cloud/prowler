@@ -132,7 +132,8 @@ export default async function Compliance({
       {selectedScanId ? (
         <>
           <div className="mb-6 flex flex-col gap-6">
-            <div className="flex flex-col items-start justify-between lg:flex-row lg:gap-6">
+            {/* Desktop: Side by side layout */}
+            <div className="hidden lg:flex lg:flex-row lg:items-start lg:justify-between lg:gap-6">
               <div className="flex-1">
                 <ComplianceHeader
                   scans={expandedScansData}
@@ -149,6 +150,27 @@ export default async function Compliance({
                       provider={selectedScan.providerInfo.provider}
                       selectedScan={selectedScanData}
                       sectionScores={threatScoreData.sectionScores}
+                    />
+                  </div>
+                )}
+            </div>
+            {/* Mobile & Tablet: Stacked layout with badge under filters */}
+            <div className="flex flex-col gap-6 lg:hidden">
+              <ComplianceHeader
+                scans={expandedScansData}
+                uniqueRegions={uniqueRegions}
+              />
+              {threatScoreData &&
+                typeof selectedScanId === "string" &&
+                selectedScan && (
+                  <div className="w-full">
+                    <ThreatScoreBadge
+                      score={threatScoreData.score}
+                      scanId={selectedScanId}
+                      provider={selectedScan.providerInfo.provider}
+                      selectedScan={selectedScanData}
+                      sectionScores={threatScoreData.sectionScores}
+                      orientation="horizontal"
                     />
                   </div>
                 )}

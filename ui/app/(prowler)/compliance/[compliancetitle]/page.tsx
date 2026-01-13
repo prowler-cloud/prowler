@@ -115,7 +115,7 @@ export default async function ComplianceDetail({
   return (
     <ContentLayout title={finalPageTitle}>
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <ComplianceHeader
             scans={[]}
             uniqueRegions={uniqueRegions}
@@ -136,6 +136,7 @@ export default async function ComplianceDetail({
               <ComplianceDownloadButton
                 scanId={selectedScanId}
                 reportType={reportType}
+                iconOnlyOnMobile
               />
             </div>
           ) : null;
@@ -146,11 +147,22 @@ export default async function ComplianceDetail({
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
-              {isThreatScore && <ThreatScoreBreakdownCardSkeleton />}
-              <RequirementsStatusCardSkeleton />
-              <TopFailedSectionsCardSkeleton />
-              {/* <SectionsFailureRateCardSkeleton /> */}
+            <div className="flex flex-col gap-6">
+              {isThreatScore && (
+                <div className="w-full lg:hidden">
+                  <ThreatScoreBreakdownCardSkeleton fullWidth />
+                </div>
+              )}
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
+                {isThreatScore && (
+                  <div className="hidden lg:block">
+                    <ThreatScoreBreakdownCardSkeleton />
+                  </div>
+                )}
+                <RequirementsStatusCardSkeleton />
+                <TopFailedSectionsCardSkeleton />
+                {/* <SectionsFailureRateCardSkeleton /> */}
+              </div>
             </div>
             <SkeletonAccordion />
           </div>
@@ -228,23 +240,38 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
+      {/* Charts section - ThreatScore on its own row on mobile/tablet */}
+      <div className="flex flex-col gap-6">
         {threatScoreData && (
-          <ThreatScoreBreakdownCard
-            overallScore={threatScoreData.overallScore}
-            sectionScores={threatScoreData.sectionScores}
-          />
+          <div className="w-full lg:hidden">
+            <ThreatScoreBreakdownCard
+              overallScore={threatScoreData.overallScore}
+              sectionScores={threatScoreData.sectionScores}
+              fullWidth
+            />
+          </div>
         )}
-        <RequirementsStatusCard
-          pass={totalRequirements.pass}
-          fail={totalRequirements.fail}
-          manual={totalRequirements.manual}
-        />
-        <TopFailedSectionsCard
-          sections={topFailedResult.items}
-          dataType={topFailedResult.type}
-        />
-        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
+          {/* Desktop: ThreatScore inline with other charts */}
+          {threatScoreData && (
+            <div className="hidden lg:block">
+              <ThreatScoreBreakdownCard
+                overallScore={threatScoreData.overallScore}
+                sectionScores={threatScoreData.sectionScores}
+              />
+            </div>
+          )}
+          <RequirementsStatusCard
+            pass={totalRequirements.pass}
+            fail={totalRequirements.fail}
+            manual={totalRequirements.manual}
+          />
+          <TopFailedSectionsCard
+            sections={topFailedResult.items}
+            dataType={topFailedResult.type}
+          />
+          {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+        </div>
       </div>
 
       <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />

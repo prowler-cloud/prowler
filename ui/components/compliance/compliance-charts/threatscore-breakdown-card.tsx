@@ -12,15 +12,19 @@ import {
   getScoreTextClass,
   SCORE_COLORS,
 } from "@/lib/compliance/score-utils";
+import { cn } from "@/lib/utils";
 
 interface ThreatScoreBreakdownCardProps {
   overallScore: number;
   sectionScores: SectionScores;
+  /** Makes the card full width with horizontal layout for mobile/tablet */
+  fullWidth?: boolean;
 }
 
 export function ThreatScoreBreakdownCard({
   overallScore,
   sectionScores,
+  fullWidth = false,
 }: ThreatScoreBreakdownCardProps) {
   const scoreLevel = getScoreLevel(overallScore);
   const scoreColor = SCORE_COLORS[scoreLevel];
@@ -40,14 +44,31 @@ export function ThreatScoreBreakdownCard({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] w-full flex-col justify-between md:w-auto md:max-w-[320px] md:min-w-[280px]"
+      className={cn(
+        "flex flex-col justify-between",
+        fullWidth
+          ? "w-full"
+          : "min-h-[372px] w-full md:w-auto md:max-w-[320px] md:min-w-[280px]",
+      )}
     >
       <CardHeader>
         <CardTitle>ThreatScore Breakdown</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3">
+      <CardContent
+        className={cn(
+          "flex gap-3",
+          fullWidth ? "flex-row items-stretch" : "flex-1 flex-col",
+        )}
+      >
         {/* Overall Score - Compact */}
-        <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            "flex gap-4",
+            fullWidth
+              ? "flex-col items-center justify-center"
+              : "flex-row items-center",
+          )}
+        >
           <div className="relative h-[100px] w-[100px] flex-shrink-0">
             <RadialChart
               percentage={overallScore}
@@ -63,7 +84,12 @@ export function ThreatScoreBreakdownCard({
               showCenterLabel={false}
             />
           </div>
-          <div className="flex flex-col">
+          <div
+            className={cn(
+              "flex flex-col",
+              fullWidth ? "items-center text-center" : "",
+            )}
+          >
             <span className="text-default-500 text-xs">Overall Score</span>
             <span
               className={`text-2xl font-bold ${getScoreTextClass(overallScore)}`}
@@ -110,19 +136,47 @@ export function ThreatScoreBreakdownCard({
   );
 }
 
-export function ThreatScoreBreakdownCardSkeleton() {
+interface ThreatScoreBreakdownCardSkeletonProps {
+  fullWidth?: boolean;
+}
+
+export function ThreatScoreBreakdownCardSkeleton({
+  fullWidth = false,
+}: ThreatScoreBreakdownCardSkeletonProps = {}) {
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] w-full animate-pulse flex-col justify-between md:w-auto md:max-w-[320px] md:min-w-[280px]"
+      className={cn(
+        "flex animate-pulse flex-col justify-between",
+        fullWidth
+          ? "w-full"
+          : "min-h-[372px] w-full md:w-auto md:max-w-[320px] md:min-w-[280px]",
+      )}
     >
       <CardHeader>
         <div className="bg-default-200 h-5 w-40 rounded" />
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3">
-        <div className="flex items-center gap-4">
+      <CardContent
+        className={cn(
+          "flex gap-3",
+          fullWidth ? "flex-row items-stretch" : "flex-1 flex-col",
+        )}
+      >
+        <div
+          className={cn(
+            "flex gap-4",
+            fullWidth
+              ? "flex-col items-center justify-center"
+              : "flex-row items-center",
+          )}
+        >
           <div className="bg-default-200 h-[100px] w-[100px] rounded-full" />
-          <div className="flex flex-col gap-1">
+          <div
+            className={cn(
+              "flex flex-col gap-1",
+              fullWidth ? "items-center" : "",
+            )}
+          >
             <div className="bg-default-200 h-3 w-16 rounded" />
             <div className="bg-default-200 h-6 w-20 rounded" />
             <div className="bg-default-200 h-3 w-14 rounded" />

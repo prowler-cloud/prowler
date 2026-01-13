@@ -26,6 +26,7 @@ import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
 } from "@/lib/helper";
+import { cn } from "@/lib/utils";
 import type { ScanEntity } from "@/types/scans";
 
 interface ThreatScoreBadgeProps {
@@ -34,6 +35,8 @@ interface ThreatScoreBadgeProps {
   provider: string;
   selectedScan?: ScanEntity;
   sectionScores?: SectionScores;
+  /** Layout orientation: vertical (default) or horizontal (for tablet) */
+  orientation?: "vertical" | "horizontal";
 }
 
 export const ThreatScoreBadge = ({
@@ -42,6 +45,7 @@ export const ThreatScoreBadge = ({
   provider,
   selectedScan,
   sectionScores,
+  orientation = "vertical",
 }: ThreatScoreBadgeProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,6 +54,7 @@ export const ThreatScoreBadge = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const complianceId = `prowler_threatscore_${provider.toLowerCase()}`;
+  const isHorizontal = orientation === "horizontal";
 
   const handleCardClick = () => {
     const title = "ProwlerThreatScore";
@@ -108,9 +113,16 @@ export const ThreatScoreBadge = ({
       shadow="sm"
       className="border-default-200 h-full border bg-transparent"
     >
-      <CardBody className="flex flex-col gap-3 p-4">
+      <CardBody
+        className={cn(
+          "gap-3 p-4",
+          isHorizontal
+            ? "flex flex-row flex-wrap items-center justify-between"
+            : "flex flex-col",
+        )}
+      >
         <button
-          className="border-default-200 hover:border-default-300 hover:bg-default-50/50 flex cursor-pointer flex-row items-center gap-4 rounded-lg border bg-transparent p-3 transition-all"
+          className="border-default-200 hover:border-default-300 hover:bg-default-50/50 flex w-full cursor-pointer flex-row items-center justify-between gap-4 rounded-lg border bg-transparent p-3 transition-all"
           onClick={handleCardClick}
           type="button"
         >
@@ -131,12 +143,19 @@ export const ThreatScoreBadge = ({
         </button>
 
         {sectionScores && Object.keys(sectionScores).length > 0 && (
-          <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <Collapsible
+            open={isExpanded}
+            onOpenChange={setIsExpanded}
+            className="w-full"
+          >
             <CollapsibleTrigger
               aria-label={
                 isExpanded ? "Hide pillar breakdown" : "Show pillar breakdown"
               }
-              className="text-default-500 hover:text-default-700 flex w-full items-center justify-center gap-1 py-1 text-xs transition-colors"
+              className={cn(
+                "text-default-500 hover:text-default-700 flex items-center justify-center gap-1 py-1 text-xs transition-colors",
+                isHorizontal ? "w-auto" : "w-full",
+              )}
             >
               {isExpanded ? (
                 <>
@@ -150,7 +169,7 @@ export const ThreatScoreBadge = ({
                 </>
               )}
             </CollapsibleTrigger>
-            <CollapsibleContent className="border-default-200 mt-2 space-y-2 border-t pt-2">
+            <CollapsibleContent className="border-default-200 mt-2 w-full space-y-2 border-t pt-2">
               {Object.entries(sectionScores)
                 .sort(([, a], [, b]) => a - b)
                 .map(([section, sectionScore]) => (
@@ -158,7 +177,7 @@ export const ThreatScoreBadge = ({
                     key={section}
                     className="flex items-center gap-2 text-xs"
                   >
-                    <span className="text-default-600 min-w-0 flex-1 truncate">
+                    <span className="text-default-600 w-1/3 min-w-0 shrink-0 truncate">
                       {section}
                     </span>
                     <Progress
@@ -166,10 +185,10 @@ export const ThreatScoreBadge = ({
                       value={sectionScore}
                       color={getScoreColor(sectionScore)}
                       size="sm"
-                      className="w-16"
+                      className="min-w-16 flex-1"
                     />
                     <span
-                      className={`w-12 text-right font-medium ${getScoreTextClass(sectionScore)}`}
+                      className={`w-12 shrink-0 text-right font-medium ${getScoreTextClass(sectionScore)}`}
                     >
                       {sectionScore.toFixed(1)}%
                     </span>
