@@ -73,7 +73,9 @@ export class HomePage extends BasePage {
   }
 
   async signOut(): Promise<void> {
-    // Sign out is a direct button click, no menu to open
+    // Wait for navbar to be visible before clicking sign out
+    const navbar = this.page.locator("header");
+    await navbar.waitFor({ state: "visible" });
     await this.signOutButton.click();
   }
 

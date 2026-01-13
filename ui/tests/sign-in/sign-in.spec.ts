@@ -178,7 +178,7 @@ test.describe("Session Persistence", () => {
       const unauthContext = await browser.newContext();
       const unauthPage = await unauthContext.newPage();
 
-      await unauthPage.goto(URLS.PROFILE);
+      await unauthPage.goto(URLS.PROFILE, { waitUntil: "networkidle" });
       await expect(unauthPage).toHaveURL(/\/sign-in/);
 
       const unauthResponse = await unauthPage.request.get("/api/auth/session");

@@ -242,7 +242,7 @@ export class SignInPage extends BasePage {
   async verifyLogoutSuccess(): Promise<void> {
     // After logout, should be on sign-in page
     await expect(this.page).toHaveURL(/\/sign-in/);
-    await expect(this.pageTitle).toHaveText("Sign in");
+    await expect(this.page.getByText("Sign in", { exact: true })).toBeVisible();
   }
 
   // Advanced interaction methods
