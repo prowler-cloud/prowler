@@ -21,6 +21,7 @@ import {
 } from "@/components/shadcn/collapsible";
 import { toast } from "@/components/ui";
 import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
+import { getScoreColor, getScoreTextClass } from "@/lib/compliance/score-utils";
 import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
@@ -33,23 +34,6 @@ interface ThreatScoreBadgeProps {
   provider: string;
   selectedScan?: ScanEntity;
   sectionScores?: SectionScores;
-}
-
-const SCORE_THRESHOLDS = {
-  SUCCESS: 80,
-  WARNING: 40,
-} as const;
-
-function getScoreColor(value: number): "success" | "warning" | "danger" {
-  if (value >= SCORE_THRESHOLDS.SUCCESS) return "success";
-  if (value >= SCORE_THRESHOLDS.WARNING) return "warning";
-  return "danger";
-}
-
-function getScoreTextClass(value: number): string {
-  if (value >= SCORE_THRESHOLDS.SUCCESS) return "text-success";
-  if (value >= SCORE_THRESHOLDS.WARNING) return "text-warning";
-  return "text-danger";
 }
 
 export const ThreatScoreBadge = ({

@@ -5,46 +5,17 @@ import { Progress } from "@heroui/progress";
 import type { SectionScores } from "@/actions/overview/threat-score";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import {
+  getScoreColor,
+  getScoreLabel,
+  getScoreLevel,
+  getScoreTextClass,
+  SCORE_COLORS,
+} from "@/lib/compliance/score-utils";
 
 interface ThreatScoreBreakdownCardProps {
   overallScore: number;
   sectionScores: SectionScores;
-}
-
-const SCORE_THRESHOLDS = {
-  SUCCESS: 80,
-  WARNING: 40,
-} as const;
-
-const SCORE_COLORS = {
-  DANGER: "var(--bg-fail-primary)",
-  WARNING: "var(--bg-warning-primary)",
-  SUCCESS: "var(--bg-pass-primary)",
-  NEUTRAL: "var(--bg-neutral-tertiary)",
-} as const;
-
-function getScoreLevel(score: number): "SUCCESS" | "WARNING" | "DANGER" {
-  if (score >= SCORE_THRESHOLDS.SUCCESS) return "SUCCESS";
-  if (score >= SCORE_THRESHOLDS.WARNING) return "WARNING";
-  return "DANGER";
-}
-
-function getScoreColor(score: number): "success" | "warning" | "danger" {
-  if (score >= SCORE_THRESHOLDS.SUCCESS) return "success";
-  if (score >= SCORE_THRESHOLDS.WARNING) return "warning";
-  return "danger";
-}
-
-function getScoreTextClass(score: number): string {
-  if (score >= SCORE_THRESHOLDS.SUCCESS) return "text-success";
-  if (score >= SCORE_THRESHOLDS.WARNING) return "text-warning";
-  return "text-danger";
-}
-
-function getScoreLabel(score: number): string {
-  if (score >= SCORE_THRESHOLDS.SUCCESS) return "Secure";
-  if (score >= SCORE_THRESHOLDS.WARNING) return "Moderate Risk";
-  return "Critical Risk";
 }
 
 export function ThreatScoreBreakdownCard({
