@@ -46,11 +46,16 @@ provider/oci:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/oraclecloud/**"
       - any-glob-to-any-file: "tests/providers/oraclecloud/**"
-      
+
 provider/alibabacloud:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/alibabacloud/**"
       - any-glob-to-any-file: "tests/providers/alibabacloud/**"
+
+provider/cloudflare:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/cloudflare/**"
+      - any-glob-to-any-file: "tests/providers/cloudflare/**"
 
 github_actions:
   - changed-files:
@@ -76,6 +81,7 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/mongodbatlas/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/oci/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/alibabacloud/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/cloudflare/lib/mutelist/**"
 
 integration/s3:
   - changed-files:
