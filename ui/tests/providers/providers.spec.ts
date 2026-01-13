@@ -1153,6 +1153,13 @@ test.describe("Add Provider", () => {
     const accessKeySecret = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET;
     const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN;
 
+    // Validate required environment variable for beforeEach
+    if (!accountId) {
+      throw new Error(
+        "E2E_ALIBABACLOUD_ACCOUNT_ID environment variable is not set",
+      );
+    }
+
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
@@ -1177,9 +1184,9 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        if (!accountId || !accessKeyId || !accessKeySecret) {
+        if (!accessKeyId || !accessKeySecret) {
           throw new Error(
-            "E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, and E2E_ALIBABACLOUD_ACCESS_KEY_SECRET environment variables are not set",
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID and E2E_ALIBABACLOUD_ACCESS_KEY_SECRET environment variables are not set",
           );
         }
 
@@ -1255,9 +1262,9 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        if (!accountId || !accessKeyId || !accessKeySecret || !roleArn) {
+        if (!accessKeyId || !accessKeySecret || !roleArn) {
           throw new Error(
-            "E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, and E2E_ALIBABACLOUD_ROLE_ARN environment variables are not set",
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, and E2E_ALIBABACLOUD_ROLE_ARN environment variables are not set",
           );
         }
 
