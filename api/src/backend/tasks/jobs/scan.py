@@ -14,6 +14,10 @@ from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, When
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+)
 from tasks.utils import CustomEncoder
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
@@ -1489,3 +1493,140 @@ def aggregate_daily_severity(tenant_id: str, scan_id: str):
         "date": str(scan_date),
         "severity_data": severity_data,
     }
+
+
+def update_provider_compliance_scores(tenant_id: str, scan_id: str):
+    """
+    Update ProviderComplianceScore with requirement statuses from a completed scan.
+
+    Uses atomic SQL upsert with ON CONFLICT for concurrency safety. Only updates
+    if the new scan is more recent than existing data. Also cleans up stale
+    requirements that no longer exist in the new scan.
+
+    Reads from primary DB (not replica) to avoid replication lag issues since
+    this runs immediately after create_compliance_requirements_task.
+
+    Args:
+        tenant_id: Tenant that owns the scan.
+        scan_id: Scan UUID whose compliance data should be materialized.
+
+    Returns:
+        dict: Statistics about the upsert operation.
+    """
+    with rls_transaction(tenant_id):
+        scan = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id,
+                id=scan_id,
+                state=StateChoices.COMPLETED,
+            )
+            .select_related("provider")
+            .first()
+        )
+
+        if not scan:
+            logger.warning(
+                f"Scan {scan_id} not found or not completed for compliance score update"
+            )
+            return {"status": "skipped", "reason": "scan not completed"}
+
+        if not scan.completed_at:
+            logger.warning(f"Scan {scan_id} has no completed_at timestamp")
+            return {"status": "skipped", "reason": "no completed_at"}
+
+        provider_id = str(scan.provider_id)
+        scan_completed_at = scan.completed_at
+
+    delete_stale_sql = """
+        DELETE FROM provider_compliance_scores pcs
+        WHERE pcs.tenant_id = %s
+          AND pcs.provider_id = %s
+          AND pcs.scan_completed_at < %s
+          AND NOT EXISTS (
+              SELECT 1 FROM compliance_requirements_overviews cro
+              WHERE cro.tenant_id = pcs.tenant_id
+                AND cro.scan_id = %s
+                AND cro.compliance_id = pcs.compliance_id
+                AND cro.requirement_id = pcs.requirement_id
+          )
+        RETURNING compliance_id
+    """
+
+    compliance_ids_sql = """
+        SELECT DISTINCT compliance_id
+        FROM compliance_requirements_overviews
+        WHERE tenant_id = %s AND scan_id = %s
+    """
+
+    try:
+        with psycopg_connection(MainRouter.default_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+
+                    # Update requirement-level scores per provider
+                    cursor.execute(
+                        COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL, [tenant_id, scan_id]
+                    )
+                    upserted_count = cursor.rowcount
+
+                    cursor.execute(compliance_ids_sql, [tenant_id, scan_id])
+                    scan_rows = cursor.fetchall()
+                    if not isinstance(scan_rows, (list, tuple)):
+                        scan_rows = []
+                    scan_compliance_ids = {row[0] for row in scan_rows}
+
+                    cursor.execute(
+                        delete_stale_sql,
+                        [tenant_id, provider_id, scan_completed_at, scan_id],
+                    )
+                    deleted_rows = cursor.fetchall()
+                    if not isinstance(deleted_rows, (list, tuple)):
+                        deleted_rows = []
+                    deleted_ids = {row[0] for row in deleted_rows}
+                    stale_deleted = len(deleted_ids)
+
+                    impacted_compliance_ids = sorted(scan_compliance_ids | deleted_ids)
+
+                    if impacted_compliance_ids:
+                        # Advisory lock on tenant to prevent race conditions when
+                        # multiple scans complete simultaneously for the same tenant
+                        cursor.execute(
+                            "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                        )
+
+                        # Recalculate tenant-level summary (FAIL-dominant across all providers)
+                        cursor.execute(
+                            COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+                            [tenant_id, tenant_id, impacted_compliance_ids],
+                        )
+                        tenant_summary_count = cursor.rowcount
+                    else:
+                        tenant_summary_count = 0
+
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+
+        logger.info(
+            f"Provider compliance scores updated for scan {scan_id}: "
+            f"{upserted_count} upserted, {stale_deleted} stale deleted, "
+            f"{tenant_summary_count} tenant summaries upserted"
+        )
+
+        return {
+            "status": "completed",
+            "scan_id": str(scan_id),
+            "provider_id": provider_id,
+            "upserted": upserted_count,
+            "stale_deleted": stale_deleted,
+            "tenant_summary_count": tenant_summary_count,
+        }
+
+    except Exception as e:
+        logger.error(
+            f"Error updating provider compliance scores for scan {scan_id}: {e}"
+        )
+        raise
