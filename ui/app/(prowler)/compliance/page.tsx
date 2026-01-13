@@ -131,50 +131,26 @@ export default async function Compliance({
     <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
-          <div className="mb-6 flex flex-col gap-6">
-            {/* Desktop: Side by side layout */}
-            <div className="hidden lg:flex lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-              <div className="flex-1">
-                <ComplianceHeader
-                  scans={expandedScansData}
-                  uniqueRegions={uniqueRegions}
-                />
-              </div>
-              {threatScoreData &&
-                typeof selectedScanId === "string" &&
-                selectedScan && (
-                  <div className="w-[360px] flex-shrink-0">
-                    <ThreatScoreBadge
-                      score={threatScoreData.score}
-                      scanId={selectedScanId}
-                      provider={selectedScan.providerInfo.provider}
-                      selectedScan={selectedScanData}
-                      sectionScores={threatScoreData.sectionScores}
-                    />
-                  </div>
-                )}
-            </div>
-            {/* Mobile & Tablet: Stacked layout with badge under filters */}
-            <div className="flex flex-col gap-6 lg:hidden">
+          <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
               <ComplianceHeader
                 scans={expandedScansData}
                 uniqueRegions={uniqueRegions}
               />
-              {threatScoreData &&
-                typeof selectedScanId === "string" &&
-                selectedScan && (
-                  <div className="w-full">
-                    <ThreatScoreBadge
-                      score={threatScoreData.score}
-                      scanId={selectedScanId}
-                      provider={selectedScan.providerInfo.provider}
-                      selectedScan={selectedScanData}
-                      sectionScores={threatScoreData.sectionScores}
-                      orientation="horizontal"
-                    />
-                  </div>
-                )}
             </div>
+            {threatScoreData &&
+              typeof selectedScanId === "string" &&
+              selectedScan && (
+                <div className="w-full lg:w-[360px] lg:flex-shrink-0">
+                  <ThreatScoreBadge
+                    score={threatScoreData.score}
+                    scanId={selectedScanId}
+                    provider={selectedScan.providerInfo.provider}
+                    selectedScan={selectedScanData}
+                    sectionScores={threatScoreData.sectionScores}
+                  />
+                </div>
+              )}
           </div>
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid

@@ -26,7 +26,6 @@ import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
 } from "@/lib/helper";
-import { cn } from "@/lib/utils";
 import type { ScanEntity } from "@/types/scans";
 
 interface ThreatScoreBadgeProps {
@@ -35,8 +34,6 @@ interface ThreatScoreBadgeProps {
   provider: string;
   selectedScan?: ScanEntity;
   sectionScores?: SectionScores;
-  /** Layout orientation: vertical (default) or horizontal (for tablet) */
-  orientation?: "vertical" | "horizontal";
 }
 
 export const ThreatScoreBadge = ({
@@ -45,7 +42,6 @@ export const ThreatScoreBadge = ({
   provider,
   selectedScan,
   sectionScores,
-  orientation = "vertical",
 }: ThreatScoreBadgeProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,7 +50,6 @@ export const ThreatScoreBadge = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const complianceId = `prowler_threatscore_${provider.toLowerCase()}`;
-  const isHorizontal = orientation === "horizontal";
 
   const handleCardClick = () => {
     const title = "ProwlerThreatScore";
@@ -113,14 +108,7 @@ export const ThreatScoreBadge = ({
       shadow="sm"
       className="border-default-200 h-full border bg-transparent"
     >
-      <CardBody
-        className={cn(
-          "gap-3 p-4",
-          isHorizontal
-            ? "flex flex-row flex-wrap items-center justify-between"
-            : "flex flex-col",
-        )}
-      >
+      <CardBody className="flex flex-row flex-wrap items-center justify-between gap-3 p-4 lg:flex-col lg:items-stretch lg:justify-start">
         <button
           className="border-default-200 hover:border-default-300 hover:bg-default-50/50 flex w-full cursor-pointer flex-row items-center justify-between gap-4 rounded-lg border bg-transparent p-3 transition-all"
           onClick={handleCardClick}
@@ -152,10 +140,7 @@ export const ThreatScoreBadge = ({
               aria-label={
                 isExpanded ? "Hide pillar breakdown" : "Show pillar breakdown"
               }
-              className={cn(
-                "text-default-500 hover:text-default-700 flex items-center justify-center gap-1 py-1 text-xs transition-colors",
-                isHorizontal ? "w-auto" : "w-full",
-              )}
+              className="text-default-500 hover:text-default-700 flex w-auto items-center justify-center gap-1 py-1 text-xs transition-colors lg:w-full"
             >
               {isExpanded ? (
                 <>
