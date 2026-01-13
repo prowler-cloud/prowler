@@ -86,6 +86,7 @@ export function adaptComplianceWatchlistResponse(
       total_requirements,
     } = item.attributes;
 
+    // Defensive conversion: API types are number but JSON parsing edge cases may return strings
     const totalReqs = Number(total_requirements) || 0;
     const passedReqs = Number(requirements_passed) || 0;
     const score =

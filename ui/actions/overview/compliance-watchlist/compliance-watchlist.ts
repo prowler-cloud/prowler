@@ -14,6 +14,7 @@ export const getComplianceWatchlist = async ({
   const url = new URL(`${apiBaseUrl}/overviews/compliance-watchlist`);
 
   // Append filter parameters (provider_id, provider_type, etc.)
+  // Exclude filter[search] as this endpoint doesn't support text search
   Object.entries(filters).forEach(([key, value]) => {
     if (key !== "filter[search]" && value !== undefined) {
       url.searchParams.append(key, String(value));

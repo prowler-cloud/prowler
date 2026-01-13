@@ -14,6 +14,7 @@ export interface ComplianceData {
   score: number;
 }
 
+// Display 7 items to match the card's min-height (405px) without scrolling
 const ITEMS_TO_DISPLAY = 7;
 
 export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
