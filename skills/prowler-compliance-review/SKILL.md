@@ -166,16 +166,16 @@ After validation passes, test the framework with Prowler:
 
 ```bash
 # Verify framework is detected
-prowler {provider} --list-compliance | grep {framework}
+poetry run python prowler-cli.py {provider} --list-compliance | grep {framework}
 
 # Run a quick test with a single check from the framework
-prowler {provider} --compliance {framework} --check {check_name}
+poetry run python prowler-cli.py {provider} --compliance {framework} --check {check_name}
 
 # Run full compliance scan (dry-run with limited checks)
-prowler {provider} --compliance {framework} --checks-limit 5
+poetry run python prowler-cli.py {provider} --compliance {framework} --checks-limit 5
 
 # Generate compliance report in multiple formats
-prowler {provider} --compliance {framework} -M csv json html
+poetry run python prowler-cli.py {provider} --compliance {framework} -M csv json html
 ```
 
 ---
