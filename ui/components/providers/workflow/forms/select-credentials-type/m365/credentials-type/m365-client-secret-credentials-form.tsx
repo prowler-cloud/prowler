@@ -29,7 +29,6 @@ export const M365ClientSecretCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.tenant_id}
       />
       <CustomInput
         control={control}
@@ -40,7 +39,6 @@ export const M365ClientSecretCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
       <CustomInput
         control={control}
@@ -51,7 +49,6 @@ export const M365ClientSecretCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
       />
     </>
   );

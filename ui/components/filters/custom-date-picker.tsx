@@ -1,101 +1,93 @@
 "use client";
 
-import { Button, ButtonGroup } from "@heroui/button";
-import { DatePicker } from "@heroui/date-picker";
-import {
-  getLocalTimeZone,
-  startOfMonth,
-  startOfWeek,
-  today,
-} from "@internationalized/date";
-import { useLocale } from "@react-aria/i18n";
+import { format } from "date-fns";
+import { CalendarIcon, ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
+import { Calendar } from "@/components/shadcn/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { cn } from "@/lib/utils";
 
 export const CustomDatePicker = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
+  const [open, setOpen] = useState(false);
 
-  const [value, setValue] = React.useState(() => {
+  const [date, setDate] = useState<Date | undefined>(() => {
     const dateParam = searchParams.get("filter[inserted_at]");
-    return dateParam ? today(getLocalTimeZone()) : null;
+    if (!dateParam) return undefined;
+    try {
+      return new Date(dateParam);
+    } catch {
+      return undefined;
+    }
   });
 
-  const { locale } = useLocale();
-
-  const now = today(getLocalTimeZone());
-  const nextWeek = startOfWeek(now.add({ weeks: 1 }), locale);
-  const nextMonth = startOfMonth(now.add({ months: 1 }));
-
-  const applyDateFilter = useCallback(
-    (date: any) => {
-      if (date) {
-        updateFilter("inserted_at", date.toString());
-      } else {
-        updateFilter("inserted_at", null);
-      }
-    },
-    [updateFilter],
-  );
-
-  const initialRender = useRef(true);
-
-  useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
-      return;
+  const applyDateFilter = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      // Format as YYYY-MM-DD for the API
+      updateFilter("inserted_at", format(selectedDate, "yyyy-MM-dd"));
+    } else {
+      updateFilter("inserted_at", null);
     }
-    const params = new URLSearchParams(searchParams.toString());
-    if (params.size === 0) {
-      setValue(null);
+  };
+
+  // Sync local state with URL params (e.g., when Clear Filters is clicked)
+  useEffect(() => {
+    const dateParam = searchParams.get("filter[inserted_at]");
+    if (!dateParam) {
+      setDate(undefined);
+    } else {
+      try {
+        setDate(new Date(dateParam));
+      } catch {
+        setDate(undefined);
+      }
     }
   }, [searchParams]);
 
-  const handleDateChange = (newValue: any) => {
-    setValue(newValue);
-    applyDateFilter(newValue);
+  const handleDateSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
+    applyDateFilter(newDate);
+    setOpen(false);
   };
 
   return (
-    <div className="flex w-full flex-col md:gap-2">
-      <DatePicker
-        aria-label="Select a Date"
-        label="Date"
-        labelPlacement="inside"
-        CalendarTopContent={
-          <ButtonGroup
-            fullWidth
-            className="bg-content1 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500 px-3 pt-3 pb-2"
-            radius="full"
-            size="sm"
-            variant="flat"
-          >
-            <Button onPress={() => handleDateChange(now)}>Today</Button>
-            <Button onPress={() => handleDateChange(nextWeek)}>
-              Next week
-            </Button>
-            <Button onPress={() => handleDateChange(nextMonth)}>
-              Next month
-            </Button>
-          </ButtonGroup>
-        }
-        calendarProps={{
-          focusedValue: value || undefined,
-          onFocusChange: setValue,
-          nextButtonProps: {
-            variant: "bordered",
-          },
-          prevButtonProps: {
-            variant: "bordered",
-          },
-        }}
-        value={value}
-        onChange={handleDateChange}
-        size="sm"
-        variant="flat"
-      />
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className={cn(
+            "border-border-input-primary bg-bg-input-primary text-bg-button-secondary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-[52px] w-full items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+            !date && "text-bg-button-secondary",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <CalendarIcon className="text-bg-button-secondary size-5 opacity-70" />
+            {date ? format(date, "PPP") : "Pick a date"}
+          </span>
+          <ChevronDown
+            className={cn(
+              "text-bg-button-secondary size-6 shrink-0 opacity-70 transition-transform duration-200",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="border-border-input-primary bg-bg-input-primary w-auto p-0"
+        align="start"
+      >
+        <Calendar mode="single" selected={date} onSelect={handleDateSelect} />
+      </PopoverContent>
+    </Popover>
   );
 };

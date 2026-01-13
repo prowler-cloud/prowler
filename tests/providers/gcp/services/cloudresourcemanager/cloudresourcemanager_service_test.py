@@ -33,6 +33,10 @@ class TestCloudResourceManagerService:
             assert (
                 api_keys_client.cloud_resource_manager_projects[0].id == GCP_PROJECT_ID
             )
+            assert (
+                api_keys_client.cloud_resource_manager_projects[0].number
+                == "123456789012"
+            )
             assert api_keys_client.cloud_resource_manager_projects[0].audit_logging
 
             assert len(api_keys_client.bindings) == 2

@@ -57,7 +57,7 @@ Tags have special matching behavior:
 Remember that mutelist can be used with regular expressions.
 
 </Note>
-## Mutelist Specification
+## Mutelist Specification
 
 <Note>
 - For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
@@ -72,7 +72,7 @@ The Mutelist file uses the [YAML](https://en.wikipedia.org/wiki/YAML) format wit
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Multiple tags in the list are "ANDed" together (ALL must match).
 ### Use regex alternation (|) within a single tag for "OR" logic (e.g., "env=dev|env=stg").
-### For each check you can use Exceptions to unmute specific Accounts, Regions, Resources and/or Tags.
+### For each check you can use Exceptions to unmute specific Accounts, Regions, Resources and/or Tags.
 ### All conditions (Account, Check, Region, Resource, Tags) are ANDed together.
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:

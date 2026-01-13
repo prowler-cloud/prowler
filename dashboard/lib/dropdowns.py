@@ -312,3 +312,28 @@ def create_table_row_dropdown(table_rows: list) -> html.Div:
             ),
         ],
     )
+
+
+def create_category_dropdown(categories: list) -> html.Div:
+    """
+    Dropdown to select the category.
+    Args:
+        categories (list): List of categories.
+    Returns:
+        html.Div: Dropdown to select the category.
+    """
+    return html.Div(
+        [
+            html.Label(
+                "Category:", className="text-prowler-stone-900 font-bold text-sm"
+            ),
+            dcc.Dropdown(
+                id="category-filter",
+                options=[{"label": i, "value": i} for i in categories],
+                value=["All"],
+                clearable=False,
+                multi=True,
+                style={"color": "#000000"},
+            ),
+        ],
+    )

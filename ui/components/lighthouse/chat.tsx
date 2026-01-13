@@ -2,17 +2,15 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Streamdown } from "streamdown";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
-import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/lighthouse/ai-elements/dropdown-menu";
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import {
   PromptInput,
   PromptInputBody,
@@ -21,11 +19,24 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/lighthouse/ai-elements/prompt-input";
+import {
+  ERROR_PREFIX,
+  MESSAGE_ROLES,
+  MESSAGE_STATUS,
+} from "@/components/lighthouse/chat-utils";
 import { Loader } from "@/components/lighthouse/loader";
+import { MessageItem } from "@/components/lighthouse/message-item";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Combobox,
+} from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { cn } from "@/lib/utils";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface Model {
@@ -56,6 +67,11 @@ interface SelectedModel {
   providerType: LighthouseProvider | "";
   modelId: string;
   modelName: string;
+}
+
+interface ExtendedError extends Error {
+  status?: number;
+  body?: Record<string, unknown>;
 }
 
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
@@ -92,14 +108,8 @@ export const Chat = ({
   // Consolidated UI state
   const [uiState, setUiState] = useState<{
     inputValue: string;
-    isDropdownOpen: boolean;
-    modelSearchTerm: string;
-    hoveredProvider: LighthouseProvider | "";
   }>({
     inputValue: "",
-    isDropdownOpen: false,
-    modelSearchTerm: "",
-    hoveredProvider: defaultProviderId || initialProviders[0]?.id || "",
   });
 
   // Error handling
@@ -107,13 +117,10 @@ export const Chat = ({
 
   // Provider and model management
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
-  const [providerLoadState, setProviderLoadState] = useState<{
-    loaded: Set<LighthouseProvider>;
-    loading: Set<LighthouseProvider>;
-  }>({
-    loaded: new Set(),
-    loading: new Set(),
-  });
+  const loadedProvidersRef = useRef<Set<LighthouseProvider>>(new Set());
+  const [loadingProviders, setLoadingProviders] = useState<
+    Set<LighthouseProvider>
+  >(new Set());
 
   // Initialize selectedModel with defaults from props
   const [selectedModel, setSelectedModel] = useState<SelectedModel>(() => {
@@ -135,20 +142,24 @@ export const Chat = ({
   const selectedModelRef = useRef(selectedModel);
   selectedModelRef.current = selectedModel;
 
+  // Load models for all providers on mount
+  useEffect(() => {
+    initialProviders.forEach((provider) => {
+      loadModelsForProvider(provider.id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load all models for a specific provider
   const loadModelsForProvider = async (providerType: LighthouseProvider) => {
-    setProviderLoadState((prev) => {
-      // Skip if already loaded or currently loading
-      if (prev.loaded.has(providerType) || prev.loading.has(providerType)) {
-        return prev;
-      }
+    // Skip if already loaded
+    if (loadedProvidersRef.current.has(providerType)) {
+      return;
+    }
 
-      // Mark as loading
-      return {
-        ...prev,
-        loading: new Set([...Array.from(prev.loading), providerType]),
-      };
-    });
+    // Mark as loaded
+    loadedProvidersRef.current.add(providerType);
+    setLoadingProviders((prev) => new Set(prev).add(providerType));
 
     try {
       const response = await getLighthouseModelIds(providerType);
@@ -169,86 +180,88 @@ export const Chat = ({
         setProviders((prev) =>
           prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
         );
-
-        // Mark as loaded and remove from loading
-        setProviderLoadState((prev) => ({
-          loaded: new Set([...Array.from(prev.loaded), providerType]),
-          loading: new Set(
-            Array.from(prev.loading).filter((id) => id !== providerType),
-          ),
-        }));
       }
     } catch (error) {
       console.error(`Error loading models for ${providerType}:`, error);
-      // Remove from loading state on error
-      setProviderLoadState((prev) => ({
-        ...prev,
-        loading: new Set(
-          Array.from(prev.loading).filter((id) => id !== providerType),
-        ),
-      }));
+      // Remove from loaded on error so it can be retried
+      loadedProvidersRef.current.delete(providerType);
+    } finally {
+      setLoadingProviders((prev) => {
+        const next = new Set(prev);
+        next.delete(providerType);
+        return next;
+      });
     }
   };
 
-  const { messages, sendMessage, status, error, setMessages, regenerate } =
-    useChat({
-      transport: new DefaultChatTransport({
-        api: "/api/lighthouse/analyst",
-        credentials: "same-origin",
-        body: () => ({
-          model: selectedModelRef.current.modelId,
-          provider: selectedModelRef.current.providerType,
-        }),
+  const {
+    messages,
+    sendMessage,
+    status,
+    error,
+    setMessages,
+    regenerate,
+    stop,
+  } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/lighthouse/analyst",
+      credentials: "same-origin",
+      body: () => ({
+        model: selectedModelRef.current.modelId,
+        provider: selectedModelRef.current.providerType,
       }),
-      experimental_throttle: 100,
-      onFinish: ({ message }) => {
-        // There is no specific way to output the error message from langgraph supervisor
-        // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
-        // Detect error messages sent from backend using specific prefix and display the error
-        const firstTextPart = message.parts.find((p) => p.type === "text");
-        if (
-          firstTextPart &&
-          "text" in firstTextPart &&
-          firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-        ) {
-          const errorText = firstTextPart.text
-            .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
-            .trim();
-          setErrorMessage(errorText);
-          // Remove error message from chat history
-          setMessages((prev) =>
-            prev.filter((m) => {
-              const textPart = m.parts.find((p) => p.type === "text");
-              return !(
-                textPart &&
-                "text" in textPart &&
-                textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-              );
-            }),
-          );
-          restoreLastUserMessage();
-        }
-      },
-      onError: (error) => {
-        console.error("Chat error:", error);
-
-        if (
-          error?.message?.includes("<html>") &&
-          error?.message?.includes("<title>403 Forbidden</title>")
-        ) {
-          restoreLastUserMessage();
-          setErrorMessage("403 Forbidden");
-          return;
-        }
-
-        restoreLastUserMessage();
-        setErrorMessage(
-          error?.message || "An error occurred. Please retry your message.",
+    }),
+    experimental_throttle: 100,
+    onFinish: ({ message }) => {
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
+      // Use includes() instead of startsWith() to catch errors that occur mid-stream (after text has been sent)
+      const firstTextPart = message.parts.find((p) => p.type === "text");
+      if (
+        firstTextPart &&
+        "text" in firstTextPart &&
+        firstTextPart.text.includes(ERROR_PREFIX)
+      ) {
+        // Extract error text - handle both start-of-message and mid-stream errors
+        const fullText = firstTextPart.text;
+        const errorIndex = fullText.indexOf(ERROR_PREFIX);
+        const errorText = fullText
+          .substring(errorIndex + ERROR_PREFIX.length)
+          .trim();
+        setErrorMessage(errorText);
+        // Remove error message from chat history
+        setMessages((prev) =>
+          prev.filter((m) => {
+            const textPart = m.parts.find((p) => p.type === "text");
+            return !(
+              textPart &&
+              "text" in textPart &&
+              textPart.text.includes(ERROR_PREFIX)
+            );
+          }),
         );
-      },
-    });
+        restoreLastUserMessage();
+      }
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
 
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        restoreLastUserMessage();
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
+      restoreLastUserMessage();
+      setErrorMessage(
+        error?.message || "An error occurred. Please retry your message.",
+      );
+    },
+  });
 
   const restoreLastUserMessage = () => {
     let restoredText = "";
@@ -284,29 +297,14 @@ export const Chat = ({
     }
   };
 
-  // Auto-scroll to bottom when new messages arrive or when streaming
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+  const stopGeneration = () => {
+    if (
+      status === MESSAGE_STATUS.STREAMING ||
+      status === MESSAGE_STATUS.SUBMITTED
+    ) {
+      stop();
     }
-  }, [messages, status]);
-
-  // Handle dropdown state changes
-  useEffect(() => {
-    if (uiState.isDropdownOpen && uiState.hoveredProvider) {
-      loadModelsForProvider(uiState.hoveredProvider as LighthouseProvider);
-    }
-  }, [uiState.isDropdownOpen, uiState.hoveredProvider, loadModelsForProvider]);
-
-  // Filter models based on search term
-  const currentProvider = providers.find(
-    (p) => p.id === uiState.hoveredProvider,
-  );
-  const filteredModels =
-    currentProvider?.models.filter((model) =>
-      model.name.toLowerCase().includes(uiState.modelSearchTerm.toLowerCase()),
-    ) || [];
+  };
 
   // Handlers
   const handleNewChat = () => {
@@ -321,61 +319,62 @@ export const Chat = ({
     modelName: string,
   ) => {
     setSelectedModel({ providerType, modelId, modelName });
-    setUiState((prev) => ({
-      ...prev,
-      isDropdownOpen: false,
-      modelSearchTerm: "", // Reset search when selecting
-    }));
   };
 
   return (
-    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
+    <div className="relative flex h-full min-w-0 flex-col overflow-hidden">
       {/* Header with New Chat button */}
       {messages.length > 0 && (
-        <div className="border-default-200 dark:border-default-100 border-b px-4 py-3">
+        <div className="border-default-200 dark:border-default-100 border-b px-2 py-3 sm:px-4">
           <div className="flex items-center justify-end">
-            <CustomButton
-              ariaLabel="Start new chat"
-              variant="bordered"
+            <Button
+              aria-label="Start new chat"
+              variant="outline"
               size="sm"
-              startContent={<Plus className="h-4 w-4" />}
-              onPress={handleNewChat}
+              onClick={handleNewChat}
               className="gap-1"
             >
+              <Plus className="h-4 w-4" />
               New Chat
-            </CustomButton>
+            </Button>
           </div>
         </div>
       )}
 
       {!hasConfig && (
         <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
-            <h3 className="mb-2 text-lg font-semibold">
-              LLM Provider Configuration Required
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Please configure an LLM provider to use Lighthouse AI.
-            </p>
-            <CustomLink
-              href="/lighthouse/config"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
-              target="_self"
-              size="sm"
-            >
-              Configure Provider
-            </CustomLink>
-          </div>
+          <Card
+            variant="base"
+            padding="lg"
+            className="max-w-md text-center shadow-lg"
+          >
+            <CardHeader>
+              <CardTitle>LLM Provider Configuration Required</CardTitle>
+              <CardDescription>
+                Please configure an LLM provider to use Lighthouse AI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomLink
+                href="/lighthouse/config"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
+                target="_self"
+                size="sm"
+              >
+                Configure Provider
+              </CustomLink>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Error Banner */}
       {(error || errorMessage) && (
-        <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="border-border-error-primary bg-bg-fail-secondary mx-2 mt-4 rounded-lg border p-4 sm:mx-4">
           <div className="flex items-start">
             <div className="shrink-0">
               <svg
-                className="h-5 w-5 text-red-400"
+                className="text-text-error h-5 w-5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -387,27 +386,25 @@ export const Chat = ({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                Error
-              </h3>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+              <h3 className="text-text-error text-sm font-medium">Error</h3>
+              <p className="text-text-neutral-secondary mt-1 text-sm">
                 {errorMessage ||
                   error?.message ||
                   "An error occurred. Please retry your message."}
               </p>
               {/* Original error details for native errors */}
-              {error && (error as any).status && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                  Status: {(error as any).status}
+              {error && (error as ExtendedError).status && (
+                <p className="text-text-neutral-tertiary mt-1 text-xs">
+                  Status: {(error as ExtendedError).status}
                 </p>
               )}
-              {error && (error as any).body && (
+              {error && (error as ExtendedError).body && (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                  <summary className="text-text-neutral-tertiary hover:text-text-neutral-secondary cursor-pointer text-xs">
                     Show details
                   </summary>
-                  <pre className="mt-1 max-h-20 overflow-auto rounded bg-red-100 p-2 text-xs text-red-800 dark:bg-red-900/30 dark:text-red-200">
-                    {JSON.stringify((error as any).body, null, 2)}
+                  <pre className="bg-bg-neutral-tertiary text-text-neutral-secondary mt-1 max-h-20 overflow-auto rounded p-2 text-xs">
+                    {JSON.stringify((error as ExtendedError).body, null, 2)}
                   </pre>
                 </details>
               )}
@@ -417,140 +414,72 @@ export const Chat = ({
       )}
 
       {messages.length === 0 && !errorMessage && !error ? (
-        <div className="flex flex-1 items-center justify-center p-4">
+        <div className="flex flex-1 items-center justify-center px-2 py-4 sm:p-4">
           <div className="w-full max-w-2xl">
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {SUGGESTED_ACTIONS.map((action, index) => (
-                <CustomButton
+                <Button
                   key={`suggested-action-${index}`}
-                  ariaLabel={`Send message: ${action.action}`}
-                  onPress={() => {
+                  aria-label={`Send message: ${action.action}`}
+                  onClick={() => {
                     sendMessage({
                       text: action.action,
                     });
                   }}
-                  className="hover:bg-muted flex h-auto w-full flex-col items-start justify-start rounded-xl border bg-gray-50 px-4 py-3.5 text-left font-sans text-sm dark:bg-gray-900"
+                  variant="outline"
+                  className="flex h-auto w-full flex-col items-start justify-start rounded-xl px-4 py-3.5 text-left font-sans text-sm"
                 >
                   <span>{action.title}</span>
                   <span className="text-muted-foreground">{action.label}</span>
-                </CustomButton>
+                </Button>
               ))}
             </div>
           </div>
         </div>
       ) : (
-        <div
-          className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto p-4"
-          ref={messagesContainerRef}
-        >
-          {messages.map((message, idx) => {
-            const isLastMessage = idx === messages.length - 1;
-            const messageText = message.parts
-              .filter((p) => p.type === "text")
-              .map((p) => ("text" in p ? p.text : ""))
-              .join("");
-
-            // Check if this is the streaming assistant message (last message, assistant role, while streaming)
-            const isStreamingAssistant =
-              isLastMessage &&
-              message.role === "assistant" &&
-              status === "streaming";
-
-            // Use a composite key to ensure uniqueness even if IDs are duplicated temporarily
-            const uniqueKey = `${message.id}-${idx}-${message.role}`;
-
-            return (
-              <div key={uniqueKey}>
-                <div
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground dark:text-black!"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {/* Show loader before text appears or while streaming empty content */}
-                    {isStreamingAssistant && !messageText ? (
-                      <Loader size="default" text="Thinking..." />
-                    ) : (
-                      <div
-                        className={
-                          message.role === "user" ? "dark:text-black!" : ""
-                        }
-                      >
-                        <Streamdown
-                          parseIncompleteMarkdown={true}
-                          shikiTheme={["github-light", "github-dark"]}
-                          controls={{
-                            code: true,
-                            table: true,
-                            mermaid: true,
-                          }}
-                          allowedLinkPrefixes={["*"]}
-                          allowedImagePrefixes={["*"]}
-                        >
-                          {messageText}
-                        </Streamdown>
-                      </div>
-                    )}
+        <Conversation className="flex-1">
+          <ConversationContent className="gap-4 px-2 py-4 sm:p-4">
+            {messages.map((message, idx) => (
+              <MessageItem
+                key={`${message.id}-${idx}-${message.role}`}
+                message={message}
+                index={idx}
+                isLastMessage={idx === messages.length - 1}
+                status={status}
+                onCopy={(text) => {
+                  navigator.clipboard.writeText(text);
+                  toast({
+                    title: "Copied",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                onRegenerate={regenerate}
+              />
+            ))}
+            {/* Show loader only if no assistant message exists yet */}
+            {(status === MESSAGE_STATUS.SUBMITTED ||
+              status === MESSAGE_STATUS.STREAMING) &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === MESSAGE_ROLES.USER && (
+                <div className="flex justify-start">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                    <Loader size="default" text="Thinking..." />
                   </div>
                 </div>
-
-                {/* Actions for assistant messages */}
-                {message.role === "assistant" &&
-                  isLastMessage &&
-                  messageText &&
-                  status !== "streaming" && (
-                    <div className="mt-2 flex justify-start">
-                      <Actions className="max-w-[80%]">
-                        <Action
-                          tooltip="Copy message"
-                          label="Copy"
-                          onClick={() => {
-                            navigator.clipboard.writeText(messageText);
-                            toast({
-                              title: "Copied",
-                              description: "Message copied to clipboard",
-                            });
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Action>
-                        <Action
-                          tooltip="Regenerate response"
-                          label="Retry"
-                          onClick={() => regenerate()}
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Action>
-                      </Actions>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
-          {/* Show loader only if no assistant message exists yet */}
-          {(status === "submitted" || status === "streaming") &&
-            messages.length > 0 &&
-            messages[messages.length - 1].role === "user" && (
-              <div className="flex justify-start">
-                <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                  <Loader size="default" text="Thinking..." />
-                </div>
-              </div>
-            )}
-        </div>
+              )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       )}
 
       <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
         <PromptInput
           onSubmit={(message) => {
-            if (status === "streaming" || status === "submitted") {
+            if (
+              status === MESSAGE_STATUS.STREAMING ||
+              status === MESSAGE_STATUS.SUBMITTED
+            ) {
               return;
             }
             if (message.text?.trim()) {
@@ -578,126 +507,62 @@ export const Chat = ({
 
           <PromptInputToolbar>
             <PromptInputTools>
-              {/* Model Selector */}
-              <DropdownMenu
-                open={uiState.isDropdownOpen}
-                onOpenChange={(open) =>
-                  setUiState((prev) => ({ ...prev, isDropdownOpen: open }))
-                }
-              >
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="hover:bg-accent text-muted-foreground hover:text-foreground flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors"
-                  >
-                    <span>{selectedModel.modelName}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="bg-background w-[400px] border p-0 shadow-lg"
-                >
-                  <div className="flex h-[300px]">
-                    {/* Left column - Providers */}
-                    <div className="border-default-200 dark:border-default-100 bg-muted/30 w-[180px] overflow-y-auto border-r p-1">
-                      {providers.map((provider) => (
-                        <div
-                          key={provider.id}
-                          onMouseEnter={() => {
-                            setUiState((prev) => ({
-                              ...prev,
-                              hoveredProvider: provider.id,
-                              modelSearchTerm: "", // Reset search when changing provider
-                            }));
-                            loadModelsForProvider(provider.id);
-                          }}
-                          className={cn(
-                            "flex cursor-default items-center justify-between rounded-sm px-3 py-2 text-sm transition-colors",
-                            uiState.hoveredProvider === provider.id
-                              ? "bg-gray-100 dark:bg-gray-800"
-                              : "hover:ring-default-200 dark:hover:ring-default-700 hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
-                          )}
-                        >
-                          <span className="font-medium">{provider.name}</span>
-                          <ChevronDown className="h-4 w-4 -rotate-90" />
-                        </div>
-                      ))}
-                    </div>
+              {/* Model Selector - Combobox */}
+              <Combobox
+                value={`${selectedModel.providerType}:${selectedModel.modelId}`}
+                onValueChange={(value) => {
+                  const separatorIndex = value.indexOf(":");
+                  if (separatorIndex === -1) return;
 
-                    {/* Right column - Models */}
-                    <div className="flex flex-1 flex-col">
-                      {/* Search bar */}
-                      <div className="border-default-200 dark:border-default-100 border-b p-2">
-                        <input
-                          type="text"
-                          placeholder="Search models..."
-                          value={uiState.modelSearchTerm}
-                          onChange={(e) =>
-                            setUiState((prev) => ({
-                              ...prev,
-                              modelSearchTerm: e.target.value,
-                            }))
-                          }
-                          className="placeholder:text-muted-foreground w-full rounded-md border border-gray-200 bg-transparent px-3 py-1.5 text-sm outline-hidden focus:border-gray-400 dark:border-gray-700 dark:focus:border-gray-500"
-                        />
-                      </div>
-
-                      {/* Models list */}
-                      <div className="flex-1 overflow-y-auto p-1">
-                        {uiState.hoveredProvider &&
-                        providerLoadState.loading.has(
-                          uiState.hoveredProvider as LighthouseProvider,
-                        ) ? (
-                          <div className="flex items-center justify-center py-8">
-                            <Loader size="sm" text="Loading models..." />
-                          </div>
-                        ) : filteredModels.length === 0 ? (
-                          <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
-                            {uiState.modelSearchTerm
-                              ? "No models found"
-                              : "No models available"}
-                          </div>
-                        ) : (
-                          filteredModels.map((model) => (
-                            <button
-                              key={model.id}
-                              type="button"
-                              onClick={() =>
-                                uiState.hoveredProvider &&
-                                handleModelSelect(
-                                  uiState.hoveredProvider as LighthouseProvider,
-                                  model.id,
-                                  model.name,
-                                )
-                              }
-                              className={cn(
-                                "focus:bg-accent focus:text-accent-foreground hover:ring-default-200 dark:hover:ring-default-700 relative flex w-full cursor-default items-center rounded-sm px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
-                                selectedModel.modelId === model.id &&
-                                  selectedModel.providerType ===
-                                    uiState.hoveredProvider
-                                  ? "bg-accent text-accent-foreground"
-                                  : "",
-                              )}
-                            >
-                              {model.name}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  const providerType = value.slice(
+                    0,
+                    separatorIndex,
+                  ) as LighthouseProvider;
+                  const modelId = value.slice(separatorIndex + 1);
+                  const provider = providers.find((p) => p.id === providerType);
+                  const model = provider?.models.find((m) => m.id === modelId);
+                  if (provider && model) {
+                    handleModelSelect(providerType, modelId, model.name);
+                  }
+                }}
+                groups={providers.map((provider) => ({
+                  heading: provider.name,
+                  options: provider.models.map((model) => ({
+                    value: `${provider.id}:${model.id}`,
+                    label: model.name,
+                  })),
+                }))}
+                loading={loadingProviders.size > 0}
+                loadingMessage="Loading models..."
+                placeholder={selectedModel.modelName || "Select model..."}
+                searchPlaceholder="Search models..."
+                emptyMessage="No model found."
+                showSelectedFirst={true}
+              />
             </PromptInputTools>
 
             {/* Submit Button */}
             <PromptInputSubmit
               status={status}
+              type={
+                status === MESSAGE_STATUS.STREAMING ||
+                status === MESSAGE_STATUS.SUBMITTED
+                  ? "button"
+                  : "submit"
+              }
+              onClick={(event) => {
+                if (
+                  status === MESSAGE_STATUS.STREAMING ||
+                  status === MESSAGE_STATUS.SUBMITTED
+                ) {
+                  event.preventDefault();
+                  stopGeneration();
+                }
+              }}
               disabled={
-                status === "streaming" ||
-                status === "submitted" ||
-                !uiState.inputValue?.trim()
+                !uiState.inputValue?.trim() &&
+                status !== MESSAGE_STATUS.STREAMING &&
+                status !== MESSAGE_STATUS.SUBMITTED
               }
             />
           </PromptInputToolbar>

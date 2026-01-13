@@ -1,0 +1,447 @@
+---
+title: 'Extending the MCP Server'
+---
+
+This guide explains how to extend the Prowler MCP Server with new tools and features.
+
+<Info>
+**New to Prowler MCP Server?** Start with the user documentation:
+- [Overview](/getting-started/products/prowler-mcp) - Key capabilities, use cases, and deployment options
+- [Installation](/getting-started/installation/prowler-mcp) - Install locally or use the managed server
+- [Configuration](/getting-started/basic-usage/prowler-mcp) - Configure Claude Desktop, Cursor, and other MCP hosts
+- [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools) - Complete list of all available tools
+</Info>
+
+## Introduction
+
+The Prowler MCP Server brings the entire Prowler ecosystem to AI assistants through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It enables seamless integration with AI tools like Claude Desktop, Cursor, and other MCP clients.
+
+The server follows a modular architecture with three independent sub-servers:
+
+| Sub-Server | Auth Required | Description |
+|------------|---------------|-------------|
+| Prowler App | Yes | Full access to Prowler Cloud and Self-Managed features |
+| Prowler Hub | No | Security checks catalog with **over 1000 checks**, fixers, and **70+ compliance frameworks** |
+| Prowler Documentation | No | Full-text search and retrieval of official documentation |
+
+<Note>
+For a complete list of tools and their descriptions, see the [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools).
+</Note>
+
+## Architecture Overview
+
+The MCP Server architecture is illustrated in the [Overview documentation](/getting-started/products/prowler-mcp#mcp-server-architecture). AI assistants connect through the MCP protocol to access Prowler's three main components.
+
+### Server Structure
+
+The main server orchestrates three sub-servers with prefixed namespacing:
+
+```
+mcp_server/prowler_mcp_server/
+├── server.py                 # Main orchestrator
+├── main.py                   # CLI entry point
+├── prowler_hub/
+├── prowler_app/
+│   ├── tools/                # Tool implementations
+│   ├── models/               # Pydantic models
+│   └── utils/                # API client, auth, loader
+└── prowler_documentation/
+```
+
+### Tool Registration Patterns
+
+The MCP Server uses two patterns for tool registration:
+
+1. **Direct Decorators** (Prowler Hub/Docs): Tools are registered using `@mcp.tool()` decorators
+2. **Auto-Discovery** (Prowler App): All public methods of `BaseTool` subclasses are auto-registered
+
+## Adding Tools to Prowler App
+
+### Step 1: Create the Tool Class
+
+Create a new file or add to an existing file in `prowler_app/tools/`:
+
+```python
+# prowler_app/tools/new_feature.py
+from typing import Any
+
+from pydantic import Field
+
+from prowler_mcp_server.prowler_app.models.new_feature import (
+    FeatureListResponse,
+    DetailedFeature,
+)
+from prowler_mcp_server.prowler_app.tools.base import BaseTool
+
+
+class NewFeatureTools(BaseTool):
+    """Tools for managing new features."""
+
+    async def list_features(
+        self,
+        status: str | None = Field(
+            default=None,
+            description="Filter by status (active, inactive, pending)"
+        ),
+        page_size: int = Field(
+            default=50,
+            description="Number of results per page (1-100)"
+        ),
+    ) -> dict[str, Any]:
+        """List all features with optional filtering.
+
+        Returns a lightweight list of features optimized for LLM consumption.
+        Use get_feature for complete information about a specific feature.
+        """
+        # Validate parameters
+        self.api_client.validate_page_size(page_size)
+
+        # Build query parameters
+        params: dict[str, Any] = {"page[size]": page_size}
+        if status:
+            params["filter[status]"] = status
+
+        # Make API request
+        clean_params = self.api_client.build_filter_params(params)
+        response = await self.api_client.get("/api/v1/features", params=clean_params)
+
+        # Transform to LLM-friendly format
+        return FeatureListResponse.from_api_response(response).model_dump()
+
+    async def get_feature(
+        self,
+        feature_id: str = Field(description="The UUID of the feature"),
+    ) -> dict[str, Any]:
+        """Get detailed information about a specific feature.
+
+        Returns complete feature details including configuration and metadata.
+        """
+        try:
+            response = await self.api_client.get(f"/api/v1/features/{feature_id}")
+            return DetailedFeature.from_api_response(response["data"]).model_dump()
+        except Exception as e:
+            self.logger.error(f"Failed to get feature {feature_id}: {e}")
+            return {"error": str(e), "status": "failed"}
+```
+
+### Step 2: Create the Models
+
+Create corresponding models in `prowler_app/models/`:
+
+```python
+# prowler_app/models/new_feature.py
+from typing import Any
+
+from pydantic import Field
+
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
+
+
+class SimplifiedFeature(MinimalSerializerMixin):
+    """Lightweight feature for list operations."""
+
+    id: str = Field(description="Unique feature identifier")
+    name: str = Field(description="Feature name")
+    status: str = Field(description="Current status")
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "SimplifiedFeature":
+        """Transform API response to simplified format."""
+        attributes = data.get("attributes", {})
+        return cls(
+            id=data["id"],
+            name=attributes["name"],
+            status=attributes["status"],
+        )
+
+
+class DetailedFeature(SimplifiedFeature):
+    """Extended feature with complete details."""
+
+    description: str | None = Field(default=None, description="Feature description")
+    configuration: dict[str, Any] | None = Field(default=None, description="Configuration")
+    created_at: str = Field(description="Creation timestamp")
+    updated_at: str = Field(description="Last update timestamp")
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "DetailedFeature":
+        """Transform API response to detailed format."""
+        attributes = data.get("attributes", {})
+        return cls(
+            id=data["id"],
+            name=attributes["name"],
+            status=attributes["status"],
+            description=attributes.get("description"),
+            configuration=attributes.get("configuration"),
+            created_at=attributes["created_at"],
+            updated_at=attributes["updated_at"],
+        )
+
+
+class FeatureListResponse(MinimalSerializerMixin):
+    """Response wrapper for feature list operations."""
+
+    count: int = Field(description="Total number of features")
+    features: list[SimplifiedFeature] = Field(description="List of features")
+
+    @classmethod
+    def from_api_response(cls, response: dict[str, Any]) -> "FeatureListResponse":
+        """Transform API response to list format."""
+        data = response.get("data", [])
+        features = [SimplifiedFeature.from_api_response(item) for item in data]
+        return cls(count=len(features), features=features)
+```
+
+### Step 3: Verify Auto-Discovery
+
+No manual registration is needed. The `tool_loader.py` automatically discovers and registers all `BaseTool` subclasses. Verify your tool is loaded by checking the server logs:
+
+```
+INFO - Auto-registered 2 tools from NewFeatureTools
+INFO - Loaded and registered: NewFeatureTools
+```
+
+## Adding Tools to Prowler Hub/Docs
+
+For Prowler Hub or Documentation tools, use the `@mcp.tool()` decorator directly:
+
+```python
+# prowler_hub/server.py
+from fastmcp import FastMCP
+
+hub_mcp_server = FastMCP("prowler-hub")
+
+@hub_mcp_server.tool()
+async def get_new_artifact(
+    artifact_id: str,
+) -> dict:
+    """Fetch a specific artifact from Prowler Hub.
+
+    Args:
+        artifact_id: The unique identifier of the artifact
+
+    Returns:
+        Dictionary containing artifact details
+    """
+    response = prowler_hub_client.get(f"/artifact/{artifact_id}")
+    response.raise_for_status()
+    return response.json()
+```
+
+## Model Design Patterns
+
+### MinimalSerializerMixin
+
+All models should use `MinimalSerializerMixin` to optimize responses for LLM consumption:
+
+```python
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
+
+class MyModel(MinimalSerializerMixin):
+    """Model that excludes empty values from serialization."""
+    required_field: str
+    optional_field: str | None = None  # Excluded if None
+    empty_list: list = []              # Excluded if empty
+```
+
+This mixin automatically excludes:
+- `None` values
+- Empty strings
+- Empty lists
+- Empty dictionaries
+
+### Two-Tier Model Pattern
+
+Use two-tier models for efficient responses:
+
+- **Simplified**: Lightweight models for list operations
+- **Detailed**: Extended models for single-item retrieval
+
+```python
+class SimplifiedItem(MinimalSerializerMixin):
+    """Use for list operations - minimal fields."""
+    id: str
+    name: str
+    status: str
+
+class DetailedItem(SimplifiedItem):
+    """Use for get operations - extends simplified with details."""
+    description: str | None = None
+    configuration: dict | None = None
+    created_at: str
+    updated_at: str
+```
+
+### Factory Method Pattern
+
+Always implement `from_api_response()` for API transformation:
+
+```python
+@classmethod
+def from_api_response(cls, data: dict[str, Any]) -> "MyModel":
+    """Transform API response to model.
+
+    This method handles the JSON:API format used by Prowler API,
+    extracting attributes and relationships as needed.
+    """
+    attributes = data.get("attributes", {})
+    return cls(
+        id=data["id"],
+        name=attributes["name"],
+        # ... map other fields
+    )
+```
+
+## API Client Usage
+
+The `ProwlerAPIClient` is a singleton that handles authentication and HTTP requests:
+
+```python
+class MyTools(BaseTool):
+    async def my_tool(self) -> dict:
+        # GET request
+        response = await self.api_client.get("/api/v1/endpoint", params={"key": "value"})
+
+        # POST request
+        response = await self.api_client.post(
+            "/api/v1/endpoint",
+            json_data={"data": {"type": "items", "attributes": {...}}}
+        )
+
+        # PATCH request
+        response = await self.api_client.patch(
+            f"/api/v1/endpoint/{id}",
+            json_data={"data": {"attributes": {...}}}
+        )
+
+        # DELETE request
+        response = await self.api_client.delete(f"/api/v1/endpoint/{id}")
+```
+
+### Helper Methods
+
+The API client provides useful helper methods:
+
+```python
+# Validate page size (1-1000)
+self.api_client.validate_page_size(page_size)
+
+# Normalize date range with max days limit
+date_range = self.api_client.normalize_date_range(date_from, date_to, max_days=2)
+
+# Build filter parameters (handles type conversion)
+clean_params = self.api_client.build_filter_params({
+    "filter[status]": "active",
+    "filter[severity__in]": ["high", "critical"],  # Converts to comma-separated
+    "filter[muted]": True,  # Converts to "true"
+})
+
+# Poll async task until completion
+result = await self.api_client.poll_task_until_complete(
+    task_id=task_id,
+    timeout=60,
+    poll_interval=1.0
+)
+```
+
+## Best Practices
+
+### Tool Docstrings
+
+Tool docstrings become description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
+
+```python
+async def search_items(self, status: str = Field(...)) -> dict:
+    """Search items with advanced filtering.
+
+    Returns a lightweight list optimized for LLM consumption.
+    Use get_item for complete details about a specific item.
+
+    Common workflows:
+    - Find critical items: status="critical"
+    - Find recent items: Use date_from parameter
+    """
+```
+
+### Error Handling
+
+Return structured error responses instead of raising exceptions:
+
+```python
+async def get_item(self, item_id: str) -> dict:
+    try:
+        response = await self.api_client.get(f"/api/v1/items/{item_id}")
+        return DetailedItem.from_api_response(response["data"]).model_dump()
+    except Exception as e:
+        self.logger.error(f"Failed to get item {item_id}: {e}")
+        return {"error": str(e), "status": "failed"}
+```
+
+### Parameter Descriptions
+
+Use Pydantic `Field()` with clear descriptions. This also helps LLMs understand
+the purpose of each parameter, so be as descriptive as possible:
+
+```python
+async def list_items(
+    self,
+    severity: list[str] = Field(
+        default=[],
+        description="Filter by severity levels (critical, high, medium, low)"
+    ),
+    status: str | None = Field(
+        default=None,
+        description="Filter by status (PASS, FAIL, MANUAL)"
+    ),
+    page_size: int = Field(
+        default=50,
+        description="Results per page"
+    ),
+) -> dict:
+```
+
+## Development Commands
+
+```bash
+# Navigate to MCP server directory
+cd mcp_server
+
+# Run in STDIO mode (default)
+uv run prowler-mcp
+
+# Run in HTTP mode
+uv run prowler-mcp --transport http --host 0.0.0.0 --port 8000
+
+# Run with environment variables
+PROWLER_APP_API_KEY="pk_xxx" uv run prowler-mcp
+```
+
+For complete installation and deployment options, see:
+- [Installation Guide](/getting-started/installation/prowler-mcp#from-source-development) - Development setup instructions
+- [Configuration Guide](/getting-started/basic-usage/prowler-mcp) - MCP client configuration
+
+For development I recommend to use the [Model Context Protocol Inspector](https://github.com/modelcontextprotocol/inspector) as MCP client to test and debug your tools.
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="MCP Server Overview" icon="circle-info" href="/getting-started/products/prowler-mcp">
+    Key capabilities, use cases, and deployment options
+  </Card>
+  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+    Complete reference of all available tools
+  </Card>
+  <Card title="Prowler Hub" icon="database" href="/getting-started/products/prowler-hub">
+    Security checks and compliance frameworks catalog
+  </Card>
+  <Card title="Lighthouse AI" icon="robot" href="/getting-started/products/prowler-lighthouse-ai">
+    AI-powered security analyst
+  </Card>
+</CardGroup>
+
+## Additional Resources
+
+- [MCP Protocol Specification](https://modelcontextprotocol.io) - Model Context Protocol details
+- [Prowler API Documentation](https://api.prowler.com/api/v1/docs) - API reference
+- [Prowler Hub API](https://hub.prowler.com/api/docs) - Hub API reference
+- [GitHub Repository](https://github.com/prowler-cloud/prowler) - Source code

@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_automatic_restart_enabled",
+  "CheckTitle": "Compute Engine VM instances have Automatic Restart enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "**Google Compute Engine virtual machine instances** are evaluated to ensure that **Automatic Restart** is enabled. This feature allows the Google Cloud Compute Engine service to automatically restart VM instances when they are terminated due to non-user-initiated reasons such as maintenance events, hardware failures, or software failures.",
+  "Risk": "VM instances without Automatic Restart enabled will not recover automatically from host maintenance events or unexpected failures, potentially leading to prolonged service downtime and requiring manual intervention to restore services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-automatic-restart.html",
+    "https://cloud.google.com/compute/docs/instances/setting-instance-scheduling-options"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances update <INSTANCE_NAME> --restart-on-failure --zone=<ZONE>",
+      "NativeIaC": "",
+      "Other": "1) Open Google Cloud Console → Compute Engine → VM instances\n2) Click on the instance name to view details\n3) Click 'Edit' at the top of the page\n4) Under 'Availability policies', set 'Automatic restart' to 'On (recommended)'\n5) Click 'Save' at the bottom of the page",
+      "Terraform": "```hcl\n# Example: enable Automatic Restart for a Compute Engine VM instance\nresource \"google_compute_instance\" \"example\" {\n  name         = var.instance_name\n  machine_type = var.machine_type\n  zone         = var.zone\n\n  scheduling {\n    automatic_restart   = true\n    on_host_maintenance = \"MIGRATE\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable the Automatic Restart feature for Compute Engine VM instances to enhance system reliability by automatically recovering from crashes or system-initiated terminations. This setting does not interfere with user-initiated shutdowns or stops.",
+      "Url": "https://hub.prowler.com/check/compute_instance_automatic_restart_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "VM instances missing the 'scheduling.automaticRestart' field are treated as having Automatic Restart enabled (defaults to true). Preemptible instances and instances with provisioning model set to SPOT are automatically marked as PASS, as they cannot have Automatic Restart enabled by design."
+}

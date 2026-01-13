@@ -1,38 +1,46 @@
 "use client";
 
-import { CrossIcon } from "@/components/icons";
+import { XCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
-import { CustomButton } from "../ui/custom/custom-button";
+import { Button } from "../shadcn";
 
 export interface ClearFiltersButtonProps {
   className?: string;
   text?: string;
   ariaLabel?: string;
+  /** Show the count of active filters */
+  showCount?: boolean;
+  /** Use link style (text only, no button background) */
+  variant?: "link" | "default";
 }
 
 export const ClearFiltersButton = ({
-  className = "w-full md:w-fit",
   text = "Clear all filters",
   ariaLabel = "Reset",
+  showCount = false,
+  variant = "link",
 }: ClearFiltersButtonProps) => {
+  const searchParams = useSearchParams();
   const { clearAllFilters, hasFilters } = useUrlFilters();
+
+  // Count active filters (excluding search)
+  const filterCount = Array.from(searchParams.keys()).filter(
+    (key) => key.startsWith("filter[") && key !== "filter[search]",
+  ).length;
 
   if (!hasFilters()) {
     return null;
   }
 
+  const displayText = showCount ? `Clear Filters (${filterCount})` : text;
+
   return (
-    <CustomButton
-      ariaLabel={ariaLabel}
-      className={className}
-      onPress={clearAllFilters}
-      variant="dashed"
-      size="md"
-      endContent={<CrossIcon size={24} />}
-      radius="sm"
-    >
-      {text}
-    </CustomButton>
+    <Button aria-label={ariaLabel} onClick={clearAllFilters} variant={variant}>
+      <XCircle className="mr-0.5 size-4" />
+      {displayText}
+    </Button>
   );
 };

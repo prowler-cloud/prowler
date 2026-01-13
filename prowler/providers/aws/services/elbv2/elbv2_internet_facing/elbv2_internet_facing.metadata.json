@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**ELBv2 Application Load Balancers** configured as `internet-facing` are assessed for exposure by reviewing attached **security groups**.\n\nInbound TCP rules that allow `0.0.0.0/0` or `::/0` indicate unrestricted internet reachability.",
   "Risk": "**Unrestricted ALB access** lets any client reach exposed endpoints, enabling **credential stuffing**, automated scanning, and **web exploits**.\n\nImpacts:\n- Confidentiality: data exfiltration\n- Integrity: unauthorized changes\n- Availability: increased attack surface and **DoS** potential",
   "RelatedUrl": "",

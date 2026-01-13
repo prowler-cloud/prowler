@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**EBS snapshots** are expected to be governed by **Data Lifecycle Manager (DLM) policies** in each Region where snapshots exist.\n\nThe evaluation looks for lifecycle policies that automate snapshot creation, retention, and cleanup for those snapshots.",
   "Risk": "Without **automated lifecycle policies**, backups become inconsistent and error-prone, reducing availability and weakening recovery objectives. Missing retention rules cause premature deletion or snapshot sprawl, increasing cost and exposing stale data. Lack of cross-Region/account copies limits resilience to regional outages and malicious deletion.",
   "RelatedUrl": "",

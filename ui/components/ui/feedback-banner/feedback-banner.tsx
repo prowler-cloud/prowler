@@ -17,7 +17,7 @@ const typeStyles: Record<
   error: {
     border: "border-danger",
     bg: "bg-system-error-light/30 dark:bg-system-error-light/80",
-    text: "text-danger",
+    text: "text-text-error",
   },
   warning: {
     border: "border-warning",

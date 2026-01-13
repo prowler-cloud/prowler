@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**Firewall Manager** policies in the administrator account are evaluated for organization-wide compliance. The assessment reviews each policy's account-level status and flags entries marked `NON_COMPLIANT` or unset. It also identifies when no effective policies exist within the administrator scope.",
   "Risk": "Policy drift or absence leaves in-scope resources without enforced controls, degrading **confidentiality**, **integrity**, and **availability**. Missing WAF, Shield, security group, or network firewall baselines can enable DDoS exposure, unsafe routes, and open access, leading to unauthorized entry and data exfiltration.",
   "RelatedUrl": "",

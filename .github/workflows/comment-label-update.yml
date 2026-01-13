@@ -1,0 +1,39 @@
+name: 'Tools: Comment Label Update'
+
+on:
+  issue_comment:
+    types:
+      - 'created'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  update-labels:
+    if: contains(github.event.issue.labels.*.name, 'status/awaiting-response')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Remove 'status/awaiting-response' label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          echo "Removing 'status/awaiting-response' label from #$ISSUE_NUMBER"
+          gh api /repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels/status%2Fawaiting-response \
+            -X DELETE
+
+      - name: Add 'status/waiting-for-revision' label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          echo "Adding 'status/waiting-for-revision' label to #$ISSUE_NUMBER"
+          gh api /repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels \
+            -X POST \
+            -f labels[]='status/waiting-for-revision'

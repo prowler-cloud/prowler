@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:events:rule",
   "Severity": "medium",
   "ResourceType": "OciEventsRule",
+  "ResourceGroup": "messaging",
   "Description": "At least one notification topic and subscription should exist to receive monitoring alerts.",
   "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",

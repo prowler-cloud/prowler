@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_audit_logs_enabled",
+  "CheckTitle": "Data Access audit logs are enabled for Cloud Storage",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "cloudresourcemanager.googleapis.com/Project",
+  "ResourceGroup": "governance",
+  "Description": "Data Access audit logs (DATA_READ and DATA_WRITE) are enabled for Cloud Storage at the project level. Unlike Admin Activity logs (enabled by default), Data Access logs must be explicitly configured to track read and write operations on Cloud Storage objects.",
+  "Risk": "Without Data Access audit logs, you cannot track who accessed or modified objects in your Cloud Storage buckets, making it difficult to detect unauthorized access, data exfiltration, or compliance violations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-data-access-audit-logs.html",
+    "https://cloud.google.com/storage/docs/audit-logging"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1) Console → IAM & Admin → Audit Logs\n2) Find 'Google Cloud Storage' in the list of services\n3) Check the boxes for 'Data Read' and 'Data Write'\n4) Click 'Save' to apply the configuration\n\nNote: This is a project-level setting that applies to all Cloud Storage buckets in the project.",
+      "Terraform": "```hcl\nresource \"google_project_iam_audit_config\" \"storage_audit\" {\n  project = var.project_id\n  service = \"storage.googleapis.com\"\n\n  audit_log_config {\n    log_type = \"DATA_READ\"\n  }\n\n  audit_log_config {\n    log_type = \"DATA_WRITE\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable Data Access audit logs (DATA_READ and DATA_WRITE) for Cloud Storage at the project level to track all read and write operations on storage objects for security monitoring and compliance.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_audit_logs_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

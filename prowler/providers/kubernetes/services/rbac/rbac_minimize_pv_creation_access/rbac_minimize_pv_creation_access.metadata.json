@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "PersistentVolume",
+  "ResourceGroup": "storage",
   "Description": "This check ensures that the ability to create persistent volumes in Kubernetes is restricted to authorized users only. Limiting this capability helps prevent privilege escalation scenarios through the creation of hostPath volumes.",
   "Risk": "Excessive permissions to create persistent volumes can lead to unauthorized access to sensitive host files, overriding the restrictions imposed by Pod Security Admission policies.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation",

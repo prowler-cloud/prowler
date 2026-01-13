@@ -1,16 +1,38 @@
 from collections import defaultdict
+from datetime import timedelta
 
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
+from celery.utils.log import get_task_logger
+from django.db.models import Sum
+from django.utils import timezone
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+)
+from tasks.jobs.scan import aggregate_category_counts
+
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import (
+    POSTGRES_TENANT_VAR,
+    SET_CONFIG_QUERY,
+    psycopg_connection,
+    rls_transaction,
+)
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
+    Finding,
+    ProviderComplianceScore,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
+    ScanSummary,
     StateChoices,
 )
+
+logger = get_task_logger(__name__)
 
 
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
@@ -175,3 +197,271 @@ def backfill_compliance_summaries(tenant_id: str, scan_id: str):
             )
 
     return {"status": "backfilled", "inserted": len(summary_objects)}
+
+
+def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
+    """
+    Backfill DailySeveritySummary from completed scans.
+    Groups by provider+date, keeps latest scan per day.
+    """
+    created_count = 0
+    updated_count = 0
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan_filter = {
+            "tenant_id": tenant_id,
+            "state": StateChoices.COMPLETED,
+            "completed_at__isnull": False,
+        }
+
+        if days is not None:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            scan_filter["completed_at__gte"] = cutoff_date
+
+        completed_scans = (
+            Scan.objects.filter(**scan_filter)
+            .order_by("provider_id", "-completed_at")
+            .values("id", "provider_id", "completed_at")
+        )
+
+        if not completed_scans:
+            return {"status": "no scans to backfill"}
+
+        # Keep only latest scan per provider/day
+        latest_scans_by_day = {}
+        for scan in completed_scans:
+            key = (scan["provider_id"], scan["completed_at"].date())
+            if key not in latest_scans_by_day:
+                latest_scans_by_day[key] = scan
+
+    # Process each provider/day
+    for (provider_id, scan_date), scan in latest_scans_by_day.items():
+        scan_id = scan["id"]
+
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            severity_totals = (
+                ScanSummary.objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                )
+                .values("severity")
+                .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
+            )
+
+            severity_data = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+
+            for row in severity_totals:
+                severity = row["severity"]
+                if severity in severity_data:
+                    severity_data[severity] = row["total_fail"] or 0
+                severity_data["muted"] += row["total_muted"] or 0
+
+        with rls_transaction(tenant_id):
+            _, created = DailySeveritySummary.objects.update_or_create(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                date=scan_date,
+                defaults={
+                    "scan_id": scan_id,
+                    "critical": severity_data["critical"],
+                    "high": severity_data["high"],
+                    "medium": severity_data["medium"],
+                    "low": severity_data["low"],
+                    "informational": severity_data["informational"],
+                    "muted": severity_data["muted"],
+                },
+            )
+
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+
+    return {
+        "status": "backfilled",
+        "created": created_count,
+        "updated": updated_count,
+        "total_days": len(latest_scans_by_day),
+    }
+
+
+def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates category counts from all findings in the scan and creates
+    one ScanCategorySummary row per (category, severity) combination.
+
+    Args:
+        tenant_id: Target tenant UUID
+        scan_id: Scan UUID to backfill
+
+    Returns:
+        dict: Status indicating whether backfill was performed
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists():
+            return {"status": "already backfilled"}
+
+        if not Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state__in=(StateChoices.COMPLETED, StateChoices.FAILED),
+        ).exists():
+            return {"status": "scan is not completed"}
+
+        category_counts: dict[tuple[str, str], dict[str, int]] = {}
+        for finding in Finding.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).values("categories", "severity", "status", "delta", "muted"):
+            aggregate_category_counts(
+                categories=finding.get("categories") or [],
+                severity=finding.get("severity"),
+                status=finding.get("status"),
+                delta=finding.get("delta"),
+                muted=finding.get("muted", False),
+                cache=category_counts,
+            )
+
+        if not category_counts:
+            return {"status": "no categories to backfill"}
+
+    category_summaries = [
+        ScanCategorySummary(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            category=category,
+            severity=severity,
+            total_findings=counts["total"],
+            failed_findings=counts["failed"],
+            new_failed_findings=counts["new_failed"],
+        )
+        for (category, severity), counts in category_counts.items()
+    ]
+
+    with rls_transaction(tenant_id):
+        ScanCategorySummary.objects.bulk_create(
+            category_summaries, batch_size=500, ignore_conflicts=True
+        )
+
+    return {"status": "backfilled", "categories_count": len(category_counts)}
+
+
+def backfill_provider_compliance_scores(tenant_id: str) -> dict:
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    For each provider with completed scans, finds the most recent scan and
+    upserts compliance requirement statuses with FAIL-dominant aggregation.
+
+    Args:
+        tenant_id: Target tenant UUID
+
+    Returns:
+        dict: Statistics about the backfill operation
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        completed_scans = Scan.all_objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
+        )
+        if not completed_scans.exists():
+            return {"status": "no completed scans"}
+
+        existing_providers = set(
+            ProviderComplianceScore.objects.filter(tenant_id=tenant_id)
+            .values_list("provider_id", flat=True)
+            .distinct()
+        )
+
+        if existing_providers:
+            completed_scans = completed_scans.exclude(
+                provider_id__in=existing_providers
+            )
+
+        scan_info = list(
+            completed_scans.order_by("provider_id", "-completed_at")
+            .distinct("provider_id")
+            .values("id", "provider_id", "completed_at")
+        )
+
+        if not scan_info:
+            return {"status": "no scans to process"}
+
+    total_upserted = 0
+    providers_processed = 0
+    providers_skipped = 0
+
+    for scan in scan_info:
+        provider_id = scan["provider_id"]
+
+        scan_id = scan["id"]
+
+        try:
+            with psycopg_connection(MainRouter.default_db) as connection:
+                connection.autocommit = False
+                try:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id]
+                        )
+                        cursor.execute(
+                            COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+                            [tenant_id, str(scan_id)],
+                        )
+                        upserted = cursor.rowcount
+                    connection.commit()
+                    total_upserted += upserted
+                    providers_processed += 1
+                except Exception:
+                    connection.rollback()
+                    raise
+        except Exception as e:
+            providers_skipped += 1
+            logger.exception(
+                "Error backfilling provider %s for tenant %s: %s",
+                provider_id,
+                tenant_id,
+                e,
+            )
+
+    # Recalculate tenant summary after all providers are backfilled
+    if providers_processed > 0:
+        with psycopg_connection(MainRouter.default_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                    # Advisory lock to prevent race conditions
+                    cursor.execute(
+                        "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                    )
+                    cursor.execute(
+                        COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+                        [tenant_id, tenant_id],
+                    )
+                    tenant_summary_count = cursor.rowcount
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+    else:
+        tenant_summary_count = 0
+
+    return {
+        "status": "backfilled",
+        "providers_processed": providers_processed,
+        "providers_skipped": providers_skipped,
+        "total_upserted": total_upserted,
+        "tenant_summary_count": tenant_summary_count,
+    }

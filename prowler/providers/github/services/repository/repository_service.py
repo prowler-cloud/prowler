@@ -341,6 +341,9 @@ class Repository(GithubService):
                 name=repo.name,
                 owner=repo.owner.login,
                 full_name=repo.full_name,
+                immutable_releases_enabled=self._get_repository_immutable_releases_status(
+                    repo
+                ),
                 default_branch=Branch(
                     name=default_branch,
                     protected=branch_protection,
@@ -370,6 +373,54 @@ class Repository(GithubService):
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_repository_immutable_releases_status(self, repo) -> Optional[bool]:
+        """Retrieve the immutable releases status for the provided repository.
+
+        The API returns a response in the format:
+        {
+            "enabled": true,
+            "enforced_by_owner": false
+        }
+
+        Args:
+            repo: The PyGithub repository instance to query.
+
+        Returns:
+            Optional[bool]: True when immutable releases are enabled, False when they are disabled, and None when the status cannot be determined.
+        """
+        try:
+            _, response = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/repos/{repo.full_name}/immutable-releases",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if isinstance(response, dict) and "enabled" in response:
+                return response.get("enabled")
+            return None
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: immutable releases endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query immutable releases endpoint."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching immutable releases status", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
 
 class Branch(BaseModel):
     """Model for Github Branch"""
@@ -396,6 +447,7 @@ class Repo(BaseModel):
     name: str
     owner: str
     full_name: str
+    immutable_releases_enabled: Optional[bool] = None
     default_branch: Branch
     private: bool
     archived: bool

@@ -112,6 +112,7 @@ class CheckMetadata(BaseModel):
     ResourceIdTemplate: str
     Severity: Severity
     ResourceType: str
+    ResourceGroup: str = Field(default="")
     Description: str
     Risk: str
     RelatedUrl: str
@@ -457,7 +458,8 @@ class Check(ABC, CheckMetadata):
         # Verify names consistency
         check_id = self.CheckID
         class_name = self.__class__.__name__
-        file_name = file_path.split(sep="/")[-1]
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
 
         errors = []
         if check_id != class_name:
@@ -649,6 +651,29 @@ class Check_Report_OCI(Check_Report):
 
 
 @dataclass
+class CheckReportAlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
+
+
+@dataclass
 class Check_Report_Kubernetes(Check_Report):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
@@ -701,6 +726,74 @@ class CheckReportGithub(Check_Report):
             or getattr(resource, "owner", "")  # For Repositories
             or getattr(resource, "name", "")  # For Organizations
         )
+
+
+@dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information.
+
+    Cloudflare is a global service - zones are resources, not regional contexts.
+    All zone-related attributes are derived from the zone object passed as resource.
+    """
+
+    resource_name: str
+    resource_id: str
+    _zone: Any  # CloudflareZone object
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The CloudflareZone resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+        """
+        super().__init__(metadata, resource)
+
+        # Zone is the resource being checked
+        self._zone = resource
+
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+
+    @property
+    def zone(self) -> Any:
+        """The CloudflareZone object."""
+        return self._zone
+
+    @property
+    def zone_id(self) -> str:
+        """Zone ID."""
+        return getattr(self._zone, "id", "")
+
+    @property
+    def zone_name(self) -> str:
+        """Zone name."""
+        return getattr(self._zone, "name", "")
+
+    @property
+    def account_id(self) -> str:
+        """Account ID derived from zone's account."""
+        zone_account = getattr(self._zone, "account", None)
+        if zone_account:
+            return getattr(zone_account, "id", "")
+        return ""
+
+    @property
+    def region(self) -> str:
+        """Cloudflare is a global service."""
+        return "global"
 
 
 @dataclass
