@@ -75,28 +75,28 @@ test.describe("Session Error Messages", () => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
 
+      // Login first
       await signInPage.goto();
       await signInPage.login(TEST_CREDENTIALS.VALID);
       await homePage.verifyPageLoaded();
 
+      // Navigate to a specific page
       await page.goto("/scans");
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForLoadState("networkidle");
 
-      // Clear cookies and reload to ensure middleware detects missing session
+      // Clear cookies to simulate session expiry
       await context.clearCookies();
 
-      // Navigate to protected route - middleware should redirect to sign-in
-      // Use waitUntil: "commit" to catch the redirect before client-side hydration
-      await page.goto("/providers", { waitUntil: "commit" });
+      // Try to navigate to a different protected route
+      await page.goto("/providers");
 
-      // Wait for the redirect to complete
-      await expect(page).toHaveURL(/\/sign-in/, { timeout: 10000 });
+      // Should be redirected to login with callbackUrl
+      await expect(page).toHaveURL(/\/sign-in\?.*callbackUrl=/);
 
-      // Verify callbackUrl is present
+      // Verify callbackUrl contains the attempted route
       const url = new URL(page.url());
       const callbackUrl = url.searchParams.get("callbackUrl");
-      // callbackUrl might be encoded, so check if it contains "providers"
-      expect(callbackUrl).toContain("providers");
+      expect(callbackUrl).toBe("/providers");
     },
   );
 });
