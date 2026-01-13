@@ -46,9 +46,8 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
     <WatchlistCard
       title="Compliance Watchlist"
       items={sortedItems}
-      // TODO: Enable CTA link once compliance dashboard use filters
-      // ctaLabel="Compliance Dashboard"
-      // ctaHref="/compliance"
+      ctaLabel="Compliance Dashboard"
+      ctaHref="/compliance"
       headerAction={
         <SortToggleButton
           isAscending={isAsc}
