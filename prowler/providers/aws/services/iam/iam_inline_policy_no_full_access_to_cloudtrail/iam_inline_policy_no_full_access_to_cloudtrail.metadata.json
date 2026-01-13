@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_inline_policy_no_full_access_to_cloudtrail",
-  "CheckTitle": "IAM inline policy does not allow 'cloudtrail:*' privileges",
+  "CheckTitle": "Inline IAM policy does not allow 'cloudtrail:*' privileges",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM inline policies** are evaluated for statements that grant **full CloudTrail permissions** (`cloudtrail:*`) to all resources.\n\nThe finding flags identity policies that provide unrestricted control over CloudTrail operations.",
   "Risk": "Full CloudTrail access allows stopping trails, modifying configurations, or deleting audit data, compromising log **integrity** and **availability**. It also exposes event data, impacting **confidentiality**. Adversaries could hide activity, evade detection, and obstruct investigations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233808-ensure-iam-policies-that-allow-full-cloudtrail-privileges-are-not-created"
   ],
   "Remediation": {
     "Code": {

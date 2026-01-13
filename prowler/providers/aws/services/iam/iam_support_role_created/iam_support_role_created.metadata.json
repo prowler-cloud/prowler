@@ -10,16 +10,14 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "Presence of an **IAM role** that has the AWS managed `AWSSupportAccess` policy attached, designating a support role for interacting with **AWS Support Center** and related tooling.",
   "Risk": "Without a dedicated support role:\n- Case creation and escalation can be delayed, prolonging outages (**availability**)\n- Teams may use admin/root, increasing blast radius (**confidentiality/integrity**)\n- Audit trails of support actions are weaker, hindering investigations",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v5.0.0_L1.audit:c0a1f18608489c0ae886fd9463cd2af9",
     "https://docs.aws.amazon.com/awssupport/latest/user/using-service-linked-roles-sup.html",
-    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_iam_25",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/support-role.html",
     "https://icompaas.freshdesk.com/support/solutions/articles/62000081064-ensure-a-support-role-has-been-created-to-manage-incidents-with-aws-support",
-    "https://www.plerion.com/cloud-knowledge-base/support-role-has-been-created-to-manage-incidents-aws-support",
     "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSSupportAccess.html"
   ],
   "Remediation": {

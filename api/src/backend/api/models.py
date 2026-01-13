@@ -287,6 +287,7 @@ class Provider(RowLevelSecurityProtectedModel):
         MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
+        ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -388,6 +389,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
                 code="mongodbatlas-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_alibabacloud_uid(value):
+        if not re.match(r"^\d{16}$", value):
+            raise ModelValidationError(
+                detail="Alibaba Cloud account ID must be exactly 16 digits.",
+                code="alibabacloud-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -716,14 +726,19 @@ class Resource(RowLevelSecurityProtectedModel):
             self.clear_tags()
             return
 
-        # Add new relationships with the tenant_id field
+        # Add new relationships with the tenant_id field; avoid touching the
+        # Resource row unless a mapping is actually created to prevent noisy
+        # updates during scans.
+        mapping_created = False
         for tag in tags:
-            ResourceTagMapping.objects.update_or_create(
+            _, created = ResourceTagMapping.objects.update_or_create(
                 tag=tag, resource=self, tenant_id=self.tenant_id
             )
+            mapping_created = mapping_created or created
 
-        # Save the instance
-        self.save()
+        if mapping_created:
+            # Only bump updated_at when the tag set truly changed
+            self.save(update_fields=["updated_at"])
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resources"
@@ -2590,3 +2605,92 @@ class AttackSurfaceOverview(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class ProviderComplianceScore(RowLevelSecurityProtectedModel):
+    """
+    Compliance requirement status from latest completed scan per provider.
+
+    Used for efficient compliance watchlist queries with FAIL-dominant aggregation
+    across multiple providers. Updated via atomic upsert after each scan completion.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    compliance_id = models.TextField()
+    requirement_id = models.TextField()
+    requirement_status = StatusEnumField(choices=StatusChoices)
+
+    scan_completed_at = models.DateTimeField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "provider_compliance_scores"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "compliance_id", "requirement_id"),
+                name="unique_provider_compliance_req",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "compliance_id"],
+                name="pcs_tenant_prov_comp_idx",
+            ),
+        ]
+
+
+class TenantComplianceSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance counts per tenant with FAIL-dominant logic applied.
+
+    One row per (tenant, compliance_id). Used for fast watchlist queries when
+    no provider filter is applied. Recalculated after each scan by aggregating
+    across all providers with FAIL-dominant logic at requirement level.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    compliance_id = models.TextField()
+
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "tenant_compliance_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "compliance_id"),
+                name="unique_tenant_compliance_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]

@@ -12,15 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamGroup",
+  "ResourceGroup": "IAM",
   "Description": "**IAM groups** are assessed for the AWS-managed `AdministratorAccess` policy attachment.\n\nThe finding reports any group that has this policy among its attached permissions.",
   "Risk": "Group-wide `AdministratorAccess` gives all members unrestricted control. A stolen or misused account can:\n- Read/exfiltrate sensitive data (C)\n- Modify or delete resources and configs (I/A)\n- Disable logging and weaken defenses, enabling persistence and lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/group-with-privileged-access.html",
-    "https://gist.github.com/apolloclark/b3f60c1f68aa972d324b",
-    "https://docs.kertos.io/en/article/ensure-no-iam-aws-managed-policies-grant-full-administrative-access",
-    "https://docs.datadoghq.com/security/default_rules/def-000-wnq/",
     "https://support.icompaas.com/support/solutions/articles/62000233798-ensure-no-iam-groups-have-administrator-access-policy",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],

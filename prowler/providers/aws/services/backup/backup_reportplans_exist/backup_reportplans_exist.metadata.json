@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsBackupBackupPlan",
+  "ResourceGroup": "storage",
   "Description": "**AWS Backup** environments with existing backup plans are assessed for the presence of at least one **report plan** that generates `jobs` or `compliance` reports.",
   "Risk": "Without a report plan, backup failures and missed restores may go unnoticed, harming **availability** and recovery objectives. Gaps in retention, scheduling, or encryption controls can persist unreported, weakening **integrity** and auditability across accounts and Regions, increasing the chance of SLA breaches.",
   "RelatedUrl": "",

@@ -13,19 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM AWS-managed policies** attached to identities are inspected for statements that allow `Action:'*'` on `Resource:'*'`-i.e., full administrative `*:*` permissions",
   "Risk": "**Unrestricted `*:*` access** enables any action on any resource, risking:\n- Data exfiltration (**confidentiality**)\n- Unauthorized changes and policy tampering (**integrity**)\n- Service deletion or shutdown (**availability**)\nAttackers can disable logging, create backdoor principals, and expand lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform",
-    "https://www.elastic.co/guide/en/security/current/prebuilt-rule-8-17-4-aws-iam-administratoraccess-policy-attached-to-user.html",
-    "https://medium.com/@haroldfinch01/terraform-correct-way-to-attach-aws-managed-policies-to-a-role-1572c8408b33",
     "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AdministratorAccess.html",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
-    "https://docs.kertos.io/en/article/ensure-no-iam-aws-managed-policies-grant-full-administrative-access",
     "https://support.icompaas.com/support/solutions/articles/62000233815-ensure-iam-roles-do-not-have-administratoraccess-policy-attached",
-    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-ilw/"
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],
   "Remediation": {
     "Code": {

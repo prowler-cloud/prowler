@@ -13,14 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**Custom IAM policies** with `Allow` statements that grant `sts:AssumeRole` (or `sts:*`/`*`) to a wildcard `Resource`.",
   "Risk": "Broad `AssumeRole` rights let principals obtain **temporary credentials** for many roles, enabling **privilege escalation**, **lateral movement**, and **cross-account access** where trusts allow. This jeopardizes **confidentiality** and **integrity** of data and the control plane.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://sra.io/blog/aws-iam-exploitation/",
     "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html",
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy",
-    "https://github.com/Netflix/security_monkey/issues/732"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html#roles-usingrole-createpolicy"
   ],
   "Remediation": {
     "Code": {

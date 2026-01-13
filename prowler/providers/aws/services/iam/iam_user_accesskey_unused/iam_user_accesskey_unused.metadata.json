@@ -12,16 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** are evaluated for **active access keys** whose `last-used` timestamp exceeds `max_unused_access_keys_days` (default `45`). Users without access keys, or whose keys were used within this window, are reported separately.",
   "Risk": "Active yet unused keys expand the attack surface. If leaked, adversaries gain API access for data exfiltration, unauthorized changes, and resource abuse, harming **confidentiality**, **integrity**, and **availability**. Stale credentials also enable persistence and unexpected cost spikes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/mastering-aws-iam-fintech-banking-application-story-suresh-konakanchi-qwzbf",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
-    "https://aws.plainenglish.io/automating-aws-iam-access-key-management-207ab5d11def",
-    "https://www.cloudyali.io/blogs/how-to-monitor-aws-iam-root-users-at-scale-best-practices",
-    "https://www.netskope.com/blog/a-real-world-look-at-aws-best-practices-iam-user-accounts"
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/IAM/access-keys-rotated-45-days.html"
   ],
   "Remediation": {
     "Code": {

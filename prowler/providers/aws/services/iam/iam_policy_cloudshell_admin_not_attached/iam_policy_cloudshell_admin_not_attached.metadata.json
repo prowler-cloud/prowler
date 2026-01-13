@@ -10,14 +10,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM identities** with the AWS managed policy `AWSCloudShellFullAccess` attached are identified across users, groups, and roles.\n\nThis indicates principals are granted `cloudshell:*` on `*`, enabling full CloudShell features, including environment startup and file transfer.",
   "Risk": "Granting `cloudshell:*` enables an interactive shell with Internet egress and file upload/download, degrading **confidentiality** and **integrity**.\n\nCompromised principals can exfiltrate data, stage tooling with sudo, persist artifacts in CloudShell, and operate from AWS IP space to bypass endpoint controls.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-27",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-access-to-awscloudshellfullaccess-is-restricted",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/unapproved-iam-policy-in-use.html",
-    "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCloudShellFullAccess.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-blacklisted-check.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html",
     "https://icompaas.freshdesk.com/support/solutions/articles/62000233099-1-22-restrict-access-to-awscloudshellfullaccess-manual-"

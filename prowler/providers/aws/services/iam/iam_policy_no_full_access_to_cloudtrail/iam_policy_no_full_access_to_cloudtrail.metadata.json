@@ -11,13 +11,15 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "Custom IAM policies are reviewed for statements that grant **full CloudTrail access** via the `cloudtrail:*` wildcard, indicating unrestricted permission to all CloudTrail actions.",
   "Risk": "Unrestricted CloudTrail control lets principals stop or alter logging, delete or modify trails, and query events.\n\nThis enables log evasion, audit tampering, and reconnaissance, undermining the **integrity**, **availability**, and **confidentiality** of audit evidence and detection.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233808-ensure-iam-policies-that-allow-full-cloudtrail-privileges-are-not-created"
   ],
   "Remediation": {
     "Code": {

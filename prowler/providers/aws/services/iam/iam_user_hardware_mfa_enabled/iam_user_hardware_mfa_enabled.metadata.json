@@ -14,13 +14,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** are evaluated for **hardware MFA** enrollment, identifying physical tokens or security keys and distinguishing them from *virtual* or *SMS* MFA, as well as users without any MFA.",
   "Risk": "Without **hardware MFA**, authentication is weaker:\n- **SIM-swap** can bypass SMS\n- **Phishing** can steal TOTP from virtual apps\n- No MFA allows password-only takeover\nThis enables unauthorized console/API access, causing data exfiltration (C), privilege abuse (I), and service disruption (A).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://medium.com/avmconsulting-blog/how-to-secure-aws-accounts-with-multi-factor-authentication-mfa-25099269de08",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html",
-    "https://partnerpens.hashnode.dev/aws-iam-hands-on-a-step-by-step-guide"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html",
+    "https://support.icompaas.com/support/solutions/articles/62000236278-ensure-iam-users-have-hardware-mfa-enabled"
   ],
   "Remediation": {
     "Code": {

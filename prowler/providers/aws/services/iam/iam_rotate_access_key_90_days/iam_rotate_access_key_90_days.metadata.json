@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM user access keys** are assessed via the credential report. For each active key, the `last_rotated` timestamp is compared to `90 days`; keys exceeding this age are identified. Users without keys or with only recent rotations are noted.",
   "Risk": "Long-lived access keys widen the attack window. If a key is leaked in code, logs, or tooling, lack of rotation keeps it valid for abuse, enabling unauthorized API calls, data exfiltration, and tampering. This degrades **confidentiality** and **integrity** and can impact **availability** and cost through destructive or excessive operations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/access-keys-rotated-90-days.html"
   ],
   "Remediation": {
     "Code": {

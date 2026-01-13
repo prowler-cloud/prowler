@@ -12,14 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** are evaluated for a direct attachment of the AWS managed policy `AdministratorAccess`. The finding identifies identities where this policy appears among the user's attached policies.",
   "Risk": "Assigning an IAM user full admin rights concentrates power in long-lived credentials. If compromised, attackers gain:\n- **Confidentiality**: read/export all data\n- **Integrity**: change configs, policies, code\n- **Availability**: delete resources, disrupt services\nAlso enables persistence and uncontrolled spend.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.datadoghq.com/security/default_rules/542-ddc-8ba/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/admin-permissions.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html",
-    "https://www.elastic.co/guide/en/security/8.19/prebuilt-rule-8-19-9-aws-iam-administratoraccess-policy-attached-to-user.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],
   "Remediation": {

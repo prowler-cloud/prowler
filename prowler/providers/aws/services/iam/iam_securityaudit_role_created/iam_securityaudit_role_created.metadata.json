@@ -12,15 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM roles** with the AWS managed `SecurityAudit` policy (`arn:aws:iam::aws:policy/SecurityAudit`) are identified. The focus is on whether a role exists that grants read-only visibility into security-relevant configuration across AWS services.",
   "Risk": "Without a dedicated **read-only audit role**, security teams lack safe visibility into configs and logs, enabling **undetected misconfigurations**, slower incident triage, and reliance on over-privileged access. This erodes **confidentiality** and **integrity** by letting exposure persist unnoticed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/SecurityAudit.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_security-auditor",
-    "https://github.com/groovyBugify/aws-security-mcp",
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/iam_example_iam_AttachRolePolicy_section.html",
-    "https://stackoverflow.com/questions/54539497/can-i-add-an-out-of-the-box-aws-iam-policy-securityaudit-an-account-id-and-an"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/iam_example_iam_AttachRolePolicy_section.html"
   ],
   "Remediation": {
     "Code": {

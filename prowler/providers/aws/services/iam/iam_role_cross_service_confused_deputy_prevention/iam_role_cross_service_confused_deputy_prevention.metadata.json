@@ -11,17 +11,15 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "**IAM service role** trust policies restrict **AWS service principals** to expected sources using global condition keys like `aws:SourceArn` or `aws:SourceAccount`, avoiding overly broad `sts:AssumeRole` trust relationships.",
   "Risk": "Unrestricted service-principal trust lets outsiders trigger a **cross-service confused deputy**, causing unintended `sts:AssumeRole`.\nThis can enable data exfiltration, unauthorized changes, and lateral movement, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html",
     "https://aws.amazon.com/blogs/security/how-to-set-up-least-privilege-access-to-your-encrypted-amazon-sqs-queue/",
-    "https://trustoncloud.com/blog/confused-deputy-vulnerability-in-amazon-datazone/",
-    "https://github.com/prowler-cloud/prowler/issues/2810",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention",
-    "https://docs.aws.amazon.com/textract/latest/dg/cross-service-confused-deputy-prevention.html",
-    "https://labs.withsecure.com/publications/dangers-of-a-service-as-a-principal-in-resource-based-policies"
+    "https://docs.aws.amazon.com/textract/latest/dg/cross-service-confused-deputy-prevention.html"
   ],
   "Remediation": {
     "Code": {

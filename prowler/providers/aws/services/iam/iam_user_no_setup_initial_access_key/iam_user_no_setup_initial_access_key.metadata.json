@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** with a console password and active **access keys** that have `last_used` as `N/A` are identified.\n\nThis highlights accounts where programmatic credentials exist but have never been exercised.",
   "Risk": "Active yet unused **access keys** expand the attack surface. If exposed, attackers gain programmatic access for unauthorized API calls, causing data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and service disruption (**availability**). Dormant keys also bloat credential inventory, delaying detection and rotation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
+    "https://support.icompaas.com/support/solutions/articles/62000228293-ensure-there-is-only-one-active-access-key-available-for-any-single-iam-user"
   ],
   "Remediation": {
     "Code": {

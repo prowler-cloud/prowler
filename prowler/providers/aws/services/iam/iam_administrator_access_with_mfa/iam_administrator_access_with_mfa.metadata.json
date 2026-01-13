@@ -14,16 +14,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamGroup",
+  "ResourceGroup": "IAM",
   "Description": "**IAM groups** with the `AdministratorAccess` managed policy are assessed to ensure all member users have **active MFA**.\n\nThe finding highlights any administrator group that includes a user without MFA enrollment or activation.",
   "Risk": "**Admin users without MFA** are vulnerable to single-factor compromise. Stolen or guessed credentials can yield full control, enabling privilege escalation, policy changes, data exfiltration, and destructive operations, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_configure-api-require.html",
-    "https://www.radishlogic.com/aws/require-multi-factor-authentication-mfa-for-iam-user-in-aws/",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
-    "https://repost.aws/knowledge-center/mfa-iam-user-aws-cli",
-    "https://medium.com/@architbidkar_66467/take-charge-of-aws-mandatory-mfa-for-unrestricted-resource-management-95241bd13734?responsesOpen=true&sortBy=REVERSE_CHRON",
-    "https://mharrison.org/post/aws_mfa/"
+    "https://repost.aws/knowledge-center/mfa-iam-user-aws-cli"
   ],
   "Remediation": {
     "Code": {

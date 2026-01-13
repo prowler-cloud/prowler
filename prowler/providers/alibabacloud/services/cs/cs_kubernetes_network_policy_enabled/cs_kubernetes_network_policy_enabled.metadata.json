@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "A **Network Policy** is a specification of how groups of pods are allowed to communicate with each other and other network endpoints.\n\n`NetworkPolicy` resources use labels to select pods and define rules which specify what traffic is allowed. By default, pods are non-isolated and accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them.",
   "Risk": "Without **Network Policies**, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move **laterally** within the cluster and access sensitive services or data.\n\nNetwork Policies are essential for implementing **defense in depth** and **least privilege** networking.",
   "RelatedUrl": "",

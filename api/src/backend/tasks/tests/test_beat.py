@@ -28,7 +28,7 @@ class TestScheduleProviderScan:
                     "tenant_id": str(provider_instance.tenant_id),
                     "provider_id": str(provider_instance.id),
                 },
-                countdown=1,
+                countdown=5,
             )
 
             task_name = f"scan-perform-scheduled-{provider_instance.id}"

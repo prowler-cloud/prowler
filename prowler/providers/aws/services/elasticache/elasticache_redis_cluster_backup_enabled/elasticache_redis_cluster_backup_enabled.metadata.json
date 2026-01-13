@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "Amazon ElastiCache Redis replication groups have **automated snapshot backups** enabled with a **retention period** of at least `7` days.\n\nThe evaluation focuses on whether backups are enabled and the configured retention meets the minimum threshold.",
   "Risk": "Absent or short-retained backups degrade **availability** and heighten **data loss** risk. Hardware failures, corruption, or accidental deletes may not be recoverable to needed points, undermining **RPO/RTO**, prolonging outages, and limiting **forensics** on cache data.",
   "RelatedUrl": "",

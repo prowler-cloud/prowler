@@ -13,14 +13,14 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**Customer-managed IAM policies** are examined for statements that grant **AWS KMS** full access using `kms:*`. The focus is on policies allowing service-wide actions rather than narrowly scoped, key-specific permissions.",
   "Risk": "Allowing `kms:*` lets principals decrypt data, change key policies, and disable or delete keys. Impact: **Confidentiality**-unauthorized decryption; **Integrity**-manipulation of cryptographic controls; **Availability**-data unreadable if keys are disabled/deleted. It can also enable privilege escalation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
-    "https://docs.kertos.io/en/article/avoid-full-kms-access-in-inline-iam-policies",
     "https://docs.aws.amazon.com/it_it/prescriptive-guidance/latest/encryption-best-practices/kms.html"
   ],
   "Remediation": {

@@ -11,20 +11,14 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "Attached **customer-managed IAM policies** are evaluated for statements granting full admin access via `Action: \"*\"`, `Resource: \"*\"`, i.e., `*:*`. Only policies you created and attached to identities are considered.",
   "Risk": "**Unrestricted admin access** lets any attached principal perform any action on any resource, enabling data exfiltration, policy tampering, credential creation, logging disablement, and destructive deletions-compromising **confidentiality, integrity, and availability** across the account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform",
-    "https://github.com/ministryofjustice/cloud-platform/issues/2800",
-    "https://www.linkedin.com/pulse/security-best-practices-aws-s3-jigisha-araniya",
-    "https://qandahub.org/blog/iam-policies-secure-aws-by",
-    "https://www.cloudquery.io/blog/announcing-aws-fsbp-policies-snowflake",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
-    "https://repost.aws/questions/QUB6UG9RwKSyakSXEyvotQ7A/iam-policies-with-full-administrative-privileges-and-mfa-questions",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/iam-policy-for-administration.html",
     "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],
   "Remediation": {

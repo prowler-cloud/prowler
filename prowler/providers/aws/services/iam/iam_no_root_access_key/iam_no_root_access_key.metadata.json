@@ -13,17 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamAccessKey",
+  "ResourceGroup": "IAM",
   "Description": "**AWS root user** is evaluated for **active access keys**. It identifies whether the root identity has one or two programmatic credentials and notes when organization-level root credential management is present.",
   "Risk": "**Root access keys** provide unrestricted API access. If exposed or misused, attackers can:\n- Turn off logging and alter policies (**integrity**)\n- Read or export data (**confidentiality**)\n- Delete resources and lock out admins (**availability**)\nLong-lived keys can persist and may bypass console-only MFA.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/secure-aws-account-root-user-onkar-gadhave-1mv3f",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
-    "https://www.rdocumentation.org/packages/paws.security.identity/versions/0.1.12/topics/iam_delete_access_key",
-    "https://www.examtopics.com/discussions/amazon/view/87564-exam-aws-certified-cloud-practitioner-topic-1-question-352/",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
-    "https://medium.com/@manimj_42945/your-aws-account-has-been-compromised-cb4e367a4bdb",
-    "https://repost.aws/fr/questions/QUdYus2RJkRNadcapHTQUIAw/deactivate-or-delete-access-keys-for-root-user?sc_ichannel=ha&sc_ilang=en&sc_isite=repost&sc_iplace=hp&sc_icontent=QUdYus2RJkRNadcapHTQUIAw&sc_ipos=12"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/root-account-access-keys-present.html"
   ],
   "Remediation": {
     "Code": {

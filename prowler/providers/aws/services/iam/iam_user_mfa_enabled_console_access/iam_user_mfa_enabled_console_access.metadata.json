@@ -14,11 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** that have a console password are expected to have **multi-factor authentication** enabled. The evaluation identifies users who can sign in to the AWS Management Console but do not have an active MFA device associated.",
   "Risk": "Without **MFA**, a stolen or brute-forced password grants full interactive access. Attackers can: - Change policies or keys - Exfiltrate data - Create backdoor users - Disable logging. This enables account takeover, threatens confidentiality and integrity, and can disrupt availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/iam-user-multi-factor-authentication-enabled.html"
   ],
   "Remediation": {
     "Code": {

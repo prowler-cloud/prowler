@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_inline_policy_no_full_access_to_kms",
-  "CheckTitle": "IAM inline policy does not allow kms:* privileges",
+  "CheckTitle": "Inline IAM policy does not allow kms:* privileges",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -11,13 +11,15 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM inline policies** are analyzed to identify statements that grant **unrestricted AWS KMS access** via the wildcard action `kms:*`.",
   "Risk": "Granting `kms:*` enables decryption of protected data, modification of key policies and grants, and disabling or deleting keys.\n\nImpacts:\n- **Confidentiality** via unauthorized decryption\n- **Integrity** through key/grant tampering\n- **Availability** if keys are disabled or deleted, breaking encrypted workloads",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+    "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233801-ensure-iam-inline-policies-that-allow-full-kms-privileges-are-not-created"
   ],
   "Remediation": {
     "Code": {

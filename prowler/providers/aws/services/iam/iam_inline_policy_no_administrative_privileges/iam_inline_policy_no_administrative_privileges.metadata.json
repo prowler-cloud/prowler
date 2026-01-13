@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_inline_policy_no_administrative_privileges",
-  "CheckTitle": "IAM inline policy does not allow '*:*' administrative privileges",
+  "CheckTitle": "Inline IAM policy does not allow '*:*' administrative privileges",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -13,13 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM inline policies** on identities are evaluated for statements allowing `Action:\"*\"` on `Resource:\"*\"`, which indicates **unrestricted administrative access**.",
   "Risk": "Granting `*:*` to an identity collapses **least privilege**, enabling total control over AWS. A compromised principal can exfiltrate data (**confidentiality**), alter configs or disable logging (**integrity**), and delete resources or keys (**availability**), enabling rapid **lateral movement** and persistent takeover.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    "https://support.icompaas.com/support/solutions/articles/62000233799-ensure-iam-inline-policies-that-allow-full-administrative-privileges-are-not-associated-to-iam-id"
   ],
   "Remediation": {
     "Code": {

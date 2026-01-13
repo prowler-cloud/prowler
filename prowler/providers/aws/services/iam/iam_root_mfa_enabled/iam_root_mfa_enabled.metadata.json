@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**AWS root user** with active credentials is assessed for **MFA activation**. The evaluation considers whether the root identity has a password or access keys and whether **MFA is enabled**.\n\n*If centralized root access is enabled in Organizations, the presence of individual root credentials is also noted.*",
   "Risk": "Without **MFA**, compromise of the root password or access keys can lead to full **account takeover**. An attacker with root can disable protections, steal or delete data, change billing, and create persistent admins, undermining confidentiality, integrity, and availability.",
   "RelatedUrl": "",

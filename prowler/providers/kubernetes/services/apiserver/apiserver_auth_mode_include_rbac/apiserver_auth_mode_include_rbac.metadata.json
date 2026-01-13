@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check verifies that Role Based Access Control (RBAC) is enabled in the Kubernetes API server's authorization mode. RBAC allows for fine-grained control over cluster operations and is recommended for secure and manageable access control.",
   "Risk": "If RBAC is not included in the API server's authorization mode, the cluster may not be leveraging fine-grained access controls, leading to potential security risks.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",

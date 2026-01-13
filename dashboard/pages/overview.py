@@ -35,6 +35,7 @@ from dashboard.config import (
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
+    create_category_dropdown,
     create_date_dropdown,
     create_provider_dropdown,
     create_region_dropdown,
@@ -343,6 +344,18 @@ else:
     status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
 
     status_dropdown = create_status_dropdown(status)
+
+    # Create the category dropdown
+    categories = []
+    if "CATEGORIES" in data.columns:
+        for cat_list in data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in categories:
+                        categories.append(cat)
+    categories = ["All"] + sorted(categories)
+    category_dropdown = create_category_dropdown(categories)
     table_div_header = []
     table_div_header.append(
         html.Div(
@@ -504,6 +517,7 @@ else:
         provider_dropdown,
         table_row_dropdown,
         status_dropdown,
+        category_dropdown,
         table_div_header,
         len(data["PROVIDER"].unique()),
     )
@@ -540,6 +554,8 @@ else:
         Output("table-rows", "options"),
         Output("status-filter", "value"),
         Output("status-filter", "options"),
+        Output("category-filter", "value"),
+        Output("category-filter", "options"),
         Output("aws_card", "n_clicks"),
         Output("azure_card", "n_clicks"),
         Output("gcp_card", "n_clicks"),
@@ -557,6 +573,7 @@ else:
     Input("provider-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("category-filter", "value"),
     Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
@@ -582,6 +599,7 @@ def filter_data(
     provider_values,
     table_row_values,
     status_values,
+    category_values,
     search_value,
     aws_clicks,
     azure_clicks,
@@ -964,6 +982,41 @@ def filter_data(
     filtered_data = filtered_data[filtered_data["STATUS"].isin(updated_status_values)]
 
     status_filter_options = ["All"] + list(filtered_data["STATUS"].unique())
+
+    # Filter Category
+    if "CATEGORIES" in filtered_data.columns:
+        if category_values == ["All"]:
+            updated_category_values = None
+        elif "All" in category_values and len(category_values) > 1:
+            category_values.remove("All")
+            updated_category_values = category_values
+        elif len(category_values) == 0:
+            updated_category_values = None
+            category_values = ["All"]
+        else:
+            updated_category_values = category_values
+
+        if updated_category_values:
+            filtered_data = filtered_data[
+                filtered_data["CATEGORIES"].apply(
+                    lambda x: any(
+                        cat.strip() in updated_category_values
+                        for cat in str(x).split(",")
+                        if str(x) != "nan"
+                    )
+                )
+            ]
+
+        category_filter_options = ["All"]
+        for cat_list in filtered_data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in category_filter_options:
+                        category_filter_options.append(cat)
+        category_filter_options = sorted(category_filter_options)
+    else:
+        category_filter_options = ["All"]
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -1512,6 +1565,8 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,
@@ -1549,6 +1604,8 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,

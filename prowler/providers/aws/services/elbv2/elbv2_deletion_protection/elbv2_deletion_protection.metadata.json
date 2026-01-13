@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**ELBv2 load balancers** with **deletion protection** (`deletion_protection.enabled`) are resistant to deletion through standard APIs.\n\nThe assessment determines whether this attribute is enabled on each load balancer.",
   "Risk": "Without **deletion protection**, a user or automated process can delete the load balancer, cutting off service endpoints and breaking routing, harming **availability**.\n\nMalicious or mistaken deletes enable **DoS**, disrupt blue/green rollbacks, and increase incident recovery time.",
   "RelatedUrl": "",

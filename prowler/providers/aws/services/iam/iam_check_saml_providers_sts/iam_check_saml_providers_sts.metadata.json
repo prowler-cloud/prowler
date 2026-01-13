@@ -10,15 +10,12 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**IAM SAML providers** enable **federated role assumption** via STS `AssumeRoleWithSAML`.\n\nThis evaluates whether such providers exist in the account.",
   "Risk": "Without **SAML federation**, users rely on **long-lived IAM keys**. Compromised keys enable persistent API access, causing **data exfiltration (C)**, unauthorized resource or policy changes (**I**), and difficult revocation. Lack of IdP controls (e.g., **MFA**, session limits) weakens **accountability** and access governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/pt/knowledge-center/workspaces-configure-saml",
-    "https://dzone.com/articles/aws-okta-jit-access-guide",
-    "https://hackage.haskell.org/package/amazonka-sts-1.6.1/docs/Network-AWS-STS-AssumeRoleWithSAML.html",
-    "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithSAML.html",
-    "https://medium.com/@knoldus/how-to-make-assumerolewithsaml-calls-with-aws-cli-94e10bbb6805"
+    "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithSAML.html"
   ],
   "Remediation": {
     "Code": {

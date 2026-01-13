@@ -10,13 +10,15 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "AwsCertificateManagerCertificate",
+  "ResourceGroup": "IAM",
   "Description": "IAM server certificates stored in **AWS IAM** are evaluated for **expiration** by comparing their validity period to the current time. Certificates with a `NotAfter` date in the past are identified as expired.",
   "Risk": "Retaining **expired TLS certificates** risks **availability** loss from failed handshakes and browser warnings, eroding trust.\n\nIf attached to endpoints, users may bypass warnings, weakening **confidentiality** and **integrity**. Stale certs also hinder **secure rotation** and may be picked by automation, causing outages.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/expired-ssl-tls-certificate.html"
   ],
   "Remediation": {
     "Code": {

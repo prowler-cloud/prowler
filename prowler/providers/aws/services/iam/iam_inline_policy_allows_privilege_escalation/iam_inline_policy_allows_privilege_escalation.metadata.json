@@ -12,11 +12,16 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**IAM inline policies** are evaluated for permission combinations that enable **privilege escalation**, such as `sts:AssumeRole`, `iam:PassRole`, attaching/editing policies, or broad wildcards. The result highlights inline policies that allow a principal to obtain higher effective access.",
   "Risk": "Excessive inline policy permissions let identities escalate to admin, compromising CIA:\n- Confidentiality: read secrets and data\n- Integrity: alter policies, code, and configs\n- Availability: delete or stop resources, disable logging\nAttackers can persist by creating keys/users or assuming powerful roles.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege",
+    "https://bishopfox.com/blog/privilege-escalation-in-aws",
+    "https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py",
+    "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "https://labs.reversec.com/posts/2025/08/another-ecs-privilege-escalation-path"
   ],
   "Remediation": {
     "Code": {
@@ -31,7 +36,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "privilege-escalation"
   ],
   "DependsOn": [],
   "RelatedTo": [],

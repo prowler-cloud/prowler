@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "**IAM roles** (excluding service roles) are evaluated for attachment of the AWS-managed `AdministratorAccess` policy.\n\nAttachment indicates the role holds unrestricted permissions across services and resources.",
   "Risk": "Granting full administrative permissions on a role undermines confidentiality, integrity, and availability. If the role is assumed or its credentials are stolen, an attacker can read sensitive data, change policies, disable auditing, delete resources and backups, and create new privileged identities, enabling swift account takeover.",
   "RelatedUrl": "",

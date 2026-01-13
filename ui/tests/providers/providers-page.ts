@@ -262,32 +262,32 @@ export class ProvidersPage extends BasePage {
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
 
-    // Radio buttons to select the type of cloud provider
-    this.awsProviderRadio = page.getByRole("radio", {
+    // Option buttons to select the type of cloud provider (listbox with options)
+    this.awsProviderRadio = page.getByRole("option", {
       name: /Amazon Web Services/i,
     });
     // Google Cloud Platform
-    this.gcpProviderRadio = page.getByRole("radio", {
+    this.gcpProviderRadio = page.getByRole("option", {
       name: /Google Cloud Platform/i,
     });
     // Microsoft Azure
-    this.azureProviderRadio = page.getByRole("radio", {
+    this.azureProviderRadio = page.getByRole("option", {
       name: /Microsoft Azure/i,
     });
     // Microsoft 365
-    this.m365ProviderRadio = page.getByRole("radio", {
+    this.m365ProviderRadio = page.getByRole("option", {
       name: /Microsoft 365/i,
     });
     // Kubernetes
-    this.kubernetesProviderRadio = page.getByRole("radio", {
+    this.kubernetesProviderRadio = page.getByRole("option", {
       name: /Kubernetes/i,
     });
     // GitHub
-    this.githubProviderRadio = page.getByRole("radio", {
+    this.githubProviderRadio = page.getByRole("option", {
       name: /GitHub/i,
     });
     // Oracle Cloud Infrastructure
-    this.ociProviderRadio = page.getByRole("radio", {
+    this.ociProviderRadio = page.getByRole("option", {
       name: /Oracle Cloud Infrastructure/i,
     });
 

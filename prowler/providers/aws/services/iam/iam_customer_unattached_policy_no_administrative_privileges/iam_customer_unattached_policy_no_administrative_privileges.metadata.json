@@ -13,13 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**Customer-managed IAM policies** that are **unattached** are evaluated for statements granting **full administrative access** using `*:*` wildcards.\n\nThe focus is on policies whose documents include unrestricted actions on all resources.",
   "Risk": "An unattached policy with `*:*` can be attached accidentally or maliciously, granting account-wide control. Attackers could read sensitive data (**confidentiality**), alter or delete resources (**integrity**), and disrupt services (**availability**), enabling rapid **privilege escalation** and lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_47#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/iam-policy-for-administration.html"
   ],
   "Remediation": {
     "Code": {

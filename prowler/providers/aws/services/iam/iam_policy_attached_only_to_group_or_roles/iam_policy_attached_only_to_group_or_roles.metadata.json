@@ -10,14 +10,13 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
   "Description": "**IAM users** have identity-based policies attached directly (managed or inline) instead of inheriting permissions via **groups** or **roles**.",
   "Risk": "Directly attached user policies hinder centralized control and cause privilege creep. If a user is compromised, excessive rights enable data exposure, resource tampering, and lateral movement, harming **confidentiality** and **integrity**. Revocation is error-prone, weakening **separation of duties** and auditability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://mf-akbar.medium.com/most-pentesters-conducting-aws-assessments-fail-to-find-real-attack-paths-how-to-attack-iam-9caa4875c110",
-    "https://readmedium.com/how-to-secure-your-aws-infrastructure-with-iam-best-practices-7ef75523af17",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],
