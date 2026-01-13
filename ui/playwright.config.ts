@@ -13,7 +13,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // CI: Run with 1 worker to reduce flakiness / shared-state conflicts
   // Local: Use half of available CPUs for faster execution
-  workers: process.env.CI ? 1 : Math.max(1, Math.floor(os.cpus().length / 2)),
+  workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
   reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
   outputDir: "/tmp/playwright-tests",
   expect: {

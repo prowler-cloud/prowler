@@ -547,8 +547,18 @@ export class ProvidersPage extends BasePage {
       await expect
         .poll(
           async () => {
+            // Primary signal: URL indicates the step.
             if (/\/providers\/add-credentials/.test(this.page.url())) return true;
 
+            // Secondary signal: the "Next" button disappeared (navigation started).
+            // This prevents us from sitting forever when the UI transitions but the
+            // add-credentials controls haven't rendered yet.
+            const nextStillVisible = await this.nextButton
+              .isVisible()
+              .catch(() => false);
+            if (!nextStillVisible) return true;
+
+            // Tertiary signals: step-specific controls become visible.
             const awsRoleRadioVisible = await this.roleCredentialsRadio
               .isVisible()
               .catch(() => false);
