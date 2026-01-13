@@ -456,10 +456,6 @@ class Entra(M365Service):
                 and error.__dict__.get("response_status_code", None) == 403
             ):
                 logger.error(
-                    "You need 'Reports.Read.All' permission to access user registration details. It only can be granted through Service Principal authentication."
-                )
-            else:
-                logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
