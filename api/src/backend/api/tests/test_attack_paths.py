@@ -10,19 +10,21 @@ from api.attack_paths import views_helpers
 
 
 def test_normalize_run_payload_extracts_attributes_section():
+    attributes = {
+        "id": "aws-rds",
+        "parameters": {"ip": "192.0.2.0"},
+    }
+
     payload = {
         "data": {
             "id": "ignored",
-            "attributes": {
-                "id": "aws-rds",
-                "parameters": {"ip": "192.0.2.0"},
-            },
+            "attributes": attributes,
         }
     }
 
     result = views_helpers.normalize_run_payload(payload)
 
-    assert result == {"id": "aws-rds", "parameters": {"ip": "192.0.2.0"}}
+    assert result == attributes
 
 
 def test_normalize_run_payload_passthrough_for_non_dict():
@@ -33,15 +35,18 @@ def test_normalize_run_payload_passthrough_for_non_dict():
 def test_prepare_query_parameters_includes_provider_and_casts(
     attack_paths_query_definition_factory,
 ):
+    limit = 5
+    uid = "123456789012"
+
     definition = attack_paths_query_definition_factory(cast_type=int)
     result = views_helpers.prepare_query_parameters(
         definition,
-        {"limit": "5"},
-        provider_uid="123456789012",
+        {"limit": limit},
+        provider_uid=uid,
     )
 
-    assert result["provider_uid"] == "123456789012"
-    assert result["limit"] == 5
+    assert result["provider_uid"] == uid
+    assert result["limit"] == limit
 
 
 @pytest.mark.parametrize(
@@ -80,6 +85,12 @@ def test_prepare_query_parameters_validates_cast(
 def test_execute_attack_paths_query_serializes_graph(
     attack_paths_query_definition_factory, attack_paths_graph_stub_classes
 ):
+    tenant_1 = "tenant-1"
+    tenant_2 = "tenant-2"
+    node_1 = "node-1"
+    node_1_property_value = "value-1"
+    rel_1_type = "OWNS"
+
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
         name="RDS",
@@ -88,16 +99,16 @@ def test_execute_attack_paths_query_serializes_graph(
         parameters=[],
     )
     parameters = {"provider_uid": "123"}
-    attack_paths_scan = SimpleNamespace(graph_database="tenant-db")
+    attack_paths_scan = SimpleNamespace(tenant_id=tenant_1)
 
     node = attack_paths_graph_stub_classes.Node(
-        element_id="node-1",
+        element_id=node_1,
         labels=["AWSAccount"],
         properties={
             "name": "account",
             "complex": {
                 "items": [
-                    attack_paths_graph_stub_classes.NativeValue("value"),
+                    attack_paths_graph_stub_classes.NativeValue(node_1_property_value),
                     {"nested": 1},
                 ]
             },
@@ -105,7 +116,7 @@ def test_execute_attack_paths_query_serializes_graph(
     )
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
-        rel_type="OWNS",
+        rel_type=rel_1_type,
         start_node=node,
         end_node=attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance"], {}),
         properties={"weight": 1},
@@ -122,19 +133,26 @@ def test_execute_attack_paths_query_serializes_graph(
     session_ctx.__enter__.return_value = session
     session_ctx.__exit__.return_value = False
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.get_session",
-        return_value=session_ctx,
-    ) as mock_get_session:
+    with (
+        patch(
+            "api.attack_paths.views_helpers.graph_database.get_session",
+            return_value=session_ctx,
+        ) as mock_get_session,
+        patch(
+            "api.attack_paths.views_helpers.graph_database.get_database_name",
+            return_value=tenant_2,
+        ) as mock_get_db_name,
+    ):
         result = views_helpers.execute_attack_paths_query(
             attack_paths_scan, definition, parameters
         )
 
-    mock_get_session.assert_called_once_with("tenant-db")
+    mock_get_db_name.assert_called_once_with(tenant_1)
+    mock_get_session.assert_called_once_with(tenant_2)
     session.run.assert_called_once_with(definition.cypher, parameters)
-    assert result["nodes"][0]["id"] == "node-1"
-    assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
-    assert result["relationships"][0]["label"] == "OWNS"
+    assert result["nodes"][0]["id"] == node_1
+    assert result["nodes"][0]["properties"]["complex"]["items"][0] == node_1_property_value
+    assert result["relationships"][0]["label"] == rel_1_type
 
 
 def test_execute_attack_paths_query_wraps_graph_errors(
@@ -147,7 +165,7 @@ def test_execute_attack_paths_query_wraps_graph_errors(
         cypher="MATCH (n) RETURN n",
         parameters=[],
     )
-    attack_paths_scan = SimpleNamespace(graph_database="tenant-db")
+    attack_paths_scan = SimpleNamespace(tenant_id="tenant-1")
     parameters = {"provider_uid": "123"}
 
     class ExplodingContext:
@@ -161,6 +179,10 @@ def test_execute_attack_paths_query_wraps_graph_errors(
         patch(
             "api.attack_paths.views_helpers.graph_database.get_session",
             return_value=ExplodingContext(),
+        ),
+        patch(
+            "api.attack_paths.views_helpers.graph_database.get_database_name",
+            return_value="tenant-db",
         ),
         patch("api.attack_paths.views_helpers.logger") as mock_logger,
     ):

@@ -83,8 +83,10 @@ def execute_attack_paths_query(
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
 ) -> dict[str, Any]:
+    tenant_database_name = graph_database.get_database_name(attack_paths_scan.tenant_id)
+
     try:
-        with graph_database.get_session(attack_paths_scan.graph_database) as session:
+        with graph_database.get_session(tenant_database_name) as session:
             result = session.run(definition.cypher, parameters)
             return _serialize_graph(result.graph())
 

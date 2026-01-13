@@ -60,14 +60,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "graph_database",
-                    models.CharField(blank=True, max_length=63, null=True),
-                ),
-                (
-                    "is_graph_database_deleted",
-                    models.BooleanField(default=False),
-                ),
-                (
                     "ingestion_exceptions",
                     models.JSONField(blank=True, default=dict, null=True),
                 ),
@@ -124,21 +116,6 @@ class Migration(migrations.Migration):
                     models.Index(
                         fields=["tenant_id", "scan_id"],
                         name="aps_scan_lookup_idx",
-                    ),
-                    models.Index(
-                        fields=["tenant_id", "provider_id"],
-                        name="aps_active_graph_idx",
-                        include=["graph_database", "id"],
-                        condition=models.Q(("is_graph_database_deleted", False)),
-                    ),
-                    models.Index(
-                        fields=["tenant_id", "provider_id", "-completed_at"],
-                        name="aps_completed_graph_idx",
-                        include=["graph_database", "id"],
-                        condition=models.Q(
-                            ("state", "completed"),
-                            ("is_graph_database_deleted", False),
-                        ),
                     ),
                 ],
             },

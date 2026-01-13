@@ -1,16 +1,20 @@
 import logging
+import os
+import tempfile
 import threading
 
 from contextlib import contextmanager
-from typing import Iterator
-from uuid import UUID
+from itertools import islice
+from typing import Any, Iterator
 
 import neo4j
 import neo4j.exceptions
 
+from cartography.intel import create_indexes as cartography_create_indexes
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
+from tasks.jobs.attack_paths import prowler as attack_paths_prowler
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -119,13 +123,116 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
             return 0  # As there are no nodes to delete, the result is empty
 
 
+def create_database_dump(database: str, root_node_label: str, root_node_id: str) -> str:
+    file_descriptor, dump_filename_path = tempfile.mkstemp(suffix=".neo4jdump")
+    os.close(file_descriptor)
+
+    query = """
+        CALL {
+            MATCH (rn:__ROOT_NODE_LABEL__ {id: $root_node_id})
+            CALL apoc.path.subgraphAll(rn, {}) YIELD nodes, relationships
+            RETURN nodes, relationships
+        }
+        WITH nodes, relationships
+
+        CALL {
+            // Chunk nodes
+            WITH nodes
+            UNWIND range(0, size(nodes) - 1, 5000) AS offset
+            UNWIND nodes[offset..offset + 5000] AS n
+            RETURN apoc.convert.toJson({
+                    type:'node',
+                    id:id(n),
+                    labels:labels(n),
+                    properties:properties(n)
+            }) AS line
+
+            UNION ALL
+
+            // Chunk relationships
+            WITH relationships
+            UNWIND range(0, size(relationships) - 1, 5000) AS offset
+            UNWIND relationships[offset..offset + 5000] AS r
+            RETURN apoc.convert.toJson({
+                type:'relationship',
+                id:id(r),
+                label:type(r),
+                start:id(startNode(r)),
+                end:id(endNode(r)),
+                properties:properties(r)
+            }) AS line
+        }
+        RETURN line
+    """.replace("__ROOT_NODE_LABEL__", root_node_label)
+    parameters = {"root_node_id": root_node_id}
+
+    with get_session(database) as neo4j_session:
+        with open(dump_filename_path, "w", encoding="utf-8") as f:
+            for record in neo4j_session.run(query, parameters):
+                f.write(record["line"])
+                f.write("\n")
+
+    return dump_filename_path
+
+
+def load_database_dump(dump_filename_path: str, database: str) -> str:
+    BATCH_SIZE = 1000
+
+    query = """
+        // Read the batch
+        WITH [line IN $lines | apoc.convert.fromJsonMap(line)] AS rows
+
+        // Create nodes from the batch
+        CALL {
+            WITH rows
+            UNWIND rows AS row
+            WITH row
+            WHERE row.type = 'node'
+            MERGE (n {piid: row.id})
+            SET n += COALESCE(row.properties, {})
+            FOREACH (l IN COALESCE(row.labels, []) | SET n:$(l))
+        }
+
+        // Create relationships from the batch
+        CALL {
+            WITH rows
+            UNWIND rows AS row
+            WITH row
+            WHERE row.type = 'relationship'
+            MATCH (s {piid: row.start}), (t {piid: row.end})
+            CREATE (s)-[r:$(row.label)]->(t)
+            SET r += COALESCE(row.properties, {})
+        };
+    """
+
+    def chunks(iterable, size):
+        it = iter(iterable)
+        while True:
+            batch = list(islice(it, size))
+            if not batch:
+                break
+            yield batch
+
+    with get_session(database) as neo4j_session:
+        with open(dump_filename_path, "r", encoding="utf-8") as f:
+            for batch in chunks(f, BATCH_SIZE):
+                neo4j_session.run(query, {"lines": batch}).consume()
+
+        cartography_create_indexes.run(neo4j_session, None)
+        attack_paths_prowler.create_indexes(neo4j_session)
+
+    os.remove(dump_filename_path)
+
+
 # Neo4j functions related to Prowler + Cartography
-DATABASE_NAME_TEMPLATE = "db-{attack_paths_scan_id}"
+DATABASE_NAME_TEMPLATE = "db-{reference_id}"  # For tenants' main databases, so it uses `tenant_id`
+TEMPORAL_DATABASE_NAME_TEMPLATE = "db-tmp-{reference_id}"  # For temporal databases, so it uses `attack_paths_scan_id`
 
 
-def get_database_name(attack_paths_scan_id: UUID) -> str:
-    attack_paths_scan_id_str = str(attack_paths_scan_id).lower()
-    return DATABASE_NAME_TEMPLATE.format(attack_paths_scan_id=attack_paths_scan_id_str)
+def get_database_name(reference_id: Any, temporal: bool = False) -> str:
+    lower_reference_id = str(reference_id).lower()
+    template = TEMPORAL_DATABASE_NAME_TEMPLATE if temporal else DATABASE_NAME_TEMPLATE
+    return template.format(reference_id=lower_reference_id)
 
 
 # Exceptions

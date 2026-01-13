@@ -59,7 +59,7 @@ class TestAttackPathsRun:
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
-                return_value="db-scan-id",
+                side_effect=["temp-db", "tenant-db"],
             ) as mock_get_db_name,
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.create_database"
@@ -69,11 +69,27 @@ class TestAttackPathsRun:
                 return_value=session_ctx,
             ) as mock_get_session,
             patch(
+                "tasks.jobs.attack_paths.scan.graph_database.create_database_dump",
+                return_value="/tmp/dump",
+            ) as mock_create_dump,
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.drop_database"
+            ) as mock_drop_db,
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph"
+            ) as mock_drop_subgraph,
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.load_database_dump"
+            ) as mock_load_dump,
+            patch(
                 "tasks.jobs.attack_paths.scan.cartography_create_indexes.run"
             ) as mock_cartography_indexes,
             patch(
                 "tasks.jobs.attack_paths.scan.cartography_analysis.run"
             ) as mock_cartography_analysis,
+            patch(
+                "tasks.jobs.attack_paths.scan.cartography_ontology.run"
+            ) as mock_cartography_ontology,
             patch(
                 "tasks.jobs.attack_paths.scan.prowler.create_indexes"
             ) as mock_prowler_indexes,
@@ -108,13 +124,14 @@ class TestAttackPathsRun:
         mock_retrieve_scan.assert_called_once_with(str(tenant.id), str(scan.id))
         mock_starting.assert_called_once()
         config = mock_starting.call_args[0][2]
-        assert config.neo4j_database == "db-scan-id"
+        assert config.neo4j_database == "temp-db"
 
-        mock_create_db.assert_called_once_with("db-scan-id")
-        mock_get_session.assert_called_once_with("db-scan-id")
+        mock_create_db.assert_has_calls([call("temp-db"), call("tenant-db")])
+        mock_get_session.assert_called_once_with("temp-db")
         mock_cartography_indexes.assert_called_once_with(mock_session, config)
         mock_prowler_indexes.assert_called_once_with(mock_session)
         mock_cartography_analysis.assert_called_once_with(mock_session, config)
+        mock_cartography_ontology.assert_called_once_with(mock_session, config)
         mock_prowler_analysis.assert_called_once_with(
             mock_session,
             provider,
@@ -129,10 +146,19 @@ class TestAttackPathsRun:
         mock_update_progress.assert_any_call(attack_paths_scan, 1)
         mock_update_progress.assert_any_call(attack_paths_scan, 2)
         mock_update_progress.assert_any_call(attack_paths_scan, 95)
-        mock_finish.assert_called_once_with(
-            attack_paths_scan, StateChoices.COMPLETED, ingestion_result
-        )
-        mock_get_db_name.assert_called_once_with(attack_paths_scan.id)
+        mock_update_progress.assert_any_call(attack_paths_scan, 96)
+        mock_update_progress.assert_any_call(attack_paths_scan, 97)
+        mock_update_progress.assert_any_call(attack_paths_scan, 98)
+        mock_update_progress.assert_any_call(attack_paths_scan, 99)
+        mock_finish.assert_called_once_with(attack_paths_scan, StateChoices.COMPLETED, ingestion_result)
+        assert mock_get_db_name.call_args_list == [
+            call(attack_paths_scan.id, temporal=True),
+            call(str(tenant.id)),
+        ]
+        mock_create_dump.assert_called_once_with("temp-db", "AWSAccount", str(provider.uid))
+        mock_drop_db.assert_called_once_with("temp-db")
+        mock_drop_subgraph.assert_called_once_with("tenant-db", "AWSAccount", str(provider.uid))
+        mock_load_dump.assert_called_once_with("/tmp/dump", "tenant-db")
 
     def test_run_failure_marks_scan_failed(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -170,15 +196,17 @@ class TestAttackPathsRun:
             patch("tasks.jobs.attack_paths.scan.graph_database.get_uri"),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
-                return_value="db-scan-id",
+                return_value="temp-db",
             ),
             patch("tasks.jobs.attack_paths.scan.graph_database.create_database"),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ),
+            patch("tasks.jobs.attack_paths.scan.graph_database.drop_database") as mock_drop_db,
             patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
             patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
+            patch("tasks.jobs.attack_paths.scan.cartography_ontology.run"),
             patch("tasks.jobs.attack_paths.scan.prowler.create_indexes"),
             patch("tasks.jobs.attack_paths.scan.prowler.analysis"),
             patch(
@@ -214,6 +242,7 @@ class TestAttackPathsRun:
         assert failure_args[2] == {
             "global_cartography_error": "Cartography failed: ingestion boom"
         }
+        mock_drop_db.assert_called_once_with("temp-db")
 
     def test_run_returns_early_for_unsupported_provider(self, tenants_fixture):
         tenant = tenants_fixture[0]

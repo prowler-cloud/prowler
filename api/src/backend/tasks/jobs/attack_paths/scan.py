@@ -17,7 +17,7 @@ from api.models import (
     StateChoices,
 )
 from api.utils import initialize_prowler_provider
-from tasks.jobs.attack_paths import aws, db_utils, prowler, utils
+from tasks.jobs.attack_paths import aws, db_utils, providers, prowler, utils
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)
@@ -63,7 +63,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
         neo4j_uri=graph_database.get_uri(),
-        neo4j_database=graph_database.get_database_name(attack_paths_scan.id),
+        neo4j_database=graph_database.get_database_name(attack_paths_scan.id, temporal=True),
         update_tag=int(time.time()),
     )
 
@@ -102,35 +102,19 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
             # Post-processing: Just keeping it to be more Cartography compliant
             cartography_ontology.run(neo4j_session, cartography_config)
-            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
-
             cartography_analysis.run(neo4j_session, cartography_config)
-            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             # Adding Prowler nodes and relationships
             prowler.analysis(
                 neo4j_session, prowler_api_provider, scan_id, cartography_config
             )
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-
-        # Handling databases changes
-        old_attack_paths_scans = db_utils.get_old_attack_paths_scans(
-            prowler_api_provider.tenant_id,
-            prowler_api_provider.id,
-            attack_paths_scan.id,
-        )
-        for old_attack_paths_scan in old_attack_paths_scans:
-            graph_database.drop_database(old_attack_paths_scan.graph_database)
-            db_utils.update_old_attack_paths_scan(old_attack_paths_scan)
-
-        db_utils.finish_attack_paths_scan(
-            attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
-        )
-        return ingestion_exceptions
 
     except Exception as e:
         exception_message = utils.stringify_exception(e, "Cartography failed")
@@ -143,6 +127,38 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )
         raise
+
+    # Variables for database transfer
+    tenant_database = graph_database.get_database_name(tenant_id)
+    root_node_label = providers.get_root_node_label(prowler_api_provider.provider)
+    root_node_id = str(prowler_api_provider.uid)
+
+    # Create dump from temporal database
+    dump_filename_path = graph_database.create_database_dump(
+        cartography_config.neo4j_database, root_node_label, root_node_id
+    )
+    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
+
+    graph_database.drop_database(cartography_config.neo4j_database)
+    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
+
+    logger.info(f"Dump created at {dump_filename_path} for Attack Paths scan {attack_paths_scan.id}")
+
+    # Load dump into tenant's main database
+    graph_database.create_database(tenant_database)
+    graph_database.drop_subgraph(tenant_database, root_node_label, root_node_id)
+    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
+
+    logger.info(f"Tenant database {tenant_database} ready, loading dump now")
+
+    graph_database.load_database_dump(dump_filename_path, tenant_database)
+
+    logger.info(f"Dump loaded into tenant database {tenant_database} for Attack Paths scan {attack_paths_scan.id}")
+
+    db_utils.finish_attack_paths_scan(
+        attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
+    )
+    return ingestion_exceptions
 
 
 def _call_within_event_loop(fn, *args, **kwargs):

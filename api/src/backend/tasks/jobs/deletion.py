@@ -13,7 +13,7 @@ from api.models import (
     ScanSummary,
     Tenant,
 )
-from tasks.jobs.attack_paths.db_utils import get_provider_graph_database_names
+from tasks.jobs.attack_paths import providers
 
 logger = get_task_logger(__name__)
 
@@ -33,16 +33,7 @@ def delete_provider(tenant_id: str, pk: str):
     Raises:
         Provider.DoesNotExist: If no instance with the provided primary key exists.
     """
-    # Delete the Attack Paths' graph databases related to the provider
-    graph_database_names = get_provider_graph_database_names(tenant_id, pk)
-    try:
-        for graph_database_name in graph_database_names:
-            graph_database.drop_database(graph_database_name)
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Provider databases: {gdb_error}")
-        raise
-
-    # Get all provider related data and delete them in batches
+    # Get all provider related data
     with rls_transaction(tenant_id):
         instance = Provider.all_objects.get(pk=pk)
         deletion_steps = [
@@ -53,6 +44,7 @@ def delete_provider(tenant_id: str, pk: str):
             ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
         ]
 
+    # Delete related data in batches
     deletion_summary = {}
     for step_name, queryset in deletion_steps:
         try:
@@ -62,6 +54,13 @@ def delete_provider(tenant_id: str, pk: str):
             logger.error(f"Error deleting {step_name}: {db_error}")
             raise
 
+    # Delete the Attack Paths' graph from the tenant graph database
+    tenant_graph_database = graph_database.get_database_name(tenant_id)
+    root_node_label = providers.get_root_node_label(instance.provider)
+    root_node_id = str(instance.uid)
+    graph_database.drop_subgraph(tenant_graph_database, root_node_label, root_node_id)
+
+    # Finally, delete the provider instance itself
     try:
         with rls_transaction(tenant_id):
             _, provider_summary = instance.delete()
@@ -89,6 +88,9 @@ def delete_tenant(pk: str):
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
+
+    tenant_graph_database = graph_database.get_database_name(pk)
+    graph_database.drop_database(tenant_graph_database)
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

@@ -1502,8 +1502,10 @@ def create_attack_paths_scan():
             "scan": scan_instance,
             "state": state,
             "progress": progress,
-            "graph_database": graph_database,
         }
+        # `graph_database` is no longer a model field; keep accepting it for backward compatibility
+        # in tests but avoid passing it to the model constructor.
+        extra_fields.pop("graph_database", None)
         payload.update(extra_fields)
 
         return AttackPathsScan.objects.create(**payload)

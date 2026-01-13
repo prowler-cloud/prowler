@@ -1258,8 +1258,8 @@ xmltodict = "*"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/cartography"
-reference = "azure-mgmt-sql-3"
-resolved_reference = "7c7d6d5014bf079066ee1645e9517c67fb36fe67"
+reference = "master"
+resolved_reference = "c134846c0db64747340f880cf0b5085f5e473e03"
 
 [[package]]
 name = "celery"
@@ -5478,8 +5478,8 @@ tzlocal = "5.3.1"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "PROWLER-510-update-cartography-dependency"
-resolved_reference = "221f6afbcf625e4b6334919f165a1419a1e7d5d4"
+reference = "attack-paths-demo"
+resolved_reference = "95d9e9a59f8e52e4096a5c17bf839e515b918239"
 
 [[package]]
 name = "psutil"
@@ -5696,7 +5696,7 @@ description = "PycURL -- A Python Interface To The cURL library"
 optional = false
 python-versions = ">=3.5"
 groups = ["main"]
-markers = "sys_platform != \"win32\" and platform_python_implementation == \"CPython\""
+markers = "platform_python_implementation == \"CPython\" and sys_platform != \"win32\""
 files = [
     {file = "pycurl-7.45.6-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:c31b390f1e2cd4525828f1bb78c1f825c0aab5d1588228ed71b22c4784bdb593"},
     {file = "pycurl-7.45.6-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:942b352b69184cb26920db48e0c5cb95af39874b57dbe27318e60f1e68564e37"},
@@ -5956,7 +5956,7 @@ description = "The MSALRuntime Python Interop Package"
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
-markers = "sys_platform == \"win32\" and (platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\")"
+markers = "(platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\") and sys_platform == \"win32\""
 files = [
     {file = "pymsalruntime-0.18.1-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:0c22e2e83faa10de422bbfaacc1bb2887c9025ee8a53f0fc2e4f7db01c4a7b66"},
     {file = "pymsalruntime-0.18.1-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:8ce2944a0f944833d047bb121396091e00287e2b6373716106da86ea99abf379"},
@@ -7806,4 +7806,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "1c2a75921edf35350cd01ff76bc4d4316ffd4f4aba8d02b4454013d8b70a730d"
+content-hash = "de57b503d0f96c22ac3f9b1e9845aefac0a5b32089c9d90928a357f991384db3"

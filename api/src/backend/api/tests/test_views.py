@@ -3850,19 +3850,40 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
-            graph_database=None,
         )
 
-        response = authenticated_client.post(
-            reverse(
-                "attack-paths-scans-queries-run", kwargs={"pk": attack_paths_scan.id}
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-rds",
+            name="RDS inventory",
+            description="List account RDS assets",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
+        )
+        prepared_parameters = {"provider_uid": provider.uid}
+        empty_graph_payload = {"nodes": [], "relationships": []}
+
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                return_value=prepared_parameters,
             ),
-            data=self._run_payload(),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                return_value=empty_graph_payload,
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
 
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "does not reference a graph database" in str(response.json())
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_run_attack_paths_query_unknown_query(
         self,
