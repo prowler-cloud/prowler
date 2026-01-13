@@ -79,6 +79,7 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/azure/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/gcp/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/kubernetes/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/m365/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/mongodbatlas/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/oci/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/alibabacloud/lib/mutelist/**"
