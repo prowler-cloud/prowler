@@ -56,6 +56,7 @@ export const GRAPH_EDGE_HIGHLIGHT_COLOR = "#f97316"; // Orange 500 (on hover)
 export const GRAPH_EDGE_GLOW_COLOR = "#fb923c";
 export const GRAPH_SELECTION_COLOR = "#ffffff";
 export const GRAPH_BORDER_COLOR = "#374151";
+export const GRAPH_ALERT_BORDER_COLOR = "#ef4444"; // Red 500 - for resources with findings
 
 /**
  * Get node fill color based on labels and properties
