@@ -136,7 +136,7 @@ export async function verifyLoginFormElements(page: Page) {
 }
 
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 }
 
 export async function verifyDashboardRoute(page: Page) {
@@ -271,8 +271,8 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   // Additional wait for React table to re-render with the server-filtered data
   // The filtering happens on the server, but the table component needs time
-  // to process the response and update the DOM after network idle
-  await page.page.waitForTimeout(1500);
+  // to process the response and update the DOM
+  await page.page.waitForTimeout(3000);
 
   // Get all rows from the table
   const allRows = page.providersTable.locator("tbody tr");
@@ -330,9 +330,6 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   if (!targetRow) {
     // Provider not found, nothing to delete
-    // Navigate back to providers page to ensure clean state
-    await page.goto();
-    await expect(page.providersTable).toBeVisible({ timeout: 10000 });
     return;
   }
 
@@ -373,7 +370,24 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-  // Navigate back to providers page to ensure clean state
-  await page.goto();
-  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+  // Poll the API directly to verify the provider is fully deleted from the database
+  // The API marks provider as is_deleted=True immediately, but the actual DB deletion
+  // happens async via Celery. We poll until the provider no longer exists in the DB.
+  // Note: NEXT_PUBLIC_API_BASE_URL may contain docker-internal hostname (prowler-api),
+  // but tests run on the host machine, so we always use localhost for direct API calls.
+  const apiBaseUrl = "http://localhost:8080/api/v1";
+
+  await expect(async () => {
+    // Query the API for providers with this UID (include deleted ones if possible)
+    const response = await page.page.request.get(
+      `${apiBaseUrl}/providers?filter[uid]=${providerUID}`
+    );
+    const data = await response.json();
+
+    // Provider should not exist in the response (fully deleted from DB)
+    const providerExists = data.data?.some((p: { attributes?: { uid?: string } }) =>
+      p.attributes?.uid === providerUID
+    );
+    expect(providerExists).toBeFalsy();
+  }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
 }

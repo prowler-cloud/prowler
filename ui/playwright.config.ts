@@ -1,24 +1,39 @@
 import { defineConfig, devices } from "@playwright/test";
+import { config } from "dotenv";
+import { expand } from "dotenv-expand";
+import os from "os";
+
+// Load environment variables from .env file (silenced to avoid noise in test output)
+expand(config({ quiet: true }));
 
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [["list"]],
+  // Retry only once in CI - tests should be stable now
+  retries: process.env.CI ? 1 : 0,
+  // CI: Use 2 workers for parallelism (provider tests are serial anyway)
+  // Local: Use half of available CPUs
+  workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
+  reporter: process.env.CI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"]],
   outputDir: "/tmp/playwright-tests",
+  // Reduce default timeout - most actions should complete in 10s
+  timeout: process.env.CI ? 60000 : 30000,
   expect: {
-    timeout: 20000,
+    timeout: 15000,
   },
 
   use: {
     baseURL: process.env.AUTH_URL
       ? process.env.AUTH_URL
       : "http://localhost:3000",
-    trace: "off",
-    screenshot: "off",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
     video: "off",
+    // Reduce action timeout for faster failure detection
+    actionTimeout: 10000,
   },
 
   projects: [
@@ -88,10 +103,11 @@ export default defineConfig({
     // Test Suite Projects
     // ===========================================
     // These projects run the actual test suites
+    // This project runs the sign-in test suite (login, middleware, session, token refresh)
     {
-      name: "chromium",
+      name: "sign-in",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: "auth-login.spec.ts",
+      testMatch: /sign-in\/.*\.spec\.ts/,
     },
     // This project runs the sign-up test suite
     {

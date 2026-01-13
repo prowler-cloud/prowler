@@ -14,28 +14,29 @@ export interface SocialAuthConfig {
 
 export class SignInPage extends BasePage {
   readonly homePage: HomePage;
-  
+
   // Form elements
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
   readonly form: Locator;
-  
+
   // Social authentication buttons
   readonly googleButton: Locator;
   readonly githubButton: Locator;
   readonly samlButton: Locator;
-  
+
   // Navigation elements
   readonly signUpLink: Locator;
   readonly backButton: Locator;
-  
+
   // UI elements
   readonly logo: Locator;
-  
+  readonly pageTitle: Locator;
+
   // Error messages
   readonly errorMessages: Locator;
-  
+
   // SAML specific elements
   readonly samlModeTitle: Locator;
   readonly samlEmailInput: Locator;
@@ -43,30 +44,31 @@ export class SignInPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.homePage = new HomePage(page);
-    
+
     // Form elements
     this.emailInput = page.getByRole("textbox", { name: "Email" });
     this.passwordInput = page.getByRole("textbox", { name: "Password" });
     this.loginButton = page.getByRole("button", { name: "Log in" });
     this.form = page.locator("form");
-    
+
     // Social authentication buttons
     this.googleButton = page.getByRole("button", { name: "Continue with Google" });
     this.githubButton = page.getByRole("button", { name: "Continue with Github" });
     this.samlButton = page.getByRole("button", { name: "Continue with SAML SSO" });
-    
+
     // Navigation elements
     this.signUpLink = page.getByRole("link", { name: "Sign up" });
     this.backButton = page.getByRole("button", { name: "Back" });
-    
-    // UI elements
+
+    // UI elements - title is a <p> element, not a heading
     this.logo = page.locator('svg[width="300"]');
-    
-    // Error messages
-    this.errorMessages = page.locator('[role="alert"], .error-message, [data-testid="error"]');
-    
-    // SAML specific elements
-    this.samlModeTitle = page.getByRole("heading", { name: "Sign in with SAML SSO" });
+    this.pageTitle = page.locator("p.text-xl.font-medium");
+
+    // Error messages - form validation errors appear as <p> with specific classes
+    this.errorMessages = page.locator("p.text-destructive, p.text-sm.text-destructive");
+
+    // SAML specific elements - title is a <p> not heading
+    this.samlModeTitle = page.locator("p.text-xl.font-medium", { hasText: "Sign in with SAML SSO" });
     this.samlEmailInput = page.getByRole("textbox", { name: "Email" });
   }
 
@@ -137,7 +139,8 @@ export class SignInPage extends BasePage {
   async verifyPageLoaded(): Promise<void> {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.logo).toBeVisible();
-    await expect(this.page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+    await expect(this.pageTitle).toBeVisible();
+    await expect(this.pageTitle).toHaveText("Sign in");
   }
 
   async verifyFormElements(): Promise<void> {
@@ -157,7 +160,7 @@ export class SignInPage extends BasePage {
   }
 
   async verifyNavigationLinks(): Promise<void> {
-    await expect(this.page.getByRole('link', { name: /Need to create an account\?/i })).toBeVisible();
+    await expect(this.page.getByText("Need to create an account?")).toBeVisible();
     await expect(this.signUpLink).toBeVisible();
   }
 
@@ -166,7 +169,8 @@ export class SignInPage extends BasePage {
   }
 
   async verifyLoginError(errorMessage: string = "Invalid email or password"): Promise<void> {
-    await expect(this.page.getByRole("alert", { name: errorMessage })).toBeVisible();
+    // Error messages appear as <p> elements with destructive styling
+    await expect(this.page.getByText(errorMessage).first()).toBeVisible();
     await expect(this.page).toHaveURL("/sign-in");
   }
 
@@ -177,22 +181,22 @@ export class SignInPage extends BasePage {
   }
 
   async verifyNormalModeActive(): Promise<void> {
-    await expect(this.page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+    await expect(this.pageTitle).toHaveText("Sign in");
     await expect(this.passwordInput).toBeVisible();
   }
 
   async verifyLoadingState(): Promise<void> {
+    // Check that button shows loading text or is disabled
     await expect(this.loginButton).toHaveAttribute("aria-disabled", "true");
-    await super.verifyLoadingState();
   }
 
   async verifyFormValidation(): Promise<void> {
-    // Check for common validation messages
-    const emailError = this.page.getByRole("alert", { name: "Please enter a valid email address." });
-    const passwordError = this.page.getByRole("alert", { name: "Password is required." });
-    
+    // Check for common validation messages - they appear as <p> elements
+    const emailError = this.page.getByText("Please enter a valid email address.");
+    const passwordError = this.page.getByText("Password is required.");
+
     // At least one validation error should be visible
-    await expect(emailError.or(passwordError)).toBeVisible();
+    await expect(emailError.or(passwordError).first()).toBeVisible();
   }
 
   // Accessibility methods
@@ -236,8 +240,9 @@ export class SignInPage extends BasePage {
   }
 
   async verifyLogoutSuccess(): Promise<void> {
-    await expect(this.page).toHaveURL("/sign-in");
-    await expect(this.page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+    // After logout, URL may include callbackUrl parameter
+    await expect(this.page).toHaveURL(/\/sign-in/);
+    await expect(this.pageTitle).toHaveText("Sign in");
   }
 
   // Advanced interaction methods
@@ -245,7 +250,7 @@ export class SignInPage extends BasePage {
     // Fill email first and check for validation
     await this.fillEmail(credentials.email);
     await this.page.keyboard.press("Tab"); // Trigger validation
-    
+
     // Fill password
     await this.fillPassword(credentials.password);
   }

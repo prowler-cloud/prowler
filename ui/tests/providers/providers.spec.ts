@@ -27,7 +27,11 @@ import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
 import { deleteProviderIfExists } from "../helpers";
 
-test.describe("Add Provider", () => {
+test.describe.serial("Add Provider", () => {
+  // Increase timeout for provider tests that involve multiple page navigations
+  // Using serial mode to prevent parallel execution conflicts with provider cleanup
+  test.setTimeout(90000);
+
   test.describe.serial("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;

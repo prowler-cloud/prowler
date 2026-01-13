@@ -469,6 +469,8 @@ export class ProvidersPage extends BasePage {
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
+    // Wait for the form to be in step 2 (fields visible after provider selection)
+    await expect(this.accountIdInput).toBeVisible();
 
     await this.accountIdInput.fill(data.accountId);
 
@@ -489,6 +491,8 @@ export class ProvidersPage extends BasePage {
 
   async fillM365ProviderDetails(data: M365ProviderData): Promise<void> {
     // Fill the M365 provider details
+    // Wait for the form to be in step 2 (fields visible after provider selection)
+    await expect(this.m365domainIdInput).toBeVisible();
 
     await this.m365domainIdInput.fill(data.domainId);
 
@@ -536,9 +540,11 @@ export class ProvidersPage extends BasePage {
     // Get the current page URL
     const url = this.page.url();
 
-    // If on the "connect-account" step, click the "Next" button
+    // If on the "connect-account" step, click the "Next" button and wait for navigation
     if (/\/providers\/connect-account/.test(url)) {
       await this.nextButton.click();
+      // Wait for navigation to add-credentials page
+      await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
       return;
     }
 
@@ -548,11 +554,15 @@ export class ProvidersPage extends BasePage {
 
       if (await this.saveButton.count()) {
         await this.saveButton.click();
+        // Wait for navigation to test-connection page
+        await expect(this.page).toHaveURL(/\/providers\/test-connection/);
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
       if (await this.nextButton.count()) {
         await this.nextButton.click();
+        // Wait for navigation to test-connection page
+        await expect(this.page).toHaveURL(/\/providers\/test-connection/);
         return;
       }
     }
@@ -821,6 +831,8 @@ export class ProvidersPage extends BasePage {
 
   async fillOCIProviderDetails(data: OCIProviderData): Promise<void> {
     // Fill the OCI provider details
+    // Wait for the form to be in step 2 (fields visible after provider selection)
+    await expect(this.ociTenancyIdInput).toBeVisible();
 
     await this.ociTenancyIdInput.fill(data.tenancyId);
 
@@ -848,9 +860,10 @@ export class ProvidersPage extends BasePage {
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
     // Verify the OCI credentials page is loaded
-
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
     await this.verifyPageHasProwlerTitle();
-    await expect(this.ociTenancyIdInput).toBeVisible();
+    // Wait for the OCI form fields to be visible (Form component is just a React context, not an HTML form)
+    // Note: Tenancy OCID is a hidden input on this page (auto-populated from step 1), so we don't check for it
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
@@ -866,8 +879,10 @@ export class ProvidersPage extends BasePage {
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
     // Verify the connect account page is loaded
-
+    await expect(this.page).toHaveURL(/\/providers\/connect-account/);
     await this.verifyPageHasProwlerTitle();
+    // Wait for the listbox to be visible before checking specific options
+    await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.awsProviderRadio).toBeVisible();
     await expect(this.ociProviderRadio).toBeVisible();
     await expect(this.gcpProviderRadio).toBeVisible();
@@ -879,8 +894,9 @@ export class ProvidersPage extends BasePage {
 
   async verifyCredentialsPageLoaded(): Promise<void> {
     // Verify the credentials page is loaded
-
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
     await this.verifyPageHasProwlerTitle();
+    // Wait for the radiogroup to be visible (Form component is just a React context, not an HTML form)
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
 
