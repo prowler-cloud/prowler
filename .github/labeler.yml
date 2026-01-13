@@ -72,6 +72,7 @@ mutelist:
       - any-glob-to-any-file: "prowler/providers/azure/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/gcp/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/kubernetes/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/m365/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/mongodbatlas/lib/mutelist/**"
       - any-glob-to-any-file: "tests/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/aws/lib/mutelist/**"
