@@ -76,8 +76,8 @@ class Entra(AzureService):
                                     user.id: User(
                                         id=user.id,
                                         name=user.display_name,
-                                        authentication_methods=registration_details.get(
-                                            user.id, []
+                                        is_mfa_capable=registration_details.get(
+                                            user.id, False
                                         ),
                                     )
                                 }
@@ -118,15 +118,7 @@ class Entra(AzureService):
             while registration_response:
                 for detail in getattr(registration_response, "value", []) or []:
                     registration_details.update(
-                        {
-                            detail.id: [
-                                AuthMethod(
-                                    id=f"{detail.id}-{method}",
-                                    type=method,
-                                )
-                                for method in getattr(detail, "methods_registered", [])
-                            ]
-                        }
+                        {detail.id: getattr(detail, "is_mfa_capable", False)}
                     )
 
                 next_link = getattr(registration_response, "odata_next_link", None)
@@ -418,15 +410,10 @@ class Entra(AzureService):
         return conditional_access_policy
 
 
-class AuthMethod(BaseModel):
-    id: str
-    type: str
-
-
 class User(BaseModel):
     id: str
     name: str
-    authentication_methods: List[AuthMethod] = []
+    is_mfa_capable: bool = False
 
 
 class DefaultUserRolePermissions(BaseModel):

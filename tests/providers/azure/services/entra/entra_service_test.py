@@ -145,10 +145,7 @@ class Test_Entra_Service:
         assert len(entra_client.users) == 1
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
-        assert (
-            len(entra_client.users[DOMAIN]["user-1@tenant1.es"].authentication_methods)
-            == 0
-        )
+        assert entra_client.users[DOMAIN]["user-1@tenant1.es"].is_mfa_capable is False
 
     def test_get_authorization_policy(self):
         entra_client = Entra(set_mocked_azure_provider())
@@ -260,11 +257,11 @@ def test_azure_entra__get_users_handles_pagination():
         value=[
             SimpleNamespace(
                 id="user-1",
-                methods_registered=["microsoftAuthenticator"],
+                is_mfa_capable=True,
             ),
             SimpleNamespace(
                 id="user-2",
-                methods_registered=["hardwareOath"],
+                is_mfa_capable=True,
             ),
         ],
         odata_next_link=None,
@@ -293,12 +290,6 @@ def test_azure_entra__get_users_handles_pagination():
     with_url_mock.assert_called_once_with("next-link")
     registration_details_builder.get.assert_awaited()
     registration_details_builder.with_url.assert_not_called()
-    assert (
-        users["tenant-1"]["user-1"].authentication_methods[0].type
-        == "microsoftAuthenticator"
-    )
-    assert (
-        users["tenant-1"]["user-2"].authentication_methods[0].id
-        == "user-2-hardwareOath"
-    )
-    assert users["tenant-1"]["user-3"].authentication_methods == []
+    assert users["tenant-1"]["user-1"].is_mfa_capable is True
+    assert users["tenant-1"]["user-2"].is_mfa_capable is True
+    assert users["tenant-1"]["user-3"].is_mfa_capable is False
