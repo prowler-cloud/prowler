@@ -4119,6 +4119,37 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
 
+    def test_finding_filter_by_provider_id_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id filter alias works identically to provider filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_provider_id_in_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id__in filter alias works identically to provider__in filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id__in]": [
+                    findings_fixture[0].scan.provider.id,
+                    findings_fixture[1].scan.provider.id,
+                ],
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
     @pytest.mark.parametrize(
         "filter_name",
         (
@@ -4339,6 +4370,28 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == latest_scan_finding.status
         )
+
+    def test_findings_latest_filter_by_provider_id_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id]": latest_scan_finding.scan.provider.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_findings_latest_filter_by_provider_id_in_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id__in filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id__in]": str(latest_scan_finding.scan.provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
 
     def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
         response = authenticated_client.get(
@@ -8235,6 +8288,97 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["failed_findings"] == 13
         assert data[0]["attributes"]["new_failed_findings"] == 5
         assert data[0]["attributes"]["resources_count"] == 10
+
+    def test_compliance_watchlist_no_filters_uses_tenant_summary(
+        self, authenticated_client, tenant_compliance_summary_fixture
+    ):
+        response = authenticated_client.get(reverse("overview-compliance-watchlist"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert len(data) == 2
+
+        by_id = {item["id"]: item["attributes"] for item in data}
+        assert "aws_cis_2.0" in by_id
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 2
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+        assert by_id["aws_cis_2.0"]["total_requirements"] == 4
+
+        assert "gdpr_aws" in by_id
+        assert by_id["gdpr_aws"]["requirements_passed"] == 5
+        assert by_id["gdpr_aws"]["requirements_failed"] == 0
+        assert by_id["gdpr_aws"]["total_requirements"] == 7
+
+    def test_compliance_watchlist_with_provider_filter_uses_provider_scores(
+        self,
+        authenticated_client,
+        provider_compliance_scores_fixture,
+        providers_fixture,
+    ):
+        provider1 = providers_fixture[0]
+        url = f"{reverse('overview-compliance-watchlist')}?filter[provider_id]={provider1.id}"
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert len(data) == 2
+        by_id = {item["id"]: item["attributes"] for item in data}
+
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+        assert by_id["aws_cis_2.0"]["total_requirements"] == 3
+
+    def test_compliance_watchlist_fail_dominant_logic(
+        self, authenticated_client, provider_compliance_scores_fixture
+    ):
+        response = authenticated_client.get(
+            f"{reverse('overview-compliance-watchlist')}?filter[provider_type]=aws"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        by_id = {item["id"]: item["attributes"] for item in data}
+        aws_cis = by_id["aws_cis_2.0"]
+
+        assert aws_cis["requirements_failed"] == 2
+        assert aws_cis["requirements_passed"] == 0
+        assert aws_cis["requirements_manual"] == 1
+        assert aws_cis["total_requirements"] == 3
+
+    def test_compliance_watchlist_provider_id_in_filter(
+        self,
+        authenticated_client,
+        provider_compliance_scores_fixture,
+        providers_fixture,
+    ):
+        provider1, provider2, *_ = providers_fixture
+        url = (
+            f"{reverse('overview-compliance-watchlist')}"
+            f"?filter[provider_id__in]={provider1.id},{provider2.id}"
+        )
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) >= 1
+
+    def test_compliance_watchlist_empty_result(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-compliance-watchlist"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data == []
+
+    @pytest.mark.parametrize(
+        "invalid_provider_type",
+        ["invalid", "not_a_provider", "AWS", "awss"],
+    )
+    def test_compliance_watchlist_invalid_provider_type_filter(
+        self, authenticated_client, invalid_provider_type
+    ):
+        url = f"{reverse('overview-compliance-watchlist')}?filter[provider_type]={invalid_provider_type}"
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db

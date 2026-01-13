@@ -101,6 +101,7 @@ from api.filters import (
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
+    ComplianceWatchlistFilter,
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
@@ -145,6 +146,7 @@ from api.models import (
     MuteRule,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
@@ -165,6 +167,7 @@ from api.models import (
     StateChoices,
     Task,
     TenantAPIKey,
+    TenantComplianceSummary,
     ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
@@ -187,6 +190,7 @@ from api.v1.serializers import (
     ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
+    ComplianceWatchlistOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
@@ -4197,6 +4201,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return CategoryOverviewSerializer
         elif self.action == "groups":
             return GroupOverviewSerializer
+        elif self.action == "compliance_watchlist":
+            return ComplianceWatchlistOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4214,6 +4220,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return GroupOverviewFilter
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewFilter
+        elif self.action == "compliance_watchlist":
+            return ComplianceWatchlistFilter
         return None
 
     def filter_queryset(self, queryset):
@@ -4297,6 +4305,8 @@ class OverviewViewSet(BaseRLSViewSet):
             self.request.query_params, exclude_keys=set(exclude_keys or [])
         )
         filterset = filterset_class(normalized_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
         return filterset.qs
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
@@ -4313,9 +4323,10 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
     def _extract_provider_filters_from_params(self):
-        """Extract provider filters from query params to apply on Scan queryset."""
+        """Extract and validate provider filters from query params."""
         params = self.request.query_params
         filters = {}
+        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
 
         provider_id = params.get("filter[provider_id]")
         if provider_id:
@@ -4327,11 +4338,21 @@ class OverviewViewSet(BaseRLSViewSet):
 
         provider_type = params.get("filter[provider_type]")
         if provider_type:
+            if provider_type not in valid_provider_types:
+                raise ValidationError(
+                    {"provider_type": f"Invalid choice: {provider_type}"}
+                )
             filters["provider__provider"] = provider_type
 
         provider_type_in = params.get("filter[provider_type__in]")
         if provider_type_in:
-            filters["provider__provider__in"] = provider_type_in.split(",")
+            types = provider_type_in.split(",")
+            invalid = [t for t in types if t not in valid_provider_types]
+            if invalid:
+                raise ValidationError(
+                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
+                )
+            filters["provider__provider__in"] = types
 
         return filters
 
@@ -5104,6 +5125,92 @@ class OverviewViewSet(BaseRLSViewSet):
         response_data = [
             {"group": grp, **data} for grp, data in sorted(group_data.items())
         ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="compliance-watchlist",
+        url_path="compliance-watchlist",
+    )
+    def compliance_watchlist(self, request):
+        """
+        Get compliance watchlist overview with FAIL-dominant aggregation.
+
+        Without filters: uses pre-aggregated TenantComplianceSummary (~70 rows).
+        With provider filters: queries ProviderComplianceScore with FAIL-dominant logic.
+        """
+        tenant_id = request.tenant_id
+        rbac_filter = self._get_provider_filter()
+        query_params = request.query_params
+
+        has_provider_filter = any(
+            key.startswith("filter[provider") for key in query_params.keys()
+        )
+        has_rbac_restriction = bool(rbac_filter)
+
+        if not has_provider_filter and not has_rbac_restriction:
+            response_data = list(
+                TenantComplianceSummary.objects.filter(tenant_id=tenant_id)
+                .values(
+                    "compliance_id",
+                    "requirements_passed",
+                    "requirements_failed",
+                    "requirements_manual",
+                    "total_requirements",
+                )
+                .order_by("compliance_id")
+            )
+        else:
+            base_queryset = ProviderComplianceScore.objects.filter(
+                tenant_id=tenant_id, **rbac_filter
+            )
+
+            filtered_queryset = self._apply_filterset(
+                base_queryset, ComplianceWatchlistFilter
+            )
+
+            aggregation = (
+                filtered_queryset.values("compliance_id", "requirement_id")
+                .annotate(
+                    has_fail=Sum(
+                        Case(When(requirement_status="FAIL", then=1), default=0)
+                    ),
+                    has_manual=Sum(
+                        Case(When(requirement_status="MANUAL", then=1), default=0)
+                    ),
+                )
+                .values("compliance_id", "requirement_id", "has_fail", "has_manual")
+            )
+
+            compliance_data = defaultdict(
+                lambda: {
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                    "total_requirements": 0,
+                }
+            )
+
+            for row in aggregation:
+                cid = row["compliance_id"]
+                compliance_data[cid]["total_requirements"] += 1
+
+                if row["has_fail"] and row["has_fail"] > 0:
+                    compliance_data[cid]["requirements_failed"] += 1
+                elif row["has_manual"] and row["has_manual"] > 0:
+                    compliance_data[cid]["requirements_manual"] += 1
+                else:
+                    compliance_data[cid]["requirements_passed"] += 1
+
+            response_data = [
+                {"compliance_id": cid, **data}
+                for cid, data in sorted(compliance_data.items())
+            ]
 
         return Response(
             self.get_serializer(response_data, many=True).data,

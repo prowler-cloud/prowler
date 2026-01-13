@@ -5,9 +5,18 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.18.0] (Prowler UNRELEASED)
 
 ### Added
+- `/api/v1/overviews/compliance-watchlist` to retrieve the compliance watchlist [(#9596)](https://github.com/prowler-cloud/prowler/pull/9596)
 - Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
 - `/api/v1/overviews/groups` to retrieve an overview of the resource groups based on finding severities [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
 - Endpoints `GET /findings` and `GET /findings/metadata/latest` now support the `group` filter [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
+- `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
+
+---
+
+## [1.17.2] (Prowler v5.16.2)
+
+### Security
+- Updated dependencies to patch security vulnerabilities: Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
 
 ---
 

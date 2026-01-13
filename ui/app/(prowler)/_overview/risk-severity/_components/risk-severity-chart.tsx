@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { BarDataPoint } from "@/components/graphs/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { calculatePercentage } from "@/lib/utils";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
@@ -30,8 +29,6 @@ export const RiskSeverityChart = ({
   const handleBarClick = (dataPoint: BarDataPoint) => {
     // Build the URL with current filters plus severity and muted
     const params = new URLSearchParams(searchParams.toString());
-
-    mapProviderFiltersForFindings(params);
 
     const severity = SEVERITY_FILTER_MAP[dataPoint.name];
     if (severity) {

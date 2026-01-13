@@ -28,9 +28,11 @@ jobs:
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
-          files: ./**
+          files: 
+            ./**
+            .github/workflows/sdk-security.yml
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
@@ -40,6 +42,7 @@ jobs:
             ui/**
             dashboard/**
             mcp_server/**
+            skills/**
             README.md
             mkdocs.yml
             .backportrc.json
@@ -48,6 +51,7 @@ jobs:
             examples/**
             .gitignore
             contrib/**
+            **/AGENTS.md
 
       - name: Install Poetry
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -70,7 +74,7 @@ jobs:
 
       - name: Security scan with Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 70612 -r pyproject.toml
+        run: poetry run safety check -r pyproject.toml
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

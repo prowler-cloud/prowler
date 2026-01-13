@@ -21,6 +21,7 @@ class Compute(GCPService):
         self.compute_projects = []
         self.load_balancers = []
         self.instance_groups = []
+        self.images = []
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -33,6 +34,8 @@ class Compute(GCPService):
         self.__threading_call__(self._get_addresses, self.regions)
         self.__threading_call__(self._get_regional_instance_groups, self.regions)
         self.__threading_call__(self._get_zonal_instance_groups, self.zones)
+        self._associate_migs_with_load_balancers()
+        self._get_images()
 
     def _get_regions(self):
         for project_id in self.project_ids:
@@ -102,10 +105,30 @@ class Compute(GCPService):
 
                     for instance in response.get("items", []):
                         public_ip = False
-                        for interface in instance.get("networkInterfaces", []):
+                        network_interfaces_raw = instance.get("networkInterfaces", [])
+
+                        network_interfaces = []
+                        for interface in network_interfaces_raw:
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
+
+                            network_interfaces.append(
+                                NetworkInterface(
+                                    name=interface.get("name", ""),
+                                    network=(
+                                        interface.get("network", "").split("/")[-1]
+                                        if interface.get("network")
+                                        else ""
+                                    ),
+                                    subnetwork=(
+                                        interface.get("subnetwork", "").split("/")[-1]
+                                        if interface.get("subnetwork")
+                                        else ""
+                                    ),
+                                )
+                            )
+
                         self.instances.append(
                             Instance(
                                 name=instance["name"],
@@ -164,6 +187,7 @@ class Compute(GCPService):
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
                                 ),
+                                network_interfaces=network_interfaces,
                             )
                         )
 
@@ -381,7 +405,6 @@ class Compute(GCPService):
                     )
 
     def _get_regional_instance_groups(self, region: str) -> None:
-        """Fetch regional managed instance groups for all projects."""
         for project_id in self.project_ids:
             try:
                 request = self.client.regionInstanceGroupManagers().list(
@@ -402,6 +425,18 @@ class Compute(GCPService):
                             if zone_info.get("zone")
                         ]
 
+                        auto_healing_policies = [
+                            AutoHealingPolicy(
+                                health_check=(
+                                    policy.get("healthCheck", "").split("/")[-1]
+                                    if policy.get("healthCheck")
+                                    else None
+                                ),
+                                initial_delay_sec=policy.get("initialDelaySec"),
+                            )
+                            for policy in mig.get("autoHealingPolicies", [])
+                        ]
+
                         self.instance_groups.append(
                             ManagedInstanceGroup(
                                 name=mig.get("name", ""),
@@ -412,6 +447,7 @@ class Compute(GCPService):
                                 is_regional=True,
                                 target_size=mig.get("targetSize", 0),
                                 project_id=project_id,
+                                auto_healing_policies=auto_healing_policies,
                             )
                         )
 
@@ -424,7 +460,6 @@ class Compute(GCPService):
                 )
 
     def _get_zonal_instance_groups(self, zone: str) -> None:
-        """Fetch zonal managed instance groups for all projects."""
         for project_id in self.project_ids:
             try:
                 request = self.client.instanceGroupManagers().list(
@@ -440,6 +475,18 @@ class Compute(GCPService):
                         mig_zone = mig.get("zone", zone).split("/")[-1]
                         mig_region = mig_zone.rsplit("-", 1)[0]
 
+                        auto_healing_policies = [
+                            AutoHealingPolicy(
+                                health_check=(
+                                    policy.get("healthCheck", "").split("/")[-1]
+                                    if policy.get("healthCheck")
+                                    else None
+                                ),
+                                initial_delay_sec=policy.get("initialDelaySec"),
+                            )
+                            for policy in mig.get("autoHealingPolicies", [])
+                        ]
+
                         self.instance_groups.append(
                             ManagedInstanceGroup(
                                 name=mig.get("name", ""),
@@ -450,6 +497,7 @@ class Compute(GCPService):
                                 is_regional=False,
                                 target_size=mig.get("targetSize", 0),
                                 project_id=project_id,
+                                auto_healing_policies=auto_healing_policies,
                             )
                         )
 
@@ -460,6 +508,105 @@ class Compute(GCPService):
                 logger.error(
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+
+    def _associate_migs_with_load_balancers(self) -> None:
+        load_balanced_groups = set()
+
+        for project_id in self.project_ids:
+            try:
+                request = self.client.backendServices().list(project=project_id)
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    for backend_service in response.get("items", []):
+                        for backend in backend_service.get("backends", []):
+                            group_url = backend.get("group", "")
+                            if group_url:
+                                group_name = group_url.split("/")[-1]
+                                load_balanced_groups.add((project_id, group_name))
+                    request = self.client.backendServices().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+            for region in self.regions:
+                try:
+                    request = self.client.regionBackendServices().list(
+                        project=project_id, region=region
+                    )
+                    while request is not None:
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                        for backend_service in response.get("items", []):
+                            for backend in backend_service.get("backends", []):
+                                group_url = backend.get("group", "")
+                                if group_url:
+                                    group_name = group_url.split("/")[-1]
+                                    load_balanced_groups.add((project_id, group_name))
+                        request = self.client.regionBackendServices().list_next(
+                            previous_request=request, previous_response=response
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        for mig in self.instance_groups:
+            if (mig.project_id, mig.name) in load_balanced_groups:
+                mig.load_balanced = True
+
+    def _get_images(self) -> None:
+        for project_id in self.project_ids:
+            try:
+                request = self.client.images().list(project=project_id)
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    for image in response.get("items", []):
+                        publicly_shared = False
+                        try:
+                            iam_policy = (
+                                self.client.images()
+                                .getIamPolicy(
+                                    project=project_id, resource=image["name"]
+                                )
+                                .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                            )
+                            for binding in iam_policy.get("bindings", []):
+                                # allUsers cannot be assigned to Compute Engine images (API restriction).
+                                # Only allAuthenticatedUsers can be set, which is the security risk.
+                                if "allAuthenticatedUsers" in binding.get(
+                                    "members", []
+                                ):
+                                    publicly_shared = True
+                                    break
+                        except Exception as error:
+                            logger.error(
+                                f"{project_id}/{image['name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
+                        self.images.append(
+                            Image(
+                                name=image["name"],
+                                id=image["id"],
+                                project_id=project_id,
+                                publicly_shared=publicly_shared,
+                            )
+                        )
+
+                    request = self.client.images().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class NetworkInterface(BaseModel):
+    name: str
+    network: str = ""
+    subnetwork: str = ""
 
 
 class Disk(BaseModel):
@@ -488,6 +635,7 @@ class Instance(BaseModel):
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
+    network_interfaces: list[NetworkInterface] = []
 
 
 class Network(BaseModel):
@@ -537,6 +685,11 @@ class LoadBalancer(BaseModel):
     project_id: str
 
 
+class AutoHealingPolicy(BaseModel):
+    health_check: Optional[str] = None
+    initial_delay_sec: Optional[int] = None
+
+
 class ManagedInstanceGroup(BaseModel):
     name: str
     id: str
@@ -546,3 +699,12 @@ class ManagedInstanceGroup(BaseModel):
     is_regional: bool
     target_size: int
     project_id: str
+    auto_healing_policies: list[AutoHealingPolicy] = []
+    load_balanced: bool = False
+
+
+class Image(BaseModel):
+    name: str
+    id: str
+    project_id: str
+    publicly_shared: bool = False
