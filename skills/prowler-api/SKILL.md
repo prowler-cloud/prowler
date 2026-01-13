@@ -1,12 +1,14 @@
 ---
 name: prowler-api
 description: >
-  Prowler API patterns: RLS, RBAC, providers, Celery tasks.
-  Trigger: When working on api/ - models, serializers, views, filters, tasks.
+  Prowler API patterns: JSON:API, RLS, RBAC, providers, Celery tasks.
+  Trigger: When working in api/ on models/serializers/viewsets/filters/tasks involving tenant isolation (RLS), RBAC, JSON:API, or provider lifecycle.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, api]
+  auto_invoke: "Creating/modifying models, views, serializers"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

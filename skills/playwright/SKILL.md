@@ -2,11 +2,13 @@
 name: playwright
 description: >
   Playwright E2E testing patterns.
-  Trigger: When writing E2E tests - Page Objects, selectors, MCP workflow.
+  Trigger: When writing Playwright E2E tests (Page Object Model, selectors, MCP exploration workflow). For Prowler-specific UI conventions under ui/tests, also use prowler-test-ui.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, ui]
+  auto_invoke: "Writing Playwright E2E tests"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

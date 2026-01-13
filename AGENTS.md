@@ -36,10 +36,62 @@ Use these skills for detailed patterns on-demand:
 | `prowler-test-api` | API testing (pytest-django + RLS) | [SKILL.md](skills/prowler-test-api/SKILL.md) |
 | `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/prowler-test-ui/SKILL.md) |
 | `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
+| `prowler-compliance-review` | Review compliance framework PRs | [SKILL.md](skills/prowler-compliance-review/SKILL.md) |
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
+| `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
+
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Adding new providers | `prowler-provider` |
+| Adding services to existing providers | `prowler-provider` |
+| After creating/modifying a skill | `skill-sync` |
+| App Router / Server Actions | `nextjs-15` |
+| Building AI chat features | `ai-sdk-5` |
+| Create a PR with gh pr create | `prowler-pr` |
+| Creating Zod schemas | `zod-4` |
+| Creating new checks | `prowler-sdk-check` |
+| Creating new skills | `skill-creator` |
+| Creating/modifying Prowler UI components | `prowler-ui` |
+| Creating/modifying models, views, serializers | `prowler-api` |
+| Creating/updating compliance frameworks | `prowler-compliance` |
+| Debug why a GitHub Actions job is failing | `prowler-ci` |
+| Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
+| General Prowler development questions | `prowler` |
+| Generic DRF patterns | `django-drf` |
+| Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
+| Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
+| Mapping checks to compliance controls | `prowler-compliance` |
+| Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
+| Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
+| Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Testing RLS tenant isolation | `prowler-test-api` |
+| Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
+| Understand CODEOWNERS/labeler-based automation | `prowler-ci` |
+| Understand PR title conventional-commit validation | `prowler-ci` |
+| Understand changelog gate and no-changelog label behavior | `prowler-ci` |
+| Understand review ownership with CODEOWNERS | `prowler-pr` |
+| Updating existing checks and metadata | `prowler-sdk-check` |
+| Using Zustand stores | `zustand-5` |
+| Working on MCP server tools | `prowler-mcp` |
+| Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working with Prowler UI test helpers/pages | `prowler-test-ui` |
+| Working with Tailwind classes | `tailwind-4` |
+| Writing Playwright E2E tests | `playwright` |
+| Writing Prowler API tests | `prowler-test-api` |
+| Writing Prowler SDK tests | `prowler-test-sdk` |
+| Writing Prowler UI E2E tests | `prowler-test-ui` |
+| Writing Python tests with pytest | `pytest` |
+| Writing React components | `react-19` |
+| Writing TypeScript types/interfaces | `typescript` |
+| Writing documentation | `prowler-docs` |
 
 ---
 
