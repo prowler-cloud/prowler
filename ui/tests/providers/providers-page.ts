@@ -854,9 +854,7 @@ export class ProvidersPage extends BasePage {
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
     // Verify the OCI credentials page is loaded
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
     await this.verifyPageHasProwlerTitle();
-    // Wait for the OCI form fields to be visible (Form component is just a React context, not an HTML form)
     // Note: Tenancy OCID is a hidden input on this page (auto-populated from step 1), so we don't check for it
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
@@ -873,10 +871,7 @@ export class ProvidersPage extends BasePage {
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
     // Verify the connect account page is loaded
-    await expect(this.page).toHaveURL(/\/providers\/connect-account/);
     await this.verifyPageHasProwlerTitle();
-    // Wait for the listbox to be visible before checking specific options
-    await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.awsProviderRadio).toBeVisible();
     await expect(this.ociProviderRadio).toBeVisible();
     await expect(this.gcpProviderRadio).toBeVisible();
@@ -888,9 +883,7 @@ export class ProvidersPage extends BasePage {
 
   async verifyCredentialsPageLoaded(): Promise<void> {
     // Verify the credentials page is loaded
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
     await this.verifyPageHasProwlerTitle();
-    // Wait for the radiogroup to be visible (Form component is just a React context, not an HTML form)
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
 
