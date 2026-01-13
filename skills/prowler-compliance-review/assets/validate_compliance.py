@@ -165,12 +165,14 @@ def validate_compliance_framework(json_path: str) -> dict:
         "automated_requirements": automated_count,
         "manual_requirements": manual_count,
         "unique_checks_referenced": len(all_checks),
-        "checks_found_in_codebase": len(all_checks - (all_checks - existing_checks))
-        if existing_checks
-        else "N/A",
-        "missing_checks": len(all_checks - existing_checks)
-        if existing_checks
-        else "N/A",
+        "checks_found_in_codebase": (
+            len(all_checks - (all_checks - existing_checks))
+            if existing_checks
+            else "N/A"
+        ),
+        "missing_checks": (
+            len(all_checks - existing_checks) if existing_checks else "N/A"
+        ),
     }
 
     return results
