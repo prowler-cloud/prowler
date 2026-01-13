@@ -59,14 +59,18 @@ export default async function Home({
       </div>
 
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
-        {/* Watchlists column: Compliance on top, Services below */}
-        <div className="flex max-w-[312px] flex-col gap-6">
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
+        {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
+        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
+          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+            <Suspense fallback={<WatchlistCardSkeleton />}>
+              <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </div>
+          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+            <Suspense fallback={<WatchlistCardSkeleton />}>
+              <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </div>
         </div>
 
         {/* Charts column: Attack Surface on top, Findings Over Time below */}
