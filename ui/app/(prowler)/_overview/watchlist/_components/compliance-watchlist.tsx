@@ -14,11 +14,15 @@ export interface ComplianceData {
   score: number;
 }
 
+const ITEMS_TO_DISPLAY = 7;
+
 export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
   const [isAsc, setIsAsc] = useState(true);
 
+  // Sort all items and take top 7 based on current sort order
   const sortedItems = [...items]
     .sort((a, b) => (isAsc ? a.score - b.score : b.score - a.score))
+    .slice(0, ITEMS_TO_DISPLAY)
     .map((item) => ({
       key: item.id,
       icon: item.icon ? (
