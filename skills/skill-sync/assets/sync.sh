@@ -253,12 +253,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
         echo "$auto_invoke_section"
         echo ""
     else
+        # Write new section to temp file (avoids awk multi-line string issues on macOS)
+        section_file=$(mktemp)
+        echo "$auto_invoke_section" > "$section_file"
+
         # Check if Auto-invoke section exists
         if grep -q "### Auto-invoke Skills" "$agents_path"; then
             # Replace existing section (up to next --- or ## heading)
-            awk -v new_section="$auto_invoke_section" '
+            awk '
                 /^### Auto-invoke Skills/ {
-                    print new_section
+                    while ((getline line < "'"$section_file"'") > 0) print line
+                    close("'"$section_file"'")
                     skip = 1
                     next
                 }
@@ -272,13 +277,14 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
             echo -e "${GREEN}  ✓ Updated Auto-invoke section${NC}"
         else
             # Insert after Skills Reference blockquote
-            awk -v new_section="$auto_invoke_section" '
+            awk '
                 /^>.*SKILL\.md\)$/ && !inserted {
                     print
                     getline
                     if (/^$/) {
                         print ""
-                        print new_section
+                        while ((getline line < "'"$section_file"'") > 0) print line
+                        close("'"$section_file"'")
                         print ""
                         inserted = 1
                         next
@@ -289,6 +295,8 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
             mv "$agents_path.tmp" "$agents_path"
             echo -e "${GREEN}  ✓ Inserted Auto-invoke section${NC}"
         fi
+
+        rm -f "$section_file"
     fi
 done
 

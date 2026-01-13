@@ -19,6 +19,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Writing Prowler SDK tests | `prowler-test-sdk` |
 | Writing Python tests with pytest | `pytest` |

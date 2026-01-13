@@ -71,6 +71,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
+| Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
 | Understand CODEOWNERS/labeler-based automation | `prowler-ci` |
