@@ -30,7 +30,9 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
-          files: ./**
+          files: 
+            ./**
+            .github/workflows/sdk-security.yml
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
@@ -70,7 +72,7 @@ jobs:
 
       - name: Security scan with Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 70612 -r pyproject.toml
+        run: poetry run safety check -r pyproject.toml
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

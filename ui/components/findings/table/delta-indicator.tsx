@@ -1,6 +1,7 @@
 import { Tooltip } from "@heroui/tooltip";
 
 import { Button } from "@/components/shadcn";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 
 interface DeltaIndicatorProps {
@@ -26,7 +27,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             asChild
           >
             <a
-              href="https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings"
+              href={DOCS_URLS.FINDINGS_ANALYSIS}
               target="_blank"
               rel="noopener noreferrer"
             >
