@@ -18,6 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `Cloudflare` provider with critical security checks [(#9423)](https://github.com/prowler-cloud/prowler/pull/9423)
 - `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
 - `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
+- `TLS/SSL`, `records` and `email` checks for `zones` service [(#9424)](https://github.com/prowler-cloud/prowler/pull/9424)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
