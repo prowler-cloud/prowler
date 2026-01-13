@@ -384,6 +384,9 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         )
                     )
 
+                // Deduplicate before creating virtual relationships
+                WITH DISTINCT escalation_outcome, aws, principal, attached_policy
+
                 CALL apoc.create.vRelationship(principal, 'CAN_ESCALATE_TO', {
                     via: 'iam:CreatePolicyVersion',
                     target_policy: attached_policy.arn,
@@ -391,11 +394,15 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS escalation_rel
 
-                UNWIND nodes(path_principal) + nodes(path_attached) + nodes(path_perms) as n
+                // Re-match paths for visualization
+                MATCH path_principal = (aws)--(principal)
+                MATCH path_attached = (principal)--(attached_policy)
+
+                UNWIND nodes(path_principal) + nodes(path_attached) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_principal, path_attached, path_perms,
+                RETURN path_principal, path_attached,
                        escalation_outcome, escalation_rel,
                        collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
@@ -456,6 +463,9 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR resource CONTAINS target_role.name
                     )
 
+                // Deduplicate before creating virtual relationships
+                WITH DISTINCT admin_outcome, aws, principal, target_role
+
                 // Create virtual relationships showing the attack path
                 CALL apoc.create.vRelationship(principal, 'CAN_MODIFY', {
                     via: 'iam:AttachRolePolicy'
@@ -469,11 +479,15 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, admin_outcome)
                 YIELD rel AS escalation_rel
 
-                UNWIND nodes(path_principal) + nodes(path_attach) + nodes(path_assume) + nodes(path_target) as n
+                // Re-match paths for visualization
+                MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
+
+                UNWIND nodes(path_principal) + nodes(path_target) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_principal, path_attach, path_assume, path_target,
+                RETURN path_principal, path_target,
                        admin_outcome, modify_rel, escalation_rel,
                        collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
@@ -573,14 +587,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Detect principals who can create Lambda functions with privileged IAM roles and invoke them. This allows executing code with the permissions of the passed role. This is a new-passrole escalation path (pathfinding.cloud: lambda-001).",
             provider="aws",
             cypher="""
-                // Create a single shared virtual Lambda function node
-                CALL apoc.create.vNode(['LambdaFunction'], {
-                    id: 'potential-lambda-passrole',
-                    name: 'New Lambda Function',
-                    description: 'Attacker-controlled Lambda with privileged role'
-                })
-                YIELD node AS lambda_node
-
                 // Create a single shared virtual escalation outcome node (styled like a finding)
                 CALL apoc.create.vNode(['PrivilegeEscalation'], {
                     id: 'effective-administrator-passrole-lambda',
@@ -591,7 +597,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 })
                 YIELD node AS escalation_outcome
 
-                WITH lambda_node, escalation_outcome
+                WITH escalation_outcome
 
                 // Find principals in the account
                 MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
@@ -640,6 +646,17 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN role_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
+                // Deduplicate before creating virtual nodes
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
+
+                // Create virtual Lambda function node (one per unique principal->target pair)
+                CALL apoc.create.vNode(['LambdaFunction'], {
+                    name: 'New Lambda Function',
+                    description: 'Lambda with target role attached',
+                    id: principal.arn + '->' + target_role.arn
+                })
+                YIELD node AS lambda_node
+
                 CALL apoc.create.vRelationship(principal, 'CAN_CREATE_AND_INVOKE', {
                     via: 'lambda:CreateFunction + lambda:InvokeFunction + iam:PassRole'
                 }, lambda_node)
@@ -653,13 +670,12 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                UNWIND nodes(path_principal) + nodes(path_passrole) + nodes(path_create) + nodes(path_invoke) + nodes(path_target) as n
-                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
-                WHERE pf.status = 'FAIL'
+                // Re-match paths for visualization
+                MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_passrole, path_create, path_invoke, path_target,
-                       lambda_node, escalation_outcome, create_rel, executes_rel, grants_rel,
-                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path_principal, path_target,
+                       lambda_node, escalation_outcome, create_rel, executes_rel, grants_rel
             """,
             parameters=[],
         ),
@@ -696,8 +712,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN admin_stmt.action WHERE toLower(action) CONTAINS 'admin')
                     )
 
-                // Calculate chain length for visualization
-                WITH escalation_outcome, principal, target_role, path_principal, path_chain, path_admin,
+                // Deduplicate and calculate chain length before creating virtual relationships
+                WITH DISTINCT escalation_outcome, aws, principal, target_role, path_chain,
                      length(path_chain) as chain_length,
                      [node in nodes(path_chain) | node.name] as chain_nodes
 
@@ -708,14 +724,12 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS admin_rel
 
-                UNWIND nodes(path_principal) + nodes(path_chain) + nodes(path_admin) as n
-                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
-                WHERE pf.status = 'FAIL'
+                // Re-match paths for visualization
+                MATCH path_principal = (aws)--(principal)
 
-                RETURN path_principal, path_chain, path_admin,
+                RETURN path_principal, path_chain,
                        escalation_outcome, admin_rel,
-                       chain_length, chain_nodes,
-                       collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                       chain_length, chain_nodes
                 ORDER BY chain_length ASC
             """,
             parameters=[],
