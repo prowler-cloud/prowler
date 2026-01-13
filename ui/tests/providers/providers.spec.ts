@@ -1153,13 +1153,6 @@ test.describe("Add Provider", () => {
     const accessKeySecret = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET;
     const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN;
 
-    // Validate required environment variables
-    if (!accountId) {
-      throw new Error(
-        "E2E_ALIBABACLOUD_ACCOUNT_ID environment variable is not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
