@@ -622,7 +622,7 @@ class Compute(GCPService):
                                     creation_timestamp_str.replace("Z", "+00:00")
                                 )
                             except ValueError:
-                                logger.warning(
+                                logger.error(
                                     f"Could not parse timestamp {creation_timestamp_str} for snapshot {snapshot['name']}"
                                 )
 

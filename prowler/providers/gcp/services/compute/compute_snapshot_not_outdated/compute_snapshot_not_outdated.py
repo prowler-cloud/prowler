@@ -34,7 +34,7 @@ class compute_snapshot_not_outdated(Check):
             if snapshot.creation_timestamp is None:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Disk snapshot {snapshot.name} has no creation timestamp "
+                    f"Disk snapshot {snapshot.name} timestamp could not be retrieved "
                     "and cannot be evaluated for age."
                 )
                 findings.append(report)
