@@ -7,10 +7,6 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.1"
-  scope: [root, sdk]
-  auto_invoke:
-    - "Creating/updating compliance frameworks"
-    - "Mapping checks to compliance controls"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
