@@ -543,6 +543,10 @@ export class ProvidersPage extends BasePage {
     // If on the "connect-account" step, click the "Next" button
     if (/\/providers\/connect-account/.test(url)) {
       await this.nextButton.click();
+      // Wait for navigation to add-credentials page
+      await this.page.waitForURL(/\/providers\/add-credentials/, {
+        timeout: 30000,
+      });
       return;
     }
 
@@ -552,11 +556,19 @@ export class ProvidersPage extends BasePage {
 
       if (await this.saveButton.count()) {
         await this.saveButton.click();
+        // Wait for navigation to test-connection page
+        await this.page.waitForURL(/\/providers\/test-connection/, {
+          timeout: 30000,
+        });
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
       if (await this.nextButton.count()) {
         await this.nextButton.click();
+        // Wait for navigation to test-connection page
+        await this.page.waitForURL(/\/providers\/test-connection/, {
+          timeout: 30000,
+        });
         return;
       }
     }

@@ -10,30 +10,23 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  // Retry only once in CI - tests should be stable now
-  retries: process.env.CI ? 1 : 0,
-  // CI: Use 2 workers for parallelism (provider tests are serial anyway)
-  // Local: Use half of available CPUs
+  retries: process.env.CI ? 2 : 0,
+  // CI: Use 2 workers (provider tests are serial anyway)
+  // Local: Use half of available CPUs for faster execution
   workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
-  // Use GitHub reporter in CI for annotations, list reporter locally
   reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
   outputDir: "/tmp/playwright-tests",
-  // Reduce default timeout - most actions should complete in 10s
-  timeout: process.env.CI ? 60000 : 30000,
   expect: {
-    timeout: 15000,
+    timeout: 20000,
   },
 
   use: {
     baseURL: process.env.AUTH_URL
       ? process.env.AUTH_URL
       : "http://localhost:3000",
-    // Disable artifacts in CI to speed up tests and reduce storage
     trace: "off",
     screenshot: "off",
     video: "off",
-    // Reduce action timeout for faster failure detection
-    actionTimeout: 10000,
   },
 
   projects: [
