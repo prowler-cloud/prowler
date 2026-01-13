@@ -169,7 +169,7 @@ class TestComputeSnapshotNotOutdated:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "no creation timestamp" in result[0].status_extended
+            assert "timestamp could not be retrieved" in result[0].status_extended
             assert result[0].resource_id == "1111111111"
             assert result[0].resource_name == "test-snapshot-no-timestamp"
             assert result[0].project_id == GCP_PROJECT_ID
