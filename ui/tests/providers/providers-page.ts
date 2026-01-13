@@ -535,50 +535,107 @@ export class ProvidersPage extends BasePage {
 
   async clickNext(): Promise<void> {
     // The wizard interface may use different labels for its primary action button on each step.
-    // This function determines which button to click depending on the current URL and page content.
+    // We prefer waiting on *UI state* (next step elements) over URL navigation because Next.js
+    // client-side transitions can be flaky in CI (no full "load" event).
 
-    // Get the current page URL
     const url = this.page.url();
 
-    // If on the "connect-account" step, click the "Next" button
+    const waitForAddCredentialsStep = async (): Promise<void> => {
+      // On add-credentials we always have at least one of these visible depending on provider.
+      // AWS: Role credentials radio is present.
+      // OCI: Tenancy OCID is hidden but User OCID is visible.
+      await expect
+        .poll(
+          async () => {
+            if (/\/providers\/add-credentials/.test(this.page.url())) return true;
+
+            const awsRoleRadioVisible = await this.roleCredentialsRadio
+              .isVisible()
+              .catch(() => false);
+            if (awsRoleRadioVisible) return true;
+
+            const ociUserVisible = await this.ociUserIdInput
+              .isVisible()
+              .catch(() => false);
+            if (ociUserVisible) return true;
+
+            const gcpKeyVisible = await this.gcpServiceAccountKeyInput
+              .isVisible()
+              .catch(() => false);
+            if (gcpKeyVisible) return true;
+
+            const m365ClientIdVisible = await this.m365ClientIdInput
+              .isVisible()
+              .catch(() => false);
+            if (m365ClientIdVisible) return true;
+
+            const githubUserVisible = await this.githubUsernameInput
+              .isVisible()
+              .catch(() => false);
+            if (githubUserVisible) return true;
+
+            return false;
+          },
+          {
+            timeout: 30000,
+            intervals: [250, 500, 1000, 2000],
+          },
+        )
+        .toBe(true);
+    };
+
+    const waitForTestConnectionStep = async (): Promise<void> => {
+      await expect
+        .poll(
+          async () => /\/providers\/test-connection/.test(this.page.url()),
+          {
+            timeout: 30000,
+            intervals: [250, 500, 1000, 2000],
+          },
+        )
+        .toBe(true);
+
+      // And "Launch scan" button should be actionable.
+      const launchScanButton = this.page
+        .locator("button")
+        .filter({ hasText: "Launch scan" })
+        .first();
+      await expect(launchScanButton).toBeVisible({ timeout: 15000 });
+    };
+
+    // Step 1 -> Step 2
     if (/\/providers\/connect-account/.test(url)) {
+      await expect(this.nextButton).toBeVisible();
+      await expect(this.nextButton).toBeEnabled();
       await this.nextButton.click();
-      // Wait for navigation to add-credentials page
-      await this.page.waitForURL(/\/providers\/add-credentials/, {
-        timeout: 30000,
-      });
+      await waitForAddCredentialsStep();
       return;
     }
 
-    // If on the "add-credentials" step, check for "Save" and "Next" buttons
+    // Step 2 -> Step 3
     if (/\/providers\/add-credentials/.test(url)) {
-      // Some UI implementations use "Save" instead of "Next" for primary action
+      // Some flows use "Save" as the primary CTA, others keep "Next".
+      const primaryButton = (await this.saveButton.count())
+        ? this.saveButton
+        : this.nextButton;
 
-      if (await this.saveButton.count()) {
-        await this.saveButton.click();
-        // Wait for navigation to test-connection page
-        await this.page.waitForURL(/\/providers\/test-connection/, {
-          timeout: 30000,
-        });
-        return;
-      }
-      // If "Save" is not present, try clicking the "Next" button
-      if (await this.nextButton.count()) {
-        await this.nextButton.click();
-        // Wait for navigation to test-connection page
-        await this.page.waitForURL(/\/providers\/test-connection/, {
-          timeout: 30000,
-        });
-        return;
-      }
+      await expect(primaryButton).toBeVisible();
+      await expect(primaryButton).toBeEnabled();
+      await primaryButton.click();
+
+      await waitForTestConnectionStep();
+      return;
     }
 
-    // If on the "test-connection" step, click the "Launch scan" button
+    // Step 3 -> Scans
     if (/\/providers\/test-connection/.test(url)) {
       const buttonByText = this.page
         .locator("button")
-        .filter({ hasText: "Launch scan" });
+        .filter({ hasText: "Launch scan" })
+        .first();
 
+      await expect(buttonByText).toBeVisible();
+      await expect(buttonByText).toBeEnabled();
       await buttonByText.click();
 
       // Wait for either success (redirect to scans) or error message to appear
@@ -588,29 +645,22 @@ export class ProvidersPage extends BasePage {
         )
         .first();
 
-      // Helper to check and throw error if visible
       const checkAndThrowError = async (): Promise<void> => {
-        const isErrorVisible = await errorMessage
-          .isVisible()
-          .catch(() => false);
+        const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+        if (!isErrorVisible) return;
 
-        if (isErrorVisible) {
-          const errorText = await errorMessage.textContent();
-
-          throw new Error(
-            `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-          );
-        }
+        const errorText = await errorMessage.textContent();
+        throw new Error(
+          `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+        );
       };
 
       try {
-        // Wait up to 15 seconds for either the error message or redirect
         await Promise.race([
           errorMessage.waitFor({ state: "visible", timeout: 15000 }),
           this.page.waitForURL(/\/scans/, { timeout: 15000 }),
         ]);
 
-        // If we're still on test-connection page, check for error
         if (/\/providers\/test-connection/.test(this.page.url())) {
           await checkAndThrowError();
         }
@@ -624,25 +674,21 @@ export class ProvidersPage extends BasePage {
 
     // Fallback logic: try finding any common primary action buttons in expected order
     const candidates: Array<{ name: string | RegExp }> = [
-      { name: "Next" }, // Try the "Next" button
-      { name: "Save" }, // Try the "Save" button
-      { name: "Launch scan" }, // Try the "Launch scan" button
-      { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
+      { name: "Next" },
+      { name: "Save" },
+      { name: "Launch scan" },
+      { name: /Continue|Proceed/i },
     ];
 
-    // Try each candidate name and click it if found
     for (const candidate of candidates) {
-      const btn = this.page.getByRole("button", {
-        name: candidate.name,
-      });
+      const btn = this.page.getByRole("button", { name: candidate.name });
+      if (!(await btn.count())) continue;
 
-      if (await btn.count()) {
-        await btn.click();
-        return;
-      }
+      await expect(btn.first()).toBeVisible();
+      await btn.first().click();
+      return;
     }
 
-    // If none of the expected action buttons are present, throw an error
     throw new Error(
       "Could not find an actionable Next/Save/Launch scan button on this step",
     );
