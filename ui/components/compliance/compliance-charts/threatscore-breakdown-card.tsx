@@ -12,19 +12,15 @@ import {
   getScoreTextClass,
   SCORE_COLORS,
 } from "@/lib/compliance/score-utils";
-import { cn } from "@/lib/utils";
 
-interface ThreatScoreBreakdownCardProps {
+export interface ThreatScoreBreakdownCardProps {
   overallScore: number;
   sectionScores: SectionScores;
-  /** Makes the card full width with horizontal layout for mobile/tablet */
-  fullWidth?: boolean;
 }
 
 export function ThreatScoreBreakdownCard({
   overallScore,
   sectionScores,
-  fullWidth = false,
 }: ThreatScoreBreakdownCardProps) {
   const scoreLevel = getScoreLevel(overallScore);
   const scoreColor = SCORE_COLORS[scoreLevel];
@@ -42,68 +38,38 @@ export function ThreatScoreBreakdownCard({
   );
 
   return (
-    <Card
-      variant="base"
-      className={cn(
-        "flex flex-col justify-between",
-        fullWidth
-          ? "w-full"
-          : "min-h-[372px] w-full md:w-auto md:max-w-[320px] md:min-w-[280px]",
-      )}
-    >
+    <Card variant="base" className="flex h-full w-full flex-col">
       <CardHeader>
         <CardTitle>ThreatScore Breakdown</CardTitle>
       </CardHeader>
-      <CardContent
-        className={cn(
-          "flex gap-3",
-          fullWidth ? "flex-row items-stretch" : "flex-1 flex-col",
-        )}
-      >
-        {/* Overall Score - Compact */}
-        <div
-          className={cn(
-            "flex gap-4",
-            fullWidth
-              ? "flex-col items-center justify-center"
-              : "flex-row items-center",
-          )}
-        >
-          <div className="relative h-[100px] w-[100px] flex-shrink-0">
-            <RadialChart
-              percentage={overallScore}
-              label="Score"
-              color={scoreColor}
-              backgroundColor={SCORE_COLORS.NEUTRAL}
-              height={100}
-              innerRadius={35}
-              outerRadius={45}
-              startAngle={200}
-              endAngle={-20}
-              tooltipData={tooltipData}
-              showCenterLabel={false}
-            />
-          </div>
-          <div
-            className={cn(
-              "flex flex-col",
-              fullWidth ? "items-center text-center" : "",
-            )}
-          >
-            <span className="text-default-500 text-xs">Overall Score</span>
-            <span
-              className={`text-2xl font-bold ${getScoreTextClass(overallScore)}`}
-            >
-              {overallScore.toFixed(1)}%
-            </span>
-            <span className="text-default-400 text-xs">
+      {/* Mobile: vertical, Tablet: horizontal, Desktop: vertical */}
+      <CardContent className="flex flex-1 flex-col gap-4 md:flex-row md:items-stretch lg:flex-col">
+        {/* Overall Score - Large radial chart matching overview style */}
+        <div className="flex w-full flex-col items-center justify-center md:w-[160px] md:flex-shrink-0 lg:w-full">
+          <div className="relative mx-auto h-[140px] w-[160px]">
+            <div className="absolute top-0 left-1/2 z-1 w-full -translate-x-1/2">
+              <RadialChart
+                percentage={overallScore}
+                label="Score"
+                color={scoreColor}
+                backgroundColor={SCORE_COLORS.NEUTRAL}
+                height={170}
+                innerRadius={70}
+                outerRadius={90}
+                startAngle={200}
+                endAngle={-20}
+                tooltipData={tooltipData}
+              />
+            </div>
+            {/* Overlaid label below percentage */}
+            <div className="text-text-neutral-secondary pointer-events-none absolute top-[65%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center text-sm text-nowrap">
               {getScoreLabel(overallScore)}
-            </span>
+            </div>
           </div>
         </div>
 
         {/* Pillar Breakdown */}
-        <Card variant="inner" padding="sm" className="flex-1">
+        <Card variant="inner" padding="sm" className="min-w-0 flex-1">
           <div className="mb-2">
             <span className="text-default-600 text-xs font-medium tracking-wide uppercase">
               Score by Pillar
@@ -136,55 +102,22 @@ export function ThreatScoreBreakdownCard({
   );
 }
 
-interface ThreatScoreBreakdownCardSkeletonProps {
-  fullWidth?: boolean;
-}
+const SKELETON_PILLAR_COUNT = 5;
 
-export function ThreatScoreBreakdownCardSkeleton({
-  fullWidth = false,
-}: ThreatScoreBreakdownCardSkeletonProps = {}) {
+export function ThreatScoreBreakdownCardSkeleton() {
   return (
-    <Card
-      variant="base"
-      className={cn(
-        "flex animate-pulse flex-col justify-between",
-        fullWidth
-          ? "w-full"
-          : "min-h-[372px] w-full md:w-auto md:max-w-[320px] md:min-w-[280px]",
-      )}
-    >
+    <Card variant="base" className="flex h-full w-full animate-pulse flex-col">
       <CardHeader>
         <div className="bg-default-200 h-5 w-40 rounded" />
       </CardHeader>
-      <CardContent
-        className={cn(
-          "flex gap-3",
-          fullWidth ? "flex-row items-stretch" : "flex-1 flex-col",
-        )}
-      >
-        <div
-          className={cn(
-            "flex gap-4",
-            fullWidth
-              ? "flex-col items-center justify-center"
-              : "flex-row items-center",
-          )}
-        >
-          <div className="bg-default-200 h-[100px] w-[100px] rounded-full" />
-          <div
-            className={cn(
-              "flex flex-col gap-1",
-              fullWidth ? "items-center" : "",
-            )}
-          >
-            <div className="bg-default-200 h-3 w-16 rounded" />
-            <div className="bg-default-200 h-6 w-20 rounded" />
-            <div className="bg-default-200 h-3 w-14 rounded" />
-          </div>
+      {/* Mobile: vertical, Tablet: horizontal, Desktop: vertical */}
+      <CardContent className="flex flex-1 flex-col gap-4 md:flex-row md:items-stretch lg:flex-col">
+        <div className="flex w-full flex-col items-center justify-center md:w-[160px] md:flex-shrink-0 lg:w-full">
+          <div className="bg-default-200 mx-auto h-[140px] w-[140px] rounded-full" />
         </div>
-        <Card variant="inner" padding="sm" className="flex-1">
+        <Card variant="inner" padding="sm" className="min-w-0 flex-1">
           <div className="space-y-2">
-            {[1, 2, 3, 4].map((i) => (
+            {Array.from({ length: SKELETON_PILLAR_COUNT }, (_, i) => (
               <div key={i} className="space-y-0.5">
                 <div className="flex justify-between">
                   <div className="bg-default-200 h-3 w-28 rounded" />

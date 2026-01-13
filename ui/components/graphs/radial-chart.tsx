@@ -49,7 +49,7 @@ const CustomTooltip = ({ active, payload }: RadialChartTooltipProps) => {
     return null;
 
   return (
-    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary rounded-xl border px-3 py-1.5 shadow-lg">
+    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary min-w-[238px] rounded-xl border px-3 py-1.5 shadow-lg">
       <div className="flex flex-col gap-0.5">
         {tooltipItems.map((item: TooltipItem, index: number) => (
           <div key={index} className="flex items-end gap-1">

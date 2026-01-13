@@ -25,6 +25,7 @@ import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance"
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import { cn } from "@/lib/utils";
 import {
   AttributesData,
   Framework,
@@ -114,7 +115,7 @@ export default async function ComplianceDetail({
 
   return (
     <ContentLayout title={finalPageTitle}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
           <ComplianceHeader
             scans={[]}
@@ -132,11 +133,11 @@ export default async function ComplianceDetail({
           const reportType = getReportTypeForFramework(framework);
 
           return selectedScanId && reportType ? (
-            <div className="flex-shrink-0 pt-1">
+            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
               <ComplianceDownloadButton
                 scanId={selectedScanId}
                 reportType={reportType}
-                iconOnlyOnMobile
+                label="Download report"
               />
             </div>
           ) : null;
@@ -147,22 +148,21 @@ export default async function ComplianceDetail({
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-6">
+            {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-6 md:grid-cols-2",
+                isThreatScore && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+              )}
+            >
               {isThreatScore && (
-                <div className="w-full lg:hidden">
-                  <ThreatScoreBreakdownCardSkeleton fullWidth />
+                <div className="md:col-span-2 xl:col-span-1">
+                  <ThreatScoreBreakdownCardSkeleton />
                 </div>
               )}
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-                {isThreatScore && (
-                  <div className="hidden lg:block">
-                    <ThreatScoreBreakdownCardSkeleton />
-                  </div>
-                )}
-                <RequirementsStatusCardSkeleton />
-                <TopFailedSectionsCardSkeleton />
-                {/* <SectionsFailureRateCardSkeleton /> */}
-              </div>
+              <RequirementsStatusCardSkeleton />
+              <TopFailedSectionsCardSkeleton />
+              {/* <SectionsFailureRateCardSkeleton /> */}
             </div>
             <SkeletonAccordion />
           </div>
@@ -209,7 +209,7 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RequirementsStatusCard pass={0} fail={0} manual={0} />
           <TopFailedSectionsCard sections={[]} />
           {/* <SectionsFailureRateCard categories={[]} /> */}
@@ -240,38 +240,32 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Charts section - ThreatScore on its own row on mobile/tablet */}
-      <div className="flex flex-col gap-6">
+      {/* Charts section */}
+      {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 md:grid-cols-2",
+          threatScoreData && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+        )}
+      >
         {threatScoreData && (
-          <div className="w-full lg:hidden">
+          <div className="md:col-span-2 xl:col-span-1">
             <ThreatScoreBreakdownCard
               overallScore={threatScoreData.overallScore}
               sectionScores={threatScoreData.sectionScores}
-              fullWidth
             />
           </div>
         )}
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          {/* Desktop: ThreatScore inline with other charts */}
-          {threatScoreData && (
-            <div className="hidden lg:block">
-              <ThreatScoreBreakdownCard
-                overallScore={threatScoreData.overallScore}
-                sectionScores={threatScoreData.sectionScores}
-              />
-            </div>
-          )}
-          <RequirementsStatusCard
-            pass={totalRequirements.pass}
-            fail={totalRequirements.fail}
-            manual={totalRequirements.manual}
-          />
-          <TopFailedSectionsCard
-            sections={topFailedResult.items}
-            dataType={topFailedResult.type}
-          />
-          {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
-        </div>
+        <RequirementsStatusCard
+          pass={totalRequirements.pass}
+          fail={totalRequirements.fail}
+          manual={totalRequirements.manual}
+        />
+        <TopFailedSectionsCard
+          sections={topFailedResult.items}
+          dataType={topFailedResult.type}
+        />
+        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
 
       <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />
