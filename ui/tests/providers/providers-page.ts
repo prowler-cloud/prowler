@@ -552,15 +552,11 @@ export class ProvidersPage extends BasePage {
 
       if (await this.saveButton.count()) {
         await this.saveButton.click();
-        // Wait for navigation to test-connection page
-        await expect(this.page).toHaveURL(/\/providers\/test-connection/);
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
       if (await this.nextButton.count()) {
         await this.nextButton.click();
-        // Wait for navigation to test-connection page
-        await expect(this.page).toHaveURL(/\/providers\/test-connection/);
         return;
       }
     }

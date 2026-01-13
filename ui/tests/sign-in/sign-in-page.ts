@@ -240,7 +240,7 @@ export class SignInPage extends BasePage {
   }
 
   async verifyLogoutSuccess(): Promise<void> {
-    // After logout, URL may include callbackUrl parameter
+    // After logout, should be on sign-in page
     await expect(this.page).toHaveURL(/\/sign-in/);
     await expect(this.pageTitle).toHaveText("Sign in");
   }
