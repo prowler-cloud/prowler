@@ -11,9 +11,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // CI: Use 2 workers (provider tests are serial anyway)
+  // CI: Run with 1 worker to reduce flakiness / shared-state conflicts
   // Local: Use half of available CPUs for faster execution
-  workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
+  workers: process.env.CI ? 1 : Math.max(1, Math.floor(os.cpus().length / 2)),
   reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
   outputDir: "/tmp/playwright-tests",
   expect: {
