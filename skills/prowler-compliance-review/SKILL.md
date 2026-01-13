@@ -31,7 +31,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ---
 
-## Validation Commands
+## Commands
 
 ```bash
 # 1. Validate JSON syntax
@@ -160,17 +160,23 @@ def get_table(data):
 
 ---
 
-## Agent Integration
+## Testing the Compliance Framework
 
-When using `prowler-pr-reviewer` agent for compliance PRs:
+After validation passes, test the framework with Prowler:
 
-1. Agent detects compliance file changes in PR
-2. Loads this skill for review patterns
-3. Creates worktree to checkout PR branch
-4. Runs `validate_compliance.py` from assets/
-5. Checks CHANGELOG and dashboard files
-6. Generates structured review report
-7. Returns recommendation (APPROVE / REQUEST CHANGES)
+```bash
+# Verify framework is detected
+prowler {provider} --list-compliance | grep {framework}
+
+# Run a quick test with a single check from the framework
+prowler {provider} --compliance {framework} --check {check_name}
+
+# Run full compliance scan (dry-run with limited checks)
+prowler {provider} --compliance {framework} --checks-limit 5
+
+# Generate compliance report in multiple formats
+prowler {provider} --compliance {framework} -M csv json html
+```
 
 ---
 
