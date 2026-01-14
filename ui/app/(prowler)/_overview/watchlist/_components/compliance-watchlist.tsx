@@ -46,7 +46,7 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
     <WatchlistCard
       title="Compliance Watchlist"
       items={sortedItems}
-      ctaLabel="Compliance Dashboard"
+      ctaLabel="Explore Compliance for Each Scan"
       ctaHref="/compliance"
       headerAction={
         <SortToggleButton
