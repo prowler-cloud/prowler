@@ -173,7 +173,9 @@ def sync_aws_account(
     max_progress = (
         87  # `cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"]` - 1
     )
-    n_steps = len(requested_syncs) - 2  # Excluding `permission_relationships` and `resourcegroupstaggingapi`
+    n_steps = (
+        len(requested_syncs) - 2
+    )  # Excluding `permission_relationships` and `resourcegroupstaggingapi`
     progress_step = (max_progress - current_progress) / n_steps
 
     failed_syncs = {}
@@ -195,7 +197,9 @@ def sync_aws_account(
                 if func_name == "ecr:image_layers":
                     cartography_aws.RESOURCE_FUNCTIONS[func_name](
                         neo4j_session=sync_args.get("neo4j_session"),
-                        aioboto3_session=get_aioboto3_session(sync_args.get("boto3_session")),
+                        aioboto3_session=get_aioboto3_session(
+                            sync_args.get("boto3_session")
+                        ),
                         regions=sync_args.get("regions"),
                         current_aws_account_id=sync_args.get("current_aws_account_id"),
                         update_tag=sync_args.get("update_tag"),

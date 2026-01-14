@@ -75,6 +75,9 @@ class TestAttackPathsRun:
                 "tasks.jobs.attack_paths.scan.cartography_analysis.run"
             ) as mock_cartography_analysis,
             patch(
+                "tasks.jobs.attack_paths.scan.cartography_ontology.run"
+            ) as mock_cartography_ontology,
+            patch(
                 "tasks.jobs.attack_paths.scan.prowler.create_indexes"
             ) as mock_prowler_indexes,
             patch(
@@ -115,6 +118,7 @@ class TestAttackPathsRun:
         mock_cartography_indexes.assert_called_once_with(mock_session, config)
         mock_prowler_indexes.assert_called_once_with(mock_session)
         mock_cartography_analysis.assert_called_once_with(mock_session, config)
+        mock_cartography_ontology.assert_called_once_with(mock_session, config)
         mock_prowler_analysis.assert_called_once_with(
             mock_session,
             provider,
