@@ -5,8 +5,6 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { getColumnFindings } from "@/components/findings/table/column-findings";
 import { FindingProps } from "@/types";
 
-// Reuse the main findings columns to keep overview in sync.
-// Remove selection/actions to keep the overview table lightweight.
 const baseColumns: ColumnDef<FindingProps>[] = getColumnFindings(
   {} as RowSelectionState,
   0,
