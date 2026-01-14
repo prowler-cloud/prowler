@@ -384,7 +384,8 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         ).exists():
             return {"status": "scan is not completed"}
 
-        resource_group_counts: dict[tuple[str, str], dict[str, int | set]] = {}
+        resource_group_counts: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
         # Get findings with their first resource UID via annotation
         resource_uid_subquery = ResourceFindingMapping.objects.filter(
             finding_id=OuterRef("id"), tenant_id=tenant_id
@@ -393,31 +394,43 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         for finding in (
             Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
             .annotate(resource_uid=Subquery(resource_uid_subquery))
-            .values("group", "severity", "status", "delta", "muted", "resource_uid")
+            .values(
+                "resource_groups",
+                "severity",
+                "status",
+                "delta",
+                "muted",
+                "resource_uid",
+            )
         ):
             aggregate_resource_group_counts(
-                resource_group=finding.get("group"),
+                resource_group=finding.get("resource_groups"),
                 severity=finding.get("severity"),
                 status=finding.get("status"),
                 delta=finding.get("delta"),
                 muted=finding.get("muted", False),
                 resource_uid=finding.get("resource_uid") or "",
                 cache=resource_group_counts,
+                group_resources_cache=group_resources_cache,
             )
 
         if not resource_group_counts:
             return {"status": "no resource groups to backfill"}
 
+    # Compute group-level resource counts (same value for all severity rows in a group)
+    group_resource_counts = {
+        grp: len(uids) for grp, uids in group_resources_cache.items()
+    }
     resource_group_summaries = [
         ScanGroupSummary(
             tenant_id=tenant_id,
             scan_id=scan_id,
-            group=grp,
+            resource_group=grp,
             severity=severity,
             total_findings=counts["total"],
             failed_findings=counts["failed"],
             new_failed_findings=counts["new_failed"],
-            resources_count=len(counts["resources"]),
+            resources_count=group_resource_counts.get(grp, 0),
         )
         for (grp, severity), counts in resource_group_counts.items()
     ]
