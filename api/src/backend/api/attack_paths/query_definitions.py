@@ -336,101 +336,108 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 ),
             ],
         ),
+        # =====================================================================
+        # Privilege Escalation Queries (based on pathfinding.cloud research)
+        # Reference: https://github.com/DataDog/pathfinding.cloud
+        # =====================================================================
         AttackPathsQueryDefinition(
-            id="aws-iam-privesc-attach-role-policy-assume-role",
-            name="Privilege Escalation: iam:AttachRolePolicy + sts:AssumeRole",
-            description="Detect principals who can both attach policies to roles AND assume those roles. This two-step attack allows modifying a role's permissions then assuming it to gain elevated access. This is a principal-access escalation path (pathfinding.cloud: iam-014).",
+            id="aws-iam-privesc-passrole-ec2",
+            name="Privilege Escalation: iam:PassRole + ec2:RunInstances",
+            description="Detect principals who can launch EC2 instances with privileged IAM roles attached. This allows gaining the permissions of the passed role by accessing the EC2 instance metadata service. This is a new-passrole escalation path (pathfinding.cloud: ec2-001).",
             provider="aws",
             cypher="""
-                // Create a virtual escalation outcome node (styled like a finding)
+                // Create a single shared virtual EC2 instance node
+                CALL apoc.create.vNode(['EC2Instance'], {
+                    id: 'potential-ec2-passrole',
+                    name: 'New EC2 Instance',
+                    description: 'Attacker-controlled EC2 with privileged role'
+                })
+                YIELD node AS ec2_node
+
+                // Create a single shared virtual escalation outcome node (styled like a finding)
                 CALL apoc.create.vNode(['PrivilegeEscalation'], {
-                    id: 'effective-administrator',
+                    id: 'effective-administrator-passrole-ec2',
                     check_title: 'Privilege Escalation',
                     name: 'Effective Administrator',
                     status: 'FAIL',
                     severity: 'critical'
                 })
-                YIELD node AS admin_outcome
+                YIELD node AS escalation_outcome
 
-                WITH admin_outcome
+                WITH ec2_node, escalation_outcome
 
                 // Find principals in the account
                 MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)
 
-                // Find statements granting iam:AttachRolePolicy
-                MATCH path_attach = (principal)--(attach_policy:AWSPolicy)--(stmt_attach:AWSPolicyStatement)
-                WHERE stmt_attach.effect = 'Allow'
-                    AND any(action IN stmt_attach.action WHERE
-                        toLower(action) = 'iam:attachrolepolicy'
+                // Find statements granting iam:PassRole
+                MATCH path_passrole = (principal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+                WHERE stmt_passrole.effect = 'Allow'
+                    AND any(action IN stmt_passrole.action WHERE
+                        toLower(action) = 'iam:passrole'
                         OR toLower(action) = 'iam:*'
                         OR action = '*'
                     )
 
-                // Find statements granting sts:AssumeRole
-                MATCH path_assume = (principal)--(assume_policy:AWSPolicy)--(stmt_assume:AWSPolicyStatement)
-                WHERE stmt_assume.effect = 'Allow'
-                    AND any(action IN stmt_assume.action WHERE
-                        toLower(action) = 'sts:assumerole'
-                        OR toLower(action) = 'sts:*'
+                // Find statements granting ec2:RunInstances
+                MATCH path_ec2 = (principal)--(ec2_policy:AWSPolicy)--(stmt_ec2:AWSPolicyStatement)
+                WHERE stmt_ec2.effect = 'Allow'
+                    AND any(action IN stmt_ec2.action WHERE
+                        toLower(action) = 'ec2:runinstances'
+                        OR toLower(action) = 'ec2:*'
                         OR action = '*'
                     )
 
-                // Find target roles that the principal can both modify AND assume
+                // Find roles that trust EC2 service (can be passed to EC2)
                 MATCH path_target = (aws)--(target_role:AWSRole)
                 WHERE target_role.arn CONTAINS $provider_uid
-                    // Can attach policy to this role
-                    AND any(resource IN stmt_attach.resource WHERE
-                        resource = '*'
-                        OR target_role.arn CONTAINS resource
-                        OR resource CONTAINS target_role.name
-                    )
-                    // Can assume this role
-                    AND any(resource IN stmt_assume.resource WHERE
+                    // Check if principal can pass this role
+                    AND any(resource IN stmt_passrole.resource WHERE
                         resource = '*'
                         OR target_role.arn CONTAINS resource
                         OR resource CONTAINS target_role.name
                     )
 
-                // Deduplicate before creating virtual relationships
-                WITH DISTINCT admin_outcome, aws, principal, target_role
+                // Check if target role has elevated permissions (optional, for severity assessment)
+                OPTIONAL MATCH (target_role)--(role_policy:AWSPolicy)--(role_stmt:AWSPolicyStatement)
+                WHERE role_stmt.effect = 'Allow'
+                    AND (
+                        any(action IN role_stmt.action WHERE action = '*')
+                        OR any(action IN role_stmt.action WHERE toLower(action) = 'iam:*')
+                    )
 
-                // Create virtual relationships showing the attack path
-                CALL apoc.create.vRelationship(principal, 'CAN_MODIFY', {
-                    via: 'iam:AttachRolePolicy'
-                }, target_role)
-                YIELD rel AS modify_rel
+                CALL apoc.create.vRelationship(principal, 'CAN_LAUNCH', {
+                    via: 'ec2:RunInstances + iam:PassRole'
+                }, ec2_node)
+                YIELD rel AS launch_rel
 
-                CALL apoc.create.vRelationship(target_role, 'LEADS_TO', {
-                    technique: 'iam:AttachRolePolicy + sts:AssumeRole',
-                    via: 'sts:AssumeRole',
-                    reference: 'https://pathfinding.cloud/paths/iam-014'
-                }, admin_outcome)
-                YIELD rel AS escalation_rel
+                CALL apoc.create.vRelationship(ec2_node, 'ASSUMES_ROLE', {}, target_role)
+                YIELD rel AS assumes_rel
 
-                // Re-match paths for visualization
-                MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
+                    reference: 'https://pathfinding.cloud/paths/ec2-001'
+                }, escalation_outcome)
+                YIELD rel AS grants_rel
 
-                UNWIND nodes(path_principal) + nodes(path_target) as n
+                UNWIND nodes(path_principal) + nodes(path_passrole) + nodes(path_ec2) + nodes(path_target) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_principal, path_target,
-                       admin_outcome, modify_rel, escalation_rel,
+                RETURN path_principal, path_passrole, path_ec2, path_target,
+                       ec2_node, escalation_outcome, launch_rel, assumes_rel, grants_rel,
                        collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
         AttackPathsQueryDefinition(
-            id="aws-bedrock-privesc-passrole-code-interpreter",
-            name="Privilege Escalation: Bedrock Code Interpreter with PassRole",
-            description="Detect principals that can escalate privileges by passing a role to a Bedrock AgentCore Code Interpreter. The attacker creates a code interpreter with an arbitrary role, then invokes it to execute code with those credentials.",
+            id="aws-glue-privesc-passrole-dev-endpoint",
+            name="Privilege Escalation: Glue Dev Endpoint with PassRole",
+            description="Detect principals that can escalate privileges by passing a role to a Glue development endpoint. The attacker creates a dev endpoint with an arbitrary role attached, then accesses those credentials through the endpoint.",
             provider="aws",
             cypher="""
                 CALL apoc.create.vNode(['PrivilegeEscalation'], {
-                    id: 'effective-administrator-bedrock',
+                    id: 'effective-administrator-glue',
                     check_title: 'Privilege Escalation',
-                    name: 'Effective Administrator (Bedrock)',
+                    name: 'Effective Administrator (Glue)',
                     status: 'FAIL',
                     severity: 'critical'
                 })
@@ -443,7 +450,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 // Principal can assume roles (up to 2 hops)
                 OPTIONAL MATCH path_assume = (principal)-[:STS_ASSUMEROLE_ALLOW*0..2]->(acting_as:AWSRole)
-                WITH escalation_outcome, aws, principal, path_principal, path_assume,
+                WITH escalation_outcome, principal, path_principal, path_assume,
                      CASE WHEN path_assume IS NULL THEN principal ELSE acting_as END AS effective_principal
 
                 // Find iam:PassRole permission
@@ -451,20 +458,12 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE passrole_stmt.effect = 'Allow'
                     AND any(action IN passrole_stmt.action WHERE toLower(action) = 'iam:passrole' OR action = '*')
 
-                // Find Bedrock AgentCore permissions
-                MATCH (effective_principal)--(bedrock_policy:AWSPolicy)--(bedrock_stmt:AWSPolicyStatement)
-                WHERE bedrock_stmt.effect = 'Allow'
-                    AND (
-                        any(action IN bedrock_stmt.action WHERE toLower(action) = 'bedrock-agentcore:createcodeinterpreter' OR action = '*' OR toLower(action) = 'bedrock-agentcore:*')
-                    )
-                    AND (
-                        any(action IN bedrock_stmt.action WHERE toLower(action) = 'bedrock-agentcore:startsession' OR action = '*' OR toLower(action) = 'bedrock-agentcore:*')
-                    )
-                    AND (
-                        any(action IN bedrock_stmt.action WHERE toLower(action) = 'bedrock-agentcore:invoke' OR action = '*' OR toLower(action) = 'bedrock-agentcore:*')
-                    )
+                // Find Glue CreateDevEndpoint permission
+                MATCH (effective_principal)--(glue_policy:AWSPolicy)--(glue_stmt:AWSPolicyStatement)
+                WHERE glue_stmt.effect = 'Allow'
+                    AND any(action IN glue_stmt.action WHERE toLower(action) = 'glue:createdevendpoint' OR action = '*' OR toLower(action) = 'glue:*')
 
-                // Find target roles with elevated permissions that could be passed
+                // Find target role with elevated permissions
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
                     AND (
@@ -472,46 +471,37 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Deduplicate per (principal, target_role) pair
-                WITH DISTINCT escalation_outcome, aws, principal, target_role
+                // Deduplicate before creating virtual nodes
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
 
-                // Group by principal, collect target_roles
-                WITH escalation_outcome, aws, principal,
-                     collect(DISTINCT target_role) AS target_roles,
-                     count(DISTINCT target_role) AS target_count
-
-                // Create single virtual Bedrock node per principal
-                CALL apoc.create.vNode(['BedrockCodeInterpreter'], {
-                    name: 'New Code Interpreter',
-                    description: toString(target_count) + ' admin role(s) can be passed',
-                    id: principal.arn,
-                    target_role_count: target_count
+                // Create virtual Glue endpoint node (one per unique principal->target pair)
+                CALL apoc.create.vNode(['GlueDevEndpoint'], {
+                    name: 'New Dev Endpoint',
+                    description: 'Glue endpoint with target role attached',
+                    id: effective_principal.arn + '->' + target_role.arn
                 })
-                YIELD node AS bedrock_agent
+                YIELD node AS glue_endpoint
 
-                // Connect from principal (not effective_principal) to keep graph connected
-                CALL apoc.create.vRelationship(principal, 'CREATES_INTERPRETER', {
-                    permissions: ['iam:PassRole', 'bedrock-agentcore:CreateCodeInterpreter', 'bedrock-agentcore:StartSession', 'bedrock-agentcore:Invoke'],
+                CALL apoc.create.vRelationship(effective_principal, 'CREATES_ENDPOINT', {
+                    permissions: ['iam:PassRole', 'glue:CreateDevEndpoint'],
                     technique: 'new-passrole'
-                }, bedrock_agent)
+                }, glue_endpoint)
                 YIELD rel AS create_rel
 
-                // UNWIND target_roles to show which roles can be passed
-                UNWIND target_roles AS target_role
-
-                CALL apoc.create.vRelationship(bedrock_agent, 'PASSES_ROLE', {}, target_role)
-                YIELD rel AS pass_rel
+                CALL apoc.create.vRelationship(glue_endpoint, 'RUNS_AS', {}, target_role)
+                YIELD rel AS runs_rel
 
                 CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
-                    reference: 'https://pathfinding.cloud/paths/bedrock-001'
+                    reference: 'https://pathfinding.cloud/paths/glue-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match path for visualization
+                // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       bedrock_agent, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       glue_endpoint, escalation_outcome, create_rel, runs_rel, grants_rel
             """,
             parameters=[],
         ),
