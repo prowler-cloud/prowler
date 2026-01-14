@@ -80,7 +80,7 @@ CLEANUP_STATEMENT = """
 
 def create_indexes(neo4j_session: neo4j.Session) -> None:
     """
-    Code based on Cartography version 0.117.0, specifically on `cartography.intel.create_indexes.run`.
+    Code based on Cartography version 0.122.0, specifically on `cartography.intel.create_indexes.run`.
     """
 
     logger.info("Creating indexes for Prowler node types.")
