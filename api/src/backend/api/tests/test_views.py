@@ -3625,7 +3625,7 @@ class TestResourceViewSet:
         assert "metadata" in response.json()["data"][0]["attributes"]
         assert "details" in response.json()["data"][0]["attributes"]
         assert "partition" in response.json()["data"][0]["attributes"]
-        assert "group" in response.json()["data"][0]["attributes"]
+        assert "groups" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -3700,10 +3700,10 @@ class TestResourceViewSet:
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
-                # group filter
-                ("group", "compute", 2),
-                ("group", "storage", 1),
-                ("group.in", "compute,storage", 3),
+                # groups filter (ArrayField)
+                ("groups", "compute", 2),
+                ("groups", "storage", 1),
+                ("groups.in", "compute,storage", 3),
             ]
         ),
     )
@@ -4483,41 +4483,43 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_filter_by_group(self, authenticated_client, findings_with_group):
-        finding = findings_with_group
-        response = authenticated_client.get(
-            reverse("finding-list"),
-            {
-                "filter[group]": "storage",
-                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["group"] == "storage"
-
-    def test_findings_filter_by_group_in(
-        self, authenticated_client, findings_with_multiple_groups
-    ):
-        finding1, _ = findings_with_multiple_groups
-        response = authenticated_client.get(
-            reverse("finding-list"),
-            {
-                "filter[group__in]": "storage,security",
-                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
-
-    def test_findings_filter_by_group_no_match(
+    def test_findings_filter_by_resource_groups(
         self, authenticated_client, findings_with_group
     ):
         finding = findings_with_group
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[group]": "nonexistent",
+                "filter[resource_groups]": "storage",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["resource_groups"] == "storage"
+
+    def test_findings_filter_by_resource_groups_in(
+        self, authenticated_client, findings_with_multiple_groups
+    ):
+        finding1, _ = findings_with_multiple_groups
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_groups__in]": "storage,security",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_resource_groups_no_match(
+        self, authenticated_client, findings_with_group
+    ):
+        finding = findings_with_group
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_groups]": "nonexistent",
                 "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
             },
         )
@@ -8071,7 +8073,7 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["new_failed_findings"] == 5
 
     def test_overview_groups_no_data(self, authenticated_client):
-        response = authenticated_client.get(reverse("overview-groups"))
+        response = authenticated_client.get(reverse("overview-resource-groups"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"] == []
 
@@ -8093,6 +8095,7 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
+        # resources_count is group-level (same for all severities within a group)
         create_scan_resource_group_summary(
             tenant,
             scan,
@@ -8111,7 +8114,7 @@ class TestOverviewViewSet:
             total_findings=15,
             failed_findings=7,
             new_failed_findings=3,
-            resources_count=5,
+            resources_count=8,  # Same as high - group-level count
         )
         create_scan_resource_group_summary(
             tenant,
@@ -8124,7 +8127,7 @@ class TestOverviewViewSet:
             resources_count=4,
         )
 
-        response = authenticated_client.get(reverse("overview-groups"))
+        response = authenticated_client.get(reverse("overview-resource-groups"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 2
@@ -8135,7 +8138,7 @@ class TestOverviewViewSet:
         assert storage_data["attributes"]["total_findings"] == 35
         assert storage_data["attributes"]["failed_findings"] == 17
         assert storage_data["attributes"]["new_failed_findings"] == 8
-        assert storage_data["attributes"]["resources_count"] == 13
+        assert storage_data["attributes"]["resources_count"] == 8  # Group-level, not sum
         assert security_data["attributes"]["total_findings"] == 10
         assert security_data["attributes"]["failed_findings"] == 8
         assert security_data["attributes"]["resources_count"] == 4
@@ -8187,7 +8190,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-groups"),
+            reverse("overview-resource-groups"),
             {filter_key: filter_value_fn(provider1, gcp_provider)},
         )
         assert response.status_code == status.HTTP_200_OK
@@ -8225,8 +8228,8 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-groups"),
-            {"filter[group__in]": "storage,compute"},
+            reverse("overview-resource-groups"),
+            {"filter[resource_group__in]": "storage,compute"},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
@@ -8279,7 +8282,7 @@ class TestOverviewViewSet:
             resources_count=6,
         )
 
-        response = authenticated_client.get(reverse("overview-groups"))
+        response = authenticated_client.get(reverse("overview-resource-groups"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1

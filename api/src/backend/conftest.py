@@ -741,7 +741,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="prowler-test",
-        group="compute",
+        groups=["compute"],
     )
 
     resource1.upsert_or_delete_tags(tags)
@@ -754,7 +754,7 @@ def resources_fixture(providers_fixture):
         region="eu-west-1",
         service="s3",
         type="prowler-test",
-        group="storage",
+        groups=["storage"],
     )
     resource2.upsert_or_delete_tags(tags)
 
@@ -766,7 +766,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="test",
-        group="compute",
+        groups=["compute"],
     )
 
     tags = [
@@ -1388,7 +1388,7 @@ def latest_scan_finding_with_categories(
         check_id="genai_iam_check",
         check_metadata={"CheckId": "genai_iam_check"},
         categories=["gen-ai", "iam"],
-        group="ai_ml",
+        resource_groups="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -1654,7 +1654,7 @@ def findings_with_group(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="storage_check",
         check_metadata={"CheckId": "storage_check"},
-        group="storage",
+        resource_groups="storage",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -1680,7 +1680,7 @@ def findings_with_multiple_groups(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="storage_check",
         check_metadata={"CheckId": "storage_check"},
-        group="storage",
+        resource_groups="storage",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding1.add_resources([resource1])
@@ -1698,7 +1698,7 @@ def findings_with_multiple_groups(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="security_check",
         check_metadata={"CheckId": "security_check"},
-        group="security",
+        resource_groups="security",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding2.add_resources([resource2])
@@ -1712,7 +1712,7 @@ def create_scan_resource_group_summary():
     def _create(
         tenant,
         scan,
-        group,
+        resource_group,
         severity,
         total_findings=10,
         failed_findings=5,
@@ -1722,7 +1722,7 @@ def create_scan_resource_group_summary():
         return ScanGroupSummary.objects.create(
             tenant=tenant,
             scan=scan,
-            group=group,
+            resource_group=resource_group,
             severity=severity,
             total_findings=total_findings,
             failed_findings=failed_findings,

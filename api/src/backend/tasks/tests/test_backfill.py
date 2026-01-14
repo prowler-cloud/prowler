@@ -285,7 +285,7 @@ def findings_with_group_fixture(scans_fixture, resources_fixture):
         raw_result={"status": Status.FAIL},
         check_id="test_check",
         check_metadata={"CheckId": "test_check"},
-        group="ai_ml",
+        resource_groups="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
@@ -298,7 +298,7 @@ def scan_resource_group_summary_fixture(scans_fixture):
     return ScanGroupSummary.objects.create(
         tenant_id=scan.tenant_id,
         scan=scan,
-        group="existing-group",
+        resource_group="existing-group",
         severity=Severity.high,
         total_findings=1,
         failed_findings=0,
@@ -347,7 +347,7 @@ class TestBackfillScanGroupSummaries:
         assert summaries.count() == 1
 
         summary = summaries.first()
-        assert summary.group == "ai_ml"
+        assert summary.resource_group == "ai_ml"
         assert summary.severity == Severity.high
         assert summary.total_findings == 1
         assert summary.failed_findings == 1
