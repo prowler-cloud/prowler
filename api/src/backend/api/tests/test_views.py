@@ -8138,7 +8138,9 @@ class TestOverviewViewSet:
         assert storage_data["attributes"]["total_findings"] == 35
         assert storage_data["attributes"]["failed_findings"] == 17
         assert storage_data["attributes"]["new_failed_findings"] == 8
-        assert storage_data["attributes"]["resources_count"] == 8  # Group-level, not sum
+        assert (
+            storage_data["attributes"]["resources_count"] == 8
+        )  # Group-level, not sum
         assert security_data["attributes"]["total_findings"] == 10
         assert security_data["attributes"]["failed_findings"] == 8
         assert security_data["attributes"]["resources_count"] == 4
