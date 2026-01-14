@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Under Attack Mode** configuration by checking if it is disabled during normal operations, as this mode performs additional security checks including an **interstitial JavaScript challenge page** that significantly impacts user experience.",
   "Risk": "Keeping **Under Attack Mode** permanently enabled causes operational issues.\n- **Availability**: all visitors face a 5-second interstitial challenge page before accessing the site\n- **Accessibility**: visitors without JavaScript support cannot access the site at all\n- **User Experience**: legitimate users experience unnecessary delays and third-party analytics show degraded performance",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **minimum TLS version** configuration by checking if the version is set to at least `TLS 1.2` to ensure connections use **secure, modern cryptographic protocols**.",
   "Risk": "Allowing **legacy TLS versions** (1.0, 1.1) exposes connections to known protocol vulnerabilities.\n- **Confidentiality**: BEAST, POODLE, and weak cipher suites can be exploited for traffic decryption\n- **Compliance**: TLS 1.0/1.1 are deprecated by PCI-DSS, NIST, and major browsers\n- **Integrity**: downgrade attacks can force weaker encryption that is susceptible to tampering",
   "RelatedUrl": "",
