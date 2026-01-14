@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_https_redirect_enabled",
+  "CheckID": "zone_https_redirect_enabled",
   "CheckTitle": "Always Use HTTPS is enabled",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable **Always Use HTTPS** to enforce encrypted connections for all visitors.\n- Combine with **HSTS** to prevent SSL stripping attacks\n- Ensure all resources (images, scripts, stylesheets) are served over HTTPS\n- Test for mixed content warnings before enabling",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_https_redirect_enabled"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_https_redirect_enabled"
     }
   },
   "Categories": [

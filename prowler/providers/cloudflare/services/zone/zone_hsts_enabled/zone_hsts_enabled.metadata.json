@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_hsts_enabled",
+  "CheckID": "zone_hsts_enabled",
   "CheckTitle": "HSTS is enabled with recommended max-age and includes subdomains",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable **HSTS** with at least a **6-month max-age** (12 months recommended).\n- Verify all resources work over HTTPS before enabling\n- Enable **include_subdomains** to protect all subdomains\n- Consider **HSTS preloading** for maximum protection against SSL stripping attacks\n- Test thoroughly as HSTS cannot be easily disabled once deployed",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_hsts_enabled"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_hsts_enabled"
     }
   },
   "Categories": [

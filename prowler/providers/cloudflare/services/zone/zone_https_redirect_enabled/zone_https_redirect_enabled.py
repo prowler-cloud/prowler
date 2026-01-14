@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
-class zones_https_redirect_enabled(Check):
+class zone_https_redirect_enabled(Check):
     """Ensure that Always Use HTTPS redirect is enabled for Cloudflare zones.
 
     The Always Use HTTPS setting automatically redirects all HTTP requests to
@@ -24,7 +24,7 @@ class zones_https_redirect_enabled(Check):
             setting is disabled for the zone.
         """
         findings = []
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

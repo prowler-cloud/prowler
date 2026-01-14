@@ -2,7 +2,7 @@ Mutelist:
   Accounts:
     "test-account-id":
       Checks:
-        "zones_dnssec_enabled":
+        "zone_dnssec_enabled":
           Regions:
             - "*"
           Resources:

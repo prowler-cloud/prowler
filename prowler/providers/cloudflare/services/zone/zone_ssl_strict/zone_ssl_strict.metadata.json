@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_ssl_strict",
+  "CheckID": "zone_ssl_strict",
   "CheckTitle": "SSL/TLS encryption mode is set to Full (Strict)",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure **SSL/TLS mode** to `Full (Strict)` and install a valid certificate on your origin server.\n- Use **Cloudflare Origin CA certificates** for seamless integration\n- Ensure origin server presents a valid certificate matching your domain\n- Enable **Authenticated Origin Pulls** for additional security",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_ssl_strict"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_ssl_strict"
     }
   },
   "Categories": [

@@ -1,4 +1,4 @@
-from prowler.providers.cloudflare.services.zones.zones_service import (
+from prowler.providers.cloudflare.services.zone.zone_service import (
     CloudflareZone,
     CloudflareZoneSettings,
     StrictTransportSecurity,
@@ -6,7 +6,7 @@ from prowler.providers.cloudflare.services.zones.zones_service import (
 from tests.providers.cloudflare.cloudflare_fixtures import ZONE_ID, ZONE_NAME
 
 
-class TestZonesService:
+class TestZoneService:
     def test_cloudflare_zone_model(self):
         zone = CloudflareZone(
             id=ZONE_ID,
