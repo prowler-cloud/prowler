@@ -2,25 +2,14 @@
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Database } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { DataTableRowDetails } from "@/components/findings/table";
-import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
-import { InfoIcon, MutedIcon } from "@/components/icons";
 import {
-  Checkbox,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/shadcn";
-import {
-  DateWithTime,
-  EntityInfo,
-  SnippetChip,
-} from "@/components/ui/entities";
-import { TriggerSheet } from "@/components/ui/sheet";
+  DataTableRowActions,
+  FindingDetail,
+} from "@/components/findings/table";
+import { Checkbox } from "@/components/shadcn";
+import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -28,7 +17,10 @@ import {
 } from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
 
-import { DeltaIndicator } from "./delta-indicator";
+// TODO: PROWLER-379 - Enable ImpactedResourcesCell when backend supports grouped findings
+// import { ImpactedResourcesCell } from "./impacted-resources-cell";
+import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { ProviderIconCell } from "./provider-icon-cell";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -58,10 +50,12 @@ const getProviderData = (
   );
 };
 
-const FindingDetailsCell = ({ row }: { row: any }) => {
+// Component for finding title that opens the detail drawer
+const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   const searchParams = useSearchParams();
   const findingId = searchParams.get("id");
   const isOpen = findingId === row.original.id;
+  const { checktitle } = row.original.attributes.check_metadata;
 
   const handleOpenChange = (open: boolean) => {
     const params = new URLSearchParams(searchParams);
@@ -76,22 +70,18 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   };
 
   return (
-    <div className="flex max-w-10 justify-center">
-      <TriggerSheet
-        triggerComponent={
-          <InfoIcon className="text-button-primary" size={16} />
-        }
-        title="Finding Details"
-        description="View the finding details"
-        defaultOpen={isOpen}
-        onOpenChange={handleOpenChange}
-      >
-        <DataTableRowDetails
-          entityId={row.original.id}
-          findingDetails={row.original}
-        />
-      </TriggerSheet>
-    </div>
+    <FindingDetail
+      findingDetails={row.original}
+      defaultOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      trigger={
+        <div className="max-w-[500px]">
+          <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
+            {checktitle}
+          </p>
+        </div>
+      }
+    />
   );
 };
 
@@ -106,11 +96,35 @@ export function getColumnFindings(
     selectedCount > 0 && selectedCount === selectableRowCount;
   const isSomeSelected =
     selectedCount > 0 && selectedCount < selectableRowCount;
+
   return [
+    // Notification column - shows new/changed/muted indicators
+    {
+      id: "notification",
+      header: () => null,
+      cell: ({ row }) => {
+        const finding = row.original;
+        const isMuted = finding.attributes.muted;
+        const mutedReason = finding.attributes.muted_reason;
+        const delta = finding.attributes.delta as
+          | (typeof DeltaValues)[keyof typeof DeltaValues]
+          | undefined;
+
+        return (
+          <NotificationIndicator
+            delta={delta}
+            isMuted={isMuted}
+            mutedReason={mutedReason}
+          />
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+    // Select column
     {
       id: "select",
       header: ({ table }) => {
-        // Use state calculated from rowSelection to force re-render
         const headerChecked = isAllSelected
           ? true
           : isSomeSelected
@@ -118,14 +132,13 @@ export function getColumnFindings(
             : false;
 
         return (
-          <div className="flex w-6 items-center justify-center">
+          <div className="ml-1 flex w-6 items-center justify-center pr-4">
             <Checkbox
               checked={headerChecked}
               onCheckedChange={(checked) =>
                 table.toggleAllPageRowsSelected(checked === true)
               }
               aria-label="Select all"
-              // Disable when no rows are selectable (all muted)
               disabled={selectableRowCount === 0}
             />
           </div>
@@ -134,46 +147,13 @@ export function getColumnFindings(
       cell: ({ row }) => {
         const finding = row.original;
         const isMuted = finding.attributes.muted;
-        const mutedReason = finding.attributes.muted_reason;
-
-        // Show muted icon with tooltip for muted findings
-        if (isMuted) {
-          const ruleName = mutedReason || "Unknown rule";
-
-          return (
-            <div className="flex w-6 items-center justify-center">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="border-system-severity-critical/40 cursor-pointer rounded-full border p-0.5">
-                      <MutedIcon className="text-system-severity-critical size-3.5" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <Link
-                      href="/mutelist"
-                      className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
-                    >
-                      <span className="text-text-neutral-primary">
-                        Mute rule:
-                      </span>
-                      <span className="max-w-[150px] truncate">{ruleName}</span>
-                    </Link>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          );
-        }
-
-        // Use rowSelection directly instead of row.getIsSelected()
-        // This ensures re-render when selection state changes
         const isSelected = !!rowSelection[row.id];
 
         return (
-          <div className="flex w-6 items-center justify-center">
+          <div className="ml-1 flex w-6 items-center justify-center pr-4">
             <Checkbox
               checked={isSelected}
+              disabled={isMuted}
               onCheckedChange={(checked) =>
                 row.toggleSelected(checked === true)
               }
@@ -185,41 +165,33 @@ export function getColumnFindings(
       enableSorting: false,
       enableHiding: false,
     },
+    // Status column
     {
-      id: "moreInfo",
+      accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Details" />
+        <DataTableColumnHeader column={column} title="Status" param="status" />
       ),
-      cell: ({ row }) => <FindingDetailsCell row={row} />,
-      enableSorting: false,
+      cell: ({ row }) => {
+        const {
+          attributes: { status },
+        } = getFindingsData(row);
+
+        return <StatusFindingBadge status={status} />;
+      },
     },
+    // Finding column - clickable to open detail sheet
     {
       accessorKey: "check",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={"Finding"}
+          title="Finding"
           param="check_id"
         />
       ),
-      cell: ({ row }) => {
-        const { checktitle } = getFindingsMetadata(row);
-        const { delta } = row.original.attributes;
-
-        return (
-          <div className="3xl:max-w-[660px] flex max-w-[410px] flex-row items-center gap-2">
-            <div className="flex flex-row items-center gap-4">
-              {delta === "new" || delta === "changed" ? (
-                <DeltaIndicator delta={delta} />
-              ) : null}
-              <p className="text-sm break-words whitespace-normal">
-                {checktitle}
-              </p>
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => <FindingTitleCell row={row} />,
     },
+    // Resource name column
     {
       accessorKey: "resourceName",
       header: ({ column }) => (
@@ -238,12 +210,13 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
+    // Severity column
     {
       accessorKey: "severity",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={"Severity"}
+          title="Severity"
           param="severity"
         />
       ),
@@ -254,74 +227,20 @@ export function getColumnFindings(
         return <SeverityBadge severity={severity} />;
       },
     },
+    // Provider column
     {
-      accessorKey: "status",
+      accessorKey: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={"Status"}
-          param="status"
-        />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => {
-        const {
-          attributes: { status },
-        } = getFindingsData(row);
+        const provider = getProviderData(row, "provider");
 
-        return <StatusFindingBadge status={status} />;
-      },
-    },
-    {
-      accessorKey: "updated_at",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={"Last seen"}
-          param="updated_at"
-        />
-      ),
-      cell: ({ row }) => {
-        const {
-          attributes: { updated_at },
-        } = getFindingsData(row);
-        return (
-          <div className="w-[100px]">
-            <DateWithTime dateTime={updated_at} />
-          </div>
-        );
-      },
-    },
-    // {
-    //   accessorKey: "scanName",
-    //   header: "Scan Name",
-    //   cell: ({ row }) => {
-    //     const name = getScanData(row, "name");
-
-    //     return (
-    //       <p className="text-small">
-    //         {typeof name === "string" || typeof name === "number"
-    //           ? name
-    //           : "Invalid data"}
-    //       </p>
-    //     );
-    //   },
-    // },
-    {
-      accessorKey: "region",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Region" />
-      ),
-      cell: ({ row }) => {
-        const region = getResourceData(row, "region");
-
-        return (
-          <div className="w-[80px] text-xs">
-            {typeof region === "string" ? region : "Invalid region"}
-          </div>
-        );
+        return <ProviderIconCell provider={provider as ProviderType} />;
       },
       enableSorting: false,
     },
+    // Service column
     {
       accessorKey: "service",
       header: ({ column }) => (
@@ -329,40 +248,47 @@ export function getColumnFindings(
       ),
       cell: ({ row }) => {
         const { servicename } = getFindingsMetadata(row);
-        return <p className="max-w-96 truncate text-xs">{servicename}</p>;
-      },
-      enableSorting: false,
-    },
-    {
-      accessorKey: "cloudProvider",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Cloud Provider" />
-      ),
-      cell: ({ row }) => {
-        const provider = getProviderData(row, "provider");
-        const alias = getProviderData(row, "alias");
-        const uid = getProviderData(row, "uid");
-
         return (
-          <>
-            <EntityInfo
-              cloudProvider={provider as ProviderType}
-              entityAlias={alias as string}
-              entityId={uid as string}
-            />
-          </>
+          <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
+            {servicename}
+          </p>
         );
       },
       enableSorting: false,
     },
+    // TODO: PROWLER-379 - Enable Impacted Resources column when backend supports grouped findings
+    // {
+    //   accessorKey: "impactedResources",
+    //   header: ({ column }) => (
+    //     <DataTableColumnHeader column={column} title="Impacted Resources" />
+    //   ),
+    //   cell: () => {
+    //     return <ImpactedResourcesCell impacted={1} total={1} />;
+    //   },
+    //   enableSorting: false,
+    // },
+    // Time column
     {
-      id: "actions",
+      accessorKey: "updated_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Actions" />
+        <DataTableColumnHeader
+          column={column}
+          title="Time"
+          param="updated_at"
+        />
       ),
       cell: ({ row }) => {
-        return <DataTableRowActions row={row} />;
+        const {
+          attributes: { updated_at },
+        } = getFindingsData(row);
+        return <DateWithTime dateTime={updated_at} />;
       },
+    },
+    // Actions column - dropdown with Mute/Jira options
+    {
+      id: "actions",
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => <DataTableRowActions row={row} />,
       enableSorting: false,
     },
   ];
