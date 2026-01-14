@@ -10,9 +10,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Stabilize E2E tests by polling API for provider deletion completion
-- Fix OCI credentials page verification (tenancy field is hidden in step 2)
-- Optimize Playwright config for CI: 2 workers, reduced timeouts, trace on retry
 - New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 

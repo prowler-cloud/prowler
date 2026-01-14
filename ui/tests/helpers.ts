@@ -373,31 +373,12 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-  // Poll the API directly to verify the provider is fully deleted from the database
-  // The API marks provider as is_deleted=True immediately, but the actual DB deletion
-  // happens async via Celery. We poll until the provider no longer exists in the DB.
-  // Note: NEXT_PUBLIC_API_BASE_URL may contain docker-internal hostname (prowler-api),
-  // but tests run on the host machine, so we always use localhost for direct API calls.
-  const apiBaseUrl = "http://localhost:8080/api/v1";
-
-  // Poll: wait for API to stop returning the provider
+  // Wait for the provider row to disappear from the table (UI-based verification)
+  // This confirms the UI has updated after the soft-delete
   await expect(async () => {
-    const response = await page.page.request.get(
-      `${apiBaseUrl}/providers?filter[uid]=${providerUID}`
-    );
-    const data = await response.json();
-    const providerExists = data.data?.some((p: { attributes?: { uid?: string } }) =>
-      p.attributes?.uid === providerUID
-    );
-    expect(providerExists).toBeFalsy();
+    const row = await findProviderRow();
+    expect(row).toBeNull();
   }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
-
-  // Fixed delay for Celery to physically delete the provider from DB.
-  // The API filters out is_deleted=True providers immediately, but the unique
-  // constraint on provider UID remains until Celery's async task completes the
-  // physical deletion. There's no API endpoint to check this, so we wait.
-  // 10 seconds is conservative but necessary for CI stability.
-  await page.page.waitForTimeout(10000);
 
   // Navigate back to providers page to ensure clean state
   await page.goto();

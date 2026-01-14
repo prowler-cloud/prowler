@@ -49,7 +49,7 @@ test.describe.serial("Add Provider", () => {
       );
     }
 
-    // Setup before each test
+    // Setup before each test - clean up and initialize
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state

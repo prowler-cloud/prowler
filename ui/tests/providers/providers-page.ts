@@ -541,8 +541,45 @@ export class ProvidersPage extends BasePage {
     const url = this.page.url();
 
     // If on the "connect-account" step, click the "Next" button
+    // Handle constraint violation error by waiting and retrying (Celery soft-delete delay)
     if (/\/providers\/connect-account/.test(url)) {
-      await this.nextButton.click();
+      const constraintError = this.page.getByText(/Constraint.*unique_provider_uids.*violated/i);
+      const maxRetries = 10;
+      const retryDelay = 3000; // 3 seconds between retries
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        await this.nextButton.click();
+
+        // Wait a moment for either navigation or error to appear
+        await this.page.waitForTimeout(1000);
+
+        // Check if we navigated to step 2 (success)
+        if (/\/providers\/add-credentials/.test(this.page.url())) {
+          return;
+        }
+
+        // Check if constraint error appeared
+        const hasConstraintError = await constraintError.isVisible().catch(() => false);
+        if (hasConstraintError) {
+          if (attempt === maxRetries) {
+            throw new Error(
+              `Provider UID constraint violation after ${maxRetries} retries. Celery may not be processing deletions.`
+            );
+          }
+          // Wait for Celery to physically delete the soft-deleted provider
+          // eslint-disable-next-line no-console
+          console.log(`[Retry ${attempt}/${maxRetries}] Constraint error detected, waiting for Celery...`);
+          await this.page.waitForTimeout(retryDelay);
+          continue;
+        }
+
+        // No error and no navigation - wait a bit more for navigation
+        await expect(this.page).toHaveURL(/\/providers\/add-credentials/, { timeout: 5000 }).catch(() => {});
+        if (/\/providers\/add-credentials/.test(this.page.url())) {
+          return;
+        }
+      }
+
       return;
     }
 
