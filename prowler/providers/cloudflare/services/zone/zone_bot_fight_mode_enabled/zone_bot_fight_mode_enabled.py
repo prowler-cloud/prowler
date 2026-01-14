@@ -5,17 +5,17 @@ from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 class zone_bot_fight_mode_enabled(Check):
     """Ensure that Bot Fight Mode is enabled for Cloudflare zones.
 
-    Bot Fight Mode (Browser Integrity Check) detects and mitigates automated bot
-    traffic by analyzing browser characteristics and behavior patterns. It challenges
-    requests that appear to come from bots or clients with missing/invalid browser
-    headers, protecting against scraping, spam, and automated attacks.
+    Bot Fight Mode is a free Cloudflare feature that detects and mitigates automated
+    bot traffic. It uses JavaScript challenges and behavioral analysis to identify
+    bots and block malicious automated traffic, protecting against scraping, spam,
+    credential stuffing, and other automated attacks.
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
         """Execute the Bot Fight Mode enabled check.
 
         Iterates through all Cloudflare zones and verifies that Bot Fight Mode
-        (Browser Integrity Check) is enabled. This feature helps identify and
+        is enabled via the Bot Management API. This feature helps identify and
         block malicious bot traffic.
 
         Returns:
@@ -28,12 +28,15 @@ class zone_bot_fight_mode_enabled(Check):
                 metadata=self.metadata(),
                 resource=zone,
             )
-            browser_check = (zone.settings.browser_check or "").lower()
-            if browser_check == "on":
+            if zone.settings.bot_fight_mode_enabled:
                 report.status = "PASS"
-                report.status_extended = f"Bot Fight Mode (Browser Integrity Check) is enabled for zone {zone.name}."
+                report.status_extended = (
+                    f"Bot Fight Mode is enabled for zone {zone.name}."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Bot Fight Mode (Browser Integrity Check) is not enabled for zone {zone.name}."
+                report.status_extended = (
+                    f"Bot Fight Mode is not enabled for zone {zone.name}."
+                )
             findings.append(report)
         return findings

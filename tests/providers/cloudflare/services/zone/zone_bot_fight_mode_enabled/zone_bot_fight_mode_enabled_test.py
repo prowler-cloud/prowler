@@ -43,7 +43,7 @@ class Test_zone_bot_fight_mode_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    browser_check="on",
+                    bot_fight_mode_enabled=True,
                 ),
             )
         }
@@ -80,7 +80,7 @@ class Test_zone_bot_fight_mode_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    browser_check="off",
+                    bot_fight_mode_enabled=False,
                 ),
             )
         }
@@ -104,36 +104,3 @@ class Test_zone_bot_fight_mode_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "not enabled" in result[0].status_extended
-
-    def test_zone_bot_fight_mode_none(self):
-        zone_client = mock.MagicMock
-        zone_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                status="active",
-                paused=False,
-                settings=CloudflareZoneSettings(
-                    browser_check=None,
-                ),
-            )
-        }
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_bot_fight_mode_enabled.zone_bot_fight_mode_enabled.zone_client",
-                new=zone_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zone.zone_bot_fight_mode_enabled.zone_bot_fight_mode_enabled import (
-                zone_bot_fight_mode_enabled,
-            )
-
-            check = zone_bot_fight_mode_enabled()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
