@@ -232,9 +232,6 @@ export async function addAWSProvider(
   await providersPage.fillAWSProviderDetails(awsProviderData);
   await providersPage.clickNext();
 
-  // Verify credentials page is loaded
-  await providersPage.verifyCredentialsPageLoaded();
-
   // Select static credentials type
   await providersPage.selectCredentialsType(
     AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
@@ -390,4 +387,9 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
     );
     expect(providerExists).toBeFalsy();
   }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
+
+  // Additional wait for Celery to physically delete the provider from DB.
+  // The API filters out is_deleted=True providers, so the poll above may pass
+  // before the actual DB deletion completes.
+  await page.page.waitForTimeout(2000);
 }

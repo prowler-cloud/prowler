@@ -544,25 +544,23 @@ export class ProvidersPage extends BasePage {
       // On add-credentials we always have at least one of these visible depending on provider.
       // AWS: Role credentials radio is present.
       // OCI: Tenancy OCID is hidden but User OCID is visible.
+      // Azure: Client ID input is visible.
       await expect
         .poll(
           async () => {
             // Primary signal: URL indicates the step.
             if (/\/providers\/add-credentials/.test(this.page.url())) return true;
 
-            // Secondary signal: the "Next" button disappeared (navigation started).
-            // This prevents us from sitting forever when the UI transitions but the
-            // add-credentials controls haven't rendered yet.
-            const nextStillVisible = await this.nextButton
-              .isVisible()
-              .catch(() => false);
-            if (!nextStillVisible) return true;
-
-            // Tertiary signals: step-specific controls become visible.
+            // Secondary signals: step-specific controls become visible.
             const awsRoleRadioVisible = await this.roleCredentialsRadio
               .isVisible()
               .catch(() => false);
             if (awsRoleRadioVisible) return true;
+
+            const awsStaticRadioVisible = await this.staticCredentialsRadio
+              .isVisible()
+              .catch(() => false);
+            if (awsStaticRadioVisible) return true;
 
             const ociUserVisible = await this.ociUserIdInput
               .isVisible()
@@ -579,10 +577,15 @@ export class ProvidersPage extends BasePage {
               .catch(() => false);
             if (m365ClientIdVisible) return true;
 
-            const githubUserVisible = await this.githubUsernameInput
+            const githubPatVisible = await this.githubPersonalAccessTokenInput
               .isVisible()
               .catch(() => false);
-            if (githubUserVisible) return true;
+            if (githubPatVisible) return true;
+
+            const azureClientIdVisible = await this.azureClientIdInput
+              .isVisible()
+              .catch(() => false);
+            if (azureClientIdVisible) return true;
 
             return false;
           },
