@@ -107,6 +107,8 @@ test.describe.serial("Add Provider", () => {
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
 
+        await providersPage.verifyCredentialsPageLoaded();
+
         // Select static credentials type
         await providersPage.selectCredentialsType(
           AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
@@ -178,6 +180,8 @@ test.describe.serial("Add Provider", () => {
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
 
+        await providersPage.verifyCredentialsPageLoaded();
+
         // Select role credentials type
         await providersPage.selectCredentialsType(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
@@ -247,6 +251,8 @@ test.describe.serial("Add Provider", () => {
         // Fill provider details
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
+
+        await providersPage.verifyCredentialsPageLoaded();
 
         // Select role credentials type
         await providersPage.selectCredentialsType(

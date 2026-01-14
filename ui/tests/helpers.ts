@@ -232,6 +232,9 @@ export async function addAWSProvider(
   await providersPage.fillAWSProviderDetails(awsProviderData);
   await providersPage.clickNext();
 
+  // Verify credentials page is loaded
+  await providersPage.verifyCredentialsPageLoaded();
+
   // Select static credentials type
   await providersPage.selectCredentialsType(
     AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
@@ -327,6 +330,9 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   if (!targetRow) {
     // Provider not found, nothing to delete
+    // Navigate back to providers page to ensure clean state
+    await page.goto();
+    await expect(page.providersTable).toBeVisible({ timeout: 10000 });
     return;
   }
 
@@ -392,4 +398,8 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // physical deletion. There's no API endpoint to check this, so we wait.
   // 10 seconds is conservative but necessary for CI stability.
   await page.page.waitForTimeout(10000);
+
+  // Navigate back to providers page to ensure clean state
+  await page.goto();
+  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
 }
