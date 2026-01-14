@@ -374,7 +374,7 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // but tests run on the host machine, so we always use localhost for direct API calls.
   const apiBaseUrl = "http://localhost:8080/api/v1";
 
-  // First poll: wait for API to stop returning the provider
+  // Poll: wait for API to stop returning the provider
   await expect(async () => {
     const response = await page.page.request.get(
       `${apiBaseUrl}/providers?filter[uid]=${providerUID}`
@@ -386,20 +386,10 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
     expect(providerExists).toBeFalsy();
   }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
 
-  // Second poll: verify the UID is truly available by checking we can use it.
-  // The API filters out is_deleted=True, but the DB constraint still blocks
-  // until Celery physically deletes. We poll until no constraint error.
-  await expect(async () => {
-    // Try to fetch with a direct DB check simulation - if the provider
-    // is still soft-deleted in DB, the unique constraint will block creation.
-    // We use the search endpoint with a broader filter to catch soft-deleted records.
-    const checkResponse = await page.page.request.get(
-      `${apiBaseUrl}/providers?filter[search]=${providerUID}`
-    );
-    const checkData = await checkResponse.json();
-    
-    // No results means truly deleted from DB
-    const totalCount = checkData.meta?.pagination?.count ?? checkData.data?.length ?? 0;
-    expect(totalCount).toBe(0);
-  }).toPass({ timeout: 60000, intervals: [1000, 2000, 3000, 5000] });
+  // Fixed delay for Celery to physically delete the provider from DB.
+  // The API filters out is_deleted=True providers immediately, but the unique
+  // constraint on provider UID remains until Celery's async task completes the
+  // physical deletion. There's no API endpoint to check this, so we wait.
+  // 10 seconds is conservative but necessary for CI stability.
+  await page.page.waitForTimeout(10000);
 }
