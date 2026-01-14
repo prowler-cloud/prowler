@@ -45,6 +45,7 @@ class Zone(CloudflareService):
         self._get_zones_settings()
         self._get_zones_dnssec()
         self._get_zones_universal_ssl()
+        self._get_zones_bot_management()
         self._get_zones_firewall_rules()
         self._get_zones_waf_rulesets()
 
@@ -146,6 +147,20 @@ class Zone(CloudflareService):
                 universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
                 zone.settings.universal_ssl_enabled = getattr(
                     universal_ssl, "enabled", False
+                )
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zones_bot_management(self) -> None:
+        """Get Bot Management settings for all zones."""
+        logger.info("Zone - Getting Bot Management settings...")
+        for zone in self.zones.values():
+            try:
+                bot_management = self.client.bot_management.get(zone_id=zone.id)
+                zone.settings.bot_fight_mode_enabled = getattr(
+                    bot_management, "fight_mode", False
                 )
             except Exception as error:
                 logger.error(
@@ -301,7 +316,7 @@ class Zone(CloudflareService):
             waf=settings.get("waf"),
             security_level=settings.get("security_level"),
             browser_check=settings.get("browser_check"),
-            challenge_ttl=settings.get("challenge_ttl"),
+            challenge_ttl=settings.get("challenge_ttl" or 0),
             ip_geolocation=settings.get("ip_geolocation"),
             email_obfuscation=settings.get("email_obfuscation"),
             server_side_exclude=settings.get("server_side_exclude"),
@@ -374,6 +389,8 @@ class CloudflareZoneSettings(BaseModel):
     # Zone state
     development_mode: Optional[str] = None
     always_online: Optional[str] = None
+    # Bot management
+    bot_fight_mode_enabled: bool = False
 
 
 class CloudflareZone(BaseModel):

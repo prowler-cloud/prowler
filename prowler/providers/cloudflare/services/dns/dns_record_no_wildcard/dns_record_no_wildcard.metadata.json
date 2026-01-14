@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare DNS records** are assessed for **wildcard usage** by checking if A, AAAA, or CNAME records use wildcard entries (*.example.com) which can **increase attack surface** and expose unintended services.",
   "Risk": "**Wildcard DNS records** can expose unintended services and increase attack surface.\n- **Confidentiality**: any subdomain resolves, potentially exposing internal naming conventions\n- **Integrity**: attackers can access unintended services via arbitrary subdomains\n- **Availability**: wildcard records may route traffic to services not designed for public access",
   "RelatedUrl": "",

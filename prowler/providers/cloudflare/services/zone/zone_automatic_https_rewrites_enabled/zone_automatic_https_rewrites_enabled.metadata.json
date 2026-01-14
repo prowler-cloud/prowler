@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Automatic HTTPS Rewrites** configuration by checking if it is enabled to automatically rewrite insecure HTTP links to HTTPS, resolving **mixed content issues** and enhancing site security.",
   "Risk": "Without **Automatic HTTPS Rewrites**, pages may contain mixed content where HTTP resources load over HTTPS pages.\n- **Confidentiality**: insecure resources can be intercepted and modified by attackers\n- **Integrity**: browsers block or warn about mixed content, indicating potential tampering\n- **User Experience**: security warnings degrade trust and some browsers block mixed content entirely",
   "RelatedUrl": "",

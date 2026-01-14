@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **OWASP managed rulesets** by checking if they are enabled to protect against common web application vulnerabilities including **SQL injection**, **XSS**, and other **OWASP Top 10** threats.",
   "Risk": "Without **OWASP managed rulesets**, web applications are exposed to well-known attack vectors.\n- **Confidentiality**: SQL injection attacks can exfiltrate sensitive database contents\n- **Integrity**: XSS attacks can modify page content and steal session tokens\n- **Availability**: remote code execution can compromise server availability",
   "RelatedUrl": "",

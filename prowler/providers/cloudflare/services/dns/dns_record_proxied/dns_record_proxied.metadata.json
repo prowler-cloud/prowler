@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare DNS records** are assessed for **proxy configuration** by checking if A, AAAA, and CNAME records are proxied through Cloudflare to benefit from **DDoS protection**, **WAF**, and **caching** capabilities.",
   "Risk": "Unproxied **DNS records** expose origin server IP addresses directly to the internet.\n- **Confidentiality**: origin IP exposure enables targeted reconnaissance and attacks\n- **Integrity**: direct access to origin bypasses WAF and security controls\n- **Availability**: origin is exposed to DDoS attacks without Cloudflare protection",
   "RelatedUrl": "",

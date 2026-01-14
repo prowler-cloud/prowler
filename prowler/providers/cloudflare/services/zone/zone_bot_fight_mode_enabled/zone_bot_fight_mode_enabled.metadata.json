@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Bot Fight Mode** configuration by checking if it is enabled to detect and mitigate **automated bot traffic** targeting the zone through browser integrity checks.",
   "Risk": "Without **Bot Fight Mode**, zones are vulnerable to automated attacks.\n- **Confidentiality**: web scraping bots can harvest sensitive data from your site\n- **Integrity**: credential stuffing attacks can compromise user accounts\n- **Availability**: bot traffic can overwhelm resources causing service degradation",
   "RelatedUrl": "",

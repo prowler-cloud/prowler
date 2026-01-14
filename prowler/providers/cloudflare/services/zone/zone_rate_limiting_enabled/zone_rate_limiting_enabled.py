@@ -39,9 +39,9 @@ class zone_rate_limiting_enabled(Check):
 
             if rate_limit_rules:
                 report.status = "PASS"
+                rules_str = ", ".join(rule.description for rule in rate_limit_rules)
                 report.status_extended = (
-                    f"Rate limiting is configured for zone {zone.name} "
-                    f"({len(rate_limit_rules)} rule(s))."
+                    f"Rate limiting is configured for zone {zone.name}: {rules_str}."
                 )
             else:
                 report.status = "FAIL"

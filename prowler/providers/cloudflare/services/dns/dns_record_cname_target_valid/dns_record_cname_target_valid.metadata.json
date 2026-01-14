@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare DNS CNAME records** are assessed for **dangling CNAME** vulnerabilities by checking if the target domain resolves to a valid address, preventing **subdomain takeover** attacks.",
   "Risk": "Dangling **CNAME records** pointing to non-existent targets create subdomain takeover vulnerabilities.\n- **Confidentiality**: attackers can host malicious content on your subdomain to phish users\n- **Integrity**: attackers can impersonate your organization and damage brand reputation\n- **Availability**: legitimate services may be disrupted or redirected",
   "RelatedUrl": "",

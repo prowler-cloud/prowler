@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **HTTP Strict Transport Security (HSTS)** by checking if it is enabled with a `max-age` of at least **6 months** (15768000 seconds) and **includes subdomains** to instruct browsers to always use HTTPS across the entire domain.",
   "Risk": "Without **HSTS**, browsers may initially connect over HTTP before redirecting to HTTPS.\n- **Confidentiality**: creates a window for SSL stripping attacks where attackers downgrade connections to unencrypted HTTP\n- **Integrity**: first request can be intercepted and modified before HTTPS redirect\n- **Session hijacking**: cookies and credentials may be captured during initial HTTP request",
   "RelatedUrl": "",

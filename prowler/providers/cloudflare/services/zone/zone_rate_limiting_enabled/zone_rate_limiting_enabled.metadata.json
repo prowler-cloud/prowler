@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Rate Limiting** configuration by checking if rules are configured to protect against **DDoS attacks**, **brute force attempts**, and **API abuse**.",
   "Risk": "Without **Rate Limiting**, applications are vulnerable to volumetric attacks.\n- **Confidentiality**: credential brute forcing can compromise user accounts\n- **Integrity**: API abuse can manipulate data through excessive requests\n- **Availability**: volumetric attacks can exhaust resources causing service degradation",
   "RelatedUrl": "",

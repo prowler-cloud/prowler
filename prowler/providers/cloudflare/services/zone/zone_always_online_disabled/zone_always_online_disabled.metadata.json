@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Always Online** configuration by checking if it is disabled to prevent serving **stale cached content** when the origin server is unavailable, which could expose outdated or sensitive information.",
   "Risk": "With **Always Online** enabled, Cloudflare serves cached pages when the origin is unavailable.\n- **Confidentiality**: stale cache may expose sensitive information that was subsequently removed\n- **Integrity**: outdated content may contain incorrect or superseded information\n- **Availability**: reliance on cached content masks origin failures requiring attention",
   "RelatedUrl": "",

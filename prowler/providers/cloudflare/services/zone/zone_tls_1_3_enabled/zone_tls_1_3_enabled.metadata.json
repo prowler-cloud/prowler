@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **TLS 1.3** configuration by checking if it is enabled to benefit from **improved security** through simplified cipher suites and **faster handshakes** with zero round-trip time resumption.",
   "Risk": "Without **TLS 1.3**, connections use older TLS versions with less secure characteristics.\n- **Confidentiality**: legacy TLS versions have more complex cipher negotiations that may expose weaknesses\n- **Integrity**: older protocols lack protection against downgrade attacks that TLS 1.3 provides\n- **Performance**: slower handshakes impact user experience and increase latency",
   "RelatedUrl": "",

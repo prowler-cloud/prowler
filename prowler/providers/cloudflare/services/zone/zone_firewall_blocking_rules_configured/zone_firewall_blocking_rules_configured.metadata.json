@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **firewall blocking rules** by checking if custom rules use block, challenge, js_challenge, or managed_challenge actions to actively protect against threats rather than only logging.",
   "Risk": "Firewall rules configured only for **logging** provide visibility but no protection.\n- **Confidentiality**: malicious traffic can access and exfiltrate sensitive data\n- **Integrity**: application exploits can modify data without being blocked\n- **Availability**: credential stuffing and abuse attacks reach the origin unimpeded",
   "RelatedUrl": "",

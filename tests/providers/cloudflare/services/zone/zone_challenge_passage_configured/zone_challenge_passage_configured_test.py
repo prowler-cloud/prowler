@@ -34,7 +34,7 @@ class Test_zone_challenge_passage_configured:
             result = check.execute()
             assert len(result) == 0
 
-    def test_zone_challenge_passage_correct(self):
+    def test_zone_challenge_passage_at_min(self):
         zone_client = mock.MagicMock
         zone_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -43,7 +43,7 @@ class Test_zone_challenge_passage_configured:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    challenge_ttl=3600,  # Recommended value
+                    challenge_ttl=900,  # 15 minutes - minimum recommended
                 ),
             )
         }
@@ -68,9 +68,9 @@ class Test_zone_challenge_passage_configured:
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "3600" in result[0].status_extended
+            assert "15 minutes" in result[0].status_extended
 
-    def test_zone_challenge_passage_too_long(self):
+    def test_zone_challenge_passage_at_max(self):
         zone_client = mock.MagicMock
         zone_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -79,7 +79,7 @@ class Test_zone_challenge_passage_configured:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    challenge_ttl=86400,  # Too long (24 hours)
+                    challenge_ttl=2700,  # 45 minutes - maximum recommended
                 ),
             )
         }
@@ -101,9 +101,42 @@ class Test_zone_challenge_passage_configured:
             check = zone_challenge_passage_configured()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "86400" in result[0].status_extended
-            assert "recommended" in result[0].status_extended
+            assert result[0].status == "PASS"
+            assert "45 minutes" in result[0].status_extended
+
+    def test_zone_challenge_passage_default(self):
+        zone_client = mock.MagicMock
+        zone_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                status="active",
+                paused=False,
+                settings=CloudflareZoneSettings(
+                    challenge_ttl=1800,  # 30 minutes - default and secure
+                ),
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_challenge_passage_configured.zone_challenge_passage_configured.zone_client",
+                new=zone_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zone.zone_challenge_passage_configured.zone_challenge_passage_configured import (
+                zone_challenge_passage_configured,
+            )
+
+            check = zone_challenge_passage_configured()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "30 minutes" in result[0].status_extended
 
     def test_zone_challenge_passage_too_short(self):
         zone_client = mock.MagicMock
@@ -114,7 +147,7 @@ class Test_zone_challenge_passage_configured:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    challenge_ttl=300,  # Too short (5 minutes)
+                    challenge_ttl=300,  # 5 minutes - too short
                 ),
             )
         }
@@ -137,7 +170,43 @@ class Test_zone_challenge_passage_configured:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "300" in result[0].status_extended
+            assert "5 minutes" in result[0].status_extended
+            assert "recommended" in result[0].status_extended
+
+    def test_zone_challenge_passage_too_long(self):
+        zone_client = mock.MagicMock
+        zone_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                status="active",
+                paused=False,
+                settings=CloudflareZoneSettings(
+                    challenge_ttl=3600,  # 60 minutes - exceeds recommended
+                ),
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_challenge_passage_configured.zone_challenge_passage_configured.zone_client",
+                new=zone_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zone.zone_challenge_passage_configured.zone_challenge_passage_configured import (
+                zone_challenge_passage_configured,
+            )
+
+            check = zone_challenge_passage_configured()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "60 minutes" in result[0].status_extended
+            assert "recommended" in result[0].status_extended
 
     def test_zone_challenge_passage_none(self):
         zone_client = mock.MagicMock

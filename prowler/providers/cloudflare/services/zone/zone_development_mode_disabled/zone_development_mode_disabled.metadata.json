@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Development Mode** configuration by checking if it is disabled to ensure **caching**, **security features**, and **performance optimizations** are active in production environments.",
   "Risk": "With **Development Mode** enabled, Cloudflare bypasses caching and some optimizations.\n- **Confidentiality**: some security features may be affected or bypassed\n- **Integrity**: performance optimizations are disabled impacting site reliability\n- **Availability**: origin server is exposed to increased load without caching protection",
   "RelatedUrl": "",

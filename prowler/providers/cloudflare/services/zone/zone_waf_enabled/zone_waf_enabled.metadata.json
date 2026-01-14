@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Web Application Firewall (WAF)** configuration by checking if it is enabled to protect against common web vulnerabilities including **SQL injection**, **XSS**, and **OWASP Top 10** threats.",
   "Risk": "Without **WAF**, web applications are exposed to common attack vectors.\n- **Confidentiality**: SQL injection attacks can exfiltrate sensitive database contents\n- **Integrity**: XSS attacks can modify page content and steal session tokens\n- **Availability**: application-layer attacks can cause service disruption",
   "RelatedUrl": "",

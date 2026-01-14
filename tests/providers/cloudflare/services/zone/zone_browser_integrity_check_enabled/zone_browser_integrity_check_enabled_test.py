@@ -11,7 +11,7 @@ from tests.providers.cloudflare.cloudflare_fixtures import (
 )
 
 
-class Test_zone_server_side_excludes_enabled:
+class Test_zone_browser_integrity_check_enabled:
     def test_no_zones(self):
         zone_client = mock.MagicMock
         zone_client.zones = {}
@@ -22,19 +22,19 @@ class Test_zone_server_side_excludes_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled.zone_client",
+                "prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled.zone_client",
                 new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled import (
-                zone_server_side_excludes_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled import (
+                zone_browser_integrity_check_enabled,
             )
 
-            check = zone_server_side_excludes_enabled()
+            check = zone_browser_integrity_check_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_zone_server_side_excludes_enabled(self):
+    def test_zone_browser_integrity_check_enabled(self):
         zone_client = mock.MagicMock
         zone_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -43,7 +43,7 @@ class Test_zone_server_side_excludes_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    server_side_exclude="on",
+                    browser_check="on",
                 ),
             )
         }
@@ -54,23 +54,24 @@ class Test_zone_server_side_excludes_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled.zone_client",
+                "prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled.zone_client",
                 new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled import (
-                zone_server_side_excludes_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled import (
+                zone_browser_integrity_check_enabled,
             )
 
-            check = zone_server_side_excludes_enabled()
+            check = zone_browser_integrity_check_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == ZONE_ID
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
-            assert "Server Side Excludes is enabled" in result[0].status_extended
+            assert "Browser Integrity Check" in result[0].status_extended
+            assert "enabled" in result[0].status_extended
 
-    def test_zone_server_side_excludes_disabled(self):
+    def test_zone_browser_integrity_check_disabled(self):
         zone_client = mock.MagicMock
         zone_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -79,7 +80,7 @@ class Test_zone_server_side_excludes_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    server_side_exclude="off",
+                    browser_check="off",
                 ),
             )
         }
@@ -90,21 +91,21 @@ class Test_zone_server_side_excludes_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled.zone_client",
+                "prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled.zone_client",
                 new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled import (
-                zone_server_side_excludes_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled import (
+                zone_browser_integrity_check_enabled,
             )
 
-            check = zone_server_side_excludes_enabled()
+            check = zone_browser_integrity_check_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Server Side Excludes is not enabled" in result[0].status_extended
+            assert "not enabled" in result[0].status_extended
 
-    def test_zone_server_side_excludes_none(self):
+    def test_zone_browser_integrity_check_none(self):
         zone_client = mock.MagicMock
         zone_client.zones = {
             ZONE_ID: CloudflareZone(
@@ -113,7 +114,7 @@ class Test_zone_server_side_excludes_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(
-                    server_side_exclude=None,
+                    browser_check=None,
                 ),
             )
         }
@@ -124,15 +125,15 @@ class Test_zone_server_side_excludes_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled.zone_client",
+                "prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled.zone_client",
                 new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zone.zone_server_side_excludes_enabled.zone_server_side_excludes_enabled import (
-                zone_server_side_excludes_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_browser_integrity_check_enabled.zone_browser_integrity_check_enabled import (
+                zone_browser_integrity_check_enabled,
             )
 
-            check = zone_server_side_excludes_enabled()
+            check = zone_browser_integrity_check_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
