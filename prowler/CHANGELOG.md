@@ -49,6 +49,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
 - Update AWS Bedrock service metadata to new format [(#8827)](https://github.com/prowler-cloud/prowler/pull/8827)
 - Update AWS IAM service metadata to new format [(#9550)](https://github.com/prowler-cloud/prowler/pull/9550)
+- Enhance `user_registration_details` perfomance and user `mfa` evaluation [(#9236)](https://github.com/prowler-cloud/prowler/pull/9236)
 - Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
 
 ---
