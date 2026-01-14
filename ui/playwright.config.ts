@@ -5,11 +5,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Run with 1 worker to avoid flakiness / shared-state conflicts
-  workers: 1,
-  reporter: process.env.CI
-    ? [["github"], ["list"], ["html", { open: "never" }]]
-    : [["list"]],
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [["list"]],
   outputDir: "/tmp/playwright-tests",
   expect: {
     timeout: 20000,
@@ -91,30 +88,27 @@ export default defineConfig({
     // Test Suite Projects
     // ===========================================
     // These projects run the actual test suites
-    // This project runs the sign-in test suite (login, middleware, session, token refresh)
     {
-      name: "sign-in",
+      name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /sign-in\/.*\.spec\.ts/,
+      testMatch: "auth-login.spec.ts",
     },
     // This project runs the sign-up test suite
     {
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
+    // This project runs the scans test suite
+    {
+      name: "scans",
+      testMatch: "scans.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
     // This project runs the providers test suite
-    // Providers must run before scans because both use the same AWS account ID
     {
       name: "providers",
       testMatch: "providers.spec.ts",
       dependencies: ["admin.auth.setup"],
-    },
-    // This project runs the scans test suite
-    // Depends on providers to avoid parallel conflicts with same AWS account ID
-    {
-      name: "scans",
-      testMatch: "scans.spec.ts",
-      dependencies: ["providers"],
     },
     // This project runs the invitations test suite
     {
