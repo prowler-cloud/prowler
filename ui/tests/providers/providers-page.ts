@@ -545,8 +545,8 @@ export class ProvidersPage extends BasePage {
     // Handle constraint violation error by waiting and retrying (Celery soft-delete delay)
     if (/\/providers\/connect-account/.test(url)) {
       const constraintError = this.page.getByText(/Constraint.*unique_provider_uids.*violated/i);
-      const maxRetries = 10;
-      const retryDelay = 3000; // 3 seconds between retries
+      const maxRetries = 15;
+      const retryDelay = 5000; // 5 seconds between retries (75s total max wait)
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         await this.nextButton.click();
