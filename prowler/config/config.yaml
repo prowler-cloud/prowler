@@ -510,6 +510,9 @@ gcp:
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
+  # gcp.compute_snapshot_not_outdated
+  # Maximum age in days for disk snapshots before they are considered outdated
+  max_snapshot_age_days: 90
   # GCP Service Account and user-managed keys unused configuration
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused
