@@ -31,35 +31,35 @@ ui/tests/
 
 ---
 
-## Checklist OBLIGATORIO (Crear o Modificar Tests)
+## MANDATORY Checklist (Create or Modify Tests)
 
-**⚠️ SIEMPRE verificar ANTES de terminar cualquier tarea de E2E:**
+**⚠️ ALWAYS verify BEFORE completing any E2E task:**
 
-### Al CREAR tests nuevos:
-- [ ] `{page-name}-page.ts` - Page Object creado/actualizado
-- [ ] `{page-name}.spec.ts` - Tests agregados con tags correctos (@TEST-ID)
-- [ ] `{page-name}.md` - Documentación creada con TODOS los test cases
-- [ ] Test IDs en `.md` coinciden con tags en `.spec.ts`
+### When CREATING new tests:
+- [ ] `{page-name}-page.ts` - Page Object created/updated
+- [ ] `{page-name}.spec.ts` - Tests added with correct tags (@TEST-ID)
+- [ ] `{page-name}.md` - Documentation created with ALL test cases
+- [ ] Test IDs in `.md` match tags in `.spec.ts`
 
-### Al MODIFICAR tests existentes:
-- [ ] `{page-name}.md` DEBE actualizarse si:
-  - Se agregaron/removieron test cases
-  - Cambió el flow de un test (steps)
-  - Cambiaron preconditions o expected results
-  - Se modificaron tags o prioridades
-- [ ] Test IDs sincronizados entre `.md` y `.spec.ts`
+### When MODIFYING existing tests:
+- [ ] `{page-name}.md` MUST be updated if:
+  - Test cases were added/removed
+  - Test flow changed (steps)
+  - Preconditions or expected results changed
+  - Tags or priorities changed
+- [ ] Test IDs synchronized between `.md` and `.spec.ts`
 
-### Validación rápida:
+### Quick validation:
 ```bash
-# Verificar que existe el .md para cada carpeta de tests
+# Verify .md exists for each test folder
 ls ui/tests/{feature}/{feature}.md
 
-# Verificar que los test IDs coinciden
+# Verify test IDs match
 grep -o "@[A-Z]*-E2E-[0-9]*" ui/tests/{feature}/{feature}.spec.ts | sort -u
 grep -o "\`[A-Z]*-E2E-[0-9]*\`" ui/tests/{feature}/{feature}.md | sort -u
 ```
 
-**❌ NO se considera completo un cambio de E2E sin actualizar el .md correspondiente**
+**❌ An E2E change is NOT considered complete without updating the corresponding .md file**
 
 ---
 
