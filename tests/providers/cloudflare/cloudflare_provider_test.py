@@ -169,7 +169,7 @@ class TestCloudflareProvider:
             with pytest.raises(CloudflareCredentialsError):
                 CloudflareProvider()
 
-    def test_cloudflare_provider_with_filter_zone(self):
+    def test_cloudflare_provider_with_filter_zones(self):
         with (
             patch(
                 "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
@@ -196,10 +196,10 @@ class TestCloudflareProvider:
                 ),
             ),
         ):
-            filter_zone = ["zone1", "zone2"]
-            provider = CloudflareProvider(filter_zone=filter_zone)
+            filter_zones = ["zone1", "zone2"]
+            provider = CloudflareProvider(filter_zones=filter_zones)
 
-            assert provider.filter_zone == set(filter_zone)
+            assert provider.filter_zones == set(filter_zones)
 
     def test_cloudflare_provider_properties(self):
         with (

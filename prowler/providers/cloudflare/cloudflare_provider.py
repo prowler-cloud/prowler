@@ -35,12 +35,12 @@ class CloudflareProvider(Provider):
     _audit_config: dict
     _fixer_config: dict
     _mutelist: CloudflareMutelist
-    _filter_zone: set[str] | None
+    _filter_zones: set[str] | None
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
-        filter_zone: Iterable[str] | None = None,
+        filter_zones: Iterable[str] | None = None,
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -72,7 +72,7 @@ class CloudflareProvider(Provider):
             self._mutelist = CloudflareMutelist(mutelist_path=mutelist_path)
 
         # Store zone filter for filtering resources across services
-        self._filter_zone = set(filter_zone) if filter_zone else None
+        self._filter_zones = set(filter_zones) if filter_zones else None
 
         Provider.set_global_provider(self)
 
@@ -101,9 +101,9 @@ class CloudflareProvider(Provider):
         return self._mutelist
 
     @property
-    def filter_zone(self) -> set[str] | None:
+    def filter_zones(self) -> set[str] | None:
         """Zone filter from --region argument to filter resources."""
-        return self._filter_zone
+        return self._filter_zones
 
     @property
     def accounts(self) -> list[CloudflareAccount]:

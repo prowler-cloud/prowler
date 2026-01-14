@@ -22,7 +22,7 @@ class Zone(CloudflareService):
         """List all Cloudflare zones with their basic information."""
         logger.info("Zone - Listing zones...")
         audited_accounts = self.provider.identity.audited_accounts
-        filter_zone = self.provider.filter_zone
+        filter_zones = self.provider.filter_zones
         seen_zone_ids: set[str] = set()
 
         try:
@@ -44,9 +44,9 @@ class Zone(CloudflareService):
 
                 # Apply zone filter if specified via --region
                 if (
-                    filter_zone
-                    and zone_id not in filter_zone
-                    and zone_name not in filter_zone
+                    filter_zones
+                    and zone_id not in filter_zones
+                    and zone_name not in filter_zones
                 ):
                     continue
 
