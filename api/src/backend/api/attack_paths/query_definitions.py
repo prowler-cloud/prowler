@@ -782,10 +782,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     )
 
                 // Deduplicate per (principal, target_role) pair
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
 
                 // Group by principal, collect target_roles
-                WITH escalation_outcome, aws, principal, effective_principal,
+                WITH escalation_outcome, aws, principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
 
@@ -793,12 +793,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 CALL apoc.create.vNode(['ECSTask'], {
                     name: 'New Task Definition',
                     description: toString(target_count) + ' admin role(s) can be passed',
-                    id: effective_principal.arn,
+                    id: principal.arn,
                     target_role_count: target_count
                 })
                 YIELD node AS ecs_task
 
-                CALL apoc.create.vRelationship(effective_principal, 'CREATES_TASK', {
+                // Connect from principal (not effective_principal) to keep graph connected
+                CALL apoc.create.vRelationship(principal, 'CREATES_TASK', {
                     permissions: ['iam:PassRole', 'ecs:RegisterTaskDefinition', 'ecs:CreateService'],
                     technique: 'new-passrole'
                 }, ecs_task)
@@ -932,10 +933,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     )
 
                 // Deduplicate per (principal, target_role) pair
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
 
                 // Group by principal, collect target_roles
-                WITH escalation_outcome, aws, principal, effective_principal,
+                WITH escalation_outcome, aws, principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
 
@@ -943,12 +944,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 CALL apoc.create.vNode(['GlueDevEndpoint'], {
                     name: 'New Dev Endpoint',
                     description: toString(target_count) + ' admin role(s) can be passed',
-                    id: effective_principal.arn,
+                    id: principal.arn,
                     target_role_count: target_count
                 })
                 YIELD node AS glue_endpoint
 
-                CALL apoc.create.vRelationship(effective_principal, 'CREATES_ENDPOINT', {
+                // Connect from principal (not effective_principal) to keep graph connected
+                CALL apoc.create.vRelationship(principal, 'CREATES_ENDPOINT', {
                     permissions: ['iam:PassRole', 'glue:CreateDevEndpoint'],
                     technique: 'new-passrole'
                 }, glue_endpoint)
@@ -1025,10 +1027,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     )
 
                 // Deduplicate per (principal, target_role) pair
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
 
                 // Group by principal, collect target_roles
-                WITH escalation_outcome, aws, principal, effective_principal,
+                WITH escalation_outcome, aws, principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
 
@@ -1036,12 +1038,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 CALL apoc.create.vNode(['BedrockCodeInterpreter'], {
                     name: 'New Code Interpreter',
                     description: toString(target_count) + ' admin role(s) can be passed',
-                    id: effective_principal.arn,
+                    id: principal.arn,
                     target_role_count: target_count
                 })
                 YIELD node AS bedrock_agent
 
-                CALL apoc.create.vRelationship(effective_principal, 'CREATES_INTERPRETER', {
+                // Connect from principal (not effective_principal) to keep graph connected
+                CALL apoc.create.vRelationship(principal, 'CREATES_INTERPRETER', {
                     permissions: ['iam:PassRole', 'bedrock-agentcore:CreateCodeInterpreter', 'bedrock-agentcore:StartSession', 'bedrock-agentcore:Invoke'],
                     technique: 'new-passrole'
                 }, bedrock_agent)
@@ -1058,7 +1061,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
+                // Re-match path for visualization
                 MATCH path_principal = (aws)--(principal)
 
                 RETURN path_principal,
@@ -1110,10 +1113,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     )
 
                 // Deduplicate per (principal, target_role) pair
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
 
                 // Group by principal, collect target_roles
-                WITH escalation_outcome, aws, principal, effective_principal,
+                WITH escalation_outcome, aws, principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
 
@@ -1121,12 +1124,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 CALL apoc.create.vNode(['CloudFormationStack'], {
                     name: 'New Stack',
                     description: toString(target_count) + ' admin role(s) can be passed',
-                    id: effective_principal.arn,
+                    id: principal.arn,
                     target_role_count: target_count
                 })
                 YIELD node AS cfn_stack
 
-                CALL apoc.create.vRelationship(effective_principal, 'CREATES_STACK', {
+                // Connect from principal (not effective_principal) to keep graph connected
+                CALL apoc.create.vRelationship(principal, 'CREATES_STACK', {
                     permissions: ['iam:PassRole', 'cloudformation:CreateStack'],
                     technique: 'new-passrole'
                 }, cfn_stack)
