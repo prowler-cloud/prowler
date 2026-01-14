@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 
 import {
-  getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
-  getComplianceRequirements,
   getCompliancesOverview,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
@@ -15,7 +14,6 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
-import { calculateThreatScore } from "@/lib/compliance/threatscore-calculator";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -113,51 +111,46 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  // Fetch ThreatScore data if we have a selected scan
+  // Fetch ThreatScore data from API if we have a selected scan
   let threatScoreData = null;
-  if (
-    selectedScanId &&
-    typeof selectedScanId === "string" &&
-    selectedScan?.providerInfo?.provider
-  ) {
-    const complianceId = `prowler_threatscore_${selectedScan.providerInfo.provider.toLowerCase()}`;
+  if (selectedScanId && typeof selectedScanId === "string") {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
 
-    const [attributesData, requirementsData] = await Promise.all([
-      getComplianceAttributes(complianceId),
-      getComplianceRequirements({
-        complianceId,
-        scanId: selectedScanId,
-      }),
-    ]);
-
-    threatScoreData = calculateThreatScore(attributesData, requirementsData);
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        score: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
   }
 
   return (
     <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
-          <div className="mb-6 flex flex-col gap-6">
-            <div className="flex flex-col items-start justify-between lg:flex-row lg:gap-6">
-              <div className="flex-1">
-                <ComplianceHeader
-                  scans={expandedScansData}
-                  uniqueRegions={uniqueRegions}
-                />
-              </div>
-              {threatScoreData &&
-                typeof selectedScanId === "string" &&
-                selectedScan && (
-                  <div className="w-[360px] flex-shrink-0">
-                    <ThreatScoreBadge
-                      score={threatScoreData.score}
-                      scanId={selectedScanId}
-                      provider={selectedScan.providerInfo.provider}
-                      selectedScan={selectedScanData}
-                    />
-                  </div>
-                )}
+          <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <ComplianceHeader
+                scans={expandedScansData}
+                uniqueRegions={uniqueRegions}
+              />
             </div>
+            {threatScoreData &&
+              typeof selectedScanId === "string" &&
+              selectedScan && (
+                <div className="w-full lg:w-[360px] lg:flex-shrink-0">
+                  <ThreatScoreBadge
+                    score={threatScoreData.score}
+                    scanId={selectedScanId}
+                    provider={selectedScan.providerInfo.provider}
+                    selectedScan={selectedScanData}
+                    sectionScores={threatScoreData.sectionScores}
+                  />
+                </div>
+              )}
           </div>
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid
