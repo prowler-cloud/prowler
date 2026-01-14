@@ -37,8 +37,7 @@ class zone_development_mode_disabled(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Development mode is enabled for zone {zone.name}. "
-                    "This bypasses Cloudflare caching and should be disabled in production."
+                    f"Development mode is enabled for zone {zone.name}."
                 )
             findings.append(report)
         return findings
