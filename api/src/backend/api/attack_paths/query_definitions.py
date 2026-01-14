@@ -629,9 +629,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR action = '*'
                     )
 
-                // Deduplicate principals FIRST (before matching target roles)
-                WITH DISTINCT escalation_outcome, aws, principal
-
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(role_policy:AWSPolicy)--(role_stmt:AWSPolicyStatement)
                 WHERE role_stmt.effect = 'Allow'
@@ -640,7 +637,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN role_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal
+                // Deduplicate per (principal, target_role) pair
+                WITH DISTINCT escalation_outcome, aws, principal, target_role
+
+                // Group by principal, collect target_roles
                 WITH escalation_outcome, aws, principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
@@ -659,16 +659,23 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, lambda_node)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(lambda_node, 'GRANTS_ACCESS', {
+                // UNWIND target_roles to show which roles can be passed
+                UNWIND target_roles AS target_role
+
+                CALL apoc.create.vRelationship(lambda_node, 'PASSES_ROLE', {}, target_role)
+                YIELD rel AS pass_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/lambda-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       lambda_node, escalation_outcome, create_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       lambda_node, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -767,9 +774,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         any(action IN ecs_stmt.action WHERE toLower(action) = 'ecs:createservice' OR toLower(action) = 'ecs:runtask' OR action = '*' OR toLower(action) = 'ecs:*')
                     )
 
-                // Deduplicate principals FIRST (before matching target roles)
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal
-
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
@@ -778,7 +782,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal
+                // Deduplicate per (principal, target_role) pair
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+
+                // Group by principal, collect target_roles
                 WITH escalation_outcome, aws, principal, effective_principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
@@ -798,16 +805,23 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, ecs_task)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(ecs_task, 'GRANTS_ACCESS', {
+                // UNWIND target_roles to show which roles can be passed
+                UNWIND target_roles AS target_role
+
+                CALL apoc.create.vRelationship(ecs_task, 'PASSES_ROLE', {}, target_role)
+                YIELD rel AS pass_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/ecs-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       ecs_task, escalation_outcome, create_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       ecs_task, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -911,9 +925,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE glue_stmt.effect = 'Allow'
                     AND any(action IN glue_stmt.action WHERE toLower(action) = 'glue:createdevendpoint' OR action = '*' OR toLower(action) = 'glue:*')
 
-                // Deduplicate principals FIRST (before matching target roles)
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal
-
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
@@ -922,7 +933,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal
+                // Deduplicate per (principal, target_role) pair
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+
+                // Group by principal, collect target_roles
                 WITH escalation_outcome, aws, principal, effective_principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
@@ -942,16 +956,23 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, glue_endpoint)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(glue_endpoint, 'GRANTS_ACCESS', {
+                // UNWIND target_roles to show which roles can be passed
+                UNWIND target_roles AS target_role
+
+                CALL apoc.create.vRelationship(glue_endpoint, 'PASSES_ROLE', {}, target_role)
+                YIELD rel AS pass_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/glue-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       glue_endpoint, escalation_outcome, create_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       glue_endpoint, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -998,17 +1019,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         any(action IN bedrock_stmt.action WHERE toLower(action) = 'bedrock-agentcore:invoke' OR action = '*' OR toLower(action) = 'bedrock-agentcore:*')
                     )
 
-                // Find target role with elevated permissions
-                MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
-                WHERE target_stmt.effect = 'Allow'
-                    AND (
-                        any(action IN target_stmt.action WHERE action = '*')
-                        OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
-                    )
-
-                // Deduplicate principals FIRST (before matching target roles)
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal
-
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
@@ -1017,7 +1027,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal
+                // Deduplicate per (principal, target_role) pair
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+
+                // Group by principal, collect target_roles
                 WITH escalation_outcome, aws, principal, effective_principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
@@ -1037,16 +1050,23 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, bedrock_agent)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(bedrock_agent, 'GRANTS_ACCESS', {
+                // UNWIND target_roles to show which roles can be passed
+                UNWIND target_roles AS target_role
+
+                CALL apoc.create.vRelationship(bedrock_agent, 'PASSES_ROLE', {}, target_role)
+                YIELD rel AS pass_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/bedrock-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       bedrock_agent, escalation_outcome, create_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       bedrock_agent, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -1085,9 +1105,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE cfn_stmt.effect = 'Allow'
                     AND any(action IN cfn_stmt.action WHERE toLower(action) = 'cloudformation:createstack' OR action = '*' OR toLower(action) = 'cloudformation:*')
 
-                // Deduplicate principals FIRST (before matching target roles)
-                WITH DISTINCT escalation_outcome, aws, principal, effective_principal
-
                 // Find target roles with elevated permissions that could be passed
                 MATCH (aws)--(target_role:AWSRole)--(target_policy:AWSPolicy)--(target_stmt:AWSPolicyStatement)
                 WHERE target_stmt.effect = 'Allow'
@@ -1096,7 +1113,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                         OR any(action IN target_stmt.action WHERE toLower(action) = 'iam:*')
                     )
 
-                // Collect all target roles per principal
+                // Deduplicate per (principal, target_role) pair
+                WITH DISTINCT escalation_outcome, aws, principal, effective_principal, target_role
+
+                // Group by principal, collect target_roles
                 WITH escalation_outcome, aws, principal, effective_principal,
                      collect(DISTINCT target_role) AS target_roles,
                      count(DISTINCT target_role) AS target_count
@@ -1116,16 +1136,23 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, cfn_stack)
                 YIELD rel AS create_rel
 
-                CALL apoc.create.vRelationship(cfn_stack, 'GRANTS_ACCESS', {
+                // UNWIND target_roles to show which roles can be passed
+                UNWIND target_roles AS target_role
+
+                CALL apoc.create.vRelationship(cfn_stack, 'PASSES_ROLE', {}, target_role)
+                YIELD rel AS pass_rel
+
+                CALL apoc.create.vRelationship(target_role, 'GRANTS_ACCESS', {
                     reference: 'https://pathfinding.cloud/paths/cloudformation-001'
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
                 // Re-match paths for visualization
                 MATCH path_principal = (aws)--(principal)
+                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal,
-                       cfn_stack, escalation_outcome, create_rel, grants_rel, target_count
+                RETURN path_principal, path_target,
+                       cfn_stack, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
