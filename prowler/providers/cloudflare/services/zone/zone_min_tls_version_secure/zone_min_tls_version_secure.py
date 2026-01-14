@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
-class zones_min_tls_version_secure(Check):
+class zone_min_tls_version_secure(Check):
     """Ensure that minimum TLS version is set to 1.2 or higher for Cloudflare zones.
 
     TLS 1.0 and 1.1 have known vulnerabilities (BEAST, POODLE) and are deprecated.
@@ -26,7 +26,7 @@ class zones_min_tls_version_secure(Check):
         """
         findings = []
 
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

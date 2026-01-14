@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.providers.cloudflare.services.zones.zones_service import (
+from prowler.providers.cloudflare.services.zone.zone_service import (
     CloudflareZone,
     CloudflareZoneSettings,
 )
@@ -11,10 +11,10 @@ from tests.providers.cloudflare.cloudflare_fixtures import (
 )
 
 
-class Test_zones_https_redirect_enabled:
+class Test_zone_https_redirect_enabled:
     def test_no_zones(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {}
+        zone_client = mock.MagicMock
+        zone_client.zones = {}
 
         with (
             mock.patch(
@@ -22,21 +22,21 @@ class Test_zones_https_redirect_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled.zones_client",
-                new=zones_client,
+                "prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled.zone_client",
+                new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled import (
-                zones_https_redirect_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled import (
+                zone_https_redirect_enabled,
             )
 
-            check = zones_https_redirect_enabled()
+            check = zone_https_redirect_enabled()
             result = check.execute()
             assert len(result) == 0
 
     def test_zone_https_redirect_enabled(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {
+        zone_client = mock.MagicMock
+        zone_client.zones = {
             ZONE_ID: CloudflareZone(
                 id=ZONE_ID,
                 name=ZONE_NAME,
@@ -54,15 +54,15 @@ class Test_zones_https_redirect_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled.zones_client",
-                new=zones_client,
+                "prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled.zone_client",
+                new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled import (
-                zones_https_redirect_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled import (
+                zone_https_redirect_enabled,
             )
 
-            check = zones_https_redirect_enabled()
+            check = zone_https_redirect_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == ZONE_ID
@@ -71,8 +71,8 @@ class Test_zones_https_redirect_enabled:
             assert "Always Use HTTPS is enabled" in result[0].status_extended
 
     def test_zone_https_redirect_disabled(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {
+        zone_client = mock.MagicMock
+        zone_client.zones = {
             ZONE_ID: CloudflareZone(
                 id=ZONE_ID,
                 name=ZONE_NAME,
@@ -90,15 +90,15 @@ class Test_zones_https_redirect_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled.zones_client",
-                new=zones_client,
+                "prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled.zone_client",
+                new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled import (
-                zones_https_redirect_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled import (
+                zone_https_redirect_enabled,
             )
 
-            check = zones_https_redirect_enabled()
+            check = zone_https_redirect_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == ZONE_ID
@@ -107,8 +107,8 @@ class Test_zones_https_redirect_enabled:
             assert "Always Use HTTPS is not enabled" in result[0].status_extended
 
     def test_zone_https_redirect_none(self):
-        zones_client = mock.MagicMock
-        zones_client.zones = {
+        zone_client = mock.MagicMock
+        zone_client.zones = {
             ZONE_ID: CloudflareZone(
                 id=ZONE_ID,
                 name=ZONE_NAME,
@@ -126,15 +126,15 @@ class Test_zones_https_redirect_enabled:
                 return_value=set_mocked_cloudflare_provider(),
             ),
             mock.patch(
-                "prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled.zones_client",
-                new=zones_client,
+                "prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled.zone_client",
+                new=zone_client,
             ),
         ):
-            from prowler.providers.cloudflare.services.zones.zones_https_redirect_enabled.zones_https_redirect_enabled import (
-                zones_https_redirect_enabled,
+            from prowler.providers.cloudflare.services.zone.zone_https_redirect_enabled.zone_https_redirect_enabled import (
+                zone_https_redirect_enabled,
             )
 
-            check = zones_https_redirect_enabled()
+            check = zone_https_redirect_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

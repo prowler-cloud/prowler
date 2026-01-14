@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_dnssec_enabled",
+  "CheckID": "zone_dnssec_enabled",
   "CheckTitle": "DNSSEC is enabled",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable **DNSSEC** and ensure **DS records** are properly configured at your domain registrar.\n- DNSSEC provides cryptographic authenticity for DNS responses\n- After enabling in Cloudflare, you must add the DS record at your registrar\n- Use online DNSSEC validators to verify correct configuration",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_dnssec_enabled"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_dnssec_enabled"
     }
   },
   "Categories": [

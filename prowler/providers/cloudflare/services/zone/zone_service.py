@@ -7,7 +7,7 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 from prowler.providers.cloudflare.models import CloudflareAccount
 
 
-class Zones(CloudflareService):
+class Zone(CloudflareService):
     """Retrieve Cloudflare zones with security-relevant settings."""
 
     def __init__(self, provider):
@@ -19,9 +19,9 @@ class Zones(CloudflareService):
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
-        logger.info("Zones - Listing zones...")
+        logger.info("Zone - Listing zones...")
         audited_accounts = self.provider.identity.audited_accounts
-        filter_zones = self.provider.filter_zones
+        filter_zone = self.provider.filter_zone
         seen_zone_ids: set[str] = set()
 
         try:
@@ -43,9 +43,9 @@ class Zones(CloudflareService):
 
                 # Apply zone filter if specified via --region
                 if (
-                    filter_zones
-                    and zone_id not in filter_zones
-                    and zone_name not in filter_zones
+                    filter_zone
+                    and zone_id not in filter_zone
+                    and zone_name not in filter_zone
                 ):
                     continue
 
@@ -86,7 +86,7 @@ class Zones(CloudflareService):
 
     def _get_zones_settings(self) -> None:
         """Get settings for all zones."""
-        logger.info("Zones - Getting zone settings...")
+        logger.info("Zone - Getting zone settings...")
         for zone in self.zones.values():
             try:
                 zone.settings = self._get_zone_settings(zone.id)
@@ -97,7 +97,7 @@ class Zones(CloudflareService):
 
     def _get_zones_dnssec(self) -> None:
         """Get DNSSEC status for all zones."""
-        logger.info("Zones - Getting DNSSEC status...")
+        logger.info("Zone - Getting DNSSEC status...")
         for zone in self.zones.values():
             try:
                 dnssec = self.client.dns.dnssec.get(zone_id=zone.id)

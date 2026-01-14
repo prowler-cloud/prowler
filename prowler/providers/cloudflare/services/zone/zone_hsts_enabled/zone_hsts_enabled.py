@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
-class zones_hsts_enabled(Check):
+class zone_hsts_enabled(Check):
     """Ensure that HSTS is enabled with secure settings for Cloudflare zones.
 
     HTTP Strict Transport Security (HSTS) forces browsers to only connect via
@@ -29,7 +29,7 @@ class zones_hsts_enabled(Check):
         # Recommended minimum max-age is 6 months (15768000 seconds)
         recommended_max_age = 15768000
 
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

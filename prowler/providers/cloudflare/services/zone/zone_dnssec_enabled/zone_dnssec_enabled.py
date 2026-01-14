@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
-class zones_dnssec_enabled(Check):
+class zone_dnssec_enabled(Check):
     """Ensure that DNSSEC is enabled for Cloudflare zones.
 
     DNSSEC (Domain Name System Security Extensions) adds cryptographic signatures
@@ -23,7 +23,7 @@ class zones_dnssec_enabled(Check):
             is active, or FAIL status if DNSSEC is not enabled for the zone.
         """
         findings = []
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

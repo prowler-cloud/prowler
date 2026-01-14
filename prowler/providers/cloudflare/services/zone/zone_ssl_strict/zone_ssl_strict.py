@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
-class zones_ssl_strict(Check):
+class zone_ssl_strict(Check):
     """Ensure that SSL/TLS encryption mode is set to Full (Strict) for Cloudflare zones.
 
     The SSL/TLS encryption mode determines how Cloudflare connects to the origin
@@ -26,7 +26,7 @@ class zones_ssl_strict(Check):
             less secure modes like 'off', 'flexible', or 'full'.
         """
         findings = []
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

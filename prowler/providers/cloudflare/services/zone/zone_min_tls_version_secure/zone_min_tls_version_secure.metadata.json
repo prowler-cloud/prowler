@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_min_tls_version_secure",
+  "CheckID": "zone_min_tls_version_secure",
   "CheckTitle": "Minimum TLS version is set to 1.2 or higher",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Set **minimum TLS version** to `1.2` or higher.\n- **TLS 1.0 and 1.1** are deprecated by all major browsers and contain known vulnerabilities\n- Consider setting to `TLS 1.3` for environments with modern client requirements\n- Test client compatibility before upgrading minimum version",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_min_tls_version_secure"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_min_tls_version_secure"
     }
   },
   "Categories": [
