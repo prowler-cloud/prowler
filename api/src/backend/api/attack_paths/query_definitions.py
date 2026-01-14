@@ -670,12 +670,11 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match paths for visualization
+                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       lambda_node, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal,
+                       lambda_node, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -816,12 +815,11 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match paths for visualization
+                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       ecs_task, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal,
+                       ecs_task, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -967,12 +965,11 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match paths for visualization
+                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       glue_endpoint, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal,
+                       glue_endpoint, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -1061,12 +1058,11 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match paths for visualization
+                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       bedrock_agent, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal,
+                       bedrock_agent, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
@@ -1147,12 +1143,11 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 }, escalation_outcome)
                 YIELD rel AS grants_rel
 
-                // Re-match paths for visualization
+                // Re-match path for visualization (only principal path, target_role is connected via virtual rels)
                 MATCH path_principal = (aws)--(principal)
-                MATCH path_target = (aws)--(target_role)
 
-                RETURN path_principal, path_target,
-                       cfn_stack, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
+                RETURN path_principal,
+                       cfn_stack, target_role, escalation_outcome, create_rel, pass_rel, grants_rel, target_count
             """,
             parameters=[],
         ),
