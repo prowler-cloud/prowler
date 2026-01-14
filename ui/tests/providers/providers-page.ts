@@ -263,34 +263,33 @@ export class ProvidersPage extends BasePage {
     this.providersTable = page.getByRole("table");
 
     // Option buttons to select the type of cloud provider (listbox with options)
-    // Provider selector - can be radio or option depending on UI version
-    this.awsProviderRadio = page
-      .getByRole("radio", { name: /Amazon Web Services/i })
-      .or(page.getByRole("option", { name: /Amazon Web Services/i }));
+    this.awsProviderRadio = page.getByRole("option", {
+      name: /Amazon Web Services/i,
+    });
     // Google Cloud Platform
-    this.gcpProviderRadio = page
-      .getByRole("radio", { name: /Google Cloud Platform/i })
-      .or(page.getByRole("option", { name: /Google Cloud Platform/i }));
+    this.gcpProviderRadio = page.getByRole("option", {
+      name: /Google Cloud Platform/i,
+    });
     // Microsoft Azure
-    this.azureProviderRadio = page
-      .getByRole("radio", { name: /Microsoft Azure/i })
-      .or(page.getByRole("option", { name: /Microsoft Azure/i }));
+    this.azureProviderRadio = page.getByRole("option", {
+      name: /Microsoft Azure/i,
+    });
     // Microsoft 365
-    this.m365ProviderRadio = page
-      .getByRole("radio", { name: /Microsoft 365/i })
-      .or(page.getByRole("option", { name: /Microsoft 365/i }));
+    this.m365ProviderRadio = page.getByRole("option", {
+      name: /Microsoft 365/i,
+    });
     // Kubernetes
-    this.kubernetesProviderRadio = page
-      .getByRole("radio", { name: /Kubernetes/i })
-      .or(page.getByRole("option", { name: /Kubernetes/i }));
+    this.kubernetesProviderRadio = page.getByRole("option", {
+      name: /Kubernetes/i,
+    });
     // GitHub
-    this.githubProviderRadio = page
-      .getByRole("radio", { name: /GitHub/i })
-      .or(page.getByRole("option", { name: /GitHub/i }));
+    this.githubProviderRadio = page.getByRole("option", {
+      name: /GitHub/i,
+    });
     // Oracle Cloud Infrastructure
-    this.ociProviderRadio = page
-      .getByRole("radio", { name: /Oracle Cloud Infrastructure/i })
-      .or(page.getByRole("option", { name: /Oracle Cloud Infrastructure/i }));
+    this.ociProviderRadio = page.getByRole("option", {
+      name: /Oracle Cloud Infrastructure/i,
+    });
 
     // AWS provider form inputs
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
@@ -470,8 +469,6 @@ export class ProvidersPage extends BasePage {
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
-    // Wait for the form to be in step 2 (fields visible after provider selection)
-    await expect(this.accountIdInput).toBeVisible();
 
     await this.accountIdInput.fill(data.accountId);
 
@@ -492,8 +489,6 @@ export class ProvidersPage extends BasePage {
 
   async fillM365ProviderDetails(data: M365ProviderData): Promise<void> {
     // Fill the M365 provider details
-    // Wait for the form to be in step 2 (fields visible after provider selection)
-    await expect(this.m365domainIdInput).toBeVisible();
 
     await this.m365domainIdInput.fill(data.domainId);
 
@@ -542,51 +537,15 @@ export class ProvidersPage extends BasePage {
     const url = this.page.url();
 
     // If on the "connect-account" step, click the "Next" button
-    // Handle constraint violation error by waiting and retrying (Celery soft-delete delay)
     if (/\/providers\/connect-account/.test(url)) {
-      const constraintError = this.page.getByText(/Constraint.*unique_provider_uids.*violated/i);
-      const maxRetries = 15;
-      const retryDelay = 5000; // 5 seconds between retries (75s total max wait)
-
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        await this.nextButton.click();
-
-        // Wait a moment for either navigation or error to appear
-        await this.page.waitForTimeout(1000);
-
-        // Check if we navigated to step 2 (success)
-        if (/\/providers\/add-credentials/.test(this.page.url())) {
-          return;
-        }
-
-        // Check if constraint error appeared
-        const hasConstraintError = await constraintError.isVisible().catch(() => false);
-        if (hasConstraintError) {
-          if (attempt === maxRetries) {
-            throw new Error(
-              `Provider UID constraint violation after ${maxRetries} retries. Celery may not be processing deletions.`
-            );
-          }
-          // Wait for Celery to physically delete the soft-deleted provider
-          // eslint-disable-next-line no-console
-          console.log(`[Retry ${attempt}/${maxRetries}] Constraint error detected, waiting for Celery...`);
-          await this.page.waitForTimeout(retryDelay);
-          continue;
-        }
-
-        // No error and no navigation - wait a bit more for navigation
-        await expect(this.page).toHaveURL(/\/providers\/add-credentials/, { timeout: 5000 }).catch(() => {});
-        if (/\/providers\/add-credentials/.test(this.page.url())) {
-          return;
-        }
-      }
-
+      await this.nextButton.click();
       return;
     }
 
     // If on the "add-credentials" step, check for "Save" and "Next" buttons
     if (/\/providers\/add-credentials/.test(url)) {
       // Some UI implementations use "Save" instead of "Next" for primary action
+
       if (await this.saveButton.count()) {
         await this.saveButton.click();
         return;
@@ -615,21 +574,27 @@ export class ProvidersPage extends BasePage {
 
       // Helper to check and throw error if visible
       const checkAndThrowError = async (): Promise<void> => {
-        const isErrorVisible = await errorMessage.isVisible().catch(() => false);
-        if (!isErrorVisible) return;
+        const isErrorVisible = await errorMessage
+          .isVisible()
+          .catch(() => false);
 
-        const errorText = await errorMessage.textContent();
-        throw new Error(
-          `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-        );
+        if (isErrorVisible) {
+          const errorText = await errorMessage.textContent();
+
+          throw new Error(
+            `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+          );
+        }
       };
 
       try {
+        // Wait up to 15 seconds for either the error message or redirect
         await Promise.race([
           errorMessage.waitFor({ state: "visible", timeout: 15000 }),
           this.page.waitForURL(/\/scans/, { timeout: 15000 }),
         ]);
 
+        // If we're still on test-connection page, check for error
         if (/\/providers\/test-connection/.test(this.page.url())) {
           await checkAndThrowError();
         }
@@ -643,21 +608,25 @@ export class ProvidersPage extends BasePage {
 
     // Fallback logic: try finding any common primary action buttons in expected order
     const candidates: Array<{ name: string | RegExp }> = [
-      { name: "Next" },
-      { name: "Save" },
-      { name: "Launch scan" },
-      { name: /Continue|Proceed/i },
+      { name: "Next" }, // Try the "Next" button
+      { name: "Save" }, // Try the "Save" button
+      { name: "Launch scan" }, // Try the "Launch scan" button
+      { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
     ];
 
+    // Try each candidate name and click it if found
     for (const candidate of candidates) {
-      const btn = this.page.getByRole("button", { name: candidate.name });
-      if (!(await btn.count())) continue;
+      const btn = this.page.getByRole("button", {
+        name: candidate.name,
+      });
 
-      await expect(btn.first()).toBeVisible();
-      await btn.first().click();
-      return;
+      if (await btn.count()) {
+        await btn.click();
+        return;
+      }
     }
 
+    // If none of the expected action buttons are present, throw an error
     throw new Error(
       "Could not find an actionable Next/Save/Launch scan button on this step",
     );
@@ -852,8 +821,6 @@ export class ProvidersPage extends BasePage {
 
   async fillOCIProviderDetails(data: OCIProviderData): Promise<void> {
     // Fill the OCI provider details
-    // Wait for the form to be in step 2 (fields visible after provider selection)
-    await expect(this.ociTenancyIdInput).toBeVisible();
 
     await this.ociTenancyIdInput.fill(data.tenancyId);
 
@@ -881,8 +848,9 @@ export class ProvidersPage extends BasePage {
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
     // Verify the OCI credentials page is loaded
+
     await this.verifyPageHasProwlerTitle();
-    // Note: Tenancy OCID is a hidden input on this page (auto-populated from step 1), so we don't check for it
+    await expect(this.ociTenancyIdInput).toBeVisible();
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
@@ -911,6 +879,7 @@ export class ProvidersPage extends BasePage {
 
   async verifyCredentialsPageLoaded(): Promise<void> {
     // Verify the credentials page is loaded
+
     await this.verifyPageHasProwlerTitle();
     await expect(this.roleCredentialsRadio).toBeVisible();
   }

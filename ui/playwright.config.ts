@@ -1,9 +1,4 @@
 import { defineConfig, devices } from "@playwright/test";
-import { config } from "dotenv";
-import { expand } from "dotenv-expand";
-
-// Load environment variables from .env file (silenced to avoid noise in test output)
-expand(config({ quiet: true }));
 
 export default defineConfig({
   testDir: "./tests",

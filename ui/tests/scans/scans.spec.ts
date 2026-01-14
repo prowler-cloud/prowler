@@ -5,9 +5,6 @@ import { deleteProviderIfExists, addAWSProvider } from "../helpers";
 
 // Scans E2E suite scaffold
 test.describe("Scans", () => {
-  // Increase timeout for scans tests that involve provider setup and scan execution
-  test.setTimeout(90000);
-
   test.describe.serial("Execute Scans", () => {
     // Scans page object
     let scansPage: ScansPage;

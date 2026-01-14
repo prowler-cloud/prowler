@@ -27,13 +27,7 @@ import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
 import { deleteProviderIfExists } from "../helpers";
 
-test.describe.serial("Add Provider", () => {
-  // Increase timeout for provider tests - needs extra time for:
-  // 1. Multiple page navigations
-  // 2. Retry loop waiting for Celery to delete soft-deleted providers (up to 75s)
-  // Using serial mode to prevent parallel execution conflicts with provider cleanup
-  test.setTimeout(180000);
-
+test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
@@ -51,7 +45,7 @@ test.describe.serial("Add Provider", () => {
       );
     }
 
-    // Setup before each test - clean up and initialize
+    // Setup before each test
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
@@ -254,12 +248,11 @@ test.describe.serial("Add Provider", () => {
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
 
-        await providersPage.verifyCredentialsPageLoaded();
-
         // Select role credentials type
         await providersPage.selectCredentialsType(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
+        await providersPage.verifyCredentialsPageLoaded();
 
         // Select Authentication Method
         await providersPage.selectAuthenticationMethod(
