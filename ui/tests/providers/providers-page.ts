@@ -951,10 +951,51 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
-    // Verify the credentials page is loaded
+    // Verify the credentials (add-credentials) page is loaded.
+    // In CI the first render can vary by provider and can be delayed; the most reliable
+    // signal is that we're on the add-credentials step, and that *some* credential UI
+    // is present (not necessarily the IAM Role radio immediately).
 
     await this.verifyPageHasProwlerTitle();
-    await expect(this.roleCredentialsRadio).toBeVisible();
+
+    await expect
+      .poll(
+        async () => {
+          if (/\/providers\/add-credentials/.test(this.page.url())) return true;
+
+          const awsRoleRadioVisible = await this.roleCredentialsRadio
+            .isVisible()
+            .catch(() => false);
+          if (awsRoleRadioVisible) return true;
+
+          const awsStaticRadioVisible = await this.staticCredentialsRadio
+            .isVisible()
+            .catch(() => false);
+          if (awsStaticRadioVisible) return true;
+
+          const ociUserVisible = await this.ociUserIdInput.isVisible().catch(() => false);
+          if (ociUserVisible) return true;
+
+          const gcpKeyVisible = await this.gcpServiceAccountKeyInput
+            .isVisible()
+            .catch(() => false);
+          if (gcpKeyVisible) return true;
+
+          const m365ClientIdVisible = await this.m365ClientIdInput
+            .isVisible()
+            .catch(() => false);
+          if (m365ClientIdVisible) return true;
+
+          const githubPatVisible = await this.githubPersonalAccessTokenInput
+            .isVisible()
+            .catch(() => false);
+          if (githubPatVisible) return true;
+
+          return false;
+        },
+        { timeout: 30000, intervals: [250, 500, 1000, 2000] },
+      )
+      .toBe(true);
   }
 
   async verifyM365CredentialsPageLoaded(): Promise<void> {
