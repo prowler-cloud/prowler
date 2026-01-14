@@ -2,11 +2,13 @@
 name: django-drf
 description: >
   Django REST Framework patterns.
-  Trigger: When building REST APIs with Django - ViewSets, Serializers, Filters.
+  Trigger: When implementing generic DRF APIs (ViewSets, serializers, routers, permissions, filtersets). For Prowler API specifics (RLS/JSON:API), also use prowler-api.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, api]
+  auto_invoke: "Generic DRF patterns"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

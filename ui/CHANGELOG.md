@@ -9,6 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
 - New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Add ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
 
 ### 🔄 Changed
 
@@ -16,6 +17,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Swap Risk Plot axes: X = Fail Findings, Y = Prowler ThreatScore [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Add showCenterLabel prop to RadialChart for optional center text display [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
 
 ---
 

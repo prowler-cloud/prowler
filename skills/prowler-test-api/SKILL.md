@@ -1,12 +1,16 @@
 ---
 name: prowler-test-api
 description: >
-  Testing patterns for Prowler API: ViewSets, Celery tasks, RLS isolation, RBAC.
-  Trigger: When writing tests for api/ - viewsets, serializers, tasks, models.
+  Testing patterns for Prowler API: JSON:API, Celery tasks, RLS isolation, RBAC.
+  Trigger: When writing tests for api/ (JSON:API requests/assertions, cross-tenant isolation, RBAC, Celery tasks, viewsets/serializers).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, api]
+  auto_invoke:
+    - "Writing Prowler API tests"
+    - "Testing RLS tenant isolation"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

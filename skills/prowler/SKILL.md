@@ -2,11 +2,13 @@
 name: prowler
 description: >
   Main entry point for Prowler development - quick reference for all components.
-  Trigger: General Prowler development questions, project overview, component navigation.
+  Trigger: General Prowler development questions, project overview, component navigation (NOT PR CI gates or GitHub Actions workflows).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root]
+  auto_invoke: "General Prowler development questions"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

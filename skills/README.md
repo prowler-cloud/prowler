@@ -83,6 +83,7 @@ Patterns tailored for Prowler development:
 | Skill | Description |
 |-------|-------------|
 | `skill-creator` | Create new AI agent skills |
+| `skill-sync` | Sync skill metadata to AGENTS.md Auto-invoke sections |
 
 ## Directory Structure
 
@@ -96,6 +97,20 @@ skills/
 └── README.md                 # This file
 ```
 
+## Why Auto-invoke Sections?
+
+**Problem**: AI assistants (Claude, Gemini, etc.) don't reliably auto-invoke skills even when the `Trigger:` in the skill description matches the user's request. They treat skill suggestions as "background noise" and barrel ahead with their default approach.
+
+**Solution**: The `AGENTS.md` files in each directory contain an **Auto-invoke Skills** section that explicitly commands the AI: "When performing X action, ALWAYS invoke Y skill FIRST." This is a [known workaround](https://scottspence.com/posts/claude-code-skills-dont-auto-activate) that forces the AI to load skills.
+
+**Automation**: Instead of manually maintaining these sections, run `skill-sync` after creating or modifying a skill:
+
+```bash
+./skills/skill-sync/assets/sync.sh
+```
+
+This reads `metadata.scope` and `metadata.auto_invoke` from each `SKILL.md` and generates the Auto-invoke tables in the corresponding `AGENTS.md` files.
+
 ## Creating New Skills
 
 Use the `skill-creator` skill for guidance:
@@ -108,9 +123,11 @@ Read skills/skill-creator/SKILL.md
 
 1. Create directory: `skills/{skill-name}/`
 2. Add `SKILL.md` with required frontmatter
-3. Keep content concise (under 500 lines)
-4. Reference existing docs instead of duplicating
-5. Add to `AGENTS.md` skills table
+3. Add `metadata.scope` and `metadata.auto_invoke` fields
+4. Keep content concise (under 500 lines)
+5. Reference existing docs instead of duplicating
+6. Run `./skills/skill-sync/assets/sync.sh` to update AGENTS.md
+7. Add to `AGENTS.md` skills table (if not auto-generated)
 
 ## Design Principles
 
