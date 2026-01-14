@@ -4,7 +4,28 @@ from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class zone_record_spf_exists(Check):
+    """Ensure that SPF record exists with strict policy for Cloudflare zones.
+
+    SPF (Sender Policy Framework) is an email authentication method that specifies
+    which mail servers are authorized to send email on behalf of the domain. This
+    check verifies that an SPF record exists as a TXT record starting with "v=spf1"
+    and uses the strict policy qualifier "-all" to instruct receiving servers to
+    reject emails from unauthorized sources.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the SPF record exists check.
+
+        Iterates through all Cloudflare zones and verifies SPF configuration.
+        The check validates two conditions:
+        1. An SPF record exists (TXT record starting with "v=spf1")
+        2. The record uses strict policy "-all" (not ~all, ?all, or +all)
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if an SPF
+            record with strict policy exists, or FAIL status if no SPF record
+            is found or it uses a permissive policy.
+        """
         findings = []
 
         for zone in zone_client.zones.values():

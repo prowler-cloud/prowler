@@ -9,7 +9,29 @@ from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class zone_record_dkim_exists(Check):
+    """Ensure that DKIM record exists with valid public key for Cloudflare zones.
+
+    DKIM (DomainKeys Identified Mail) is an email authentication method that allows
+    the receiver to verify that an email was sent by the domain owner and was not
+    modified in transit. This check verifies that DKIM records exist at *._domainkey
+    subdomains containing "v=DKIM1" with a cryptographically valid public key in the
+    p= parameter that can be used to verify email signatures.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the DKIM record exists check.
+
+        Iterates through all Cloudflare zones and verifies DKIM configuration.
+        The check validates three conditions:
+        1. A DKIM record exists (TXT record at *._domainkey with "v=DKIM1")
+        2. The record contains a p= parameter with a public key
+        3. The public key is cryptographically valid (valid Base64 and DER format)
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if a DKIM
+            record with valid public key exists, or FAIL status if no DKIM record
+            is found or the public key is invalid/missing.
+        """
         findings = []
 
         for zone in zone_client.zones.values():

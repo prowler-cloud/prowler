@@ -6,7 +6,29 @@ from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class zone_record_caa_exists(Check):
+    """Ensure that CAA record exists with certificate issuance restrictions.
+
+    CAA (Certificate Authority Authorization) is a DNS record type that allows
+    domain owners to specify which certificate authorities (CAs) are permitted
+    to issue SSL/TLS certificates for their domain. This check verifies that CAA
+    records exist with "issue" or "issuewild" tags that explicitly authorize
+    specific CAs, preventing unauthorized certificate issuance and reducing the
+    risk of man-in-the-middle attacks from fraudulent certificates.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the CAA record exists check.
+
+        Iterates through all Cloudflare zones and verifies CAA configuration.
+        The check validates two conditions:
+        1. CAA records exist for the zone
+        2. At least one record has an "issue" or "issuewild" tag specifying authorized CAs
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if CAA
+            records with issuance restrictions exist, or FAIL status if no CAA
+            records are found or they lack proper issue/issuewild tags.
+        """
         findings = []
 
         for zone in zone_client.zones.values():

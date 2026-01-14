@@ -6,7 +6,29 @@ from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class zone_record_dmarc_exists(Check):
+    """Ensure that DMARC record exists with enforcement policy for Cloudflare zones.
+
+    DMARC (Domain-based Message Authentication, Reporting, and Conformance) is an
+    email authentication protocol that builds on SPF and DKIM. It allows domain
+    owners to specify how receiving mail servers should handle emails that fail
+    authentication checks. This check verifies that a DMARC record exists at the
+    _dmarc subdomain with an enforcement policy (p=reject or p=quarantine) to
+    actively block or quarantine spoofed emails, not just monitor them (p=none).
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the DMARC record exists check.
+
+        Iterates through all Cloudflare zones and verifies DMARC configuration.
+        The check validates two conditions:
+        1. A DMARC record exists (TXT record at _dmarc subdomain with "v=DMARC1")
+        2. The record uses an enforcement policy (p=reject or p=quarantine)
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if a DMARC
+            record with enforcement policy exists, or FAIL status if no DMARC
+            record is found or it uses monitoring-only policy (p=none).
+        """
         findings = []
 
         for zone in zone_client.zones.values():
