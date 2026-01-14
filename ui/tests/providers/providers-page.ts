@@ -621,7 +621,18 @@ export class ProvidersPage extends BasePage {
       await expect(this.nextButton).toBeVisible();
       await expect(this.nextButton).toBeEnabled();
       await this.nextButton.click();
-      await waitForAddCredentialsStep();
+
+      try {
+        await waitForAddCredentialsStep();
+      } catch (error) {
+        // Capture diagnostic info on failure for CI debugging
+        const currentUrl = this.page.url();
+        const timestamp = Date.now();
+        const screenshotPath = `playwright-report/step1-to-step2-failure-${timestamp}.png`;
+        await this.page.screenshot({ path: screenshotPath, fullPage: true });
+        console.error(`[DIAG] Step 1->2 failed. URL: ${currentUrl}. Screenshot saved.`);
+        throw error;
+      }
       return;
     }
 
