@@ -36,8 +36,8 @@ export const DateWithTime = ({
     return (
       <div
         className={cn(
-          "flex gap-1",
-          inline ? "flex-row items-center" : "flex-col",
+          "gap-1",
+          inline ? "inline-flex flex-row items-center" : "flex flex-col",
         )}
       >
         <span className="text-text-neutral-primary text-sm whitespace-nowrap">
