@@ -14,7 +14,9 @@ export default defineConfig({
   // CI: Run with 1 worker to reduce flakiness / shared-state conflicts
   // Local: Use half of available CPUs for faster execution
   workers: process.env.CI ? 2 : Math.max(1, Math.floor(os.cpus().length / 2)),
-  reporter: process.env.CI ? [["github"], ["list"]] : [["list"]],
+  reporter: process.env.CI
+    ? [["github"], ["list"], ["html", { open: "never" }]]
+    : [["list"]],
   outputDir: "/tmp/playwright-tests",
   expect: {
     timeout: 20000,
