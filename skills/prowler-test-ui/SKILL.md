@@ -26,8 +26,40 @@ ui/tests/
 └── {page-name}/
     ├── {page-name}-page.ts   # Page Object Model
     ├── {page-name}.spec.ts   # ALL tests (single file per feature)
-    └── {page-name}.md        # Test documentation
+    └── {page-name}.md        # Test documentation (OBLIGATORIO - sync con spec.ts)
 ```
+
+---
+
+## Checklist OBLIGATORIO (Crear o Modificar Tests)
+
+**⚠️ SIEMPRE verificar ANTES de terminar cualquier tarea de E2E:**
+
+### Al CREAR tests nuevos:
+- [ ] `{page-name}-page.ts` - Page Object creado/actualizado
+- [ ] `{page-name}.spec.ts` - Tests agregados con tags correctos (@TEST-ID)
+- [ ] `{page-name}.md` - Documentación creada con TODOS los test cases
+- [ ] Test IDs en `.md` coinciden con tags en `.spec.ts`
+
+### Al MODIFICAR tests existentes:
+- [ ] `{page-name}.md` DEBE actualizarse si:
+  - Se agregaron/removieron test cases
+  - Cambió el flow de un test (steps)
+  - Cambiaron preconditions o expected results
+  - Se modificaron tags o prioridades
+- [ ] Test IDs sincronizados entre `.md` y `.spec.ts`
+
+### Validación rápida:
+```bash
+# Verificar que existe el .md para cada carpeta de tests
+ls ui/tests/{feature}/{feature}.md
+
+# Verificar que los test IDs coinciden
+grep -o "@[A-Z]*-E2E-[0-9]*" ui/tests/{feature}/{feature}.spec.ts | sort -u
+grep -o "\`[A-Z]*-E2E-[0-9]*\`" ui/tests/{feature}/{feature}.md | sort -u
+```
+
+**❌ NO se considera completo un cambio de E2E sin actualizar el .md correspondiente**
 
 ---
 
