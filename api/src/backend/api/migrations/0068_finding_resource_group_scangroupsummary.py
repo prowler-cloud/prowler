@@ -15,10 +15,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="finding",
-            name="group",
+            name="resource_groups",
             field=models.TextField(
                 blank=True,
-                help_text="Group from check metadata for efficient filtering",
+                help_text="Resource group from check metadata for efficient filtering",
                 null=True,
             ),
         ),
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "group",
+                    "resource_group",
                     models.CharField(max_length=50),
                 ),
                 (
@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="scangroupsummary",
             constraint=models.UniqueConstraint(
-                fields=("tenant_id", "scan_id", "group", "severity"),
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
                 name="unique_resource_group_severity_per_scan",
             ),
         ),

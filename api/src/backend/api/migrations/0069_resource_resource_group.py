@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import migrations, models
 
 
@@ -9,10 +10,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="resource",
-            name="group",
-            field=models.TextField(
+            name="groups",
+            field=ArrayField(
+                models.CharField(max_length=100),
                 blank=True,
-                help_text="Group for categorization (e.g., compute, storage, IAM)",
+                help_text="Groups for categorization (e.g., compute, storage, IAM)",
                 null=True,
             ),
         ),

@@ -704,10 +704,11 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
-    group = models.TextField(
+    groups = ArrayField(
+        models.CharField(max_length=100),
         blank=True,
         null=True,
-        help_text="Group for categorization (e.g., compute, storage, IAM)",
+        help_text="Groups for categorization (e.g., compute, storage, IAM)",
     )
 
     failed_findings_count = models.IntegerField(default=0)
@@ -895,10 +896,10 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         null=True,
         help_text="Categories from check metadata for efficient filtering",
     )
-    group = models.TextField(
+    resource_groups = models.TextField(
         blank=True,
         null=True,
-        help_text="Group from check metadata for efficient filtering",
+        help_text="Resource group from check metadata for efficient filtering",
     )
 
     # Relationships
@@ -2063,7 +2064,7 @@ class ScanGroupSummary(RowLevelSecurityProtectedModel):
         related_query_name="resource_group_summary",
     )
 
-    group = models.CharField(max_length=50)
+    resource_group = models.CharField(max_length=50)
     severity = SeverityEnumField(choices=SeverityChoices)
 
     total_findings = models.IntegerField(
@@ -2089,7 +2090,7 @@ class ScanGroupSummary(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "scan_id", "group", "severity"),
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
                 name="unique_resource_group_severity_per_scan",
             ),
             RowLevelSecurityConstraint(
