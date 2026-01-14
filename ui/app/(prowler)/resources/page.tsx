@@ -65,6 +65,7 @@ export default async function Resources({
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
+      <Spacer y={4} />
       <DataTableFilterCustom
         filters={[
           {
@@ -84,7 +85,7 @@ export default async function Resources({
             values: uniqueServices,
           },
           {
-            key: "group__in",
+            key: "groups__in",
             labelCheckboxGroup: "Group",
             values: uniqueGroups,
           },

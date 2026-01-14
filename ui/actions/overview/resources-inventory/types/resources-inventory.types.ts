@@ -1,4 +1,4 @@
-// GET /api/v1/overviews/groups endpoint
+// GET /api/v1/overviews/resource-groups endpoint
 
 interface OverviewResponseMeta {
   version: string;

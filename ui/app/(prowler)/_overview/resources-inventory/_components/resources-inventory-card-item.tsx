@@ -23,7 +23,7 @@ export function ResourcesInventoryCardItem({
     const params = new URLSearchParams();
 
     // Add group specific filter
-    params.set("filter[group__in]", item.id);
+    params.set("filter[groups__in]", item.id);
 
     // Add current page filters (provider, account, etc.)
     // Transform provider_id__in to provider__in for resources endpoint
