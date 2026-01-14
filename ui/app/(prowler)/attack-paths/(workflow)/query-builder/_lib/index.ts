@@ -4,7 +4,6 @@ export {
   exportGraphAsSVG,
 } from "./export";
 export { formatNodeLabel, formatNodeLabels } from "./format";
-export { getPathEdges } from "./graph-utils";
 export {
   computeFilteredSubgraph,
   getEdgeNodeId,
