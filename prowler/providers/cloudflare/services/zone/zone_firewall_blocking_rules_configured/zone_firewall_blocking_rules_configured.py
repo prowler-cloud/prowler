@@ -1,14 +1,32 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 BLOCKING_ACTIONS = {"block", "challenge", "js_challenge", "managed_challenge"}
 
 
-class zones_firewall_blocking_rules_configured(Check):
+class zone_firewall_blocking_rules_configured(Check):
+    """Ensure that firewall rules with blocking actions are configured for Cloudflare zones.
+
+    Firewall rules should use blocking actions (block, challenge, js_challenge,
+    managed_challenge) to actively protect against threats rather than only logging
+    traffic. Without blocking actions, malicious requests can reach the origin server
+    and potentially compromise the application's security.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the firewall blocking rules configured check.
+
+        Iterates through all Cloudflare zones and verifies that at least one
+        firewall rule exists with a blocking action. Blocking actions include
+        block, challenge, js_challenge, and managed_challenge.
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if blocking
+            rules are configured, or FAIL status if no blocking rules exist.
+        """
         findings = []
 
-        for zone in zones_client.zones.values():
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

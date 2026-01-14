@@ -5,7 +5,27 @@ PROXYABLE_TYPES = {"A", "AAAA", "CNAME"}
 
 
 class dns_record_proxied(Check):
+    """Ensure that DNS records are proxied through Cloudflare.
+
+    Proxying DNS records through Cloudflare hides the origin server's IP address
+    and provides DDoS protection, WAF capabilities, and performance optimizations.
+    Non-proxied (DNS-only) records expose the origin IP directly, bypassing
+    Cloudflare's security features and making the origin vulnerable to direct
+    attacks.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the DNS record proxy status check.
+
+        Iterates through all proxyable DNS records (A, AAAA, CNAME) and verifies
+        that they are configured to be proxied through Cloudflare. Non-proxied
+        records bypass Cloudflare's security and performance features.
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if the
+            record is proxied through Cloudflare, or FAIL status if it is
+            DNS-only (not proxied).
+        """
         findings = []
 
         for record in dns_client.records:

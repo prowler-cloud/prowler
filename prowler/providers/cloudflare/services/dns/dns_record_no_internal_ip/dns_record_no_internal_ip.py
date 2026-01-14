@@ -5,7 +5,27 @@ from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 
 
 class dns_record_no_internal_ip(Check):
+    """Ensure that DNS records do not expose internal or private IP addresses.
+
+    Public DNS records should only contain publicly routable IP addresses.
+    Exposing internal, private, loopback, or link-local addresses in DNS records
+    can leak information about internal network infrastructure, potentially
+    aiding attackers in reconnaissance and targeted attacks against internal
+    systems.
+    """
+
     def execute(self) -> list[CheckReportCloudflare]:
+        """Execute the internal IP address exposure check.
+
+        Iterates through all A and AAAA DNS records and checks if they contain
+        private, loopback, link-local, or reserved IP addresses that should not
+        be exposed publicly.
+
+        Returns:
+            A list of CheckReportCloudflare objects with PASS status if the
+            record points to a public IP address, or FAIL status if it exposes
+            an internal IP address.
+        """
         findings = []
 
         for record in dns_client.records:

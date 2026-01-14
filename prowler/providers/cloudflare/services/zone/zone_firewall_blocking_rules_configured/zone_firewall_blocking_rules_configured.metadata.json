@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_firewall_blocking_rules_configured",
-  "CheckTitle": "Firewall rules use blocking actions to protect against threats",
+  "CheckID": "zone_firewall_blocking_rules_configured",
+  "CheckTitle": "Cloudflare Zone Firewall Rules Use Blocking Actions to Protect Against Threats",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure **firewall rules** with blocking actions to enforce security policies.\n- Use challenge actions for suspicious traffic to verify human visitors\n- Use block actions for known malicious patterns and high-risk sources\n- Test rules in log mode before enabling blocking to avoid false positives\n- Follow the principle of least privilege in rule configuration",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_firewall_blocking_rules_configured"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_firewall_blocking_rules_configured"
     }
   },
   "Categories": [

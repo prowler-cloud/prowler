@@ -1,9 +1,9 @@
 {
   "Provider": "cloudflare",
-  "CheckID": "zones_waf_owasp_ruleset_enabled",
-  "CheckTitle": "OWASP managed WAF rulesets are enabled for the zone",
+  "CheckID": "zone_waf_owasp_ruleset_enabled",
+  "CheckTitle": "Cloudflare Zone OWASP Managed WAF Rulesets Are Enabled",
   "CheckType": [],
-  "ServiceName": "zones",
+  "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable **OWASP Core Ruleset** managed rules as part of a defense in depth strategy.\n- Protects against OWASP Top 10 vulnerabilities including SQLi and XSS\n- Regularly review and tune rule sensitivity based on application requirements\n- Monitor WAF analytics to identify and address false positives\n- Combine with custom rules for application-specific protection",
-      "Url": "https://hub.prowler.com/checks/cloudflare/zones_waf_owasp_ruleset_enabled"
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_waf_owasp_ruleset_enabled"
     }
   },
   "Categories": [
