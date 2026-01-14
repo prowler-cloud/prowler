@@ -109,17 +109,19 @@ export default defineConfig({
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
-    // This project runs the scans test suite
-    {
-      name: "scans",
-      testMatch: "scans.spec.ts",
-      dependencies: ["admin.auth.setup"],
-    },
     // This project runs the providers test suite
+    // Providers must run before scans because both use the same AWS account ID
     {
       name: "providers",
       testMatch: "providers.spec.ts",
       dependencies: ["admin.auth.setup"],
+    },
+    // This project runs the scans test suite
+    // Depends on providers to avoid parallel conflicts with same AWS account ID
+    {
+      name: "scans",
+      testMatch: "scans.spec.ts",
+      dependencies: ["providers"],
     },
     // This project runs the invitations test suite
     {
