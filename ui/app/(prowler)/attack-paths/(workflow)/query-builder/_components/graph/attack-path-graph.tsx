@@ -18,6 +18,8 @@ import {
   formatNodeLabel,
   getNodeBorderColor,
   getNodeColor,
+  getPathEdges,
+  GRAPH_ALERT_BORDER_COLOR,
   GRAPH_EDGE_COLOR,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_SELECTION_COLOR,
@@ -35,7 +37,6 @@ interface AttackPathGraphProps {
   data: AttackPathGraphData;
   onNodeClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
-  isFilteredView?: boolean;
   ref?: Ref<AttackPathGraphRef>;
 }
 
@@ -58,7 +59,7 @@ const HEXAGON_HEIGHT = 55; // Height for finding hexagons
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
   AttackPathGraphProps
->(({ data, onNodeClick, selectedNodeId, isFilteredView = false }, ref) => {
+>(({ data, onNodeClick, selectedNodeId }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
@@ -92,49 +93,6 @@ const AttackPathGraphComponent = forwardRef<
     selectedNodeIdRef.current = selectedNodeId ?? null;
   }, [selectedNodeId]);
 
-  // Helper function to find edges in the path from a given node
-  // Upstream: follows only ONE parent path (first parent at each level) to avoid lighting up siblings
-  // Downstream: follows ALL children recursively
-  const getPathEdges = (
-    nodeId: string,
-    edges: Array<{ sourceId: string; targetId: string }>,
-  ): Set<string> => {
-    const pathEdgeIds = new Set<string>();
-    const visitedNodes = new Set<string>();
-
-    // Traverse upstream - only follow ONE parent at each level (first found)
-    // This creates a single path to the root, not all paths
-    const traverseUpstream = (currentNodeId: string) => {
-      if (visitedNodes.has(`up-${currentNodeId}`)) return;
-      visitedNodes.add(`up-${currentNodeId}`);
-
-      // Find the first parent edge only
-      const parentEdge = edges.find((edge) => edge.targetId === currentNodeId);
-      if (parentEdge) {
-        pathEdgeIds.add(`${parentEdge.sourceId}-${parentEdge.targetId}`);
-        traverseUpstream(parentEdge.sourceId);
-      }
-    };
-
-    // Traverse downstream (find ALL targets from this node)
-    const traverseDownstream = (currentNodeId: string) => {
-      if (visitedNodes.has(`down-${currentNodeId}`)) return;
-      visitedNodes.add(`down-${currentNodeId}`);
-
-      edges.forEach((edge) => {
-        if (edge.sourceId === currentNodeId) {
-          pathEdgeIds.add(`${edge.sourceId}-${edge.targetId}`);
-          traverseDownstream(edge.targetId);
-        }
-      });
-    };
-
-    traverseUpstream(nodeId);
-    traverseDownstream(nodeId);
-
-    return pathEdgeIds;
-  };
-
   // Update ref when onNodeClick changes
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -143,7 +101,6 @@ const AttackPathGraphComponent = forwardRef<
   // Update selected node styling and edge highlighting without re-rendering
   useEffect(() => {
     if (nodeShapesRef.current) {
-      const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
       nodeShapesRef.current
         .attr("stroke", (d: NodeData) => {
           const isFinding = d.data.labels.some((label) =>
@@ -153,7 +110,7 @@ const AttackPathGraphComponent = forwardRef<
 
           // Resources with findings always keep red border
           if (!isFinding && hasFindings) {
-            return ALERT_BORDER_COLOR;
+            return GRAPH_ALERT_BORDER_COLOR;
           }
           // Selected nodes get highlight color (orange)
           if (d.id === selectedNodeId) {
@@ -167,26 +124,12 @@ const AttackPathGraphComponent = forwardRef<
             label.toLowerCase().includes("finding"),
           );
           const hasFindings = resourcesWithFindingsRef.current.has(d.id);
-          const isSelected = d.id === selectedNodeId;
 
-          if (isSelected) return 4;
-          if (!isFinding && hasFindings) return 2.5;
-          return isFinding ? 2 : 1.5;
-        })
-        .attr("filter", (d: NodeData) => {
-          const isFinding = d.data.labels.some((label) =>
-            label.toLowerCase().includes("finding"),
-          );
-          const hasFindings = resourcesWithFindingsRef.current.has(d.id);
-          const isSelected = d.id === selectedNodeId;
-
-          if (isSelected) return "url(#selectedGlow)";
-          if (!isFinding && hasFindings) return "url(#redGlow)";
-          return isFinding ? "url(#glow)" : null;
-        })
-        .attr("class", (d: NodeData) => {
-          const isSelected = d.id === selectedNodeId;
-          return isSelected ? "node-shape selected-node" : "node-shape";
+          // Resources with findings keep their wider stroke
+          if (!isFinding && hasFindings) {
+            return 2.5;
+          }
+          return d.id === selectedNodeId ? 3 : isFinding ? 2 : 1.5;
         });
     }
 
@@ -208,7 +151,6 @@ const AttackPathGraphComponent = forwardRef<
       });
     }
   }, [selectedNodeId]);
-
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
@@ -303,19 +245,16 @@ const AttackPathGraphComponent = forwardRef<
     });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // Initially hide finding nodes - they are shown when user clicks on a node
-    // In filtered view, show all nodes since they're already filtered to the selected path
+    // Initially hide finding nodes
     const initialHiddenNodes = new Set<string>();
-    if (!isFilteredView) {
-      data.nodes.forEach((node) => {
-        const isFinding = node.labels.some((label) =>
-          label.toLowerCase().includes("finding"),
-        );
-        if (isFinding) {
-          initialHiddenNodes.add(node.id);
-        }
-      });
-    }
+    data.nodes.forEach((node) => {
+      const isFinding = node.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      if (isFinding) {
+        initialHiddenNodes.add(node.id);
+      }
+    });
     hiddenNodeIdsRef.current = initialHiddenNodes;
 
     // Create a map to store original node data
@@ -431,18 +370,8 @@ const AttackPathGraphComponent = forwardRef<
       .attr("dx", "0")
       .attr("dy", "0")
       .attr("stdDeviation", "4")
-      .attr("flood-color", "#ef4444")
+      .attr("flood-color", GRAPH_ALERT_BORDER_COLOR)
       .attr("flood-opacity", "0.6");
-
-    // Orange glow filter for selected/filtered node
-    const selectedGlowFilter = defs.append("filter").attr("id", "selectedGlow");
-    selectedGlowFilter
-      .append("feDropShadow")
-      .attr("dx", "0")
-      .attr("dy", "0")
-      .attr("stdDeviation", "6")
-      .attr("flood-color", GRAPH_EDGE_HIGHLIGHT_COLOR)
-      .attr("flood-opacity", "0.8");
 
     // Arrow marker (default white) - refX=10 places the arrow tip exactly at the line endpoint
     defs
@@ -472,7 +401,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("d", "M 0 0 L 10 5 L 0 10 z")
       .attr("fill", GRAPH_EDGE_HIGHLIGHT_COLOR);
 
-    // Add CSS animation for dashed lines, resource edge styles, and selected node pulse
+    // Add CSS animation for dashed lines and resource edge styles
     svg.append("style").text(`
       @keyframes dash {
         to {
@@ -484,20 +413,6 @@ const AttackPathGraphComponent = forwardRef<
       }
       .resource-edge {
         stroke-opacity: 1;
-      }
-      @keyframes selectedPulse {
-        0%, 100% {
-          stroke-opacity: 1;
-          stroke-width: 4px;
-        }
-        50% {
-          stroke-opacity: 0.6;
-          stroke-width: 6px;
-        }
-      }
-      .selected-node {
-        animation: selectedPulse 1.2s ease-in-out infinite;
-        filter: url(#selectedGlow);
       }
     `);
 
@@ -595,21 +510,24 @@ const AttackPathGraphComponent = forwardRef<
         return hasFinding ? "animated-edge" : "resource-edge";
       })
       .attr("marker-end", "url(#arrowhead)")
-      .style("visibility", (d) => {
+      .each(function (d) {
+        // Resource-to-resource edges are ALWAYS visible
+        // Finding edges are only visible when the finding node is visible
         const sourceIsFinding = isNodeFinding(d.sourceId);
         const targetIsFinding = isNodeFinding(d.targetId);
 
-        // Hide edges connected to findings in full view (shown when user clicks on a node or in filtered view)
-        if (
-          !isFilteredView &&
-          (sourceIsFinding || targetIsFinding)
-        ) {
-          return "hidden";
+        let visibility = "visible";
+        if (sourceIsFinding || targetIsFinding) {
+          const sourceHidden = hiddenNodeIdsRef.current.has(d.sourceId);
+          const targetHidden = hiddenNodeIdsRef.current.has(d.targetId);
+          visibility = sourceHidden || targetHidden ? "hidden" : "visible";
         }
-        return "visible";
+
+        select(this).style("visibility", visibility);
       });
 
     // Store linkElements reference for hover interactions
+    // D3 selection types don't match our ref type exactly; safe cast for internal use
     linkElementsRef.current = linkElements as unknown as ReturnType<
       typeof select<SVGLineElement, unknown>
     >;
@@ -635,10 +553,9 @@ const AttackPathGraphComponent = forwardRef<
       .attr("class", "node")
       .attr("transform", (d) => `translate(${d.x},${d.y})`)
       .attr("cursor", "pointer")
-      .style("display", (d) => {
-        // Hide findings in full view (they are shown when user clicks on a node or in filtered view)
-        return hiddenNodeIdsRef.current.has(d.id) ? "none" : null;
-      })
+      .style("display", (d) =>
+        hiddenNodeIdsRef.current.has(d.id) ? "none" : null,
+      )
       .on("mouseenter", function (_event: PointerEvent, d) {
         // Highlight entire path from this node
         const pathEdges = getPathEdges(d.id, edgesData);
@@ -692,11 +609,10 @@ const AttackPathGraphComponent = forwardRef<
           label.toLowerCase().includes("finding"),
         );
         const hasFindings = resourcesWithFindings.has(d.id);
-        const ALERT_BORDER_COLOR = "#ef4444";
 
         // Determine the correct border color
         if (!isFinding && hasFindings) {
-          nodeShape.attr("stroke", ALERT_BORDER_COLOR);
+          nodeShape.attr("stroke", GRAPH_ALERT_BORDER_COLOR);
         } else if (d.id === selectedId) {
           nodeShape.attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR);
         } else {
@@ -912,23 +828,17 @@ const AttackPathGraphComponent = forwardRef<
     // Store in ref for use in selection updates
     resourcesWithFindingsRef.current = resourcesWithFindings;
 
-    // Red alert color for resources with findings
-    const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
-
     // Add shapes - hexagons for findings, rounded pill shapes for resources
     nodeElements.each(function (d) {
       const group = select(this);
       const isFinding = d.data.labels.some((label) =>
         label.toLowerCase().includes("finding"),
       );
-      const isPrivilegeEscalation = d.data.labels.some(
-        (label) => label === "PrivilegeEscalation",
-      );
       const nodeColor = getNodeColor(d.data.labels, d.data.properties);
       const borderColor = getNodeBorderColor(d.data.labels, d.data.properties);
       const hasFindings = resourcesWithFindings.has(d.id);
 
-      if (isFinding || isPrivilegeEscalation) {
+      if (isFinding) {
         // Hexagon for findings - always has glow
         const w = HEXAGON_WIDTH;
         const h = HEXAGON_HEIGHT;
@@ -942,40 +852,30 @@ const AttackPathGraphComponent = forwardRef<
           L ${-w / 2} 0
           Z
         `;
-        const isSelected = d.id === selectedNodeId;
         group
           .append("path")
           .attr("d", hexPath)
           .attr("fill", nodeColor)
           .attr("fill-opacity", 0.85)
-          .attr("stroke", isSelected ? GRAPH_EDGE_HIGHLIGHT_COLOR : borderColor)
-          .attr("stroke-width", isSelected ? 4 : 2)
-          .attr("filter", isSelected ? "url(#selectedGlow)" : "url(#glow)")
-          .attr("class", isSelected ? "node-shape selected-node" : "node-shape");
+          .attr(
+            "stroke",
+            d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : borderColor,
+          )
+          .attr("stroke-width", d.id === selectedNodeId ? 3 : 2)
+          .attr("filter", "url(#glow)")
+          .attr("class", "node-shape");
       } else {
         // Check if this is an Internet node
         const isInternet = d.data.labels.some(
           (label) => label.toLowerCase() === "internet",
         );
 
-        const isSelected = d.id === selectedNodeId;
-
         // Resources with findings get red border and red glow (even when selected)
-        // Selected nodes get orange border
         const strokeColor = hasFindings
-          ? ALERT_BORDER_COLOR
-          : isSelected
-            ? GRAPH_EDGE_HIGHLIGHT_COLOR
+          ? GRAPH_ALERT_BORDER_COLOR
+          : d.id === selectedNodeId
+            ? GRAPH_SELECTION_COLOR
             : borderColor;
-
-        // Determine filter: selected takes priority, then hasFindings, then default
-        const nodeFilter = isSelected
-          ? "url(#selectedGlow)"
-          : hasFindings
-            ? "url(#redGlow)"
-            : "url(#glow)";
-
-        const nodeClass = isSelected ? "node-shape selected-node" : "node-shape";
 
         if (isInternet) {
           // Globe shape for Internet nodes - larger than regular nodes
@@ -990,9 +890,12 @@ const AttackPathGraphComponent = forwardRef<
             .attr("fill", nodeColor)
             .attr("fill-opacity", 0.85)
             .attr("stroke", strokeColor)
-            .attr("stroke-width", isSelected ? 4 : hasFindings ? 2.5 : 1.5)
-            .attr("filter", nodeFilter)
-            .attr("class", nodeClass);
+            .attr(
+              "stroke-width",
+              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
+            )
+            .attr("filter", hasFindings ? "url(#redGlow)" : "url(#glow)")
+            .attr("class", "node-shape");
 
           // Horizontal ellipse (equator)
           group
@@ -1030,14 +933,17 @@ const AttackPathGraphComponent = forwardRef<
             .attr("fill", nodeColor)
             .attr("fill-opacity", 0.85)
             .attr("stroke", strokeColor)
-            .attr("stroke-width", isSelected ? 4 : hasFindings ? 2.5 : 1.5)
-            .attr("filter", nodeFilter)
-            .attr("class", nodeClass);
+            .attr(
+              "stroke-width",
+              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
+            )
+            .attr("filter", hasFindings ? "url(#redGlow)" : null)
+            .attr("class", "node-shape");
         }
       }
     });
 
-    // Store references for updating selection later
+    // Store reference for updating selection later (select all shapes)
     const nodeShapes = nodeElements.selectAll(".node-shape");
     nodeShapesRef.current = nodeShapes as unknown as ReturnType<
       typeof select<SVGRectElement, NodeData>
@@ -1049,9 +955,6 @@ const AttackPathGraphComponent = forwardRef<
       const isFinding = d.data.labels.some((label) =>
         label.toLowerCase().includes("finding"),
       );
-      const isPrivilegeEscalation = d.data.labels.some(
-        (label) => label === "PrivilegeEscalation",
-      );
 
       // Create text container - white text with shadow for readability
       const textGroup = group
@@ -1062,7 +965,7 @@ const AttackPathGraphComponent = forwardRef<
         .attr("fill", "#ffffff")
         .style("text-shadow", "0 1px 2px rgba(0,0,0,0.5)");
 
-      if (isFinding || isPrivilegeEscalation) {
+      if (isFinding) {
         // For findings: show check_title/name (severity is shown by color)
         const title = String(
           d.data.properties?.check_title ||
@@ -1070,47 +973,18 @@ const AttackPathGraphComponent = forwardRef<
             d.data.properties?.id ||
             "Finding",
         );
-        const subtitle = isPrivilegeEscalation
-          ? String(d.data.properties?.name || "")
-          : "";
-
         const maxChars = 24;
         const displayTitle =
           title.length > maxChars
             ? title.substring(0, maxChars) + "..."
             : title;
 
-        if (subtitle) {
-          // Title (main)
-          textGroup
-            .append("tspan")
-            .attr("x", 0)
-            .attr("dy", "-0.3em")
-            .attr("font-size", "11px")
-            .attr("font-weight", "600")
-            .text(displayTitle);
-
-          // Subtitle (name)
-          const displaySubtitle =
-            subtitle.length > maxChars
-              ? subtitle.substring(0, maxChars) + "..."
-              : subtitle;
-          textGroup
-            .append("tspan")
-            .attr("x", 0)
-            .attr("dy", "1.3em")
-            .attr("font-size", "10px")
-            .attr("fill", "rgba(255,255,255,0.85)")
-            .text(displaySubtitle);
-        } else {
-          // Single line for regular findings
-          textGroup
-            .append("tspan")
-            .attr("x", 0)
-            .attr("font-size", "11px")
-            .attr("font-weight", "600")
-            .text(displayTitle);
-        }
+        textGroup
+          .append("tspan")
+          .attr("x", 0)
+          .attr("font-size", "11px")
+          .attr("font-weight", "600")
+          .text(displayTitle);
       } else {
         // For resources: show name with type below
         const name = String(
@@ -1227,7 +1101,7 @@ const AttackPathGraphComponent = forwardRef<
       }
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isFilteredView]);
+  }, [data]);
 
   return (
     <svg
