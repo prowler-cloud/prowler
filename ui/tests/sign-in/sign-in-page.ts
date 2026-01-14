@@ -62,13 +62,14 @@ export class SignInPage extends BasePage {
 
     // UI elements - title is a <p> element, not a heading
     this.logo = page.locator('svg[width="300"]');
-    this.pageTitle = page.locator("p.text-xl.font-medium");
+    // Use text matching with exact=true to avoid matching other elements
+    this.pageTitle = page.getByText("Sign in", { exact: true });
 
     // Error messages - form validation errors appear as <p> with specific classes
     this.errorMessages = page.locator("p.text-destructive, p.text-sm.text-destructive");
 
-    // SAML specific elements - title is a <p> not heading
-    this.samlModeTitle = page.locator("p.text-xl.font-medium", { hasText: "Sign in with SAML SSO" });
+    // SAML specific elements - use text matching
+    this.samlModeTitle = page.getByText("Sign in with SAML SSO", { exact: true });
     this.samlEmailInput = page.getByRole("textbox", { name: "Email" });
   }
 

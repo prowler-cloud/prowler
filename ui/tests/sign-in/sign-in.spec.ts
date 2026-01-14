@@ -135,7 +135,7 @@ test.describe("Session Persistence", () => {
     async ({ page }) => {
       await page.goto(URLS.DASHBOARD);
       await expect(page).toHaveURL(/\/sign-in/);
-      await expect(page.locator("p.text-xl.font-medium")).toHaveText("Sign in");
+      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
     },
   );
 
@@ -213,7 +213,7 @@ test.describe("Navigation", () => {
       await signUpPage.goto();
       await signUpPage.loginLink.click();
       await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.locator("p.text-xl.font-medium")).toHaveText("Sign in");
+      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
     },
   );
 
@@ -227,7 +227,7 @@ test.describe("Navigation", () => {
       await expect(page).toHaveURL(URLS.SIGNUP);
       await page.goBack();
       await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.locator("p.text-xl.font-medium")).toHaveText("Sign in");
+      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
     },
   );
 });

@@ -15,7 +15,7 @@ test.describe("Middleware Error Handling", () => {
 
       await page.goto(URLS.LOGIN);
       await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.locator("p.text-xl.font-medium")).toHaveText("Sign in");
+      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
 
       await page.goto(URLS.SIGNUP);
       await expect(page).toHaveURL(URLS.SIGNUP);
@@ -54,7 +54,7 @@ test.describe("Middleware Error Handling", () => {
 
         await page.goto("/scans");
         // With invalid session, should redirect to sign-in
-        await expect(page.locator("p.text-xl.font-medium")).toHaveText("Sign in");
+        await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
       }
     },
   );
