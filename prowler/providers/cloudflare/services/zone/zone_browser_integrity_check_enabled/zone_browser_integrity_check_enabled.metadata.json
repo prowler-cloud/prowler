@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Browser Integrity Check** configuration by verifying that HTTP headers are analyzed to identify requests from bots or clients with missing/invalid browser signatures.",
   "Risk": "Without **Browser Integrity Check**, malformed or suspicious requests reach the origin.\n- **Confidentiality**: basic bots can access and scrape content without challenge\n- **Integrity**: requests with invalid headers may exploit application vulnerabilities\n- **Availability**: automated traffic without browser signatures consumes resources",
   "RelatedUrl": "",

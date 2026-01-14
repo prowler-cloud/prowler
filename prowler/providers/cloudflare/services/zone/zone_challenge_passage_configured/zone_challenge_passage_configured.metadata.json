@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Challenge Passage** (challenge TTL) configuration by checking if it is set between **15 minutes** and **45 minutes** to balance security with user experience.",
   "Risk": "Improperly configured **Challenge Passage** can impact security or user experience.\n- **Confidentiality**: TTL set too long may allow attackers extended access after passing initial challenge\n- **Integrity**: security controls become less effective with overly permissive TTL settings\n- **Availability**: TTL set too short causes excessive challenges degrading user experience",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Hotlink Protection** (Scrape Shield) configuration by checking if it is enabled to prevent other websites from directly linking to **images and media**, consuming bandwidth without authorization.",
   "Risk": "Without **Hotlink Protection**, external websites can embed your media directly.\n- **Confidentiality**: content may be used without proper attribution or permission\n- **Integrity**: unauthorized use of media may misrepresent your brand\n- **Availability**: bandwidth theft increases costs and may degrade performance",
   "RelatedUrl": "",

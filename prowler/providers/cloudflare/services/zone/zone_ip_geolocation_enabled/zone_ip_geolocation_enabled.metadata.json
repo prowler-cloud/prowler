@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **IP Geolocation** configuration by checking if it is enabled to add the **CF-IPCountry header** to requests, enabling geographic-based access controls, firewall rules, and analytics.",
   "Risk": "Without **IP Geolocation**, geographic-based security controls cannot be implemented.\n- **Confidentiality**: unable to restrict access from high-risk regions\n- **Integrity**: cannot enforce geographic data residency requirements\n- **Availability**: limited visibility into traffic origins for threat analysis",
   "RelatedUrl": "",
