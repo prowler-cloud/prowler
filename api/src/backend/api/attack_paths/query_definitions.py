@@ -42,6 +42,7 @@ def get_query_by_id(query_id: str) -> AttackPathsQueryDefinition | None:
 # API's Attack Paths query definitions
 _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
     "aws": [
+        # Custom query for detecting internet-exposed EC2 instances with sensitive S3 access
         AttackPathsQueryDefinition(
             id="aws-internet-exposed-ec2-sensitive-s3-access",
             name="Identify internet-exposed EC2 instances with sensitive S3 access",
@@ -88,6 +89,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 ),
             ],
         ),
+        # Regular Cartography Attack Paths queries
         AttackPathsQueryDefinition(
             id="aws-rds-instances",
             name="Identify provisioned RDS instances",
@@ -336,10 +338,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 ),
             ],
         ),
-        # =====================================================================
-        # Privilege Escalation Queries (based on pathfinding.cloud research)
-        # Reference: https://github.com/DataDog/pathfinding.cloud
-        # =====================================================================
+        # Privilege Escalation Queries (based on pathfinding.cloud research): https://github.com/DataDog/pathfinding.cloud
         AttackPathsQueryDefinition(
             id="aws-iam-privesc-passrole-ec2",
             name="Privilege Escalation: iam:PassRole + ec2:RunInstances",
