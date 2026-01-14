@@ -215,8 +215,8 @@ class CommonFindingFilters(FilterSet):
     category = CharFilter(method="filter_category")
     category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
 
-    group = CharFilter(field_name="group", lookup_expr="exact")
-    group__in = CharInFilter(field_name="group", lookup_expr="in")
+    resource_groups = CharFilter(field_name="resource_groups", lookup_expr="exact")
+    resource_groups__in = CharInFilter(field_name="resource_groups", lookup_expr="in")
 
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
@@ -443,6 +443,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
     scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
+    groups = CharFilter(method="filter_groups")
+    groups__in = CharInFilter(field_name="groups", lookup_expr="overlap")
 
     class Meta:
         model = Resource
@@ -453,10 +455,12 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
-            "group": ["exact", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
+
+    def filter_groups(self, queryset, name, value):
+        return queryset.filter(groups__contains=[value])
 
     def filter_queryset(self, queryset):
         if not (self.data.get("scan") or self.data.get("scan__in")) and not (
@@ -522,6 +526,8 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
     tag_value = CharFilter(method="filter_tag_value")
     tag = CharFilter(method="filter_tag")
     tags = CharFilter(method="filter_tag")
+    groups = CharFilter(method="filter_groups")
+    groups__in = CharInFilter(field_name="groups", lookup_expr="overlap")
 
     class Meta:
         model = Resource
@@ -532,8 +538,10 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
-            "group": ["exact", "in"],
         }
+
+    def filter_groups(self, queryset, name, value):
+        return queryset.filter(groups__contains=[value])
 
     def filter_tag_key(self, queryset, name, value):
         return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
@@ -1163,7 +1171,7 @@ class CategoryOverviewFilter(BaseScanProviderFilter):
         fields = {}
 
 
-class GroupOverviewFilter(FilterSet):
+class ResourceGroupOverviewFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
@@ -1174,8 +1182,8 @@ class GroupOverviewFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
-    group = CharFilter(field_name="group", lookup_expr="exact")
-    group__in = CharInFilter(field_name="group", lookup_expr="in")
+    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
+    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
 
     class Meta:
         model = ScanGroupSummary

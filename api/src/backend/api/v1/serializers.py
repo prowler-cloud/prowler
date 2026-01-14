@@ -1175,7 +1175,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
-            "group",
+            "groups",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1184,7 +1184,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
-            "group": {"read_only": True},
+            "groups": {"read_only": True},
         }
 
     included_serializers = {
@@ -1305,7 +1305,7 @@ class FindingSerializer(RLSSerializer):
             "check_id",
             "check_metadata",
             "categories",
-            "group",
+            "resource_groups",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -2310,10 +2310,10 @@ class CategoryOverviewSerializer(BaseSerializerV1):
         resource_name = "category-overviews"
 
 
-class GroupOverviewSerializer(BaseSerializerV1):
+class ResourceGroupOverviewSerializer(BaseSerializerV1):
     """Serializer for resource group overview aggregations."""
 
-    id = serializers.CharField(source="group")
+    id = serializers.CharField(source="resource_group")
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     new_failed_findings = serializers.IntegerField()
