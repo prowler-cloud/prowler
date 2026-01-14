@@ -164,6 +164,11 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
+    perform_attack_paths_scan_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
+    return  # TODO: Delete this block
+
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,

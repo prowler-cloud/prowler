@@ -157,8 +157,8 @@ class TestAttackPathsRun:
         ]
         mock_create_dump.assert_called_once_with("temp-db", "AWSAccount", str(provider.uid))
         mock_drop_db.assert_called_once_with("temp-db")
-        mock_drop_subgraph.assert_called_once_with("tenant-db", "AWSAccount", str(provider.uid))
-        mock_load_dump.assert_called_once_with("/tmp/dump", "tenant-db")
+        mock_drop_subgraph.assert_called_once_with("tenant-db", "AWSAccount", str(provider.uid), str(provider.id))
+        mock_load_dump.assert_called_once_with("/tmp/dump", "tenant-db", str(provider.id))
 
     def test_run_failure_marks_scan_failed(
         self, tenants_fixture, providers_fixture, scans_fixture

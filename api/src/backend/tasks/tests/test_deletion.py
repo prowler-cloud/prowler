@@ -28,6 +28,7 @@ class TestDeleteProvider:
                 "tenant-db",
                 providers.get_root_node_label(instance.provider),
                 str(instance.uid),
+                str(instance.id),
             )
 
     def test_delete_provider_does_not_exist(self, tenants_fixture):
@@ -70,7 +71,8 @@ class TestDeleteTenant:
                 call(
                     f"db-{tenant.id}",
                     providers.get_root_node_label(provider.provider),
-                    provider.uid,
+                    str(provider.uid),
+                    str(provider.id),
                 )
                 for provider in provider_list
             ]

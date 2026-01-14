@@ -141,18 +141,15 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     graph_database.drop_database(cartography_config.neo4j_database)
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
-
     logger.info(f"Dump created at {dump_filename_path} for Attack Paths scan {attack_paths_scan.id}")
 
     # Load dump into tenant's main database
-    graph_database.create_database(tenant_database)
-    graph_database.drop_subgraph(tenant_database, root_node_label, root_node_id)
+    graph_database.create_database(tenant_database)  # Create it if not exists
+    graph_database.drop_subgraph(tenant_database, root_node_label, root_node_id, str(prowler_api_provider.id))
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
-
     logger.info(f"Tenant database {tenant_database} ready, loading dump now")
 
-    graph_database.load_database_dump(dump_filename_path, tenant_database)
-
+    graph_database.load_database_dump(dump_filename_path, tenant_database, str(prowler_api_provider.id))
     logger.info(f"Dump loaded into tenant database {tenant_database} for Attack Paths scan {attack_paths_scan.id}")
 
     db_utils.finish_attack_paths_scan(

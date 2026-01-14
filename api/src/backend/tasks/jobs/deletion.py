@@ -58,7 +58,7 @@ def delete_provider(tenant_id: str, pk: str):
     tenant_graph_database = graph_database.get_database_name(tenant_id)
     root_node_label = providers.get_root_node_label(instance.provider)
     root_node_id = str(instance.uid)
-    graph_database.drop_subgraph(tenant_graph_database, root_node_label, root_node_id)
+    graph_database.drop_subgraph(tenant_graph_database, root_node_label, root_node_id, str(instance.id))
 
     # Finally, delete the provider instance itself
     try:

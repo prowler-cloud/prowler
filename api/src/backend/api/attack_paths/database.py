@@ -103,15 +103,18 @@ def drop_database(database: str) -> None:
         session.run(query)
 
 
-def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int:
+def drop_subgraph(database: str, root_node_label: str, root_node_id: str, provider_id: str) -> int:
     query = """
-        MATCH (rn:__ROOT_NODE_LABEL__ {id: $root_node_id})
+        MATCH (rn:__ROOT_NODE_LABEL__ {id: $root_node_id, prowler_provider_id: $prowler_provider_id})
         CALL apoc.path.subgraphNodes(rn, {})
         YIELD node
         DETACH DELETE node
         RETURN COUNT(node) AS deleted_nodes_count
     """.replace("__ROOT_NODE_LABEL__", root_node_label)
-    parameters = {"root_node_id": root_node_id}
+    parameters = {
+        "root_node_id": root_node_id,
+        "prowler_provider_id": provider_id,
+    }
 
     with get_session(database) as session:
         result = session.run(query, parameters)
@@ -175,7 +178,7 @@ def create_database_dump(database: str, root_node_label: str, root_node_id: str)
     return dump_filename_path
 
 
-def load_database_dump(dump_filename_path: str, database: str) -> str:
+def load_database_dump(dump_filename_path: str, database: str, provider_id: str) -> None:
     BATCH_SIZE = 1000
 
     query = """
@@ -188,9 +191,9 @@ def load_database_dump(dump_filename_path: str, database: str) -> str:
             UNWIND rows AS row
             WITH row
             WHERE row.type = 'node'
-            MERGE (n {piid: row.id})
+            MERGE (n {piid: row.id, prowler_provider_id: $prowler_provider_id})
             SET n += COALESCE(row.properties, {})
-            FOREACH (l IN COALESCE(row.labels, []) | SET n:$(l))
+            SET n:$(COALESCE(row.labels, []))
         }
 
         // Create relationships from the batch
@@ -198,11 +201,21 @@ def load_database_dump(dump_filename_path: str, database: str) -> str:
             WITH rows
             UNWIND rows AS row
             WITH row
-            WHERE row.type = 'relationship'
-            MATCH (s {piid: row.start}), (t {piid: row.end})
-            CREATE (s)-[r:$(row.label)]->(t)
-            SET r += COALESCE(row.properties, {})
-        };
+            WHERE row.type = 'relationship' AND row.label IS NOT NULL
+            MATCH (s {piid: row.start, prowler_provider_id: $prowler_provider_id}),
+                (t {piid: row.end, prowler_provider_id: $prowler_provider_id})
+            CALL apoc.merge.relationship(
+                s,
+                row.label,
+                {},
+                COALESCE(row.properties, {}),
+                t
+            ) YIELD rel
+            RETURN TRUE AS relationship_created
+        }
+        RETURN relationship_created AS export_finished;
+
+        // It needs to return something because of the use of `apoc.merge.relationship` inside a CALL
     """
 
     def chunks(iterable, size):
@@ -216,7 +229,13 @@ def load_database_dump(dump_filename_path: str, database: str) -> str:
     with get_session(database) as neo4j_session:
         with open(dump_filename_path, "r", encoding="utf-8") as f:
             for batch in chunks(f, BATCH_SIZE):
-                neo4j_session.run(query, {"lines": batch}).consume()
+                neo4j_session.run(
+                    query,
+                    {
+                        "prowler_provider_id": provider_id,
+                        "lines": batch,
+                    }
+                ).consume()
 
         cartography_create_indexes.run(neo4j_session, None)
         attack_paths_prowler.create_indexes(neo4j_session)
