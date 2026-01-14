@@ -513,6 +513,9 @@ gcp:
   # gcp.compute_instance_approved_image
   # List of approved VM image patterns (regex supported)
   approved_vm_images: []
+  # gcp.compute_snapshot_not_outdated
+  # Maximum age in days for disk snapshots before they are considered outdated
+  max_snapshot_age_days: 90
   # GCP Service Account and user-managed keys unused configuration
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused
@@ -595,3 +598,9 @@ github:
 mongodbatlas:
   # mongodbatlas.organizations_service_account_secrets_expiration --> Maximum hours for service account secrets validity
   max_service_account_secret_validity_hours: 8
+
+# Cloudflare Configuration
+cloudflare:
+  # Maximum number of retries for API requests (default is 2)
+  # Set to 0 to disable retries
+  max_retries: 3

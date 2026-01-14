@@ -15,8 +15,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `ResourceGroup` field to all check metadata for resource classification [(#9656)](https://github.com/prowler-cloud/prowler/pull/9656)
 - `compute_configuration_changes` check for GCP provider to detect Compute Engine configuration changes in Cloud Audit Logs [(#9698)](https://github.com/prowler-cloud/prowler/pull/9698)
 - `compute_instance_group_load_balancer_attached` check for GCP provider [(#9695)](https://github.com/prowler-cloud/prowler/pull/9695)
+- `Cloudflare` provider with critical security checks [(#9423)](https://github.com/prowler-cloud/prowler/pull/9423)
 - `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
 - `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
+- `compute_snapshot_not_outdated` check for GCP provider [(#9774)](https://github.com/prowler-cloud/prowler/pull/9774)
+- CIS 1.12 compliance framework for Kubernetes [(#9778)](https://github.com/prowler-cloud/prowler/pull/9778)
+- CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
+- CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
 
 ### Changed
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
@@ -43,6 +48,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
 - Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
 - Update AWS Bedrock service metadata to new format [(#8827)](https://github.com/prowler-cloud/prowler/pull/8827)
+- Update AWS IAM service metadata to new format [(#9550)](https://github.com/prowler-cloud/prowler/pull/9550)
+- Enhance `user_registration_details` perfomance and user `mfa` evaluation [(#9236)](https://github.com/prowler-cloud/prowler/pull/9236)
+- Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
 
 ---
 

@@ -2,11 +2,15 @@
 name: prowler-sdk-check
 description: >
   Creates Prowler security checks following SDK architecture patterns.
-  Trigger: When user asks to create a new security check for any provider (AWS, Azure, GCP, K8s, GitHub, etc.)
+  Trigger: When creating or updating a Prowler SDK security check (implementation + metadata) for any provider (AWS, Azure, GCP, K8s, GitHub, etc.).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, sdk]
+  auto_invoke:
+    - "Creating new checks"
+    - "Updating existing checks and metadata"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

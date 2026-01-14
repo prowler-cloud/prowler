@@ -93,6 +93,7 @@ class TestGCPProvider:
                 "storage_min_retention_days": 90,
                 "mig_min_zones": 2,
                 "approved_vm_images": [],
+                "max_snapshot_age_days": 90,
             }
 
     @freeze_time(datetime.today())

@@ -2,11 +2,13 @@
 name: zod-4
 description: >
   Zod 4 schema validation patterns.
-  Trigger: When using Zod for validation - breaking changes from v3.
+  Trigger: When creating or updating Zod v4 schemas for validation/parsing (forms, request payloads, adapters), including v3 -> v4 migration patterns.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, ui]
+  auto_invoke: "Creating Zod schemas"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

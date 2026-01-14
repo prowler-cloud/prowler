@@ -2,11 +2,13 @@
 name: pytest
 description: >
   Pytest testing patterns for Python.
-  Trigger: When writing Python tests - fixtures, mocking, markers.
+  Trigger: When writing or refactoring pytest tests (fixtures, mocking, parametrize, markers). For Prowler-specific API/SDK testing conventions, also use prowler-test-api or prowler-test-sdk.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, sdk, api]
+  auto_invoke: "Writing Python tests with pytest"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
