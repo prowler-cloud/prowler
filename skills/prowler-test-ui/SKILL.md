@@ -26,7 +26,7 @@ ui/tests/
 └── {page-name}/
     ├── {page-name}-page.ts   # Page Object Model
     ├── {page-name}.spec.ts   # ALL tests (single file per feature)
-    └── {page-name}.md        # Test documentation (OBLIGATORIO - sync con spec.ts)
+    └── {page-name}.md        # Test documentation (MANDATORY - sync with spec.ts)
 ```
 
 ---
