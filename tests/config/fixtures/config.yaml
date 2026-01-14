@@ -416,6 +416,8 @@ gcp:
   max_unused_account_days: 30
   # gcp.compute_instance_approved_image
   approved_vm_images: []
+  # gcp.compute_snapshot_not_outdated
+  max_snapshot_age_days: 90
 
 # Kubernetes Configuration
 kubernetes:
