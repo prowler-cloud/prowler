@@ -7,6 +7,7 @@ from typing import Any, Callable
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
+from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
@@ -35,7 +36,7 @@ def get_cartography_ingestion_function(provider_type: str) -> Callable | None:
 
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     """
-    Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
+    Code based on Cartography version 0.122.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
     ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
@@ -45,19 +46,35 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         prowler_api_provider = ProwlerAPIProvider.objects.get(scan__pk=scan_id)
         prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
-    # If the provider is still not supported, just return the current `ingestion_exceptions`, that is empty
-    if not get_cartography_ingestion_function(prowler_api_provider.provider):
+    # Attack Paths Scan necessary objects
+    cartography_ingestion_function = get_cartography_ingestion_function(
+        prowler_api_provider.provider
+    )
+    attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
+
+    # Checks before starting the scan
+    if not cartography_ingestion_function:
+        ingestion_exceptions = {
+            "global_error": f"Provider {prowler_api_provider.provider} is not supported for Attack Paths scans"
+        }
+        if attack_paths_scan:
+            db_utils.finish_attack_paths_scan(
+                attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
+            )
+
+        logger.warning(
+            f"Provider {prowler_api_provider.provider} is not supported for Attack Paths scans"
+        )
         return ingestion_exceptions
 
-    # Getting the Attack Paths Scan object and starting it
-    attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
-    if not attack_paths_scan:
-        logger.warning(
-            f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
-        )
-        attack_paths_scan = db_utils.create_attack_paths_scan(
-            tenant_id, scan_id, prowler_api_provider.id
-        )
+    else:
+        if not attack_paths_scan:
+            logger.warning(
+                f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
+            )
+            attack_paths_scan = db_utils.create_attack_paths_scan(
+                tenant_id, scan_id, prowler_api_provider.id
+            )
 
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
@@ -91,7 +108,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
             # The real scan, where iterates over cloud services
             ingestion_exceptions = _call_within_event_loop(
-                get_cartography_ingestion_function(prowler_api_provider.provider),
+                cartography_ingestion_function,
                 neo4j_session,
                 cartography_config,
                 prowler_api_provider,
@@ -100,8 +117,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             )
 
             # Post-processing: Just keeping it to be more Cartography compliant
-            cartography_analysis.run(neo4j_session, cartography_config)
+            cartography_ontology.run(neo4j_session, cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
+
+            cartography_analysis.run(neo4j_session, cartography_config)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler nodes and relationships
             prowler.analysis(
