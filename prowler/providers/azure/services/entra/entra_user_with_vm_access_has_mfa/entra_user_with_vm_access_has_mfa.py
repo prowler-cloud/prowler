@@ -43,7 +43,7 @@ class entra_user_with_vm_access_has_mfa(Check):
                             report.subscription = subscription_name
                             report.status = "FAIL"
                             report.status_extended = f"User {user.name} without MFA can access VMs in subscription {subscription_name}"
-                            if len(user.authentication_methods) > 1:
+                            if user.is_mfa_capable:
                                 report.status = "PASS"
                                 report.status_extended = f"User {user.name} can access VMs in subscription {subscription_name} but it has MFA."
 

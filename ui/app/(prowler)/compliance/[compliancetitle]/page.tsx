@@ -6,6 +6,7 @@ import {
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import {
   ClientAccordionWrapper,
   ComplianceDownloadButton,
@@ -15,6 +16,8 @@ import {
   // SectionsFailureRateCard,
   // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  ThreatScoreBreakdownCard,
+  ThreatScoreBreakdownCardSkeleton,
   TopFailedSectionsCard,
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
@@ -22,6 +25,7 @@ import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance"
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import { cn } from "@/lib/utils";
 import {
   AttributesData,
   Framework,
@@ -86,14 +90,33 @@ export default async function ComplianceDetail({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Detect if this is a ThreatScore compliance view
+  const isThreatScore = complianceId?.includes("prowler_threatscore");
+
+  // Fetch ThreatScore data if applicable
+  let threatScoreData = null;
+  if (isThreatScore && selectedScanId) {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
+
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        overallScore: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
+  }
+
   // Use compliance_name from attributes if available, otherwise fallback to formatted title
   const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
   const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
 
   return (
     <ContentLayout title={finalPageTitle}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
           <ComplianceHeader
             scans={[]}
             uniqueRegions={uniqueRegions}
@@ -110,10 +133,11 @@ export default async function ComplianceDetail({
           const reportType = getReportTypeForFramework(framework);
 
           return selectedScanId && reportType ? (
-            <div className="flex-shrink-0 pt-1">
+            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
               <ComplianceDownloadButton
                 scanId={selectedScanId}
                 reportType={reportType}
+                label="Download report"
               />
             </div>
           ) : null;
@@ -124,7 +148,18 @@ export default async function ComplianceDetail({
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+            {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-6 md:grid-cols-2",
+                isThreatScore && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+              )}
+            >
+              {isThreatScore && (
+                <div className="md:col-span-2 xl:col-span-1">
+                  <ThreatScoreBreakdownCardSkeleton />
+                </div>
+              )}
               <RequirementsStatusCardSkeleton />
               <TopFailedSectionsCardSkeleton />
               {/* <SectionsFailureRateCardSkeleton /> */}
@@ -139,6 +174,7 @@ export default async function ComplianceDetail({
           region={regionFilter}
           filter={cisProfileFilter}
           attributesData={attributesData}
+          threatScoreData={threatScoreData}
         />
       </Suspense>
     </ContentLayout>
@@ -151,12 +187,17 @@ const SSRComplianceContent = async ({
   region,
   filter,
   attributesData,
+  threatScoreData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   attributesData: AttributesData;
+  threatScoreData: {
+    overallScore: number;
+    sectionScores: Record<string, number>;
+  } | null;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
@@ -168,7 +209,7 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RequirementsStatusCard pass={0} fail={0} manual={0} />
           <TopFailedSectionsCard sections={[]} />
           {/* <SectionsFailureRateCard categories={[]} /> */}
@@ -199,7 +240,22 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
+      {/* Charts section */}
+      {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 md:grid-cols-2",
+          threatScoreData && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+        )}
+      >
+        {threatScoreData && (
+          <div className="md:col-span-2 xl:col-span-1">
+            <ThreatScoreBreakdownCard
+              overallScore={threatScoreData.overallScore}
+              sectionScores={threatScoreData.sectionScores}
+            />
+          </div>
+        )}
         <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}

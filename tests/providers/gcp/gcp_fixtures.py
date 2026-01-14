@@ -32,6 +32,11 @@ def set_mocked_gcp_provider(
     provider.identity = GCPIdentityInfo(
         profile=profile,
     )
+    provider.audit_config = {
+        "mig_min_zones": 2,
+        "max_unused_account_days": 30,
+    }
+    provider.fixer_config = {}
 
     return provider
 
@@ -58,6 +63,8 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_services_calls(client)
     mock_api_access_policies_calls(client)
     mock_api_instance_group_managers_calls(client)
+    mock_api_images_calls(client)
+    mock_api_snapshots_calls(client)
 
     return client
 
@@ -1102,6 +1109,34 @@ def mock_api_sink_calls(client: MagicMock):
     }
     client.sinks().list_next.return_value = None
 
+    client.entries().list().execute.return_value = {
+        "entries": [
+            {
+                "insertId": "audit-log-entry-1",
+                "timestamp": "2024-01-15T10:30:00Z",
+                "receiveTimestamp": "2024-01-15T10:30:01Z",
+                "resource": {
+                    "type": "gce_instance",
+                    "labels": {
+                        "instance_id": "test-instance-1",
+                        "project_id": GCP_PROJECT_ID,
+                    },
+                },
+                "protoPayload": {
+                    "serviceName": "compute.googleapis.com",
+                    "methodName": "v1.compute.instances.insert",
+                    "resourceName": "projects/test-project/zones/us-central1-a/instances/test-instance-1",
+                    "authenticationInfo": {
+                        "principalEmail": "user@example.com",
+                    },
+                    "requestMetadata": {
+                        "callerIp": "192.168.1.1",
+                    },
+                },
+            },
+        ]
+    }
+
 
 def mock_api_services_calls(client: MagicMock):
     client.services().list().execute.return_value = {
@@ -1219,6 +1254,12 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         },
                     ]
                 },
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/http-health-check",
+                        "initialDelaySec": 300,
+                    }
+                ],
             },
             {
                 "name": "regional-mig-single-zone",
@@ -1231,6 +1272,7 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                         }
                     ]
                 },
+                # No autoHealingPolicies - testing missing autohealing
             },
         ]
     }
@@ -1243,7 +1285,68 @@ def mock_api_instance_group_managers_calls(client: MagicMock):
                 "name": "zonal-mig-1",
                 "id": zonal_mig1_id,
                 "targetSize": 2,
+                "autoHealingPolicies": [
+                    {
+                        "healthCheck": "https://www.googleapis.com/compute/v1/projects/test-project/global/healthChecks/tcp-health-check",
+                        "initialDelaySec": 120,
+                    }
+                ],
             },
         ]
     }
     client.instanceGroupManagers().list_next.return_value = None
+
+
+def mock_api_images_calls(client: MagicMock):
+    image1_id = str(uuid4())
+    image2_id = str(uuid4())
+    image3_id = str(uuid4())
+
+    client.images().list().execute.return_value = {
+        "items": [
+            {
+                "name": "test-image-1",
+                "id": image1_id,
+            },
+            {
+                "name": "test-image-2",
+                "id": image2_id,
+            },
+            {
+                "name": "test-image-3",
+                "id": image3_id,
+            },
+        ]
+    }
+    client.images().list_next.return_value = None
+
+    def mock_get_image_iam_policy(project, resource):
+        return_value = MagicMock()
+        if resource == "test-image-1":
+            return_value.execute.return_value = {
+                "bindings": [
+                    {
+                        "role": "roles/compute.imageUser",
+                        "members": ["user:test@example.com"],
+                    }
+                ]
+            }
+        elif resource == "test-image-2":
+            return_value.execute.return_value = {
+                "bindings": [
+                    {
+                        "role": "roles/compute.imageUser",
+                        "members": ["allAuthenticatedUsers"],
+                    }
+                ]
+            }
+        elif resource == "test-image-3":
+            return_value.execute.side_effect = Exception("Permission denied")
+        return return_value
+
+    client.images().getIamPolicy = mock_get_image_iam_policy
+
+
+def mock_api_snapshots_calls(client: MagicMock):
+    client.snapshots().list().execute.return_value = {"items": []}
+    client.snapshots().list_next.return_value = None
