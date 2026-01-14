@@ -50,10 +50,10 @@
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "1.1.4",
+    "from": "1.1.4",
+    "to": "1.1.8",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-01-14T12:27:43.361Z"
   },
   {
     "section": "dependencies",
