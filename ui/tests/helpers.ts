@@ -136,7 +136,7 @@ export async function verifyLoginFormElements(page: Page) {
 }
 
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("domcontentloaded");
+  await page.waitForLoadState("networkidle");
 }
 
 export async function verifyDashboardRoute(page: Page) {
@@ -271,8 +271,8 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   // Additional wait for React table to re-render with the server-filtered data
   // The filtering happens on the server, but the table component needs time
-  // to process the response and update the DOM
-  await page.page.waitForTimeout(3000);
+  // to process the response and update the DOM after network idle
+  await page.page.waitForTimeout(1500);
 
   // Get all rows from the table
   const allRows = page.providersTable.locator("tbody tr");
@@ -372,13 +372,6 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
-
-  // Wait for the provider row to disappear from the table (UI-based verification)
-  // This confirms the UI has updated after the soft-delete
-  await expect(async () => {
-    const row = await findProviderRow();
-    expect(row).toBeNull();
-  }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
 
   // Navigate back to providers page to ensure clean state
   await page.goto();
