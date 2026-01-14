@@ -28,9 +28,11 @@ import fs from "fs";
 import { deleteProviderIfExists } from "../helpers";
 
 test.describe.serial("Add Provider", () => {
-  // Increase timeout for provider tests that involve multiple page navigations
+  // Increase timeout for provider tests - needs extra time for:
+  // 1. Multiple page navigations
+  // 2. Retry loop waiting for Celery to delete soft-deleted providers (up to 75s)
   // Using serial mode to prevent parallel execution conflicts with provider cleanup
-  test.setTimeout(90000);
+  test.setTimeout(180000);
 
   test.describe.serial("Add AWS Provider", () => {
     // Providers page object
