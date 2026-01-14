@@ -2323,7 +2323,7 @@ class ResourceGroupOverviewSerializer(BaseSerializerV1):
     )
 
     class JSONAPIMeta:
-        resource_name = "resource-group-overview"
+        resource_name = "resource-group-overviews"
 
 
 class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):

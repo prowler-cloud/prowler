@@ -5990,7 +5990,7 @@ paths:
       summary: Get resource group overview
       parameters:
       - in: query
-        name: fields[resource-group-overview]
+        name: fields[resource-group-overviews]
         schema:
           type: array
           items:
@@ -19186,7 +19186,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - resource-group-overview
+          - resource-group-overviews
         id: {}
         attributes:
           type: object
