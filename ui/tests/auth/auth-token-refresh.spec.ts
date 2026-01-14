@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { SignInPage } from "./sign-in-page";
+import { SignInPage } from "./auth-page";
 import { HomePage } from "../home/home-page";
 import { TEST_CREDENTIALS, URLS, getSession, verifySessionValid } from "../helpers";
 

@@ -88,11 +88,11 @@ export default defineConfig({
     // Test Suite Projects
     // ===========================================
     // These projects run the actual test suites
-    // This project runs the sign-in test suite (login, middleware, session, token refresh)
+    // This project runs the auth test suite (login, middleware, session, token refresh)
     {
-      name: "sign-in",
+      name: "auth",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /sign-in\/.*\.spec\.ts/,
+      testMatch: /auth\/.*\.spec\.ts/,
     },
     // This project runs the sign-up test suite
     {

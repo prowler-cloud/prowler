@@ -1,5 +1,5 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
+import { SignInPage, SignInCredentials } from "./auth/auth-page";
 import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
 
