@@ -395,11 +395,11 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
 
     # Aggregate groups from findings
     groups = list(
-        filtered_queryset.exclude(group__isnull=True)
-        .exclude(group__exact="")
-        .values_list("group", flat=True)
+        filtered_queryset.exclude(resource_groups__isnull=True)
+        .exclude(resource_groups__exact="")
+        .values_list("resource_groups", flat=True)
         .distinct()
-        .order_by("group")
+        .order_by("resource_groups")
     )
 
     result = {
