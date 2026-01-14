@@ -490,6 +490,17 @@ export const GraphLegend = ({ data }: GraphLegendProps) => {
               )}
             </TooltipProvider>
           </div>
+
+          {/* Zoom control hint */}
+          <div className="border-border-neutral-primary flex items-center gap-2 border-t pt-3">
+            <kbd className="bg-bg-neutral-tertiary text-text-neutral-secondary rounded px-1.5 py-0.5 text-xs font-medium">
+              Ctrl
+            </kbd>
+            <span className="text-text-neutral-secondary text-xs">+</span>
+            <span className="text-text-neutral-secondary text-xs">
+              Scroll to zoom
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>

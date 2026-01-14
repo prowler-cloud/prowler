@@ -372,7 +372,7 @@ export default function AttackPathAnalysisPage() {
             {/* Info message and controls */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div
-                className="bg-button-primary hover:bg-button-primary-hover inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-black shadow-sm transition-colors sm:px-4 sm:text-sm"
+                className="bg-button-primary inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-black shadow-sm sm:px-4 sm:text-sm"
                 role="status"
                 aria-label="Graph interaction instructions"
               >
