@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class DNS(CloudflareService):
@@ -20,7 +20,7 @@ class DNS(CloudflareService):
         logger.info("DNS - Listing DNS records...")
 
         try:
-            for zone in zones_client.zones.values():
+            for zone in zone_client.zones.values():
                 seen_record_ids: set[str] = set()
                 try:
                     for record in self.client.dns.records.list(zone_id=zone.id):

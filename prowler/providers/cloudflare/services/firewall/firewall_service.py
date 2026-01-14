@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
-from prowler.providers.cloudflare.services.zones.zones_client import zones_client
+from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
 class Firewall(CloudflareService):
@@ -19,7 +19,7 @@ class Firewall(CloudflareService):
         """List firewall rulesets for all zones."""
         logger.info("Firewall - Listing firewall rulesets...")
         try:
-            for zone in zones_client.zones.values():
+            for zone in zone_client.zones.values():
                 try:
                     # Get all rulesets for the zone
                     rulesets = self.client.rulesets.list(zone_id=zone.id)

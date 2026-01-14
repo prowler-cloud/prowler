@@ -25,6 +25,7 @@ interface RadialChartProps {
   startAngle?: number;
   endAngle?: number;
   tooltipData?: TooltipItem[];
+  showCenterLabel?: boolean;
 }
 
 interface RadialChartTooltipProps {
@@ -48,7 +49,7 @@ const CustomTooltip = ({ active, payload }: RadialChartTooltipProps) => {
     return null;
 
   return (
-    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary rounded-xl border px-3 py-1.5 shadow-lg">
+    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary min-w-[238px] rounded-xl border px-3 py-1.5 shadow-lg">
       <div className="flex flex-col gap-0.5">
         {tooltipItems.map((item: TooltipItem, index: number) => (
           <div key={index} className="flex items-end gap-1">
@@ -81,6 +82,7 @@ export function RadialChart({
   startAngle = 90,
   endAngle = -270,
   tooltipData,
+  showCenterLabel = true,
 }: RadialChartProps) {
   // Calculate the real barSize based on the difference
   const barSize = outerRadius - innerRadius;
@@ -126,18 +128,20 @@ export function RadialChart({
           isAnimationActive={false}
         />
 
-        <text
-          x="50%"
-          y="38%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          className="text-2xl font-bold"
-          style={{
-            fill: "var(--text-neutral-secondary)",
-          }}
-        >
-          {percentage}%
-        </text>
+        {showCenterLabel && (
+          <text
+            x="50%"
+            y="38%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-2xl font-bold"
+            style={{
+              fill: "var(--text-neutral-secondary)",
+            }}
+          >
+            {percentage}%
+          </text>
+        )}
       </RadialBarChart>
     </ResponsiveContainer>
   );
