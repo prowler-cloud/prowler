@@ -1,0 +1,35 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_approved_image",
+  "CheckTitle": "VM instance is launched from an approved (golden) machine image",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "Verifies that Compute Engine VM instances are launched exclusively from approved **golden machine images**. Using standardized, pre-configured images ensures security best practices, consistency, and enables secure versioned upgrades.",
+  "Risk": "Using unapproved images may introduce:\n\n- **Security vulnerabilities** from unpatched or misconfigured software\n- **Inconsistent configurations** across the environment\n- **Compliance violations** if images don't meet organizational standards\n- **Malware or backdoors** from untrusted image sources",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/images",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/approved-vm-image.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances create INSTANCE_NAME --zone=ZONE --image=APPROVED_IMAGE --image-project=PROJECT_ID",
+      "NativeIaC": "",
+      "Other": "1. Document the non-compliant instance configuration\n2. Navigate to Compute Engine > Machine images\n3. Select the approved golden image\n4. Click 'Create instance' using the approved image\n5. Configure the new instance with the same settings\n6. Migrate application data to the new instance\n7. Delete the non-compliant instance",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  boot_disk {\n    initialize_params {\n      # Use an approved image from your organization\n      image = \"projects/your-project/global/images/approved-golden-image\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Maintain an approved list of **golden machine images** that are pre-configured, hardened, and regularly patched. Deploy all VM instances exclusively from these approved images to ensure consistency, security, and compliance across your environment.",
+      "Url": "https://hub.prowler.com/check/compute_instance_approved_image"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Configure the approved image list in Prowler's config.yaml using the 'approved_vm_images' parameter with regex patterns."
+}

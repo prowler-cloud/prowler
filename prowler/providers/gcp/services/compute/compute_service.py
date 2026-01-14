@@ -129,6 +129,14 @@ class Compute(GCPService):
                                 )
                             )
 
+                        source_image = None
+                        for disk in instance.get("disks", []):
+                            if disk.get("boot", False):
+                                source_image = disk.get("initializeParams", {}).get(
+                                    "sourceImage", ""
+                                )
+                                break
+
                         self.instances.append(
                             Instance(
                                 name=instance["name"],
@@ -188,6 +196,7 @@ class Compute(GCPService):
                                     "deletionProtection", False
                                 ),
                                 network_interfaces=network_interfaces,
+                                source_image=source_image,
                             )
                         )
 
@@ -636,6 +645,7 @@ class Instance(BaseModel):
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
     network_interfaces: list[NetworkInterface] = []
+    source_image: Optional[str] = None
 
 
 class Network(BaseModel):
