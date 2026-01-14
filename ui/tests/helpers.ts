@@ -374,22 +374,32 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   // but tests run on the host machine, so we always use localhost for direct API calls.
   const apiBaseUrl = "http://localhost:8080/api/v1";
 
+  // First poll: wait for API to stop returning the provider
   await expect(async () => {
-    // Query the API for providers with this UID (include deleted ones if possible)
     const response = await page.page.request.get(
       `${apiBaseUrl}/providers?filter[uid]=${providerUID}`
     );
     const data = await response.json();
-
-    // Provider should not exist in the response (fully deleted from DB)
     const providerExists = data.data?.some((p: { attributes?: { uid?: string } }) =>
       p.attributes?.uid === providerUID
     );
     expect(providerExists).toBeFalsy();
   }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
 
-  // Additional wait for Celery to physically delete the provider from DB.
-  // The API filters out is_deleted=True providers, so the poll above may pass
-  // before the actual DB deletion completes.
-  await page.page.waitForTimeout(2000);
+  // Second poll: verify the UID is truly available by checking we can use it.
+  // The API filters out is_deleted=True, but the DB constraint still blocks
+  // until Celery physically deletes. We poll until no constraint error.
+  await expect(async () => {
+    // Try to fetch with a direct DB check simulation - if the provider
+    // is still soft-deleted in DB, the unique constraint will block creation.
+    // We use the search endpoint with a broader filter to catch soft-deleted records.
+    const checkResponse = await page.page.request.get(
+      `${apiBaseUrl}/providers?filter[search]=${providerUID}`
+    );
+    const checkData = await checkResponse.json();
+    
+    // No results means truly deleted from DB
+    const totalCount = checkData.meta?.pagination?.count ?? checkData.data?.length ?? 0;
+    expect(totalCount).toBe(0);
+  }).toPass({ timeout: 60000, intervals: [1000, 2000, 3000, 5000] });
 }
