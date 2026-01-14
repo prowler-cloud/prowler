@@ -1,7 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.services.firewall.firewall_client import (
-    firewall_client,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -36,10 +33,8 @@ class zone_rate_limiting_enabled(Check):
             # Find rate limiting rules for this zone
             rate_limit_rules = [
                 rule
-                for rule in firewall_client.rules
-                if rule.zone_id == zone.id
-                and rule.phase == "http_ratelimit"
-                and rule.enabled
+                for rule in zone.firewall_rules
+                if rule.phase == "http_ratelimit" and rule.enabled
             ]
 
             if rate_limit_rules:
