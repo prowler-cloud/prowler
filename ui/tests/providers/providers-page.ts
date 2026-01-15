@@ -1003,8 +1003,8 @@ export class ProvidersPage extends BasePage {
     });
     await expect(row).toBeVisible();
 
-    // Click the dropdown trigger (has aria-haspopup attribute to distinguish from copy button)
-    const actionsButton = row.locator('button[aria-haspopup="true"]');
+    // Click the dropdown trigger (has aria-haspopup="menu" to distinguish from copy button)
+    const actionsButton = row.locator('button[aria-haspopup="menu"]');
     await actionsButton.click();
   }
 
