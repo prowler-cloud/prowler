@@ -17,7 +17,6 @@ class Zone(CloudflareService):
         self._get_zones_settings()
         self._get_zones_dnssec()
         self._get_zones_universal_ssl()
-        self._get_zones_bot_management()
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -117,20 +116,6 @@ class Zone(CloudflareService):
                 universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
                 zone.settings.universal_ssl_enabled = getattr(
                     universal_ssl, "enabled", False
-                )
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
-    def _get_zones_bot_management(self) -> None:
-        """Get Bot Management settings for all zones."""
-        logger.info("Zone - Getting Bot Management settings...")
-        for zone in self.zones.values():
-            try:
-                bot_management = self.client.bot_management.get(zone_id=zone.id)
-                zone.settings.bot_fight_mode_enabled = getattr(
-                    bot_management, "fight_mode", False
                 )
             except Exception as error:
                 logger.error(
