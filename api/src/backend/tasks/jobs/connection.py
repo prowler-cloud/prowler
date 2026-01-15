@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 import openai
 from celery.utils.log import get_task_logger
 
-from api.models import Integration, LighthouseConfiguration, Provider
+from api.models import (
+    Integration,
+    LighthouseConfiguration,
+    Provider,
+    ProviderStatusChoices,
+)
 from api.utils import (
     prowler_integration_connection_test,
     prowler_provider_connection_test,
@@ -29,16 +34,31 @@ def check_provider_connection(provider_id: str):
         Model.DoesNotExist: If the provider does not exist.
     """
     provider_instance = Provider.objects.get(pk=provider_id)
+
+    # Set status to CHECKING before the connection test
+    provider_instance.status = ProviderStatusChoices.CHECKING
+    provider_instance.save(update_fields=["status"])
+
     try:
         connection_result = prowler_provider_connection_test(provider_instance)
     except Exception as e:
         logger.warning(
             f"Unexpected exception checking {provider_instance.provider} provider connection: {str(e)}"
         )
+        # Set status to ERROR on exception
+        provider_instance.status = ProviderStatusChoices.ERROR
+        provider_instance.connected = False
+        provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
+        provider_instance.save()
         raise e
 
     provider_instance.connected = connection_result.is_connected
     provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
+    provider_instance.status = (
+        ProviderStatusChoices.CONNECTED
+        if connection_result.is_connected
+        else ProviderStatusChoices.ERROR
+    )
     provider_instance.save()
 
     connection_error = f"{connection_result.error}" if connection_result.error else None

@@ -890,6 +890,7 @@ class ProviderSerializer(RLSSerializer):
             "properties": {
                 "connected": {"type": "boolean"},
                 "last_checked_at": {"type": "string", "format": "date-time"},
+                "status": {"type": "string"},
             },
         }
     )
@@ -897,6 +898,7 @@ class ProviderSerializer(RLSSerializer):
         return {
             "connected": obj.connected,
             "last_checked_at": obj.connection_last_checked_at,
+            "status": obj.status,
         }
 
 
@@ -927,6 +929,7 @@ class ProviderIncludeSerializer(RLSSerializer):
             "properties": {
                 "connected": {"type": "boolean"},
                 "last_checked_at": {"type": "string", "format": "date-time"},
+                "status": {"type": "string"},
             },
         }
     )
@@ -934,6 +937,7 @@ class ProviderIncludeSerializer(RLSSerializer):
         return {
             "connected": obj.connected,
             "last_checked_at": obj.connection_last_checked_at,
+            "status": obj.status,
         }
 
 

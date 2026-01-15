@@ -6646,6 +6646,34 @@ paths:
                   included. Providers with no connection attempt (status is null) are
                   excluded from this filter.
       - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - pending
+          - checking
+          - connected
+          - error
+        description: |-
+          Filter by provider connection status.
+                  Valid values: pending, checking, connected, error.
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - pending
+            - checking
+            - connected
+            - error
+        description: |-
+          Filter by multiple provider connection statuses.
+                  Accepts comma-separated values: pending,connected,error
+        explode: false
+        style: form
+      - in: query
         name: filter[id]
         schema:
           type: string
@@ -16867,6 +16895,13 @@ components:
                 last_checked_at:
                   type: string
                   format: date-time
+                status:
+                  type: string
+                  enum:
+                  - pending
+                  - checking
+                  - connected
+                  - error
               readOnly: true
           required:
           - provider

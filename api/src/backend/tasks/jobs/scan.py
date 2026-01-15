@@ -39,6 +39,7 @@ from api.models import (
     MuteRule,
     Processor,
     Provider,
+    ProviderStatusChoices,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
@@ -801,8 +802,10 @@ def perform_prowler_scan(
                     provider_instance, mutelist_processor
                 )
                 provider_instance.connected = True
+                provider_instance.status = ProviderStatusChoices.CONNECTED
             except Exception as e:
                 provider_instance.connected = False
+                provider_instance.status = ProviderStatusChoices.ERROR
                 exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
