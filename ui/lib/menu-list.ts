@@ -71,7 +71,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-<<<<<<< HEAD
           href: "/attack-paths",
           label: "Attack Paths",
           icon: GitBranch,
@@ -85,10 +84,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "/findings",
-=======
           href: "/findings?filter[muted]=false",
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
           label: "Findings",
           icon: Tag,
         },

@@ -2,12 +2,10 @@
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Database } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
-import {
-  DataTableRowActions,
-  FindingDetail,
-} from "@/components/findings/table";
+import { FindingDetail } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
 import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import {
@@ -50,60 +48,17 @@ const getProviderData = (
   );
 };
 
-<<<<<<< HEAD
-const FindingDetailsCell = ({ row }: { row: { original: FindingProps } }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const findingIdFromUrl = searchParams.get("id");
-
-  // If there's an id in the URL, the sheet is controlled by FindingDetailsSheet component
-  // so we don't open a local sheet for any row
-  const isUrlControlled = !!findingIdFromUrl;
-=======
 // Component for finding title that opens the detail drawer
 const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   const searchParams = useSearchParams();
   const findingId = searchParams.get("id");
   const isOpen = findingId === row.original.id;
   const { checktitle } = row.original.attributes.check_metadata;
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
-
-  const handleOpenChange = (open: boolean) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (open) {
-      params.set("id", row.original.id);
-    } else {
-      params.delete("id");
-    }
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  };
 
   return (
-<<<<<<< HEAD
-    <div className="flex max-w-10 justify-center">
-      <TriggerSheet
-        triggerComponent={
-          <InfoIcon className="text-button-primary" size={16} />
-        }
-        title="Finding Details"
-        description="View the finding details"
-        open={isUrlControlled ? false : undefined}
-        onOpenChange={handleOpenChange}
-      >
-        <DataTableRowDetails
-          entityId={row.original.id}
-          findingDetails={row.original}
-        />
-      </TriggerSheet>
-    </div>
-=======
     <FindingDetail
       findingDetails={row.original}
       defaultOpen={isOpen}
-      onOpenChange={handleOpenChange}
       trigger={
         <div className="max-w-[500px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
@@ -112,7 +67,6 @@ const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
         </div>
       }
     />
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
   );
 };
 

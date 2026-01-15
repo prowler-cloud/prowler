@@ -1,17 +1,5 @@
 "use client";
 
-<<<<<<< HEAD
-import { ExternalLink, Link } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-=======
-import { Snippet } from "@heroui/snippet";
 import { ExternalLink, Link, X } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
@@ -30,7 +18,6 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -122,27 +109,6 @@ export const FindingDetail = ({
   const content = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
       {/* Header */}
-<<<<<<< HEAD
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium text-gray-800">
-            {renderValue(attributes.check_metadata.checktitle)}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => navigator.clipboard.writeText(url)}
-                  className="text-text-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
-                  aria-label="Copy finding link to clipboard"
-                >
-                  <Link size={16} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Copy finding link to clipboard</TooltipContent>
-            </Tooltip>
-          </h2>
-        </div>
-        <div className="flex items-center gap-x-4">
-=======
       <div className="flex flex-col gap-2">
         {/* Row 1: Status badges */}
         <div className="flex flex-wrap items-center gap-4">
@@ -156,7 +122,6 @@ export const FindingDetail = ({
               </span>
             </div>
           )}
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
           <Muted
             isMuted={attributes.muted}
             mutedReason={attributes.muted_reason || ""}
@@ -341,29 +306,18 @@ export const FindingDetail = ({
         {/* Resources Tab */}
         <TabsContent value="resources" className="flex flex-col gap-4">
           {providerDetails.provider === "iac" && gitUrl && (
-<<<<<<< HEAD
-            <CardAction>
-=======
             <div className="flex justify-end">
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a
                     href={gitUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-<<<<<<< HEAD
-                    className="text-text-info inline-flex cursor-pointer"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} className="inline" />
-=======
                     className="text-bg-data-info inline-flex items-center gap-1 text-sm"
                     aria-label="Open resource in repository"
                   >
                     <ExternalLink size={16} />
                     View in Repository
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
                   </a>
                 </TooltipTrigger>
                 <TooltipContent>
