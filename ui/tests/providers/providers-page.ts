@@ -995,4 +995,36 @@ export class ProvidersPage extends BasePage {
       throw new Error(`Invalid authentication method: ${method}`);
     }
   }
+
+  async clickProviderRowActions(providerUid: string): Promise<void> {
+    // Click the actions dropdown for a specific provider row
+    const row = this.providersTable.locator("tbody tr", {
+      hasText: providerUid,
+    });
+    await expect(row).toBeVisible();
+
+    // Click the dropdown trigger (vertical dots button)
+    const actionsButton = row.locator("button").filter({
+      has: this.page.locator("svg"),
+    });
+    await actionsButton.click();
+  }
+
+  async clickUpdateCredentials(providerUid: string): Promise<void> {
+    // Click update credentials for a specific provider
+    await this.clickProviderRowActions(providerUid);
+
+    // Wait for dropdown menu to appear and click Update Credentials
+    const updateCredentialsOption = this.page.getByRole("menuitem", {
+      name: /Update Credentials/i,
+    });
+    await expect(updateCredentialsOption).toBeVisible();
+    await updateCredentialsOption.click();
+  }
+
+  async verifyUpdateCredentialsPageLoaded(): Promise<void> {
+    // Verify the update credentials page is loaded
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.page).toHaveURL(/\/providers\/update-credentials/);
+  }
 }
