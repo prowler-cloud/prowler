@@ -100,9 +100,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               variant="bordered"
               className="bg-bg-neutral-secondary max-w-full overflow-hidden py-1"
             >
-              <p className="min-w-0 truncate text-sm">
-                {invitationLink}
-              </p>
+              <p className="min-w-0 truncate text-sm">{invitationLink}</p>
             </Snippet>
           </div>
         </CardContent>

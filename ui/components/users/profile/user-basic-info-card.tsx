@@ -9,7 +9,7 @@ import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
   return (
-    <div className="flex min-w-0 max-w-full items-center gap-2 md:flex-col md:items-start md:justify-start">
+    <div className="flex max-w-full min-w-0 items-center gap-2 md:flex-col md:items-start md:justify-start">
       <SnippetChip value={id} className="max-w-full" />
     </div>
   );
