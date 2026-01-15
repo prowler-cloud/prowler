@@ -1,4 +1,5 @@
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { formatLabel } from "@/lib/categories";
 
 import { ComplianceWatchlistResponse } from "./compliance-watchlist.types";
 
@@ -14,31 +15,14 @@ export interface EnrichedComplianceWatchlistItem {
   totalRequirements: number;
 }
 
-const KNOWN_ACRONYMS = [
-  "aws",
-  "cis",
-  "iso",
-  "pci",
-  "soc",
-  "gdpr",
-  "hipaa",
-  "nist",
-  "ens",
-  "rbi",
-  "mitre",
-  "nis",
-  "fedramp",
-  "ffiec",
-  "gxp",
-  "kisa",
-  "c5",
-  "ccc",
-  "cisa",
-] as const;
-
 /**
  * Formats compliance_id into a human-readable label
  * e.g., "aws_account_security_onboarding_aws" → "AWS Account Security Onboarding"
+ *
+ * Uses the shared formatLabel utility from lib/categories.ts which handles:
+ * - Acronyms (≤3 chars like AWS, CIS, ISO, PCI, SOC, etc.)
+ * - Special cases (4+ char acronyms like GDPR, HIPAA, NIST, etc.)
+ * - Version patterns (e.g., "v1", "v2")
  */
 function formatComplianceLabel(complianceId: string): string {
   // Remove trailing provider suffix (e.g., "_aws", "_gcp", "_azure")
@@ -48,26 +32,7 @@ function formatComplianceLabel(complianceId: string): string {
     .replace(/_azure$/i, "")
     .replace(/_kubernetes$/i, "");
 
-  // Split by underscore and capitalize each word
-  return withoutProvider
-    .split("_")
-    .map((word) => {
-      // Handle known acronyms
-      if (
-        KNOWN_ACRONYMS.includes(
-          word.toLowerCase() as (typeof KNOWN_ACRONYMS)[number],
-        )
-      ) {
-        return word.toUpperCase();
-      }
-      // Handle version numbers (e.g., "2" stays as "2", "v1" stays as "v1")
-      if (/^\d+$/.test(word) || /^v\d+/.test(word)) {
-        return word;
-      }
-      // Capitalize first letter
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(" ");
+  return formatLabel(withoutProvider, "_");
 }
 
 export function adaptComplianceWatchlistResponse(
