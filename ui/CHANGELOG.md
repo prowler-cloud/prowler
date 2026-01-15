@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Add ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
+- Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#)](https://github.com/prowler-cloud/prowler/pull/)
 
 ### 🔄 Changed
 

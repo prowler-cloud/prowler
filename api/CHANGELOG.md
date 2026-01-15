@@ -8,6 +8,15 @@ All notable changes to the **Prowler API** are documented in this file.
 - `/api/v1/overviews/compliance-watchlist` to retrieve the compliance watchlist [(#9596)](https://github.com/prowler-cloud/prowler/pull/9596)
 - Support AlibabaCloud provider [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
 - `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
+- Attack Paths scans for AWS providers: [(#)](https://github.com/prowler-cloud/prowler/pull/)
+  - A new Neo4j Docker Compose service
+  - A new task for the Attack Paths scan is executed when a regular scan is executed
+  - `AttackPathsScan` model and Attack Paths related serializers
+  - 4 endpoints at `/api/v1/attack-paths-scans`
+     - `/`: retrieve a list of Attack Paths scans
+     - `/:id`: retrieve full details for an Attack Paths scan
+     - `/:id/queries`: retrieve the catalog of Attack Paths queries for an Attack Paths scan
+     - `/:id/queries/run`: execute the selected Attack Paths query in an Attack Paths scan
 
 ---
 
