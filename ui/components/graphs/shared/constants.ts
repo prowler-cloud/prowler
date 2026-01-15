@@ -18,6 +18,7 @@ export const SEVERITY_ORDER = {
   Medium: 2,
   Low: 3,
   Informational: 4,
+  Info: 4,
 } as const;
 
 export const LAYOUT_OPTIONS = {

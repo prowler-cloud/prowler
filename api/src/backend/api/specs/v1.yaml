@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.15.0
+  version: 1.18.0
   description: |-
     Prowler API specification.
 
@@ -1249,13 +1249,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:
@@ -1788,13 +1788,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:
@@ -2680,13 +2680,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:

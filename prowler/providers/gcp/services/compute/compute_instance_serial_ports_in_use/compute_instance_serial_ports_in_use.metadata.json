@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VMInstance",
+  "ResourceGroup": "compute",
   "Description": "Interacting with a serial port is often referred to as the serial console, which is similar to using a terminal window, in that input and output is entirely in text mode and there is no graphical interface or mouse support. If you enable the interactive serial console on an instance, clients can attempt to connect to that instance from any IP address. Therefore interactive serial console support should be disabled.",
   "Risk": "If you enable the interactive serial console on your VM instance, clients can attempt to connect to your instance from any IP address and this allows anybody to access the instance if they know the user name, the SSH key, the project ID, and the instance name and zone.",
   "RelatedUrl": "",

@@ -125,10 +125,7 @@ class TestAttackPathsRun:
             str(scan.id),
             config,
         )
-        assert mock_get_ingestion.call_args_list == [
-            call(provider.provider),
-            call(provider.provider),
-        ]
+        mock_get_ingestion.assert_called_once_with(provider.provider)
         mock_event_loop.assert_called_once()
         mock_update_progress.assert_any_call(attack_paths_scan, 1)
         mock_update_progress.assert_any_call(attack_paths_scan, 2)
@@ -252,11 +249,14 @@ class TestAttackPathsRun:
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan"
             ) as mock_retrieve,
         ):
+            mock_retrieve.return_value = None
             result = attack_paths_run(str(tenant.id), str(scan.id), "task-789")
 
-        assert result == {}
+        assert result == {
+            "global_error": "Provider gcp is not supported for Attack Paths scans"
+        }
         mock_get_ingestion.assert_called_once_with(provider.provider)
-        mock_retrieve.assert_not_called()
+        mock_retrieve.assert_called_once_with(str(tenant.id), str(scan.id))
 
 
 @pytest.mark.django_db

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Defender Anti-Spam Policy",
+  "ResourceGroup": "security",
   "Description": "This check ensures that the EnableSafeList setting in the default connection filter policy is set to False. The safe list, managed dynamically by Microsoft, allows emails from listed IPs to bypass spam filtering and sender authentication checks, posing a security risk.",
   "Risk": "If the safe list is enabled, emails from IPs on this list can bypass essential security checks (SPF, DKIM, DMARC), potentially allowing malicious emails to be delivered directly to users' inboxes.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/connection-filter-policies-configure",

@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
@@ -13,11 +12,10 @@ import { getScans } from "@/actions/scans";
 import { FindingDetailsSheet } from "@/components/findings";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  ColumnFindings,
+  FindingsTableWithSelection,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   createScanDetailsMapping,
@@ -29,7 +27,7 @@ import {
   createProviderDetailsMappingById,
   extractProviderIds,
 } from "@/lib/provider-helpers";
-import { FilterEntity, ScanEntity, ScanProps } from "@/types";
+import { ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -119,18 +117,17 @@ export default async function Findings({
       })()
     : null;
 
-  // Extract unique regions and services from the new endpoint
+  // Extract unique regions, services, categories from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
 
   // Extract provider IDs and details using helper functions
   const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMappingById(providerIds, providersData) as {
-        [id: string]: FilterEntity;
-      }[])
+    ? createProviderDetailsMappingById(providerIds, providersData)
     : [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
@@ -150,17 +147,20 @@ export default async function Findings({
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <FindingsFilters
-        providerIds={providerIds}
-        providerDetails={providerDetails}
-        completedScans={completedScans || []}
-        completedScanIds={completedScanIds}
-        scanDetails={scanDetails}
-        uniqueRegions={uniqueRegions}
-        uniqueServices={uniqueServices}
-        uniqueResourceTypes={uniqueResourceTypes}
-      />
-      <Spacer y={8} />
+      <div className="mb-6">
+        <FindingsFilters
+          providers={providersData?.data || []}
+          providerIds={providerIds}
+          providerDetails={providerDetails}
+          completedScans={completedScans || []}
+          completedScanIds={completedScanIds}
+          scanDetails={scanDetails}
+          uniqueRegions={uniqueRegions}
+          uniqueServices={uniqueServices}
+          uniqueResourceTypes={uniqueResourceTypes}
+          uniqueCategories={uniqueCategories}
+        />
+      </div>
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
@@ -231,9 +231,7 @@ const SSRDataTable = async ({
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={Date.now()}
-        columns={ColumnFindings}
+      <FindingsTableWithSelection
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}
       />

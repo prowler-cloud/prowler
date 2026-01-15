@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID
 
 from cartography.config import Config as CartographyConfig
 
@@ -13,15 +12,19 @@ from api.models import (
 from tasks.jobs.attack_paths.providers import is_provider_available
 
 
+def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
+    with rls_transaction(tenant_id):
+        prowler_api_provider = ProwlerAPIProvider.objects.get(id=provider_id)
+
+    return is_provider_available(prowler_api_provider.provider)
+
+
 def create_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
     provider_id: int,
 ) -> ProwlerAPIAttackPathsScan | None:
-    with rls_transaction(tenant_id):
-        prowler_api_provider = ProwlerAPIProvider.objects.get(id=provider_id)
-
-    if not is_provider_available(prowler_api_provider.provider):
+    if not can_provider_run_attack_paths_scan(tenant_id, provider_id):
         return None
 
     with rls_transaction(tenant_id):

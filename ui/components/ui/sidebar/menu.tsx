@@ -17,7 +17,6 @@ import { MenuItem } from "@/components/ui/sidebar/menu-item";
 import { useAuth } from "@/hooks";
 import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
-import { useUIStore } from "@/store/ui/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
@@ -56,14 +55,9 @@ const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { hasProviders, openMutelistModal, requestMutelistModalOpen } =
-    useUIStore();
 
   const menuList = getMenuList({
     pathname,
-    hasProviders,
-    openMutelistModal,
-    requestMutelistModalOpen,
   });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>

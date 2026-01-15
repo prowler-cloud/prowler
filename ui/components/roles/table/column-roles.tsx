@@ -105,9 +105,7 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
   },
   {
     accessorKey: "actions",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Actions" />
-    ),
+    header: () => null,
     id: "actions",
     cell: ({ row }) => {
       return <DataTableRowActions row={row} />;

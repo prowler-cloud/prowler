@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureDefenderPlan",
+  "ResourceGroup": "security",
   "Description": "Ensure That Microsoft Defender for Databases Is Set To 'On' ",
   "Risk": "Enabling Microsoft Defender for Azure SQL Databases allows your organization more granular control of the infrastructure running your database software",
   "RelatedUrl": "",

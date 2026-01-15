@@ -73,6 +73,42 @@ from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
 
+# Base
+
+
+class BaseModelSerializerV1(serializers.ModelSerializer):
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class BaseSerializerV1(serializers.Serializer):
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class BaseWriteSerializer(BaseModelSerializerV1):
+    def validate(self, data):
+        if hasattr(self, "initial_data"):
+            initial_data = set(self.initial_data.keys()) - {"id", "type"}
+            unknown_keys = initial_data - set(self.fields.keys())
+            if unknown_keys:
+                raise ValidationError(f"Invalid fields: {unknown_keys}")
+        return data
+
+
+class RLSSerializer(BaseModelSerializerV1):
+    def create(self, validated_data):
+        tenant_id = self.context.get("tenant_id")
+        validated_data["tenant_id"] = tenant_id
+        return super().create(validated_data)
+
+
+class StateEnumSerializerField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        kwargs["choices"] = StateChoices.choices
+        super().__init__(**kwargs)
+
+
 # Tokens
 
 
@@ -180,7 +216,7 @@ class TokenSocialLoginSerializer(BaseTokenSerializer):
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
-class TokenRefreshSerializer(serializers.Serializer):
+class TokenRefreshSerializer(BaseSerializerV1):
     refresh = serializers.CharField()
 
     # Output token
@@ -214,7 +250,7 @@ class TokenRefreshSerializer(serializers.Serializer):
             raise ValidationError({"refresh": "Invalid or expired token"})
 
 
-class TokenSwitchTenantSerializer(serializers.Serializer):
+class TokenSwitchTenantSerializer(BaseSerializerV1):
     tenant_id = serializers.UUIDField(
         write_only=True, help_text="The tenant ID for which to request a new token."
     )
@@ -238,41 +274,10 @@ class TokenSwitchTenantSerializer(serializers.Serializer):
         return generate_tokens(user, tenant_id)
 
 
-# Base
-
-
-class BaseSerializerV1(serializers.ModelSerializer):
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
-
-
-class BaseWriteSerializer(BaseSerializerV1):
-    def validate(self, data):
-        if hasattr(self, "initial_data"):
-            initial_data = set(self.initial_data.keys()) - {"id", "type"}
-            unknown_keys = initial_data - set(self.fields.keys())
-            if unknown_keys:
-                raise ValidationError(f"Invalid fields: {unknown_keys}")
-        return data
-
-
-class RLSSerializer(BaseSerializerV1):
-    def create(self, validated_data):
-        tenant_id = self.context.get("tenant_id")
-        validated_data["tenant_id"] = tenant_id
-        return super().create(validated_data)
-
-
-class StateEnumSerializerField(serializers.ChoiceField):
-    def __init__(self, **kwargs):
-        kwargs["choices"] = StateChoices.choices
-        super().__init__(**kwargs)
-
-
 # Users
 
 
-class UserSerializer(BaseSerializerV1):
+class UserSerializer(BaseModelSerializerV1):
     """
     Serializer for the User model.
     """
@@ -403,7 +408,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
         return super().update(instance, validated_data)
 
 
-class RoleResourceIdentifierSerializer(serializers.Serializer):
+class RoleResourceIdentifierSerializer(BaseSerializerV1):
     resource_type = serializers.CharField(source="type")
     id = serializers.UUIDField()
 
@@ -586,7 +591,7 @@ class TaskSerializer(RLSSerializer, TaskBase):
 # Tenants
 
 
-class TenantSerializer(BaseSerializerV1):
+class TenantSerializer(BaseModelSerializerV1):
     """
     Serializer for the Tenant model.
     """
@@ -598,7 +603,7 @@ class TenantSerializer(BaseSerializerV1):
         fields = ["id", "name", "memberships"]
 
 
-class TenantIncludeSerializer(BaseSerializerV1):
+class TenantIncludeSerializer(BaseModelSerializerV1):
     class Meta:
         model = Tenant
         fields = ["id", "name"]
@@ -774,7 +779,7 @@ class ProviderGroupUpdateSerializer(ProviderGroupSerializer):
         return super().update(instance, validated_data)
 
 
-class ProviderResourceIdentifierSerializer(serializers.Serializer):
+class ProviderResourceIdentifierSerializer(BaseSerializerV1):
     resource_type = serializers.CharField(source="type")
     id = serializers.UUIDField()
 
@@ -1111,7 +1116,7 @@ class ScanTaskSerializer(RLSSerializer):
         ]
 
 
-class ScanReportSerializer(serializers.Serializer):
+class ScanReportSerializer(BaseSerializerV1):
     id = serializers.CharField(source="scan")
 
     class Meta:
@@ -1119,7 +1124,7 @@ class ScanReportSerializer(serializers.Serializer):
         fields = ["id"]
 
 
-class ScanComplianceReportSerializer(serializers.Serializer):
+class ScanComplianceReportSerializer(BaseSerializerV1):
     id = serializers.CharField(source="scan")
     name = serializers.CharField()
 
@@ -1171,7 +1176,7 @@ class AttackPathsScanSerializer(RLSSerializer):
         return provider.uid if provider else None
 
 
-class AttackPathsQueryParameterSerializer(serializers.Serializer):
+class AttackPathsQueryParameterSerializer(BaseSerializerV1):
     name = serializers.CharField()
     label = serializers.CharField()
     data_type = serializers.CharField(default="string")
@@ -1179,10 +1184,10 @@ class AttackPathsQueryParameterSerializer(serializers.Serializer):
     placeholder = serializers.CharField(allow_null=True, required=False)
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query-parameter"
+        resource_name = "attack-paths-query-parameters"
 
 
-class AttackPathsQuerySerializer(serializers.Serializer):
+class AttackPathsQuerySerializer(BaseSerializerV1):
     id = serializers.CharField()
     name = serializers.CharField()
     description = serializers.CharField()
@@ -1190,29 +1195,29 @@ class AttackPathsQuerySerializer(serializers.Serializer):
     parameters = AttackPathsQueryParameterSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query"
+        resource_name = "attack-paths-queries"
 
 
-class AttackPathsQueryRunRequestSerializer(serializers.Serializer):
+class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
     id = serializers.CharField()
     parameters = serializers.DictField(
         child=serializers.JSONField(), allow_empty=True, required=False
     )
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query-run-request"
+        resource_name = "attack-paths-query-run-requests"
 
 
-class AttackPathsNodeSerializer(serializers.Serializer):
+class AttackPathsNodeSerializer(BaseSerializerV1):
     id = serializers.CharField()
     labels = serializers.ListField(child=serializers.CharField())
     properties = serializers.DictField(child=serializers.JSONField())
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query-result-node"
+        resource_name = "attack-paths-query-result-nodes"
 
 
-class AttackPathsRelationshipSerializer(serializers.Serializer):
+class AttackPathsRelationshipSerializer(BaseSerializerV1):
     id = serializers.CharField()
     label = serializers.CharField()
     source = serializers.CharField()
@@ -1220,15 +1225,15 @@ class AttackPathsRelationshipSerializer(serializers.Serializer):
     properties = serializers.DictField(child=serializers.JSONField())
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query-result-relationship"
+        resource_name = "attack-paths-query-result-relationships"
 
 
-class AttackPathsQueryResultSerializer(serializers.Serializer):
+class AttackPathsQueryResultSerializer(BaseSerializerV1):
     nodes = AttackPathsNodeSerializer(many=True)
     relationships = AttackPathsRelationshipSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-query-result"
+        resource_name = "attack-paths-query-results"
 
 
 class ResourceTagSerializer(RLSSerializer):
@@ -1274,6 +1279,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
+            "groups",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1282,6 +1288,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
+            "groups": {"read_only": True},
         }
 
     included_serializers = {
@@ -1371,10 +1378,11 @@ class ResourceIncludeSerializer(RLSSerializer):
         return fields
 
 
-class ResourceMetadataSerializer(serializers.Serializer):
+class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1400,6 +1408,8 @@ class FindingSerializer(RLSSerializer):
             "severity",
             "check_id",
             "check_metadata",
+            "categories",
+            "resource_groups",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1441,7 +1451,7 @@ class FindingIncludeSerializer(RLSSerializer):
 
 
 # To be removed when the related endpoint is removed as well
-class FindingDynamicFilterSerializer(serializers.Serializer):
+class FindingDynamicFilterSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
@@ -1449,11 +1459,15 @@ class FindingDynamicFilterSerializer(serializers.Serializer):
         resource_name = "finding-dynamic-filters"
 
 
-class FindingMetadataSerializer(serializers.Serializer):
+class FindingMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
+    )
+    categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True, required=False, default=list
     )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
@@ -1487,12 +1501,23 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OracleCloudProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
                 serializer = MongoDBAtlasProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
                 )
         elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            if provider_type == Provider.ProviderChoices.AWS.value:
+                serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                    }
+                )
         elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
             serializer = GCPServiceAccountProviderSecret(data=secret)
         else:
@@ -1624,6 +1649,34 @@ class OracleCloudProviderSecret(serializers.Serializer):
     tenancy = serializers.CharField()
     region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudProviderSecret(serializers.Serializer):
+    access_key_id = serializers.CharField()
+    access_key_secret = serializers.CharField()
+    security_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudRoleAssumptionProviderSecret(serializers.Serializer):
+    role_arn = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_id = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_secret = serializers.CharField(
+        help_text="Access Key Secret of the RAM user that will assume the role"
+    )
+    role_session_name = serializers.CharField(
+        required=False,
+        help_text="Session name for the assumed role session (optional, defaults to 'ProwlerSession')",
+    )
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2143,7 +2196,7 @@ class RoleProviderGroupRelationshipSerializer(RLSSerializer, BaseWriteSerializer
 # Compliance overview
 
 
-class ComplianceOverviewSerializer(serializers.Serializer):
+class ComplianceOverviewSerializer(BaseSerializerV1):
     """
     Serializer for compliance requirement status aggregated by compliance framework.
 
@@ -2165,7 +2218,7 @@ class ComplianceOverviewSerializer(serializers.Serializer):
         resource_name = "compliance-overviews"
 
 
-class ComplianceOverviewDetailSerializer(serializers.Serializer):
+class ComplianceOverviewDetailSerializer(BaseSerializerV1):
     """
     Serializer for detailed compliance requirement information.
 
@@ -2194,7 +2247,7 @@ class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSeri
     total_findings = serializers.IntegerField()
 
 
-class ComplianceOverviewAttributesSerializer(serializers.Serializer):
+class ComplianceOverviewAttributesSerializer(BaseSerializerV1):
     id = serializers.CharField()
     compliance_name = serializers.CharField()
     framework_description = serializers.CharField()
@@ -2208,7 +2261,7 @@ class ComplianceOverviewAttributesSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-attributes"
 
 
-class ComplianceOverviewMetadataSerializer(serializers.Serializer):
+class ComplianceOverviewMetadataSerializer(BaseSerializerV1):
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
     class JSONAPIMeta:
@@ -2218,16 +2271,13 @@ class ComplianceOverviewMetadataSerializer(serializers.Serializer):
 # Overviews
 
 
-class OverviewProviderSerializer(serializers.Serializer):
+class OverviewProviderSerializer(BaseSerializerV1):
     id = serializers.CharField(source="provider")
     findings = serializers.SerializerMethodField(read_only=True)
     resources = serializers.SerializerMethodField(read_only=True)
 
     class JSONAPIMeta:
         resource_name = "providers-overview"
-
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
 
     @extend_schema_field(
         {
@@ -2262,18 +2312,15 @@ class OverviewProviderSerializer(serializers.Serializer):
         }
 
 
-class OverviewProviderCountSerializer(serializers.Serializer):
+class OverviewProviderCountSerializer(BaseSerializerV1):
     id = serializers.CharField(source="provider")
     count = serializers.IntegerField()
 
     class JSONAPIMeta:
         resource_name = "providers-count-overview"
 
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
 
-
-class OverviewFindingSerializer(serializers.Serializer):
+class OverviewFindingSerializer(BaseSerializerV1):
     id = serializers.CharField(default="n/a")
     new = serializers.IntegerField()
     changed = serializers.IntegerField()
@@ -2292,15 +2339,12 @@ class OverviewFindingSerializer(serializers.Serializer):
     class JSONAPIMeta:
         resource_name = "findings-overview"
 
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["pass"] = self.fields.pop("_pass")
 
 
-class OverviewSeveritySerializer(serializers.Serializer):
+class OverviewSeveritySerializer(BaseSerializerV1):
     id = serializers.CharField(default="n/a")
     critical = serializers.IntegerField()
     high = serializers.IntegerField()
@@ -2311,11 +2355,24 @@ class OverviewSeveritySerializer(serializers.Serializer):
     class JSONAPIMeta:
         resource_name = "findings-severity-overview"
 
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
+
+class FindingsSeverityOverTimeSerializer(BaseSerializerV1):
+    """Serializer for daily findings severity trend data."""
+
+    id = serializers.DateField(source="date")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+    scan_ids = serializers.ListField(child=serializers.UUIDField())
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-over-time"
 
 
-class OverviewServiceSerializer(serializers.Serializer):
+class OverviewServiceSerializer(BaseSerializerV1):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()
     _pass = serializers.IntegerField()
@@ -2329,8 +2386,62 @@ class OverviewServiceSerializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields["pass"] = self.fields.pop("_pass")
 
-    def get_root_meta(self, _resource, _many):
-        return {"version": "v1"}
+
+class AttackSurfaceOverviewSerializer(BaseSerializerV1):
+    """Serializer for attack surface overview aggregations."""
+
+    id = serializers.CharField(source="attack_surface_type")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    muted_failed_findings = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-surface-overviews"
+
+
+class CategoryOverviewSerializer(BaseSerializerV1):
+    """Serializer for category overview aggregations."""
+
+    id = serializers.CharField(source="category")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "category-overviews"
+
+
+class ResourceGroupOverviewSerializer(BaseSerializerV1):
+    """Serializer for resource group overview aggregations."""
+
+    id = serializers.CharField(source="resource_group")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    resources_count = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "resource-group-overviews"
+
+
+class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):
+    """Serializer for compliance watchlist overview with FAIL-dominant aggregation."""
+
+    id = serializers.CharField(source="compliance_id")
+    compliance_id = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-watchlist-overviews"
 
 
 class OverviewRegionSerializer(serializers.Serializer):
@@ -2360,7 +2471,7 @@ class OverviewRegionSerializer(serializers.Serializer):
 # Schedules
 
 
-class ScheduleDailyCreateSerializer(serializers.Serializer):
+class ScheduleDailyCreateSerializer(BaseSerializerV1):
     provider_id = serializers.UUIDField(required=True)
 
     class JSONAPIMeta:
@@ -2696,7 +2807,7 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
-class IntegrationJiraDispatchSerializer(serializers.Serializer):
+class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.
     """
@@ -2859,14 +2970,14 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 # SSO
 
 
-class SamlInitiateSerializer(serializers.Serializer):
+class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"
 
 
-class SamlMetadataSerializer(serializers.Serializer):
+class SamlMetadataSerializer(BaseSerializerV1):
     class JSONAPIMeta:
         resource_name = "saml-meta"
 
@@ -3398,6 +3509,19 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
             and provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
+            # For updates, enforce that the authentication method (access keys vs API key)
+            # is immutable. To switch methods, the UI must delete and recreate the provider.
+            existing_credentials = (
+                self.instance.credentials_decoded if self.instance else {}
+            ) or {}
+
+            existing_uses_api_key = "api_key" in existing_credentials
+            existing_uses_access_keys = any(
+                k in existing_credentials
+                for k in ("access_key_id", "secret_access_key")
+            )
+
+            # First run field-level validation on the partial payload
             try:
                 BedrockCredentialsUpdateSerializer(data=credentials).is_valid(
                     raise_exception=True
@@ -3408,6 +3532,31 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     e.detail[f"credentials/{key}"] = value
                     del e.detail[key]
                 raise e
+
+            # Then enforce invariants about not changing the auth method
+            # If the existing config uses an API key, forbid introducing access keys.
+            if existing_uses_api_key and any(
+                k in credentials for k in ("access_key_id", "secret_access_key")
+            ):
+                raise ValidationError(
+                    {
+                        "credentials/non_field_errors": [
+                            "Cannot change Bedrock authentication method from API key "
+                            "to access key via update. Delete and recreate the provider instead."
+                        ]
+                    }
+                )
+
+            # If the existing config uses access keys, forbid introducing an API key.
+            if existing_uses_access_keys and "api_key" in credentials:
+                raise ValidationError(
+                    {
+                        "credentials/non_field_errors": [
+                            "Cannot change Bedrock authentication method from access key "
+                            "to API key via update. Delete and recreate the provider instead."
+                        ]
+                    }
+                )
         elif (
             credentials is not None
             and provider_type
