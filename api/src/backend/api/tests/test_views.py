@@ -3612,7 +3612,7 @@ class TestAttackPathsScanViewSet:
     def _run_payload(query_id="aws-rds", parameters=None):
         return {
             "data": {
-                "type": "attack-paths-query-run-request",
+                "type": "attack-paths-query-run-requests",
                 "attributes": {
                     "id": query_id,
                     "parameters": parameters or {},

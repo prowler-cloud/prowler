@@ -1837,7 +1837,6 @@ def create_scan_resource_group_summary():
     return _create
 
 
-@pytest.fixture
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
 
