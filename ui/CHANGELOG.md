@@ -20,6 +20,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Add showCenterLabel prop to RadialChart for optional center text display [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
 
+### 🔐 Security
+
+- Upgrade Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs from January 2026 security advisory [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+
 ---
 
 ## [1.16.2] (Prowler v5.16.2) (UNRELEASED)

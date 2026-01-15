@@ -50,10 +50,10 @@
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "1.1.4",
+    "from": "1.1.8",
+    "to": "1.1.15",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-01-15T08:46:46.283Z"
   },
   {
     "section": "dependencies",
@@ -410,10 +410,10 @@
   {
     "section": "dependencies",
     "name": "langchain",
-    "from": "1.1.4",
-    "to": "1.1.5",
+    "from": "1.1.5",
+    "to": "1.2.10",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-01-15T08:46:46.283Z"
   },
   {
     "section": "dependencies",
@@ -683,9 +683,9 @@
     "section": "devDependencies",
     "name": "@types/node",
     "from": "20.5.7",
-    "to": "20.5.7",
+    "to": "24.10.8",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-15T08:43:57.254Z"
   },
   {
     "section": "devDependencies",

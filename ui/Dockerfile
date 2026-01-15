@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24.13.0-alpine AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
