@@ -1208,7 +1208,8 @@ test.describe("Update Provider Credentials", () => {
         await providersPage.verifyUpdateCredentialsPageLoaded();
 
         // Verify OCI credentials form fields are visible (confirms providerUid is loaded)
-        await providersPage.verifyOCICredentialsPageLoaded();
+        // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+        await providersPage.verifyOCIUpdateCredentialsPageLoaded();
 
         // Fill updated credentials
         await providersPage.fillOCICredentials(ociCredentials);
@@ -1217,7 +1218,7 @@ test.describe("Update Provider Credentials", () => {
         await providersPage.clickNext();
 
         // Verify successful navigation to test connection page
-        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.verifyTestConnectionPageLoaded();
       },
     );
   });
