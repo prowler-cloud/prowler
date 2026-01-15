@@ -10,15 +10,26 @@ interface ResourcesInventoryProps {
   filters?: Record<string, string | string[] | undefined>;
 }
 
+const MAX_VISIBLE_GROUPS = 8;
+
 export function ResourcesInventory({
   items,
   filters,
 }: ResourcesInventoryProps) {
   const isEmpty = items.length === 0;
 
-  // Split items into two rows of 4
-  const firstRow = items.slice(0, 4);
-  const secondRow = items.slice(4, 8);
+  // Sort by failedFindings (desc), then by totalResources (desc) to prioritize groups with issues
+  const sortedItems = [...items].sort((a, b) => {
+    if (b.failedFindings !== a.failedFindings) {
+      return b.failedFindings - a.failedFindings;
+    }
+    return b.totalResources - a.totalResources;
+  });
+
+  // Take top 8 most relevant groups
+  const visibleItems = sortedItems.slice(0, MAX_VISIBLE_GROUPS);
+  const firstRow = visibleItems.slice(0, 4);
+  const secondRow = visibleItems.slice(4, 8);
 
   return (
     <Card variant="base" className="flex w-full flex-col">

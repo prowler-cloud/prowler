@@ -24,7 +24,7 @@ import {
   createProviderDetailsMappingById,
   extractProviderIds,
 } from "@/lib/provider-helpers";
-import { FilterEntity, ResourceProps, SearchParamsProps } from "@/types";
+import { ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
   searchParams,
@@ -57,9 +57,7 @@ export default async function Resources({
   // Extract provider IDs and details
   const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMappingById(providerIds, providersData) as {
-        [id: string]: FilterEntity;
-      }[])
+    ? createProviderDetailsMappingById(providerIds, providersData)
     : [];
 
   return (

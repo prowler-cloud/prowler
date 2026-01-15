@@ -86,7 +86,7 @@ export function ResourcesInventoryCardItem({
       variant={hasFailedFindings ? CardVariant.fail : CardVariant.default}
       className={
         hasFailedFindings
-          ? "flex-1 cursor-pointer transition-all hover:border-rose-500/60"
+          ? "hover:border-bg-fail/60 flex-1 cursor-pointer transition-all"
           : "flex-1"
       }
     />

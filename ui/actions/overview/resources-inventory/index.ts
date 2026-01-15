@@ -1,7 +1,6 @@
 export { getResourceGroupOverview } from "./resources-inventory";
 export {
   adaptResourceGroupOverview,
-  getEmptyResourceInventoryItems,
   RESOURCE_GROUP_IDS,
   type ResourceGroupId,
   type ResourceInventoryItem,
