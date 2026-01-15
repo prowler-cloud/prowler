@@ -147,7 +147,8 @@ export const FindingDetail = ({
 
         {/* Row 3: First Seen */}
         <div className="text-text-neutral-tertiary text-sm">
-          <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
+          <span className="text-text-neutral-secondary mr-1">Time:</span>
+          <DateWithTime inline dateTime={attributes.updated_at || "-"} />
         </div>
       </div>
 
@@ -187,6 +188,9 @@ export const FindingDetail = ({
             </InfoField>
             <InfoField label="Finding UID" variant="simple">
               <CodeSnippet value={attributes.uid} />
+            </InfoField>
+            <InfoField label="First seen" variant="simple">
+              <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
             </InfoField>
           </div>
 

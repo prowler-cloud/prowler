@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
@@ -84,19 +83,20 @@ export default async function Findings({
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <FindingsFilters
-        providers={providersData?.data || []}
-        providerIds={providerIds}
-        providerDetails={providerDetails}
-        completedScans={completedScans || []}
-        completedScanIds={completedScanIds}
-        scanDetails={scanDetails}
-        uniqueRegions={uniqueRegions}
-        uniqueServices={uniqueServices}
-        uniqueResourceTypes={uniqueResourceTypes}
-        uniqueCategories={uniqueCategories}
-      />
-      <Spacer y={8} />
+      <div className="mb-6">
+        <FindingsFilters
+          providers={providersData?.data || []}
+          providerIds={providerIds}
+          providerDetails={providerDetails}
+          completedScans={completedScans || []}
+          completedScanIds={completedScanIds}
+          scanDetails={scanDetails}
+          uniqueRegions={uniqueRegions}
+          uniqueServices={uniqueServices}
+          uniqueResourceTypes={uniqueResourceTypes}
+          uniqueCategories={uniqueCategories}
+        />
+      </div>
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>

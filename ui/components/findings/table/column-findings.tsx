@@ -256,6 +256,23 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
+    // Region column
+    {
+      accessorKey: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => {
+        const region = getResourceData(row, "region");
+        const regionText = typeof region === "string" ? region : "-";
+        return (
+          <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
+            {regionText}
+          </p>
+        );
+      },
+      enableSorting: false,
+    },
     // TODO: PROWLER-379 - Enable Impacted Resources column when backend supports grouped findings
     // {
     //   accessorKey: "impactedResources",
