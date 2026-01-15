@@ -1,0 +1,60 @@
+apiVersion: v2
+name: prowler
+description: Prowler is an Open Cloud Security tool for AWS, Azure, GCP and Kubernetes. It helps for continuous monitoring, security assessments and audits, incident response, compliance, hardening and forensics readiness. 
+type: application
+version: 0.0.2
+appVersion: "5.5.1"
+home: https://prowler.com/
+icon: https://prowler.com/wp-content/themes/prowler-2024/img/web-logo-prowler-p.png
+keywords:
+  - security
+  - aws
+  - azure
+  - gcp
+  - kubernetes
+maintainers:
+  - name: Dani
+    email: andre.gomes@promptlyhealth.com
+dependencies:
+  # https://artifacthub.io/packages/helm/bitnami/postgresql
+  - name: postgresql
+    version: 16.6.3
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  # https://artifacthub.io/packages/helm/bitnami/valkey
+  - name: valkey
+    version: 3.0.1
+    repository: https://charts.bitnami.com/bitnami
+    condition: valkey.enabled
+annotations: 
+  artifacthub.io/alternativeName: prowler-app
+  artifacthub.io/category: security
+  artifacthub.io/links: |
+    - name: source
+      url: https://github.com/promptlylabs/prowler-helm-chart
+    - name: application source
+      url: https://github.com/prowler-cloud/prowler
+    - name: support
+      url: https://github.com/promptlylabs/prowler-helm-chart/issues
+  artifacthub.io/changes: |
+    - kind: fixed
+      description: Worker services startup command
+    - kind: changed
+      description: Environment variables setup for API and worker services
+      links:
+        - name: Github PR
+          url: https://github.com/promptlylabs/prowler-helm-chart/pull/2
+#   artifacthub.io/containsSecurityUpdates: "true"
+  artifacthub.io/screenshots: |
+    - title: Sign In
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/sign_in.png
+    - title: Sign Up
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/sign_up.png
+    - title: Homepage
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/overview.png
+    - title: Findings
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/findings.png
+    - title: Providers
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/providers.png
+    - title: Scans
+      url: https://promptlylabs.github.io/prowler-helm-chart/docs/images/scans.png
