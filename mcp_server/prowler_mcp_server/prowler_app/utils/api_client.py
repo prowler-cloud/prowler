@@ -84,7 +84,13 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             )
             response.raise_for_status()
 
-            return response.json()
+            if not response.content:
+                return {
+                    "success": True,
+                    "status_code": response.status_code,
+                }
+            else:
+                return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error during {method.value} {path}: {e}")
             error_detail: str = ""
@@ -222,7 +228,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                 )
 
             # Fetch current task state
-            response = await self.get(f"/api/v1/tasks/{task_id}")
+            response = await self.get(f"/tasks/{task_id}")
             task_data = response.get("data", {})
             task_attrs = task_data.get("attributes", {})
             state = task_attrs.get("state")

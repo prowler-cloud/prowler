@@ -1,0 +1,254 @@
+name: 'API: Bump Version'
+
+on:
+  release:
+    types:
+      - 'published'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  PROWLER_VERSION: ${{ github.event.release.tag_name }}
+  BASE_BRANCH: master
+
+jobs:
+  detect-release-type:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      is_minor: ${{ steps.detect.outputs.is_minor }}
+      is_patch: ${{ steps.detect.outputs.is_patch }}
+      major_version: ${{ steps.detect.outputs.major_version }}
+      minor_version: ${{ steps.detect.outputs.minor_version }}
+      patch_version: ${{ steps.detect.outputs.patch_version }}
+      current_api_version: ${{ steps.get_api_version.outputs.current_api_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Get current API version
+        id: get_api_version
+        run: |
+          CURRENT_API_VERSION=$(grep -oP '^version = "\K[^"]+' api/pyproject.toml)
+          echo "current_api_version=${CURRENT_API_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Current API version: $CURRENT_API_VERSION"
+
+      - name: Detect release type and parse version
+        id: detect
+        run: |
+          if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR_VERSION=${BASH_REMATCH[1]}
+            MINOR_VERSION=${BASH_REMATCH[2]}
+            PATCH_VERSION=${BASH_REMATCH[3]}
+
+            echo "major_version=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "minor_version=${MINOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "patch_version=${PATCH_VERSION}" >> "${GITHUB_OUTPUT}"
+
+            if (( MAJOR_VERSION != 5 )); then
+              echo "::error::Releasing another Prowler major version, aborting..."
+              exit 1
+            fi
+
+            if (( PATCH_VERSION == 0 )); then
+              echo "is_minor=true" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=false" >> "${GITHUB_OUTPUT}"
+              echo "✓ Minor release detected: $PROWLER_VERSION"
+            else
+              echo "is_minor=false" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=true" >> "${GITHUB_OUTPUT}"
+              echo "✓ Patch release detected: $PROWLER_VERSION"
+            fi
+          else
+            echo "::error::Invalid version syntax: '$PROWLER_VERSION' (must be X.Y.Z)"
+            exit 1
+          fi
+
+  bump-minor-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_minor == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Calculate next API minor version
+        run: |
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+
+          # API version follows Prowler minor + 1
+          # For Prowler 5.17.0 -> API 1.18.0
+          # For next master (Prowler 5.18.0) -> API 1.19.0
+          NEXT_API_VERSION=1.$((MINOR_VERSION + 2)).0
+
+          echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "NEXT_API_VERSION=${NEXT_API_VERSION}" >> "${GITHUB_ENV}"
+
+          echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
+          echo "Current API version: $CURRENT_API_VERSION"
+          echo "Next API minor version (for master): $NEXT_API_VERSION"
+
+      - name: Bump API versions in files for master
+        run: |
+          set -e
+
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${NEXT_API_VERSION}\"|" api/src/backend/api/v1/views.py
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for next API minor version to master
+        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: master
+          commit-message: 'chore(api): Bump version to v${{ env.NEXT_API_VERSION }}'
+          branch: api-version-bump-to-v${{ env.NEXT_API_VERSION }}
+          title: 'chore(api): Bump version to v${{ env.NEXT_API_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler API version to v${{ env.NEXT_API_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: Checkout version branch
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+
+      - name: Calculate first API patch version
+        run: |
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+
+          # API version follows Prowler minor + 1
+          # For Prowler 5.17.0 release -> version branch v5.17 should have API 1.18.1
+          FIRST_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).1
+
+          echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+          echo "FIRST_API_PATCH_VERSION=${FIRST_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+          echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
+          echo "First API patch version (for ${VERSION_BRANCH}): $FIRST_API_PATCH_VERSION"
+          echo "Version branch: $VERSION_BRANCH"
+
+      - name: Bump API versions in files for version branch
+        run: |
+          set -e
+
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${FIRST_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${FIRST_API_PATCH_VERSION}\"|" api/src/backend/api/v1/views.py
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${FIRST_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for first API patch version to version branch
+        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(api): Bump version to v${{ env.FIRST_API_PATCH_VERSION }}'
+          branch: api-version-bump-to-v${{ env.FIRST_API_PATCH_VERSION }}
+          title: 'chore(api): Bump version to v${{ env.FIRST_API_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler API version to v${{ env.FIRST_API_PATCH_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+  bump-patch-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_patch == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Calculate next API patch version
+        run: |
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
+          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+
+          # Extract current API patch to increment it
+          if [[ $CURRENT_API_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            API_PATCH=${BASH_REMATCH[3]}
+
+            # API version follows Prowler minor + 1
+            # Keep same API minor (based on Prowler minor), increment patch
+            NEXT_API_PATCH_VERSION=1.$((MINOR_VERSION + 1)).$((API_PATCH + 1))
+
+            echo "CURRENT_API_VERSION=${CURRENT_API_VERSION}" >> "${GITHUB_ENV}"
+            echo "NEXT_API_PATCH_VERSION=${NEXT_API_PATCH_VERSION}" >> "${GITHUB_ENV}"
+            echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+            echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+            echo "Current API version: $CURRENT_API_VERSION"
+            echo "Next API patch version: $NEXT_API_PATCH_VERSION"
+            echo "Target branch: $VERSION_BRANCH"
+          else
+            echo "::error::Invalid API version format: $CURRENT_API_VERSION"
+            exit 1
+          fi
+
+      - name: Bump API versions in files for version branch
+        run: |
+          set -e
+
+          sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${NEXT_API_PATCH_VERSION}\"|" api/src/backend/api/v1/views.py
+          sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for next API patch version to version branch
+        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(api): Bump version to v${{ env.NEXT_API_PATCH_VERSION }}'
+          branch: api-version-bump-to-v${{ env.NEXT_API_PATCH_VERSION }}
+          title: 'chore(api): Bump version to v${{ env.NEXT_API_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler API version to v${{ env.NEXT_API_PATCH_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.

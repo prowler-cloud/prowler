@@ -20,9 +20,11 @@ from tasks.jobs.scan import (
     _process_finding_micro_batch,
     _store_resources,
     aggregate_attack_surface,
+    aggregate_category_counts,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
 
@@ -1377,6 +1379,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1394,6 +1399,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1486,6 +1494,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1503,6 +1514,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         existing_resource.refresh_from_db()
@@ -1610,6 +1624,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1628,6 +1645,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         # Verify the long UID finding was NOT created
@@ -1647,6 +1667,122 @@ class TestProcessFindingMicroBatch:
             f"Scan {scan.id}: Skipped 1 finding(s)" in str(call)
             for call in warning_calls
         )
+
+    def test_process_finding_micro_batch_tracks_categories(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        finding1 = FakeFinding(
+            uid="finding-cat-1",
+            status=StatusChoices.PASS,
+            status_extended="all good",
+            severity=Severity.low,
+            check_id="genai_check",
+            resource_uid="arn:aws:bedrock:::model/test",
+            resource_name="test-model",
+            region="us-east-1",
+            service_name="bedrock",
+            resource_type="model",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["gen-ai", "security"]},
+            muted=False,
+        )
+
+        finding2 = FakeFinding(
+            uid="finding-cat-2",
+            status=StatusChoices.FAIL,
+            status_extended="bad",
+            severity=Severity.high,
+            check_id="iam_check",
+            resource_uid="arn:aws:iam:::user/test",
+            resource_name="test-user",
+            region="us-east-1",
+            service_name="iam",
+            resource_type="user",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security", "iam"]},
+            muted=False,
+        )
+
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding1, finding2],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        # finding1: PASS, severity=low, categories=["gen-ai", "security"]
+        # finding2: FAIL, severity=high, categories=["security", "iam"]
+        # Keys are (category, severity) tuples
+        assert set(scan_categories_cache.keys()) == {
+            ("gen-ai", "low"),
+            ("security", "low"),
+            ("security", "high"),
+            ("iam", "high"),
+        }
+        assert scan_categories_cache[("gen-ai", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+        assert scan_categories_cache[("iam", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+
+        created_finding1 = Finding.objects.get(uid="finding-cat-1")
+        created_finding2 = Finding.objects.get(uid="finding-cat-2")
+        assert set(created_finding1.categories) == {"gen-ai", "security"}
+        assert set(created_finding2.categories) == {"security", "iam"}
 
 
 @pytest.mark.django_db
@@ -3756,3 +3892,270 @@ class TestAggregateAttackSurface:
             aggregate_attack_surface(str(tenant.id), str(scan.id))
 
         mock_select_related.assert_called_once_with("provider")
+
+
+class TestAggregateCategoryCounts:
+    """Test aggregate_category_counts helper function."""
+
+    def test_aggregate_category_counts_basic(self):
+        """Test basic category counting for a non-muted PASS finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "iam"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert ("security", "high") in cache
+        assert ("iam", "high") in cache
+        assert cache[("security", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+        assert cache[("iam", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_fail_not_muted(self):
+        """Test category counting for a non-muted FAIL finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="critical",
+            status="FAIL",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "critical")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 0,
+        }
+
+    def test_aggregate_category_counts_new_fail(self):
+        """Test category counting for a new FAIL finding (delta='new')."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["gen-ai"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("gen-ai", "high")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+    def test_aggregate_category_counts_muted_finding(self):
+        """Test that muted findings are excluded from all counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=True,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 0, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_accumulates(self):
+        """Test that multiple calls accumulate counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+
+        # First finding: PASS
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        # Second finding: FAIL (new)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        # Third finding: FAIL (changed)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 3, "failed": 2, "new_failed": 1}
+
+    def test_aggregate_category_counts_empty_categories(self):
+        """Test with empty categories list."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=[],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache == {}
+
+    def test_aggregate_category_counts_changed_delta(self):
+        """Test that changed delta increments failed but not new_failed."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["iam"],
+            severity="medium",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("iam", "medium")] == {"total": 1, "failed": 1, "new_failed": 0}
+
+    def test_aggregate_category_counts_multiple_categories_single_finding(self):
+        """Test single finding with multiple categories."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "compliance", "data-protection"],
+            severity="low",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert len(cache) == 3
+        for cat in ["security", "compliance", "data-protection"]:
+            assert cache[(cat, "low")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+
+@pytest.mark.django_db
+class TestUpdateProviderComplianceScores:
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_basic(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 2
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+        assert result["upserted"] == 2
+        assert cursor.execute.call_count >= 3
+        connection.commit.assert_called_once()
+
+    def test_update_provider_compliance_scores_skips_incomplete_scan(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[1]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not completed"
+
+    def test_update_provider_compliance_scores_skips_no_completed_at(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = None
+        scan.save()
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "no completed_at"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 1
+        cursor.fetchall.side_effect = [[("aws_cis_2.0",)], []]
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+
+        calls = [str(c) for c in cursor.execute.call_args_list]
+        assert any("provider_compliance_scores" in c for c in calls)
+        assert any("tenant_compliance_summaries" in c for c in calls)
+        assert any("pg_advisory_xact_lock" in c for c in calls)

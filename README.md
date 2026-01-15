@@ -23,6 +23,7 @@
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
     <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
@@ -147,9 +148,9 @@ If your workstation's architecture is incompatible, you can resolve this by:
 ### Common Issues with Docker Pull Installation
 
 > [!Note]
-  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.md) section for more details and examples.
+  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.mdx) section for more details and examples.
 
-You can find more information in the [Troubleshooting](./docs/troubleshooting.md) section.
+You can find more information in the [Troubleshooting](./docs/troubleshooting.mdx) section.
 
 
 ### From GitHub
@@ -276,11 +277,12 @@ python prowler-cli.py -v
 # ✏️ High level architecture
 
 ## Prowler App
-**Prowler App** is composed of three key components:
+**Prowler App** is composed of four key components:
 
 - **Prowler UI**: A web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
+- **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
 ![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
 
@@ -307,6 +309,45 @@ Prowler can be executed across various environments, offering flexibility to mee
 And many more environments.
 
 ![Architecture](docs/img/architecture.png)
+
+# 🤖 AI Skills for Development
+
+Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants understand Prowler's codebase patterns and conventions.
+
+## What are AI Skills?
+
+Skills are structured instructions that give AI assistants the context they need to write code that follows Prowler's standards. They include:
+
+- **Coding patterns** for each component (SDK, API, UI, MCP Server)
+- **Testing conventions** (pytest, Playwright)
+- **Architecture guidelines** (Clean Architecture, RLS patterns)
+- **Framework-specific rules** (React 19, Next.js 15, Django DRF, Tailwind 4)
+
+## Available Skills
+
+| Category | Skills |
+|----------|--------|
+| **Generic** | `typescript`, `react-19`, `nextjs-15`, `tailwind-4`, `playwright`, `pytest`, `django-drf`, `zod-4`, `zustand-5`, `ai-sdk-5` |
+| **Prowler** | `prowler`, `prowler-api`, `prowler-ui`, `prowler-mcp`, `prowler-sdk-check`, `prowler-test-ui`, `prowler-test-api`, `prowler-test-sdk`, `prowler-compliance`, `prowler-provider`, `prowler-pr`, `prowler-docs` |
+
+## Setup
+
+```bash
+./skills/setup.sh
+```
+
+This configures skills for AI coding assistants that follow the [agentskills.io](https://agentskills.io) standard:
+
+| Tool | Configuration |
+|------|---------------|
+| **Claude Code** | `.claude/skills/` (symlink) |
+| **OpenCode** | `.claude/skills/` (symlink) |
+| **Codex (OpenAI)** | `.codex/skills/` (symlink) |
+| **GitHub Copilot** | `.github/skills/` (symlink) |
+| **Gemini CLI** | `.gemini/skills/` (symlink) |
+
+> **Note:** Restart your AI coding assistant after running setup to load the skills.
+> Gemini CLI requires `experimental.skills` enabled in settings.
 
 # 📖 Documentation
 

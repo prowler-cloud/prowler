@@ -1175,6 +1175,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
+            "groups",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1183,6 +1184,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
+            "groups": {"read_only": True},
         }
 
     included_serializers = {
@@ -1276,6 +1278,7 @@ class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1301,6 +1304,8 @@ class FindingSerializer(RLSSerializer):
             "severity",
             "check_id",
             "check_metadata",
+            "categories",
+            "resource_groups",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1356,6 +1361,10 @@ class FindingMetadataSerializer(BaseSerializerV1):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
+    categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True, required=False, default=list
+    )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1388,12 +1397,23 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OracleCloudProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
                 serializer = MongoDBAtlasProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
                 )
         elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            if provider_type == Provider.ProviderChoices.AWS.value:
+                serializer = AWSRoleAssumptionProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                    }
+                )
         elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
             serializer = GCPServiceAccountProviderSecret(data=secret)
         else:
@@ -1525,6 +1545,34 @@ class OracleCloudProviderSecret(serializers.Serializer):
     tenancy = serializers.CharField()
     region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudProviderSecret(serializers.Serializer):
+    access_key_id = serializers.CharField()
+    access_key_secret = serializers.CharField()
+    security_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class AlibabaCloudRoleAssumptionProviderSecret(serializers.Serializer):
+    role_arn = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_id = serializers.CharField(
+        help_text="Access Key ID of the RAM user that will assume the role"
+    )
+    access_key_secret = serializers.CharField(
+        help_text="Access Key Secret of the RAM user that will assume the role"
+    )
+    role_session_name = serializers.CharField(
+        required=False,
+        help_text="Session name for the assumed role session (optional, defaults to 'ProwlerSession')",
+    )
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2242,12 +2290,54 @@ class AttackSurfaceOverviewSerializer(BaseSerializerV1):
     total_findings = serializers.IntegerField()
     failed_findings = serializers.IntegerField()
     muted_failed_findings = serializers.IntegerField()
-    check_ids = serializers.ListField(
-        child=serializers.CharField(), allow_empty=True, default=list, read_only=True
-    )
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class CategoryOverviewSerializer(BaseSerializerV1):
+    """Serializer for category overview aggregations."""
+
+    id = serializers.CharField(source="category")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "category-overviews"
+
+
+class ResourceGroupOverviewSerializer(BaseSerializerV1):
+    """Serializer for resource group overview aggregations."""
+
+    id = serializers.CharField(source="resource_group")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    resources_count = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "resource-group-overviews"
+
+
+class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):
+    """Serializer for compliance watchlist overview with FAIL-dominant aggregation."""
+
+    id = serializers.CharField(source="compliance_id")
+    compliance_id = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-watchlist-overviews"
 
 
 class OverviewRegionSerializer(serializers.Serializer):

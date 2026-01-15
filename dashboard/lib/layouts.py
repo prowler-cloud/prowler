@@ -12,6 +12,7 @@ def create_layout_overview(
     provider_dropdown: html.Div,
     table_row_dropdown: html.Div,
     status_dropdown: html.Div,
+    category_dropdown: html.Div,
     table_div_header: html.Div,
     amount_providers: int,
 ) -> html.Div:
@@ -51,8 +52,9 @@ def create_layout_overview(
                     html.Div([service_dropdown], className=""),
                     html.Div([provider_dropdown], className=""),
                     html.Div([status_dropdown], className=""),
+                    html.Div([category_dropdown], className=""),
                 ],
-                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-4",
+                className="grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-5",
             ),
             html.Div(
                 [

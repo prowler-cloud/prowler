@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+  "CheckTitle": "Compute Engine configuration changes are monitored with log metric filters and alerts",
+  "CheckType": [],
+  "ServiceName": "logging",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
+  "Description": "Log metric filters and alerts for **Compute Engine configuration changes** provide visibility into modifications to instances, disks, networks, firewalls, and routes. These monitoring controls enable security teams to detect unauthorized changes and investigate suspicious infrastructure modifications.",
+  "Risk": "Without monitoring for Compute Engine configuration changes, **unauthorized modifications** to compute resources may go undetected. Attackers can establish **persistence** through instance modifications, escalate privileges via IAM policy changes, disable security controls, or pivot to other resources. This compromises **confidentiality**, **integrity**, and **availability** of workloads and may enable **data exfiltration** or **lateral movement**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/gcp-compute-engine-configuration-changes.html",
+    "https://cloud.google.com/logging/docs/audit",
+    "https://cloud.google.com/monitoring/alerts"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud logging metrics create compute_config_changes --description=\"Compute Engine configuration changes\" --log-filter='protoPayload.serviceName=\"compute.googleapis.com\"' && gcloud alpha monitoring policies create --notification-channels=CHANNEL_ID --display-name=\"Compute Engine Configuration Changes Alert\" --condition-threshold-value=1 --condition-threshold-duration=0s --condition-filter='metric.type=\"logging.googleapis.com/user/compute_config_changes\"'",
+      "NativeIaC": "",
+      "Other": "1. Open the Google Cloud Console\n2. Navigate to Logging > Logs-based Metrics\n3. Click 'Create Metric'\n4. Set Metric Type to 'Counter'\n5. Enter filter: protoPayload.serviceName=\"compute.googleapis.com\"\n6. Click 'Create Metric'\n7. Navigate to Monitoring > Alerting\n8. Click 'Create Policy'\n9. Click 'Add Condition'\n10. Select your log metric in the metric dropdown\n11. Set threshold and conditions\n12. Add notification channels\n13. Click 'Save'",
+      "Terraform": "```hcl\nresource \"google_logging_metric\" \"compute_config_changes\" {\n  name   = \"compute_config_changes\"\n  filter = \"protoPayload.serviceName=\\\"compute.googleapis.com\\\"\"\n  metric_descriptor {\n    metric_kind = \"DELTA\"\n    value_type  = \"INT64\"\n  }\n}\n\nresource \"google_monitoring_alert_policy\" \"compute_config_alert\" {\n  display_name = \"Compute Engine Configuration Changes\"\n  conditions {\n    display_name = \"Compute config changes detected\"\n    condition_threshold {\n      filter          = \"metric.type=\\\"logging.googleapis.com/user/compute_config_changes\\\"\"\n      duration        = \"0s\"\n      comparison      = \"COMPARISON_GT\"\n      threshold_value = 0\n    }\n  }\n  notification_channels = [var.notification_channel_id]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure log-based metric filters to detect Compute Engine configuration changes and create alert policies that trigger notifications when these metrics increment. Apply the **principle of least privilege** to limit who can modify compute resources, and establish **change management processes** to review and approve infrastructure modifications.",
+      "Url": "https://hub.prowler.com/check/logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

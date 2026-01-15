@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "Neptune DB clusters are evaluated for **IAM database authentication**. \n\nIf this setting is enabled, the cluster supports IAM-based authentication.\nIf disabled, the cluster requires traditional database credentials instead.",
   "Risk": "**Disabled IAM database authentication** weakens confidentiality and integrity of the database.\n\n- Static or embedded DB credentials can be stolen or reused, enabling unauthorized queries and data exfiltration\n- Attackers may bypass centralized access controls, escalate privileges, and move laterally without IAM-based audit trails",
   "RelatedUrl": "",

@@ -11,7 +11,10 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -43,6 +46,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    update_provider_compliance_scores,
 )
 from tasks.utils import batched, get_next_execution_datetime
 
@@ -60,6 +64,58 @@ from prowler.lib.outputs.finding import Finding as FindingOutput
 logger = get_task_logger(__name__)
 
 
+def _cleanup_orphan_scheduled_scans(
+    tenant_id: str,
+    provider_id: str,
+    scheduler_task_id: int,
+) -> int:
+    """
+    TEMPORARY WORKAROUND: Clean up orphan AVAILABLE scans.
+
+    Detects and removes AVAILABLE scans that were never used due to an
+    issue during the first scheduled scan setup.
+
+    An AVAILABLE scan is considered orphan if there's also a SCHEDULED scan for
+    the same provider with the same scheduler_task_id. This situation indicates
+    that the first scan execution didn't find the AVAILABLE scan (because it
+    wasn't committed yet, probably) and created a new one, leaving the AVAILABLE orphaned.
+
+    Args:
+        tenant_id: The tenant ID.
+        provider_id: The provider ID.
+        scheduler_task_id: The PeriodicTask ID that triggers these scans.
+
+    Returns:
+        Number of orphan scans deleted (0 if none found).
+    """
+    orphan_available_scans = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.AVAILABLE,
+        scheduler_task_id=scheduler_task_id,
+    )
+
+    scheduled_scan_exists = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.SCHEDULED,
+        scheduler_task_id=scheduler_task_id,
+    ).exists()
+
+    if scheduled_scan_exists and orphan_available_scans.exists():
+        orphan_count = orphan_available_scans.count()
+        logger.warning(
+            f"[WORKAROUND] Found {orphan_count} orphan AVAILABLE scan(s) for "
+            f"provider {provider_id} alongside a SCHEDULED scan. Cleaning up orphans..."
+        )
+        orphan_available_scans.delete()
+        return orphan_count
+
+    return 0
+
+
 def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str):
     """
     Helper function to perform tasks after a scan is completed.
@@ -69,9 +125,10 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
-    create_compliance_requirements_task.apply_async(
-        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
-    )
+    chain(
+        create_compliance_requirements_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        update_provider_compliance_scores_task.si(tenant_id=tenant_id, scan_id=scan_id),
+    ).apply_async()
     aggregate_attack_surface_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
@@ -246,6 +303,14 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             return serializer.data
 
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+
+        # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
+        _cleanup_orphan_scheduled_scans(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scheduler_task_id=periodic_task_instance.id,
+        )
+
         scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
             provider_id=provider_id,
@@ -534,6 +599,50 @@ def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
     return backfill_daily_severity_summaries(tenant_id=tenant_id, days=days)
 
 
+@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates unique categories from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanGroupSummary for a completed scan.
+
+    Aggregates unique resource groups from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-provider-compliance-scores", queue="backfill")
+def backfill_provider_compliance_scores_task(tenant_id: str):
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    Used to populate the compliance watchlist materialized table for tenants
+    that had scans before the feature was deployed.
+
+    Args:
+        tenant_id: Target tenant UUID.
+    """
+    return backfill_provider_compliance_scores(tenant_id=tenant_id)
+
+
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 @handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
@@ -565,6 +674,21 @@ def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-provider-compliance-scores", queue="compliance")
+def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
+    """
+    Update provider compliance scores from a completed scan.
+
+    This task materializes compliance requirement statuses into ProviderComplianceScore
+    for efficient watchlist queries. Uses atomic upsert with concurrency protection.
+
+    Args:
+        tenant_id (str): The tenant ID for which to update scores.
+        scan_id (str): The ID of the scan whose data should be materialized.
+    """
+    return update_provider_compliance_scores(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="scan-daily-severity", queue="overview")

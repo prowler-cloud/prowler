@@ -37,12 +37,15 @@ from api.models import (
     PermissionChoices,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderSecret,
     Resource,
     ResourceTag,
     Role,
     Scan,
+    ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -91,10 +94,62 @@ class ChoiceInFilter(BaseInFilter, ChoiceFilter):
     pass
 
 
+class BaseProviderFilter(FilterSet):
+    """
+    Abstract base filter for models with direct FK to Provider.
+
+    Provides standard provider_id and provider_type filters.
+    Subclasses must define Meta.model.
+    """
+
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        abstract = True
+        fields = {}
+
+
+class BaseScanProviderFilter(FilterSet):
+    """
+    Abstract base filter for models with FK to Scan (and Scan has FK to Provider).
+
+    Provides standard provider_id and provider_type filters via scan relationship.
+    Subclasses must define Meta.model.
+    """
+
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        abstract = True
+        fields = {}
+
+
 class CommonFindingFilters(FilterSet):
     # We filter providers from the scan in findings
+    # Both 'provider' and 'provider_id' parameters are supported for API consistency
+    # Frontend uses 'provider_id' uniformly across all endpoints
     provider = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
     )
@@ -157,6 +212,12 @@ class CommonFindingFilters(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    category = CharFilter(method="filter_category")
+    category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
+
+    resource_groups = CharFilter(field_name="resource_groups", lookup_expr="exact")
+    resource_groups__in = CharInFilter(field_name="resource_groups", lookup_expr="in")
+
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
@@ -187,6 +248,9 @@ class CommonFindingFilters(FilterSet):
 
     def filter_resource_type(self, queryset, name, value):
         return queryset.filter(resource_types__contains=[value])
+
+    def filter_category(self, queryset, name, value):
+        return queryset.filter(categories__contains=[value])
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()
@@ -379,6 +443,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
     scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
+    groups = CharFilter(method="filter_groups")
+    groups__in = CharInFilter(field_name="groups", lookup_expr="overlap")
 
     class Meta:
         model = Resource
@@ -392,6 +458,9 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
+
+    def filter_groups(self, queryset, name, value):
+        return queryset.filter(groups__contains=[value])
 
     def filter_queryset(self, queryset):
         if not (self.data.get("scan") or self.data.get("scan__in")) and not (
@@ -457,6 +526,8 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
     tag_value = CharFilter(method="filter_tag_value")
     tag = CharFilter(method="filter_tag")
     tags = CharFilter(method="filter_tag")
+    groups = CharFilter(method="filter_groups")
+    groups__in = CharInFilter(field_name="groups", lookup_expr="overlap")
 
     class Meta:
         model = Resource
@@ -468,6 +539,9 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
         }
+
+    def filter_groups(self, queryset, name, value):
+        return queryset.filter(groups__contains=[value])
 
     def filter_tag_key(self, queryset, name, value):
         return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
@@ -762,7 +836,7 @@ class RoleFilter(FilterSet):
 
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    scan_id = UUIDFilter(field_name="scan_id")
+    scan_id = UUIDFilter(field_name="scan_id", required=True)
     region = CharFilter(field_name="region")
 
     class Meta:
@@ -1079,9 +1153,25 @@ class ThreatScoreSnapshotFilter(FilterSet):
         }
 
 
-class AttackSurfaceOverviewFilter(FilterSet):
+class AttackSurfaceOverviewFilter(BaseScanProviderFilter):
     """Filter for attack surface overview aggregations by provider."""
 
+    class Meta(BaseScanProviderFilter.Meta):
+        model = AttackSurfaceOverview
+
+
+class CategoryOverviewFilter(BaseScanProviderFilter):
+    """Filter for category overview aggregations by provider."""
+
+    category = CharFilter(field_name="category", lookup_expr="exact")
+    category__in = CharInFilter(field_name="category", lookup_expr="in")
+
+    class Meta(BaseScanProviderFilter.Meta):
+        model = ScanCategorySummary
+        fields = {}
+
+
+class ResourceGroupOverviewFilter(FilterSet):
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
@@ -1092,7 +1182,16 @@ class AttackSurfaceOverviewFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
+    resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")
 
     class Meta:
-        model = AttackSurfaceOverview
+        model = ScanGroupSummary
         fields = {}
+
+
+class ComplianceWatchlistFilter(BaseProviderFilter):
+    """Filter for compliance watchlist overview by provider."""
+
+    class Meta(BaseProviderFilter.Meta):
+        model = ProviderComplianceScore

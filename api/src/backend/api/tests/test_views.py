@@ -1165,6 +1165,11 @@ class TestProviderViewSet:
                     "uid": "64b1d3c0e4b03b1234567890",
                     "alias": "Atlas Organization",
                 },
+                {
+                    "provider": "alibabacloud",
+                    "uid": "1234567890123456",
+                    "alias": "Alibaba Cloud Account",
+                },
             ]
         ),
     )
@@ -1514,6 +1519,36 @@ class TestProviderViewSet:
                     "mongodbatlas-uid",
                     "uid",
                 ),
+                # Alibaba Cloud UID validation - too short (not 16 digits)
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "123456789012345",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
+                # Alibaba Cloud UID validation - too long (not 16 digits)
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "12345678901234567",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
+                # Alibaba Cloud UID validation - contains non-digits
+                (
+                    {
+                        "provider": "alibabacloud",
+                        "uid": "123456789012345a",
+                        "alias": "test",
+                    },
+                    "alibabacloud-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1687,21 +1722,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    7,
+                    8,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 8),
+                ("inserted_at", TODAY, 9),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2249,6 +2284,46 @@ class TestProviderSecretViewSet:
                 {
                     "atlas_public_key": "public-key",
                     "atlas_private_key": "private-key",
+                },
+            ),
+            # Alibaba Cloud credentials (with access key only)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                },
+            ),
+            # Alibaba Cloud credentials (with STS security token)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                    "security_token": "my-security-token-for-sts",
+                },
+            ),
+            # Alibaba Cloud RAM Role Assumption (minimal required fields)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.ROLE,
+                {
+                    "role_arn": "acs:ram::1234567890123456:role/ProwlerRole",
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                },
+            ),
+            # Alibaba Cloud RAM Role Assumption (with optional role_session_name)
+            (
+                Provider.ProviderChoices.ALIBABACLOUD.value,
+                ProviderSecret.TypeChoices.ROLE,
+                {
+                    "role_arn": "acs:ram::1234567890123456:role/ProwlerRole",
+                    "access_key_id": "LTAI5t1234567890abcdef",
+                    "access_key_secret": "my-secret-access-key",
+                    "role_session_name": "ProwlerAuditSession",
                 },
             ),
         ],
@@ -3550,6 +3625,7 @@ class TestResourceViewSet:
         assert "metadata" in response.json()["data"][0]["attributes"]
         assert "details" in response.json()["data"][0]["attributes"]
         assert "partition" in response.json()["data"][0]["attributes"]
+        assert "groups" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -3624,6 +3700,10 @@ class TestResourceViewSet:
                 # full text search on resource tags
                 ("search", "multi word", 1),
                 ("search", "key2", 2),
+                # groups filter (ArrayField)
+                ("groups", "compute", 2),
+                ("groups", "storage", 1),
+                ("groups.in", "compute,storage", 3),
             ]
         ),
     )
@@ -3770,12 +3850,14 @@ class TestResourceViewSet:
         expected_services = {"ec2", "s3"}
         expected_regions = {"us-east-1", "eu-west-1"}
         expected_resource_types = {"prowler-test"}
+        expected_groups = {"compute", "storage"}
 
         assert data["data"]["type"] == "resources-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
         assert set(data["data"]["attributes"]["types"]) == expected_resource_types
+        assert set(data["data"]["attributes"]["groups"]) == expected_groups
 
     def test_resources_metadata_resource_filter_retrieve(
         self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
@@ -3811,6 +3893,7 @@ class TestResourceViewSet:
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
         assert data["data"]["attributes"]["types"] == []
+        assert data["data"]["attributes"]["groups"] == []
 
     def test_resources_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
@@ -3850,6 +3933,7 @@ class TestResourceViewSet:
         assert attributes["services"] == [latest_scan_resource.service]
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
+        assert "groups" in attributes
 
 
 @pytest.mark.django_db
@@ -4026,6 +4110,37 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[provider.in]": [
+                    findings_fixture[0].scan.provider.id,
+                    findings_fixture[1].scan.provider.id,
+                ],
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_provider_id_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id filter alias works identically to provider filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_finding_filter_by_provider_id_in_alias(
+        self, authenticated_client, findings_fixture
+    ):
+        """Test that provider_id__in filter alias works identically to provider__in filter."""
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[provider_id__in]": [
                     findings_fixture[0].scan.provider.id,
                     findings_fixture[1].scan.provider.id,
                 ],
@@ -4256,6 +4371,28 @@ class TestFindingViewSet:
             == latest_scan_finding.status
         )
 
+    def test_findings_latest_filter_by_provider_id_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id]": latest_scan_finding.scan.provider.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    def test_findings_latest_filter_by_provider_id_in_alias(
+        self, authenticated_client, latest_scan_finding
+    ):
+        """Test that provider_id__in filter alias works on latest findings endpoint."""
+        response = authenticated_client.get(
+            reverse("finding-latest"),
+            {"filter[provider_id__in]": str(latest_scan_finding.scan.provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
     def test_findings_metadata_latest(self, authenticated_client, latest_scan_finding):
         response = authenticated_client.get(
             reverse("finding-metadata_latest"),
@@ -4266,6 +4403,128 @@ class TestFindingViewSet:
         assert attributes["services"] == latest_scan_finding.resource_services
         assert attributes["regions"] == latest_scan_finding.resource_regions
         assert attributes["resource_types"] == latest_scan_finding.resource_types
+
+    def test_findings_metadata_categories(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d")},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "security"}
+
+    def test_findings_metadata_latest_categories(
+        self, authenticated_client, latest_scan_finding_with_categories
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "iam"}
+
+    def test_findings_metadata_latest_groups(
+        self, authenticated_client, latest_scan_finding_with_categories
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert "groups" in attributes
+        assert "ai_ml" in attributes["groups"]
+
+    def test_findings_filter_by_category(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "gen-ai",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert set(response.json()["data"][0]["attributes"]["categories"]) == {
+            "gen-ai",
+            "security",
+        }
+
+    def test_findings_filter_by_category_in(
+        self, authenticated_client, findings_with_multiple_categories
+    ):
+        finding1, _ = findings_with_multiple_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category__in]": "gen-ai,iam",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_category_no_match(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "nonexistent",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_findings_filter_by_resource_groups(
+        self, authenticated_client, findings_with_group
+    ):
+        finding = findings_with_group
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_groups]": "storage",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["resource_groups"] == "storage"
+
+    def test_findings_filter_by_resource_groups_in(
+        self, authenticated_client, findings_with_multiple_groups
+    ):
+        finding1, _ = findings_with_multiple_groups
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_groups__in]": "storage,security",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_resource_groups_no_match(
+        self, authenticated_client, findings_with_group
+    ):
+        finding = findings_with_group
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[resource_groups]": "nonexistent",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
 
 
 @pytest.mark.django_db
@@ -7258,7 +7517,6 @@ class TestOverviewViewSet:
             assert item["attributes"]["total_findings"] == 0
             assert item["attributes"]["failed_findings"] == 0
             assert item["attributes"]["muted_failed_findings"] == 0
-            assert item["attributes"]["check_ids"] == []
 
     def test_overview_attack_surface_with_data(
         self,
@@ -7269,13 +7527,6 @@ class TestOverviewViewSet:
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
-
-        mapping = {
-            "internet-exposed": {"aws-check-1", "aws-check-2"},
-            "secrets": {"aws-secret-check"},
-            "privilege-escalation": {"aws-priv-check"},
-            "ec2-imdsv1": {"aws-imdsv1-check"},
-        }
 
         scan = Scan.objects.create(
             name="attack-surface-scan",
@@ -7302,11 +7553,7 @@ class TestOverviewViewSet:
             muted_failed=2,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(reverse("overview-attack-surface"))
+        response = authenticated_client.get(reverse("overview-attack-surface"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 4
@@ -7314,19 +7561,10 @@ class TestOverviewViewSet:
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 20
         assert results_by_type["internet-exposed"]["failed_findings"] == 10
-        assert set(results_by_type["internet-exposed"]["check_ids"]) == {
-            "aws-check-1",
-            "aws-check-2",
-        }
         assert results_by_type["secrets"]["total_findings"] == 15
         assert results_by_type["secrets"]["failed_findings"] == 8
-        assert set(results_by_type["secrets"]["check_ids"]) == {"aws-secret-check"}
         assert results_by_type["privilege-escalation"]["total_findings"] == 0
-        assert set(results_by_type["privilege-escalation"]["check_ids"]) == {
-            "aws-priv-check"
-        }
         assert results_by_type["ec2-imdsv1"]["total_findings"] == 0
-        assert set(results_by_type["ec2-imdsv1"]["check_ids"]) == {"aws-imdsv1-check"}
 
     def test_overview_attack_surface_provider_filter(
         self,
@@ -7353,13 +7591,6 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
-        mapping = {
-            "internet-exposed": {"shared-check", "shared-check"},
-            "secrets": set(),
-            "privilege-escalation": {"priv-check"},
-            "ec2-imdsv1": {"imdsv1-check"},
-        }
-
         create_attack_surface_overview(
             tenant,
             scan1,
@@ -7377,20 +7608,15 @@ class TestOverviewViewSet:
             muted_failed=3,
         )
 
-        with patch(
-            "api.v1.views._get_attack_surface_mapping_from_provider",
-            return_value=mapping,
-        ):
-            response = authenticated_client.get(
-                reverse("overview-attack-surface"),
-                {"filter[provider_id]": str(provider1.id)},
-            )
+        response = authenticated_client.get(
+            reverse("overview-attack-surface"),
+            {"filter[provider_id]": str(provider1.id)},
+        )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         results_by_type = {item["id"]: item["attributes"] for item in data}
         assert results_by_type["internet-exposed"]["total_findings"] == 10
         assert results_by_type["internet-exposed"]["failed_findings"] == 5
-        assert results_by_type["internet-exposed"]["check_ids"] == ["shared-check"]
 
     def test_overview_services_region_filter(
         self, authenticated_client, scan_summaries_fixture
@@ -7632,6 +7858,532 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["attributes"]["overall_score"] == "80.00"
+
+    def test_overview_categories_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_overview_categories_aggregates_by_category_with_severity(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="categories-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "iam",
+            "high",
+            total_findings=20,
+            failed_findings=10,
+            new_failed_findings=5,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "iam",
+            "medium",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan,
+            "encryption",
+            "critical",
+            total_findings=5,
+            failed_findings=2,
+            new_failed_findings=1,
+        )
+
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+        results_by_category = {item["id"]: item["attributes"] for item in data}
+
+        assert results_by_category["iam"]["total_findings"] == 35
+        assert results_by_category["iam"]["failed_findings"] == 18
+        assert results_by_category["iam"]["new_failed_findings"] == 8
+        assert results_by_category["iam"]["severity"]["high"] == 10
+        assert results_by_category["iam"]["severity"]["medium"] == 8
+        assert results_by_category["iam"]["severity"]["critical"] == 0
+
+        assert results_by_category["encryption"]["total_findings"] == 5
+        assert results_by_category["encryption"]["failed_findings"] == 2
+        assert results_by_category["encryption"]["severity"]["critical"] == 2
+
+    @pytest.mark.parametrize(
+        "filter_key,filter_value_fn,expected_total,expected_failed",
+        [
+            ("filter[provider_id]", lambda p1, _: str(p1.id), 10, 5),
+            ("filter[provider_type]", lambda *_: "aws", 10, 5),
+            ("filter[provider_type__in]", lambda *_: "aws,gcp", 30, 20),
+        ],
+    )
+    def test_overview_categories_filters(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+        filter_key,
+        filter_value_fn,
+        expected_total,
+        expected_failed,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, _, gcp_provider, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="categories-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="categories-scan-2",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant, scan1, "iam", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_category_summary(
+            tenant, scan2, "iam", "high", total_findings=20, failed_findings=15
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-categories"),
+            {filter_key: filter_value_fn(provider1, gcp_provider)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["total_findings"] == expected_total
+        assert data[0]["attributes"]["failed_findings"] == expected_failed
+
+    def test_overview_categories_category_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="category-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant, scan, "iam", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_category_summary(
+            tenant, scan, "encryption", "medium", total_findings=20, failed_findings=8
+        )
+        create_scan_category_summary(
+            tenant, scan, "logging", "low", total_findings=15, failed_findings=3
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-categories"),
+            {"filter[category__in]": "iam,encryption"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        category_ids = {item["id"] for item in data}
+        assert category_ids == {"iam", "encryption"}
+
+    def test_overview_categories_aggregates_multiple_providers(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_category_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="multi-provider-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="multi-provider-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_category_summary(
+            tenant,
+            scan1,
+            "iam",
+            "high",
+            total_findings=10,
+            failed_findings=5,
+            new_failed_findings=2,
+        )
+        create_scan_category_summary(
+            tenant,
+            scan2,
+            "iam",
+            "high",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+        )
+
+        response = authenticated_client.get(reverse("overview-categories"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "iam"
+        assert data[0]["attributes"]["total_findings"] == 25
+        assert data[0]["attributes"]["failed_findings"] == 13
+        assert data[0]["attributes"]["new_failed_findings"] == 5
+
+    def test_overview_groups_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-resource-groups"))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_overview_groups_aggregates_by_group_with_severity(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="resource-groups-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        # resources_count is group-level (same for all severities within a group)
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "storage",
+            "high",
+            total_findings=20,
+            failed_findings=10,
+            new_failed_findings=5,
+            resources_count=8,
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "storage",
+            "medium",
+            total_findings=15,
+            failed_findings=7,
+            new_failed_findings=3,
+            resources_count=8,  # Same as high - group-level count
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan,
+            "security",
+            "critical",
+            total_findings=10,
+            failed_findings=8,
+            new_failed_findings=2,
+            resources_count=4,
+        )
+
+        response = authenticated_client.get(reverse("overview-resource-groups"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+        storage_data = next(d for d in data if d["id"] == "storage")
+        security_data = next(d for d in data if d["id"] == "security")
+
+        assert storage_data["attributes"]["total_findings"] == 35
+        assert storage_data["attributes"]["failed_findings"] == 17
+        assert storage_data["attributes"]["new_failed_findings"] == 8
+        assert (
+            storage_data["attributes"]["resources_count"] == 8
+        )  # Group-level, not sum
+        assert security_data["attributes"]["total_findings"] == 10
+        assert security_data["attributes"]["failed_findings"] == 8
+        assert security_data["attributes"]["resources_count"] == 4
+
+    @pytest.mark.parametrize(
+        "filter_key,filter_value_fn,expected_total,expected_failed",
+        [
+            ("filter[provider_id]", lambda p1, p2: str(p1.id), 10, 5),
+            ("filter[provider_id__in]", lambda p1, p2: f"{p1.id},{p2.id}", 25, 12),
+            ("filter[provider_type]", lambda p1, p2: "aws", 10, 5),
+            ("filter[provider_type__in]", lambda p1, p2: "aws,gcp", 25, 12),
+        ],
+    )
+    def test_overview_groups_provider_filters(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+        filter_key,
+        filter_value_fn,
+        expected_total,
+        expected_failed,
+    ):
+        tenant = tenants_fixture[0]
+        provider1 = providers_fixture[0]  # AWS
+        gcp_provider = providers_fixture[2]  # GCP
+
+        scan1 = Scan.objects.create(
+            name="aws-rg-scan",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="gcp-rg-scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant, scan1, "storage", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_resource_group_summary(
+            tenant, scan2, "storage", "high", total_findings=15, failed_findings=7
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-resource-groups"),
+            {filter_key: filter_value_fn(provider1, gcp_provider)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["total_findings"] == expected_total
+        assert data[0]["attributes"]["failed_findings"] == expected_failed
+
+    def test_overview_groups_group_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="rg-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant, scan, "storage", "high", total_findings=10, failed_findings=5
+        )
+        create_scan_resource_group_summary(
+            tenant, scan, "compute", "medium", total_findings=20, failed_findings=8
+        )
+        create_scan_resource_group_summary(
+            tenant, scan, "security", "low", total_findings=15, failed_findings=3
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-resource-groups"),
+            {"filter[resource_group__in]": "storage,compute"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        group_ids = {item["id"] for item in data}
+        assert group_ids == {"storage", "compute"}
+
+    def test_overview_groups_aggregates_multiple_providers(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_scan_resource_group_summary,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="multi-provider-rg-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="multi-provider-rg-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_scan_resource_group_summary(
+            tenant,
+            scan1,
+            "storage",
+            "high",
+            total_findings=10,
+            failed_findings=5,
+            new_failed_findings=2,
+            resources_count=4,
+        )
+        create_scan_resource_group_summary(
+            tenant,
+            scan2,
+            "storage",
+            "high",
+            total_findings=15,
+            failed_findings=8,
+            new_failed_findings=3,
+            resources_count=6,
+        )
+
+        response = authenticated_client.get(reverse("overview-resource-groups"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "storage"
+        assert data[0]["attributes"]["total_findings"] == 25
+        assert data[0]["attributes"]["failed_findings"] == 13
+        assert data[0]["attributes"]["new_failed_findings"] == 5
+        assert data[0]["attributes"]["resources_count"] == 10
+
+    def test_compliance_watchlist_no_filters_uses_tenant_summary(
+        self, authenticated_client, tenant_compliance_summary_fixture
+    ):
+        response = authenticated_client.get(reverse("overview-compliance-watchlist"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert len(data) == 2
+
+        by_id = {item["id"]: item["attributes"] for item in data}
+        assert "aws_cis_2.0" in by_id
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 2
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+        assert by_id["aws_cis_2.0"]["total_requirements"] == 4
+
+        assert "gdpr_aws" in by_id
+        assert by_id["gdpr_aws"]["requirements_passed"] == 5
+        assert by_id["gdpr_aws"]["requirements_failed"] == 0
+        assert by_id["gdpr_aws"]["total_requirements"] == 7
+
+    def test_compliance_watchlist_with_provider_filter_uses_provider_scores(
+        self,
+        authenticated_client,
+        provider_compliance_scores_fixture,
+        providers_fixture,
+    ):
+        provider1 = providers_fixture[0]
+        url = f"{reverse('overview-compliance-watchlist')}?filter[provider_id]={provider1.id}"
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        assert len(data) == 2
+        by_id = {item["id"]: item["attributes"] for item in data}
+
+        assert by_id["aws_cis_2.0"]["requirements_passed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_failed"] == 1
+        assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
+        assert by_id["aws_cis_2.0"]["total_requirements"] == 3
+
+    def test_compliance_watchlist_fail_dominant_logic(
+        self, authenticated_client, provider_compliance_scores_fixture
+    ):
+        response = authenticated_client.get(
+            f"{reverse('overview-compliance-watchlist')}?filter[provider_type]=aws"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        by_id = {item["id"]: item["attributes"] for item in data}
+        aws_cis = by_id["aws_cis_2.0"]
+
+        assert aws_cis["requirements_failed"] == 2
+        assert aws_cis["requirements_passed"] == 0
+        assert aws_cis["requirements_manual"] == 1
+        assert aws_cis["total_requirements"] == 3
+
+    def test_compliance_watchlist_provider_id_in_filter(
+        self,
+        authenticated_client,
+        provider_compliance_scores_fixture,
+        providers_fixture,
+    ):
+        provider1, provider2, *_ = providers_fixture
+        url = (
+            f"{reverse('overview-compliance-watchlist')}"
+            f"?filter[provider_id__in]={provider1.id},{provider2.id}"
+        )
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) >= 1
+
+    def test_compliance_watchlist_empty_result(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-compliance-watchlist"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data == []
+
+    @pytest.mark.parametrize(
+        "invalid_provider_type",
+        ["invalid", "not_a_provider", "AWS", "awss"],
+    )
+    def test_compliance_watchlist_invalid_provider_type_filter(
+        self, authenticated_client, invalid_provider_type
+    ):
+        url = f"{reverse('overview-compliance-watchlist')}?filter[provider_type]={invalid_provider_type}"
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db

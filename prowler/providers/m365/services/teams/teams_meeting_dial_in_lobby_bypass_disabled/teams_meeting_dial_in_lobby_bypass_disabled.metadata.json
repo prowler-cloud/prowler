@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that dial-in users cannot bypass the lobby in Teams meetings",
   "Risk": "Allowing dial-in users to bypass the lobby may result in unauthorized or unauthenticated individuals joining sensitive meetings without prior validation, increasing the risk of information leakage or meeting disruptions.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
