@@ -10,10 +10,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Add ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
+- Compliance Watchlist component in Overview page [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
 
 ### 🔄 Changed
 
-- Integrate Compliance Watchlist with new `/overviews/compliance-watchlist` endpoint [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Swap Risk Plot axes: X = Fail Findings, Y = Prowler ThreatScore [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
