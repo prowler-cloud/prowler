@@ -184,12 +184,14 @@ class OpenstackProvider(Provider):
             return conn
         except openstack_exceptions.SDKException as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- Failed to create OpenStack connection: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                f"Failed to create OpenStack connection: {error}"
             )
             raise
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- Unexpected error while creating OpenStack connection: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                f"Unexpected error while creating OpenStack connection: {error}"
             )
             raise
 
@@ -230,14 +232,85 @@ class OpenstackProvider(Provider):
             project_domain_name=session.project_domain_name,
         )
 
-    def test_connection(self) -> Connection:
+    @staticmethod
+    def test_connection(
+        auth_url: Optional[str] = None,
+        identity_api_version: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        project_id: Optional[str] = None,
+        region_name: Optional[str] = None,
+        user_domain_name: Optional[str] = None,
+        project_domain_name: Optional[str] = None,
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """Test connection to OpenStack without creating a full provider instance.
+
+        This static method allows testing OpenStack credentials without initializing
+        the entire provider. Useful for API validation before storing credentials.
+
+        Args:
+            auth_url: OpenStack Keystone authentication URL
+            identity_api_version: Keystone API version (default: "3")
+            username: OpenStack username
+            password: OpenStack password
+            project_id: OpenStack project/tenant ID
+            region_name: OpenStack region name
+            user_domain_name: User domain name (default: "Default")
+            project_domain_name: Project domain name (default: "Default")
+            raise_on_exception: Whether to raise exception on failure (default: True)
+
+        Returns:
+            Connection object with is_connected=True on success, or error on failure
+
+        Raises:
+            RuntimeError: If raise_on_exception=True and credentials are invalid
+            openstack_exceptions.SDKException: If raise_on_exception=True and connection fails
+
+        Examples:
+            >>> OpenstackProvider.test_connection(
+            ...     auth_url="https://openstack.example.com:5000/v3",
+            ...     username="admin",
+            ...     password="secret",
+            ...     project_id="project-123",
+            ...     region_name="RegionOne"
+            ... )
+            Connection(is_connected=True, error=None)
+        """
         try:
-            self._connection.authorize()
-            return Connection(is_connected=True)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- OpenStack connection test failed: {error}"
+            # Setup session with provided credentials
+            session = OpenstackProvider.setup_session(
+                auth_url=auth_url,
+                identity_api_version=identity_api_version,
+                username=username,
+                password=password,
+                project_id=project_id,
+                region_name=region_name,
+                user_domain_name=user_domain_name,
+                project_domain_name=project_domain_name,
             )
+
+            # Create and test connection
+            conn = OpenstackProvider._create_connection(session)
+            conn.authorize()
+
+            logger.info("OpenStack provider: Connection test successful")
+            return Connection(is_connected=True)
+
+        except RuntimeError as error:
+            logger.error(f"OpenStack connection test failed: {error}")
+            if raise_on_exception:
+                raise
+            return Connection(is_connected=False, error=error)
+        except openstack_exceptions.SDKException as error:
+            logger.error(f"OpenStack connection test failed: {error}")
+            if raise_on_exception:
+                raise
+            return Connection(is_connected=False, error=error)
+        except Exception as error:
+            logger.error(f"OpenStack connection test failed: {error}")
+            if raise_on_exception:
+                raise
             return Connection(is_connected=False, error=error)
 
     def print_credentials(self) -> None:
@@ -254,5 +327,6 @@ class OpenstackProvider(Provider):
         ]
         print_boxes(messages, "OpenStack Credentials")
         logger.info(
-            f"Using OpenStack endpoint {Fore.YELLOW}{auth_url}{Style.RESET_ALL} in region {Fore.YELLOW}{region}{Style.RESET_ALL}"
+            f"Using OpenStack endpoint {Fore.YELLOW}{auth_url}{Style.RESET_ALL} "
+            f"in region {Fore.YELLOW}{region}{Style.RESET_ALL}"
         )

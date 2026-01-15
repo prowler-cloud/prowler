@@ -45,10 +45,12 @@ class Keystone(OpenStackService):
                 )
         except openstack_exceptions.SDKException as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- Failed to list Keystone projects: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                f"Failed to list Keystone projects: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- Unexpected error listing Keystone projects: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                f"Unexpected error listing Keystone projects: {error}"
             )
         return projects
