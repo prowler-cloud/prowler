@@ -11,13 +11,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "Other",
-  "Description": "Amazon EBS snapshots with **public sharing** permissions (accessible by all AWS accounts) are identified, as opposed to snapshots shared privately with specific accounts.",
+  "ResourceType": "AwsEc2Volume",
+  "ResourceGroup": "compute",
+  "Description": "**EBS snapshots** with **public sharing** permissions (accessible by all AWS accounts) are identified, as opposed to snapshots shared privately with specific accounts.",
   "Risk": "Public snapshots expose full volume contents, harming **confidentiality**. Any account can create a volume from the snapshot to read files, secrets, or database data, enabling **data exfiltration**, broad reconnaissance, and facilitating **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html",
-    "https://docs.prowler.com/checks/aws/public-policies/public_7"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/public-snapshots.html"
   ],
   "Remediation": {
     "Code": {
@@ -32,8 +33,7 @@
     }
   },
   "Categories": [
-    "internet-exposed",
-    "identity-access"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

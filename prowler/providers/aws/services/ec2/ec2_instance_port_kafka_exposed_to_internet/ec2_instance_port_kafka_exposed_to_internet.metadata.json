@@ -14,11 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security group rules that allow inbound `TCP 9092` (Kafka) from the Internet are reported. The evaluation inspects ingress rules to detect broad sources (for example `0.0.0.0/0` or `::/0`) that expose Kafka brokers.",
   "Risk": "Public Kafka access undermines CIA: adversaries can read topics and metadata (**confidentiality**), publish or alter events (**integrity**), and overwhelm brokers (**availability**). Exposure also eases reconnaissance and lateral movement from the broker host.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233794-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-9092-kafka-"
   ],
   "Remediation": {
     "Code": {

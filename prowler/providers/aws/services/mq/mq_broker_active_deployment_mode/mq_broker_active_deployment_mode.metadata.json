@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAmazonMQBroker",
+  "ResourceGroup": "messaging",
   "Description": "**ActiveMQ broker deployment mode** is configured as **active/standby** (`ACTIVE_STANDBY_MULTI_AZ`), indicating a redundant pair operating across Availability Zones",
   "Risk": "Without **active/standby**, a single-instance broker becomes a **single point of failure**, degrading **availability** and risking **message loss or duplication** during outages or maintenance. This can stall message flows, grow backlogs, and cause inconsistent processing across dependent services.",
   "RelatedUrl": "",

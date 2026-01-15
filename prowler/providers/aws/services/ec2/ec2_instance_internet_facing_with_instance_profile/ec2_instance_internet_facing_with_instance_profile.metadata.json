@@ -12,13 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with a public IP address and an attached **instance profile** (IAM role) are identified.\n\nInstances lacking public exposure or without an instance profile are excluded.",
   "Risk": "Publicly reachable instances with **IAM role credentials** expand the blast radius. Remote exploits or misconfigurations can steal credentials via the **instance metadata service**, enabling unauthorized API calls, data exfiltration, and lateral movement, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html",
     "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/",
-    "https://mf-akbar.medium.com/most-pentesters-conducting-aws-assessments-fail-to-find-real-attack-paths-how-to-attack-iam-9caa4875c110"
+    "https://support.icompaas.com/support/solutions/articles/62000127121-ensure-instance-profile-is-attached-for-internet-facing-ec2-instances"
   ],
   "Remediation": {
     "Code": {

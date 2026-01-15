@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the kubelet is configured to use only strong cryptographic ciphers. Ensuring the use of strong ciphers is essential to minimize the risk of vulnerabilities and enhance the security of TLS connections to the kubelet.",
   "Risk": "Using weak ciphers can expose the kubelet to cryptographic attacks, compromising the security of data in transit.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",

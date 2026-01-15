@@ -1,0 +1,128 @@
+{
+  "Framework": "ENS",
+  "Name": "ENS RD 311/2022 - Categoria Alta",
+  "Version": "RD2022",
+  "Provider": "AWS",
+  "Description": "The accreditation scheme of the ENS (Esquema Nacional de Seguridad - National Security Scheme of Spain) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+  "Requirements": [
+    {
+      "Id": "op.acc.1.aws.iam.2",
+      "Description": "Proveedor de identidad centralizado",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Es muy recomendable la utilizacion de un proveedor de identidades que permita administrar las identidades en un lugar centralizado, en vez de utilizar IAM para ello.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_check_saml_providers_sts"
+      ]
+    },
+    {
+      "Id": "op.acc.2.aws.iam.4",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se debera delegar en cuentas administradoras la administracion de la organizacion, dejando la cuenta maestra sin uso y con las medidas de seguridad pertinentes.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_avoid_root_usage"
+      ]
+    },
+    {
+      "Id": "op.acc.3.r1.aws.iam.1",
+      "Description": "Segregacion rigurosa",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "En caso de ser de aplicacion, la segregacion debera tener en cuenta la separacion de las funciones de configuracion y mantenimiento y de auditoria de cualquier otra.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_support_role_created"
+      ]
+    },
+    {
+      "Id": "op.exp.8.aws.cloudwatch.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotacion",
+          "DescripcionControl": "Se registraran las actividades de los usuarios en el sistema, de forma que se pueda identificar que acciones ha realizado cada usuario.",
+          "Nivel": "medio",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ]
+    },
+    {
+      "Id": "mp.info.3.aws.s3.1",
+      "Description": "Cifrado de la informacion",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3",
+          "Marco": "medidas de proteccion",
+          "Categoria": "proteccion de la informacion",
+          "DescripcionControl": "La informacion con un nivel de clasificacion CONFIDENCIAL o superior debera ser cifrada.",
+          "Nivel": "bajo",
+          "Tipo": "medida",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption"
+      ]
+    }
+  ]
+}

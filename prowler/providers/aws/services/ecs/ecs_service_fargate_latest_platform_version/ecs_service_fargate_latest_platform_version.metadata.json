@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcsService",
+  "ResourceGroup": "container",
   "Description": "**ECS Fargate services** use the **latest Fargate platform version** via `platformVersion`=`LATEST` or an explicit value matching the current release for their `platformFamily` (Linux/Windows).",
   "Risk": "Running on an outdated platform leaves known CVEs in the kernel/runtime unpatched, risking:\n- **Confidentiality**: data exposure via container escape\n- **Integrity**: privilege escalation and tampering\n- **Availability**: crashes/DoS and instability under load",
   "RelatedUrl": "",

@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_ebs_volume_protected_by_backup_plan",
-  "CheckTitle": "Amazon EBS volume is protected by a backup plan.",
+  "CheckTitle": "EBS volume is protected by a backup plan",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -10,17 +10,14 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsEc2Volume",
-  "Description": "**Amazon EBS volumes** are evaluated for coverage by an **AWS Backup plan**, whether explicitly targeted or included via broad resource selection, confirming scheduled, policy-driven backups exist for the volume.",
+  "ResourceGroup": "compute",
+  "Description": "**EBS volumes** are evaluated for coverage by an **AWS Backup plan**, whether explicitly targeted or included via broad resource selection, confirming scheduled, policy-driven backups exist for the volume.",
   "Risk": "Absent backup coverage, volumes face **data loss**, weakened **integrity**, and reduced **availability**. Deletion or corruption-whether accidental or malicious-can leave no recovery path, causing prolonged outages, failed point-in-time restoration, unmet retention needs, and harder incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/knowledge-center/backup-configure-vault-lock",
     "https://docs.amazonaws.cn/en_us/aws-backup/latest/devguide/vault-lock.html",
-    "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-28",
-    "https://www.clouddefense.ai/compliance-rules/soc-2/system-operations/ebs-volume-protected-by-backup-plan",
     "https://aws.amazon.com/blogs/storage/protecting-your-critical-amazon-ebs-volumes-using-aws-backup/",
     "https://docs.aws.amazon.com/config/latest/developerguide/ebs-resources-protected-by-backup-plan.html"
   ],

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEc2NetworkAcl",
+  "ResourceGroup": "network",
   "Description": "**VPC network ACLs** that are **not associated with any subnet** are considered unused. The evaluation focuses on non-default ACLs and identifies those without a current subnet association; the default network ACL is excluded.",
   "Risk": "Unused ACLs raise the risk of **misassociation**, unexpectedly changing subnet filtering. A permissive ACL could expose workloads (**confidentiality, integrity**), while an overly restrictive one could disrupt traffic (**availability**). Stale objects also hinder reviews and conceal drift.",
   "RelatedUrl": "",
@@ -36,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Infrastructure Security"
+  "Notes": ""
 }

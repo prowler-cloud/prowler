@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 null=True,
                 size=None,
+                help_text="Categories from check metadata for efficient filtering",
             ),
         ),
     ]

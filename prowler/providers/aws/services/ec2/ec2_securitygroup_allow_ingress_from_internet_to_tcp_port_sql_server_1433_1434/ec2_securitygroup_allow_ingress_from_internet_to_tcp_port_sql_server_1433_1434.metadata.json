@@ -18,8 +18,8 @@
   "Risk": "**Internet-exposed SQL ports** enable credential brute force, service enumeration, and remote exploitation. Compromise can lead to unauthorized queries, data exfiltration or tampering, and outages via destructive commands, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://forum.infostart.ru/forum16/topic317195/",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000223371-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-or-0-to-windows-sql-server-ports-1433-or-14"
   ],
   "Remediation": {
     "Code": {

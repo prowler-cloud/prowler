@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** are assessed for enrollment as **Systems Manager managed nodes**. Running instances lacking Systems Manager registration are marked as unmanaged; instances in `stopped`, `terminated`, or `pending` states are noted separately.",
   "Risk": "Unmanaged instances lack centralized patching, inventory, and secure remote access. This increases exposure to brute force on SSH/RDP, delayed patching, and poor visibility. Exploits can enable lateral movement and persistence, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",

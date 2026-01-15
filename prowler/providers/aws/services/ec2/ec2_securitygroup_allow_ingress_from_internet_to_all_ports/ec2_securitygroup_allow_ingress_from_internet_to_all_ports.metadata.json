@@ -14,12 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** with **inbound rules** permitting Internet sources (`0.0.0.0/0`, `::/0`) to `all ports` across any protocol",
   "Risk": "Opening every port to the Internet enables broad scanning and exploit attempts, leading to **unauthorized access**, **remote code execution**, and **data exfiltration**, with easier lateral movement into the VPC. Confidentiality, integrity, and availability are all at risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-security-group-does-not-allow-all-traffic-on-all-ports/",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/security-group-ingress-any.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,13 +13,12 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security groups permitting inbound **FTP** on `TCP 20-21` from any address (e.g., `0.0.0.0/0` or `::/0`) are identified.\n\nExposure is contextualized by the instance's public reachability (public IP and subnet).",
   "Risk": "Exposed **FTP** invites Internet brute force and transmits in cleartext, enabling credential theft and packet sniffing (**confidentiality**).\n\nAttackers can upload/alter files (**integrity**) and abuse services for malware staging or DoS (**availability**). Publicly reachable hosts are rapidly probed by scanners.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://developers.rapticore.com/docs/ensure-no-security-groups-allow-ingress-from-00000-to-ftp-port-20-21",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-ftp-access.html",
-    "https://repost.aws/questions/QUVWll2XoIRB6J5JqZipIwZQ/what-is-mean-fromport-is-0-and-toport-is-0-in-security-groups-ippermission-ippermissionegress",
     "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
   ],
   "Remediation": {

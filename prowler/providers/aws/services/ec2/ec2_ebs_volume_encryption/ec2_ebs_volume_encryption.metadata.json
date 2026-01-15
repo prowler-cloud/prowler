@@ -13,12 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "**Amazon EBS volumes** are assessed for **encryption at rest** using **AWS KMS**.\n\nThe finding identifies volumes whose `encrypted` state is disabled, meaning data is stored unencrypted on block storage.",
+  "ResourceGroup": "compute",
+  "Description": "**EBS volumes** are assessed for **encryption at rest** using **AWS KMS**.\n\nThe finding identifies volumes whose `encrypted` state is disabled, meaning data is stored unencrypted on block storage.",
   "Risk": "Unencrypted volumes or snapshots can be copied, shared, or recovered and reveal raw data, undermining **confidentiality**.\n\nAdversaries with host or account access can read disks offline, harvest secrets, or alter system images, affecting **integrity** and enabling **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.acquia.com/acquia-cloud-platform/security-and-compliance",
-    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/ebs-encrypted.html"
   ],
   "Remediation": {
     "Code": {

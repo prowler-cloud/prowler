@@ -14,11 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security groups allowing inbound `TCP` from any address to Oracle listener ports `1521`, `2483`, or `2484`",
   "Risk": "Exposed Oracle listener ports enable SID enumeration, credential brute force, and TNS abuse. A successful intrusion can grant database access, causing data exfiltration (C), unauthorized changes (I), and outages via exploits or DoS (A). Internet scanning quickly finds these endpoints, enlarging the attack surface.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-oracle-access.html"
   ],
   "Remediation": {
     "Code": {

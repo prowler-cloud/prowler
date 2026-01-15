@@ -13,13 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are assessed for **inbound SSH exposure** by locating ingress rules that allow `TCP 22` from the Internet (`0.0.0.0/0` or `::/0`).\n\nOnly groups in use are considered; sets already flagged for all-port exposure are not repeated.",
   "Risk": "Exposed **SSH** invites Internet-scale **brute force** and **credential stuffing**. A successful login grants **remote shell**, enabling data theft (confidentiality), code or config tampering (integrity), and cryptomining or service disruption (availability), plus **lateral movement** within the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security#terraform",
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_1-port-security",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-ssh-access.html"
   ],
   "Remediation": {
     "Code": {

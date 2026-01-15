@@ -13,13 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** restrict **inbound RDP** on `TCP 3389` to trusted sources, avoiding Internet-wide (`0.0.0.0/0`, `::/0`) exposure.",
   "Risk": "**Internet-exposed RDP** enables brute force and credential stuffing and increases the chance of **remote code execution** via RDP flaws.\n\nAdversaries can gain interactive access, exfiltrate data (**confidentiality**), tamper with systems (**integrity**), and trigger ransomware or service disruption (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_2",
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_2#terraform",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-rdp-access.html"
   ],
   "Remediation": {
     "Code": {

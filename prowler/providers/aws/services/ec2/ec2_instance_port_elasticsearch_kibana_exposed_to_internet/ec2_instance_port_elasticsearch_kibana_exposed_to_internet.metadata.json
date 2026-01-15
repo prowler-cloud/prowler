@@ -11,14 +11,15 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with **Elasticsearch/Kibana ports** (`9200`, `9300`, `5601`) exposed to the Internet through inbound security group rules.\n\nAssesses reachability considering instance public IP and subnet to reflect real exposure.",
   "Risk": "Public access to Elasticsearch/Kibana can lead to:\n- Unauthorized queries or dashboard viewing  confidentiality loss\n- Index changes or cluster control via `9300`  integrity impact\n- Scans and bulk queries  availability degradation\n\nEnables data exfiltration and lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.tutorialpedia.org/blog/how-to-disable-security-username-password-on-elasticsearch-docker-container/",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233821-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-elasticsearch-and-kibana-ports-tcp-9200-"
   ],
   "Remediation": {
     "Code": {

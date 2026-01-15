@@ -13,11 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are assessed for inbound rules that allow Internet sources (`0.0.0.0/0` or `::/0`) to **high-risk TCP ports**: `25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088`.\n\nFindings highlight groups exposing any of these ports to the public network.",
   "Risk": "Public exposure of these ports enables:\n- **RCE** via SMB/RPC and weak admin consoles (`445`, `135`, `3000`, `5000`, `8080`)\n- **Credential theft/data leakage** via mail protocols (`25`, `110`, `143`)\n- **Spam relay** on `25`\nImpacts: **confidentiality**, **integrity**, and **availability** through exploitation and mass scanning.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000234274-5-3-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-to-remote-server-administration-ports-aut"
   ],
   "Remediation": {
     "Code": {

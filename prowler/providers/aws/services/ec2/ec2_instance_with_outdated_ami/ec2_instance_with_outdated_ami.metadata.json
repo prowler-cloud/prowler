@@ -12,13 +12,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** launched from **Amazon-owned AMIs** are evaluated for the AMI's `DeprecationTime`; instances tied to images with a deprecation date in the past are reported as using **deprecated AMIs**.",
   "Risk": "Running on a **deprecated AMI** undermines security and availability:\n- Missing patches enable exploitation of known CVEs (confidentiality/integrity)\n- Unsupported components hinder hardening and forensics\n- AMI removal from catalogs complicates scale-out and recovery (availability)",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-deprecate.html",
-    "https://deepwiki.com/aws/aws-eks-best-practices/6.2-data-plane-reliability",
-    "https://github.com/aws/karpenter-provider-aws/issues/6393",
     "https://repost.aws/knowledge-center/ec2-find-deprecated-ami"
   ],
   "Remediation": {

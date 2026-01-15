@@ -11,14 +11,16 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security groups permitting any source to `TCP 1433` or `1434` (SQL Server) are identified, considering the instance's public reachability based on IP and subnet exposure.",
   "Risk": "Internet-reachable SQL services enable:\n- Brute-force and credential-stuffing of DB logins\n- Exploitation of SQL Server flaws for remote code execution\n- Unauthorized queries and data exfiltration\nThis threatens **confidentiality** and **integrity**, and facilitates **lateral movement** from the database host.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/inspector/v1/userguide/inspector_network-reachability.html",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000223371-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-or-0-to-windows-sql-server-ports-1433-or-14",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-mssql-access.html"
   ],
   "Remediation": {
     "Code": {

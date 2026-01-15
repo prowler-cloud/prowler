@@ -11,17 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances whose security groups allow public **inbound TCP** access to Kerberos ports `88`, `464`, `749`, or `750` (authentication, password change, admin).\n\nRules permitting `0.0.0.0/0` or `::/0` are treated as Internet-exposed.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** whose security groups allow public **inbound TCP** access to Kerberos ports `88`, `464`, `749`, or `750` (authentication, password change, admin).\n\nRules permitting `0.0.0.0/0` or `::/0` are treated as Internet-exposed.",
   "Risk": "Public Kerberos exposure risks CIA:\n- **Password spraying**/AS-REP roasting against accounts\n- Unauthorized password changes on `464`\n- Realm/user enumeration and DoS of KDC/services\n\nStolen tickets enable **lateral movement** and privilege escalation in Active Directory or the Kerberos realm.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.oreilly.com/library/view/kerberos-the-definitive/0596004036/ch06s05s01.html",
-    "https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/IpPermission.html",
-    "https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers",
-    "https://www.calendar-uk.co.uk/frequently-asked-questions/what-is-the-port-number-of-kerberos",
-    "https://web.mit.edu/kerberos/krb5-1.5/krb5-1.5.4/doc/krb5-admin/Configuring-Your-Firewall-to-Work-With-Kerberos-V5.html",
-    "https://support.tools/required-domain-controller-ports/",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233825-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-88-464-749-or-750-kerberos-"
   ],
   "Remediation": {
     "Code": {

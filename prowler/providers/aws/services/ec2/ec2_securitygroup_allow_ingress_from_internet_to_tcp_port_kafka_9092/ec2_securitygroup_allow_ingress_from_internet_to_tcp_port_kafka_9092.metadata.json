@@ -13,11 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are evaluated for ingress rules that expose **Kafka** on `TCP 9092` to the Internet via `0.0.0.0/0` or `::/0`",
   "Risk": "Public Kafka `9092` access allows arbitrary clients to connect, enabling topic enumeration, data exfiltration, and producer/consumer impersonation (**C/I**). Brokers can be flooded or exploited, disrupting clusters (**A**). Exposure gives attackers a foothold for lateral movement inside the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233725-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-or-0-to-kafka-port-9092-"
   ],
   "Remediation": {
     "Code": {

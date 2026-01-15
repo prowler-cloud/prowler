@@ -14,12 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2NetworkAcl",
+  "ResourceGroup": "network",
   "Description": "**VPC network ACLs** with **inbound entries** that permit traffic from `0.0.0.0/0` to any port (any protocol) are identified at the subnet boundary.",
   "Risk": "Allowing Internet-wide ingress at the subnet layer enables broad port scanning and unsolicited connections. Attackers can probe and exploit exposed services, risking data disclosure and tampering (confidentiality, integrity) and causing outages via floods or brute-force (availability). Any security group lapse then lacks a compensating control.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html",
-    "https://marketplace.visualstudio.com/items?itemName=MehmetUstek.iac-file-vulnerability-scan"
+    "https://support.icompaas.com/support/solutions/articles/62000233809-ensure-no-network-acls-allow-ingress-from-0-0-0-0-0-to-any-port"
   ],
   "Remediation": {
     "Code": {
@@ -38,5 +39,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Infrastructure Security"
+  "Notes": ""
 }

@@ -13,11 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security groups that expose **MySQL** on `TCP 3306` to the Internet (`0.0.0.0/0` or `::/0`) are identified, with context on public IP and subnet exposure.",
   "Risk": "Publicly reachable **MySQL** enables Internet scanning, brute force, and credential stuffing, leading to unauthorized queries and data dumps (**confidentiality**). Attackers can alter or delete data (**integrity**), overload the service with query floods (**availability**), and pivot from the DB host into adjacent workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-mysql-access.html"
   ],
   "Remediation": {
     "Code": {

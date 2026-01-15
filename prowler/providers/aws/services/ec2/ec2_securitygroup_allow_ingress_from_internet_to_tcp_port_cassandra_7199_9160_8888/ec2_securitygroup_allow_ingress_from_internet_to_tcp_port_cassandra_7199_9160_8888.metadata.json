@@ -13,12 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are evaluated for inbound rules that allow the Internet (`0.0.0.0/0` or `::/0`) to reach **Cassandra ports** `7199`, `9160`, or `8888`.\n\nFocuses on `tcp` rules that expose these ports to public sources.",
   "Risk": "Exposed **Cassandra interfaces** (`7199` JMX, `9160` Thrift, `8888` tools) enable:\n- Unauthorized reads of data/metrics (confidentiality)\n- Schema and cluster changes (integrity)\n- Remote operations causing outages (availability)\n\nPublic reachability also increases brute-force and exploit attempts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127020-ensure-security-groups-do-not-allow-unrestricted-ingress-access-to-cassandra-ports-7199-or-9160-or-88"
   ],
   "Remediation": {
     "Code": {

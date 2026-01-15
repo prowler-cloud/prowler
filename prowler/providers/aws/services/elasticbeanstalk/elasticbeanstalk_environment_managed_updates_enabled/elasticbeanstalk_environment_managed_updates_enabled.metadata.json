@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "ResourceGroup": "compute",
   "Description": "**Elastic Beanstalk environments** with **managed platform updates** enabled (`ManagedActionsEnabled: true`) automatically apply platform patch/minor updates during a scheduled maintenance window.",
   "Risk": "Without automatic platform updates, environments may run **vulnerable OS/runtime versions**, enabling exploitation of known CVEs, RCE, or privilege escalation.\n\nPatch drift also increases instability, harming **availability** and undermining application **integrity**.",
   "RelatedUrl": "",

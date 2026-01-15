@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSInstance",
+  "ResourceGroup": "compute",
   "Description": "Windows and Linux virtual machines should be kept updated to address specific bugs or flaws, improve OS or application's general stability, and fix **security vulnerabilities**.\n\nThe Alibaba Cloud **Security Center** checks for the latest updates in Linux and Windows systems.",
   "Risk": "**Unpatched systems** are vulnerable to known security exploits and may be compromised by attackers.\n\nKeeping systems updated with the latest patches is critical for maintaining security and preventing **exploitation of known vulnerabilities**.",
   "RelatedUrl": "",

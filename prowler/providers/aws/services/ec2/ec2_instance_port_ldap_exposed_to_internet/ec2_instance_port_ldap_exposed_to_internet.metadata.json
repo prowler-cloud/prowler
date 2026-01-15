@@ -12,7 +12,8 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances with security groups permitting Internet-sourced access to **LDAP** on `TCP 389` or **LDAPS** on `TCP 636` are identified.\n\nPublic exposure context (presence of public IP and subnet reachability) is considered to gauge how broadly these ports can be accessed.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** with security groups permitting Internet-sourced access to **LDAP** on `TCP 389` or **LDAPS** on `TCP 636` are identified.\n\nPublic exposure context (presence of public IP and subnet reachability) is considered to gauge how broadly these ports can be accessed.",
   "Risk": "Publicly reachable **LDAP/LDAPS** enables:\n- Directory enumeration and weak/anonymous bind attempts\n- **Password spraying** and credential theft (cleartext on `389`)\n- Unauthorized queries causing **data exfiltration**\n\nAbuse may lead to **privilege escalation** and availability impact via account lockouts.",
   "RelatedUrl": "",
   "AdditionalURLs": [

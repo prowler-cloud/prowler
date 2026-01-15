@@ -12,13 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** are assessed for the presence of a **public IPv4 address** and public DNS. A public IP indicates the instance is directly reachable from the Internet; no public IP implies access only through private networking paths such as load balancers, gateways, or proxies.",
   "Risk": "Publicly addressed instances are Internet-scannable, enabling direct probing and brute-force of exposed services and management ports. This increases risks of unauthorized access, remote code execution, and data exfiltration (**confidentiality, integrity**), and allows direct DDoS targeting, degrading **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/public-policies/public_12#aws-console",
-    "https://aws.amazon.com/blogs/aws/aws-web-application-firewall-waf-for-application-load-balancers/",
-    "https://docs.prowler.com/checks/aws/public-policies/public_12#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/aws-ec2-public-ip.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
   ],
   "Remediation": {
     "Code": {

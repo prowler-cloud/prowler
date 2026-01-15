@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail** logs in CloudWatch include a metric filter for **root account activity** (`{ $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }`) and a linked CloudWatch alarm that triggers when the filter matches.",
   "Risk": "Without alerting on **root activity**, full-privilege actions can proceed unnoticed, impacting:\n- confidentiality via data access/exfiltration\n- integrity via policy/config tampering\n- availability via deletions or shutdowns\nDelayed detection increases blast radius and persistence.",
   "RelatedUrl": "",

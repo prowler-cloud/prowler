@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are inspected for inbound rules that expose **MongoDB** on `TCP 27017-27018` to the Internet via `0.0.0.0/0` or `::/0`.\n\nIt identifies groups where these ports are reachable from any address.",
   "Risk": "Public **MongoDB** ports invite unauthenticated probing, brute force, and misuse of weak configs. Attackers can read/alter data, drop collections, or deploy ransomware, compromising **confidentiality** and **integrity**.\n\nExposure also enables enumeration and lateral movement, threatening **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127019-ensure-security-groups-do-not-allow-unrestricted-ingress-access-to-mongodb-ports-27017-and-27018"
   ],
   "Remediation": {
     "Code": {

@@ -11,12 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "EC2 security groups are evaluated for Internet-exposed **FTP**: any inbound rule allowing `tcp` ports `20` or `21` from `0.0.0.0/0` or `::/0`.",
   "Risk": "Exposed FTP weakens CIA:\n- Confidentiality: cleartext credentials/files enable interception and brute force.\n- Integrity: unauthorized uploads or tampering enable malware staging.\n- Availability: mass scans and login attempts can exhaust resources and disrupt services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-ftp-access.html"
   ],
   "Remediation": {
     "Code": {

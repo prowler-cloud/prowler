@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2LaunchTemplate",
+  "ResourceGroup": "compute",
   "Description": "**EC2 launch templates** with versions that either enable `associate_public_ip_address` for network interfaces or reference **ENIs** already associated with public IPs",
   "Risk": "Assigning **public IPs** makes instances Internet-reachable, enabling:\n- Loss of **confidentiality** via unauthorized access and data exfiltration\n- Compromised **integrity** through remote exploitation and tampering\n- Reduced **availability** from DDoS and brute-force traffic\nAttackers can scan exposed services and pivot within the VPC.",
   "RelatedUrl": "",

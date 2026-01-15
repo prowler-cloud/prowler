@@ -10,14 +10,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** whose names include `launch-wizard` are identified as created by the **EC2 Launch Wizard**, distinguishing auto-generated groups from curated, baseline-controlled groups.",
   "Risk": "Wizard-generated groups often include **overly permissive rules** (e.g., `0.0.0.0/0` to admin ports), expanding exposure. Attackers can run **port scans** and **brute-force** to gain entry, then **lateral movement** and **data exfiltration**, impacting **confidentiality** and **integrity**; broad egress aids command-and-control.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/security-group-prefixed-with-launch-wizard.html",
-    "https://issackpaul95.medium.com/aws-hands-on-mastering-aws-security-groups-edit-rules-fix-timeouts-and-keep-your-ec2-safe-5d9a2d3c038a",
-    "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
-    "https://gitlab.com/cloud64/aws-launch-wizard"
+    "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html"
   ],
   "Remediation": {
     "Code": {

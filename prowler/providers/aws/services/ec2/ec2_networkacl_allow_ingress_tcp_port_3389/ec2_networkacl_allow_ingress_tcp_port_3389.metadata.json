@@ -11,13 +11,14 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsEc2NetworkAcl",
+  "ResourceGroup": "network",
   "Description": "**VPC network ACLs** with inbound rules allowing **RDP** on `TCP 3389` from `0.0.0.0/0` are identified.\n\nAssessment focuses on subnet-level ACL entries that permit this traffic.",
   "Risk": "Internet-exposed **RDP** enables **password spraying**, brute force, and exploitation of RDP flaws to gain remote control. Allowing it at the subnet layer weakens **defense in depth**-a misconfigured security group or route can expose instances-leading to data exfiltration, privilege escalation, and ransomware, impacting confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-nacl-does-not-allow-ingress-from-00000-to-port-3389#terraform",
+    "https://support.icompaas.com/support/solutions/articles/62000223179-ensure-no-network-acls-allow-ingress-from-0-0-0-0-0-to-microsoft-rdp-port-3389-",
     "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
   ],
   "Remediation": {

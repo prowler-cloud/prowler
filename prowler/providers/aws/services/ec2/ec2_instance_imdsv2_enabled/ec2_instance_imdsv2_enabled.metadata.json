@@ -13,18 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** are evaluated for **IMDSv2 enforcement**: metadata endpoint enabled with `http_tokens: required`, or metadata service fully disabled (`http_endpoint: disabled`).",
   "Risk": "Permitting **IMDSv1** or optional tokens lets SSRF or compromised workloads retrieve **temporary IAM credentials**, impacting confidentiality and integrity. Stolen role creds can drive **privilege escalation**, unauthorized data access, and lateral movement across AWS resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html",
-    "https://www.cyberbit.com/uncategorized/aws-imds-v2-secures-ssrf-vulnerability/",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_31#terraform",
-    "https://github.com/davidawcloudsecurity/learn-aws-enable-IMDSv2",
-    "https://blog.securelayer7.net/strengthen-ec2-security-with-imdsv2/",
-    "https://securitylabs.datadoghq.com/cloud-security-atlas/vulnerabilities/eks-pods-can-steal-host-credentials/",
     "https://support.icompaas.com/support/solutions/articles/62000234166-5-7-ensure-that-the-ec2-metadata-service-only-allows-imdsv2-automated-",
-    "https://docs.convox.com/configuration/rack-parameters/aws/imds_http_tokens/",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html#configuring-instance-metadata-options"
   ],
   "Remediation": {

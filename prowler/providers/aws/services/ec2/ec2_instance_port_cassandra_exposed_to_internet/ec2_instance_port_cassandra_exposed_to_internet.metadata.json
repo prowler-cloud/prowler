@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances have **Cassandra service ports** (`7000`, `7001`, `7199`, `9042`, `9160`) reachable from the Internet through security group ingress.\n\nPublic IP presence and subnet exposure are considered to assess external reachability.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** have **Cassandra service ports** (`7000`, `7001`, `7199`, `9042`, `9160`) reachable from the Internet through security group ingress.\n\nPublic IP presence and subnet exposure are considered to assess external reachability.",
   "Risk": "Internet-exposed Cassandra enables unauthorized queries on `9042`, remote management via `7199` (JMX), and tampering with inter-node channels on `7000/7001` and `9160`.\n\nAttackers can read/modify data (**confidentiality, integrity**), disrupt or take over the cluster (**availability**), and pivot within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127020-ensure-security-groups-do-not-allow-unrestricted-ingress-access-to-cassandra-ports-7199-or-9160-or-88"
   ],
   "Remediation": {
     "Code": {

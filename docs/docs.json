@@ -99,7 +99,14 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-mute-findings",
+              {
+                "group": "Mutelist",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-simple-mutelist",
+                  "user-guide/tutorials/prowler-app-mute-findings"
+                ]
+              },
               {
                 "group": "Integrations",
                 "expanded": true,
@@ -242,6 +249,13 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
@@ -277,7 +291,9 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse"
+              "developer-guide/lighthouse-architecture",
+              "developer-guide/mcp-server",
+              "developer-guide/ai-skills"
             ]
           },
           {
@@ -286,6 +302,7 @@
               "developer-guide/aws-details",
               "developer-guide/azure-details",
               "developer-guide/gcp-details",
+              "developer-guide/alibabacloud-details",
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
@@ -300,7 +317,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",

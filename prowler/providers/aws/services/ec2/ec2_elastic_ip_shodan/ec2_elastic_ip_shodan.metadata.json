@@ -11,12 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Eip",
+  "ResourceGroup": "network",
   "Description": "**EC2 Elastic IPs** are compared with **Shodan**'s index to identify publicly reachable addresses that have been scanned and cataloged, including metadata such as open ports, ISP, and geolocation",
   "Risk": "Being listed on **Shodan** confirms Internet exposure and reveals open services, versions, and banners. Adversaries can rapidly target these hosts for credential attacks and CVE exploits, threatening **confidentiality** (data access), **integrity** (system takeover), and **availability** (service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.shodan.io/",
-    "https://undercodetesting.com/the-ultimate-shodan-reconnaissance-guide-how-hackers-see-your-network-before-you-do/"
+    "https://support.icompaas.com/support/solutions/articles/62000229484-ensure-any-of-the-elastic-or-public-ip-are-in-shodan"
   ],
   "Remediation": {
     "Code": {

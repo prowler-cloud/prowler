@@ -10,7 +10,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
-  "Description": "**Amazon EC2 instances** are evaluated for their virtualization mode. Instances with `virtualization_type` set to `paravirtual` are identified; those using **HVM** are recognized as hardware-assisted virtualization.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** are evaluated for their virtualization mode. Instances with `virtualization_type` set to `paravirtual` are identified; those using **HVM** are recognized as hardware-assisted virtualization.",
   "Risk": "Using **paravirtual (PV)** weakens isolation versus **HVM/Nitro** and blocks features like `ENA` and `NVMe`. Confidentiality and integrity can suffer due to reliance on legacy hypercalls/drivers; availability and performance may degrade under load, increasing exposure to kernel/driver exploits and noisy-neighbor impacts.",
   "RelatedUrl": "",
   "AdditionalURLs": [

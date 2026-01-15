@@ -12,13 +12,15 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances with security group rules allowing inbound **PostgreSQL** on `TCP 5432` from the Internet (`0.0.0.0/0` or `::/0`) are identified, considering the instance's public reachability via IP and subnet.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** with security group rules allowing inbound **PostgreSQL** on `TCP 5432` from the Internet (`0.0.0.0/0` or `::/0`) are identified, considering the instance's public reachability via IP and subnet.",
   "Risk": "Exposed `TCP 5432` enables unauthenticated Internet probes and **brute-force** attempts against PostgreSQL, risking database **confidentiality**, **integrity**, and **availability**. Attackers could dump data, alter schemas, create backdoor accounts, pivot within the VPC, or exploit unpatched flaws at scale.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-postgresql-access.html"
   ],
   "Remediation": {
     "Code": {

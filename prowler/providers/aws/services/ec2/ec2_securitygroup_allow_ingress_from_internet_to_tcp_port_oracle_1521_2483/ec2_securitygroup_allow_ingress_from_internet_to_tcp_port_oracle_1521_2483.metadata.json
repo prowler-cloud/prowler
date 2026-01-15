@@ -11,12 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are evaluated for inbound rules that permit public sources (`0.0.0.0/0` or `::/0`) to `TCP 1521` or `TCP 2483`-Oracle listener ports.\n\nThe focus is on rules that make these ports reachable from the Internet over IPv4 or IPv6.",
   "Risk": "Public Oracle listener exposure enables attackers to:\n- **Brute force** credentials and enumerate services\n- Exploit **listener flaws** for remote access\n- Run unauthorized queries causing **data exfiltration**\n- Launch **DoS** on the listener\n\nThis jeopardizes database confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000236318-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-or-0-to-oracle-ports-1521-or-2483-"
   ],
   "Remediation": {
     "Code": {

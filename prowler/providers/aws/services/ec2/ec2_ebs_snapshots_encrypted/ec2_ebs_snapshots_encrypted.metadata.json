@@ -12,13 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "**Amazon EBS snapshots** are evaluated for **encryption at rest** with AWS KMS. The finding identifies snapshots where encryption is not enabled.",
+  "ResourceGroup": "compute",
+  "Description": "**EBS snapshots** are evaluated for **encryption at rest** with AWS KMS. The finding identifies snapshots where encryption is not enabled.",
   "Risk": "Unencrypted snapshots expose complete disk images to anyone with snapshot access or if mis-shared. Attackers can exfiltrate data, harvest credentials, and clone volumes for offline analysis, compromising **confidentiality** and enabling **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#aws-console",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default",
-    "https://docs.prowler.com/checks/aws/general-policies/general_3-encrypt-ebs-volume#terraform"
+    "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/snapshot-encrypted.html"
   ],
   "Remediation": {
     "Code": {

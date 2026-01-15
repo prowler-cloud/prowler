@@ -11,15 +11,16 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances whose security groups allow Internet-wide inbound **RDP** on `TCP 3389` (`0.0.0.0/0` or `::/0`). The instance's public IP and subnet routing are considered to determine external reachability.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** whose security groups allow Internet-wide inbound **RDP** on `TCP 3389` (`0.0.0.0/0` or `::/0`). The instance's public IP and subnet routing are considered to determine external reachability.",
   "Risk": "Internet-exposed **RDP** allows:\n- **Brute force** and credential reuse on Windows logons\n- Exploitation of RDP flaws for remote code execution\n- **Lateral movement** and data exfiltration\nThis threatens **confidentiality**, **integrity**, and **availability** through data theft, tampering, account lockouts, or ransomware.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://AdmiNotes.ru/fail2ban-dlya-rdp-za-nat-nadyozhnaya-zashhita-terminalnogo-servera/",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233789-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-3389-rdp-",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-rdp-access.html"
   ],
   "Remediation": {
     "Code": {

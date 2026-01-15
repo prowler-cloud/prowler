@@ -1,17 +1,28 @@
 from collections import defaultdict
 from datetime import timedelta
 
+from celery.utils.log import get_task_logger
 from django.db.models import Sum
 from django.utils import timezone
+from tasks.jobs.queries import (
+    COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+)
 from tasks.jobs.scan import aggregate_category_counts
 
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import (
+    POSTGRES_TENANT_VAR,
+    SET_CONFIG_QUERY,
+    psycopg_connection,
+    rls_transaction,
+)
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    ProviderComplianceScore,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
@@ -20,6 +31,8 @@ from api.models import (
     ScanSummary,
     StateChoices,
 )
+
+logger = get_task_logger(__name__)
 
 
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
@@ -341,3 +354,114 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         )
 
     return {"status": "backfilled", "categories_count": len(category_counts)}
+
+
+def backfill_provider_compliance_scores(tenant_id: str) -> dict:
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    For each provider with completed scans, finds the most recent scan and
+    upserts compliance requirement statuses with FAIL-dominant aggregation.
+
+    Args:
+        tenant_id: Target tenant UUID
+
+    Returns:
+        dict: Statistics about the backfill operation
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        completed_scans = Scan.all_objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
+        )
+        if not completed_scans.exists():
+            return {"status": "no completed scans"}
+
+        existing_providers = set(
+            ProviderComplianceScore.objects.filter(tenant_id=tenant_id)
+            .values_list("provider_id", flat=True)
+            .distinct()
+        )
+
+        if existing_providers:
+            completed_scans = completed_scans.exclude(
+                provider_id__in=existing_providers
+            )
+
+        scan_info = list(
+            completed_scans.order_by("provider_id", "-completed_at")
+            .distinct("provider_id")
+            .values("id", "provider_id", "completed_at")
+        )
+
+        if not scan_info:
+            return {"status": "no scans to process"}
+
+    total_upserted = 0
+    providers_processed = 0
+    providers_skipped = 0
+
+    for scan in scan_info:
+        provider_id = scan["provider_id"]
+
+        scan_id = scan["id"]
+
+        try:
+            with psycopg_connection(MainRouter.default_db) as connection:
+                connection.autocommit = False
+                try:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id]
+                        )
+                        cursor.execute(
+                            COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
+                            [tenant_id, str(scan_id)],
+                        )
+                        upserted = cursor.rowcount
+                    connection.commit()
+                    total_upserted += upserted
+                    providers_processed += 1
+                except Exception:
+                    connection.rollback()
+                    raise
+        except Exception as e:
+            providers_skipped += 1
+            logger.exception(
+                "Error backfilling provider %s for tenant %s: %s",
+                provider_id,
+                tenant_id,
+                e,
+            )
+
+    # Recalculate tenant summary after all providers are backfilled
+    if providers_processed > 0:
+        with psycopg_connection(MainRouter.default_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                    # Advisory lock to prevent race conditions
+                    cursor.execute(
+                        "SELECT pg_advisory_xact_lock(hashtext(%s))", [tenant_id]
+                    )
+                    cursor.execute(
+                        COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
+                        [tenant_id, tenant_id],
+                    )
+                    tenant_summary_count = cursor.rowcount
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+    else:
+        tenant_summary_count = 0
+
+    return {
+        "status": "backfilled",
+        "providers_processed": providers_processed,
+        "providers_skipped": providers_skipped,
+        "total_upserted": total_upserted,
+        "tenant_summary_count": tenant_summary_count,
+    }

@@ -13,11 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are evaluated for rules that allow **inbound Telnet** on `TCP 23` from the Internet (`0.0.0.0/0` or `::/0`).",
   "Risk": "Public **Telnet** exposes cleartext credentials and remote shell access.\n- Brute-force and credential interception enable account takeover\n- Command execution enables data theft and lateral movement\n\nThis threatens confidentiality and integrity and can degrade availability through misuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233790-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-23-telnet-",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-telnet-access.html"
   ],
   "Remediation": {
     "Code": {

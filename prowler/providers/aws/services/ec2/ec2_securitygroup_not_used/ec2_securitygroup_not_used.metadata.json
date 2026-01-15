@@ -10,12 +10,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "EC2 security groups, except `default`, are assessed for **unused** status: zero attached network interfaces, no AWS Lambda associations, and no references from other security groups.",
   "Risk": "Orphaned security groups may later be attached with **overly permissive rules** without review, enabling unintended inbound or lateral access that compromises **confidentiality** and **integrity**. They also create **configuration drift**, increasing the chance of misapplied access controls.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.youtube.com/watch?v=VZ-Yr2TjBJU",
-    "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-find-security-group-resources/"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/default-security-group-unrestricted.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html"
   ],
   "Remediation": {
     "Code": {

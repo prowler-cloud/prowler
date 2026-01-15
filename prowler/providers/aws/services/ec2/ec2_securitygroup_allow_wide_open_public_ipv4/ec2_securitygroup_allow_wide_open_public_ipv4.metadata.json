@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** with rules that permit non-RFC1918 IPv4 ranges wider than `/24` are identified across both **ingress** and **egress**.\n\nThe focus is on public CIDRs (`/1`-`/23`) that broadly expose sources or destinations, not on private networks.",
   "Risk": "Over-broad public CIDRs expand exposure and enable:\n- **Confidentiality** loss via unauthorized access and exfiltration\n- **Integrity** compromise by exploiting exposed services\n- **Availability** impact from scanning and abuse\n\nOpen egress further allows **C2** beacons and bulk data exfiltration to untrusted IPs.",
   "RelatedUrl": "",

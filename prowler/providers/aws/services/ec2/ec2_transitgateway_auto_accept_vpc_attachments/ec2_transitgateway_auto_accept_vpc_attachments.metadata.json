@@ -11,18 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2TransitGateway",
+  "ResourceGroup": "network",
   "Description": "**EC2 Transit Gateways** with `AutoAcceptSharedAttachments=enable` automatically approve cross-account **VPC attachments**.\n\nThe evaluation identifies transit gateways configured to auto-accept shared attachments.",
   "Risk": "Auto-accepting cross-account attachments can link untrusted VPCs to your routing domain, impacting:\n- **Confidentiality**: unintended visibility and data exfiltration\n- **Integrity**: route injection or traffic tampering\n- **Availability**: misrouting/blackholing and lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://runebook.dev/en/aws/ec2/ModifyTransitGateway",
-    "https://github.com/cloudposse/terraform-aws-transit-gateway/issues/28",
     "https://docs.aws.amazon.com/config/latest/developerguide/ec2-transit-gateway-auto-vpc-attach-disabled.html",
-    "https://www.stream.security/rules/ensure-transit-gateway-auto-accept-shared-attachments-is-disabled",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-23",
-    "https://repost.aws/questions/QUj6bECQMbQAmY3WyvEY7iCg/describe-transit-gateways-get-transit-gateway-id-using-its-description-row",
-    "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html#tgw-modifying",
-    "https://guides.spectralops.io/docs/d9_aws_mon_20"
+    "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html#tgw-modifying"
   ],
   "Remediation": {
     "Code": {

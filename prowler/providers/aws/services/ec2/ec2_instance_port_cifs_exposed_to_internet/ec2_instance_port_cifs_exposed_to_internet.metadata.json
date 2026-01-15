@@ -13,11 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
-  "Description": "EC2 instances with security groups permitting **inbound** TCP `139` or `445` (**CIFS/SMB**) from `0.0.0.0/0` are identified.\n\nExposure level reflects whether the instance has a **public IP** and the subnet's Internet reachability.",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** with security groups permitting **inbound** TCP `139` or `445` (**CIFS/SMB**) from `0.0.0.0/0` are identified.\n\nExposure level reflects whether the instance has a **public IP** and the subnet's Internet reachability.",
   "Risk": "Publicly reachable **SMB** allows unauthorized access and **remote code execution**, enabling credential theft, NTLM relay, and share enumeration. Attackers can exfiltrate files, tamper or delete data, and spread **ransomware**, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-cifs-access.html"
   ],
   "Remediation": {
     "Code": {

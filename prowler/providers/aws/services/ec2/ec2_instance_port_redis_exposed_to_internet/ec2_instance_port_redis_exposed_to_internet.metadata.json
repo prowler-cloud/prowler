@@ -12,11 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** with security groups permitting Internet access to **Redis** on `TCP 6379` are identified.\n\nExposure is assessed using public IP assignment and subnet reachability to reflect how broadly the service can be contacted.",
   "Risk": "Exposed **Redis** allows remote access to cached data and secrets, reducing **confidentiality**. Unauthorized commands (`SET`, `DEL`, `FLUSHALL`, config changes) can corrupt or erase data, harming **integrity**. Internet scanning and abuse can exhaust memory and disrupt service, degrading **availability** and enabling lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233806-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-6379-redis-",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-redis-access.html"
   ],
   "Remediation": {
     "Code": {

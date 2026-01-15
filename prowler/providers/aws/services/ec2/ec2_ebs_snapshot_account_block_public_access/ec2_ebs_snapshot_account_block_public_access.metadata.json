@@ -10,18 +10,14 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "**Amazon EBS snapshots** account/Region configuration for **Block Public Access** is assessed to see whether public sharing is fully blocked (`block-all-sharing`) versus only new sharing (`block-new-sharing`) or unblocked. The state indicates if any snapshot can be publicly shared.",
+  "ResourceGroup": "compute",
+  "Description": "**EBS snapshots** account/Region configuration for **Block Public Access** is assessed to see whether public sharing is fully blocked (`block-all-sharing`) versus only new sharing (`block-new-sharing`) or unblocked. The state indicates if any snapshot can be publicly shared.",
   "Risk": "Without `block-all-sharing`, previously public snapshots can remain accessible, exposing raw disk data.\n\nImpacts:\n- Loss of **confidentiality** (PII, keys, configs)\n- Unauthorized cloning enabling **lateral movement**\n- Cross-account copies create **irreversible data leakage**",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.pulumi.com/registry/packages/aws/api-docs/ebs/snapshotblockpublicaccess/",
-    "https://blog.csdn.net/just2gooo/article/details/134812422",
-    "https://www.fogsecurity.io/blog/aws-block-public-access-state",
     "https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots-work.html#block-public-access-snapshots-enable",
-    "https://www.linkedin.com/posts/ngo-michael_amazon-ebs-launches-aws-cloudformation-support-activity-7141139104058048512-LgcF",
-    "https://rdrr.io/cran/paws.compute/man/ec2_enable_snapshot_block_public_access.html",
     "https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots.html"
   ],
   "Remediation": {

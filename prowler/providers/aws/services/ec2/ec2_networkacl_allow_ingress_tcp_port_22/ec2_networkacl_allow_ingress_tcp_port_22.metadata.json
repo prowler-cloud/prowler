@@ -11,12 +11,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2NetworkAcl",
+  "ResourceGroup": "network",
   "Description": "**VPC network ACLs** are evaluated for inbound rules that permit `0.0.0.0/0` to access **SSH** on `TCP 22` at the subnet boundary.",
   "Risk": "An ACL allowing Internet-wide SSH erodes **defense in depth**. Systems reachable on `TCP 22` face **brute-force**, credential stuffing, reconnaissance, and SSH exploit attempts.\n\nChanges to routes or security groups can create direct exposure, enabling unauthorized access and **lateral movement**, undermining **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/es/questions/QUzp5Ugq45SGiDpQyxqrsQOg/acm-alb-ec2-onamae-com-registrar-access-to-subdomain-always-connection-timed-out",
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-nacl-does-not-allow-ingress-from-00000-to-port-22#terraform",
+    "https://support.icompaas.com/support/solutions/articles/62000233578-ensure-no-network-acls-allow-ingress-from-0-0-0-0-0-to-ssh-port-22",
     "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
   ],
   "Remediation": {

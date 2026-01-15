@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 instances** are evaluated for age while in `running` state. Instances launched beyond the configurable limit (`max_ec2_instance_age_in_days`, default `180`) are flagged as older than the allowed lifetime. Stopped instances are ignored.",
   "Risk": "Long-lived instances often run **unpatched OS and agents**, enabling:\n- Exploitation of known CVEs  loss of confidentiality\n- Privilege escalation and tampering  integrity compromise\n- Malware/crypto-mining and instability  reduced availability\n\nAged hosts also drift from baselines and impede response.",
   "RelatedUrl": "",
@@ -30,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/ec2_instance_older_than_specific_days"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

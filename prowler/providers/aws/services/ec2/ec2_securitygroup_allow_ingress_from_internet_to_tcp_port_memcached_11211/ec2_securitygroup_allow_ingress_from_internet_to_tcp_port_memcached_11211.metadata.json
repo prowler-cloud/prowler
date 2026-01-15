@@ -11,14 +11,15 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are evaluated for inbound rules that permit Internet-sourced access to `TCP 11211` (Memcached) from `0.0.0.0/0` or `::/0`.",
   "Risk": "Exposed **Memcached** enables unauthenticated access, impacting CIA:\n- **Confidentiality**: read cached data (sessions, secrets)\n- **Integrity**: modify or poison entries\n- **Availability**: flush or overload cache, degrading apps\n\nOpen `11211` is widely scanned, enabling unauthorized access and lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127021-ensure-security-groups-do-not-allow-unrestricted-ingress-access-to-memcached-port-11211"
   ],
   "Remediation": {
     "Code": {

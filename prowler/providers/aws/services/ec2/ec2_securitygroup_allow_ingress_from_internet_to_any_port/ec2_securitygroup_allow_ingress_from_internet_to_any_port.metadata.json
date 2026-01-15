@@ -13,11 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** with **internet-sourced ingress** from `0.0.0.0/0` or `::/0` to any port, and their attachments, are evaluated. Groups linked to network interfaces or instance owners outside an approved list for public exposure are identified.",
   "Risk": "Open ingress to any port on non-approved interfaces enables external scanning, brute force, and exploitation of unintended services. This threatens **confidentiality** (unauthorized access), **integrity** (tampering), and **availability** (DoS), and facilitates **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000234274-5-3-ensure-no-security-groups-allow-ingress-from-0-0-0-0-0-to-remote-server-administration-ports-aut"
   ],
   "Remediation": {
     "Code": {

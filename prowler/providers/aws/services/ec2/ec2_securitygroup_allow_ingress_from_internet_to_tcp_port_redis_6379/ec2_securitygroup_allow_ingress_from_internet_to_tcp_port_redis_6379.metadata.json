@@ -14,11 +14,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** permitting Internet sources (`0.0.0.0/0` or `::/0`) to `TCP 6379` are identified, indicating Redis is reachable from public networks",
   "Risk": "Public Redis access undermines **confidentiality, integrity, and availability**:\n- Read keys and secrets\n- Modify or flush data and configs\n- Exhaust memory for DoS\nAttackers can brute-force `AUTH`, exploit replication or modules for code execution, and pivot within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233806-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-tcp-port-6379-redis-"
   ],
   "Remediation": {
     "Code": {

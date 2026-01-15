@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2LaunchTemplate",
+  "ResourceGroup": "compute",
   "Description": "EC2 launch templates are inspected for **Instance Metadata Service** configuration. It identifies versions where `http_endpoint` is `enabled` and `http_tokens` is `required` (IMDSv2 enforced), versions with the metadata service `disabled`, and versions that allow metadata without requiring tokens.",
   "Risk": "Allowing metadata access without **IMDSv2** enables SSRF and open proxy paths to query instance metadata, exposing temporary credentials and secrets. Attackers can steal IAM role credentials to access data, modify resources, and pivot within the account, threatening confidentiality and integrity.",
   "RelatedUrl": "",

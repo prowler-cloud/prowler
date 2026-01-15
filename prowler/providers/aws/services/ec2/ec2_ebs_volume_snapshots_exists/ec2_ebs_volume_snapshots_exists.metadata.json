@@ -11,17 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Volume",
-  "Description": "**Amazon EBS volumes** are evaluated for the existence of at least one associated **snapshot**, identifying volumes without any point-in-time backup available.",
+  "ResourceGroup": "compute",
+  "Description": "**EBS volumes** are evaluated for the existence of at least one associated **snapshot**, identifying volumes without any point-in-time backup available.",
   "Risk": "Missing **EBS snapshots** removes point-in-time recovery. Accidental deletion, corruption, or ransomware can cause **irrecoverable data loss** and prolonged **service outages**, degrading data **integrity** and **availability** and complicating recovery and forensics.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://n2ws.com/blog/how-to-guides/automate-amazon-ec2-instance-backup",
     "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html",
-    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
-    "https://readmedium.com/how-we-automated-ebs-snapshot-and-ami-management-using-amazon-data-lifecycle-manager-dlm-8bd3bbb58c9d",
-    "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-snapshot.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html"
   ],
   "Remediation": {
     "Code": {

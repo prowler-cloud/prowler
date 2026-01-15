@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** restrict public ingress to Elasticsearch/Kibana ports `9200`, `9300`, and `5601`, denying sources `0.0.0.0/0` and `::/0`",
   "Risk": "Open Elasticsearch/Kibana ports to the Internet erode CIA:\n- Confidentiality: unauthorized queries and data exfiltration\n- Integrity: index tampering/deletion, cluster control via `9300`\n- Availability: API abuse, exploit-based outages, and Kibana `5601` brute-force",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233821-ensure-no-ec2-instances-allow-ingress-from-the-internet-to-elasticsearch-and-kibana-ports-tcp-9200-"
   ],
   "Remediation": {
     "Code": {

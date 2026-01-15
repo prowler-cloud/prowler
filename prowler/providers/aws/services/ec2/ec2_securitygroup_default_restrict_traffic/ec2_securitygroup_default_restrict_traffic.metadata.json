@@ -12,17 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**Default VPC security group** should have **no inbound or outbound rules**. This evaluates whether the group allows any traffic-ingress, egress, or self-referencing-instead of remaining empty.",
   "Risk": "Permissive rules in the **default security group** mean instances that inherit it can communicate widely. This enables **lateral movement**, **port scanning**, and **data exfiltration**; unrestricted egress aids **C2**. Confidentiality and integrity are reduced, and the blast radius of a compromise grows.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://subhaspatil-c.medium.com/aws-config-rules-deployment-from-a-centralised-delegated-admin-aws-account-98df7ee8d472",
     "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html",
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_4#terraform",
-    "https://github.com/mlevit/aws-auto-remediate",
-    "https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html",
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_4#aws-console",
-    "https://sagebionetworks.jira.com/wiki/spaces/PLFM/pages/2661580804/SecurityHub+locking+down+default+VPC+security+group?atl_f=content-tree"
+    "https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html"
   ],
   "Remediation": {
     "Code": {

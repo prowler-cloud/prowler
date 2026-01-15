@@ -12,11 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "EC2 instances with security groups allowing inbound **Telnet** on `TCP 23` from the Internet are identified, including open IPv4/IPv6 sources like `0.0.0.0/0` and `::/0`.\n\nExposure is evaluated considering public IP assignment and subnet reachability.",
   "Risk": "Exposed **Telnet** weakens **confidentiality** and **integrity**: credentials and commands are plaintext, enabling interception and session hijacking. Attackers can brute-force to gain shell, run remote commands, exfiltrate data, and pivot laterally, also threatening **availability** through misuse or takeover.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-telnet-access.html"
   ],
   "Remediation": {
     "Code": {

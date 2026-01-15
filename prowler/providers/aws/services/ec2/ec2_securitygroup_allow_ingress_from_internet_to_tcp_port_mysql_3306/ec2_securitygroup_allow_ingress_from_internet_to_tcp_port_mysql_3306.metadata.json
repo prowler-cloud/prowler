@@ -13,13 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**EC2 security groups** are assessed for **inbound exposure** of **MySQL** on `TCP 3306` from `0.0.0.0/0` or `::/0`.\n\nThe finding reflects whether this port is reachable from any IPv4 or IPv6 address.",
   "Risk": "**Public MySQL** access lets anyone reach the service, enabling credential brute force and vulnerability exploitation. This threatens:\n- **Confidentiality**: data exfiltration\n- **Integrity**: unauthorized writes or schema changes\n- **Availability**: DoS from abuse or scans",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://aws.plainenglish.io/ec2-mastery-the-tips-nobody-tells-you-but-everyone-needs-4181a919e2a2",
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
-    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-mysql-access.html"
   ],
   "Remediation": {
     "Code": {

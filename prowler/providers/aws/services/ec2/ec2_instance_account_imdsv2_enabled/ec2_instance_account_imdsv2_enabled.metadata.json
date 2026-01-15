@@ -12,17 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
   "Description": "**EC2 account IMDS defaults** with `http_tokens`=`required` ensure new instances in the Region use **IMDSv2** by default and disable IMDSv1. *Existing instances keep their current setting.*",
   "Risk": "Without a default of **IMDSv2**, new instances may enable **IMDSv1**, exposing metadata via simple HTTP. SSRF or proxy misconfigs can steal **temporary IAM credentials**, enabling data exfiltration (confidentiality), unauthorized API changes (integrity), and lateral movement that can disrupt services (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults",
-    "https://runebook.dev/en/aws/ec2/ModifyInstanceMetadataDefaults",
-    "https://www.rdocumentation.org/packages/paws.compute/versions/0.9.0/topics/ec2_modify_instance_metadata_defaults",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
-    "https://dev.to/aws-builders/understanding-aws-instance-metadata-service-a-closer-look-69h",
-    "https://www.cloudyali.io/blogs/understanding-instance-metadata-service-imds",
-    "https://github.com/aws-cloudformation/cloudformation-coverage-roadmap/issues/655"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html"
   ],
   "Remediation": {
     "Code": {

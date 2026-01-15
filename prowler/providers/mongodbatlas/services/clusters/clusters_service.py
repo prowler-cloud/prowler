@@ -17,6 +17,28 @@ class Clusters(MongoDBAtlasService):
         super().__init__(__class__.__name__, provider)
         self.clusters = self._list_clusters()
 
+    def _extract_location(self, cluster_data: dict) -> str:
+        """
+        Extract location from cluster data and convert to lowercase
+
+        Args:
+            cluster_data: Cluster data from API
+
+        Returns:
+            str: Location in lowercase, empty string if not found
+        """
+        try:
+            replication_specs = cluster_data.get("replicationSpecs", [])
+            if replication_specs and len(replication_specs) > 0:
+                region_configs = replication_specs[0].get("regionConfigs", [])
+                if region_configs and len(region_configs) > 0:
+                    region_name = region_configs[0].get("regionName", "")
+                    if region_name:
+                        return region_name.lower()
+        except (KeyError, IndexError, AttributeError):
+            pass
+        return ""
+
     def _list_clusters(self):
         """
         List all MongoDB Atlas clusters across all projects
@@ -89,9 +111,7 @@ class Clusters(MongoDBAtlasService):
                                 "connectionStrings", {}
                             ),
                             tags=cluster_data.get("tags", []),
-                            location=cluster_data.get("replicationSpecs", {})[0]
-                            .get("regionConfigs", {})[0]
-                            .get("regionName", ""),
+                            location=self._extract_location(cluster_data),
                         )
 
                         # Use a unique key combining project_id and cluster_name
