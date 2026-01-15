@@ -237,7 +237,7 @@ class Zone(CloudflareService):
             waf=settings.get("waf"),
             security_level=settings.get("security_level"),
             browser_check=settings.get("browser_check"),
-            challenge_ttl=settings.get("challenge_ttl" or 0),
+            challenge_ttl=settings.get("challenge_ttl", 0),
             ip_geolocation=settings.get("ip_geolocation"),
             email_obfuscation=settings.get("email_obfuscation"),
             server_side_exclude=settings.get("server_side_exclude"),
