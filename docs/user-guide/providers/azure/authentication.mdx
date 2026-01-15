@@ -30,6 +30,7 @@ Assign the following Microsoft Graph permissions:
 - `Directory.Read.All`
 - `Policy.Read.All`
 - `UserAuthenticationMethod.Read.All` (optional, for multifactor authentication (MFA) checks)
+- `AuditLog.Read.All` (optional, for multifactor authentication (MFA) checks)
 
 <Note>
 Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permissions. Note that Entra checks related to DirectoryRoles and GetUsers will not run with this permission.
@@ -51,6 +52,7 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
         - `Directory.Read.All`
         - `Policy.Read.All`
         - `UserAuthenticationMethod.Read.All`
+        - `AuditLog.Read.All`
 
         ![Permission Screenshots](/images/providers/domain-permission.png)
 
@@ -62,7 +64,7 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
     1. To grant permissions to a Service Principal, execute the following command in a terminal:
 
         ```console
-        az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role
+        az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role b0afded3-3588-46d8-8b3d-9842eff778da=Role
         ```
   </Tab>
 </Tabs>
@@ -375,7 +377,7 @@ The ProwlerRole is a custom role required for specific security checks. First, c
 
 #### Step 4: (Optional) Assign Microsoft Graph Permissions
 
-For Entra ID (Azure AD) checks, the Managed Identity needs Microsoft Graph API permissions: `Directory.Read.All`, `Policy.Read.All`, and optionally `UserAuthenticationMethod.Read.All`.
+For Entra ID (Azure AD) checks, the Managed Identity needs Microsoft Graph API permissions: `Directory.Read.All`, `Policy.Read.All`, and optionally `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`.
 
 <Note>
 Assigning Microsoft Graph API permissions to a Managed Identity requires Azure CLI or PowerShell - it cannot be done through the Azure Portal's standard role assignment interface.

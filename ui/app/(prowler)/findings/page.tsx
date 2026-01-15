@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
@@ -26,7 +25,7 @@ import {
   createProviderDetailsMappingById,
   extractProviderIds,
 } from "@/lib/provider-helpers";
-import { FilterEntity, ScanEntity, ScanProps } from "@/types";
+import { ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -62,9 +61,7 @@ export default async function Findings({
   // Extract provider IDs and details using helper functions
   const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMappingById(providerIds, providersData) as {
-        [id: string]: FilterEntity;
-      }[])
+    ? createProviderDetailsMappingById(providerIds, providersData)
     : [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
@@ -84,19 +81,20 @@ export default async function Findings({
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <FindingsFilters
-        providers={providersData?.data || []}
-        providerIds={providerIds}
-        providerDetails={providerDetails}
-        completedScans={completedScans || []}
-        completedScanIds={completedScanIds}
-        scanDetails={scanDetails}
-        uniqueRegions={uniqueRegions}
-        uniqueServices={uniqueServices}
-        uniqueResourceTypes={uniqueResourceTypes}
-        uniqueCategories={uniqueCategories}
-      />
-      <Spacer y={8} />
+      <div className="mb-6">
+        <FindingsFilters
+          providers={providersData?.data || []}
+          providerIds={providerIds}
+          providerDetails={providerDetails}
+          completedScans={completedScans || []}
+          completedScanIds={completedScanIds}
+          scanDetails={scanDetails}
+          uniqueRegions={uniqueRegions}
+          uniqueServices={uniqueServices}
+          uniqueResourceTypes={uniqueResourceTypes}
+          uniqueCategories={uniqueCategories}
+        />
+      </div>
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>

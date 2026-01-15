@@ -64,6 +64,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_access_policies_calls(client)
     mock_api_instance_group_managers_calls(client)
     mock_api_images_calls(client)
+    mock_api_snapshots_calls(client)
 
     return client
 
@@ -1344,3 +1345,8 @@ def mock_api_images_calls(client: MagicMock):
         return return_value
 
     client.images().getIamPolicy = mock_get_image_iam_policy
+
+
+def mock_api_snapshots_calls(client: MagicMock):
+    client.snapshots().list().execute.return_value = {"items": []}
+    client.snapshots().list_next.return_value = None

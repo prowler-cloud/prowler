@@ -30,7 +30,7 @@ class CloudflareIdentityInfo(BaseModel):
     email: Optional[str] = None
     accounts: list[CloudflareAccount] = Field(default_factory=list)
     audited_accounts: list[str] = Field(default_factory=list)
-    audited_zones: list[str] = Field(default_factory=list)
+    audited_zone: list[str] = Field(default_factory=list)
 
 
 class CloudflareOutputOptions(ProviderOutputOptions):

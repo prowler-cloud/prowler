@@ -14,6 +14,7 @@ from tasks.jobs.backfill import (
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -611,6 +612,21 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         scan_id (str): The scan identifier.
     """
     return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanGroupSummary for a completed scan.
+
+    Aggregates unique resource groups from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")

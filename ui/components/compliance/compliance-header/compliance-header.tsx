@@ -1,6 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
 
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
@@ -72,7 +71,7 @@ export const ComplianceHeader = ({
   return (
     <>
       {hasContent && (
-        <div className="flex w-full items-start justify-between gap-6">
+        <div className="flex w-full items-start justify-between gap-6 sm:mb-8">
           <div className="flex flex-1 flex-col justify-end gap-4">
             {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
 
@@ -95,7 +94,6 @@ export const ComplianceHeader = ({
           )}
         </div>
       )}
-      {hasContent && <Spacer y={8} />}
     </>
   );
 };
