@@ -10,7 +10,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
 - Add gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Add ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
-- Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#)](https://github.com/prowler-cloud/prowler/pull/)
+- Compliance Watchlist component in Overview page [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
+- - Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#)](https://github.com/prowler-cloud/prowler/pull/)
 
 ### 🔄 Changed
 
@@ -19,6 +20,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Add showCenterLabel prop to RadialChart for optional center text display [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
+
+### 🔐 Security
+
+- Upgrade Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs from January 2026 security advisory [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+
+---
+
+## [1.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### 🐞 Fixed
+
+- OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
 
 ---
 

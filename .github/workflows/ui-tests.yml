@@ -16,7 +16,7 @@ concurrency:
 
 env:
   UI_WORKING_DIR: ./ui
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '24.13.0'
 
 jobs:
   ui-tests:

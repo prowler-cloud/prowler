@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_record_caa_exists",
+  "CheckTitle": "CAA record exists with issue or issuewild tag",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **CAA (Certificate Authority Authorization)** DNS records by checking if they exist with **`issue` or `issuewild` tags** that specify which **certificate authorities** are permitted to issue SSL/TLS certificates for the domain.",
+  "Risk": "Without **CAA** records or without `issue`/`issuewild` tags, any certificate authority can issue certificates for your domain.\n- **Confidentiality**: unauthorized certificates enable man-in-the-middle attacks\n- **Integrity**: attackers can impersonate your domain with fraudulently obtained certificates\n- **Trust**: CA compromise or social engineering can result in unauthorized certificate issuance\n- **Missing tags**: CAA records without `issue` or `issuewild` tags (e.g., only `iodef`) do not restrict certificate issuance",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/caa-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Click Add record\n4. Select CAA as the record type\n5. Enter @ for the Name field\n6. Set flags to 0, tag to issue, and value to your authorized CA (e.g., letsencrypt.org)\n7. Click Save\n8. Optionally add issuewild records to control wildcard certificate issuance",
+      "Terraform": "```hcl\n# Create CAA record to restrict certificate issuance\nresource \"cloudflare_record\" \"caa_issue\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"@\"\n  type    = \"CAA\"\n  data {\n    flags = \"0\"\n    tag   = \"issue\"                # Restricts which CAs can issue regular certificates\n    value = \"letsencrypt.org\"      # Specify your authorized certificate authority\n  }\n}\n\n# Create CAA record to restrict wildcard certificate issuance\nresource \"cloudflare_record\" \"caa_issuewild\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"@\"\n  type    = \"CAA\"\n  data {\n    flags = \"0\"\n    tag   = \"issuewild\"            # Restricts which CAs can issue wildcard certificates\n    value = \"letsencrypt.org\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Add **CAA records** with `issue` or `issuewild` tags specifying authorized certificate authorities.\n- `issue` tag: authorizes CAs for regular (non-wildcard) certificates\n- `issuewild` tag: authorizes CAs for wildcard certificates specifically\n- Use `issue \";\"` to block all certificate issuance (for domains that should never have certificates)\n- Use `iodef` tag to receive reports of policy violations (optional, for monitoring)\n- All CAs are required to check CAA records before issuing certificates",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_record_caa_exists"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CAA records help prevent unauthorized SSL/TLS certificate issuance. This check verifies both existence and that the record contains issue or issuewild tags. Records with only iodef tag will fail this check."
+}

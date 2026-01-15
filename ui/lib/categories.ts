@@ -3,8 +3,15 @@
  * Add entries here for edge cases that heuristics can't handle.
  */
 const SPECIAL_CASES: Record<string, string> = {
-  // Add special cases here if needed, e.g.:
-  // "someweirdcase": "SomeWeirdCase",
+  // Compliance framework acronyms (4+ chars, not caught by length heuristic)
+  gdpr: "GDPR",
+  hipaa: "HIPAA",
+  nist: "NIST",
+  mitre: "MITRE",
+  fedramp: "FedRAMP",
+  ffiec: "FFIEC",
+  kisa: "KISA",
+  cisa: "CISA",
 };
 
 /**
@@ -22,14 +29,29 @@ const SPECIAL_CASES: Record<string, string> = {
  * - "ec2-imdsv1" -> "EC2 IMDSv1"
  * - "forensics-ready" -> "Forensics Ready"
  */
-export function getCategoryLabel(id: string): string {
+/**
+ * Generic label formatter that works with any delimiter.
+ * Use this for formatting IDs into human-readable labels.
+ *
+ * @param id - The ID to format
+ * @param delimiter - The delimiter to split on (default: "-")
+ */
+export function formatLabel(id: string, delimiter = "-"): string {
   return id
-    .split("-")
+    .split(delimiter)
     .map((word) => formatWord(word))
     .join(" ");
 }
 
-function formatWord(word: string): string {
+/**
+ * Converts a category ID to a human-readable label.
+ * Convenience wrapper for formatLabel with "-" delimiter.
+ */
+export function getCategoryLabel(id: string): string {
+  return formatLabel(id, "-");
+}
+
+export function formatWord(word: string): string {
   const lowerWord = word.toLowerCase();
 
   // 1. Check special cases dictionary

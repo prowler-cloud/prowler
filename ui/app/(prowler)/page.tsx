@@ -24,6 +24,7 @@ import {
 import { StatusChartSkeleton } from "./_overview/status-chart";
 import { ThreatScoreSkeleton, ThreatScoreSSR } from "./_overview/threat-score";
 import {
+  ComplianceWatchlistSSR,
   ServiceWatchlistSSR,
   WatchlistCardSkeleton,
 } from "./_overview/watchlist";
@@ -57,19 +58,30 @@ export default async function Home({
         </Suspense>
       </div>
 
-      <div className="mt-6">
-        <Suspense fallback={<AttackSurfaceSkeleton />}>
-          <AttackSurfaceSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-      </div>
-
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
-        <Suspense fallback={<WatchlistCardSkeleton />}>
-          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-        <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
-          <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
-        </Suspense>
+        {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
+        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
+          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+            <Suspense fallback={<WatchlistCardSkeleton />}>
+              <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </div>
+          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+            <Suspense fallback={<WatchlistCardSkeleton />}>
+              <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </div>
+        </div>
+
+        {/* Charts column: Attack Surface on top, Findings Over Time below */}
+        <div className="flex flex-1 flex-col gap-6">
+          <Suspense fallback={<AttackSurfaceSkeleton />}>
+            <AttackSurfaceSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+          <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
+            <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        </div>
       </div>
 
       <div className="mt-6">
