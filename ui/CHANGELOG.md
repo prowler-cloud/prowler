@@ -21,6 +21,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.16.2] (Prowler v5.16.2) (UNRELEASED)
+
+### 🐞 Fixed
+
+- OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
+
+---
+
 ## [1.16.1] (Prowler v5.16.1)
 
 ### 🔄 Changed
