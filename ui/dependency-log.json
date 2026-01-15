@@ -161,6 +161,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-scroll-area",
+    "from": "1.2.10",
+    "to": "1.2.10",
+    "strategy": "installed",
+    "generatedAt": "2025-12-10T11:34:11.122Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-select",
     "from": "2.2.5",
     "to": "2.2.5",
