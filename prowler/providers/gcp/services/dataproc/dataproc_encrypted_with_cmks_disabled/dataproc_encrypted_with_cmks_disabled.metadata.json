@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Cluster",
+  "ResourceGroup": "container",
   "Description": "When you use Dataproc, cluster and job data is stored on Persistent Disks (PDs) associated with the Compute Engine VMs in your cluster and in a Cloud Storage staging bucket. This PD and bucket data is encrypted using a Google-generated data encryption key (DEK) and key encryption key (KEK). The CMEK feature allows you to create, use, and revoke the key encryption key (KEK). Google still controls the data encryption key (DEK).",
   "Risk": "The Dataproc cluster data is encrypted using a Google-generated Data Encryption Key (DEK) and a Key Encryption Key (KEK). If you need to control and manage your cluster data encryption yourself, you can use your own Customer-Managed Keys (CMKs). Cloud KMS Customer-Managed Keys can be implemented as an additional security layer on top of existing data encryption, and are often used in the enterprise world, where compliance and security controls are very strict.",
   "RelatedUrl": "",

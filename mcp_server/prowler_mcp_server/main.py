@@ -33,8 +33,6 @@ def main():
     try:
         args = parse_arguments()
 
-        print(f"args.transport: {args.transport}")
-
         if args.transport is None:
             args.transport = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio")
         else:

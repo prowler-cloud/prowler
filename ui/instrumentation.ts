@@ -16,7 +16,14 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+const SENTRY_DSN = process.env.SENTRY_DSN;
+
 export async function register() {
+  // Skip Sentry initialization if DSN is not configured
+  if (!SENTRY_DSN) {
+    return;
+  }
+
   // The Sentry SDK automatically loads the appropriate config based on runtime
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry/sentry.server.config");
@@ -27,4 +34,7 @@ export async function register() {
   }
 }
 
-export const onRequestError = Sentry.captureRequestError;
+// Only capture request errors if Sentry is configured
+export const onRequestError = SENTRY_DSN
+  ? Sentry.captureRequestError
+  : undefined;

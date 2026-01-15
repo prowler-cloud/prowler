@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEventSchemasRegistry",
+  "ResourceGroup": "messaging",
   "Description": "**EventBridge schema registry** resource policies are assessed for **cross-account access**. It identifies statements that grant external or public principals (e.g., `Principal: *` or other accounts) permissions to interact with the registry and its schemas.",
   "Risk": "Unknown cross-account access exposes schema definitions, enabling reconnaissance and leaking data models (**confidentiality**). Excessive permissions may let outsiders alter or delete schemas, corrupt code bindings, and disrupt integrations (**integrity** and **availability**).",
   "RelatedUrl": "",

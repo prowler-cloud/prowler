@@ -1,17 +1,25 @@
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
 )
 
 from api.models import (
     ComplianceOverviewSummary,
+    Finding,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
     StateChoices,
 )
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 @pytest.fixture(scope="function")
@@ -44,6 +52,45 @@ def get_not_completed_scans(providers_fixture):
         provider_id=provider_id,
     )
     return scan_1, scan_2
+
+
+@pytest.fixture(scope="function")
+def findings_with_categories_fixture(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_categories",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="test_check",
+        check_metadata={"CheckId": "test_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    return finding
+
+
+@pytest.fixture(scope="function")
+def scan_category_summary_fixture(scans_fixture):
+    scan = scans_fixture[0]
+    return ScanCategorySummary.objects.create(
+        tenant_id=scan.tenant_id,
+        scan=scan,
+        category="existing-category",
+        severity=Severity.critical,
+        total_findings=1,
+        failed_findings=0,
+        new_failed_findings=0,
+    )
 
 
 @pytest.mark.django_db
@@ -172,3 +219,106 @@ class TestBackfillComplianceSummaries:
             assert summary.requirements_failed == expected_counts["requirements_failed"]
             assert summary.requirements_manual == expected_counts["requirements_manual"]
             assert summary.total_requirements == expected_counts["total_requirements"]
+
+
+@pytest.mark.django_db
+class TestBackfillScanCategorySummaries:
+    def test_already_backfilled(self, scan_category_summary_fixture):
+        tenant_id = scan_category_summary_fixture.tenant_id
+        scan_id = scan_category_summary_fixture.scan_id
+
+        result = backfill_scan_category_summaries(str(tenant_id), str(scan_id))
+
+        assert result == {"status": "already backfilled"}
+
+    def test_not_completed_scan(self, get_not_completed_scans):
+        for scan in get_not_completed_scans:
+            result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+            assert result == {"status": "scan is not completed"}
+
+    def test_no_categories_to_backfill(self, scans_fixture):
+        scan = scans_fixture[1]  # Failed scan with no findings
+        result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+        assert result == {"status": "no categories to backfill"}
+
+    def test_successful_backfill(self, findings_with_categories_fixture):
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        result = backfill_scan_category_summaries(tenant_id, scan_id)
+
+        # 2 categories × 1 severity = 2 rows
+        assert result == {"status": "backfilled", "categories_count": 2}
+
+        summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+        assert summaries.count() == 2
+        categories = set(summaries.values_list("category", flat=True))
+        assert categories == {"gen-ai", "security"}
+
+        for summary in summaries:
+            assert summary.severity == Severity.critical
+            assert summary.total_findings == 1
+            assert summary.failed_findings == 1
+            assert summary.new_failed_findings == 1
+
+
+@pytest.mark.django_db
+class TestBackfillProviderComplianceScores:
+    def test_no_completed_scans(self, tenants_fixture):
+        tenant = tenants_fixture[2]
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no completed scans"}
+
+    def test_no_scans_to_process(self, tenants_fixture, scans_fixture):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.completed_at = None
+        scan.save()
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no completed scans"}
+
+    @patch("tasks.jobs.backfill.psycopg_connection")
+    def test_successful_backfill_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        scans_fixture,
+        settings,
+    ):
+        """Test successful backfill executes SQL queries and returns correct stats."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Set completed_at to make the scan eligible for backfill
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 5
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+
+        assert result["status"] == "backfilled"
+        assert result["providers_processed"] == 1
+        assert result["providers_skipped"] == 0
+        assert result["total_upserted"] == 5
+        assert result["tenant_summary_count"] == 5

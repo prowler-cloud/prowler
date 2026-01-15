@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Classic Load Balancer** spans at least the configured number of **Availability Zones**.\n\nThe evaluation identifies load balancers enabled in fewer AZs than the specified minimum.",
   "Risk": "Operating in too few AZs makes the load balancer a **single point of failure**. An AZ outage or zonal degradation can cause **service unavailability**, dropped connections, and uneven capacity, undermining application **availability** and resilience and increasing recovery time.",
   "RelatedUrl": "",

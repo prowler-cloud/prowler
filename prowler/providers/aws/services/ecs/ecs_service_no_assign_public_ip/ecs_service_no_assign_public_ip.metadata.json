@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsService",
+  "ResourceGroup": "container",
   "Description": "**ECS services** are assessed for automatic public IP assignment via the `assignPublicIp` setting in their network configuration.\n\nThe finding indicates whether tasks launched by the service receive a public IP or are limited to private addressing.",
   "Risk": "Automatic **public IPs** make tasks directly reachable from the Internet, enabling:\n- Port scanning and remote exploitation\n- Brute-force against admin endpoints\n- Data exfiltration via exposed APIs\nThis jeopardizes **confidentiality**, **integrity**, and **availability**, and can facilitate lateral movement within the VPC.",
   "RelatedUrl": "",

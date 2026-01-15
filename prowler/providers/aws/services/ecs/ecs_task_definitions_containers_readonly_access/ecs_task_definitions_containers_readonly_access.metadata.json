@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
+  "ResourceGroup": "container",
   "Description": "Amazon ECS task definitions specify whether container root filesystems are **read-only** via `readonlyRootFilesystem`. Containers where this setting is absent or set to `false` effectively have write access to the root filesystem.",
   "Risk": "A **writable root filesystem** enables runtime tampering and persistence. Attackers can modify binaries or configs, drop implants, or delete critical files, degrading **integrity** and **availability**. Access to writable paths can also expose secrets and logs, eroding **confidentiality** and complicating incident response.",
   "RelatedUrl": "",

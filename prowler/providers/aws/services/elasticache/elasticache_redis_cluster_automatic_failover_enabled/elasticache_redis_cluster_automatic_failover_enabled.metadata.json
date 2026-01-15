@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**Amazon ElastiCache (Redis OSS) replication groups** have **automatic failover** set to `enabled`, allowing a replica to be promoted when the primary becomes unavailable",
   "Risk": "**Missing automatic failover** reduces **availability**: a primary or AZ outage can stop writes and require manual recovery, prolonging downtime.\n\nAs Redis replication is asynchronous, delayed promotion increases chances of **lost or stale writes**, affecting **data integrity** and causing client timeouts.",
   "RelatedUrl": "",
