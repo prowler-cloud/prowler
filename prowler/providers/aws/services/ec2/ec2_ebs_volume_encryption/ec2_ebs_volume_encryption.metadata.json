@@ -23,7 +23,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ec2 create-snapshot --volume-id <VOLUME_ID> --description \"Snapshot for encryption\" && aws ec2 copy-snapshot --source-region <REGION> --source-snapshot-id <SNAPSHOT_ID> --encrypted --description \"Encrypted snapshot\" && aws ec2 create-volume --snapshot-id <ENCRYPTED_SNAPSHOT_ID> --availability-zone <AZ> --encrypted",
       "NativeIaC": "```yaml\n# CloudFormation: Encrypted EBS volume\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::Volume\n    Properties:\n      AvailabilityZone: <example_az>\n      Size: 1\n      Encrypted: true  # CRITICAL: enables EBS encryption so the volume is created encrypted\n```",
       "Other": "1. In the AWS Console, go to EC2 > Volumes and select the unencrypted volume\n2. Choose Actions > Create snapshot and wait for it to complete\n3. Open the snapshot, click Actions > Create volume, select the same Availability Zone, and check Encrypted, then create\n4. Stop the instance using the old volume\n5. Detach the old (unencrypted) volume\n6. Attach the new encrypted volume to the instance using the same device name\n7. Start the instance\n8. Verify the new volume shows Encrypted = Yes",
       "Terraform": "```hcl\n# Encrypted EBS volume\nresource \"aws_ebs_volume\" \"<example_resource_name>\" {\n  availability_zone = \"<example_az>\"\n  size              = 1\n  encrypted         = true  # CRITICAL: ensures the volume is created encrypted\n}\n```"

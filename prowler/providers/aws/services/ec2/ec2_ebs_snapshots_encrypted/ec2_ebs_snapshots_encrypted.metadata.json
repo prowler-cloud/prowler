@@ -23,7 +23,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ec2 copy-snapshot --source-region <SOURCE_REGION> --source-snapshot-id <SNAPSHOT_ID> --encrypted --description \"Encrypted copy of <SNAPSHOT_ID>\"",
       "NativeIaC": "",
       "Other": "1. In the AWS Console, go to EC2 > Snapshots and select the unencrypted snapshot\n2. Click Actions > Copy snapshot\n3. Check Encrypt this snapshot (leave the default KMS key unless a specific key is required)\n4. Click Copy snapshot and wait for the new encrypted snapshot to be available\n5. Select the original unencrypted snapshot > Actions > Delete snapshot > Delete",
       "Terraform": "```hcl\nresource \"aws_ebs_snapshot_copy\" \"<example_resource_name>\" {\n  source_snapshot_id = \"<UNENCRYPTED_SNAPSHOT_ID>\"\n  source_region      = \"<SOURCE_REGION>\"\n  encrypted          = true  # Critical: creates an encrypted copy of the snapshot to remediate the finding\n}\n```"
