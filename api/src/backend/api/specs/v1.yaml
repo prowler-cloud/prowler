@@ -1140,8 +1140,6 @@ paths:
             - severity
             - check_id
             - check_metadata
-            - categories
-            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1154,19 +1152,6 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1264,13 +1249,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:
@@ -1310,27 +1295,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -1350,16 +1319,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -1381,7 +1348,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1411,19 +1377,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -1681,8 +1634,6 @@ paths:
             - severity
             - check_id
             - check_metadata
-            - categories
-            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1743,19 +1694,6 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1850,13 +1788,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:
@@ -1896,27 +1834,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -1936,16 +1858,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -1967,7 +1887,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1997,19 +1916,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2245,8 +2151,6 @@ paths:
             - severity
             - check_id
             - check_metadata
-            - categories
-            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -2259,19 +2163,6 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2390,27 +2281,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -2430,16 +2305,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -2461,7 +2334,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2491,19 +2363,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2721,24 +2580,9 @@ paths:
             - services
             - regions
             - resource_types
-            - categories
-            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2836,13 +2680,13 @@ paths:
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
-        description: Maximum date range is 7 days.
+        description: Maximum date range is 2 days.
       - in: query
         name: filter[muted]
         schema:
@@ -2882,27 +2726,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -2922,16 +2750,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -2953,7 +2779,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2983,19 +2808,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -3226,24 +3038,9 @@ paths:
             - services
             - regions
             - resource_types
-            - categories
-            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -3362,27 +3159,11 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -3402,16 +3183,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -3433,7 +3212,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -3463,19 +3241,6 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -5161,459 +4926,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/overviews/attack-surfaces:
-    get:
-      operationId: overviews_attack_surfaces_list
-      description: Retrieve aggregated attack surface metrics from latest completed
-        scans per provider.
-      summary: Get attack surface overview
-      parameters:
-      - in: query
-        name: fields[attack-surface-overviews]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - total_findings
-            - failed_findings
-            - muted_failed_findings
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: 684bf4173d2b754f
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: 684bf4173d2b754f
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - total_findings
-            - -total_findings
-            - failed_findings
-            - -failed_findings
-            - muted_failed_findings
-            - -muted_failed_findings
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedAttackSurfaceOverviewList'
-          description: ''
-  /api/v1/overviews/categories:
-    get:
-      operationId: overviews_categories_list
-      description: 'Retrieve aggregated category metrics from latest completed scans
-        per provider. Returns one row per category with total, failed, and new failed
-        findings counts, plus a severity breakdown showing failed findings per severity
-        level. '
-      summary: Get category overview
-      parameters:
-      - in: query
-        name: fields[category-overviews]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - total_findings
-            - failed_findings
-            - new_failed_findings
-            - severity
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[category]
-        schema:
-          type: string
-      - in: query
-        name: filter[category__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: 684bf4173d2b754f
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: 684bf4173d2b754f
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - total_findings
-            - -total_findings
-            - failed_findings
-            - -failed_findings
-            - new_failed_findings
-            - -new_failed_findings
-            - severity
-            - -severity
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedCategoryOverviewList'
-          description: ''
-  /api/v1/overviews/compliance-watchlist:
-    get:
-      operationId: overviews_compliance_watchlist_list
-      description: 'Retrieve compliance metrics with FAIL-dominant aggregation. Without
-        filters: uses pre-aggregated TenantComplianceSummary. With provider filters:
-        queries ProviderComplianceScore with FAIL-dominant logic where any FAIL in
-        a requirement marks it as failed.'
-      summary: Get compliance watchlist overview
-      parameters:
-      - in: query
-        name: fields[compliance-watchlist-overviews]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - compliance_id
-            - requirements_passed
-            - requirements_failed
-            - requirements_manual
-            - total_requirements
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - compliance_id
-            - -compliance_id
-            - requirements_passed
-            - -requirements_passed
-            - requirements_failed
-            - -requirements_failed
-            - requirements_manual
-            - -requirements_manual
-            - total_requirements
-            - -total_requirements
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedComplianceWatchlistOverviewList'
-          description: ''
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -5687,9 +4999,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5709,16 +5020,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5740,7 +5049,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -5880,9 +5188,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -5902,16 +5209,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -5933,7 +5238,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6010,160 +5314,6 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
-          description: ''
-  /api/v1/overviews/findings_severity/timeseries:
-    get:
-      operationId: overviews_findings_severity_timeseries_retrieve
-      description: Retrieve daily aggregated findings data grouped by severity levels
-        over a date range. Returns one data point per day with counts of failed findings
-        by severity (critical, high, medium, low, informational) and muted findings.
-        Days without scans are filled forward with the most recent known values. Use
-        date_from (required) and date_to filters to specify the range.
-      summary: Get findings severity data over time
-      parameters:
-      - in: query
-        name: fields[findings-severity-over-time]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - critical
-            - high
-            - medium
-            - low
-            - informational
-            - muted
-            - scan_ids
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[date_from]
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: filter[date_to]
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - critical
-            - -critical
-            - high
-            - -high
-            - medium
-            - -medium
-            - low
-            - -low
-            - informational
-            - -informational
-            - muted
-            - -muted
-            - scan_ids
-            - -scan_ids
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/FindingsSeverityOverTimeResponse'
           description: ''
   /api/v1/overviews/providers:
     get:
@@ -6295,9 +5445,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -6317,16 +5466,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -6348,7 +5495,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6408,170 +5554,6 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewRegionResponse'
-          description: ''
-  /api/v1/overviews/resource-groups:
-    get:
-      operationId: overviews_resource_groups_list
-      description: Retrieve aggregated resource group metrics from latest completed
-        scans per provider. Returns one row per resource group with total, failed,
-        and new failed findings counts, plus a severity breakdown showing failed findings
-        per severity level, and a count of distinct resources evaluated per group.
-      summary: Get resource group overview
-      parameters:
-      - in: query
-        name: fields[resource-group-overviews]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - total_findings
-            - failed_findings
-            - new_failed_findings
-            - resources_count
-            - severity
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: 684bf4173d2b754f
-          enum:
-          - alibabacloud
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: 684bf4173d2b754f
-            enum:
-            - alibabacloud
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_group]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_group__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - -id
-            - total_findings
-            - -total_findings
-            - failed_findings
-            - -failed_findings
-            - new_failed_findings
-            - -new_failed_findings
-            - resources_count
-            - -resources_count
-            - severity
-            - -severity
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResourceGroupOverviewList'
           description: ''
   /api/v1/overviews/services:
     get:
@@ -6635,9 +5617,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -6657,16 +5638,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -6688,7 +5667,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7458,9 +6436,8 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -7480,16 +6457,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -7511,16 +6486,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -7540,16 +6513,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -7571,7 +6542,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -8109,24 +7079,10 @@ paths:
             - metadata
             - details
             - partition
-            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[groups__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -8186,9 +7142,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -8208,16 +7163,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -8239,7 +7192,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -8463,7 +7415,6 @@ paths:
             - metadata
             - details
             - partition
-            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -8526,24 +7477,10 @@ paths:
             - metadata
             - details
             - partition
-            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[groups__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[name]
         schema:
@@ -8588,9 +7525,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -8610,16 +7546,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -8641,7 +7575,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -8808,23 +7741,9 @@ paths:
             - services
             - regions
             - types
-            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[groups__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -8884,9 +7803,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -8906,16 +7824,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -8937,7 +7853,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -9125,23 +8040,9 @@ paths:
             - services
             - regions
             - types
-            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: query
-        name: filter[groups]
-        schema:
-          type: string
-      - in: query
-        name: filter[groups__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - in: query
         name: filter[name]
         schema:
@@ -9186,9 +8087,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -9208,16 +8108,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -9239,7 +8137,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -10037,9 +8934,8 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
-          - alibabacloud
           - aws
           - azure
           - gcp
@@ -10059,16 +8955,14 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
-            - alibabacloud
             - aws
             - azure
             - gcp
@@ -10090,7 +8984,6 @@ paths:
           * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
-          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -12154,7 +11047,6 @@ paths:
           description: ''
 components:
   schemas:
-<<<<<<< HEAD
     AttackPathsNode:
       type: object
       required:
@@ -12185,9 +11077,6 @@ components:
           - labels
           - properties
     AttackPathsQuery:
-=======
-    AttackSurfaceOverview:
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
       type: object
       required:
       - type
@@ -12200,18 +11089,13 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-<<<<<<< HEAD
           - attack-paths-query
-=======
-          - attack-surface-overviews
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
         id: {}
         attributes:
           type: object
           properties:
             id:
               type: string
-<<<<<<< HEAD
             name:
               type: string
             description:
@@ -12229,20 +11113,6 @@ components:
           - provider
           - parameters
     AttackPathsQueryParameter:
-=======
-            total_findings:
-              type: integer
-            failed_findings:
-              type: integer
-            muted_failed_findings:
-              type: integer
-          required:
-          - id
-          - total_findings
-          - failed_findings
-          - muted_failed_findings
-    CategoryOverview:
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
       type: object
       required:
       - type
@@ -12255,16 +11125,11 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-<<<<<<< HEAD
           - attack-paths-query-parameter
-=======
-          - category-overviews
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
         id: {}
         attributes:
           type: object
           properties:
-<<<<<<< HEAD
             name:
               type: string
             label:
@@ -12525,25 +11390,6 @@ components:
           $ref: '#/components/schemas/AttackPathsScan'
       required:
       - data
-=======
-            id:
-              type: string
-            total_findings:
-              type: integer
-            failed_findings:
-              type: integer
-            new_failed_findings:
-              type: integer
-            severity:
-              description: 'Severity breakdown: {informational, low, medium, high,
-                critical}'
-          required:
-          - id
-          - total_findings
-          - failed_findings
-          - new_failed_findings
-          - severity
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
     ComplianceOverview:
       type: object
       required:
@@ -12693,43 +11539,6 @@ components:
                 type: string
           required:
           - regions
-    ComplianceWatchlistOverview:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - compliance-watchlist-overviews
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            compliance_id:
-              type: string
-            requirements_passed:
-              type: integer
-            requirements_failed:
-              type: integer
-            requirements_manual:
-              type: integer
-            total_requirements:
-              type: integer
-          required:
-          - id
-          - compliance_id
-          - requirements_passed
-          - requirements_failed
-          - requirements_manual
-          - total_requirements
     Finding:
       type: object
       required:
@@ -12797,17 +11606,6 @@ components:
               type: string
               maxLength: 100
             check_metadata: {}
-            categories:
-              type: array
-              items:
-                type: string
-                maxLength: 100
-              nullable: true
-              description: Categories from check metadata for efficient filtering
-            resource_groups:
-              type: string
-              nullable: true
-              description: Resource group from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -12958,19 +11756,10 @@ components:
               type: array
               items:
                 type: string
-            categories:
-              type: array
-              items:
-                type: string
-            groups:
-              type: array
-              items:
-                type: string
           required:
           - services
           - regions
           - resource_types
-          - categories
     FindingMetadataResponse:
       type: object
       properties:
@@ -12983,60 +11772,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Finding'
-      required:
-      - data
-    FindingsSeverityOverTime:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - findings-severity-over-time
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-              format: date
-            critical:
-              type: integer
-            high:
-              type: integer
-            medium:
-              type: integer
-            low:
-              type: integer
-            informational:
-              type: integer
-            muted:
-              type: integer
-            scan_ids:
-              type: array
-              items:
-                type: string
-                format: uuid
-          required:
-          - id
-          - critical
-          - high
-          - medium
-          - low
-          - informational
-          - muted
-          - scan_ids
-    FindingsSeverityOverTimeResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/FindingsSeverityOverTime'
       required:
       - data
     Integration:
@@ -14595,46 +13330,26 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - title: AWS Bedrock Credentials
-                oneOf:
-                - title: IAM Access Key Pair
-                  type: object
-                  description: Authenticate with AWS access key and secret key. Recommended
-                    when you manage IAM users or roles.
-                  properties:
-                    access_key_id:
-                      type: string
-                      description: AWS access key ID.
-                      pattern: ^AKIA[0-9A-Z]{16}$
-                    secret_access_key:
-                      type: string
-                      description: AWS secret access key.
-                      pattern: ^[A-Za-z0-9/+=]{40}$
-                    region:
-                      type: string
-                      description: 'AWS region identifier where Bedrock is available.
-                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                      pattern: ^[a-z]{2}-[a-z]+-\d+$
-                  required:
-                  - access_key_id
-                  - secret_access_key
-                  - region
-                - title: Amazon Bedrock API Key
-                  type: object
-                  description: Authenticate with an Amazon Bedrock API key (bearer
-                    token). Region is still required.
-                  properties:
-                    api_key:
-                      type: string
-                      description: Amazon Bedrock API key (bearer token).
-                    region:
-                      type: string
-                      description: 'AWS region identifier where Bedrock is available.
-                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                      pattern: ^[a-z]{2}-[a-z]+-\d+$
-                  required:
-                  - api_key
-                  - region
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -14702,46 +13417,26 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - title: AWS Bedrock Credentials
-                    oneOf:
-                    - title: IAM Access Key Pair
-                      type: object
-                      description: Authenticate with AWS access key and secret key.
-                        Recommended when you manage IAM users or roles.
-                      properties:
-                        access_key_id:
-                          type: string
-                          description: AWS access key ID.
-                          pattern: ^AKIA[0-9A-Z]{16}$
-                        secret_access_key:
-                          type: string
-                          description: AWS secret access key.
-                          pattern: ^[A-Za-z0-9/+=]{40}$
-                        region:
-                          type: string
-                          description: 'AWS region identifier where Bedrock is available.
-                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                          pattern: ^[a-z]{2}-[a-z]+-\d+$
-                      required:
-                      - access_key_id
-                      - secret_access_key
-                      - region
-                    - title: Amazon Bedrock API Key
-                      type: object
-                      description: Authenticate with an Amazon Bedrock API key (bearer
-                        token). Region is still required.
-                      properties:
-                        api_key:
-                          type: string
-                          description: Amazon Bedrock API key (bearer token).
-                        region:
-                          type: string
-                          description: 'AWS region identifier where Bedrock is available.
-                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                          pattern: ^[a-z]{2}-[a-z]+-\d+$
-                      required:
-                      - api_key
-                      - region
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:
@@ -14827,46 +13522,26 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - title: AWS Bedrock Credentials
-                oneOf:
-                - title: IAM Access Key Pair
-                  type: object
-                  description: Authenticate with AWS access key and secret key. Recommended
-                    when you manage IAM users or roles.
-                  properties:
-                    access_key_id:
-                      type: string
-                      description: AWS access key ID.
-                      pattern: ^AKIA[0-9A-Z]{16}$
-                    secret_access_key:
-                      type: string
-                      description: AWS secret access key.
-                      pattern: ^[A-Za-z0-9/+=]{40}$
-                    region:
-                      type: string
-                      description: 'AWS region identifier where Bedrock is available.
-                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                      pattern: ^[a-z]{2}-[a-z]+-\d+$
-                  required:
-                  - access_key_id
-                  - secret_access_key
-                  - region
-                - title: Amazon Bedrock API Key
-                  type: object
-                  description: Authenticate with an Amazon Bedrock API key (bearer
-                    token). Region is still required.
-                  properties:
-                    api_key:
-                      type: string
-                      description: Amazon Bedrock API key (bearer token).
-                    region:
-                      type: string
-                      description: 'AWS region identifier where Bedrock is available.
-                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                      pattern: ^[a-z]{2}-[a-z]+-\d+$
-                  required:
-                  - api_key
-                  - region
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -15673,37 +14348,22 @@ components:
           $ref: '#/components/schemas/OverviewSeverity'
       required:
       - data
-<<<<<<< HEAD
     PaginatedAttackPathsQueryList:
-=======
-    PaginatedAttackSurfaceOverviewList:
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
       type: object
       properties:
         data:
           type: array
           items:
-<<<<<<< HEAD
             $ref: '#/components/schemas/AttackPathsQuery'
       required:
       - data
     PaginatedAttackPathsScanList:
-=======
-            $ref: '#/components/schemas/AttackSurfaceOverview'
-      required:
-      - data
-    PaginatedCategoryOverviewList:
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
       type: object
       properties:
         data:
           type: array
           items:
-<<<<<<< HEAD
             $ref: '#/components/schemas/AttackPathsScan'
-=======
-            $ref: '#/components/schemas/CategoryOverview'
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
       required:
       - data
     PaginatedComplianceOverviewAttributesList:
@@ -15731,15 +14391,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ComplianceOverview'
-      required:
-      - data
-    PaginatedComplianceWatchlistOverviewList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplianceWatchlistOverview'
       required:
       - data
     PaginatedFindingList:
@@ -15857,15 +14508,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderSecret'
-      required:
-      - data
-    PaginatedResourceGroupOverviewList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceGroupOverview'
       required:
       - data
     PaginatedResourceList:
@@ -16340,46 +14982,26 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - title: AWS Bedrock Credentials
-                    oneOf:
-                    - title: IAM Access Key Pair
-                      type: object
-                      description: Authenticate with AWS access key and secret key.
-                        Recommended when you manage IAM users or roles.
-                      properties:
-                        access_key_id:
-                          type: string
-                          description: AWS access key ID.
-                          pattern: ^AKIA[0-9A-Z]{16}$
-                        secret_access_key:
-                          type: string
-                          description: AWS secret access key.
-                          pattern: ^[A-Za-z0-9/+=]{40}$
-                        region:
-                          type: string
-                          description: 'AWS region identifier where Bedrock is available.
-                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                          pattern: ^[a-z]{2}-[a-z]+-\d+$
-                      required:
-                      - access_key_id
-                      - secret_access_key
-                      - region
-                    - title: Amazon Bedrock API Key
-                      type: object
-                      description: Authenticate with an Amazon Bedrock API key (bearer
-                        token). Region is still required.
-                      properties:
-                        api_key:
-                          type: string
-                          description: Amazon Bedrock API key (bearer token).
-                        region:
-                          type: string
-                          description: 'AWS region identifier where Bedrock is available.
-                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                          pattern: ^[a-z]{2}-[a-z]+-\d+$
-                      required:
-                      - api_key
-                      - region
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:
@@ -16991,44 +15613,6 @@ components:
                     required:
                     - atlas_public_key
                     - atlas_private_key
-                  - type: object
-                    title: Alibaba Cloud Static Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: The Alibaba Cloud access key ID for authentication.
-                      access_key_secret:
-                        type: string
-                        description: The Alibaba Cloud access key secret for authentication.
-                      security_token:
-                        type: string
-                        description: The STS security token for temporary credentials
-                          (optional).
-                    required:
-                    - access_key_id
-                    - access_key_secret
-                  - type: object
-                    title: Alibaba Cloud RAM Role Assumption
-                    properties:
-                      role_arn:
-                        type: string
-                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
-                      access_key_id:
-                        type: string
-                        description: The Alibaba Cloud access key ID of the RAM user
-                          that will assume the role.
-                      access_key_secret:
-                        type: string
-                        description: The Alibaba Cloud access key secret of the RAM
-                          user that will assume the role.
-                      role_session_name:
-                        type: string
-                        description: An identifier for the role session (optional,
-                          defaults to 'ProwlerSession').
-                    required:
-                    - role_arn
-                    - access_key_id
-                    - access_key_secret
                   writeOnly: true
               required:
               - secret
@@ -18026,7 +16610,6 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
-              - alibabacloud
               type: string
               description: |-
                 * `aws` - AWS
@@ -18038,8 +16621,7 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
-                * `alibabacloud` - Alibaba Cloud
-              x-spec-enum-id: 684bf4173d2b754f
+              x-spec-enum-id: eca8c51e6bd28935
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18154,9 +16736,8 @@ components:
               - mongodbatlas
               - iac
               - oraclecloud
-              - alibabacloud
               type: string
-              x-spec-enum-id: 684bf4173d2b754f
+              x-spec-enum-id: eca8c51e6bd28935
               description: |-
                 Type of provider to create.
 
@@ -18169,7 +16750,6 @@ components:
                 * `mongodbatlas` - MongoDB Atlas
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
-                * `alibabacloud` - Alibaba Cloud
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18216,9 +16796,8 @@ components:
                   - mongodbatlas
                   - iac
                   - oraclecloud
-                  - alibabacloud
                   type: string
-                  x-spec-enum-id: 684bf4173d2b754f
+                  x-spec-enum-id: eca8c51e6bd28935
                   description: |-
                     Type of provider to create.
 
@@ -18231,7 +16810,6 @@ components:
                     * `mongodbatlas` - MongoDB Atlas
                     * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
-                    * `alibabacloud` - Alibaba Cloud
                 uid:
                   type: string
                   minLength: 3
@@ -18994,44 +17572,6 @@ components:
                 required:
                 - atlas_public_key
                 - atlas_private_key
-              - type: object
-                title: Alibaba Cloud Static Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: The Alibaba Cloud access key ID for authentication.
-                  access_key_secret:
-                    type: string
-                    description: The Alibaba Cloud access key secret for authentication.
-                  security_token:
-                    type: string
-                    description: The STS security token for temporary credentials
-                      (optional).
-                required:
-                - access_key_id
-                - access_key_secret
-              - type: object
-                title: Alibaba Cloud RAM Role Assumption
-                properties:
-                  role_arn:
-                    type: string
-                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
-                  access_key_id:
-                    type: string
-                    description: The Alibaba Cloud access key ID of the RAM user that
-                      will assume the role.
-                  access_key_secret:
-                    type: string
-                    description: The Alibaba Cloud access key secret of the RAM user
-                      that will assume the role.
-                  role_session_name:
-                    type: string
-                    description: An identifier for the role session (optional, defaults
-                      to 'ProwlerSession').
-                required:
-                - role_arn
-                - access_key_id
-                - access_key_secret
               writeOnly: true
           required:
           - secret_type
@@ -19357,44 +17897,6 @@ components:
                     required:
                     - atlas_public_key
                     - atlas_private_key
-                  - type: object
-                    title: Alibaba Cloud Static Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: The Alibaba Cloud access key ID for authentication.
-                      access_key_secret:
-                        type: string
-                        description: The Alibaba Cloud access key secret for authentication.
-                      security_token:
-                        type: string
-                        description: The STS security token for temporary credentials
-                          (optional).
-                    required:
-                    - access_key_id
-                    - access_key_secret
-                  - type: object
-                    title: Alibaba Cloud RAM Role Assumption
-                    properties:
-                      role_arn:
-                        type: string
-                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
-                      access_key_id:
-                        type: string
-                        description: The Alibaba Cloud access key ID of the RAM user
-                          that will assume the role.
-                      access_key_secret:
-                        type: string
-                        description: The Alibaba Cloud access key secret of the RAM
-                          user that will assume the role.
-                      role_session_name:
-                        type: string
-                        description: An identifier for the role session (optional,
-                          defaults to 'ProwlerSession').
-                    required:
-                    - role_arn
-                    - access_key_id
-                    - access_key_secret
                   writeOnly: true
               required:
               - secret_type
@@ -19734,44 +18236,6 @@ components:
                 required:
                 - atlas_public_key
                 - atlas_private_key
-              - type: object
-                title: Alibaba Cloud Static Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: The Alibaba Cloud access key ID for authentication.
-                  access_key_secret:
-                    type: string
-                    description: The Alibaba Cloud access key secret for authentication.
-                  security_token:
-                    type: string
-                    description: The STS security token for temporary credentials
-                      (optional).
-                required:
-                - access_key_id
-                - access_key_secret
-              - type: object
-                title: Alibaba Cloud RAM Role Assumption
-                properties:
-                  role_arn:
-                    type: string
-                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
-                  access_key_id:
-                    type: string
-                    description: The Alibaba Cloud access key ID of the RAM user that
-                      will assume the role.
-                  access_key_secret:
-                    type: string
-                    description: The Alibaba Cloud access key secret of the RAM user
-                      that will assume the role.
-                  role_session_name:
-                    type: string
-                    description: An identifier for the role session (optional, defaults
-                      to 'ProwlerSession').
-                required:
-                - role_arn
-                - access_key_id
-                - access_key_secret
               writeOnly: true
           required:
           - secret
@@ -19872,14 +18336,6 @@ components:
               type: string
               readOnly: true
               nullable: true
-            groups:
-              type: array
-              items:
-                type: string
-                maxLength: 100
-              readOnly: true
-              nullable: true
-              description: Groups for categorization (e.g., compute, storage, IAM)
             type:
               type: string
               readOnly: true
@@ -19941,44 +18397,6 @@ components:
               readOnly: true
           required:
           - provider
-    ResourceGroupOverview:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - resource-group-overviews
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            total_findings:
-              type: integer
-            failed_findings:
-              type: integer
-            new_failed_findings:
-              type: integer
-            resources_count:
-              type: integer
-            severity:
-              description: 'Severity breakdown: {informational, low, medium, high,
-                critical}'
-          required:
-          - id
-          - total_findings
-          - failed_findings
-          - new_failed_findings
-          - resources_count
-          - severity
     ResourceMetadata:
       type: object
       required:
@@ -20009,15 +18427,10 @@ components:
               type: array
               items:
                 type: string
-            groups:
-              type: array
-              items:
-                type: string
           required:
           - services
           - regions
           - types
-          - groups
     ResourceMetadataResponse:
       type: object
       properties:
