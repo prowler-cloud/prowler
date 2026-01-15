@@ -1003,10 +1003,8 @@ export class ProvidersPage extends BasePage {
     });
     await expect(row).toBeVisible();
 
-    // Click the dropdown trigger (vertical dots button)
-    const actionsButton = row.locator("button").filter({
-      has: this.page.locator("svg"),
-    });
+    // Click the dropdown trigger (has aria-haspopup attribute to distinguish from copy button)
+    const actionsButton = row.locator('button[aria-haspopup="true"]');
     await actionsButton.click();
   }
 
