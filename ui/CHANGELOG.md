@@ -14,6 +14,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Refactor Lighthouse AI MCP tool filtering from blacklist to whitelist approach for improved security [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Swap Risk Plot axes: X = Fail Findings, Y = Prowler ThreatScore [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
