@@ -733,19 +733,15 @@ class TestGenerateOutputs:
 
 
 class TestScanCompleteTasks:
-<<<<<<< HEAD
-    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
-    @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
-=======
     @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.create_compliance_requirements_task.si")
     @patch("tasks.tasks.update_provider_compliance_scores_task.si")
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_compliance_reports_task.si")
     @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
     def test_scan_complete_tasks(
         self,
         mock_check_integrations_task,
@@ -754,12 +750,9 @@ class TestScanCompleteTasks:
         mock_scan_summary_task,
         mock_update_compliance_scores_task,
         mock_compliance_requirements_task,
-<<<<<<< HEAD
-        mock_attack_paths_task,
-=======
         mock_chain,
         mock_attack_surface_task,
->>>>>>> 1bf49747adaefcb19db66274478f6933342112c1
+        mock_attack_paths_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
@@ -806,6 +799,7 @@ class TestScanCompleteTasks:
             scan_id="scan-id",
         )
 
+        # Verify Attack Paths task is called
         mock_attack_paths_task.assert_called_once_with(
             kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"}
         )

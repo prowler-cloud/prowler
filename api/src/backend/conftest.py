@@ -58,7 +58,10 @@ from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
-from tasks.jobs.backfill import backfill_resource_scan_summaries, backfill_scan_category_summaries
+from tasks.jobs.backfill import (
+    backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+)
 
 TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
