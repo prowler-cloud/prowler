@@ -12,7 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
 - Add Provider and Group filters to Resources page [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
 - Compliance Watchlist component in Overview page [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
-- Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#)](https://github.com/prowler-cloud/prowler/pull/)
+- Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
 
 ### 🔄 Changed
 
