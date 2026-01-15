@@ -10,7 +10,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0067_tenant_compliance_summary"),
+        ("api", "0069_resource_resource_group"),
     ]
 
     operations = [
