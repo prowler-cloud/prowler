@@ -704,6 +704,12 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
+    groups = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Groups for categorization (e.g., compute, storage, IAM)",
+    )
 
     failed_findings_count = models.IntegerField(default=0)
 
@@ -889,6 +895,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         blank=True,
         null=True,
         help_text="Categories from check metadata for efficient filtering",
+    )
+    resource_groups = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Resource group from check metadata for efficient filtering",
     )
 
     # Relationships
@@ -2030,6 +2041,67 @@ class ScanCategorySummary(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scan-category-summaries"
+
+
+class ScanGroupSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated resource group metrics per scan by severity.
+
+    Stores one row per (resource_group, severity) combination per scan for efficient
+    overview queries. Resource groups come from check_metadata.Group.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="resource_group_summaries",
+        related_query_name="resource_group_summary",
+    )
+
+    resource_group = models.CharField(max_length=50)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+    resources_count = models.IntegerField(
+        default=0, help_text="Count of distinct resource_uid values"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_resource_group_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="srgs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
+                name="unique_resource_group_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-resource-group-summaries"
 
 
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):
