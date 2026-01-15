@@ -1,9 +1,7 @@
-from typing import Optional
 from unittest import mock
 
-from pydantic import BaseModel
-
 from prowler.providers.cloudflare.services.zone.zone_service import (
+    CloudflareRateLimitRule,
     CloudflareZone,
     CloudflareZoneSettings,
 )
@@ -14,27 +12,10 @@ from tests.providers.cloudflare.cloudflare_fixtures import (
 )
 
 
-class CloudflareFirewallRule(BaseModel):
-    """Cloudflare firewall rule representation for testing."""
-
-    id: Optional[str] = None
-    zone_id: str
-    zone_name: str
-    ruleset_id: Optional[str] = None
-    phase: Optional[str] = None
-    action: Optional[str] = None
-    expression: Optional[str] = None
-    description: Optional[str] = None
-    enabled: bool = True
-
-
 class Test_zone_rate_limiting_enabled:
     def test_no_zones(self):
         zone_client = mock.MagicMock
         zone_client.zones = {}
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = []
 
         with (
             mock.patch(
@@ -44,10 +25,6 @@ class Test_zone_rate_limiting_enabled:
             mock.patch(
                 "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
                 new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
             ),
         ):
             from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
@@ -67,22 +44,17 @@ class Test_zone_rate_limiting_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(),
+                rate_limit_rules=[
+                    CloudflareRateLimitRule(
+                        id="rule-1",
+                        description="API Rate Limit",
+                        action="block",
+                        enabled=True,
+                        expression="(http.request.uri.path contains '/api/')",
+                    )
+                ],
             )
         }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = [
-            CloudflareFirewallRule(
-                id="rule-1",
-                zone_id=ZONE_ID,
-                zone_name=ZONE_NAME,
-                ruleset_id="ruleset-1",
-                phase="http_ratelimit",
-                action="block",
-                expression="(http.request.uri.path contains '/api/')",
-                enabled=True,
-            )
-        ]
 
         with (
             mock.patch(
@@ -92,10 +64,6 @@ class Test_zone_rate_limiting_enabled:
             mock.patch(
                 "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
                 new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
             ),
         ):
             from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
@@ -109,7 +77,6 @@ class Test_zone_rate_limiting_enabled:
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
             assert "Rate limiting is configured" in result[0].status_extended
-            assert "1 rule(s)" in result[0].status_extended
 
     def test_zone_with_multiple_rate_limiting_rules(self):
         zone_client = mock.MagicMock
@@ -120,26 +87,20 @@ class Test_zone_rate_limiting_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(),
+                rate_limit_rules=[
+                    CloudflareRateLimitRule(
+                        id="rule-1",
+                        description="API Rate Limit",
+                        enabled=True,
+                    ),
+                    CloudflareRateLimitRule(
+                        id="rule-2",
+                        description="Login Rate Limit",
+                        enabled=True,
+                    ),
+                ],
             )
         }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = [
-            CloudflareFirewallRule(
-                id="rule-1",
-                zone_id=ZONE_ID,
-                zone_name=ZONE_NAME,
-                phase="http_ratelimit",
-                enabled=True,
-            ),
-            CloudflareFirewallRule(
-                id="rule-2",
-                zone_id=ZONE_ID,
-                zone_name=ZONE_NAME,
-                phase="http_ratelimit",
-                enabled=True,
-            ),
-        ]
 
         with (
             mock.patch(
@@ -149,10 +110,6 @@ class Test_zone_rate_limiting_enabled:
             mock.patch(
                 "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
                 new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
             ),
         ):
             from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
@@ -163,7 +120,6 @@ class Test_zone_rate_limiting_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "2 rule(s)" in result[0].status_extended
 
     def test_zone_without_rate_limiting_rules(self):
         zone_client = mock.MagicMock
@@ -174,11 +130,9 @@ class Test_zone_rate_limiting_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(),
+                rate_limit_rules=[],
             )
         }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = []
 
         with (
             mock.patch(
@@ -188,10 +142,6 @@ class Test_zone_rate_limiting_enabled:
             mock.patch(
                 "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
                 new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
             ),
         ):
             from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
@@ -213,19 +163,15 @@ class Test_zone_rate_limiting_enabled:
                 status="active",
                 paused=False,
                 settings=CloudflareZoneSettings(),
+                rate_limit_rules=[
+                    CloudflareRateLimitRule(
+                        id="rule-1",
+                        description="Disabled Rule",
+                        enabled=False,
+                    )
+                ],
             )
         }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = [
-            CloudflareFirewallRule(
-                id="rule-1",
-                zone_id=ZONE_ID,
-                zone_name=ZONE_NAME,
-                phase="http_ratelimit",
-                enabled=False,  # Disabled
-            )
-        ]
 
         with (
             mock.patch(
@@ -235,102 +181,6 @@ class Test_zone_rate_limiting_enabled:
             mock.patch(
                 "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
                 new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
-                zone_rate_limiting_enabled,
-            )
-
-            check = zone_rate_limiting_enabled()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-
-    def test_zone_with_different_phase_rules(self):
-        zone_client = mock.MagicMock
-        zone_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                status="active",
-                paused=False,
-                settings=CloudflareZoneSettings(),
-            )
-        }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = [
-            CloudflareFirewallRule(
-                id="rule-1",
-                zone_id=ZONE_ID,
-                zone_name=ZONE_NAME,
-                phase="http_request_firewall_custom",  # Different phase
-                enabled=True,
-            )
-        ]
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
-                new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (
-                zone_rate_limiting_enabled,
-            )
-
-            check = zone_rate_limiting_enabled()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-
-    def test_zone_with_rate_limiting_rules_for_different_zone(self):
-        zone_client = mock.MagicMock
-        zone_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                status="active",
-                paused=False,
-                settings=CloudflareZoneSettings(),
-            )
-        }
-
-        firewall_client = mock.MagicMock
-        firewall_client.rules = [
-            CloudflareFirewallRule(
-                id="rule-1",
-                zone_id="other-zone-id",
-                zone_name="other.com",
-                phase="http_ratelimit",
-                enabled=True,
-            )
-        ]
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.zone_client",
-                new=zone_client,
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled.firewall_client",
-                new=firewall_client,
             ),
         ):
             from prowler.providers.cloudflare.services.zone.zone_rate_limiting_enabled.zone_rate_limiting_enabled import (

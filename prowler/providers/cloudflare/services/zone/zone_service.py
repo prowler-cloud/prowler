@@ -7,6 +7,16 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 from prowler.providers.cloudflare.models import CloudflareAccount
 
 
+class CloudflareRateLimitRule(BaseModel):
+    """Cloudflare rate limiting rule representation."""
+
+    id: str
+    description: Optional[str] = None
+    action: Optional[str] = None
+    enabled: bool = True
+    expression: Optional[str] = None
+
+
 class Zone(CloudflareService):
     """Retrieve Cloudflare zones with security-relevant settings."""
 
@@ -17,6 +27,8 @@ class Zone(CloudflareService):
         self._get_zones_settings()
         self._get_zones_dnssec()
         self._get_zones_universal_ssl()
+        self._get_zones_rate_limit_rules()
+        self._get_zones_bot_management()
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -116,6 +128,63 @@ class Zone(CloudflareService):
                 universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
                 zone.settings.universal_ssl_enabled = getattr(
                     universal_ssl, "enabled", False
+                )
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zones_rate_limit_rules(self) -> None:
+        """Get rate limiting rules for all zones."""
+        logger.info("Zone - Getting rate limit rules...")
+        for zone in self.zones.values():
+            try:
+                seen_ruleset_ids: set[str] = set()
+                for ruleset in self.client.rulesets.list(zone_id=zone.id):
+                    ruleset_id = getattr(ruleset, "id", "")
+                    if ruleset_id in seen_ruleset_ids:
+                        break
+                    seen_ruleset_ids.add(ruleset_id)
+
+                    phase = getattr(ruleset, "phase", "")
+                    if phase == "http_ratelimit":
+                        try:
+                            ruleset_detail = self.client.rulesets.get(
+                                ruleset_id=ruleset_id, zone_id=zone.id
+                            )
+                            rules = getattr(ruleset_detail, "rules", []) or []
+                            seen_rule_ids: set[str] = set()
+                            for rule in rules:
+                                rule_id = getattr(rule, "id", "")
+                                if rule_id in seen_rule_ids:
+                                    break
+                                seen_rule_ids.add(rule_id)
+                                zone.rate_limit_rules.append(
+                                    CloudflareRateLimitRule(
+                                        id=rule_id,
+                                        description=getattr(rule, "description", None),
+                                        action=getattr(rule, "action", None),
+                                        enabled=getattr(rule, "enabled", True),
+                                        expression=getattr(rule, "expression", None),
+                                    )
+                                )
+                        except Exception as error:
+                            logger.debug(
+                                f"{zone.id} ruleset {ruleset_id} -- {error.__class__.__name__}: {error}"
+                            )
+            except Exception as error:
+                logger.error(
+                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_zones_bot_management(self) -> None:
+        """Get Bot Management settings for all zones."""
+        logger.info("Zone - Getting Bot Management settings...")
+        for zone in self.zones.values():
+            try:
+                bot_management = self.client.bot_management.get(zone_id=zone.id)
+                zone.settings.bot_fight_mode_enabled = getattr(
+                    bot_management, "fight_mode", False
                 )
             except Exception as error:
                 logger.error(
@@ -256,3 +325,4 @@ class CloudflareZone(BaseModel):
     plan: Optional[str] = None
     settings: CloudflareZoneSettings = Field(default_factory=CloudflareZoneSettings)
     dnssec_status: Optional[str] = None
+    rate_limit_rules: list[CloudflareRateLimitRule] = Field(default_factory=list)
