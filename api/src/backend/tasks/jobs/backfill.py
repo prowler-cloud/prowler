@@ -2,13 +2,13 @@ from collections import defaultdict
 from datetime import timedelta
 
 from celery.utils.log import get_task_logger
-from django.db.models import Sum
+from django.db.models import OuterRef, Subquery, Sum
 from django.utils import timezone
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
 )
-from tasks.jobs.scan import aggregate_category_counts
+from tasks.jobs.scan import aggregate_category_counts, aggregate_resource_group_counts
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
@@ -28,6 +28,7 @@ from api.models import (
     ResourceScanSummary,
     Scan,
     ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
 )
@@ -354,6 +355,92 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         )
 
     return {"status": "backfilled", "categories_count": len(category_counts)}
+
+
+def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanGroupSummary for a completed scan.
+
+    Aggregates resource group counts from all findings in the scan and creates
+    one ScanGroupSummary row per (resource_group, severity) combination.
+
+    Args:
+        tenant_id: Target tenant UUID
+        scan_id: Scan UUID to backfill
+
+    Returns:
+        dict: Status indicating whether backfill was performed
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists():
+            return {"status": "already backfilled"}
+
+        if not Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state__in=(StateChoices.COMPLETED, StateChoices.FAILED),
+        ).exists():
+            return {"status": "scan is not completed"}
+
+        resource_group_counts: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+        # Get findings with their first resource UID via annotation
+        resource_uid_subquery = ResourceFindingMapping.objects.filter(
+            finding_id=OuterRef("id"), tenant_id=tenant_id
+        ).values("resource__uid")[:1]
+
+        for finding in (
+            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .annotate(resource_uid=Subquery(resource_uid_subquery))
+            .values(
+                "resource_groups",
+                "severity",
+                "status",
+                "delta",
+                "muted",
+                "resource_uid",
+            )
+        ):
+            aggregate_resource_group_counts(
+                resource_group=finding.get("resource_groups"),
+                severity=finding.get("severity"),
+                status=finding.get("status"),
+                delta=finding.get("delta"),
+                muted=finding.get("muted", False),
+                resource_uid=finding.get("resource_uid") or "",
+                cache=resource_group_counts,
+                group_resources_cache=group_resources_cache,
+            )
+
+        if not resource_group_counts:
+            return {"status": "no resource groups to backfill"}
+
+    # Compute group-level resource counts (same value for all severity rows in a group)
+    group_resource_counts = {
+        grp: len(uids) for grp, uids in group_resources_cache.items()
+    }
+    resource_group_summaries = [
+        ScanGroupSummary(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_group=grp,
+            severity=severity,
+            total_findings=counts["total"],
+            failed_findings=counts["failed"],
+            new_failed_findings=counts["new_failed"],
+            resources_count=group_resource_counts.get(grp, 0),
+        )
+        for (grp, severity), counts in resource_group_counts.items()
+    ]
+
+    with rls_transaction(tenant_id):
+        ScanGroupSummary.objects.bulk_create(
+            resource_group_summaries, batch_size=500, ignore_conflicts=True
+        )
+
+    return {"status": "backfilled", "resource_groups_count": len(resource_group_counts)}
 
 
 def backfill_provider_compliance_scores(tenant_id: str) -> dict:

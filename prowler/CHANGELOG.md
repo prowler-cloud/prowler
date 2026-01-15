@@ -52,6 +52,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS IAM service metadata to new format [(#9550)](https://github.com/prowler-cloud/prowler/pull/9550)
 - Enhance `user_registration_details` perfomance and user `mfa` evaluation [(#9236)](https://github.com/prowler-cloud/prowler/pull/9236)
 - Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
+- Update AWS EC2 service metadata to new format [(#9549)](https://github.com/prowler-cloud/prowler/pull/9549)
 
 ---
 

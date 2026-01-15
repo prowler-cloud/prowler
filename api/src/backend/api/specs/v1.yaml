@@ -712,6 +712,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -989,6 +990,19 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_name]
         schema:
           type: string
@@ -1239,6 +1253,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1561,6 +1576,19 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_name]
         schema:
           type: string
@@ -1789,6 +1817,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -2041,6 +2070,19 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_name]
         schema:
           type: string
@@ -2251,6 +2293,7 @@ paths:
             - regions
             - resource_types
             - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2519,6 +2562,19 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_name]
         schema:
           type: string
@@ -2742,6 +2798,7 @@ paths:
             - regions
             - resource_types
             - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2977,6 +3034,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -4968,12 +5038,12 @@ paths:
           description: ''
   /api/v1/overviews/compliance-watchlist:
     get:
-      operationId: overviews_compliance_watchlist_retrieve
-      description: |-
-        Get compliance watchlist overview with FAIL-dominant aggregation.
-
-        Without filters: uses pre-aggregated TenantComplianceSummary (~70 rows).
-        With provider filters: queries ProviderComplianceScore with FAIL-dominant logic.
+      operationId: overviews_compliance_watchlist_list
+      description: 'Retrieve compliance metrics with FAIL-dominant aggregation. Without
+        filters: uses pre-aggregated TenantComplianceSummary. With provider filters:
+        queries ProviderComplianceScore with FAIL-dominant logic where any FAIL in
+        a requirement marks it as failed.'
+      summary: Get compliance watchlist overview
       parameters:
       - in: query
         name: fields[compliance-watchlist-overviews]
@@ -4991,6 +5061,119 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - compliance_id
+            - -compliance_id
+            - requirements_passed
+            - -requirements_passed
+            - requirements_failed
+            - -requirements_failed
+            - requirements_manual
+            - -requirements_manual
+            - total_requirements
+            - -total_requirements
+        explode: false
       tags:
       - Overview
       security:
@@ -5000,7 +5183,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ComplianceWatchlistOverviewResponse'
+                $ref: '#/components/schemas/PaginatedComplianceWatchlistOverviewList'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -5796,6 +5979,170 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewRegionResponse'
+          description: ''
+  /api/v1/overviews/resource-groups:
+    get:
+      operationId: overviews_resource_groups_list
+      description: Retrieve aggregated resource group metrics from latest completed
+        scans per provider. Returns one row per resource group with total, failed,
+        and new failed findings counts, plus a severity breakdown showing failed findings
+        per severity level, and a count of distinct resources evaluated per group.
+      summary: Get resource group overview
+      parameters:
+      - in: query
+        name: fields[resource-group-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - resources_count
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_group]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - resources_count
+            - -resources_count
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceGroupOverviewList'
           description: ''
   /api/v1/overviews/services:
     get:
@@ -7333,10 +7680,24 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -7673,6 +8034,7 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7735,10 +8097,24 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -8003,9 +8379,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -8306,9 +8696,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -11573,13 +11977,6 @@ components:
           - requirements_failed
           - requirements_manual
           - total_requirements
-    ComplianceWatchlistOverviewResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ComplianceWatchlistOverview'
-      required:
-      - data
     Finding:
       type: object
       required:
@@ -11654,6 +12051,10 @@ components:
                 maxLength: 100
               nullable: true
               description: Categories from check metadata for efficient filtering
+            resource_groups:
+              type: string
+              nullable: true
+              description: Resource group from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -11805,6 +12206,10 @@ components:
               items:
                 type: string
             categories:
+              type: array
+              items:
+                type: string
+            groups:
               type: array
               items:
                 type: string
@@ -14560,6 +14965,15 @@ components:
             $ref: '#/components/schemas/ComplianceOverview'
       required:
       - data
+    PaginatedComplianceWatchlistOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceWatchlistOverview'
+      required:
+      - data
     PaginatedFindingList:
       type: object
       properties:
@@ -14675,6 +15089,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderSecret'
+      required:
+      - data
+    PaginatedResourceGroupOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceGroupOverview'
       required:
       - data
     PaginatedResourceList:
@@ -18681,6 +19104,14 @@ components:
               type: string
               readOnly: true
               nullable: true
+            groups:
+              type: array
+              items:
+                type: string
+                maxLength: 100
+              readOnly: true
+              nullable: true
+              description: Groups for categorization (e.g., compute, storage, IAM)
             type:
               type: string
               readOnly: true
@@ -18742,6 +19173,44 @@ components:
               readOnly: true
           required:
           - provider
+    ResourceGroupOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-group-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            resources_count:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - resources_count
+          - severity
     ResourceMetadata:
       type: object
       required:
@@ -18772,10 +19241,15 @@ components:
               type: array
               items:
                 type: string
+            groups:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - types
+          - groups
     ResourceMetadataResponse:
       type: object
       properties:
