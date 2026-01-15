@@ -1,7 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
-
 import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";

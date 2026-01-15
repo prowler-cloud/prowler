@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
