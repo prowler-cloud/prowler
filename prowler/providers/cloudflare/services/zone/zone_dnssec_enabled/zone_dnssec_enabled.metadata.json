@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Zone",
+  "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **DNSSEC** configuration by checking if it is enabled to **cryptographically sign DNS responses** and protect against DNS spoofing and cache poisoning attacks.",
   "Risk": "Without **DNSSEC**, DNS responses can be spoofed or modified by attackers.\n- **Confidentiality**: users can be redirected to malicious sites that harvest credentials\n- **Integrity**: DNS hijacking enables man-in-the-middle attacks and content modification\n- **Availability**: cache poisoning can cause denial of service by directing traffic to non-existent servers",
   "RelatedUrl": "",

@@ -14,6 +14,7 @@ from rest_framework.test import APIClient
 from tasks.jobs.backfill import (
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
 )
 
 from api.db_utils import rls_transaction
@@ -41,6 +42,7 @@ from api.models import (
     SAMLDomainIndex,
     Scan,
     ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -739,6 +741,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="prowler-test",
+        groups=["compute"],
     )
 
     resource1.upsert_or_delete_tags(tags)
@@ -751,6 +754,7 @@ def resources_fixture(providers_fixture):
         region="eu-west-1",
         service="s3",
         type="prowler-test",
+        groups=["storage"],
     )
     resource2.upsert_or_delete_tags(tags)
 
@@ -762,6 +766,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="test",
+        groups=["compute"],
     )
 
     tags = [
@@ -1383,11 +1388,13 @@ def latest_scan_finding_with_categories(
         check_id="genai_iam_check",
         check_metadata={"CheckId": "genai_iam_check"},
         categories=["gen-ai", "iam"],
+        resource_groups="ai_ml",
         first_seen_at="2024-01-02T00:00:00Z",
     )
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
     backfill_scan_category_summaries(tenant_id, str(scan.id))
+    backfill_scan_resource_group_summaries(tenant_id, str(scan.id))
     return finding
 
 
@@ -1624,6 +1631,103 @@ def create_scan_category_summary():
             total_findings=total_findings,
             failed_findings=failed_findings,
             new_failed_findings=new_failed_findings,
+        )
+
+    return _create
+
+
+@pytest.fixture(scope="function")
+def findings_with_group(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_group_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="storage_check",
+        check_metadata={"CheckId": "storage_check"},
+        resource_groups="storage",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
+def findings_with_multiple_groups(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource1, resource2 = resources_fixture[:2]
+
+    finding1 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_grp_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="storage_check",
+        check_metadata={"CheckId": "storage_check"},
+        resource_groups="storage",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding1.add_resources([resource1])
+
+    finding2 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_grp_2",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status 2",
+        impact=Severity.high,
+        impact_extended="test impact 2",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL},
+        check_id="security_check",
+        check_metadata={"CheckId": "security_check"},
+        resource_groups="security",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding2.add_resources([resource2])
+
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding1, finding2
+
+
+@pytest.fixture
+def create_scan_resource_group_summary():
+    def _create(
+        tenant,
+        scan,
+        resource_group,
+        severity,
+        total_findings=10,
+        failed_findings=5,
+        new_failed_findings=2,
+        resources_count=3,
+    ):
+        return ScanGroupSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            resource_group=resource_group,
+            severity=severity,
+            total_findings=total_findings,
+            failed_findings=failed_findings,
+            new_failed_findings=new_failed_findings,
+            resources_count=resources_count,
         )
 
     return _create
