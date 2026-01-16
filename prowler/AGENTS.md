@@ -13,13 +13,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
+| Create PR that requires changelog entry | `prowler-changelog` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Review changelog format and conventions | `prowler-changelog` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Writing Prowler SDK tests | `prowler-test-sdk` |
 | Writing Python tests with pytest | `pytest` |
