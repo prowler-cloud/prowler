@@ -31,6 +31,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔐 Security
 
 - Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs from January 2026 security advisory [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+- langchain from 1.1.5 to 1.2.10 and @langchain/core from 1.1.8 to 1.1.15 [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
 
 ---
 
