@@ -63,6 +63,7 @@ from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
+    AuthenticationFailed,
     MethodNotAllowed,
     NotFound,
     PermissionDenied,
@@ -2162,10 +2163,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
 
-    # Timeline constants
+    # Timeline constants (AWS: limited to 90 days by CloudTrail Event History)
     TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
     TIMELINE_MIN_LOOKBACK_DAYS = 1
-    TIMELINE_MAX_LOOKBACK_DAYS = 365
+    TIMELINE_MAX_LOOKBACK_DAYS = 90
 
     ordering_fields = [
         "provider_uid",
@@ -2473,17 +2474,17 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     @extend_schema(
         tags=["Resource"],
-        summary="Get CloudTrail timeline for a resource",
+        summary="Get timeline for a resource",
         description=(
-            "Retrieve CloudTrail events showing modification history for an AWS resource. "
-            "Returns timeline of who modified the resource and when. Only available for AWS resources."
+            "Retrieve events showing modification history for a resource. "
+            "Returns timeline of who modified the resource and when. Currently only available for AWS resources."
         ),
         parameters=[
             OpenApiParameter(
                 name="filter[lookback_days]",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
-                description="Number of days to look back (default: 90, min: 1, max: 365)",
+                description="Number of days to look back (default: 90, min: 1, max: 90).",
                 required=False,
             ),
         ],
@@ -2491,6 +2492,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             200: ResourceTimelineSerializer,
             400: OpenApiResponse(description="Invalid provider or parameters"),
             401: OpenApiResponse(description="AWS credentials not available"),
+            403: OpenApiResponse(
+                description="Access denied - missing required permissions"
+            ),
             503: OpenApiResponse(description="AWS service unavailable"),
         },
     )
@@ -2501,7 +2505,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         serializer_class=ResourceTimelineSerializer,
     )
     def timeline(self, request, pk=None):
-        """Get CloudTrail timeline events for a resource."""
+        """Get timeline events for a resource."""
         resource = self.get_object()
 
         # Validate provider
@@ -2549,16 +2553,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             # Get the boto3 session from the Prowler provider
             session = prowler_provider._session.current_session
 
-            # Create CloudTrail timeline service
+            # Create timeline service (AWS uses CloudTrail)
             timeline_service = CloudTrailTimeline(
                 session=session, lookback_days=lookback_days
             )
 
-            # Get timeline events
+            # Get timeline events (uid is the unique identifier, e.g., ARN for AWS)
             events = timeline_service.get_resource_timeline(
-                resource_id=resource.uid,
-                resource_arn=resource.uid,
                 region=resource.region,
+                resource_uid=resource.uid,
             )
 
             # Prepare response data
@@ -2578,15 +2581,32 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             return Response(serializer.data)
 
         except NoCredentialsError:
-            raise ValidationError(
-                {"detail": "AWS credentials not found for this provider"},
+            raise AuthenticationFailed(
+                detail="AWS credentials not found for this provider",
                 code="no_credentials",
             )
         except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
             logger.error(
-                f"AWS API error retrieving CloudTrail timeline: {str(e)}",
+                f"AWS API error retrieving timeline: {str(e)}",
                 exc_info=True,
             )
+
+            # AccessDenied means the credentials don't have the required permissions
+            if error_code in ("AccessDenied", "AccessDeniedException"):
+                return Response(
+                    {
+                        "errors": [
+                            {
+                                "detail": "Access denied. The provider credentials do not have the required permissions.",
+                                "status": "403",
+                                "code": "access_denied",
+                            }
+                        ]
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             return Response(
                 {
                     "errors": [
@@ -2600,9 +2620,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as e:
-            logger.error(
-                f"Error retrieving CloudTrail timeline: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error retrieving timeline: {str(e)}", exc_info=True)
             sentry_sdk.capture_exception(e)
             return Response(
                 {

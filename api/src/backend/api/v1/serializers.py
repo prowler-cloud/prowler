@@ -3704,13 +3704,13 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
 
 
 class TimelineEventSerializer(serializers.Serializer):
-    """Serializer for individual CloudTrail timeline events."""
+    """Serializer for individual timeline events."""
 
     event_time = serializers.DateTimeField()
     event_name = serializers.CharField()
     event_source = serializers.CharField()
-    username = serializers.CharField()
-    user_identity_type = serializers.CharField()
+    actor = serializers.CharField()
+    actor_type = serializers.CharField()
     source_ip_address = serializers.CharField(allow_null=True, required=False)
     user_agent = serializers.CharField(allow_null=True, required=False)
     request_parameters = serializers.JSONField(allow_null=True, required=False)
@@ -3723,7 +3723,7 @@ class TimelineEventSerializer(serializers.Serializer):
 
 
 class ResourceTimelineSerializer(serializers.Serializer):
-    """Serializer for resource CloudTrail timeline data."""
+    """Serializer for resource timeline data."""
 
     resource_id = serializers.CharField()
     resource_name = serializers.CharField()

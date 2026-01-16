@@ -52,23 +52,30 @@ class TestCloudTrailTimeline:
         timeline = CloudTrailTimeline(session=mock_session, lookback_days=365)
         assert timeline._lookback_days == 90
 
-    def test_get_resource_timeline_empty_resource_id(self, mock_session):
-        timeline = CloudTrailTimeline(session=mock_session)
-        result = timeline.get_resource_timeline(
-            resource_id="", resource_arn="", region="us-east-1"
-        )
-        assert result == []
+    def test_get_resource_timeline_defaults_to_us_east_1(self, mock_session):
+        """When no region is provided, should default to us-east-1 for global resources."""
+        mock_client = MagicMock()
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = [{"Events": []}]
+        mock_client.get_paginator.return_value = mock_paginator
+        mock_session.client.return_value = mock_client
 
-    def test_get_resource_timeline_empty_region(self, mock_session):
         timeline = CloudTrailTimeline(session=mock_session)
-        result = timeline.get_resource_timeline(
-            resource_id="i-1234567890abcdef0",
-            resource_arn="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
-            region="",
+        timeline.get_resource_timeline(
+            resource_uid="arn:aws:iam::123456789012:user/admin"
         )
-        assert result == []
 
-    def test_get_resource_timeline_success(self, mock_session, sample_cloudtrail_event):
+        # Verify us-east-1 was used as the default region
+        mock_session.client.assert_called_with("cloudtrail", region_name="us-east-1")
+
+    def test_get_resource_timeline_missing_identifier_raises(self, mock_session):
+        timeline = CloudTrailTimeline(session=mock_session)
+        with pytest.raises(ValueError, match="Either resource_id or resource_uid"):
+            timeline.get_resource_timeline(region="us-east-1")
+
+    def test_get_resource_timeline_with_resource_id(
+        self, mock_session, sample_cloudtrail_event
+    ):
         mock_client = MagicMock()
         mock_paginator = MagicMock()
         mock_paginator.paginate.return_value = [{"Events": [sample_cloudtrail_event]}]
@@ -77,15 +84,54 @@ class TestCloudTrailTimeline:
 
         timeline = CloudTrailTimeline(session=mock_session)
         result = timeline.get_resource_timeline(
-            resource_id="i-1234567890abcdef0",
-            resource_arn="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
-            region="us-east-1",
+            region="us-east-1", resource_id="i-1234567890abcdef0"
         )
 
         assert len(result) == 1
         assert result[0]["event_name"] == "RunInstances"
-        assert result[0]["username"] == "admin"
+        assert result[0]["actor"] == "admin"
         assert result[0]["source_ip_address"] == "203.0.113.1"
+
+    def test_get_resource_timeline_with_resource_uid(
+        self, mock_session, sample_cloudtrail_event
+    ):
+        mock_client = MagicMock()
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = [{"Events": [sample_cloudtrail_event]}]
+        mock_client.get_paginator.return_value = mock_paginator
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_uid="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+        )
+
+        assert len(result) == 1
+        assert result[0]["event_name"] == "RunInstances"
+
+    def test_get_resource_timeline_prefers_uid_over_id(self, mock_session):
+        """When both resource_id and resource_uid are provided, UID should be used."""
+        mock_client = MagicMock()
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = [{"Events": []}]
+        mock_client.get_paginator.return_value = mock_paginator
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_id="i-1234",
+            resource_uid="arn:aws:ec2:us-east-1:123:instance/i-1234",
+        )
+
+        # Verify UID was used in the lookup
+        call_args = mock_paginator.paginate.call_args
+        lookup_attrs = call_args.kwargs["LookupAttributes"]
+        assert (
+            lookup_attrs[0]["AttributeValue"]
+            == "arn:aws:ec2:us-east-1:123:instance/i-1234"
+        )
 
     def test_get_resource_timeline_client_error(self, mock_session):
         mock_client = MagicMock()
@@ -97,11 +143,7 @@ class TestCloudTrailTimeline:
 
         timeline = CloudTrailTimeline(session=mock_session)
         with pytest.raises(ClientError):
-            timeline.get_resource_timeline(
-                resource_id="i-1234",
-                resource_arn="arn:aws:ec2:us-east-1:123:instance/i-1234",
-                region="us-east-1",
-            )
+            timeline.get_resource_timeline(region="us-east-1", resource_id="i-1234")
 
     def test_get_resource_timeline_multiple_events(self, mock_session):
         events = [
@@ -141,9 +183,7 @@ class TestCloudTrailTimeline:
 
         timeline = CloudTrailTimeline(session=mock_session)
         result = timeline.get_resource_timeline(
-            resource_id="i-1234",
-            resource_arn="arn:aws:ec2:us-east-1:123:instance/i-1234",
-            region="us-east-1",
+            region="us-east-1", resource_id="i-1234"
         )
 
         assert len(result) == 2
@@ -151,52 +191,51 @@ class TestCloudTrailTimeline:
         assert result[1]["event_name"] == "StopInstances"
 
 
-class TestExtractUsername:
-    def test_extract_username_iam_user(self):
+class TestExtractActor:
+    def test_extract_actor_iam_user(self):
         user_identity = {
             "type": "IAMUser",
             "arn": "arn:aws:iam::123456789012:user/alice",
             "userName": "alice",
         }
-        assert CloudTrailTimeline._extract_username(user_identity) == "alice"
+        assert CloudTrailTimeline._extract_actor(user_identity) == "alice"
 
-    def test_extract_username_assumed_role(self):
+    def test_extract_actor_assumed_role(self):
         user_identity = {
             "type": "AssumedRole",
             "arn": "arn:aws:sts::123456789012:assumed-role/MyRole/session-name",
         }
-        assert CloudTrailTimeline._extract_username(user_identity) == "MyRole"
+        assert CloudTrailTimeline._extract_actor(user_identity) == "MyRole"
 
-    def test_extract_username_root(self):
+    def test_extract_actor_root(self):
         user_identity = {"type": "Root", "arn": "arn:aws:iam::123456789012:root"}
-        assert CloudTrailTimeline._extract_username(user_identity) == "root"
+        assert CloudTrailTimeline._extract_actor(user_identity) == "root"
 
-    def test_extract_username_service(self):
+    def test_extract_actor_service(self):
         user_identity = {
             "type": "AWSService",
             "invokedBy": "elasticloadbalancing.amazonaws.com",
         }
         assert (
-            CloudTrailTimeline._extract_username(user_identity)
+            CloudTrailTimeline._extract_actor(user_identity)
             == "elasticloadbalancing.amazonaws.com"
         )
 
-    def test_extract_username_fallback_to_principal_id(self):
+    def test_extract_actor_fallback_to_principal_id(self):
         user_identity = {"type": "Unknown", "principalId": "AROAEXAMPLEID:session"}
         assert (
-            CloudTrailTimeline._extract_username(user_identity)
-            == "AROAEXAMPLEID:session"
+            CloudTrailTimeline._extract_actor(user_identity) == "AROAEXAMPLEID:session"
         )
 
-    def test_extract_username_unknown(self):
-        assert CloudTrailTimeline._extract_username({}) == "Unknown"
+    def test_extract_actor_unknown(self):
+        assert CloudTrailTimeline._extract_actor({}) == "Unknown"
 
-    def test_extract_username_federated_user(self):
+    def test_extract_actor_federated_user(self):
         user_identity = {
             "type": "FederatedUser",
             "arn": "arn:aws:sts::123456789012:federated-user/developer",
         }
-        assert CloudTrailTimeline._extract_username(user_identity) == "developer"
+        assert CloudTrailTimeline._extract_actor(user_identity) == "developer"
 
 
 class TestParseEvent:
@@ -234,8 +273,8 @@ class TestParseEvent:
         assert result is not None
         assert result["event_name"] == "RunInstances"
         assert result["event_source"] == "ec2.amazonaws.com"
-        assert result["username"] == "admin"
-        assert result["user_identity_type"] == "IAMUser"
+        assert result["actor"] == "admin"
+        assert result["actor_type"] == "IAMUser"
 
     def test_parse_event_malformed_json(self, mock_session):
         event = {
@@ -282,7 +321,7 @@ class TestParseEvent:
 
         assert result is not None
         assert result["event_name"] == "RunInstances"
-        assert result["username"] == "admin"
+        assert result["actor"] == "admin"
 
 
 class TestClientCaching:

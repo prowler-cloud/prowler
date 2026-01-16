@@ -1,4 +1,4 @@
-"""CloudTrail timeline service for Prowler.
+"""CloudTrail timeline service for AWS.
 
 Queries AWS CloudTrail to retrieve timeline events for resources,
 showing who performed actions and when.
@@ -6,16 +6,16 @@ showing who performed actions and when.
 
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from botocore.exceptions import ClientError
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.cloudtrail_timeline.models import TimelineEvent
+from prowler.lib.timeline import TimelineEvent, TimelineService
 
 
-class CloudTrailTimeline:
-    """Queries CloudTrail for resource timeline events.
+class CloudTrailTimeline(TimelineService):
+    """AWS CloudTrail implementation of TimelineService.
 
     Args:
         session: boto3.Session for AWS API calls
@@ -27,31 +27,40 @@ class CloudTrailTimeline:
     def __init__(self, session, lookback_days: int = 90):
         self._session = session
         self._lookback_days = min(lookback_days, self.MAX_LOOKBACK_DAYS)
-        self._clients: dict[str, Any] = {}
+        self._clients: Dict[str, Any] = {}
+
+    DEFAULT_REGION = "us-east-1"  # Default for global resources in commercial partition
 
     def get_resource_timeline(
-        self, resource_id: str, resource_arn: str, region: str
-    ) -> list[dict[str, Any]]:
+        self,
+        region: Optional[str] = None,
+        resource_id: Optional[str] = None,
+        resource_uid: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         """Get CloudTrail timeline events for a resource.
 
         Args:
+            region: AWS region to query. Defaults to us-east-1 for global resources
+                    (IAM, S3, Route53, etc.) in the commercial partition. Caller
+                    should provide the correct region for regional resources.
             resource_id: AWS resource ID (e.g., sg-1234567890abcdef0)
-            resource_arn: AWS resource ARN
-            region: AWS region
+            resource_uid: AWS resource ARN (unique identifier)
 
         Returns:
-            List of timeline event dictionaries, empty list if no events found
-        """
-        if not resource_id:
-            logger.debug("CloudTrail timeline: skipping - no resource_id")
-            return []
+            List of timeline event dictionaries
 
-        if not region:
-            logger.debug("CloudTrail timeline: skipping - no region")
-            return []
+        Raises:
+            ValueError: If neither resource_id nor resource_uid is provided
+            ClientError: If AWS API call fails
+        """
+        resource_identifier = resource_uid or resource_id
+        if not resource_identifier:
+            raise ValueError("Either resource_id or resource_uid must be provided")
+
+        region = region or self.DEFAULT_REGION
 
         try:
-            raw_events = self._lookup_events(resource_id, region)
+            raw_events = self._lookup_events(resource_identifier, region)
 
             events = []
             for raw_event in raw_events:
@@ -60,20 +69,21 @@ class CloudTrailTimeline:
                     events.append(parsed)
 
             logger.debug(
-                f"CloudTrail timeline: found {len(events)} events for {resource_id}"
+                f"CloudTrail timeline: found {len(events)} events for {resource_identifier}"
             )
             return events
 
         except ClientError as e:
             logger.error(
-                f"CloudTrail timeline error for {resource_id} in {region}: "
+                f"CloudTrail timeline error for {resource_identifier} in {region}: "
                 f"{e.response['Error']['Code']} - {e.response['Error']['Message']}"
             )
             raise
         except Exception as e:
+            lineno = e.__traceback__.tb_lineno if e.__traceback__ else "?"
             logger.error(
                 f"CloudTrail timeline unexpected error: "
-                f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
+                f"{e.__class__.__name__}[{lineno}]: {e}"
             )
             return []
 
@@ -85,7 +95,9 @@ class CloudTrailTimeline:
             )
         return self._clients[region]
 
-    def _lookup_events(self, resource_id: str, region: str) -> list[dict[str, Any]]:
+    def _lookup_events(
+        self, resource_identifier: str, region: str
+    ) -> List[Dict[str, Any]]:
         """Query CloudTrail for events related to a specific resource."""
         client = self._get_client(region)
         start_time = datetime.now(timezone.utc) - timedelta(days=self._lookback_days)
@@ -95,7 +107,7 @@ class CloudTrailTimeline:
 
         for page in paginator.paginate(
             LookupAttributes=[
-                {"AttributeKey": "ResourceName", "AttributeValue": resource_id}
+                {"AttributeKey": "ResourceName", "AttributeValue": resource_identifier}
             ],
             StartTime=start_time,
         ):
@@ -103,7 +115,7 @@ class CloudTrailTimeline:
 
         return events
 
-    def _parse_event(self, raw_event: dict[str, Any]) -> dict[str, Any] | None:
+    def _parse_event(self, raw_event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse a raw CloudTrail event into a TimelineEvent dictionary."""
         try:
             cloud_trail_event = raw_event.get("CloudTrailEvent", "{}")
@@ -118,8 +130,8 @@ class CloudTrailTimeline:
                 event_time=raw_event["EventTime"],
                 event_name=raw_event.get("EventName", "Unknown"),
                 event_source=raw_event.get("EventSource", "Unknown"),
-                username=self._extract_username(user_identity),
-                user_identity_type=user_identity.get("type", "Unknown"),
+                actor=self._extract_actor(user_identity),
+                actor_type=user_identity.get("type", "Unknown"),
                 source_ip_address=details.get("sourceIPAddress"),
                 user_agent=details.get("userAgent"),
                 request_parameters=details.get("requestParameters"),
@@ -138,8 +150,8 @@ class CloudTrailTimeline:
             return None
 
     @staticmethod
-    def _extract_username(user_identity: dict[str, Any]) -> str:
-        """Extract a human-readable username from CloudTrail userIdentity."""
+    def _extract_actor(user_identity: Dict[str, Any]) -> str:
+        """Extract a human-readable actor name from CloudTrail userIdentity."""
         # Try ARN first - most reliable
         if arn := user_identity.get("arn"):
             if "/" in arn:
