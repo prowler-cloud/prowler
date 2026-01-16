@@ -1053,9 +1053,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(d.get("type") == expected_type for d in included_data), (
-                f"Expected type '{expected_type}' not found in included data"
-            )
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -4071,9 +4071,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(d.get("type") == expected_type for d in included_data), (
-                f"Expected type '{expected_type}' not found in included data"
-            )
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -4412,9 +4412,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(d.get("type") == expected_type for d in included_data), (
-                f"Expected type '{expected_type}' not found in included data"
-            )
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -4953,9 +4953,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert response.status_code == status.HTTP_200_OK, (
-            f"Unexpected status code: {response.status_code}"
-        )
+        assert (
+            response.status_code == status.HTTP_200_OK
+        ), f"Unexpected status code: {response.status_code}"
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -4969,23 +4969,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert payload[field] == expected_fields[field], (
-                f"The value of '{field}' does not match"
-            )
+            assert (
+                payload[field] == expected_fields[field]
+            ), f"The value of '{field}' does not match"
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(payload[time_field], int), (
-                f"The field '{time_field}' is not an integer"
-            )
+            assert isinstance(
+                payload[time_field], int
+            ), f"The field '{time_field}' is not an integer"
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert isinstance(payload[id_field], str) and payload[id_field], (
-                f"The field '{id_field}' is not a valid string"
-            )
+            assert (
+                isinstance(payload[id_field], str) and payload[id_field]
+            ), f"The field '{id_field}' is not a valid string"
 
 
 @pytest.mark.django_db
@@ -8920,9 +8920,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(d.get("type") == expected_type for d in included_data), (
-                f"Expected type '{expected_type}' not found in included data"
-            )
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -10212,9 +10212,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(c == "*" for c in masked_api_key), (
-            "API key should contain only asterisks"
-        )
+        assert all(
+            c == "*" for c in masked_api_key
+        ), "API key should contain only asterisks"
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",

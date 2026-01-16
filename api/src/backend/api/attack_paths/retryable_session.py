@@ -33,7 +33,9 @@ class RetryableSession:
     def __enter__(self) -> "RetryableSession":
         return self
 
-    def __exit__(self, exc_type: Any, exc: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self, _: Any, __: Any, ___: Any
+    ) -> None:  # Unused args:  exc_type, exc, exc_tb
         self.close()
 
     def run(self, *args: Any, **kwargs: Any) -> Any:
