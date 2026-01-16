@@ -13,7 +13,7 @@ import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useRelatedFilters } from "@/hooks";
-import { getCategoryLabel } from "@/lib/categories";
+import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
 import { ProviderProps } from "@/types/providers";
 
@@ -29,6 +29,7 @@ interface FindingsFiltersProps {
   uniqueServices: string[];
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
+  uniqueGroups: string[];
 }
 
 export const FindingsFilters = ({
@@ -41,6 +42,7 @@ export const FindingsFilters = ({
   uniqueServices,
   uniqueResourceTypes,
   uniqueCategories,
+  uniqueGroups,
 }: FindingsFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -79,6 +81,13 @@ export const FindingsFilters = ({
       values: uniqueCategories,
       labelFormatter: getCategoryLabel,
       index: 5,
+    },
+    {
+      key: FilterType.RESOURCE_GROUPS,
+      labelCheckboxGroup: "Resource Group",
+      values: uniqueGroups,
+      labelFormatter: getGroupLabel,
+      index: 6,
     },
     {
       key: FilterType.SCAN,
