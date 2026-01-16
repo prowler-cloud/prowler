@@ -6849,10 +6849,10 @@ paths:
   /api/v1/resources/{id}/timeline:
     get:
       operationId: resources_timeline_retrieve
-      description: Retrieve CloudTrail events showing modification history for an
-        AWS resource. Returns timeline of who modified the resource and when. Only
-        available for AWS resources.
-      summary: Get CloudTrail timeline for a resource
+      description: Retrieve events showing modification history for a resource. Returns
+        timeline of who modified the resource and when. Currently only available for
+        AWS resources.
+      summary: Get timeline for a resource
       parameters:
       - in: query
         name: fields[resource-timeline]
@@ -6875,7 +6875,7 @@ paths:
         name: filter[lookback_days]
         schema:
           type: integer
-        description: 'Number of days to look back (default: 90, min: 1, max: 365)'
+        description: 'Number of days to look back (default: 90, min: 1, max: 90).'
       - in: path
         name: id
         schema:
@@ -6897,9 +6897,11 @@ paths:
         '400':
           description: Invalid provider or parameters
         '401':
-          description: AWS credentials not available
+          description: Provider credentials not available
+        '403':
+          description: Access denied - missing required permissions
         '503':
-          description: AWS service unavailable
+          description: Provider service unavailable
   /api/v1/resources/latest:
     get:
       operationId: resources_latest_retrieve
@@ -18923,9 +18925,9 @@ components:
               type: string
             event_source:
               type: string
-            username:
+            actor:
               type: string
-            user_identity_type:
+            actor_type:
               type: string
             source_ip_address:
               type: string
@@ -18947,8 +18949,8 @@ components:
           - event_time
           - event_name
           - event_source
-          - username
-          - user_identity_type
+          - actor
+          - actor_type
     Token:
       type: object
       required:
