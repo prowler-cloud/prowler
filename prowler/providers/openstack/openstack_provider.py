@@ -140,11 +140,12 @@ class OpenstackProvider(Provider):
             if not (provided_overrides.get(env_var) or environ.get(env_var))
         ]
 
-        resolved_project_id = (
-            project_id or environ.get("OS_PROJECT_ID") or environ.get("OS_TENANT_ID")
-        )
+        # Resolve project_id from parameters or environment
+        resolved_project_id = project_id or environ.get("OS_PROJECT_ID")
+
+        # OS_PROJECT_ID is mandatory
         if not resolved_project_id:
-            missing_variables.append("OS_PROJECT_ID/OS_TENANT_ID")
+            missing_variables.append("OS_PROJECT_ID")
 
         if missing_variables:
             pretty_missing = ", ".join(missing_variables)
@@ -254,7 +255,7 @@ class OpenstackProvider(Provider):
             identity_api_version: Keystone API version (default: "3")
             username: OpenStack username
             password: OpenStack password
-            project_id: OpenStack project/tenant ID
+            project_id: OpenStack project identifier (can be UUID or string ID)
             region_name: OpenStack region name
             user_domain_name: User domain name (default: "Default")
             project_domain_name: Project domain name (default: "Default")
@@ -272,7 +273,7 @@ class OpenstackProvider(Provider):
             ...     auth_url="https://openstack.example.com:5000/v3",
             ...     username="admin",
             ...     password="secret",
-            ...     project_id="project-123",
+            ...     project_id="my-project-id",
             ...     region_name="RegionOne"
             ... )
             Connection(is_connected=True, error=None)
@@ -291,8 +292,7 @@ class OpenstackProvider(Provider):
             )
 
             # Create and test connection
-            conn = OpenstackProvider._create_connection(session)
-            conn.authorize()
+            OpenstackProvider._create_connection(session)
 
             logger.info("OpenStack provider: Connection test successful")
             return Connection(is_connected=True)

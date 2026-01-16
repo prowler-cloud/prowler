@@ -1,11 +1,12 @@
 def init_parser(self):
     """Register the OpenStack provider CLI parser."""
     description = (
-        "OpenStack Provider (experimental). Authentication relies solely on the "
+        "OpenStack Provider (experimental). Authentication relies on "
         "standard Keystone v3 environment variables. "
-        "Ensure OS_AUTH_URL, OS_USERNAME, OS_PASSWORD, OS_PROJECT_ID or OS_TENANT_ID, "
-        "OS_REGION_NAME, OS_USER_DOMAIN_NAME, and OS_PROJECT_DOMAIN_NAME are exported "
-        "before running Prowler."
+        "Required: OS_AUTH_URL, OS_USERNAME, OS_PASSWORD, OS_REGION_NAME, "
+        "and OS_PROJECT_ID. "
+        "Optional: OS_USER_DOMAIN_NAME, OS_PROJECT_DOMAIN_NAME, "
+        "OS_IDENTITY_API_VERSION (defaults: 'Default', 'Default', '3')."
     )
     self.subparsers.add_parser(
         "openstack",

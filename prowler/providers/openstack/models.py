@@ -1,6 +1,19 @@
+import re
 from typing import Optional
 
 from pydantic.v1 import BaseModel, Field
+
+from prowler.config.config import output_file_timestamp
+from prowler.providers.common.models import ProviderOutputOptions
+
+
+def _is_uuid(value: str) -> bool:
+    """Check if a string is a valid UUID."""
+    uuid_pattern = re.compile(
+        r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        re.IGNORECASE,
+    )
+    return bool(uuid_pattern.match(value))
 
 
 class OpenStackSession(BaseModel):
@@ -16,17 +29,29 @@ class OpenStackSession(BaseModel):
     project_domain_name: str = Field(default="Default")
 
     def as_sdk_config(self) -> dict:
-        """Return a dict compatible with openstacksdk.connect()."""
-        return {
+        """Return a dict compatible with openstacksdk.connect().
+
+        Note: The OpenStack SDK distinguishes between project_id (must be UUID)
+        and project_name (any string identifier). We accept project_id from users
+        but internally pass it as project_name to the SDK if it's not a UUID.
+        This allows compatibility with providers like OVH that use numeric IDs.
+        """
+        config = {
             "auth_url": self.auth_url,
             "username": self.username,
             "password": self.password,
-            "project_id": self.project_id,
             "region_name": self.region_name,
             "project_domain_name": self.project_domain_name,
             "user_domain_name": self.user_domain_name,
             "identity_api_version": self.identity_api_version,
         }
+        # If project_id is a UUID, pass it as project_id to SDK
+        # Otherwise, pass it as project_name (e.g., OVH numeric IDs)
+        if _is_uuid(self.project_id):
+            config["project_id"] = self.project_id
+        else:
+            config["project_name"] = self.project_id
+        return config
 
 
 class OpenStackIdentityInfo(BaseModel):
@@ -39,3 +64,26 @@ class OpenStackIdentityInfo(BaseModel):
     region_name: str
     user_domain_name: str
     project_domain_name: str
+
+
+class OpenStackOutputOptions(ProviderOutputOptions):
+    """OpenStack output options."""
+
+    def __init__(self, arguments, bulk_checks_metadata, identity):
+        # First call ProviderOutputOptions init
+        super().__init__(arguments, bulk_checks_metadata)
+
+        # Check if custom output filename was input, if not, set the default
+        if (
+            not hasattr(arguments, "output_filename")
+            or arguments.output_filename is None
+        ):
+            # Use project_name if available, otherwise use project_id
+            project_identifier = (
+                identity.project_name if identity.project_name else identity.project_id
+            )
+            self.output_filename = (
+                f"prowler-output-{project_identifier}-{output_file_timestamp}"
+            )
+        else:
+            self.output_filename = arguments.output_filename

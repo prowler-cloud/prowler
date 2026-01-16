@@ -1,1 +1,0 @@
-"""OpenStack compliance frameworks placeholder."""
