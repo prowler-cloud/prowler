@@ -1,10 +1,21 @@
 import uuid
+
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+
 from botocore.exceptions import ClientError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+)
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
@@ -15,17 +26,10 @@ from tasks.tasks import (
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
+    perform_attack_paths_scan_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
-)
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
-    Scan,
-    StateChoices,
 )
 
 
@@ -737,8 +741,12 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_compliance_reports_task.si")
     @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=False)
     def test_scan_complete_tasks(
         self,
+        mock_can_run_attack_paths,
+        mock_attack_paths_task,
         mock_check_integrations_task,
         mock_compliance_reports_task,
         mock_outputs_task,
@@ -791,6 +799,67 @@ class TestScanCompleteTasks:
             tenant_id="tenant-id",
             provider_id="provider-id",
             scan_id="scan-id",
+        )
+
+        # Attack Paths task should be skipped when provider cannot run it
+        mock_attack_paths_task.assert_not_called()
+
+
+class TestAttackPathsTasks:
+    @staticmethod
+    @contextmanager
+    def _override_task_request(task, **attrs):
+        request = task.request
+        sentinel = object()
+        previous = {key: getattr(request, key, sentinel) for key in attrs}
+        for key, value in attrs.items():
+            setattr(request, key, value)
+
+        try:
+            yield
+        finally:
+            for key, prev in previous.items():
+                if prev is sentinel:
+                    if hasattr(request, key):
+                        delattr(request, key)
+                else:
+                    setattr(request, key, prev)
+
+    def test_perform_attack_paths_scan_task_calls_runner(self):
+        with (
+            patch("tasks.tasks.attack_paths_scan") as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-id"
+            ),
+        ):
+            mock_attack_paths_scan.return_value = {"status": "ok"}
+
+            result = perform_attack_paths_scan_task.run(
+                tenant_id="tenant-id", scan_id="scan-id"
+            )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-id"
+        )
+        assert result == {"status": "ok"}
+
+    def test_perform_attack_paths_scan_task_propagates_exception(self):
+        with (
+            patch(
+                "tasks.tasks.attack_paths_scan",
+                side_effect=RuntimeError("Exception to propagate"),
+            ) as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-error"
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="Exception to propagate"):
+                perform_attack_paths_scan_task.run(
+                    tenant_id="tenant-id", scan_id="scan-id"
+                )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-error"
         )
 
 
