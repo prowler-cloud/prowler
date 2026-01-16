@@ -20,6 +20,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - ALWAYS use `content_type = "application/vnd.api+json"` in requests
 - ALWAYS test cross-tenant isolation with `other_tenant_provider` fixture
 - NEVER skip RLS isolation tests when adding new endpoints
+- NEVER use realistic-looking API keys in tests (TruffleHog will flag them)
 
 ---
 
@@ -104,6 +105,27 @@ def test_task_success(self, mock_scan):
 | `providers_fixture` | Providers in tenant 1 |
 | `other_tenant_provider` | Provider in isolated tenant (RLS tests) |
 | `authenticated_client` | Client with JWT for tenant 1 |
+
+---
+
+## 7. Fake Secrets in Tests (TruffleHog)
+
+CI runs TruffleHog to detect leaked secrets. Use obviously fake values:
+
+```python
+# BAD - TruffleHog will flag these patterns:
+api_key = "sk-test1234567890T3BlbkFJtest1234567890"  # OpenAI pattern
+api_key = "AKIA..."  # AWS pattern
+
+# GOOD - clearly fake values:
+api_key = "sk-fake-test-key-for-unit-testing-only"
+api_key = "fake-aws-key-for-testing"
+```
+
+**Patterns to avoid:**
+- `sk-*T3BlbkFJ*` (OpenAI)
+- `AKIA[A-Z0-9]{16}` (AWS Access Key)
+- `ghp_*` or `gho_*` (GitHub tokens)
 
 ---
 
