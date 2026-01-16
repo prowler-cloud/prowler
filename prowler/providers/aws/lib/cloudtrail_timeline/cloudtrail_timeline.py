@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional
 from botocore.exceptions import ClientError
 
 from prowler.lib.logger import logger
-from prowler.lib.timeline import TimelineEvent, TimelineService
+from prowler.lib.timeline.models import TimelineEvent
+from prowler.lib.timeline.timeline import TimelineService
 
 
 class CloudTrailTimeline(TimelineService):
