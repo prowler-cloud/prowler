@@ -2163,7 +2163,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
 
-    # Timeline constants (AWS: limited to 90 days by CloudTrail Event History)
+    # Timeline constants (currently AWS-only, limited to 90 days by CloudTrail Event History)
     TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
     TIMELINE_MIN_LOOKBACK_DAYS = 1
     TIMELINE_MAX_LOOKBACK_DAYS = 90
@@ -2491,11 +2491,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         responses={
             200: ResourceTimelineSerializer,
             400: OpenApiResponse(description="Invalid provider or parameters"),
-            401: OpenApiResponse(description="AWS credentials not available"),
+            401: OpenApiResponse(description="Provider credentials not available"),
             403: OpenApiResponse(
                 description="Access denied - missing required permissions"
             ),
-            503: OpenApiResponse(description="AWS service unavailable"),
+            503: OpenApiResponse(description="Provider service unavailable"),
         },
     )
     @action(
@@ -2547,18 +2547,18 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
 
         try:
-            # Initialize Prowler AWS provider using existing utility
+            # Initialize Prowler provider using existing utility
             prowler_provider = initialize_prowler_provider(resource.provider)
 
             # Get the boto3 session from the Prowler provider
             session = prowler_provider._session.current_session
 
-            # Create timeline service (AWS uses CloudTrail)
+            # Create timeline service (currently only AWS/CloudTrail is supported)
             timeline_service = CloudTrailTimeline(
                 session=session, lookback_days=lookback_days
             )
 
-            # Get timeline events (uid is the unique identifier, e.g., ARN for AWS)
+            # Get timeline events
             events = timeline_service.get_resource_timeline(
                 region=resource.region,
                 resource_uid=resource.uid,
@@ -2582,13 +2582,13 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         except NoCredentialsError:
             raise AuthenticationFailed(
-                detail="AWS credentials not found for this provider",
+                detail="Credentials not found for this provider",
                 code="no_credentials",
             )
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
             logger.error(
-                f"AWS API error retrieving timeline: {str(e)}",
+                f"Provider API error retrieving timeline: {str(e)}",
                 exc_info=True,
             )
 
@@ -2611,7 +2611,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 {
                     "errors": [
                         {
-                            "detail": "Unable to communicate with AWS. Please try again later.",
+                            "detail": "Unable to communicate with the provider. Please try again later.",
                             "status": "503",
                             "code": "service_unavailable",
                         }
