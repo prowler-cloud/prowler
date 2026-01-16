@@ -1,7 +1,5 @@
 "use server";
 
-import { Spacer } from "@heroui/spacer";
-
 import { getLatestFindings } from "@/actions/findings/findings";
 import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
