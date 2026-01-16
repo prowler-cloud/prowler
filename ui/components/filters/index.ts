@@ -1,4 +1,3 @@
-export * from "./active-filter-badge";
 export * from "./clear-filters-button";
 export * from "./custom-account-selection";
 export * from "./custom-checkbox-muted-findings";
