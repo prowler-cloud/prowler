@@ -47,14 +47,27 @@ const initialState: GraphState & FilteredViewState = {
 
 const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
-  setGraphData: (data) => set({ data, fullData: null, error: null, isFilteredView: false, filteredNodeId: null }),
+  setGraphData: (data) =>
+    set({
+      data,
+      fullData: null,
+      error: null,
+      isFilteredView: false,
+      filteredNodeId: null,
+    }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setZoom: (zoomLevel) => set({ zoomLevel }),
   setPan: (panX, panY) => set({ panX, panY }),
   setFilteredView: (isFiltered, nodeId, filteredData, fullData) =>
-    set({ isFilteredView: isFiltered, filteredNodeId: nodeId, data: filteredData, fullData, selectedNodeId: nodeId }),
+    set({
+      isFilteredView: isFiltered,
+      filteredNodeId: nodeId,
+      data: filteredData,
+      fullData,
+      selectedNodeId: nodeId,
+    }),
   reset: () => set(initialState),
 }));
 

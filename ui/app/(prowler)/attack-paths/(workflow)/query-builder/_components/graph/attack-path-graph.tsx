@@ -22,7 +22,6 @@ import {
   GRAPH_ALERT_BORDER_COLOR,
   GRAPH_EDGE_COLOR,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
-  GRAPH_SELECTION_COLOR,
 } from "../../_lib";
 
 export interface AttackPathGraphRef {
@@ -78,7 +77,7 @@ const AttackPathGraphComponent = forwardRef<
     typeof select<SVGRectElement, NodeData>
   > | null>(null);
   const linkElementsRef = useRef<ReturnType<
-    typeof select<SVGLineElement, unknown>
+    typeof select<SVGLineElement, { sourceId: string; targetId: string }>
   > | null>(null);
   const resourcesWithFindingsRef = useRef<Set<string>>(new Set());
   const selectedNodeIdRef = useRef<string | null>(null);
@@ -161,8 +160,14 @@ const AttackPathGraphComponent = forwardRef<
         const edgeId = `${edgeData.sourceId}-${edgeData.targetId}`;
         const isInPath = pathEdges.has(edgeId);
         select(this)
-          .attr("stroke", isInPath ? GRAPH_EDGE_HIGHLIGHT_COLOR : GRAPH_EDGE_COLOR)
-          .attr("marker-end", isInPath ? "url(#arrowhead-highlight)" : "url(#arrowhead)");
+          .attr(
+            "stroke",
+            isInPath ? GRAPH_EDGE_HIGHLIGHT_COLOR : GRAPH_EDGE_COLOR,
+          )
+          .attr(
+            "marker-end",
+            isInPath ? "url(#arrowhead-highlight)" : "url(#arrowhead)",
+          );
       });
     }
   }, [selectedNodeId]);
@@ -557,10 +562,7 @@ const AttackPathGraphComponent = forwardRef<
         const targetIsFinding = isNodeFinding(d.targetId);
 
         // Hide edges connected to findings in full view (shown when user clicks on a node or in filtered view)
-        if (
-          !isFilteredView &&
-          (sourceIsFinding || targetIsFinding)
-        ) {
+        if (!isFilteredView && (sourceIsFinding || targetIsFinding)) {
           return "hidden";
         }
         return "visible";
@@ -569,7 +571,7 @@ const AttackPathGraphComponent = forwardRef<
     // Store linkElements reference for hover interactions
     // D3 selection types don't match our ref type exactly; safe cast for internal use
     linkElementsRef.current = linkElements as unknown as ReturnType<
-      typeof select<SVGLineElement, unknown>
+      typeof select<SVGLineElement, { sourceId: string; targetId: string }>
     >;
 
     // Draw nodes
@@ -657,7 +659,10 @@ const AttackPathGraphComponent = forwardRef<
         } else if (d.id === selectedId) {
           nodeShape.attr("stroke", GRAPH_EDGE_HIGHLIGHT_COLOR);
         } else {
-          nodeShape.attr("stroke", getNodeBorderColor(d.data.labels, d.data.properties));
+          nodeShape.attr(
+            "stroke",
+            getNodeBorderColor(d.data.labels, d.data.properties),
+          );
         }
       })
       .on("click", function (event: PointerEvent, d) {
@@ -902,7 +907,10 @@ const AttackPathGraphComponent = forwardRef<
           .attr("stroke", isSelected ? GRAPH_EDGE_HIGHLIGHT_COLOR : borderColor)
           .attr("stroke-width", isSelected ? 4 : 2)
           .attr("filter", isSelected ? "url(#selectedGlow)" : "url(#glow)")
-          .attr("class", isSelected ? "node-shape selected-node" : "node-shape");
+          .attr(
+            "class",
+            isSelected ? "node-shape selected-node" : "node-shape",
+          );
       } else {
         // Check if this is an Internet node
         const isInternet = d.data.labels.some(
@@ -926,7 +934,9 @@ const AttackPathGraphComponent = forwardRef<
             ? "url(#redGlow)"
             : "url(#glow)";
 
-        const nodeClass = isSelected ? "node-shape selected-node" : "node-shape";
+        const nodeClass = isSelected
+          ? "node-shape selected-node"
+          : "node-shape";
 
         if (isInternet) {
           // Globe shape for Internet nodes - larger than regular nodes
@@ -1092,9 +1102,7 @@ const AttackPathGraphComponent = forwardRef<
         event.preventDefault();
         const currentTransform = container.attr("transform");
         const k = currentTransform
-          ? parseFloat(
-              currentTransform.match(/scale\(([^)]+)\)/)?.[1] || "1",
-            )
+          ? parseFloat(currentTransform.match(/scale\(([^)]+)\)/)?.[1] || "1")
           : 1;
         const scaleFactor = event.deltaY > 0 ? 0.75 : 1.35;
         const newK = Math.max(0.1, Math.min(10, k * scaleFactor));
@@ -1109,11 +1117,7 @@ const AttackPathGraphComponent = forwardRef<
             svgSelectionRef.current
               .transition()
               .duration(100)
-              .call(
-                zoomBehaviorRef.current.scaleTo,
-                newK,
-                [mouseX, mouseY],
-              );
+              .call(zoomBehaviorRef.current.scaleTo, newK, [mouseX, mouseY]);
           }
         }
       }

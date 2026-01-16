@@ -5,12 +5,6 @@ export {
 } from "./export";
 export { formatNodeLabel, formatNodeLabels } from "./format";
 export {
-  computeFilteredSubgraph,
-  getEdgeNodeId,
-  getPathEdges,
-  type EdgeNodeRef,
-} from "./graph-utils";
-export {
   getNodeBorderColor,
   getNodeColor,
   GRAPH_ALERT_BORDER_COLOR,
@@ -20,3 +14,9 @@ export {
   GRAPH_NODE_COLORS,
   GRAPH_SELECTION_COLOR,
 } from "./graph-colors";
+export {
+  computeFilteredSubgraph,
+  type EdgeNodeRef,
+  getEdgeNodeId,
+  getPathEdges,
+} from "./graph-utils";
