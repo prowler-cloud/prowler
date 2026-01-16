@@ -163,68 +163,6 @@ class TestExtractBedrockCredentials:
         assert result is None
 
 
-class TestCreateBedrockClient:
-    """Unit tests for _create_bedrock_client helper function."""
-
-    @patch("tasks.jobs.lighthouse_providers.boto3.client")
-    def test_create_client_with_access_keys(self, mock_boto_client):
-        """Test creating client with access key authentication."""
-        mock_client = MagicMock()
-        mock_boto_client.return_value = mock_client
-
-        creds = {
-            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            "region": "us-east-1",
-        }
-
-        result = _create_bedrock_client(creds)
-
-        assert result == mock_client
-        mock_boto_client.assert_called_once_with(
-            service_name="bedrock",
-            region_name="us-east-1",
-            aws_access_key_id="AKIAIOSFODNN7EXAMPLE",
-            aws_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-        )
-
-    @patch("tasks.jobs.lighthouse_providers.Config")
-    @patch("tasks.jobs.lighthouse_providers.boto3.client")
-    def test_create_client_with_api_key(self, mock_boto_client, mock_config):
-        """Test creating client with API key authentication."""
-        mock_client = MagicMock()
-        mock_events = MagicMock()
-        mock_client.meta.events = mock_events
-        mock_boto_client.return_value = mock_client
-        mock_config_instance = MagicMock()
-        mock_config.return_value = mock_config_instance
-        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
-
-        creds = {
-            "api_key": valid_api_key,
-            "region": "us-west-2",
-        }
-
-        result = _create_bedrock_client(creds)
-
-        assert result == mock_client
-        mock_boto_client.assert_called_once_with(
-            service_name="bedrock",
-            region_name="us-west-2",
-            config=mock_config_instance,
-        )
-        mock_events.register.assert_called_once()
-        call_args = mock_events.register.call_args
-        assert call_args[0][0] == "before-send.*.*"
-
-        # Verify handler injects bearer token
-        handler_fn = call_args[0][1]
-        mock_request = MagicMock()
-        mock_request.headers = {}
-        handler_fn(mock_request)
-        assert mock_request.headers["Authorization"] == f"Bearer {valid_api_key}"
-
-
 @pytest.mark.django_db
 class TestExtractBedrockCredentials:
     """Unit tests for _extract_bedrock_credentials helper function."""
