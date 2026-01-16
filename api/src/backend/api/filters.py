@@ -40,6 +40,7 @@ from api.models import (
     ProviderComplianceScore,
     ProviderGroup,
     ProviderSecret,
+    ProviderStatusChoices,
     Resource,
     ResourceTag,
     Role,
@@ -323,6 +324,18 @@ class ProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    status = ChoiceFilter(
+        choices=ProviderStatusChoices.choices,
+        help_text="""Filter by provider connection status.
+        Valid values: pending, checking, connected, error.""",
+    )
+    status__in = ChoiceInFilter(
+        field_name="status",
+        choices=ProviderStatusChoices.choices,
+        lookup_expr="in",
+        help_text="""Filter by multiple provider connection statuses.
+        Accepts comma-separated values: pending,connected,error""",
+    )
 
     class Meta:
         model = Provider
@@ -333,6 +346,7 @@ class ProviderFilter(FilterSet):
             "alias": ["exact", "icontains", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
+            "status": ["exact", "in"],
         }
         filter_overrides = {
             ProviderEnumField: {

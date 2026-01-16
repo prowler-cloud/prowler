@@ -9,7 +9,27 @@ from tasks.jobs.connection import (
     check_provider_connection,
 )
 
-from api.models import Integration, LighthouseConfiguration, Provider
+from api.models import (
+    Integration,
+    LighthouseConfiguration,
+    Provider,
+    ProviderStatusChoices,
+)
+
+
+@pytest.mark.django_db
+def test_provider_created_with_pending_status(tenants_fixture):
+    """Test that a newly created provider has PENDING status."""
+    provider = Provider.objects.create(
+        provider="aws",
+        uid="123456789012",
+        alias="aws-test",
+        tenant_id=tenants_fixture[0].id,
+    )
+
+    assert provider.status == ProviderStatusChoices.PENDING
+    assert provider.connected is None
+    assert provider.connection_last_checked_at is None
 
 
 @pytest.mark.parametrize(
@@ -25,6 +45,9 @@ def test_check_provider_connection(
 ):
     provider = Provider.objects.create(**provider_data, tenant_id=tenants_fixture[0].id)
 
+    # Verify initial state is PENDING
+    assert provider.status == ProviderStatusChoices.PENDING
+
     mock_test_connection_result = MagicMock()
     mock_test_connection_result.is_connected = True
 
@@ -37,8 +60,38 @@ def test_check_provider_connection(
 
     mock_provider_connection_test.assert_called_once()
     assert provider.connected is True
+    assert provider.status == ProviderStatusChoices.CONNECTED
     assert provider.connection_last_checked_at is not None
     assert provider.connection_last_checked_at <= datetime.now(tz=timezone.utc)
+
+
+@patch("tasks.jobs.connection.Provider.objects.get")
+@patch("tasks.jobs.connection.prowler_provider_connection_test")
+@pytest.mark.django_db
+def test_check_provider_connection_sets_checking_status(
+    mock_provider_connection_test, mock_provider_get
+):
+    """Test that status is set to CHECKING before connection test runs."""
+    mock_provider_instance = MagicMock()
+    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
+    mock_provider_get.return_value = mock_provider_instance
+
+    captured_status = None
+
+    def capture_status_during_test(provider):
+        nonlocal captured_status
+        captured_status = provider.status
+        result = MagicMock()
+        result.is_connected = True
+        result.error = None
+        return result
+
+    mock_provider_connection_test.side_effect = capture_status_during_test
+
+    check_provider_connection(provider_id="provider_id")
+
+    # Verify status was CHECKING when prowler_provider_connection_test was called
+    assert captured_status == ProviderStatusChoices.CHECKING
 
 
 @patch("tasks.jobs.connection.Provider.objects.get")
@@ -73,8 +126,11 @@ def test_check_provider_connection_exception(
     assert result["connected"] is False
     assert result["error"] is not None
 
-    mock_provider_instance.save.assert_called_once()
+    assert (
+        mock_provider_instance.save.call_count == 2
+    )  # Once for CHECKING, once for ERROR
     assert mock_provider_instance.connected is False
+    assert mock_provider_instance.status == ProviderStatusChoices.ERROR
 
 
 @pytest.mark.parametrize(

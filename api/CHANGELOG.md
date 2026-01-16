@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `/api/v1/overviews/resource-groups` to retrieve an overview of the resource groups based on finding severities [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
 - Endpoints `GET /findings` and `GET /findings/metadata/latest` now support the `group` filter [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
 - `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
+- `status` field to Provider model to track connection state (`pending`, `checking`, `connected`, `error`) [(#9804)](https://github.com/prowler-cloud/prowler/pull/9804)
 
 ---
 
