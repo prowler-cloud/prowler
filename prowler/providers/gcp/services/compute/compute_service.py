@@ -132,6 +132,11 @@ class Compute(GCPService):
                                 )
                             )
 
+                        machine_type_url = instance.get("machineType", "")
+                        machine_type = (
+                            machine_type_url.split("/")[-1] if machine_type_url else ""
+                        )
+
                         self.instances.append(
                             Instance(
                                 name=instance["name"],
@@ -191,6 +196,7 @@ class Compute(GCPService):
                                     "deletionProtection", False
                                 ),
                                 network_interfaces=network_interfaces,
+                                machine_type=machine_type,
                             )
                         )
 
@@ -690,6 +696,7 @@ class Instance(BaseModel):
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
     network_interfaces: list[NetworkInterface] = []
+    machine_type: str = ""
 
 
 class Network(BaseModel):

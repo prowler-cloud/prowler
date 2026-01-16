@@ -1,0 +1,36 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_desired_machine_type",
+  "CheckTitle": "Compute Engine VM instance uses an approved machine type",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "Compute Engine **VM instances** are evaluated to ensure they use machine types approved by the organization. The approved machine types are configured via the `desired_machine_types` list in the Prowler configuration file.",
+  "Risk": "Using unapproved machine types can lead to **cost overruns**, **compliance violations**, and **resource misallocation**. Unauthorized machine types may not meet security, performance, or operational requirements established by the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/desired-machine-types.html",
+    "https://cloud.google.com/compute/docs/machine-resource",
+    "https://cloud.google.com/compute/docs/instances/changing-machine-type-of-stopped-instance"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances set-machine-type INSTANCE_NAME --zone=ZONE --machine-type=APPROVED_MACHINE_TYPE",
+      "NativeIaC": "",
+      "Other": "1. Open Google Cloud Console and navigate to Compute Engine > VM instances\n2. Stop the instance that needs to be resized\n3. Click on the instance name to view details\n4. Click **Edit** at the top of the page\n5. Under **Machine configuration**, select an approved machine type from the list\n6. Click **Save** and restart the instance",
+      "Terraform": "```hcl\nresource \"google_compute_instance\" \"example\" {\n  name         = var.instance_name\n  zone         = var.zone\n\n  # Use an approved machine type from your organization's list\n  machine_type = \"n2-standard-4\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Define and document your organization's approved VM machine types based on workload requirements, cost constraints, and compliance needs. Implement organization policies to restrict VM creation to approved machine types. Regularly review and update your approved machine type list based on changing business requirements and cost optimization goals.",
+      "Url": "https://hub.prowler.com/check/compute_instance_desired_machine_type"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
