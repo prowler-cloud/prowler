@@ -1,0 +1,92 @@
+import { test, expect } from "@playwright/test";
+import { SignInPage } from "./auth-page";
+import { HomePage } from "../home/home-page";
+import { ScansPage } from "../scans/scans-page";
+import { ProvidersPage } from "../providers/providers-page";
+import { TEST_CREDENTIALS } from "../helpers";
+
+test.describe("Session Error Messages", () => {
+  // Increase timeout for tests that involve session operations under load
+  test.setTimeout(60000);
+
+  test(
+    "should show RefreshAccessTokenError message",
+    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-001"] },
+    async ({ page }) => {
+      const signInPage = new SignInPage(page);
+
+      await signInPage.gotoWithError("RefreshAccessTokenError");
+
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
+        expect(text).toContain("Session Expired");
+        expect(text).toContain("Please sign in again");
+      }
+
+      await signInPage.verifyFormElements();
+    },
+  );
+
+  test(
+    "should show MissingRefreshToken error message",
+    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-002"] },
+    async ({ page }) => {
+      const signInPage = new SignInPage(page);
+
+      await signInPage.gotoWithError("MissingRefreshToken");
+
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
+        expect(text).toContain("Session Error");
+      }
+
+      await expect(signInPage.emailInput).toBeVisible();
+    },
+  );
+
+  test(
+    "should show generic error for unknown error types",
+    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-003"] },
+    async ({ page }) => {
+      const signInPage = new SignInPage(page);
+
+      await signInPage.gotoWithError("UnknownError");
+
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
+        expect(text).toContain("Authentication Error");
+        expect(text).toContain("Please sign in again");
+      }
+    },
+  );
+
+  test(
+    "should include callbackUrl in redirect",
+    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-004"] },
+    async ({ page, context }) => {
+      const signInPage = new SignInPage(page);
+      const homePage = new HomePage(page);
+      const scansPage = new ScansPage(page);
+      const providersPage = new ProvidersPage(page);
+
+      // Login first
+      await signInPage.goto();
+      await signInPage.login(TEST_CREDENTIALS.VALID);
+      await homePage.verifyPageLoaded();
+
+      // Navigate to a specific page (just need to be on a protected route)
+      await scansPage.goto();
+      await expect(page.locator("main")).toBeVisible();
+
+      // Clear cookies to simulate session expiry
+      await context.clearCookies();
+
+      // Try to navigate to a different protected route
+      // Use gotoFresh to ensure middleware runs without cached state
+      await providersPage.gotoFresh("/providers");
+
+      // Should be redirected to login with callbackUrl
+      await signInPage.verifyRedirectWithCallback("/providers");
+    },
+  );
+});

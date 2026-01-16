@@ -54,11 +54,14 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyPageLoaded(): Promise<void> {
-    // Verify the sign up page is loaded
-
-    await expect(this.page.getByRole("heading", { name: "Sign up" })).toBeVisible();
+    await expect(this.page).toHaveURL("/sign-up");
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
+  }
+
+  async verifyOnSignUpPage(): Promise<void> {
+    await expect(this.page).toHaveURL("/sign-up");
+    await expect(this.emailInput).toBeVisible();
   }
 
   async fillName(name: string): Promise<void> {
@@ -141,5 +144,3 @@ export class SignUpPage extends BasePage {
     await expect(this.page).toHaveURL("/email-verification");
   }
 }
-
-

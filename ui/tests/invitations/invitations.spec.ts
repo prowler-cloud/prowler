@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { InvitationsPage } from "./invitations-page";
 import { makeSuffix } from "../helpers";
 import { SignUpPage } from "../sign-up/sign-up-page";
-import { SignInPage } from "../sign-in/sign-in-page";
+import { SignInPage } from "../auth/auth-page";
 import { UserProfilePage } from "../profile/profile-page";
 
 test.describe("New user invitation", () => {
@@ -90,7 +90,7 @@ test.describe("New user invitation", () => {
         password: password,
       });
       await signInPage.verifySuccessfulLogin();
-      
+
       // Navigate to the user profile page
       const userProfilePage = new UserProfilePage(await inviteContext.newPage());
       await userProfilePage.goto();
