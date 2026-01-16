@@ -65,6 +65,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_instance_group_managers_calls(client)
     mock_api_images_calls(client)
     mock_api_snapshots_calls(client)
+    mock_api_disks_calls(client)
 
     return client
 
@@ -761,7 +762,9 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "canIpForward": True,
                     "disks": [
                         {
+                            "boot": True,
                             "deviceName": "disk1",
+                            "source": f"https://www.googleapis.com/compute/v1/projects/{GCP_PROJECT_ID}/zones/zone1/disks/disk1",
                             "diskEncryptionKey": {"sha256": "sha256_key"},
                             "diskSizeGb": 10,
                             "diskType": "disk_type",
@@ -792,7 +795,9 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "canIpForward": False,
                     "disks": [
                         {
+                            "boot": True,
                             "deviceName": "disk2",
+                            "source": f"https://www.googleapis.com/compute/v1/projects/{GCP_PROJECT_ID}/zones/zone1/disks/disk2",
                             "diskEncryptionKey": {"kmsKeyName": "kms_key"},
                             "diskSizeGb": 20,
                             "diskType": "disk_type",
@@ -1350,3 +1355,9 @@ def mock_api_images_calls(client: MagicMock):
 def mock_api_snapshots_calls(client: MagicMock):
     client.snapshots().list().execute.return_value = {"items": []}
     client.snapshots().list_next.return_value = None
+
+
+def mock_api_disks_calls(client: MagicMock):
+    client.disks().get().execute.return_value = {
+        "sourceImage": "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-11-bullseye-v20231010"
+    }
