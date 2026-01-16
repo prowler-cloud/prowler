@@ -20,6 +20,23 @@ from prowler.providers.openstack.openstack_provider import OpenstackProvider
 class TestOpenstackProvider:
     """Test suite for OpenStack Provider initialization."""
 
+    @pytest.fixture(autouse=True)
+    def clean_openstack_env(self, monkeypatch):
+        """Ensure clean OpenStack environment for all tests."""
+        openstack_env_vars = [
+            "OS_AUTH_URL",
+            "OS_USERNAME",
+            "OS_PASSWORD",
+            "OS_PROJECT_ID",
+            "OS_REGION_NAME",
+            "OS_CLOUD",
+            "OS_IDENTITY_API_VERSION",
+            "OS_USER_DOMAIN_NAME",
+            "OS_PROJECT_DOMAIN_NAME",
+        ]
+        for env_var in openstack_env_vars:
+            monkeypatch.delenv(env_var, raising=False)
+
     def test_openstack_provider_with_all_parameters(self):
         """Test OpenStack provider initialization with all parameters provided."""
         auth_url = "https://openstack.example.com:5000/v3"
@@ -84,20 +101,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_with_environment_variables(self, monkeypatch):
         """Test OpenStack provider initialization using environment variables."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         auth_url = "https://openstack.example.com:5000/v3"
         username = "env-user"
         password = "env-password"
@@ -136,19 +139,8 @@ class TestOpenstackProvider:
             assert provider.session.region_name == region_name
             assert provider.identity.username == username
 
-    def test_openstack_provider_missing_auth_url(self, monkeypatch):
+    def test_openstack_provider_missing_auth_url(self):
         """Test OpenStack provider initialization fails when OS_AUTH_URL is missing."""
-        # Clear all OpenStack environment variables to avoid interference
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         with pytest.raises(RuntimeError) as excinfo:
             OpenstackProvider(
                 username="test-user",
@@ -162,17 +154,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_missing_username(self, monkeypatch):
         """Test OpenStack provider initialization fails when OS_USERNAME is missing."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
         monkeypatch.setenv("OS_PROJECT_ID", "test-project")
@@ -186,17 +167,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_missing_password(self, monkeypatch):
         """Test OpenStack provider initialization fails when OS_PASSWORD is missing."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PROJECT_ID", "test-project")
@@ -210,17 +180,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_missing_project_id(self, monkeypatch):
         """Test OpenStack provider initialization fails when OS_PROJECT_ID is missing."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -234,17 +193,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_missing_region(self, monkeypatch):
         """Test OpenStack provider initialization fails when OS_REGION_NAME is missing."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -258,20 +206,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_with_custom_identity_api_version(self, monkeypatch):
         """Test OpenStack provider with custom identity API version."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -296,20 +230,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_with_custom_domain_names(self, monkeypatch):
         """Test OpenStack provider with custom user and project domain names."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -336,20 +256,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_connection_failure(self, monkeypatch):
         """Test OpenStack provider initialization fails when connection cannot be established."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -390,21 +296,8 @@ class TestOpenstackProvider:
             assert connection_result.error is None
             mock_connect.assert_called_once()
 
-    def test_openstack_provider_static_test_connection_missing_credentials(
-        self, monkeypatch
-    ):
+    def test_openstack_provider_static_test_connection_missing_credentials(self):
         """Test static test_connection fails with missing credentials."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         connection_result = OpenstackProvider.test_connection(
             auth_url="https://openstack.example.com:5000/v3",
             username="test-user",
@@ -496,20 +389,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_identity_enrichment_failure(self, monkeypatch):
         """Test OpenStack provider handles identity enrichment failures gracefully."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -576,20 +455,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_with_config_content(self, monkeypatch):
         """Test OpenStack provider with config content instead of config path."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
@@ -615,20 +480,6 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_with_mutelist_content(self, monkeypatch):
         """Test OpenStack provider with mutelist content instead of mutelist path."""
-        # Clear all OpenStack environment variables first
-        for env_var in [
-            "OS_AUTH_URL",
-            "OS_USERNAME",
-            "OS_PASSWORD",
-            "OS_PROJECT_ID",
-            "OS_REGION_NAME",
-            "OS_CLOUD",
-            "OS_IDENTITY_API_VERSION",
-            "OS_USER_DOMAIN_NAME",
-            "OS_PROJECT_DOMAIN_NAME",
-        ]:
-            monkeypatch.delenv(env_var, raising=False)
-
         monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
         monkeypatch.setenv("OS_USERNAME", "test-user")
         monkeypatch.setenv("OS_PASSWORD", "test-password")
