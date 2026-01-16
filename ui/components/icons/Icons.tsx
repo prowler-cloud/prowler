@@ -1119,7 +1119,7 @@ export const KubernetesIcon: React.FC<IconSvgProps> = ({
 };
 
 export const LighthouseIcon: React.FC<IconSvgProps> = ({
-  size = 24,
+  size = 19,
   width,
   height,
   ...props
@@ -1127,10 +1127,11 @@ export const LighthouseIcon: React.FC<IconSvgProps> = ({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="19"
-      height="18"
+      width={width || size}
+      height={height || size}
       viewBox="0 0 19 18"
       fill="none"
+      {...props}
     >
       <path
         d="M16.792 11.6488H17.2955L17.4214 12.404L18.0508 12.6557L17.4214 13.0333L17.2955 13.6627H16.792V11.6488Z"
