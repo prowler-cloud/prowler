@@ -1,6 +1,18 @@
 # Prowler MCP Server - AI Agent Ruleset
 
-> **Skills Reference**: For detailed patterns, use the [`prowler-mcp`](../skills/prowler-mcp/SKILL.md) skill.
+> **Skills Reference**: See [`prowler-mcp`](../skills/prowler-mcp/SKILL.md)
+
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
+| Create PR that requires changelog entry | `prowler-changelog` |
+| Review changelog format and conventions | `prowler-changelog` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
+| Working on MCP server tools | `prowler-mcp` |
 
 ## Project Overview
 
