@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_security_groups_attached",
+  "CheckTitle": "Compute instances have security groups attached",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "Description": "Compute instances must have security groups attached to control network access and prevent unauthorized connections.",
+  "Risk": "Instances without security groups may be exposed to unrestricted network access, allowing potential unauthorized access, data breaches, or service compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/latest/user/security-groups.html",
+    "https://docs.openstack.org/api-ref/compute/",
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server add security group <instance_id> <security_group_name>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Compute -> Instances in the Horizon dashboard\n2. Select the instance without security groups\n3. Click on 'Edit Security Groups' in the Actions menu\n4. Add appropriate security groups to restrict network access",
+      "Terraform": "resource \"openstack_compute_instance_v2\" \"example\" {\n  name            = \"example-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  security_groups = [\"default\", \"custom-sg\"]  # Attach security groups\n}"
+    },
+    "Recommendation": {
+      "Text": "Ensure all compute instances have at least one security group attached to control inbound and outbound network traffic. Follow the principle of least privilege when configuring security group rules.",
+      "Url": "https://docs.openstack.org/nova/latest/user/security-groups.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
