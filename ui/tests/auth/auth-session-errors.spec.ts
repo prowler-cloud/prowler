@@ -82,7 +82,8 @@ test.describe("Session Error Messages", () => {
       await context.clearCookies();
 
       // Try to navigate to a different protected route
-      await providersPage.goto();
+      // Use gotoFresh to ensure middleware runs without cached state
+      await providersPage.gotoFresh("/providers");
 
       // Should be redirected to login with callbackUrl
       await signInPage.verifyRedirectWithCallback("/providers");
