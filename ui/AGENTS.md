@@ -18,10 +18,14 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
+| Create PR that requires changelog entry | `prowler-changelog` |
 | Creating Zod schemas | `zod-4` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
+| Review changelog format and conventions | `prowler-changelog` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Using Zustand stores | `zustand-5` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
 | Working with Prowler UI test helpers/pages | `prowler-test-ui` |
