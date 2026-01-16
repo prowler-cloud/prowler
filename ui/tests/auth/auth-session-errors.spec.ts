@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { SignInPage } from "./auth-page";
 import { HomePage } from "../home/home-page";
+import { ScansPage } from "../scans/scans-page";
+import { ProvidersPage } from "../providers/providers-page";
 import { TEST_CREDENTIALS } from "../helpers";
 
 test.describe("Session Error Messages", () => {
@@ -13,14 +15,10 @@ test.describe("Session Error Messages", () => {
     async ({ page }) => {
       const signInPage = new SignInPage(page);
 
-      await page.goto("/sign-in?error=RefreshAccessTokenError");
-      await page.waitForTimeout(200);
+      await signInPage.gotoWithError("RefreshAccessTokenError");
 
-      const toast = page.locator('[role="status"], [role="alert"]').first();
-      const isVisible = await toast.isVisible().catch(() => false);
-
-      if (isVisible) {
-        const text = await toast.textContent();
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
         expect(text).toContain("Session Expired");
         expect(text).toContain("Please sign in again");
       }
@@ -35,14 +33,10 @@ test.describe("Session Error Messages", () => {
     async ({ page }) => {
       const signInPage = new SignInPage(page);
 
-      await page.goto("/sign-in?error=MissingRefreshToken");
-      await page.waitForTimeout(200);
+      await signInPage.gotoWithError("MissingRefreshToken");
 
-      const toast = page.locator('[role="status"], [role="alert"]').first();
-      const isVisible = await toast.isVisible().catch(() => false);
-
-      if (isVisible) {
-        const text = await toast.textContent();
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
         expect(text).toContain("Session Error");
       }
 
@@ -54,14 +48,12 @@ test.describe("Session Error Messages", () => {
     "should show generic error for unknown error types",
     { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-003"] },
     async ({ page }) => {
-      await page.goto("/sign-in?error=UnknownError");
-      await page.waitForTimeout(200);
+      const signInPage = new SignInPage(page);
 
-      const toast = page.locator('[role="status"], [role="alert"]').first();
-      const isVisible = await toast.isVisible().catch(() => false);
+      await signInPage.gotoWithError("UnknownError");
 
-      if (isVisible) {
-        const text = await toast.textContent();
+      const { isVisible, text } = await signInPage.waitForToast();
+      if (isVisible && text) {
         expect(text).toContain("Authentication Error");
         expect(text).toContain("Please sign in again");
       }
@@ -74,29 +66,26 @@ test.describe("Session Error Messages", () => {
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
+      const scansPage = new ScansPage(page);
+      const providersPage = new ProvidersPage(page);
 
       // Login first
       await signInPage.goto();
       await signInPage.login(TEST_CREDENTIALS.VALID);
       await homePage.verifyPageLoaded();
 
-      // Navigate to a specific page
-      await page.goto("/scans");
-      await page.waitForLoadState("networkidle");
+      // Navigate to a specific page (just need to be on a protected route)
+      await scansPage.goto();
+      await expect(page.locator("main")).toBeVisible();
 
       // Clear cookies to simulate session expiry
       await context.clearCookies();
 
       // Try to navigate to a different protected route
-      await page.goto("/providers");
+      await providersPage.goto();
 
       // Should be redirected to login with callbackUrl
-      await expect(page).toHaveURL(/\/sign-in\?.*callbackUrl=/);
-
-      // Verify callbackUrl contains the attempted route
-      const url = new URL(page.url());
-      const callbackUrl = url.searchParams.get("callbackUrl");
-      expect(callbackUrl).toBe("/providers");
+      await signInPage.verifyRedirectWithCallback("/providers");
     },
   );
 });

@@ -78,6 +78,14 @@ export class SignInPage extends BasePage {
     await super.goto("/sign-in");
   }
 
+  /**
+   * Navigate to sign-in page with an error query parameter
+   * Used for testing error message display (e.g., session expiry)
+   */
+  async gotoWithError(errorType: string): Promise<void> {
+    await this.page.goto(`/sign-in?error=${errorType}`);
+  }
+
   // Form interaction methods
   async fillEmail(email: string): Promise<void> {
     await this.emailInput.fill(email);
@@ -240,10 +248,57 @@ export class SignInPage extends BasePage {
     await this.homePage.signOut();
   }
 
-  async verifyLogoutSuccess(): Promise<void> {
-    // After logout, should be on sign-in page
+  /**
+   * Verifies we are on the sign-in page (URL + title visible)
+   * Use this when redirected to sign-in from protected routes
+   */
+  async verifyOnSignInPage(): Promise<void> {
     await expect(this.page).toHaveURL(/\/sign-in/);
-    await expect(this.page.getByText("Sign in", { exact: true })).toBeVisible();
+    await expect(this.pageTitle).toBeVisible();
+  }
+
+  /**
+   * Verifies we stayed on the sign-in page (exact URL match)
+   * Use after form validation errors
+   */
+  async verifyStaysOnSignInPage(): Promise<void> {
+    await expect(this.page).toHaveURL("/sign-in");
+  }
+
+  /**
+   * Verifies we are NOT on the sign-in page
+   * Use after successful login to confirm redirect
+   */
+  async verifyNotOnSignInPage(): Promise<void> {
+    await expect(this.page).not.toHaveURL(/\/sign-in/);
+  }
+
+  /**
+   * Verifies redirect to sign-in includes a callbackUrl parameter
+   */
+  async verifyRedirectWithCallback(expectedCallback: string): Promise<void> {
+    await expect(this.page).toHaveURL(/\/sign-in\?.*callbackUrl=/);
+    const url = new URL(this.page.url());
+    const callbackUrl = url.searchParams.get("callbackUrl");
+    expect(callbackUrl).toBe(expectedCallback);
+  }
+
+  /**
+   * Wait for toast notification to appear (used for error messages)
+   */
+  async waitForToast(): Promise<{ isVisible: boolean; text: string | null }> {
+    const toast = this.page.locator('[role="status"], [role="alert"]').first();
+    try {
+      await toast.waitFor({ state: "visible", timeout: 2000 });
+      const text = await toast.textContent();
+      return { isVisible: true, text };
+    } catch {
+      return { isVisible: false, text: null };
+    }
+  }
+
+  async verifyLogoutSuccess(): Promise<void> {
+    await this.verifyOnSignInPage();
   }
 
   // Advanced interaction methods

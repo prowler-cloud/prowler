@@ -50,7 +50,7 @@ test.describe("Login Flow", () => {
     async () => {
       await signInPage.submitForm();
       await signInPage.verifyFormValidation();
-      await expect(signInPage.page).toHaveURL(URLS.LOGIN);
+      await signInPage.verifyStaysOnSignInPage();
     },
   );
 
@@ -60,7 +60,7 @@ test.describe("Login Flow", () => {
     async () => {
       await signInPage.login(TEST_CREDENTIALS.INVALID_EMAIL_FORMAT);
       await signInPage.verifyFormValidation();
-      await expect(signInPage.page).toHaveURL(URLS.LOGIN);
+      await signInPage.verifyStaysOnSignInPage();
     },
   );
 
@@ -73,7 +73,7 @@ test.describe("Login Flow", () => {
       await expect(
         signInPage.page.getByText(ERROR_MESSAGES.PASSWORD_REQUIRED),
       ).toBeVisible();
-      await expect(signInPage.page).toHaveURL(URLS.LOGIN);
+      await signInPage.verifyStaysOnSignInPage();
     },
   );
 
@@ -125,7 +125,7 @@ test.describe("Session Persistence", () => {
 
       await page.reload();
       await homePage.verifyPageLoaded();
-      await expect(page).not.toHaveURL(URLS.LOGIN);
+      await signInPage.verifyNotOnSignInPage();
     },
   );
 
@@ -133,9 +133,11 @@ test.describe("Session Persistence", () => {
     "should redirect to login when accessing protected route without session",
     { tag: ["@e2e", "@signin", "@SIGNIN-E2E-011"] },
     async ({ page }) => {
-      await page.goto(URLS.DASHBOARD);
-      await expect(page).toHaveURL(/\/sign-in/);
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
+      const homePage = new HomePage(page);
+      const signInPage = new SignInPage(page);
+
+      await homePage.goto();
+      await signInPage.verifyOnSignInPage();
     },
   );
 
@@ -153,8 +155,8 @@ test.describe("Session Persistence", () => {
       await homePage.signOut();
       await signInPage.verifyLogoutSuccess();
 
-      await page.goto(URLS.DASHBOARD);
-      await expect(page).toHaveURL(/\/sign-in/);
+      await homePage.goto();
+      await signInPage.verifyOnSignInPage();
     },
   );
 
@@ -177,9 +179,10 @@ test.describe("Session Persistence", () => {
 
       const unauthContext = await browser.newContext();
       const unauthPage = await unauthContext.newPage();
+      const unauthSignInPage = new SignInPage(unauthPage);
 
-      await unauthPage.goto(URLS.PROFILE, { waitUntil: "networkidle" });
-      await expect(unauthPage).toHaveURL(/\/sign-in/);
+      await unauthPage.goto(URLS.PROFILE);
+      await unauthSignInPage.verifyOnSignInPage();
 
       const unauthResponse = await unauthPage.request.get("/api/auth/session");
       const unauthSessionText = await unauthResponse.text();
@@ -199,9 +202,11 @@ test.describe("Navigation", () => {
     { tag: ["@e2e", "@signin", "@SIGNIN-E2E-014"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
+      const signUpPage = new SignUpPage(page);
+
       await signInPage.goto();
       await signInPage.goToSignUp();
-      await expect(page).toHaveURL(URLS.SIGNUP);
+      await signUpPage.verifyOnSignUpPage();
     },
   );
 
@@ -209,11 +214,12 @@ test.describe("Navigation", () => {
     "should navigate from sign up back to sign in",
     { tag: ["@e2e", "@signin", "@SIGNIN-E2E-015"] },
     async ({ page }) => {
+      const signInPage = new SignInPage(page);
       const signUpPage = new SignUpPage(page);
+
       await signUpPage.goto();
       await signUpPage.loginLink.click();
-      await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
+      await signInPage.verifyOnSignInPage();
     },
   );
 
@@ -222,12 +228,13 @@ test.describe("Navigation", () => {
     { tag: ["@e2e", "@signin", "@SIGNIN-E2E-016"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
+      const signUpPage = new SignUpPage(page);
+
       await signInPage.goto();
       await signInPage.goToSignUp();
-      await expect(page).toHaveURL(URLS.SIGNUP);
+      await signUpPage.verifyOnSignUpPage();
       await page.goBack();
-      await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
+      await signInPage.verifyOnSignInPage();
     },
   );
 });

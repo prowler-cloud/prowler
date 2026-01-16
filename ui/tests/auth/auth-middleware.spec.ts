@@ -1,7 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { SignInPage } from "./auth-page";
+import { SignUpPage } from "../sign-up/sign-up-page";
 import { HomePage } from "../home/home-page";
-import { TEST_CREDENTIALS, URLS, verifySessionValid } from "../helpers";
+import { ProvidersPage } from "../providers/providers-page";
+import { ScansPage } from "../scans/scans-page";
+import { UserProfilePage } from "../profile/profile-page";
+import { TEST_CREDENTIALS, verifySessionValid } from "../helpers";
 
 test.describe("Middleware Error Handling", () => {
   // Increase timeout for tests that involve multiple navigations under load
@@ -11,14 +15,16 @@ test.describe("Middleware Error Handling", () => {
     "should allow access to public routes without session",
     { tag: ["@e2e", "@signin", "@middleware", "@AUTH-MW-E2E-001"] },
     async ({ page, context }) => {
+      const signInPage = new SignInPage(page);
+      const signUpPage = new SignUpPage(page);
+
       await context.clearCookies();
 
-      await page.goto(URLS.LOGIN);
-      await expect(page).toHaveURL(URLS.LOGIN);
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
+      await signInPage.goto();
+      await signInPage.verifyOnSignInPage();
 
-      await page.goto(URLS.SIGNUP);
-      await expect(page).toHaveURL(URLS.SIGNUP);
+      await signUpPage.goto();
+      await signUpPage.verifyPageLoaded();
     },
   );
 
@@ -28,15 +34,15 @@ test.describe("Middleware Error Handling", () => {
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
+      const providersPage = new ProvidersPage(page);
+      const scansPage = new ScansPage(page);
 
       await signInPage.goto();
       await signInPage.login(TEST_CREDENTIALS.VALID);
       await homePage.verifyPageLoaded();
 
-      await page.goto("/providers");
-      await expect(page).toHaveURL("/providers");
-      // Wait for the page content to be visible
-      await expect(page.locator("main")).toBeVisible();
+      await providersPage.goto();
+      await providersPage.verifyPageLoaded();
 
       const cookies = await context.cookies();
       const sessionCookie = cookies.find((c) =>
@@ -52,9 +58,9 @@ test.describe("Middleware Error Handling", () => {
           },
         ]);
 
-        await page.goto("/scans");
+        await scansPage.goto();
         // With invalid session, should redirect to sign-in
-        await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
+        await signInPage.verifyOnSignInPage();
       }
     },
   );
@@ -65,6 +71,7 @@ test.describe("Middleware Error Handling", () => {
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
+      const profilePage = new UserProfilePage(page);
 
       await signInPage.goto();
       await signInPage.login(TEST_CREDENTIALS.VALID);
@@ -73,14 +80,16 @@ test.describe("Middleware Error Handling", () => {
       const session = await verifySessionValid(page);
       const permissions = session.user.permissions;
 
+      // Note: /billing and /integrations don't have dedicated Page Objects
+      // Using direct navigation since these are permission-redirect tests
       if (!permissions.manage_billing) {
         await page.goto("/billing");
-        await expect(page).toHaveURL("/profile");
+        await profilePage.verifyOnProfilePage();
       }
 
       if (!permissions.manage_integrations) {
         await page.goto("/integrations");
-        await expect(page).toHaveURL("/profile");
+        await profilePage.verifyOnProfilePage();
       }
     },
   );

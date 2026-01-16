@@ -135,8 +135,12 @@ export async function verifyLoginFormElements(page: Page) {
   await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
 }
 
+/**
+ * @deprecated Use pageObject.verifyPageLoaded() instead.
+ * Waiting for specific UI elements is more reliable than load states.
+ */
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load");
 }
 
 export async function verifyDashboardRoute(page: Page) {
