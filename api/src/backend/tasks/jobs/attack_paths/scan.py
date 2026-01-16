@@ -176,8 +176,8 @@ def _call_within_event_loop(fn, *args, **kwargs):
         try:
             loop.run_until_complete(loop.shutdown_asyncgens())
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to shutdown async generators cleanly: {e}")
 
         loop.close()
         asyncio.set_event_loop(None)
