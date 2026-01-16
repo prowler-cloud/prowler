@@ -679,7 +679,7 @@ class TestOpenstackProvider:
         assert sdk_config["identity_api_version"] == "3"
 
     def test_openstack_session_as_sdk_config_with_uuid(self):
-        """Test OpenStackSession.as_sdk_config() with UUID project_id."""
+        """Test OpenStackSession.as_sdk_config() with UUID project_id (standard format with dashes)."""
         session = OpenStackSession(
             auth_url="https://openstack.example.com:5000/v3",
             identity_api_version="3",
@@ -698,6 +698,32 @@ class TestOpenstackProvider:
         assert sdk_config["password"] == "test-password"
         # UUID project_id should be returned as project_id
         assert sdk_config["project_id"] == "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        assert "project_name" not in sdk_config
+        assert sdk_config["region_name"] == "RegionOne"
+        assert sdk_config["user_domain_name"] == "Default"
+        assert sdk_config["project_domain_name"] == "Default"
+        assert sdk_config["identity_api_version"] == "3"
+
+    def test_openstack_session_as_sdk_config_with_uuid_no_dashes(self):
+        """Test OpenStackSession.as_sdk_config() with UUID project_id (compact format without dashes, e.g., OVH)."""
+        session = OpenStackSession(
+            auth_url="https://openstack.example.com:5000/v3",
+            identity_api_version="3",
+            username="test-user",
+            password="test-password",
+            project_id="f60368c2d0e04193bd61e14ae5754eeb",  # OVH-style UUID without dashes
+            region_name="RegionOne",
+            user_domain_name="Default",
+            project_domain_name="Default",
+        )
+
+        sdk_config = session.as_sdk_config()
+
+        assert sdk_config["auth_url"] == "https://openstack.example.com:5000/v3"
+        assert sdk_config["username"] == "test-user"
+        assert sdk_config["password"] == "test-password"
+        # UUID without dashes should still be returned as project_id
+        assert sdk_config["project_id"] == "f60368c2d0e04193bd61e14ae5754eeb"
         assert "project_name" not in sdk_config
         assert sdk_config["region_name"] == "RegionOne"
         assert sdk_config["user_domain_name"] == "Default"

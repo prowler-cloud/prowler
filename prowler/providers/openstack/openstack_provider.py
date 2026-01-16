@@ -178,9 +178,19 @@ class OpenstackProvider(Provider):
     def _create_connection(
         session: OpenStackSession,
     ) -> OpenStackConnection:
-        """Initialize the OpenStack SDK connection."""
+        """Initialize the OpenStack SDK connection.
+
+        Note: We explicitly disable loading configuration from clouds.yaml
+        and environment variables to ensure Prowler uses only the credentials
+        provided through its own configuration mechanisms (CLI args, config file,
+        or environment variables read by Prowler itself in setup_session()).
+        """
         try:
-            conn = openstack.connect(**session.as_sdk_config())
+            conn = openstack.connect(
+                load_yaml_config=False,  # Don't load from clouds.yaml
+                load_envvars=False,  # Don't load from OS_* env vars
+                **session.as_sdk_config(),
+            )
             conn.authorize()
             return conn
         except openstack_exceptions.SDKException as error:

@@ -8,12 +8,23 @@ from prowler.providers.common.models import ProviderOutputOptions
 
 
 def _is_uuid(value: str) -> bool:
-    """Check if a string is a valid UUID."""
-    uuid_pattern = re.compile(
+    """Check if a string is a valid UUID.
+
+    Accepts both formats:
+    - Standard with dashes: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    - Compact without dashes: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    """
+    # Standard UUID format with dashes
+    uuid_with_dashes = re.compile(
         r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
         re.IGNORECASE,
     )
-    return bool(uuid_pattern.match(value))
+    # Compact UUID format without dashes (e.g., OVH)
+    uuid_without_dashes = re.compile(
+        r"^[0-9a-f]{32}$",
+        re.IGNORECASE,
+    )
+    return bool(uuid_with_dashes.match(value) or uuid_without_dashes.match(value))
 
 
 class OpenStackSession(BaseModel):
