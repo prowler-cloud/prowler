@@ -7,7 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [root, ui, api, prowler, mcp_server]
+  scope: [root, ui, api, sdk, mcp_server]
   auto_invoke:
     - "Add changelog entry for a PR or feature"
     - "Update CHANGELOG.md in any component"
