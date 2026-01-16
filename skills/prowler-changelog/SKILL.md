@@ -84,6 +84,23 @@ Prowler follows [semver.org](https://semver.org/):
 
 **CRITICAL:** `### ❌ Removed` entries MUST only appear in MAJOR version releases. Removing features is a breaking change.
 
+### Released Versions Are Immutable
+
+**NEVER modify already released versions.** Once a version is released (has a Prowler version tag like `v5.16.0`), its changelog section is frozen.
+
+**Common issue:** A PR is created during release cycle X, includes a changelog entry, but merges after release. The entry is now in the wrong section.
+
+```markdown
+## [1.16.0] (Prowler v5.16.0)    ← RELEASED, DO NOT MODIFY
+
+### Added
+- Feature from merged PR [(#9999)]   ← WRONG! PR merged after release
+
+## [1.17.0] (Prowler UNRELEASED)  ← Move entry HERE
+```
+
+**Fix:** Move the entry from the released version to the UNRELEASED section.
+
 ### Version Header Format
 
 ```markdown
