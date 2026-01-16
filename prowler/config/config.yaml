@@ -513,6 +513,9 @@ gcp:
   # gcp.compute_snapshot_not_outdated
   # Maximum age in days for disk snapshots before they are considered outdated
   max_snapshot_age_days: 90
+  # gcp.compute_instance_desired_machine_type
+  # List of approved machine types for VM instances
+  desired_machine_types: []
   # GCP Service Account and user-managed keys unused configuration
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused

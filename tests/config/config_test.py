@@ -332,6 +332,7 @@ config_azure = {
 config_gcp = {
     "shodan_api_key": None,
     "mig_min_zones": 2,
+    "desired_machine_types": [],
     "max_unused_account_days": 30,
 }
 

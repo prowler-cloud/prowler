@@ -413,6 +413,9 @@ gcp:
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
+  # gcp.compute_instance_desired_machine_type
+  # List of approved machine types for VM instances
+  desired_machine_types: []
   max_unused_account_days: 30
 
 # Kubernetes Configuration
