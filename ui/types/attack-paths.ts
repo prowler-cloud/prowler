@@ -158,7 +158,7 @@ export interface QueryResultAttributes {
 }
 
 export interface QueryResultData {
-  type: "attack-paths-query-run-request";
+  type: "attack-paths-query-run-requests";
   id: string | null;
   attributes: QueryResultAttributes;
 }
@@ -236,7 +236,7 @@ export interface QueryRequestAttributes {
 }
 
 export interface ExecuteQueryRequestData {
-  type: "attack-paths-query-run-request";
+  type: "attack-paths-query-run-requests";
   attributes: QueryRequestAttributes;
 }
 

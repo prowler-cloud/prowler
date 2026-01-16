@@ -71,7 +71,7 @@ export const executeQuery = async (
 
   const requestBody: ExecuteQueryRequest = {
     data: {
-      type: "attack-paths-query-run-request",
+      type: "attack-paths-query-run-requests",
       attributes: {
         id: queryId,
         ...(parameters && { parameters }),
