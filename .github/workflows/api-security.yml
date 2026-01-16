@@ -61,9 +61,8 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027,82754
+        run: poetry run safety check --ignore 79023,79027
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
-        # TODO: 82754 filelock TOCTOU symlink vulnerability - transitive dep, awaiting upstream fix
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

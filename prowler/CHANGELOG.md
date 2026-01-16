@@ -55,6 +55,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
 - Update AWS EC2 service metadata to new format [(#9549)](https://github.com/prowler-cloud/prowler/pull/9549)
 
+### Security
+- Updated `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
+
 ---
 
 ## [5.16.2] (Prowler v5.16.2) (UNRELEASED)
