@@ -1245,7 +1245,7 @@ def lighthouse_config_fixture(authenticated_client, tenants_fixture):
     return LighthouseConfiguration.objects.create(
         tenant_id=tenants_fixture[0].id,
         name="OpenAI",
-        api_key_decoded="sk-test1234567890T3BlbkFJtest1234567890",
+        api_key_decoded="sk-fake-test-key-for-unit-testing-only",
         model="gpt-4o",
         temperature=0,
         max_tokens=4000,

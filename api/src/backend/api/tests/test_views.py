@@ -1053,9 +1053,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -4071,9 +4071,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -4412,9 +4412,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -4953,9 +4953,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -4969,23 +4969,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
@@ -8920,9 +8920,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -10148,7 +10148,7 @@ class TestLighthouseConfigViewSet:
                 "type": "lighthouse-configurations",
                 "attributes": {
                     "name": "OpenAI",
-                    "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
+                    "api_key": "sk-fake-test-key-for-unit-testing-only",
                     "model": "gpt-4o",
                     "temperature": 0.7,
                     "max_tokens": 4000,
@@ -10212,9 +10212,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -11610,7 +11610,7 @@ class TestLighthouseTenantConfigViewSet:
         provider_config = LighthouseProviderConfiguration.objects.create(
             tenant_id=tenants_fixture[0].id,
             provider_type="openai",
-            credentials=b'{"api_key": "sk-test1234567890T3BlbkFJtest1234567890"}',
+            credentials=b'{"api_key": "sk-fake-test-key-for-unit-testing-only"}',
             is_active=True,
         )
 
@@ -11746,7 +11746,7 @@ class TestLighthouseProviderConfigViewSet:
                 "type": "lighthouse-providers",
                 "attributes": {
                     "provider_type": "testprovider",
-                    "credentials": {"api_key": "sk-testT3BlbkFJkey"},
+                    "credentials": {"api_key": "sk-fake-test-key-1234"},
                 },
             }
         }
@@ -11778,7 +11778,7 @@ class TestLighthouseProviderConfigViewSet:
         "credentials",
         [
             {},  # empty credentials
-            {"token": "sk-testT3BlbkFJkey"},  # wrong key name
+            {"token": "sk-fake-test-key-1234"},  # wrong key name
             {"api_key": "ks-invalid-format"},  # wrong format
         ],
     )
@@ -11802,7 +11802,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_valid_credentials_success(self, authenticated_client):
         """OpenAI provider with valid sk-xxx format should succeed"""
-        valid_key = "sk-abc123T3BlbkFJxyz456"
+        valid_key = "sk-fake-abc-test-key-xyz"
         payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11827,7 +11827,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_provider_duplicate_per_tenant(self, authenticated_client):
         """If an OpenAI provider exists for tenant, creating again should error"""
-        valid_key = "sk-dup123T3BlbkFJdup456"
+        valid_key = "sk-fake-dup-test-key-456"
         payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11856,7 +11856,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_patch_base_url_and_is_active(self, authenticated_client):
         """After creating, should be able to patch base_url and is_active"""
-        valid_key = "sk-patch123T3BlbkFJpatch456"
+        valid_key = "sk-fake-patch-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11896,7 +11896,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_patch_invalid_credentials(self, authenticated_client):
         """PATCH with invalid credentials.api_key should error (400)"""
-        valid_key = "sk-ok123T3BlbkFJok456"
+        valid_key = "sk-fake-ok-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11932,7 +11932,7 @@ class TestLighthouseProviderConfigViewSet:
         assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_openai_get_masking_and_fields_filter(self, authenticated_client):
-        valid_key = "sk-get123T3BlbkFJget456"
+        valid_key = "sk-fake-get-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11978,7 +11978,7 @@ class TestLighthouseProviderConfigViewSet:
         provider = LighthouseProviderConfiguration.objects.create(
             tenant_id=tenant.id,
             provider_type="openai",
-            credentials=b'{"api_key":"sk-test123T3BlbkFJ"}',
+            credentials=b'{"api_key":"sk-fake-test-key-123"}',
             is_active=True,
         )
 
