@@ -52,12 +52,18 @@ class TestCloudTrailTimeline:
         timeline = CloudTrailTimeline(session=mock_session, lookback_days=365)
         assert timeline._lookback_days == 90
 
+    def test_init_default_max_results(self, mock_session):
+        timeline = CloudTrailTimeline(session=mock_session)
+        assert timeline._max_results == 50
+
+    def test_init_custom_max_results(self, mock_session):
+        timeline = CloudTrailTimeline(session=mock_session, max_results=10)
+        assert timeline._max_results == 10
+
     def test_get_resource_timeline_defaults_to_us_east_1(self, mock_session):
         """When no region is provided, should default to us-east-1 for global resources."""
         mock_client = MagicMock()
-        mock_paginator = MagicMock()
-        mock_paginator.paginate.return_value = [{"Events": []}]
-        mock_client.get_paginator.return_value = mock_paginator
+        mock_client.lookup_events.return_value = {"Events": []}
         mock_session.client.return_value = mock_client
 
         timeline = CloudTrailTimeline(session=mock_session)
@@ -77,9 +83,7 @@ class TestCloudTrailTimeline:
         self, mock_session, sample_cloudtrail_event
     ):
         mock_client = MagicMock()
-        mock_paginator = MagicMock()
-        mock_paginator.paginate.return_value = [{"Events": [sample_cloudtrail_event]}]
-        mock_client.get_paginator.return_value = mock_paginator
+        mock_client.lookup_events.return_value = {"Events": [sample_cloudtrail_event]}
         mock_session.client.return_value = mock_client
 
         timeline = CloudTrailTimeline(session=mock_session)
@@ -96,9 +100,7 @@ class TestCloudTrailTimeline:
         self, mock_session, sample_cloudtrail_event
     ):
         mock_client = MagicMock()
-        mock_paginator = MagicMock()
-        mock_paginator.paginate.return_value = [{"Events": [sample_cloudtrail_event]}]
-        mock_client.get_paginator.return_value = mock_paginator
+        mock_client.lookup_events.return_value = {"Events": [sample_cloudtrail_event]}
         mock_session.client.return_value = mock_client
 
         timeline = CloudTrailTimeline(session=mock_session)
@@ -113,9 +115,7 @@ class TestCloudTrailTimeline:
     def test_get_resource_timeline_prefers_uid_over_id(self, mock_session):
         """When both resource_id and resource_uid are provided, UID should be used."""
         mock_client = MagicMock()
-        mock_paginator = MagicMock()
-        mock_paginator.paginate.return_value = [{"Events": []}]
-        mock_client.get_paginator.return_value = mock_paginator
+        mock_client.lookup_events.return_value = {"Events": []}
         mock_session.client.return_value = mock_client
 
         timeline = CloudTrailTimeline(session=mock_session)
@@ -126,7 +126,7 @@ class TestCloudTrailTimeline:
         )
 
         # Verify UID was used in the lookup
-        call_args = mock_paginator.paginate.call_args
+        call_args = mock_client.lookup_events.call_args
         lookup_attrs = call_args.kwargs["LookupAttributes"]
         assert (
             lookup_attrs[0]["AttributeValue"]
@@ -135,7 +135,7 @@ class TestCloudTrailTimeline:
 
     def test_get_resource_timeline_client_error(self, mock_session):
         mock_client = MagicMock()
-        mock_client.get_paginator.side_effect = ClientError(
+        mock_client.lookup_events.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
             "LookupEvents",
         )
@@ -176,9 +176,7 @@ class TestCloudTrailTimeline:
         ]
 
         mock_client = MagicMock()
-        mock_paginator = MagicMock()
-        mock_paginator.paginate.return_value = [{"Events": events}]
-        mock_client.get_paginator.return_value = mock_paginator
+        mock_client.lookup_events.return_value = {"Events": events}
         mock_session.client.return_value = mock_client
 
         timeline = CloudTrailTimeline(session=mock_session)
@@ -189,6 +187,19 @@ class TestCloudTrailTimeline:
         assert len(result) == 2
         assert result[0]["event_name"] == "RunInstances"
         assert result[1]["event_name"] == "StopInstances"
+
+    def test_get_resource_timeline_uses_max_results(self, mock_session):
+        """Verify MaxResults is passed to lookup_events."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session, max_results=25)
+        timeline.get_resource_timeline(region="us-east-1", resource_id="i-1234")
+
+        # Verify MaxResults was passed to lookup_events
+        call_args = mock_client.lookup_events.call_args
+        assert call_args.kwargs["MaxResults"] == 25
 
 
 class TestExtractActor:

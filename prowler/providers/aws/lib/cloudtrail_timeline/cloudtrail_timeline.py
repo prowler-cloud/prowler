@@ -25,9 +25,14 @@ class CloudTrailTimeline(TimelineService):
 
     MAX_LOOKBACK_DAYS = 90
 
-    def __init__(self, session, lookback_days: int = 90):
+    DEFAULT_MAX_RESULTS = 50  # Default page size for CloudTrail queries
+
+    def __init__(
+        self, session, lookback_days: int = 90, max_results: Optional[int] = None
+    ):
         self._session = session
         self._lookback_days = min(lookback_days, self.MAX_LOOKBACK_DAYS)
+        self._max_results = max_results or self.DEFAULT_MAX_RESULTS
         self._clients: Dict[str, Any] = {}
 
     DEFAULT_REGION = "us-east-1"  # Default for global resources in commercial partition
@@ -99,22 +104,26 @@ class CloudTrailTimeline(TimelineService):
     def _lookup_events(
         self, resource_identifier: str, region: str
     ) -> List[Dict[str, Any]]:
-        """Query CloudTrail for events related to a specific resource."""
+        """Query CloudTrail for events related to a specific resource.
+
+        Uses MaxResults to limit the number of events returned, preparing
+        for API-level pagination. Currently returns up to max_results events
+        from the first page only.
+        """
         client = self._get_client(region)
         start_time = datetime.now(timezone.utc) - timedelta(days=self._lookback_days)
 
-        events = []
-        paginator = client.get_paginator("lookup_events")
-
-        for page in paginator.paginate(
+        # Use direct API call with MaxResults instead of paginator
+        # This limits CloudTrail to return only max_results events
+        response = client.lookup_events(
             LookupAttributes=[
                 {"AttributeKey": "ResourceName", "AttributeValue": resource_identifier}
             ],
             StartTime=start_time,
-        ):
-            events.extend(page.get("Events", []))
+            MaxResults=self._max_results,
+        )
 
-        return events
+        return response.get("Events", [])
 
     def _parse_event(self, raw_event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse a raw CloudTrail event into a TimelineEvent dictionary."""

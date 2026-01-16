@@ -3700,11 +3700,11 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         return str(obj.id)
 
 
-# Resource Timeline Serializers
+# Resource Events Serializers
 
 
-class TimelineEventSerializer(serializers.Serializer):
-    """Serializer for individual timeline events."""
+class ResourceEventSerializer(serializers.Serializer):
+    """Serializer for resource events (modification history)."""
 
     event_time = serializers.DateTimeField()
     event_name = serializers.CharField()
@@ -3719,19 +3719,4 @@ class TimelineEventSerializer(serializers.Serializer):
     error_message = serializers.CharField(allow_null=True, required=False)
 
     class Meta:
-        resource_name = "timeline-events"
-
-
-class ResourceTimelineSerializer(serializers.Serializer):
-    """Serializer for resource timeline data."""
-
-    resource_id = serializers.CharField()
-    resource_name = serializers.CharField()
-    resource_type = serializers.CharField()
-    region = serializers.CharField()
-    lookback_days = serializers.IntegerField()
-    event_count = serializers.IntegerField()
-    events = TimelineEventSerializer(many=True)
-
-    class Meta:
-        resource_name = "resource-timeline"
+        resource_name = "resource-events"

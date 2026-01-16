@@ -222,9 +222,9 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceEventSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
-    ResourceTimelineSerializer,
     RoleCreateSerializer,
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
@@ -2167,6 +2167,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
     TIMELINE_MIN_LOOKBACK_DAYS = 1
     TIMELINE_MAX_LOOKBACK_DAYS = 90
+    # Page size controls how many events CloudTrail returns (prepares for API pagination)
+    TIMELINE_DEFAULT_PAGE_SIZE = 50
+    TIMELINE_MIN_PAGE_SIZE = 1
+    TIMELINE_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
 
     ordering_fields = [
         "provider_uid",
@@ -2243,6 +2247,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
+        if self.action == "events":
+            return ResourceEventSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -2251,8 +2257,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return ResourceFilter
 
     def filter_queryset(self, queryset):
-        # Do not apply filters when retrieving specific resource or timeline
-        if self.action in ["retrieve", "timeline"]:
+        # Do not apply filters when retrieving specific resource or events
+        if self.action in ["retrieve", "events"]:
             return queryset
         return super().filter_queryset(queryset)
 
@@ -2474,22 +2480,29 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     @extend_schema(
         tags=["Resource"],
-        summary="Get timeline for a resource",
+        summary="Get events for a resource",
         description=(
             "Retrieve events showing modification history for a resource. "
-            "Returns timeline of who modified the resource and when. Currently only available for AWS resources."
+            "Returns who modified the resource and when. Currently only available for AWS resources."
         ),
         parameters=[
             OpenApiParameter(
-                name="filter[lookback_days]",
+                name="lookback_days",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 description="Number of days to look back (default: 90, min: 1, max: 90).",
                 required=False,
             ),
+            OpenApiParameter(
+                name="page[size]",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Maximum number of events to return (default: 50, min: 1, max: 50).",
+                required=False,
+            ),
         ],
         responses={
-            200: ResourceTimelineSerializer,
+            200: ResourceEventSerializer(many=True),
             400: OpenApiResponse(description="Invalid provider or parameters"),
             401: OpenApiResponse(description="Provider credentials not available"),
             403: OpenApiResponse(
@@ -2501,25 +2514,25 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     @action(
         detail=True,
         methods=["get"],
-        url_name="timeline",
-        serializer_class=ResourceTimelineSerializer,
+        url_name="events",
+        filter_backends=[],  # Disable filters - we're calling external API, not filtering queryset
     )
-    def timeline(self, request, pk=None):
-        """Get timeline events for a resource."""
+    def events(self, request, pk=None):
+        """Get events for a resource."""
         resource = self.get_object()
 
         # Validate provider
         if resource.provider.provider != "aws":
             raise ValidationError(
                 {
-                    "detail": "Timeline is only available for AWS resources",
+                    "detail": "Events are only available for AWS resources",
                     "provider": resource.provider.provider,
                 },
                 code="invalid_provider",
             )
 
         # Validate and parse lookback_days from query params
-        lookback_days_str = request.query_params.get("filter[lookback_days]")
+        lookback_days_str = request.query_params.get("lookback_days")
         if lookback_days_str is None:
             lookback_days = self.TIMELINE_DEFAULT_LOOKBACK_DAYS
         else:
@@ -2527,7 +2540,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 lookback_days = int(lookback_days_str)
             except (ValueError, TypeError):
                 raise ValidationError(
-                    {"filter[lookback_days]": "Must be a valid integer"},
+                    {"lookback_days": "Must be a valid integer"},
                     code="invalid",
                 )
 
@@ -2538,9 +2551,35 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             ):
                 raise ValidationError(
                     {
-                        "filter[lookback_days]": (
+                        "lookback_days": (
                             f"Must be between {self.TIMELINE_MIN_LOOKBACK_DAYS} "
                             f"and {self.TIMELINE_MAX_LOOKBACK_DAYS}"
+                        )
+                    },
+                    code="out_of_range",
+                )
+
+        # Validate and parse page[size] from query params (JSON:API pagination)
+        page_size_str = request.query_params.get("page[size]")
+        if page_size_str is None:
+            page_size = self.TIMELINE_DEFAULT_PAGE_SIZE
+        else:
+            try:
+                page_size = int(page_size_str)
+            except (ValueError, TypeError):
+                raise ValidationError(
+                    {"page[size]": "Must be a valid integer"},
+                    code="invalid",
+                )
+
+            if not (
+                self.TIMELINE_MIN_PAGE_SIZE <= page_size <= self.TIMELINE_MAX_PAGE_SIZE
+            ):
+                raise ValidationError(
+                    {
+                        "page[size]": (
+                            f"Must be between {self.TIMELINE_MIN_PAGE_SIZE} "
+                            f"and {self.TIMELINE_MAX_PAGE_SIZE}"
                         )
                     },
                     code="out_of_range",
@@ -2564,20 +2603,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 resource_uid=resource.uid,
             )
 
-            # Prepare response data
-            response_data = {
-                "resource_id": resource.uid,
-                "resource_name": resource.name,
-                "resource_type": resource.type,
-                "region": resource.region,
-                "lookback_days": lookback_days,
-                "event_count": len(events),
-                "events": events,
-            }
-
-            # Serialize and return
-            serializer = self.get_serializer(data=response_data)
-            serializer.is_valid(raise_exception=True)
+            # Serialize and return events directly
+            serializer = ResourceEventSerializer(events, many=True)
             return Response(serializer.data)
 
         except NoCredentialsError:
