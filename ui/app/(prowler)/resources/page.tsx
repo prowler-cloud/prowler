@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -63,36 +62,36 @@ export default async function Resources({
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
-      <Spacer y={4} />
-      <DataTableFilterCustom
-        filters={[
-          {
-            key: "provider__in",
-            labelCheckboxGroup: "Provider",
-            values: providerIds,
-            valueLabelMapping: providerDetails,
-          },
-          {
-            key: "region__in",
-            labelCheckboxGroup: "Region",
-            values: uniqueRegions,
-          },
-          {
-            key: "service__in",
-            labelCheckboxGroup: "Service",
-            values: uniqueServices,
-          },
-          {
-            key: "groups__in",
-            labelCheckboxGroup: "Group",
-            values: uniqueGroups,
-          },
-        ]}
-      />
-      <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <div className="flex flex-col gap-6">
+        <DataTableFilterCustom
+          filters={[
+            {
+              key: "provider__in",
+              labelCheckboxGroup: "Provider",
+              values: providerIds,
+              valueLabelMapping: providerDetails,
+            },
+            {
+              key: "region__in",
+              labelCheckboxGroup: "Region",
+              values: uniqueRegions,
+            },
+            {
+              key: "service__in",
+              labelCheckboxGroup: "Service",
+              values: uniqueServices,
+            },
+            {
+              key: "groups__in",
+              labelCheckboxGroup: "Group",
+              values: uniqueGroups,
+            },
+          ]}
+        />
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
     </ContentLayout>
   );
 }
