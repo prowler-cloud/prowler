@@ -30,7 +30,7 @@ class zone_challenge_passage_configured(Check):
                 resource=zone,
             )
             # API returns seconds, convert to minutes
-            challenge_ttl_minutes =  zone.settings.challenge_ttl // 60
+            challenge_ttl_minutes = zone.settings.challenge_ttl // 60
 
             if min_minutes <= challenge_ttl_minutes <= max_minutes:
                 report.status = "PASS"

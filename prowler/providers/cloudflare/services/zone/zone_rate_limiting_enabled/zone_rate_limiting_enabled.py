@@ -15,8 +15,7 @@ class zone_rate_limiting_enabled(Check):
         """Execute the Rate Limiting enabled check.
 
         Iterates through all Cloudflare zones and verifies that at least one
-        enabled rate limiting rule exists. Rate limiting rules are identified
-        by the http_ratelimit phase in firewall rules.
+        enabled rate limiting rule exists.
 
         Returns:
             A list of CheckReportCloudflare objects with PASS status if rate
@@ -30,16 +29,14 @@ class zone_rate_limiting_enabled(Check):
                 resource=zone,
             )
 
-            # Find rate limiting rules for this zone
-            rate_limit_rules = [
-                rule
-                for rule in zone.firewall_rules
-                if rule.phase == "http_ratelimit" and rule.enabled
-            ]
+            # Get enabled rate limiting rules for this zone
+            enabled_rules = [rule for rule in zone.rate_limit_rules if rule.enabled]
 
-            if rate_limit_rules:
+            if enabled_rules:
                 report.status = "PASS"
-                rules_str = ", ".join(rule.description for rule in rate_limit_rules)
+                rules_str = ", ".join(
+                    rule.description or rule.id for rule in enabled_rules
+                )
                 report.status_extended = (
                     f"Rate limiting is configured for zone {zone.name}: {rules_str}."
                 )

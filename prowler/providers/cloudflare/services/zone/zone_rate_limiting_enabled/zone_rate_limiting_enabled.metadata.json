@@ -6,7 +6,7 @@
   "ServiceName": "zone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Zone",
   "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **Rate Limiting** configuration by checking if rules are configured to protect against **DDoS attacks**, **brute force attempts**, and **API abuse**.",

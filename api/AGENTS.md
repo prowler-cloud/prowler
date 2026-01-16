@@ -12,9 +12,13 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
+| Create PR that requires changelog entry | `prowler-changelog` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Generic DRF patterns | `django-drf` |
+| Review changelog format and conventions | `prowler-changelog` |
 | Testing RLS tenant isolation | `prowler-test-api` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Writing Prowler API tests | `prowler-test-api` |
 | Writing Python tests with pytest | `pytest` |
 

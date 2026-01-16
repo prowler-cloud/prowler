@@ -38,6 +38,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
 | `prowler-compliance-review` | Review compliance framework PRs | [SKILL.md](skills/prowler-compliance-review/SKILL.md) |
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
+| `prowler-changelog` | Changelog entries (keepachangelog.com) | [SKILL.md](skills/prowler-changelog/SKILL.md) |
 | `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
@@ -49,11 +50,13 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
+| Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
 | Creating Zod schemas | `zod-4` |
 | Creating new checks | `prowler-sdk-check` |
@@ -71,6 +74,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
+| Review changelog format and conventions | `prowler-changelog` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
@@ -78,6 +82,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Understand PR title conventional-commit validation | `prowler-ci` |
 | Understand changelog gate and no-changelog label behavior | `prowler-ci` |
 | Understand review ownership with CODEOWNERS | `prowler-pr` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |

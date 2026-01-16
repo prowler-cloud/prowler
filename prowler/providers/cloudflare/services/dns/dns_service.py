@@ -18,7 +18,6 @@ class DNS(CloudflareService):
     def _list_dns_records(self) -> None:
         """List DNS records for all zones."""
         logger.info("DNS - Listing DNS records...")
-
         try:
             for zone in zone_client.zones.values():
                 seen_record_ids: set[str] = set()
