@@ -4,7 +4,7 @@ fullnameOverride: ""
 
 postgresql:
   # If enabled, it will create a Secret with the credentials.
-  # Otherwise, create a secret with the following:
+  # Otherwise, create a secret with the following and add it to the api deployment ":
   # - POSTGRES_HOST
   # - POSTGRES_PORT
   # - POSTGRES_ADMIN_USER     - Existing user in charge of migrations, tables, permissions, RLS
@@ -13,6 +13,8 @@ postgresql:
   # - POSTGRES_PASSWORD
   # - POSTGRES_DB             - Existing DB
   enabled: true
+  image:
+    repository: "bitnami/postgresql"
   global:
     postgresql:
       auth:
@@ -20,21 +22,16 @@ postgresql:
         database: prowler_db
 
 valkey:
-  # If enabled, it will create a Secret with the credentials.
+  # If enabled, it will create a Secret with the following.
   # Otherwise, create a secret with
   # - VALKEY_HOST
   # - VALKEY_PORT
-  # - VALKEY_PASSWORD
   # - VALKEY_DB
   enabled: true
-  architecture: "standalone"
-  auth:
-    enabled: false
-    # password: valkey_password
 
 ui:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
-  replicaCount: 2
+  replicaCount: 1
 
   # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
   image:
@@ -151,7 +148,7 @@ ui:
 
 api:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
-  replicaCount: 2
+  replicaCount: 1
 
   # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
   image:
@@ -412,7 +409,6 @@ worker:
   tolerations: []
 
   affinity: {}
-
 
 worker_beat:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
