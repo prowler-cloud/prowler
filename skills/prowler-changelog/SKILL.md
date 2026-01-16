@@ -54,10 +54,19 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ### Entry Format
 
 ```markdown
-- Description of change [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+### Added
+
+- First entry [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Second entry [(#YYYY)](https://github.com/prowler-cloud/prowler/pull/YYYY)
+
+### Changed
+
+- Another entry [(#ZZZZ)](https://github.com/prowler-cloud/prowler/pull/ZZZZ)
 ```
 
 **Rules:**
+- **Blank line after section header** before first entry
+- **Blank line between sections**
 - Be specific: what changed, not why (that's in the PR)
 - One entry per PR (can link multiple PRs for related changes)
 - No period at the end
