@@ -2,12 +2,13 @@
  * Utility functions for attack path graph operations
  */
 
-import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
+import type { AttackPathGraphData } from "@/types/attack-paths";
 
 /**
  * Type for edge node reference - can be a string ID or an object with id property
+ * Note: We use `object` to match GraphEdge type from attack-paths.ts
  */
-export type EdgeNodeRef = string | { id: string };
+export type EdgeNodeRef = string | object;
 
 /**
  * Helper to get edge source/target ID from string or object
@@ -16,7 +17,8 @@ export const getEdgeNodeId = (nodeRef: EdgeNodeRef): string => {
   if (typeof nodeRef === "string") {
     return nodeRef;
   }
-  return nodeRef.id;
+  // Edge node references are objects with an id property
+  return (nodeRef as { id: string }).id;
 };
 
 /**
