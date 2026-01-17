@@ -3712,6 +3712,7 @@ class ResourceEventSerializer(serializers.Serializer):
     event_name = serializers.CharField()
     event_source = serializers.CharField()
     actor = serializers.CharField()
+    actor_uid = serializers.CharField(allow_null=True, required=False)
     actor_type = serializers.CharField()
     source_ip_address = serializers.CharField(allow_null=True, required=False)
     user_agent = serializers.CharField(allow_null=True, required=False)

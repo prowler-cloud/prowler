@@ -2483,7 +2483,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         summary="Get events for a resource",
         description=(
             "Retrieve events showing modification history for a resource. "
-            "Returns who modified the resource and when. Currently only available for AWS resources."
+            "Returns who modified the resource and when. Currently only available for AWS resources.\n\n"
+            "**Note:** Some events may not appear due to CloudTrail indexing limitations. "
+            "Not all AWS API calls record the resource identifier in a searchable format."
         ),
         parameters=[
             OpenApiParameter(
@@ -2498,6 +2500,16 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 description="Maximum number of events to return (default: 50, min: 1, max: 50).",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="include_read_events",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Include read-only events (Describe*, Get*, List*, etc.). "
+                    "Default: false. Set to true to include all events."
+                ),
                 required=False,
             ),
         ],
@@ -2585,6 +2597,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     code="out_of_range",
                 )
 
+        # Parse include_read_events (default: false)
+        include_read_events = (
+            request.query_params.get("include_read_events", "").lower() == "true"
+        )
+
         try:
             # Initialize Prowler provider using existing utility
             prowler_provider = initialize_prowler_provider(resource.provider)
@@ -2594,7 +2611,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
             # Create timeline service (currently only AWS/CloudTrail is supported)
             timeline_service = CloudTrailTimeline(
-                session=session, lookback_days=lookback_days, max_results=page_size
+                session=session,
+                lookback_days=lookback_days,
+                max_results=page_size,
+                write_events_only=not include_read_events,
             )
 
             # Get timeline events
@@ -2603,9 +2623,21 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 resource_uid=resource.uid,
             )
 
-            # Serialize and return events directly
+            # Serialize events
             serializer = ResourceEventSerializer(events, many=True)
-            return Response(serializer.data)
+
+            # Return JSON:API compliant response with meta
+            return Response(
+                {
+                    "data": serializer.data,
+                    "meta": {
+                        "count": len(events),
+                        "lookback_days": lookback_days,
+                        "include_read_events": include_read_events,
+                        "resource_uid": resource.uid,
+                    },
+                }
+            )
 
         except NoCredentialsError:
             raise AuthenticationFailed(

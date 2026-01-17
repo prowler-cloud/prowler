@@ -21,18 +21,40 @@ class CloudTrailTimeline(TimelineService):
     Args:
         session: boto3.Session for AWS API calls
         lookback_days: Number of days to look back (default 90, max 90 for Event History)
+        max_results: Maximum number of events to return
+        write_events_only: If True, filter out read-only events (Describe*, Get*, List*, etc.)
     """
 
     MAX_LOOKBACK_DAYS = 90
 
     DEFAULT_MAX_RESULTS = 50  # Default page size for CloudTrail queries
 
+    # Prefixes for read-only API operations that don't modify resources
+    READ_ONLY_PREFIXES = (
+        "Describe",
+        "Get",
+        "List",
+        "Head",
+        "Check",
+        "Lookup",
+        "Search",
+        "Scan",
+        "Query",
+        "BatchGet",
+        "Select",
+    )
+
     def __init__(
-        self, session, lookback_days: int = 90, max_results: Optional[int] = None
+        self,
+        session,
+        lookback_days: int = 90,
+        max_results: Optional[int] = None,
+        write_events_only: bool = True,
     ):
         self._session = session
         self._lookback_days = min(lookback_days, self.MAX_LOOKBACK_DAYS)
         self._max_results = max_results or self.DEFAULT_MAX_RESULTS
+        self._write_events_only = write_events_only
         self._clients: Dict[str, Any] = {}
 
     DEFAULT_REGION = "us-east-1"  # Default for global resources in commercial partition
@@ -70,6 +92,12 @@ class CloudTrailTimeline(TimelineService):
 
             events = []
             for raw_event in raw_events:
+                # Filter read-only events if write_events_only is enabled
+                if self._write_events_only:
+                    event_name = raw_event.get("EventName", "")
+                    if self._is_read_only_event(event_name):
+                        continue
+
                 parsed = self._parse_event(raw_event)
                 if parsed:
                     events.append(parsed)
@@ -92,6 +120,10 @@ class CloudTrailTimeline(TimelineService):
                 f"{e.__class__.__name__}[{lineno}]: {e}"
             )
             return []
+
+    def _is_read_only_event(self, event_name: str) -> bool:
+        """Check if an event is a read-only operation."""
+        return event_name.startswith(self.READ_ONLY_PREFIXES)
 
     def _get_client(self, region: str):
         """Get or create a CloudTrail client for the specified region."""
@@ -142,6 +174,7 @@ class CloudTrailTimeline(TimelineService):
                 event_name=raw_event.get("EventName", "Unknown"),
                 event_source=raw_event.get("EventSource", "Unknown"),
                 actor=self._extract_actor(user_identity),
+                actor_uid=user_identity.get("arn"),
                 actor_type=user_identity.get("type", "Unknown"),
                 source_ip_address=details.get("sourceIPAddress"),
                 user_agent=details.get("userAgent"),

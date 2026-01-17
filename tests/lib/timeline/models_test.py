@@ -28,6 +28,7 @@ class TestTimelineEvent:
         assert event.actor == "user@example.com"
         assert event.actor_type == "User"
         # Optional fields should be None
+        assert event.actor_uid is None
         assert event.source_ip_address is None
         assert event.user_agent is None
         assert event.request_parameters is None
@@ -43,6 +44,7 @@ class TestTimelineEvent:
             event_name="ModifyResource",
             event_source="storage.example.com",
             actor="admin-role",
+            actor_uid="arn:aws:sts::123456789012:assumed-role/admin-role/session",
             actor_type="AssumedRole",
             source_ip_address="192.168.1.100",
             user_agent="aws-cli/2.0.0",
@@ -53,6 +55,7 @@ class TestTimelineEvent:
         )
 
         assert event.event_id == "full-event-id-456"
+        assert event.actor_uid == "arn:aws:sts::123456789012:assumed-role/admin-role/session"
         assert event.source_ip_address == "192.168.1.100"
         assert event.user_agent == "aws-cli/2.0.0"
         assert event.request_parameters == {"bucket": "my-bucket", "acl": "private"}

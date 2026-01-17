@@ -61,6 +61,14 @@ class TestCloudTrailTimeline:
         timeline = CloudTrailTimeline(session=mock_session, max_results=10)
         assert timeline._max_results == 10
 
+    def test_init_default_write_events_only(self, mock_session):
+        timeline = CloudTrailTimeline(session=mock_session)
+        assert timeline._write_events_only is True
+
+    def test_init_write_events_only_disabled(self, mock_session):
+        timeline = CloudTrailTimeline(session=mock_session, write_events_only=False)
+        assert timeline._write_events_only is False
+
     def test_get_resource_timeline_defaults_to_us_east_1(self, mock_session):
         """When no region is provided, should default to us-east-1 for global resources."""
         mock_client = MagicMock()
@@ -204,6 +212,86 @@ class TestCloudTrailTimeline:
         call_args = mock_client.lookup_events.call_args
         assert call_args.kwargs["MaxResults"] == 25
 
+    def test_get_resource_timeline_filters_read_only_events(self, mock_session):
+        """Verify read-only events are filtered when write_events_only=True."""
+        events = [
+            {
+                "EventId": "write-event-id",
+                "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+                "EventName": "CreateSecurityGroup",
+                "EventSource": "ec2.amazonaws.com",
+                "CloudTrailEvent": json.dumps(
+                    {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+                ),
+            },
+            {
+                "EventId": "read-event-id",
+                "EventTime": datetime(2024, 1, 15, 10, 31, 0, tzinfo=timezone.utc),
+                "EventName": "DescribeSecurityGroups",
+                "EventSource": "ec2.amazonaws.com",
+                "CloudTrailEvent": json.dumps(
+                    {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+                ),
+            },
+            {
+                "EventId": "another-read-id",
+                "EventTime": datetime(2024, 1, 15, 10, 32, 0, tzinfo=timezone.utc),
+                "EventName": "GetSecurityGroupRules",
+                "EventSource": "ec2.amazonaws.com",
+                "CloudTrailEvent": json.dumps(
+                    {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+                ),
+            },
+        ]
+
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": events}
+        mock_session.client.return_value = mock_client
+
+        # Default: write_events_only=True
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(region="us-east-1", resource_id="sg-123")
+
+        # Only the write event should be returned
+        assert len(result) == 1
+        assert result[0]["event_name"] == "CreateSecurityGroup"
+
+    def test_get_resource_timeline_includes_read_events_when_disabled(self, mock_session):
+        """Verify all events returned when write_events_only=False."""
+        events = [
+            {
+                "EventId": "write-event-id",
+                "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+                "EventName": "CreateSecurityGroup",
+                "EventSource": "ec2.amazonaws.com",
+                "CloudTrailEvent": json.dumps(
+                    {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+                ),
+            },
+            {
+                "EventId": "read-event-id",
+                "EventTime": datetime(2024, 1, 15, 10, 31, 0, tzinfo=timezone.utc),
+                "EventName": "DescribeSecurityGroups",
+                "EventSource": "ec2.amazonaws.com",
+                "CloudTrailEvent": json.dumps(
+                    {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+                ),
+            },
+        ]
+
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": events}
+        mock_session.client.return_value = mock_client
+
+        # Disable filtering
+        timeline = CloudTrailTimeline(session=mock_session, write_events_only=False)
+        result = timeline.get_resource_timeline(region="us-east-1", resource_id="sg-123")
+
+        # All events should be returned
+        assert len(result) == 2
+        assert result[0]["event_name"] == "CreateSecurityGroup"
+        assert result[1]["event_name"] == "DescribeSecurityGroups"
+
 
 class TestExtractActor:
     def test_extract_actor_iam_user(self):
@@ -289,6 +377,7 @@ class TestParseEvent:
         assert result["event_name"] == "RunInstances"
         assert result["event_source"] == "ec2.amazonaws.com"
         assert result["actor"] == "admin"
+        assert result["actor_uid"] == "arn:aws:iam::123456789012:user/admin"
         assert result["actor_type"] == "IAMUser"
 
     def test_parse_event_malformed_json(self, mock_session):
@@ -368,3 +457,51 @@ class TestClientCaching:
 
         # Should create client for each region
         assert mock_session.client.call_count == 2
+
+
+class TestIsReadOnlyEvent:
+    """Tests for _is_read_only_event method."""
+
+    @pytest.fixture
+    def mock_session(self):
+        return MagicMock()
+
+    @pytest.mark.parametrize(
+        "event_name",
+        [
+            "DescribeSecurityGroups",
+            "GetBucketPolicy",
+            "ListBuckets",
+            "HeadObject",
+            "CheckAccessNotGranted",
+            "LookupEvents",
+            "SearchResources",
+            "ScanOnDemand",
+            "QueryObjects",
+            "BatchGetItem",
+            "SelectObjectContent",
+        ],
+    )
+    def test_read_only_events_detected(self, mock_session, event_name):
+        """Verify various read-only event prefixes are correctly identified."""
+        timeline = CloudTrailTimeline(session=mock_session)
+        assert timeline._is_read_only_event(event_name) is True
+
+    @pytest.mark.parametrize(
+        "event_name",
+        [
+            "CreateSecurityGroup",
+            "DeleteSecurityGroup",
+            "ModifySecurityGroupRules",
+            "PutBucketPolicy",
+            "RunInstances",
+            "TerminateInstances",
+            "UpdateFunction",
+            "AttachRolePolicy",
+            "AuthorizeSecurityGroupIngress",
+        ],
+    )
+    def test_write_events_not_filtered(self, mock_session, event_name):
+        """Verify write events are not marked as read-only."""
+        timeline = CloudTrailTimeline(session=mock_session)
+        assert timeline._is_read_only_event(event_name) is False

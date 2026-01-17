@@ -18,6 +18,7 @@ class TimelineEvent(BaseModel):
     event_name: str
     event_source: str
     actor: str
+    actor_uid: Optional[str] = None  # Full ARN/identifier for the actor
     actor_type: str
     source_ip_address: Optional[str] = None
     user_agent: Optional[str] = None
