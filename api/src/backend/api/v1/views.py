@@ -63,6 +63,7 @@ from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
+    AuthenticationFailed,
     MethodNotAllowed,
     NotFound,
     PermissionDenied,
@@ -221,9 +222,9 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceEventSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
-    ResourceTimelineSerializer,
     RoleCreateSerializer,
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
@@ -251,6 +252,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.providers.aws.exceptions.exceptions import AWSCredentialsError
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
 )
@@ -2162,10 +2164,14 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
 
-    # Timeline constants
-    TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
-    TIMELINE_MIN_LOOKBACK_DAYS = 1
-    TIMELINE_MAX_LOOKBACK_DAYS = 365
+    # Events endpoint constants (currently AWS-only, limited to 90 days by CloudTrail Event History)
+    EVENTS_DEFAULT_LOOKBACK_DAYS = 90
+    EVENTS_MIN_LOOKBACK_DAYS = 1
+    EVENTS_MAX_LOOKBACK_DAYS = 90
+    # Page size controls how many events CloudTrail returns (prepares for API pagination)
+    EVENTS_DEFAULT_PAGE_SIZE = 50
+    EVENTS_MIN_PAGE_SIZE = 1
+    EVENTS_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
 
     ordering_fields = [
         "provider_uid",
@@ -2242,6 +2248,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
+        if self.action == "events":
+            return ResourceEventSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -2250,8 +2258,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return ResourceFilter
 
     def filter_queryset(self, queryset):
-        # Do not apply filters when retrieving specific resource or timeline
-        if self.action in ["retrieve", "timeline"]:
+        # Do not apply filters when retrieving specific resource or events
+        if self.action in ["retrieve", "events"]:
             return queryset
         return super().filter_queryset(queryset)
 
@@ -2473,125 +2481,212 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     @extend_schema(
         tags=["Resource"],
-        summary="Get CloudTrail timeline for a resource",
+        summary="Get events for a resource",
         description=(
-            "Retrieve CloudTrail events showing modification history for an AWS resource. "
-            "Returns timeline of who modified the resource and when. Only available for AWS resources."
+            "Retrieve events showing modification history for a resource. "
+            "Returns who modified the resource and when. Currently only available for AWS resources.\n\n"
+            "**Note:** Some events may not appear due to CloudTrail indexing limitations. "
+            "Not all AWS API calls record the resource identifier in a searchable format."
         ),
         parameters=[
             OpenApiParameter(
-                name="filter[lookback_days]",
+                name="lookback_days",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
-                description="Number of days to look back (default: 90, min: 1, max: 365)",
+                description="Number of days to look back (default: 90, min: 1, max: 90).",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="page[size]",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Maximum number of events to return (default: 50, min: 1, max: 50).",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="include_read_events",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Include read-only events (Describe*, Get*, List*, etc.). "
+                    "Default: false. Set to true to include all events."
+                ),
                 required=False,
             ),
         ],
         responses={
-            200: ResourceTimelineSerializer,
+            200: ResourceEventSerializer(many=True),
             400: OpenApiResponse(description="Invalid provider or parameters"),
-            401: OpenApiResponse(description="AWS credentials not available"),
-            503: OpenApiResponse(description="AWS service unavailable"),
+            401: OpenApiResponse(description="Provider credentials not available"),
+            403: OpenApiResponse(
+                description="Access denied - missing required permissions"
+            ),
+            503: OpenApiResponse(description="Provider service unavailable"),
         },
     )
     @action(
         detail=True,
         methods=["get"],
-        url_name="timeline",
-        serializer_class=ResourceTimelineSerializer,
+        url_name="events",
+        filter_backends=[],  # Disable filters - we're calling external API, not filtering queryset
     )
-    def timeline(self, request, pk=None):
-        """Get CloudTrail timeline events for a resource."""
+    def events(self, request, pk=None):
+        """Get events for a resource."""
         resource = self.get_object()
 
         # Validate provider
         if resource.provider.provider != "aws":
             raise ValidationError(
                 {
-                    "detail": "Timeline is only available for AWS resources",
+                    "detail": "Events are only available for AWS resources",
                     "provider": resource.provider.provider,
                 },
                 code="invalid_provider",
             )
 
         # Validate and parse lookback_days from query params
-        lookback_days_str = request.query_params.get("filter[lookback_days]")
+        lookback_days_str = request.query_params.get("lookback_days")
         if lookback_days_str is None:
-            lookback_days = self.TIMELINE_DEFAULT_LOOKBACK_DAYS
+            lookback_days = self.EVENTS_DEFAULT_LOOKBACK_DAYS
         else:
             try:
                 lookback_days = int(lookback_days_str)
             except (ValueError, TypeError):
                 raise ValidationError(
-                    {"filter[lookback_days]": "Must be a valid integer"},
+                    {"lookback_days": "Must be a valid integer"},
                     code="invalid",
                 )
 
             if not (
-                self.TIMELINE_MIN_LOOKBACK_DAYS
+                self.EVENTS_MIN_LOOKBACK_DAYS
                 <= lookback_days
-                <= self.TIMELINE_MAX_LOOKBACK_DAYS
+                <= self.EVENTS_MAX_LOOKBACK_DAYS
             ):
                 raise ValidationError(
                     {
-                        "filter[lookback_days]": (
-                            f"Must be between {self.TIMELINE_MIN_LOOKBACK_DAYS} "
-                            f"and {self.TIMELINE_MAX_LOOKBACK_DAYS}"
+                        "lookback_days": (
+                            f"Must be between {self.EVENTS_MIN_LOOKBACK_DAYS} "
+                            f"and {self.EVENTS_MAX_LOOKBACK_DAYS}"
                         )
                     },
                     code="out_of_range",
                 )
 
+        # Validate and parse page[size] from query params (JSON:API pagination)
+        page_size_str = request.query_params.get("page[size]")
+        if page_size_str is None:
+            page_size = self.EVENTS_DEFAULT_PAGE_SIZE
+        else:
+            try:
+                page_size = int(page_size_str)
+            except (ValueError, TypeError):
+                raise ValidationError(
+                    {"page[size]": "Must be a valid integer"},
+                    code="invalid",
+                )
+
+            if not (
+                self.EVENTS_MIN_PAGE_SIZE <= page_size <= self.EVENTS_MAX_PAGE_SIZE
+            ):
+                raise ValidationError(
+                    {
+                        "page[size]": (
+                            f"Must be between {self.EVENTS_MIN_PAGE_SIZE} "
+                            f"and {self.EVENTS_MAX_PAGE_SIZE}"
+                        )
+                    },
+                    code="out_of_range",
+                )
+
+        # Parse include_read_events (default: false)
+        include_read_events = (
+            request.query_params.get("include_read_events", "").lower() == "true"
+        )
+
         try:
-            # Initialize Prowler AWS provider using existing utility
+            # Initialize Prowler provider using existing utility
             prowler_provider = initialize_prowler_provider(resource.provider)
 
             # Get the boto3 session from the Prowler provider
             session = prowler_provider._session.current_session
 
-            # Create CloudTrail timeline service
+            # Create timeline service (currently only AWS/CloudTrail is supported)
             timeline_service = CloudTrailTimeline(
-                session=session, lookback_days=lookback_days
+                session=session,
+                lookback_days=lookback_days,
+                max_results=page_size,
+                write_events_only=not include_read_events,
             )
 
             # Get timeline events
             events = timeline_service.get_resource_timeline(
-                resource_id=resource.uid,
-                resource_arn=resource.uid,
                 region=resource.region,
+                resource_uid=resource.uid,
             )
 
-            # Prepare response data
-            response_data = {
-                "resource_id": resource.uid,
-                "resource_name": resource.name,
-                "resource_type": resource.type,
-                "region": resource.region,
-                "lookback_days": lookback_days,
-                "event_count": len(events),
-                "events": events,
-            }
+            # Serialize events with context for root meta
+            serializer = ResourceEventSerializer(
+                events,
+                many=True,
+                context={
+                    "count": len(events),
+                    "lookback_days": lookback_days,
+                    "include_read_events": include_read_events,
+                    "resource_uid": resource.uid,
+                },
+            )
 
-            # Serialize and return
-            serializer = self.get_serializer(data=response_data)
-            serializer.is_valid(raise_exception=True)
+            # Return serializer.data - JSON:API renderer wraps it and calls get_root_meta
             return Response(serializer.data)
 
         except NoCredentialsError:
-            raise ValidationError(
-                {"detail": "AWS credentials not found for this provider"},
+            raise AuthenticationFailed(
+                detail="Credentials not found for this provider",
                 code="no_credentials",
             )
-        except ClientError as e:
-            logger.error(
-                f"AWS API error retrieving CloudTrail timeline: {str(e)}",
-                exc_info=True,
-            )
+        except AWSCredentialsError as e:
+            # Handles expired tokens, invalid keys, profile not found, etc.
+            # 502 because this is an upstream auth failure, not API auth failure
+            logger.warning(f"AWS credentials error: {str(e)}")
             return Response(
                 {
                     "errors": [
                         {
-                            "detail": "Unable to communicate with AWS. Please try again later.",
+                            "detail": "Provider credentials are invalid or expired. Please reconnect the provider.",
+                            "status": "502",
+                            "code": "upstream_auth_failed",
+                        }
+                    ]
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            logger.error(
+                f"Provider API error retrieving timeline: {str(e)}",
+                exc_info=True,
+            )
+
+            # AccessDenied means the credentials don't have the required permissions
+            if error_code in ("AccessDenied", "AccessDeniedException"):
+                return Response(
+                    {
+                        "errors": [
+                            {
+                                "detail": "Access denied. The provider credentials do not have the required permissions.",
+                                "status": "403",
+                                "code": "access_denied",
+                            }
+                        ]
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            return Response(
+                {
+                    "errors": [
+                        {
+                            "detail": "Unable to communicate with the provider. Please try again later.",
                             "status": "503",
                             "code": "service_unavailable",
                         }
@@ -2600,9 +2695,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as e:
-            logger.error(
-                f"Error retrieving CloudTrail timeline: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error retrieving timeline: {str(e)}", exc_info=True)
             sentry_sdk.capture_exception(e)
             return Response(
                 {

@@ -3700,17 +3700,20 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         return str(obj.id)
 
 
-# Resource Timeline Serializers
+# Resource Events Serializers
 
 
-class TimelineEventSerializer(serializers.Serializer):
-    """Serializer for individual CloudTrail timeline events."""
+class ResourceEventSerializer(serializers.Serializer):
+    """Serializer for resource events (modification history)."""
 
+    # Map event_id from the SDK model to id for JSON:API compliance
+    id = serializers.CharField(source="event_id")
     event_time = serializers.DateTimeField()
     event_name = serializers.CharField()
     event_source = serializers.CharField()
-    username = serializers.CharField()
-    user_identity_type = serializers.CharField()
+    actor = serializers.CharField()
+    actor_uid = serializers.CharField(allow_null=True, required=False)
+    actor_type = serializers.CharField()
     source_ip_address = serializers.CharField(allow_null=True, required=False)
     user_agent = serializers.CharField(allow_null=True, required=False)
     request_parameters = serializers.JSONField(allow_null=True, required=False)
@@ -3719,19 +3722,14 @@ class TimelineEventSerializer(serializers.Serializer):
     error_message = serializers.CharField(allow_null=True, required=False)
 
     class Meta:
-        resource_name = "timeline-events"
+        resource_name = "resource-events"
 
-
-class ResourceTimelineSerializer(serializers.Serializer):
-    """Serializer for resource CloudTrail timeline data."""
-
-    resource_id = serializers.CharField()
-    resource_name = serializers.CharField()
-    resource_type = serializers.CharField()
-    region = serializers.CharField()
-    lookback_days = serializers.IntegerField()
-    event_count = serializers.IntegerField()
-    events = TimelineEventSerializer(many=True)
-
-    class Meta:
-        resource_name = "resource-timeline"
+    def get_root_meta(self, resource, many):
+        """Add metadata to the top-level meta object."""
+        return {
+            "version": "v1",
+            "count": self.context.get("count"),
+            "lookback_days": self.context.get("lookback_days"),
+            "include_read_events": self.context.get("include_read_events"),
+            "resource_uid": self.context.get("resource_uid"),
+        }

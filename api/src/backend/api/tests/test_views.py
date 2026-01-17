@@ -3945,8 +3945,8 @@ class TestResourceViewSet:
                 "event_time": "2024-01-15T10:30:00Z",
                 "event_name": "RunInstances",
                 "event_source": "ec2.amazonaws.com",
-                "username": "admin@example.com",
-                "user_identity_type": "IAMUser",
+                "actor": "admin@example.com",
+                "actor_type": "IAMUser",
                 "source_ip_address": "203.0.113.1",
                 "user_agent": "aws-cli/2.0.0",
             },
@@ -3954,8 +3954,8 @@ class TestResourceViewSet:
                 "event_time": "2024-01-16T14:20:00Z",
                 "event_name": "StopInstances",
                 "event_source": "ec2.amazonaws.com",
-                "username": "operator@example.com",
-                "user_identity_type": "IAMUser",
+                "actor": "operator@example.com",
+                "actor_type": "IAMUser",
             },
         ]
         mock_timeline_instance.get_resource_timeline.return_value = mock_events
@@ -3984,9 +3984,8 @@ class TestResourceViewSet:
             session=mock_session, lookback_days=30
         )
         mock_timeline_instance.get_resource_timeline.assert_called_once_with(
-            resource_id=resource.uid,
-            resource_arn=resource.uid,
             region=resource.region,
+            resource_uid=resource.uid,
         )
 
     @patch("api.v1.views.initialize_prowler_provider")
