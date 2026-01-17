@@ -13,6 +13,7 @@ class TimelineEvent(BaseModel):
     (AWS CloudTrail, Azure Activity Logs, GCP Audit Logs, etc.).
     """
 
+    event_id: str
     event_time: datetime
     event_name: str
     event_source: str

@@ -13,6 +13,7 @@ class TestTimelineEvent:
     def test_minimal_event(self):
         """Test creating an event with only required fields."""
         event = TimelineEvent(
+            event_id="test-event-id-123",
             event_time=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             event_name="CreateResource",
             event_source="service.example.com",
@@ -20,6 +21,7 @@ class TestTimelineEvent:
             actor_type="User",
         )
 
+        assert event.event_id == "test-event-id-123"
         assert event.event_time == datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc)
         assert event.event_name == "CreateResource"
         assert event.event_source == "service.example.com"
@@ -36,6 +38,7 @@ class TestTimelineEvent:
     def test_full_event(self):
         """Test creating an event with all fields populated."""
         event = TimelineEvent(
+            event_id="full-event-id-456",
             event_time=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             event_name="ModifyResource",
             event_source="storage.example.com",
@@ -49,6 +52,7 @@ class TestTimelineEvent:
             error_message=None,
         )
 
+        assert event.event_id == "full-event-id-456"
         assert event.source_ip_address == "192.168.1.100"
         assert event.user_agent == "aws-cli/2.0.0"
         assert event.request_parameters == {"bucket": "my-bucket", "acl": "private"}
@@ -57,6 +61,7 @@ class TestTimelineEvent:
     def test_error_event(self):
         """Test creating an event that represents a failed operation."""
         event = TimelineEvent(
+            event_id="error-event-id-789",
             event_time=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             event_name="DeleteResource",
             event_source="storage.example.com",
@@ -75,6 +80,7 @@ class TestTimelineEvent:
     def test_event_to_dict(self):
         """Test that event can be serialized to dictionary."""
         event = TimelineEvent(
+            event_id="dict-test-id",
             event_time=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             event_name="CreateResource",
             event_source="service.example.com",
@@ -84,6 +90,7 @@ class TestTimelineEvent:
 
         event_dict = event.dict()
 
+        assert event_dict["event_id"] == "dict-test-id"
         assert event_dict["event_name"] == "CreateResource"
         assert event_dict["actor"] == "user@example.com"
         assert event_dict["actor_type"] == "User"
@@ -91,6 +98,7 @@ class TestTimelineEvent:
     def test_event_from_dict(self):
         """Test creating an event from a dictionary."""
         data = {
+            "event_id": "from-dict-id",
             "event_time": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "event_name": "UpdateResource",
             "event_source": "compute.example.com",
@@ -100,6 +108,7 @@ class TestTimelineEvent:
 
         event = TimelineEvent(**data)
 
+        assert event.event_id == "from-dict-id"
         assert event.event_name == "UpdateResource"
         assert event.actor == "service-account"
         assert event.actor_type == "ServiceAccount"
@@ -108,6 +117,7 @@ class TestTimelineEvent:
         """Test that missing required fields raise validation error."""
         with pytest.raises(Exception):  # Pydantic validation error
             TimelineEvent(
+                event_id="validation-test",
                 event_time=datetime.now(timezone.utc),
                 event_name="CreateResource",
                 # Missing: event_source, actor, actor_type
@@ -117,6 +127,7 @@ class TestTimelineEvent:
         """Test that actor_type accepts any string value (provider-agnostic)."""
         # AWS-style
         aws_event = TimelineEvent(
+            event_id="aws-event-id",
             event_time=datetime.now(timezone.utc),
             event_name="CreateBucket",
             event_source="s3.amazonaws.com",
@@ -127,6 +138,7 @@ class TestTimelineEvent:
 
         # Azure-style
         azure_event = TimelineEvent(
+            event_id="azure-event-id",
             event_time=datetime.now(timezone.utc),
             event_name="CreateStorageAccount",
             event_source="Microsoft.Storage",
@@ -137,6 +149,7 @@ class TestTimelineEvent:
 
         # GCP-style
         gcp_event = TimelineEvent(
+            event_id="gcp-event-id",
             event_time=datetime.now(timezone.utc),
             event_name="storage.buckets.create",
             event_source="storage.googleapis.com",

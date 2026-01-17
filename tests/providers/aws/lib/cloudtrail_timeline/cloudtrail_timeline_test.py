@@ -20,6 +20,7 @@ class TestCloudTrailTimeline:
     @pytest.fixture
     def sample_cloudtrail_event(self):
         return {
+            "EventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "EventName": "RunInstances",
             "EventSource": "ec2.amazonaws.com",
@@ -148,6 +149,7 @@ class TestCloudTrailTimeline:
     def test_get_resource_timeline_multiple_events(self, mock_session):
         events = [
             {
+                "EventId": "event-1-id",
                 "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
                 "EventName": "RunInstances",
                 "EventSource": "ec2.amazonaws.com",
@@ -161,6 +163,7 @@ class TestCloudTrailTimeline:
                 ),
             },
             {
+                "EventId": "event-2-id",
                 "EventTime": datetime(2024, 1, 15, 11, 30, 0, tzinfo=timezone.utc),
                 "EventName": "StopInstances",
                 "EventSource": "ec2.amazonaws.com",
@@ -257,6 +260,7 @@ class TestParseEvent:
     @pytest.fixture
     def sample_cloudtrail_event(self):
         return {
+            "EventId": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
             "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "EventName": "RunInstances",
             "EventSource": "ec2.amazonaws.com",
@@ -289,6 +293,7 @@ class TestParseEvent:
 
     def test_parse_event_malformed_json(self, mock_session):
         event = {
+            "EventId": "malformed-event-id",
             "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "EventName": "RunInstances",
             "EventSource": "ec2.amazonaws.com",
@@ -299,6 +304,7 @@ class TestParseEvent:
 
     def test_parse_event_with_error_fields(self, mock_session):
         event = {
+            "EventId": "error-event-id",
             "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "EventName": "CreateBucket",
             "EventSource": "s3.amazonaws.com",
@@ -320,6 +326,7 @@ class TestParseEvent:
     def test_parse_event_dict_cloud_trail_event(self, mock_session):
         """Test parsing when CloudTrailEvent is already a dict (not JSON string)."""
         event = {
+            "EventId": "dict-event-id",
             "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             "EventName": "RunInstances",
             "EventSource": "ec2.amazonaws.com",

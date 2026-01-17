@@ -3706,6 +3706,8 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
 class ResourceEventSerializer(serializers.Serializer):
     """Serializer for resource events (modification history)."""
 
+    # Map event_id from the SDK model to id for JSON:API compliance
+    id = serializers.CharField(source="event_id")
     event_time = serializers.DateTimeField()
     event_name = serializers.CharField()
     event_source = serializers.CharField()

@@ -137,6 +137,7 @@ class CloudTrailTimeline(TimelineService):
             user_identity = details.get("userIdentity", {})
 
             event = TimelineEvent(
+                event_id=raw_event.get("EventId", ""),
                 event_time=raw_event["EventTime"],
                 event_name=raw_event.get("EventName", "Unknown"),
                 event_source=raw_event.get("EventSource", "Unknown"),

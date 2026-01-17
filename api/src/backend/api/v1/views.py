@@ -2163,14 +2163,14 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
 
-    # Timeline constants (currently AWS-only, limited to 90 days by CloudTrail Event History)
-    TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
-    TIMELINE_MIN_LOOKBACK_DAYS = 1
-    TIMELINE_MAX_LOOKBACK_DAYS = 90
+    # Events endpoint constants (currently AWS-only, limited to 90 days by CloudTrail Event History)
+    EVENTS_DEFAULT_LOOKBACK_DAYS = 90
+    EVENTS_MIN_LOOKBACK_DAYS = 1
+    EVENTS_MAX_LOOKBACK_DAYS = 90
     # Page size controls how many events CloudTrail returns (prepares for API pagination)
-    TIMELINE_DEFAULT_PAGE_SIZE = 50
-    TIMELINE_MIN_PAGE_SIZE = 1
-    TIMELINE_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
+    EVENTS_DEFAULT_PAGE_SIZE = 50
+    EVENTS_MIN_PAGE_SIZE = 1
+    EVENTS_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
 
     ordering_fields = [
         "provider_uid",
@@ -2534,7 +2534,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         # Validate and parse lookback_days from query params
         lookback_days_str = request.query_params.get("lookback_days")
         if lookback_days_str is None:
-            lookback_days = self.TIMELINE_DEFAULT_LOOKBACK_DAYS
+            lookback_days = self.EVENTS_DEFAULT_LOOKBACK_DAYS
         else:
             try:
                 lookback_days = int(lookback_days_str)
@@ -2545,15 +2545,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
 
             if not (
-                self.TIMELINE_MIN_LOOKBACK_DAYS
+                self.EVENTS_MIN_LOOKBACK_DAYS
                 <= lookback_days
-                <= self.TIMELINE_MAX_LOOKBACK_DAYS
+                <= self.EVENTS_MAX_LOOKBACK_DAYS
             ):
                 raise ValidationError(
                     {
                         "lookback_days": (
-                            f"Must be between {self.TIMELINE_MIN_LOOKBACK_DAYS} "
-                            f"and {self.TIMELINE_MAX_LOOKBACK_DAYS}"
+                            f"Must be between {self.EVENTS_MIN_LOOKBACK_DAYS} "
+                            f"and {self.EVENTS_MAX_LOOKBACK_DAYS}"
                         )
                     },
                     code="out_of_range",
@@ -2562,7 +2562,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         # Validate and parse page[size] from query params (JSON:API pagination)
         page_size_str = request.query_params.get("page[size]")
         if page_size_str is None:
-            page_size = self.TIMELINE_DEFAULT_PAGE_SIZE
+            page_size = self.EVENTS_DEFAULT_PAGE_SIZE
         else:
             try:
                 page_size = int(page_size_str)
@@ -2573,13 +2573,13 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
 
             if not (
-                self.TIMELINE_MIN_PAGE_SIZE <= page_size <= self.TIMELINE_MAX_PAGE_SIZE
+                self.EVENTS_MIN_PAGE_SIZE <= page_size <= self.EVENTS_MAX_PAGE_SIZE
             ):
                 raise ValidationError(
                     {
                         "page[size]": (
-                            f"Must be between {self.TIMELINE_MIN_PAGE_SIZE} "
-                            f"and {self.TIMELINE_MAX_PAGE_SIZE}"
+                            f"Must be between {self.EVENTS_MIN_PAGE_SIZE} "
+                            f"and {self.EVENTS_MAX_PAGE_SIZE}"
                         )
                     },
                     code="out_of_range",
@@ -2594,7 +2594,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
             # Create timeline service (currently only AWS/CloudTrail is supported)
             timeline_service = CloudTrailTimeline(
-                session=session, lookback_days=lookback_days
+                session=session, lookback_days=lookback_days, max_results=page_size
             )
 
             # Get timeline events
