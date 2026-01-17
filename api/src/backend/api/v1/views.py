@@ -252,6 +252,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.providers.aws.exceptions.exceptions import AWSCredentialsError
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
 )
@@ -2623,26 +2624,41 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 resource_uid=resource.uid,
             )
 
-            # Serialize events
-            serializer = ResourceEventSerializer(events, many=True)
-
-            # Return JSON:API compliant response with meta
-            return Response(
-                {
-                    "data": serializer.data,
-                    "meta": {
-                        "count": len(events),
-                        "lookback_days": lookback_days,
-                        "include_read_events": include_read_events,
-                        "resource_uid": resource.uid,
-                    },
-                }
+            # Serialize events with context for root meta
+            serializer = ResourceEventSerializer(
+                events,
+                many=True,
+                context={
+                    "count": len(events),
+                    "lookback_days": lookback_days,
+                    "include_read_events": include_read_events,
+                    "resource_uid": resource.uid,
+                },
             )
+
+            # Return serializer.data - JSON:API renderer wraps it and calls get_root_meta
+            return Response(serializer.data)
 
         except NoCredentialsError:
             raise AuthenticationFailed(
                 detail="Credentials not found for this provider",
                 code="no_credentials",
+            )
+        except AWSCredentialsError as e:
+            # Handles expired tokens, invalid keys, profile not found, etc.
+            # 502 because this is an upstream auth failure, not API auth failure
+            logger.warning(f"AWS credentials error: {str(e)}")
+            return Response(
+                {
+                    "errors": [
+                        {
+                            "detail": "Provider credentials are invalid or expired. Please reconnect the provider.",
+                            "status": "502",
+                            "code": "upstream_auth_failed",
+                        }
+                    ]
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
             )
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")

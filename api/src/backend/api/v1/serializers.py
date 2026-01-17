@@ -3723,3 +3723,13 @@ class ResourceEventSerializer(serializers.Serializer):
 
     class Meta:
         resource_name = "resource-events"
+
+    def get_root_meta(self, resource, many):
+        """Add metadata to the top-level meta object."""
+        return {
+            "version": "v1",
+            "count": self.context.get("count"),
+            "lookback_days": self.context.get("lookback_days"),
+            "include_read_events": self.context.get("include_read_events"),
+            "resource_uid": self.context.get("resource_uid"),
+        }
