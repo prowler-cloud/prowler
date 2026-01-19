@@ -15,6 +15,11 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.openstack.exceptions.exceptions import (
+    OpenStackAuthenticationError,
+    OpenStackCredentialsError,
+    OpenStackSessionError,
+)
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
 
@@ -66,7 +71,7 @@ class OpenstackProvider(Provider):
             project_domain_name=project_domain_name,
         )
         self._connection = OpenstackProvider._create_connection(self._session)
-        self._identity = OpenstackProvider._build_identity(
+        self._identity = OpenstackProvider.setup_identity(
             self._connection, self._session
         )
 
@@ -149,8 +154,8 @@ class OpenstackProvider(Provider):
 
         if missing_variables:
             pretty_missing = ", ".join(missing_variables)
-            raise RuntimeError(
-                f"Missing mandatory OpenStack environment variables: {pretty_missing}"
+            raise OpenStackCredentialsError(
+                message=f"Missing mandatory OpenStack environment variables: {pretty_missing}"
             )
 
         resolved_identity_api_version = (
@@ -198,16 +203,22 @@ class OpenstackProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Failed to create OpenStack connection: {error}"
             )
-            raise
+            raise OpenStackAuthenticationError(
+                original_exception=error,
+                message=f"Failed to create OpenStack connection: {error}",
+            )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error while creating OpenStack connection: {error}"
             )
-            raise
+            raise OpenStackSessionError(
+                original_exception=error,
+                message=f"Unexpected error while creating OpenStack connection: {error}",
+            )
 
     @staticmethod
-    def _build_identity(
+    def setup_identity(
         conn: OpenStackConnection, session: OpenStackSession
     ) -> OpenStackIdentityInfo:
         """Build identity information for CLI/logging purposes."""
@@ -275,8 +286,9 @@ class OpenstackProvider(Provider):
             Connection object with is_connected=True on success, or error on failure
 
         Raises:
-            RuntimeError: If raise_on_exception=True and credentials are invalid
-            openstack_exceptions.SDKException: If raise_on_exception=True and connection fails
+            OpenStackCredentialsError: If raise_on_exception=True and credentials are invalid
+            OpenStackAuthenticationError: If raise_on_exception=True and authentication fails
+            OpenStackSessionError: If raise_on_exception=True and connection fails
 
         Examples:
             >>> OpenstackProvider.test_connection(
@@ -307,20 +319,30 @@ class OpenstackProvider(Provider):
             logger.info("OpenStack provider: Connection test successful")
             return Connection(is_connected=True)
 
-        except RuntimeError as error:
+        except OpenStackCredentialsError as error:
             logger.error(f"OpenStack connection test failed: {error}")
             if raise_on_exception:
                 raise
             return Connection(is_connected=False, error=error)
-        except openstack_exceptions.SDKException as error:
+        except OpenStackAuthenticationError as error:
+            logger.error(f"OpenStack connection test failed: {error}")
+            if raise_on_exception:
+                raise
+            return Connection(is_connected=False, error=error)
+        except OpenStackSessionError as error:
             logger.error(f"OpenStack connection test failed: {error}")
             if raise_on_exception:
                 raise
             return Connection(is_connected=False, error=error)
         except Exception as error:
-            logger.error(f"OpenStack connection test failed: {error}")
+            logger.error(
+                f"OpenStack connection test failed with unexpected error: {error}"
+            )
             if raise_on_exception:
-                raise
+                raise OpenStackSessionError(
+                    original_exception=error,
+                    message=f"Unexpected error during connection test: {error}",
+                )
             return Connection(is_connected=False, error=error)
 
     def print_credentials(self) -> None:

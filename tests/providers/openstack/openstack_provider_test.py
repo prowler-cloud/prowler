@@ -13,6 +13,10 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.providers.common.models import Connection
+from prowler.providers.openstack.exceptions.exceptions import (
+    OpenStackAuthenticationError,
+    OpenStackCredentialsError,
+)
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 
@@ -141,7 +145,7 @@ class TestOpenstackProvider:
 
     def test_openstack_provider_missing_auth_url(self):
         """Test OpenStack provider initialization fails when OS_AUTH_URL is missing."""
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(OpenStackCredentialsError) as excinfo:
             OpenstackProvider(
                 username="test-user",
                 password="test-password",
@@ -159,7 +163,7 @@ class TestOpenstackProvider:
         monkeypatch.setenv("OS_PROJECT_ID", "test-project")
         monkeypatch.setenv("OS_REGION_NAME", "RegionOne")
 
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(OpenStackCredentialsError) as excinfo:
             OpenstackProvider()
 
         assert "Missing mandatory OpenStack environment variables" in str(excinfo.value)
@@ -172,7 +176,7 @@ class TestOpenstackProvider:
         monkeypatch.setenv("OS_PROJECT_ID", "test-project")
         monkeypatch.setenv("OS_REGION_NAME", "RegionOne")
 
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(OpenStackCredentialsError) as excinfo:
             OpenstackProvider()
 
         assert "Missing mandatory OpenStack environment variables" in str(excinfo.value)
@@ -185,7 +189,7 @@ class TestOpenstackProvider:
         monkeypatch.setenv("OS_PASSWORD", "test-password")
         monkeypatch.setenv("OS_REGION_NAME", "RegionOne")
 
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(OpenStackCredentialsError) as excinfo:
             OpenstackProvider()
 
         assert "Missing mandatory OpenStack environment variables" in str(excinfo.value)
@@ -198,7 +202,7 @@ class TestOpenstackProvider:
         monkeypatch.setenv("OS_PASSWORD", "test-password")
         monkeypatch.setenv("OS_PROJECT_ID", "test-project")
 
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(OpenStackCredentialsError) as excinfo:
             OpenstackProvider()
 
         assert "Missing mandatory OpenStack environment variables" in str(excinfo.value)
@@ -269,7 +273,7 @@ class TestOpenstackProvider:
                 "Connection failed"
             )
 
-            with pytest.raises(openstack_exceptions.SDKException):
+            with pytest.raises(OpenStackAuthenticationError):
                 OpenstackProvider()
 
     def test_openstack_provider_static_test_connection_success(self):
@@ -351,7 +355,7 @@ class TestOpenstackProvider:
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
-            with pytest.raises(openstack_exceptions.SDKException):
+            with pytest.raises(OpenStackAuthenticationError):
                 OpenstackProvider.test_connection(
                     auth_url="https://openstack.example.com:5000/v3",
                     username="test-user",

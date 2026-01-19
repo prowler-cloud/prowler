@@ -30,10 +30,6 @@ class OpenStackBaseException(ProwlerException):
             "message": "OpenStack API rate limit exceeded",
             "remediation": "Reduce the number of API requests or wait before making more requests.",
         },
-        (10006, "OpenStackInvalidOrganizationIdError"): {
-            "message": "The provided credentials do not have access to the organization with the provided ID",
-            "remediation": "Check the organization ID and ensure it is a valid organization ID and that the credentials have access to it.",
-        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -116,18 +112,6 @@ class OpenStackRateLimitError(OpenStackBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             code=10005,
-            file=file,
-            original_exception=original_exception,
-            message=message,
-        )
-
-
-class OpenStackInvalidOrganizationIdError(OpenStackBaseException):
-    """Exception for OpenStack invalid organization ID errors"""
-
-    def __init__(self, file=None, original_exception=None, message=None):
-        super().__init__(
-            code=10006,
             file=file,
             original_exception=original_exception,
             message=message,
