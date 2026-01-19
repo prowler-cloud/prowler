@@ -15907,10 +15907,6 @@ components:
                     'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
-                available:
-                  type: boolean
-                  description: Whether the provider account still exists. Set to False
-                    if the provider is ephemeral and no longer exists.
       required:
       - data
     PatchedRoleProviderGroupRelationshipRequest:

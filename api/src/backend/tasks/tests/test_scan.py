@@ -260,7 +260,7 @@ class TestPerformScan:
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
 
-    @patch("api.db_utils.rls_transaction")
+    @patch("tasks.jobs.scan.rls_transaction")
     def test_perform_prowler_scan_unavailable_provider(
         self,
         mock_rls_transaction,

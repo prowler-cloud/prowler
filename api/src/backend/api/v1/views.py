@@ -1552,21 +1552,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
         provider = get_object_or_404(Provider, pk=pk)
-
-        if not provider.available:
-            return Response(
-                data={
-                    "errors": [
-                        {
-                            "detail": "Cannot check connection for unavailable provider. "
-                            "The provider no longer exists.",
-                            "status": "400",
-                            "code": "provider_unavailable",
-                        }
-                    ]
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        provider.check_available()
 
         with transaction.atomic():
             task = check_provider_connection_task.delay(
@@ -2158,6 +2144,12 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+
+        # Check provider availability before creating scan
+        provider = input_serializer.validated_data.get("provider")
+        if provider:
+            provider.check_available()
+
         with transaction.atomic():
             scan = input_serializer.save()
         with transaction.atomic():
@@ -5146,6 +5138,8 @@ class ScheduleViewSet(BaseRLSViewSet):
         provider_id = serializer.validated_data["provider_id"]
 
         provider_instance = get_object_or_404(Provider, pk=provider_id)
+        provider_instance.check_available()
+
         with transaction.atomic():
             task = schedule_provider_scan(provider_instance)
 

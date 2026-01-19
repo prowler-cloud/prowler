@@ -2914,7 +2914,6 @@ class TestScanViewSet:
                 "type": "scans",
                 "attributes": {
                     "name": "Test Scan",
-                    "trigger": Scan.TriggerChoices.MANUAL,
                 },
                 "relationships": {
                     "provider": {"data": {"type": "providers", "id": str(provider1.id)}}
@@ -2928,7 +2927,7 @@ class TestScanViewSet:
             content_type=API_JSON_CONTENT_TYPE,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "unavailable provider" in response.json()["errors"][0]["detail"].lower()
+        assert response.json()["errors"][0]["code"] == "provider_unavailable"
 
     def test_scans_partial_update(self, authenticated_client, scans_fixture):
         scan1, *_ = scans_fixture
@@ -8208,6 +8207,23 @@ class TestScheduleViewSet:
             reverse("schedule-daily"), data=json_payload, format="json"
         )
         assert response.status_code == status.HTTP_409_CONFLICT
+
+    def test_schedule_daily_unavailable_provider(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that creating a schedule for an unavailable provider returns 400."""
+        provider, *_ = providers_fixture
+        provider.available = False
+        provider.save()
+
+        json_payload = {
+            "provider_id": str(provider.id),
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "provider_unavailable"
 
 
 @pytest.mark.django_db

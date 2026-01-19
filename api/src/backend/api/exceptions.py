@@ -70,6 +70,25 @@ class ProviderDeletedException(Exception):
     """Raised when a provider has been deleted during scan/task execution."""
 
 
+class ProviderNotAvailableError(APIException):
+    """Raised when attempting to perform actions on an unavailable provider."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = (
+        "Cannot perform this action on an unavailable provider. "
+        "The provider no longer exists in the cloud environment."
+    )
+    default_code = "provider_unavailable"
+
+    def __init__(self, detail=None):
+        error_detail = {
+            "detail": detail or self.default_detail,
+            "status": str(self.status_code),
+            "code": self.default_code,
+        }
+        super().__init__(detail=[error_detail])
+
+
 def custom_exception_handler(exc, context):
     if isinstance(exc, django_validation_error):
         if hasattr(exc, "error_dict"):

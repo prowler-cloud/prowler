@@ -964,23 +964,19 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
     Serializer for updating the Provider model.
-    Only allows "alias", "available" and "scanner_args" fields to be updated.
+    Only allows "alias" and "scanner_args" fields to be updated.
     """
 
     class Meta:
         model = Provider
         fields = [
             "alias",
-            "available",
             # "scanner_args"
         ]
         extra_kwargs = {
             "alias": {
                 "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
-            },
-            "available": {
-                "help_text": "Whether the provider account still exists. Set to False if the provider is ephemeral and no longer exists.",
-            },
+            }
         }
 
 
@@ -1065,14 +1061,6 @@ class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
             # "scanner_args",
             "name",
         ]
-
-    def validate_provider(self, provider):
-        if not provider.available:
-            raise serializers.ValidationError(
-                "Cannot create scan for unavailable provider. "
-                "The provider no longer exists."
-            )
-        return provider
 
     def create(self, validated_data):
         # provider = validated_data.get("provider")
@@ -2363,6 +2351,11 @@ class ScheduleDailyCreateSerializer(BaseSerializerV1):
 
     class JSONAPIMeta:
         resource_name = "daily-schedules"
+
+    def validate_provider_id(self, provider_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            raise serializers.ValidationError("Provider not found.")
+        return provider_id
 
     # TODO: DRY this when we have more time
     def validate(self, data):

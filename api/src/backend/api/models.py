@@ -48,7 +48,7 @@ from api.db_utils import (
     generate_random_token,
     one_week_from_now,
 )
-from api.exceptions import ModelValidationError
+from api.exceptions import ModelValidationError, ProviderNotAvailableError
 from api.rls import (
     BaseSecurityConstraint,
     RowLevelSecurityConstraint,
@@ -433,6 +433,16 @@ class Provider(RowLevelSecurityProtectedModel):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def check_available(self):
+        """
+        Check if the provider is available.
+
+        Raises:
+            ProviderNotAvailableError: If the provider is not available.
+        """
+        if not self.available:
+            raise ProviderNotAvailableError()
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "providers"
