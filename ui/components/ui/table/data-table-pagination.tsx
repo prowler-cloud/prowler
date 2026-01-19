@@ -1,17 +1,14 @@
 "use client";
 
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
+  ChevronFirst,
+  ChevronLast,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-
-import { getPaginationInfo } from "@/lib";
-import { MetaDataProps } from "@/types";
 
 import {
   Select,
@@ -19,18 +16,21 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../select/Select";
+} from "@/components/shadcn/select/select";
+import { getPaginationInfo } from "@/lib";
+import { cn } from "@/lib/utils";
+import { MetaDataProps } from "@/types";
 
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
   disableScroll?: boolean;
 }
 
-const baseLinkClass =
-  "relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green";
-
-const disabledLinkClass =
-  "text-gray-300 dark:text-gray-600 hover:bg-transparent hover:text-gray-300 dark:hover:text-gray-600 cursor-default pointer-events-none";
+const NAV_BUTTON_STYLES = {
+  base: "flex items-center justify-center rounded-full p-3 transition-colors",
+  enabled: "text-text-neutral-secondary hover:text-white",
+  disabled: "text-text-neutral-tertiary cursor-not-allowed pointer-events-none",
+} as const;
 
 export function DataTablePagination({
   metadata,
@@ -39,7 +39,7 @@ export function DataTablePagination({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialPageSize = searchParams.get("pageSize") ?? "10";
+  const initialPageSize = searchParams.get("pageSize") ?? "50";
 
   const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
 
@@ -74,17 +74,14 @@ export function DataTablePagination({
   const isLastPage = currentPage === totalPages;
 
   return (
-    <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8">
-      <div className="text-sm whitespace-nowrap">
-        {totalEntries} entries in total
-      </div>
+    <div className="flex w-full items-center justify-end gap-6 py-1.5">
       {totalEntries > 10 && (
-        <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
+        <>
           {/* Rows per page selector */}
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium whitespace-nowrap">
+          <div className="flex items-center gap-3">
+            <span className="text-text-neutral-secondary text-xs font-medium whitespace-nowrap">
               Rows per page
-            </p>
+            </span>
             <Select
               value={selectedPageSize}
               onValueChange={(value) => {
@@ -114,7 +111,10 @@ export function DataTablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-18">
+              <SelectTrigger
+                iconSize="sm"
+                className="bg-bg-neutral-tertiary border-border-neutral-tertiary !h-auto !w-auto !min-w-0 !gap-1 !rounded-full !px-[19px] !py-[9px] !text-xs !font-medium backdrop-blur-[46px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -130,68 +130,92 @@ export function DataTablePagination({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-center text-sm font-medium">
-            Page {currentPage} of {totalPages}
+
+          {/* Page info and navigation */}
+          <div className="flex items-center gap-3">
+            <span className="text-text-neutral-secondary text-xs font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-3">
+              <Link
+                aria-label="Go to first page"
+                className={cn(
+                  NAV_BUTTON_STYLES.base,
+                  isFirstPage
+                    ? NAV_BUTTON_STYLES.disabled
+                    : NAV_BUTTON_STYLES.enabled,
+                )}
+                href={
+                  isFirstPage
+                    ? pathname + "?" + searchParams.toString()
+                    : createPageUrl(1)
+                }
+                scroll={!disableScroll}
+                aria-disabled={isFirstPage}
+                onClick={(e) => isFirstPage && e.preventDefault()}
+              >
+                <ChevronFirst className="size-6" aria-hidden="true" />
+              </Link>
+              <Link
+                aria-label="Go to previous page"
+                className={cn(
+                  NAV_BUTTON_STYLES.base,
+                  isFirstPage
+                    ? NAV_BUTTON_STYLES.disabled
+                    : NAV_BUTTON_STYLES.enabled,
+                )}
+                href={
+                  isFirstPage
+                    ? pathname + "?" + searchParams.toString()
+                    : createPageUrl(currentPage - 1)
+                }
+                scroll={!disableScroll}
+                aria-disabled={isFirstPage}
+                onClick={(e) => isFirstPage && e.preventDefault()}
+              >
+                <ChevronLeft className="size-6" aria-hidden="true" />
+              </Link>
+              <Link
+                aria-label="Go to next page"
+                className={cn(
+                  NAV_BUTTON_STYLES.base,
+                  isLastPage
+                    ? NAV_BUTTON_STYLES.disabled
+                    : NAV_BUTTON_STYLES.enabled,
+                )}
+                href={
+                  isLastPage
+                    ? pathname + "?" + searchParams.toString()
+                    : createPageUrl(currentPage + 1)
+                }
+                scroll={!disableScroll}
+                aria-disabled={isLastPage}
+                onClick={(e) => isLastPage && e.preventDefault()}
+              >
+                <ChevronRight className="size-6" aria-hidden="true" />
+              </Link>
+              <Link
+                aria-label="Go to last page"
+                className={cn(
+                  NAV_BUTTON_STYLES.base,
+                  isLastPage
+                    ? NAV_BUTTON_STYLES.disabled
+                    : NAV_BUTTON_STYLES.enabled,
+                )}
+                href={
+                  isLastPage
+                    ? pathname + "?" + searchParams.toString()
+                    : createPageUrl(totalPages)
+                }
+                scroll={!disableScroll}
+                aria-disabled={isLastPage}
+                onClick={(e) => isLastPage && e.preventDefault()}
+              >
+                <ChevronLast className="size-6" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              aria-label="Go to first page"
-              className={`${baseLinkClass} ${isFirstPage ? disabledLinkClass : ""}`}
-              href={
-                isFirstPage
-                  ? pathname + "?" + searchParams.toString()
-                  : createPageUrl(1)
-              }
-              scroll={!disableScroll}
-              aria-disabled={isFirstPage}
-              onClick={(e) => isFirstPage && e.preventDefault()}
-            >
-              <DoubleArrowLeftIcon className="size-4" aria-hidden="true" />
-            </Link>
-            <Link
-              aria-label="Go to previous page"
-              className={`${baseLinkClass} ${isFirstPage ? disabledLinkClass : ""}`}
-              href={
-                isFirstPage
-                  ? pathname + "?" + searchParams.toString()
-                  : createPageUrl(currentPage - 1)
-              }
-              scroll={!disableScroll}
-              aria-disabled={isFirstPage}
-              onClick={(e) => isFirstPage && e.preventDefault()}
-            >
-              <ChevronLeftIcon className="size-4" aria-hidden="true" />
-            </Link>
-            <Link
-              aria-label="Go to next page"
-              className={`${baseLinkClass} ${isLastPage ? disabledLinkClass : ""}`}
-              href={
-                isLastPage
-                  ? pathname + "?" + searchParams.toString()
-                  : createPageUrl(currentPage + 1)
-              }
-              scroll={!disableScroll}
-              aria-disabled={isLastPage}
-              onClick={(e) => isLastPage && e.preventDefault()}
-            >
-              <ChevronRightIcon className="size-4" aria-hidden="true" />
-            </Link>
-            <Link
-              aria-label="Go to last page"
-              className={`${baseLinkClass} ${isLastPage ? disabledLinkClass : ""}`}
-              href={
-                isLastPage
-                  ? pathname + "?" + searchParams.toString()
-                  : createPageUrl(totalPages)
-              }
-              scroll={!disableScroll}
-              aria-disabled={isLastPage}
-              onClick={(e) => isLastPage && e.preventDefault()}
-            >
-              <DoubleArrowRightIcon className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

@@ -248,6 +248,13 @@ class Provider(ABC):
                         repositories=arguments.repository,
                         organizations=arguments.organization,
                     )
+                elif "cloudflare" in provider_class_name.lower():
+                    provider_class(
+                        filter_zones=arguments.region,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "iac" in provider_class_name.lower():
                     provider_class(
                         scan_path=arguments.scan_path,
@@ -285,6 +292,18 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
+                    )
+                elif "alibabacloud" in provider_class_name.lower():
+                    provider_class(
+                        role_arn=arguments.role_arn,
+                        role_session_name=arguments.role_session_name,
+                        ecs_ram_role=arguments.ecs_ram_role,
+                        oidc_role_arn=arguments.oidc_role_arn,
+                        credentials_uri=arguments.credentials_uri,
+                        regions=arguments.regions,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:

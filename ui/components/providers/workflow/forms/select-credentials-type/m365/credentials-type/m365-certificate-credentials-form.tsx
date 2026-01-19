@@ -31,7 +31,6 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.tenant_id}
       />
       <CustomInput
         control={control}
@@ -42,7 +41,6 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
       <CustomTextarea
         control={control}
@@ -52,7 +50,6 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the base64 encoded certificate content"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.certificate_content}
         minRows={4}
       />
       <p className="text-default-500 text-sm">

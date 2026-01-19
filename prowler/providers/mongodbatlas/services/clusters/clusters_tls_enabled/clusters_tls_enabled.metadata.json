@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "MongoDBAtlasCluster",
+  "ResourceGroup": "database",
   "Description": "Ensure MongoDB Atlas clusters have TLS authentication required to secure data in transit",
   "Risk": "Without TLS enabled, MongoDB Atlas clusters are vulnerable to man-in-the-middle attacks and data interception during transmission",
   "RelatedUrl": "",

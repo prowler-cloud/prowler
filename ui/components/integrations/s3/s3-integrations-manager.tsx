@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -16,14 +15,16 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { S3IntegrationForm } from "./s3-integration-form";
 
 interface S3IntegrationsManagerProps {
@@ -214,38 +215,33 @@ export const S3IntegrationsManager = ({
         title="Delete S3 Integration"
         description="This action cannot be undone. This will permanently delete your S3 integration."
       >
-        <div className="flex w-full justify-center gap-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
+            variant="ghost"
             size="lg"
-            onPress={() => {
+            onClick={() => {
               setIsDeleteOpen(false);
               setIntegrationToDelete(null);
             }}
-            isDisabled={isDeleting !== null}
+            disabled={isDeleting !== null}
           >
-            <span>Cancel</span>
-          </CustomButton>
+            Cancel
+          </Button>
 
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete"
-            className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting !== null}
-            startContent={!isDeleting && <Trash2Icon size={24} />}
-            onPress={() =>
+            disabled={isDeleting !== null}
+            onClick={() =>
               integrationToDelete &&
               handleDeleteIntegration(integrationToDelete.id)
             }
           >
+            {!isDeleting && <Trash2Icon size={24} />}
             {isDeleting ? "Deleting..." : "Delete"}
-          </CustomButton>
+          </Button>
         </div>
       </CustomAlertModal>
 
@@ -284,14 +280,10 @@ export const S3IntegrationsManager = ({
                 : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured`}
             </p>
           </div>
-          <CustomButton
-            color="action"
-            startContent={<PlusIcon size={16} />}
-            onPress={handleAddIntegration}
-            ariaLabel="Add integration"
-          >
+          <Button onClick={handleAddIntegration}>
+            <PlusIcon size={16} />
             Add Integration
-          </CustomButton>
+          </Button>
         </div>
 
         {/* Integrations List */}
@@ -306,8 +298,8 @@ export const S3IntegrationsManager = ({
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
-              <Card key={integration.id} className="dark:bg-gray-800">
-                <CardHeader className="pb-2">
+              <Card key={integration.id} variant="base">
+                <CardHeader>
                   <IntegrationCardHeader
                     icon={<AmazonS3Icon size={32} />}
                     title={
@@ -326,7 +318,7 @@ export const S3IntegrationsManager = ({
                   />
                 </CardHeader>
 
-                <CardBody className="pt-0">
+                <CardContent className="pt-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">
                       {integration.attributes.connection_last_checked_at && (
@@ -351,7 +343,7 @@ export const S3IntegrationsManager = ({
                       isTesting={isTesting === integration.id}
                     />
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>

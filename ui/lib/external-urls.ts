@@ -1,5 +1,11 @@
 import { IntegrationType } from "../types/integrations";
 
+// Documentation URLs
+export const DOCS_URLS = {
+  FINDINGS_ANALYSIS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
+} as const;
+
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
     case "aws":
@@ -41,6 +47,16 @@ export const getProviderHelpText = (provider: string) => {
       return {
         text: "Need help connecting your Oracle Cloud account?",
         link: "https://goto.prowler.com/provider-oraclecloud",
+      };
+    case "mongodbatlas":
+      return {
+        text: "Need help connecting your MongoDB Atlas organization?",
+        link: "https://goto.prowler.com/provider-mongodbatlas",
+      };
+    case "alibabacloud":
+      return {
+        text: "Need help connecting your Alibaba Cloud account?",
+        link: "https://goto.prowler.com/provider-alibabacloud",
       };
     default:
       return {

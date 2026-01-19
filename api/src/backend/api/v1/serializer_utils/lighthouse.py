@@ -40,11 +40,16 @@ class BedrockCredentialsSerializer(serializers.Serializer):
     """
     Serializer for AWS Bedrock credentials validation.
 
-    Validates long-term AWS credentials (AKIA) and region format.
+    Supports two authentication methods:
+    1. AWS access key + secret key
+    2. Bedrock API key (bearer token)
+
+    In both cases, region is mandatory.
     """
 
-    access_key_id = serializers.CharField()
-    secret_access_key = serializers.CharField()
+    access_key_id = serializers.CharField(required=False, allow_blank=False)
+    secret_access_key = serializers.CharField(required=False, allow_blank=False)
+    api_key = serializers.CharField(required=False, allow_blank=False)
     region = serializers.CharField()
 
     def validate_access_key_id(self, value: str) -> str:
@@ -65,6 +70,15 @@ class BedrockCredentialsSerializer(serializers.Serializer):
             )
         return value
 
+    def validate_api_key(self, value: str) -> str:
+        """
+        Validate Bedrock API key (bearer token).
+        """
+        pattern = r"^ABSKQmVkcm9ja0FQSUtleS[A-Za-z0-9+/=]{110}$"
+        if not re.match(pattern, value or ""):
+            raise serializers.ValidationError("Invalid Bedrock API key format.")
+        return value
+
     def validate_region(self, value: str) -> str:
         """Validate AWS region format."""
         pattern = r"^[a-z]{2}-[a-z]+-\d+$"
@@ -73,6 +87,50 @@ class BedrockCredentialsSerializer(serializers.Serializer):
                 "Invalid AWS region format. Expected format like 'us-east-1' or 'eu-west-2'."
             )
         return value
+
+    def validate(self, attrs):
+        """
+        Enforce either:
+        - access_key_id + secret_access_key + region
+        OR
+        - api_key + region
+        """
+        access_key_id = attrs.get("access_key_id")
+        secret_access_key = attrs.get("secret_access_key")
+        api_key = attrs.get("api_key")
+        region = attrs.get("region")
+
+        errors = {}
+
+        if not region:
+            errors["region"] = ["Region is required."]
+
+        using_access_keys = bool(access_key_id or secret_access_key)
+        using_api_key = api_key is not None and api_key != ""
+
+        if using_access_keys and using_api_key:
+            errors["non_field_errors"] = [
+                "Provide either access key + secret key OR api key, not both."
+            ]
+        elif not using_access_keys and not using_api_key:
+            errors["non_field_errors"] = [
+                "You must provide either access key + secret key OR api key."
+            ]
+        elif using_access_keys:
+            # Both access_key_id and secret_access_key must be present together
+            if not access_key_id:
+                errors.setdefault("access_key_id", []).append(
+                    "AWS access key ID is required when using access key authentication."
+                )
+            if not secret_access_key:
+                errors.setdefault("secret_access_key", []).append(
+                    "AWS secret access key is required when using access key authentication."
+                )
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return attrs
 
     def to_internal_value(self, data):
         """Check for unknown fields before DRF filters them out."""
@@ -110,6 +168,15 @@ class BedrockCredentialsUpdateSerializer(BedrockCredentialsSerializer):
         # Make all fields optional for updates
         for field in self.fields.values():
             field.required = False
+
+    def validate(self, attrs):
+        """
+        For updates, this serializer only checks individual fields.
+        It does NOT enforce the "either access keys OR api key" rule.
+        That rule is applied later, after merging with existing stored
+        credentials, in LighthouseProviderConfigUpdateSerializer.
+        """
+        return attrs
 
 
 class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
@@ -168,27 +235,51 @@ class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
                 "required": ["api_key"],
             },
             {
-                "type": "object",
                 "title": "AWS Bedrock Credentials",
-                "properties": {
-                    "access_key_id": {
-                        "type": "string",
-                        "description": "AWS access key ID.",
-                        "pattern": "^AKIA[0-9A-Z]{16}$",
+                "oneOf": [
+                    {
+                        "title": "IAM Access Key Pair",
+                        "type": "object",
+                        "description": "Authenticate with AWS access key and secret key. Recommended when you manage IAM users or roles.",
+                        "properties": {
+                            "access_key_id": {
+                                "type": "string",
+                                "description": "AWS access key ID.",
+                                "pattern": "^AKIA[0-9A-Z]{16}$",
+                            },
+                            "secret_access_key": {
+                                "type": "string",
+                                "description": "AWS secret access key.",
+                                "pattern": "^[A-Za-z0-9/+=]{40}$",
+                            },
+                            "region": {
+                                "type": "string",
+                                "description": "AWS region identifier where Bedrock is available. Examples: us-east-1, "
+                                "us-west-2, eu-west-1, ap-northeast-1.",
+                                "pattern": "^[a-z]{2}-[a-z]+-\\d+$",
+                            },
+                        },
+                        "required": ["access_key_id", "secret_access_key", "region"],
                     },
-                    "secret_access_key": {
-                        "type": "string",
-                        "description": "AWS secret access key.",
-                        "pattern": "^[A-Za-z0-9/+=]{40}$",
+                    {
+                        "title": "Amazon Bedrock API Key",
+                        "type": "object",
+                        "description": "Authenticate with an Amazon Bedrock API key (bearer token). Region is still required.",
+                        "properties": {
+                            "api_key": {
+                                "type": "string",
+                                "description": "Amazon Bedrock API key (bearer token).",
+                            },
+                            "region": {
+                                "type": "string",
+                                "description": "AWS region identifier where Bedrock is available. Examples: us-east-1, "
+                                "us-west-2, eu-west-1, ap-northeast-1.",
+                                "pattern": "^[a-z]{2}-[a-z]+-\\d+$",
+                            },
+                        },
+                        "required": ["api_key", "region"],
                     },
-                    "region": {
-                        "type": "string",
-                        "description": "AWS region identifier where Bedrock is available. Examples: us-east-1, "
-                        "us-west-2, eu-west-1, ap-northeast-1.",
-                        "pattern": "^[a-z]{2}-[a-z]+-\\d+$",
-                    },
-                },
-                "required": ["access_key_id", "secret_access_key", "region"],
+                ],
             },
             {
                 "type": "object",

@@ -32,11 +32,11 @@ export function AlertPill({
       >
         <AlertTriangle
           size={iconSize}
-          style={{ color: "var(--color-text-error)" }}
+          style={{ color: "var(--color-text-error-primary)" }}
         />
         <span
           className={cn(textSizeClass, "font-semibold")}
-          style={{ color: "var(--color-text-error)" }}
+          style={{ color: "var(--color-text-error-primary)" }}
         >
           {value}
         </span>

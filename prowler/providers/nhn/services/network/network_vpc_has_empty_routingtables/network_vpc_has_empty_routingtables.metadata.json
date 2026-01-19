@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VPC",
+  "ResourceGroup": "network",
   "Description": "Check if VPC has empty routing tables. Having empty routing tables may indicate misconfiguration or incomplete network setup.",
   "Risk": "",
   "RelatedUrl": "",

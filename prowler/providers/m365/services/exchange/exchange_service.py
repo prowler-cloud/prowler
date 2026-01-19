@@ -16,7 +16,7 @@ class Exchange(M365Service):
         self.external_mail_config = []
         self.transport_rules = []
         self.transport_config = None
-        self.mailbox_policy = None
+        self.mailbox_policies = []
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
 
@@ -27,7 +27,7 @@ class Exchange(M365Service):
                 self.external_mail_config = self._get_external_mail_config()
                 self.transport_rules = self._get_transport_rules()
                 self.transport_config = self._get_transport_config()
-                self.mailbox_policy = self._get_mailbox_policy()
+                self.mailbox_policies = self._get_mailbox_policy()
                 self.role_assignment_policies = self._get_role_assignment_policies()
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
@@ -164,21 +164,27 @@ class Exchange(M365Service):
 
     def _get_mailbox_policy(self):
         logger.info("Microsoft365 - Getting mailbox policy configuration...")
-        mailboxes_policy = None
+        mailbox_policies = []
         try:
-            mailbox_policy = self.powershell.get_mailbox_policy()
-            if mailbox_policy:
-                mailboxes_policy = MailboxPolicy(
-                    id=mailbox_policy.get("Id", ""),
-                    additional_storage_enabled=mailbox_policy.get(
-                        "AdditionalStorageProvidersAvailable", True
-                    ),
-                )
+            policies_data = self.powershell.get_mailbox_policy()
+            if policies_data:
+                if isinstance(policies_data, dict):
+                    policies_data = [policies_data]
+                for policy in policies_data:
+                    if policy:
+                        mailbox_policies.append(
+                            MailboxPolicy(
+                                id=policy.get("Id", ""),
+                                additional_storage_enabled=policy.get(
+                                    "AdditionalStorageProvidersAvailable", True
+                                ),
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return mailboxes_policy
+        return mailbox_policies
 
     def _get_role_assignment_policies(self):
         logger.info("Microsoft365 - Getting role assignment policies...")

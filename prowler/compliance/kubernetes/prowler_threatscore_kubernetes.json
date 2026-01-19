@@ -1,0 +1,1269 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Name": "Prowler ThreatScore Compliance Framework for Kubernetes",
+  "Version": "1.0",
+  "Provider": "Kubernetes",
+  "Description": "Prowler ThreatScore Compliance Framework for Kubernetes ensures that Kubernetes clusters are compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Logging and Monitoring, and Encryption. This framework provides a comprehensive security assessment for Kubernetes environments focusing on workload security, RBAC configurations, container isolation, audit logging, and encryption controls that are directly controllable by users in both managed and self-managed Kubernetes deployments.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure anonymous authentication is disabled for the API server",
+      "Checks": [
+        "apiserver_anonymous_requests"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server anonymous authentication disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The Kubernetes API server is the central control plane component that exposes the Kubernetes API. Anonymous authentication allows unauthenticated users to make requests to the API server, which can expose the cluster to unauthorized access. The --anonymous-auth argument should be set to false to ensure that all requests to the API server are authenticated.",
+          "AdditionalInformation": "Enabling anonymous authentication on the API server allows unauthenticated users to discover information about the cluster, potentially including sensitive configuration details and resources. Attackers can exploit this to gather intelligence for further attacks or to access resources without proper authorization. Disabling anonymous authentication ensures that all API requests are properly authenticated, reducing the attack surface and enforcing the principle of least privilege.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure that the API server authorization mode is not set to AlwaysAllow",
+      "Checks": [
+        "apiserver_auth_mode_not_always_allow"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server authorization mode not AlwaysAllow",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The Kubernetes API server supports multiple authorization modes to control access to cluster resources. The AlwaysAllow mode bypasses all authorization checks, granting full access to all requests without any validation. This mode should never be used in production environments as it completely disables access control mechanisms.",
+          "AdditionalInformation": "Using the AlwaysAllow authorization mode effectively disables all authorization checks on the API server, allowing any authenticated or unauthenticated user to perform any action on the cluster. This poses an extreme security risk, as it removes all access control barriers and allows unrestricted access to sensitive cluster resources, secrets, and configuration. Ensuring that AlwaysAllow is not used is critical for maintaining cluster security and implementing proper access controls.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Ensure that the --client-ca-file argument is set for the API server",
+      "Checks": [
+        "apiserver_client_ca_file_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server client CA file configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The API server uses client certificates to authenticate requests from users and components. The --client-ca-file argument specifies the Certificate Authority (CA) bundle that the API server uses to validate client certificates. When this is properly configured, the API server can verify the authenticity of client certificates and ensure that only authorized entities can access the cluster.",
+          "AdditionalInformation": "Without proper client certificate authentication, the API server cannot verify the identity of clients making requests, potentially allowing unauthorized access to cluster resources. Client certificate authentication provides strong mutual TLS authentication, ensuring that both the server and client can verify each other's identity. This is essential for securing communication between cluster components and preventing man-in-the-middle attacks.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.4",
+      "Description": "Ensure that the --token-auth-file parameter is not set for the API server",
+      "Checks": [
+        "apiserver_no_token_auth_file"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server token authentication file not used",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The --token-auth-file parameter allows the API server to authenticate requests using static tokens defined in a CSV file. This authentication method is insecure because tokens are long-lived, stored in plaintext, and cannot be rotated without restarting the API server. Modern Kubernetes clusters should use more secure authentication methods such as service account tokens, OIDC, or client certificates.",
+          "AdditionalInformation": "Using static token files for authentication creates significant security risks. Tokens cannot be easily rotated, and if the token file is compromised, attackers gain persistent access to the cluster. Additionally, token files are often stored without proper encryption, making them vulnerable to unauthorized access. Disabling static token authentication and using modern authentication mechanisms like service account tokens with automatic rotation or OIDC integration significantly improves cluster security.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.5",
+      "Description": "Ensure that the --service-account-key-file argument is set for the API server",
+      "Checks": [
+        "apiserver_service_account_key_file_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server service account key file configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Service accounts provide an identity for processes running in pods to authenticate with the API server. The --service-account-key-file argument specifies the public key used to verify service account tokens. When properly configured, the API server uses this key to validate that service account tokens are legitimate and have not been tampered with.",
+          "AdditionalInformation": "Service account token validation is critical for ensuring that only authorized pods can access cluster resources. Without proper key validation, attackers could forge service account tokens and gain unauthorized access to the cluster. Using a dedicated key file for service account validation, separate from the TLS certificate key, follows security best practices and allows for independent key rotation without affecting TLS communication.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.6",
+      "Description": "Ensure kubelet certificate authority is configured for the API server",
+      "Checks": [
+        "apiserver_kubelet_cert_auth"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server kubelet certificate authority configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The API server communicates with kubelet on worker nodes to manage pods and retrieve logs and metrics. The --kubelet-certificate-authority argument specifies the CA certificate used to verify the kubelet's serving certificate. This ensures that the API server can authenticate the kubelet and establish a secure connection.",
+          "AdditionalInformation": "Without proper certificate validation, the API server cannot verify that it is communicating with a legitimate kubelet. This creates a risk of man-in-the-middle attacks where an attacker could intercept communications between the API server and kubelets, potentially exposing sensitive pod data, logs, and cluster information. Configuring certificate authority validation ensures secure, authenticated communication between control plane and worker nodes.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.7",
+      "Description": "Ensure kubelet client certificate and key are configured for the API server",
+      "Checks": [
+        "apiserver_kubelet_tls_auth"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server kubelet client certificates configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The API server requires client certificates to authenticate when connecting to kubelets on worker nodes. The --kubelet-client-certificate and --kubelet-client-key arguments specify the certificate and private key that the API server uses to authenticate itself to kubelets. This establishes mutual TLS authentication between the control plane and worker nodes.",
+          "AdditionalInformation": "Mutual TLS authentication between the API server and kubelets ensures that both parties can verify each other's identity. Without proper client certificate authentication, kubelets cannot verify that requests are coming from a legitimate API server, potentially allowing unauthorized components to communicate with kubelets and manipulate pod lifecycle, extract logs, or execute commands in containers. Configuring client certificates provides strong authentication and prevents impersonation attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.8",
+      "Description": "Ensure that the etcd certfile and keyfile are set appropriately for the API server",
+      "Checks": [
+        "apiserver_etcd_tls_config"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server etcd TLS configuration set",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The API server stores all cluster state in etcd, the distributed key-value store. The --etcd-certfile and --etcd-keyfile arguments specify the client certificate and private key that the API server uses to authenticate to etcd. This ensures secure, authenticated communication between the API server and etcd, protecting sensitive cluster data including secrets, configuration, and state.",
+          "AdditionalInformation": "Communication between the API server and etcd contains all cluster data, including Kubernetes secrets, pod specifications, and cluster configuration. Without proper TLS authentication, this communication could be intercepted or manipulated, leading to data breaches, unauthorized access to secrets, or cluster compromise. Using client certificates for etcd authentication ensures that only authorized API servers can access and modify cluster state stored in etcd.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.9",
+      "Description": "Ensure that the etcd cafile is set appropriately for the API server",
+      "Checks": [
+        "apiserver_etcd_cafile_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server etcd CA file configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The --etcd-cafile argument specifies the Certificate Authority bundle that the API server uses to verify the identity of etcd servers. This ensures that the API server can validate etcd's server certificate and establish a trusted connection, preventing man-in-the-middle attacks when accessing cluster state data.",
+          "AdditionalInformation": "Without proper CA validation, the API server cannot verify that it is connecting to a legitimate etcd server. An attacker could potentially impersonate etcd and intercept or manipulate all cluster state data, including secrets, configuration, and resource definitions. Configuring the etcd CA file ensures that the API server only communicates with verified etcd instances, protecting the integrity and confidentiality of all cluster data.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.10",
+      "Description": "Ensure that client certificate authentication is enabled for etcd",
+      "Checks": [
+        "etcd_client_cert_auth"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd client certificate authentication enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Etcd is the key-value store that holds all Kubernetes cluster data, including secrets, configurations, and state. The --client-cert-auth argument enables client certificate authentication, requiring all clients (including the API server) to present valid certificates to access etcd. This provides strong mutual TLS authentication and ensures that only authorized components can access cluster data.",
+          "AdditionalInformation": "Etcd contains the entire state of the Kubernetes cluster, including all secrets and sensitive configuration data. Without client certificate authentication, etcd could be accessed by unauthorized clients, leading to complete cluster compromise, data breaches, and unauthorized modifications to cluster state. Enabling client certificate authentication ensures that only verified components can interact with etcd, providing a critical layer of security for cluster data protection.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.11",
+      "Description": "Ensure that peer client certificate authentication is enabled for etcd",
+      "Checks": [
+        "etcd_peer_client_cert_auth"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd peer client certificate authentication enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "In a multi-node etcd cluster, etcd instances communicate with each other to replicate data and maintain cluster consensus. The --peer-client-cert-auth argument enables certificate-based authentication for peer communication, ensuring that only verified etcd nodes can join the cluster and participate in data replication.",
+          "AdditionalInformation": "Without peer certificate authentication, unauthorized etcd nodes could join the cluster and access or manipulate all cluster data. An attacker who gains access to the etcd peer network could introduce a malicious etcd instance, extract all secrets and configuration, or corrupt cluster state. Enabling peer certificate authentication ensures that only authorized etcd instances can participate in the cluster, protecting data integrity and preventing unauthorized access.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.12",
+      "Description": "Ensure that a unique Certificate Authority is used for etcd",
+      "Checks": [
+        "etcd_unique_ca"
+      ],
+      "Attributes": [
+        {
+          "Title": "Unique Certificate Authority used for etcd",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Etcd should use a dedicated Certificate Authority (CA) separate from the Kubernetes cluster CA. This ensures that certificates issued for etcd communication cannot be used to access other cluster components, and vice versa. Using a unique CA provides defense in depth by limiting the scope of certificate compromise.",
+          "AdditionalInformation": "If etcd shares the same CA as other cluster components, a certificate compromise in one area could allow attackers to impersonate other components and access etcd. By using a dedicated CA for etcd, the impact of a certificate compromise is limited, preventing lateral movement within the cluster. This security practice follows the principle of least privilege and provides isolation between different security domains within the cluster.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.13",
+      "Description": "Ensure anonymous authentication is disabled for the kubelet",
+      "Checks": [
+        "kubelet_disable_anonymous_auth"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet anonymous authentication disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The kubelet is the primary node agent that runs on each worker node and manages containers. Anonymous authentication allows unauthenticated users to make requests to the kubelet API, potentially exposing pod information, metrics, and node status. The --anonymous-auth argument should be set to false to ensure all requests are properly authenticated.",
+          "AdditionalInformation": "Enabling anonymous authentication on kubelet allows unauthenticated users to query the kubelet API for information about pods, containers, and node status. Attackers can exploit this to gather intelligence about running workloads, discover vulnerabilities, and plan attacks. Additionally, depending on the authorization mode, anonymous users might be able to perform privileged operations. Disabling anonymous authentication ensures that all kubelet API access requires proper credentials, significantly reducing the attack surface.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.14",
+      "Description": "Ensure that the --client-ca-file argument is set for the kubelet",
+      "Checks": [
+        "kubelet_client_ca_file_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet client CA file configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The kubelet uses client certificates to authenticate requests from the API server and other authorized components. The --client-ca-file argument specifies the Certificate Authority bundle that the kubelet uses to validate client certificates. This ensures that the kubelet can verify the identity of clients and only accept requests from authorized sources.",
+          "AdditionalInformation": "Without proper client certificate validation, the kubelet cannot verify the identity of clients making requests. This could allow unauthorized components or attackers to communicate with the kubelet, potentially executing commands in containers, extracting sensitive data, or manipulating pod lifecycle. Configuring the client CA file ensures that only clients with valid certificates signed by the trusted CA can interact with the kubelet, providing strong authentication and access control.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.15",
+      "Description": "Ensure that the --root-ca-file argument is set for the Controller Manager",
+      "Checks": [
+        "controllermanager_root_ca_file_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "Controller Manager root CA file configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The Controller Manager is responsible for running core control loops that manage cluster state. The --root-ca-file argument specifies the root Certificate Authority certificate that is used to verify service account tokens and to include in service account's token secrets. This ensures that service accounts can securely authenticate with the API server.",
+          "AdditionalInformation": "Service accounts are used by pods to authenticate with the API server and access cluster resources. The root CA certificate is essential for service account token validation and distribution. Without proper CA configuration, service accounts may not function correctly, or token validation may be compromised. Configuring the root CA file ensures that service account authentication is secure and that pods can reliably access the resources they need with proper authentication.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "Ensure that the --authorization-mode argument includes RBAC for the API server",
+      "Checks": [
+        "apiserver_auth_mode_include_rbac"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server authorization mode includes RBAC",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Role-Based Access Control (RBAC) is the recommended authorization mode for Kubernetes clusters. RBAC uses roles and role bindings to define which users, groups, and service accounts can perform specific actions on cluster resources. The --authorization-mode argument must include RBAC to enable this fine-grained access control mechanism.",
+          "AdditionalInformation": "RBAC is essential for implementing the principle of least privilege in Kubernetes clusters. Without RBAC, it is difficult to control who can access what resources and perform which operations. Enabling RBAC allows administrators to create granular permissions, limit user access to only necessary resources, and prevent unauthorized actions. This is a fundamental security control that should be enabled on all production clusters to prevent privilege escalation and unauthorized resource access.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.2.2",
+      "Description": "Ensure that the --authorization-mode argument includes Node for the API server",
+      "Checks": [
+        "apiserver_auth_mode_include_node"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server authorization mode includes Node",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The Node authorization mode is a special-purpose authorizer that grants permissions to kubelets based on the pods scheduled to run on them. This authorizer restricts kubelets to only read objects associated with their own node, preventing kubelets from accessing resources or secrets from pods scheduled on other nodes. The --authorization-mode argument should include Node to enable this restriction.",
+          "AdditionalInformation": "Without Node authorization, kubelets have broader permissions and could potentially access secrets, pods, and other resources from all nodes in the cluster. This violates the principle of least privilege and increases the blast radius if a single node is compromised. The Node authorizer ensures that each kubelet can only access the specific resources needed for pods running on its node, limiting the impact of a node compromise and preventing lateral movement within the cluster.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.2.3",
+      "Description": "Ensure that the AlwaysAdmit admission control plugin is not set for the API server",
+      "Checks": [
+        "apiserver_no_always_admit_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server AlwaysAdmit admission plugin not enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Admission control plugins enforce policies on objects during create, update, and delete operations. The AlwaysAdmit plugin approves all admission requests without any validation or enforcement. This plugin should never be enabled as it bypasses all admission control policies, including security policies, resource quotas, and configuration validation.",
+          "AdditionalInformation": "The AlwaysAdmit admission plugin completely disables admission control, allowing any request to be accepted regardless of cluster policies. This can lead to insecure configurations, resource exhaustion, and policy violations. Attackers could create privileged containers, bypass security contexts, ignore resource limits, or violate organizational policies. Ensuring that AlwaysAdmit is not enabled is critical for maintaining cluster security and policy enforcement.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "Ensure that the NodeRestriction admission control plugin is set for the API server",
+      "Checks": [
+        "apiserver_node_restriction_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server NodeRestriction admission plugin enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The NodeRestriction admission control plugin limits the Node and Pod objects a kubelet can modify. This plugin ensures that kubelets can only modify their own Node object and Pod objects bound to their node, preventing a compromised kubelet from affecting other nodes or workloads in the cluster.",
+          "AdditionalInformation": "Without the NodeRestriction plugin, a compromised kubelet could modify any node's status or labels, potentially affecting scheduling decisions across the entire cluster. It could also tamper with pods on other nodes, leading to service disruption or data exposure. The NodeRestriction plugin enforces isolation between nodes and limits the blast radius of a node compromise, making it a critical security control for multi-tenant and production clusters.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.2.5",
+      "Description": "Ensure that the --service-account-lookup argument is set to true for the API server",
+      "Checks": [
+        "apiserver_service_account_lookup_true"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server service account lookup enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The --service-account-lookup argument controls whether the API server validates that service account tokens reference existing service accounts. When set to true, the API server checks that the service account specified in the token actually exists in the cluster and has not been deleted. This prevents the use of tokens for deleted service accounts.",
+          "AdditionalInformation": "Without service account lookup, tokens for deleted service accounts would continue to be valid until they expire. This creates a security gap where compromised or old tokens could be used to access the cluster even after the associated service account has been removed. Enabling service account lookup ensures that tokens are invalidated immediately when service accounts are deleted, providing better control over access revocation and reducing the window of exposure after credential compromise.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.6",
+      "Description": "Ensure that the ServiceAccount admission control plugin is set for the API server",
+      "Checks": [
+        "apiserver_service_account_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server ServiceAccount admission plugin enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The ServiceAccount admission control plugin automatically manages service accounts for pods. When enabled, it ensures that pods without a specified service account are assigned the default service account, and that the necessary service account token, CA certificate, and namespace information are mounted into pods. This plugin is essential for proper service account functionality.",
+          "AdditionalInformation": "Service accounts provide identity for processes running in pods and are the primary mechanism for pod authentication to the API server. The ServiceAccount admission plugin ensures that all pods have proper credentials to authenticate and that service account tokens are correctly provisioned. Without this plugin, pods may not have proper authentication credentials, leading to authentication failures or the use of insecure workarounds. This plugin should always be enabled to ensure secure and functional service account implementation.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.2.7",
+      "Description": "Ensure that the authorization mode is not set to AlwaysAllow for the kubelet",
+      "Checks": [
+        "kubelet_authorization_mode"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet authorization mode not AlwaysAllow",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The kubelet supports various authorization modes to control access to its API endpoints. The AlwaysAllow mode bypasses all authorization checks, granting access to all requests without validation. The --authorization-mode argument should be set to Webhook or another secure mode instead of AlwaysAllow to ensure proper access control.",
+          "AdditionalInformation": "Using AlwaysAllow authorization mode on the kubelet allows any authenticated user to perform any operation through the kubelet API, including executing commands in containers, accessing logs, and managing pod lifecycle. This effectively removes all access control from the kubelet, creating a critical security vulnerability. Proper authorization configuration ensures that only authorized users and components can access kubelet APIs, preventing unauthorized access to containers and sensitive workload data.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.2.8",
+      "Description": "Ensure that the cluster-admin role is only used where required",
+      "Checks": [
+        "rbac_cluster_admin_usage"
+      ],
+      "Attributes": [
+        {
+          "Title": "Cluster-admin role usage minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The cluster-admin role is a built-in ClusterRole that provides unrestricted access to all resources in the cluster. This role should be granted sparingly and only to users or service accounts that absolutely require full cluster access. Most users and applications should use more restrictive roles that grant only the minimum necessary permissions.",
+          "AdditionalInformation": "Overuse of the cluster-admin role violates the principle of least privilege and increases the risk of accidental or malicious cluster damage. If an account with cluster-admin access is compromised, attackers gain full control over the cluster, including the ability to view all secrets, modify any resource, create privileged containers, and exfiltrate data. Limiting cluster-admin usage to only essential administrative tasks and using more granular RBAC roles for other users reduces the blast radius of compromised credentials and prevents privilege abuse.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.9",
+      "Description": "Ensure that wildcard use in Roles and ClusterRoles is minimized",
+      "Checks": [
+        "rbac_minimize_wildcard_use_roles"
+      ],
+      "Attributes": [
+        {
+          "Title": "RBAC wildcard usage minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "RBAC roles can use wildcards (*) to grant permissions to all resources, API groups, or verbs. While wildcards can simplify role definitions, they often grant excessive permissions beyond what is actually needed. Roles and ClusterRoles should use specific resource names, API groups, and verbs instead of wildcards to implement the principle of least privilege.",
+          "AdditionalInformation": "Using wildcards in RBAC roles can inadvertently grant excessive permissions, allowing users or service accounts to access resources they don't need. This increases the risk of privilege escalation, where users could exploit their broad permissions to access sensitive data or modify critical resources. Wildcards also make it difficult to audit permissions and understand what access has been granted. Minimizing wildcard usage and explicitly defining required permissions improves security posture and makes access control more transparent and auditable.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.10",
+      "Description": "Ensure that the --use-service-account-credentials argument is set to true for the Controller Manager",
+      "Checks": [
+        "controllermanager_service_account_credentials"
+      ],
+      "Attributes": [
+        {
+          "Title": "Controller Manager uses service account credentials",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The Controller Manager runs multiple controllers that manage different aspects of the cluster. The --use-service-account-credentials argument ensures that each controller uses its own service account credentials when communicating with the API server, rather than sharing a single set of credentials. This provides better auditability and allows for fine-grained access control per controller.",
+          "AdditionalInformation": "When service account credentials are not used, all controllers operate under the same identity, making it impossible to distinguish which controller performed which action. This reduces audit trail quality and makes it difficult to implement least-privilege access for individual controllers. Using separate service account credentials for each controller allows administrators to grant each controller only the permissions it needs, implement better logging and monitoring, and reduce the impact if a single controller is compromised.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.3.1",
+      "Description": "Ensure that the SecurityContextDeny admission control plugin is set for the API server if PodSecurityPolicy is not used",
+      "Checks": [
+        "apiserver_security_context_deny_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "SecurityContextDeny admission plugin configured",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The SecurityContextDeny admission control plugin denies any pod that attempts to set security context options that could escalate privileges. This includes privileged containers, host namespace access, and other dangerous security context settings. While PodSecurityPolicy or Pod Security Standards are preferred, SecurityContextDeny provides basic protection against privilege escalation.",
+          "AdditionalInformation": "Without security context controls, users can create pods with privileged access, host namespace sharing, and dangerous capabilities that allow container escape and node compromise. The SecurityContextDeny plugin provides a basic safety net by rejecting dangerous security contexts. However, it is a coarse-grained control and should be supplemented with PodSecurityPolicy, Pod Security Standards, or admission webhooks for production environments to provide more granular control over pod security configurations.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.2",
+      "Description": "Ensure admission of privileged containers is minimized",
+      "Checks": [
+        "core_minimize_privileged_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Privileged containers minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Privileged containers run with all Linux capabilities enabled and have access to the host's devices, effectively having root access to the node. The use of privileged containers should be strictly controlled and limited to specific use cases where host access is absolutely necessary, such as certain monitoring or networking components. Most application workloads should never run as privileged.",
+          "AdditionalInformation": "Privileged containers can be used to escape the container and compromise the underlying node. They have unrestricted access to the node's resources, can load kernel modules, access all devices, and perform any operation that root can perform on the host. If a privileged container is compromised, the attacker gains complete control over the node and potentially the entire cluster. Minimizing privileged container usage and implementing strict admission controls prevents container escapes and limits the blast radius of container compromises.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.3.3",
+      "Description": "Ensure admission of containers running as root is minimized",
+      "Checks": [
+        "core_minimize_root_containers_admission"
+      ],
+      "Attributes": [
+        {
+          "Title": "Root containers minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Containers running as the root user (UID 0) have elevated privileges within the container. While container isolation provides some protection, running as root increases the risk of container escape and privilege escalation if vulnerabilities are exploited. Containers should run as non-root users whenever possible to follow the principle of least privilege.",
+          "AdditionalInformation": "Running containers as root increases the attack surface and makes privilege escalation easier if container vulnerabilities are discovered. Many container escape vulnerabilities require root access within the container to exploit. Additionally, if a container is misconfigured or compromised, running as root gives attackers more capabilities to manipulate files, processes, and potentially escape to the host. Enforcing non-root container execution significantly reduces the risk of privilege escalation and container escape attacks.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.3.4",
+      "Description": "Ensure admission of containers with the NET_RAW capability is minimized",
+      "Checks": [
+        "core_minimize_net_raw_capability_admission"
+      ],
+      "Attributes": [
+        {
+          "Title": "NET_RAW capability minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The NET_RAW capability allows containers to create raw sockets and perform low-level network operations, including packet sniffing and spoofing. This capability is dangerous as it enables man-in-the-middle attacks, network reconnaissance, and bypassing network security controls. Containers with NET_RAW should be minimized and used only when absolutely necessary.",
+          "AdditionalInformation": "Containers with the NET_RAW capability can intercept, manipulate, and forge network traffic within the cluster. Attackers can use this capability to perform ARP spoofing, DNS poisoning, or sniff sensitive data from other pods on the same node. This significantly increases the risk of lateral movement and data exfiltration within the cluster. By default, Docker and Kubernetes grant NET_RAW to containers, but this should be explicitly dropped for workloads that don't require it to reduce attack surface and prevent network-based attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.5",
+      "Description": "Ensure admission of containers with added capabilities is minimized",
+      "Checks": [
+        "core_minimize_containers_added_capabilities"
+      ],
+      "Attributes": [
+        {
+          "Title": "Containers with added capabilities minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Linux capabilities provide fine-grained control over privileged operations. While containers run with a default set of capabilities, additional capabilities can be granted through security context. Adding capabilities increases the attack surface and can enable privilege escalation. Containers should run with the minimum required capabilities, and additional capabilities should only be granted when absolutely necessary.",
+          "AdditionalInformation": "Many dangerous operations are gated by specific Linux capabilities, such as CAP_SYS_ADMIN, CAP_NET_ADMIN, or CAP_DAC_OVERRIDE. Granting additional capabilities can enable attackers to bypass security controls, access sensitive resources, or escalate privileges. For example, CAP_SYS_ADMIN provides near-root level access and can be used to mount filesystems, load kernel modules, and perform other dangerous operations. Minimizing added capabilities ensures containers operate with least privilege and reduces the risk of container escape and privilege escalation.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.6",
+      "Description": "Ensure admission of containers with capabilities assigned is minimized",
+      "Checks": [
+        "core_minimize_containers_capabilities_assigned"
+      ],
+      "Attributes": [
+        {
+          "Title": "Containers with capabilities assigned minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Containers with any explicitly assigned capabilities should be carefully reviewed and minimized. Even removing some default capabilities and adding others can create security risks if not properly managed. Best practice is to drop all capabilities and only add back the specific ones required for the container to function.",
+          "AdditionalInformation": "Managing container capabilities is complex, and misconfigurations can inadvertently grant excessive privileges. Attackers can exploit containers with inappropriate capabilities to perform privilege escalation, bypass security controls, or access host resources. A defense-in-depth approach involves dropping all capabilities by default and explicitly adding only the minimum required capabilities with clear justification and documentation. This ensures that capability assignments are intentional and reviewed rather than inherited by default.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.7",
+      "Description": "Ensure admission of containers with allowPrivilegeEscalation is minimized",
+      "Checks": [
+        "core_minimize_allowPrivilegeEscalation_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "AllowPrivilegeEscalation minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The allowPrivilegeEscalation security context setting controls whether a process can gain more privileges than its parent process. When set to true, programs running in the container can use setuid or setgid binaries to escalate privileges. This setting should be set to false unless there is a specific requirement for privilege escalation within the container.",
+          "AdditionalInformation": "Allowing privilege escalation within containers enables attackers to exploit setuid/setgid binaries or other privilege escalation vulnerabilities to gain root access within the container. This significantly increases the risk of container compromise and can be a stepping stone to container escape and node compromise. Setting allowPrivilegeEscalation to false prevents processes from gaining additional privileges through setuid/setgid mechanisms, providing defense in depth against privilege escalation attacks even if vulnerable binaries exist in container images.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.8",
+      "Description": "Ensure admission of containers sharing the host IPC namespace is minimized",
+      "Checks": [
+        "core_minimize_hostIPC_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Host IPC namespace sharing minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Containers can be configured to share the host's IPC (Inter-Process Communication) namespace using the hostIPC setting. This allows containers to communicate with processes on the host using IPC mechanisms like shared memory and semaphores. Sharing the host IPC namespace should be minimized as it breaks container isolation and can expose sensitive information.",
+          "AdditionalInformation": "Containers sharing the host IPC namespace can access IPC resources used by other processes on the host, including other containers. This can lead to information disclosure, as containers could read shared memory segments containing sensitive data from other applications. Additionally, malicious containers could manipulate IPC resources to disrupt or compromise other processes on the host. Maintaining IPC namespace isolation ensures that containers cannot interfere with each other or the host through IPC mechanisms.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.9",
+      "Description": "Ensure admission of containers sharing the host PID namespace is minimized",
+      "Checks": [
+        "core_minimize_hostPID_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Host PID namespace sharing minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Containers can be configured to share the host's PID (Process ID) namespace using the hostPID setting. This allows containers to see and interact with all processes running on the host, including processes in other containers. Sharing the host PID namespace should be minimized as it breaks process isolation and enables privilege escalation attacks.",
+          "AdditionalInformation": "Containers with access to the host PID namespace can view all processes on the node, including sensitive system processes and processes from other containers. This information can be used for reconnaissance and to identify attack targets. More critically, if the container also has elevated capabilities or is running as root, it could send signals to or manipulate host processes, potentially killing critical system processes or injecting code. Maintaining PID namespace isolation prevents containers from viewing or interacting with processes outside their namespace.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.10",
+      "Description": "Ensure admission of Windows HostProcess containers is minimized",
+      "Checks": [
+        "core_minimize_admission_windows_hostprocess_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Windows HostProcess containers minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Windows HostProcess containers run directly on the Windows host with elevated privileges, similar to privileged containers in Linux. These containers have access to host resources and can perform administrative operations on the Windows node. HostProcess containers should only be used for specific system-level operations and should be strictly controlled.",
+          "AdditionalInformation": "Windows HostProcess containers have extensive access to the host system and can perform privileged operations that could compromise node security. If a HostProcess container is compromised, attackers gain administrative access to the Windows node, allowing them to access sensitive data, manipulate the host, or pivot to other systems. Like privileged Linux containers, HostProcess containers should only be used when absolutely necessary and with strict admission controls to prevent misuse and reduce the attack surface.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.11",
+      "Description": "Ensure that the seccomp profile is set to docker/default or runtime/default",
+      "Checks": [
+        "core_seccomp_profile_docker_default"
+      ],
+      "Attributes": [
+        {
+          "Title": "Seccomp profile set to docker/default",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Seccomp (Secure Computing Mode) is a Linux kernel feature that restricts the system calls a process can make. Setting the seccomp profile to docker/default or runtime/default applies a restrictive profile that blocks many dangerous system calls while allowing common operations needed by most applications. This provides defense in depth against container escape and privilege escalation.",
+          "AdditionalInformation": "Without seccomp restrictions, containers can make any system call, including dangerous ones that could be exploited for container escape or privilege escalation. Many container escape vulnerabilities rely on specific system calls to interact with the kernel in unexpected ways. Applying the docker/default seccomp profile blocks the most dangerous system calls while maintaining compatibility with most applications. This significantly reduces the attack surface and makes it harder for attackers to exploit kernel vulnerabilities from within containers.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.12",
+      "Description": "Ensure access to secrets is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_secret_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Access to secrets minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Kubernetes secrets store sensitive data such as passwords, OAuth tokens, and SSH keys. Access to secrets should be strictly controlled using RBAC to ensure that only authorized users and service accounts can read or modify secrets. Broad secret access increases the risk of credential theft and privilege escalation.",
+          "AdditionalInformation": "Secrets often contain credentials that can be used to access external systems, databases, or escalate privileges within the cluster. If secret access is not properly restricted, compromised accounts could read all secrets in the cluster, leading to widespread credential theft and unauthorized access to external resources. Minimizing secret access through granular RBAC policies ensures that users and service accounts can only access the specific secrets they need, implementing least privilege and reducing the blast radius of compromised accounts.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.3.13",
+      "Description": "Ensure access to create pods is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_pod_creation_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Pod creation access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The ability to create pods is a powerful permission in Kubernetes, as it allows users to run arbitrary code in the cluster. Access to create pods should be restricted to only those users and service accounts that require it. Unrestricted pod creation can lead to privilege escalation, resource exhaustion, and deployment of malicious workloads.",
+          "AdditionalInformation": "Users with pod creation permissions can potentially escalate privileges by creating pods with privileged security contexts, host namespace access, or by mounting sensitive host paths or secrets. They could also deploy malicious containers to perform reconnaissance, exfiltrate data, or attack other workloads. Restricting pod creation to authorized users and service accounts, and implementing admission controls to validate pod security configurations, prevents unauthorized workload deployment and privilege escalation through pod manipulation.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.14",
+      "Description": "Ensure access to create persistent volumes is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_pv_creation_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Persistent volume creation access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Creating persistent volumes allows users to provision storage that can be mounted into pods. In some configurations, users with PV creation permissions could create volumes that access sensitive host paths or storage systems, potentially leading to data exposure or privilege escalation. Access to create PVs should be restricted to administrators.",
+          "AdditionalInformation": "Persistent volumes can be configured to bind to host paths or access privileged storage systems. Users with PV creation permissions could potentially create volumes that expose sensitive data from the host filesystem, access other tenants' data in multi-tenant storage systems, or bypass storage quotas and policies. Restricting PV creation to cluster administrators ensures that storage provisioning follows organizational policies and security requirements, preventing unauthorized data access through storage manipulation.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.3.15",
+      "Description": "Ensure access to proxy sub-resources of nodes is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_node_proxy_subresource_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Node proxy sub-resource access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The node proxy sub-resource allows users to establish proxy connections to kubelet APIs on nodes. This provides access to pod logs, execution capabilities, and other node-level operations. Access to the node proxy sub-resource should be strictly limited as it can be used to bypass normal API server authorization and directly interact with kubelets.",
+          "AdditionalInformation": "Users with access to the node proxy sub-resource can communicate directly with kubelets, potentially bypassing API server audit logging and authorization policies. This could allow them to access pods on specific nodes, execute commands in containers, or retrieve sensitive information without proper tracking. In some configurations, node proxy access could be used for privilege escalation by interacting with privileged pods or system components. Restricting node proxy access ensures that all node and pod interactions go through proper API server authorization and audit logging.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.16",
+      "Description": "Ensure access to approve certificate signing requests is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_csr_approval_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "CSR approval access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Certificate Signing Requests (CSRs) are used to request signed certificates from the cluster's certificate authority. The ability to approve CSRs is a sensitive permission that should be restricted to administrators. Unauthorized CSR approval could allow attackers to obtain valid certificates for arbitrary identities, enabling authentication bypass and privilege escalation.",
+          "AdditionalInformation": "Users who can approve CSRs could issue certificates for any identity, including cluster administrators or system components. This effectively allows them to impersonate any user or service account in the cluster, bypassing all RBAC controls. An attacker with CSR approval permissions could issue certificates for privileged accounts and use them to gain full control over the cluster. Restricting CSR approval to a small group of trusted administrators prevents unauthorized certificate issuance and protects the integrity of the cluster's PKI infrastructure.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.17",
+      "Description": "Ensure access to create service account tokens is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_service_account_token_creation"
+      ],
+      "Attributes": [
+        {
+          "Title": "Service account token creation access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The ability to create service account tokens allows users to generate authentication tokens for service accounts. This is a sensitive permission because tokens provide authentication credentials that can be used to access the API server. Access to create service account tokens should be restricted to prevent unauthorized token generation and privilege escalation.",
+          "AdditionalInformation": "Users with permission to create service account tokens can generate authentication credentials for any service account they have access to. This could allow them to escalate privileges by creating tokens for service accounts with higher permissions than their own. The tokens can be extracted and used outside the cluster, potentially exposing cluster access to external attackers. Restricting token creation ensures that service account credentials are only generated through approved mechanisms and prevents unauthorized privilege escalation through token manipulation.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.18",
+      "Description": "Ensure access to webhook configuration objects is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_webhook_config_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Webhook configuration access minimized",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Admission webhooks and authentication webhooks allow external services to validate or modify requests to the API server. Access to create or modify webhook configurations should be strictly limited to administrators, as malicious webhook configurations could intercept credentials, bypass security policies, or manipulate cluster operations.",
+          "AdditionalInformation": "Users who can modify webhook configurations could redirect webhook calls to attacker-controlled servers, allowing them to intercept authentication tokens, modify admission decisions, or capture sensitive data from API requests. They could also disable security-enforcing webhooks or create webhooks that automatically approve dangerous configurations. Controlling access to webhook configurations is critical for maintaining the integrity of admission control and authentication systems, preventing attackers from bypassing security policies or stealing credentials.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Ensure that the DenyServiceExternalIPs admission control plugin is set for the API server",
+      "Checks": [
+        "apiserver_deny_service_external_ips"
+      ],
+      "Attributes": [
+        {
+          "Title": "DenyServiceExternalIPs admission plugin enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Kubernetes services can be configured with external IPs that are not managed by the cluster. The DenyServiceExternalIPs admission control plugin prevents users from creating services with arbitrary external IPs, which could be used to intercept traffic or expose services unexpectedly. This plugin should be enabled to control service external IP assignments.",
+          "AdditionalInformation": "Allowing arbitrary external IPs on services can lead to security issues and traffic interception. Users could configure services to claim external IPs that route traffic through their pods, potentially intercepting traffic intended for other services or external systems. This could enable man-in-the-middle attacks or unauthorized access to network traffic. Enabling DenyServiceExternalIPs prevents users from assigning external IPs to services, ensuring that all external service exposure is controlled through proper mechanisms like LoadBalancer services or Ingress resources.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2",
+      "Description": "Ensure admission of containers using hostPorts is minimized",
+      "Checks": [
+        "core_minimize_admission_hostport_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Host port containers minimized",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Containers can bind to ports on the host network interface using the hostPort setting. This exposes the container directly on the node's IP address, bypassing service abstractions and network policies. Host ports should be minimized as they increase the attack surface, can cause port conflicts, and make pods immobile if ports are already in use on a node.",
+          "AdditionalInformation": "Using host ports exposes containers directly to the network without the protection of service abstractions or network policies. This increases the attack surface as the container becomes directly accessible on the node's IP address. Host ports can also interfere with node services or other pods, and they make pod scheduling more complex as only one pod can bind to a specific host port on each node. Minimizing host port usage and using services and ingress controllers for external access provides better security, flexibility, and manageability.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.3",
+      "Description": "Ensure admission of containers sharing the host network namespace is minimized",
+      "Checks": [
+        "core_minimize_hostNetwork_containers"
+      ],
+      "Attributes": [
+        {
+          "Title": "Host network namespace sharing minimized",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Containers can be configured to use the host's network namespace with the hostNetwork setting. This gives containers direct access to the host's network interfaces and eliminates network isolation. Containers with hostNetwork can listen on any port on the host and can intercept or manipulate network traffic. This setting should be minimized and used only when absolutely necessary.",
+          "AdditionalInformation": "Containers using the host network namespace bypass network isolation and network policies, gaining the same network access as the host. They can listen on privileged ports, access services bound to localhost, and potentially intercept traffic from other pods. This is particularly dangerous in multi-tenant environments as it allows containers to bypass network segmentation. Using hostNetwork should be restricted to specific system components that require it, such as certain CNI plugins or monitoring agents, and should never be allowed for general application workloads.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.4",
+      "Description": "Ensure that the read-only port is disabled for the kubelet",
+      "Checks": [
+        "kubelet_disable_read_only_port"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet read-only port disabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "The kubelet can expose a read-only HTTP endpoint on port 10255 that provides access to pod and node information without authentication. The --read-only-port argument should be set to 0 to disable this endpoint, as it exposes cluster information without requiring authentication and can be used for reconnaissance by attackers.",
+          "AdditionalInformation": "The read-only port provides unauthenticated access to kubelet APIs, allowing anyone who can reach the port to retrieve information about all pods on the node, including pod specifications, environment variables, and configuration details. This information can be used by attackers to identify vulnerable applications, discover secrets exposed through environment variables, or plan further attacks. Disabling the read-only port ensures that all kubelet API access requires proper authentication, preventing information disclosure and unauthorized reconnaissance.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "Ensure secrets are not exposed as environment variables",
+      "Checks": [
+        "core_no_secrets_envs"
+      ],
+      "Attributes": [
+        {
+          "Title": "Secrets not exposed as environment variables",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "Kubernetes secrets can be exposed to containers either as mounted volumes or as environment variables. Exposing secrets as environment variables is less secure because environment variables are visible in pod specifications, can be logged by applications, and may be exposed through system information endpoints. Secrets should be mounted as files instead.",
+          "AdditionalInformation": "Environment variables containing secrets are more likely to be accidentally exposed through various channels including application logs, error messages, process listings, and debugging endpoints. They are also visible to any process running in the container and can be accessed by attackers who gain limited shell access. Mounting secrets as files provides better isolation, as the files can have restricted permissions and are not automatically visible to all processes. Using volume mounts for secrets follows security best practices and reduces the risk of accidental credential exposure.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.2.2",
+      "Description": "Ensure access to secrets is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_secret_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Secret access minimized through RBAC",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "Access to read or modify secrets should be strictly controlled through RBAC policies. Only users and service accounts that specifically need to access secrets for their operations should be granted these permissions. Broad secret access increases the risk of credential theft and unauthorized access to sensitive data.",
+          "AdditionalInformation": "Secrets often contain credentials for external systems, databases, and APIs. Unrestricted secret access allows compromised accounts to retrieve all cluster secrets, potentially leading to widespread credential theft and unauthorized access to external resources. Implementing granular RBAC policies that grant secret access only to specific namespaces and resources ensures that each user and service account can only access the secrets they need, implementing the principle of least privilege and minimizing the impact of compromised accounts.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "2.2.3",
+      "Description": "Ensure access to create persistent volumes is minimized through RBAC",
+      "Checks": [
+        "rbac_minimize_pv_creation_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Persistent volume creation minimized",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "Creating persistent volumes with host path or other privileged storage configurations can expose sensitive data or allow privilege escalation. Access to create PVs should be restricted to cluster administrators who understand the security implications of different storage configurations.",
+          "AdditionalInformation": "Persistent volumes can be configured to access host directories, cloud storage, or network storage systems. Without proper controls, users could create PVs that expose sensitive data from the host filesystem, access other tenants' data in shared storage, or bypass storage quotas. Restricting PV creation to administrators ensures that storage is provisioned according to security policies and that sensitive data paths are not accidentally exposed to unauthorized workloads.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "Ensure that the AlwaysPullImages admission control plugin is set for the API server",
+      "Checks": [
+        "apiserver_always_pull_images_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "AlwaysPullImages admission plugin enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The AlwaysPullImages admission control plugin modifies pod specifications to always pull container images, regardless of the imagePullPolicy specified. This ensures that image registry authentication is checked for every pod creation and prevents users from running images cached on nodes that they wouldn't normally have access to pull from the registry.",
+          "AdditionalInformation": "Without AlwaysPullImages, users could potentially run containers from cached images that they no longer have permission to pull from the registry. This could allow unauthorized access to proprietary or sensitive images after access has been revoked. Additionally, always pulling images ensures that pods run the latest image version rather than potentially vulnerable cached versions. Enabling this plugin provides defense in depth by ensuring that image registry permissions are enforced at pod runtime, not just at initial image pull.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.3.2",
+      "Description": "Ensure that the NamespaceLifecycle admission control plugin is set for the API server",
+      "Checks": [
+        "apiserver_namespace_lifecycle_plugin"
+      ],
+      "Attributes": [
+        {
+          "Title": "NamespaceLifecycle admission plugin enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The NamespaceLifecycle admission control plugin enforces that objects cannot be created in non-existent or terminating namespaces. It prevents race conditions where objects might be created in namespaces that are being deleted, and ensures that the default and kube-system namespaces cannot be deleted.",
+          "AdditionalInformation": "Without the NamespaceLifecycle plugin, users could create resources in namespaces that are being deleted, leading to orphaned resources or inconsistent cluster state. The plugin also protects critical namespaces from accidental deletion. This is a fundamental admission control plugin that should always be enabled to maintain cluster consistency and prevent namespace-related errors and security issues.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "Ensure that the API server TLS certificate and key are configured",
+      "Checks": [
+        "apiserver_tls_config"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server TLS certificate and key configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The API server must use TLS to secure communications with clients, kubelets, and other components. The --tls-cert-file and --tls-private-key-file arguments specify the certificate and private key used for TLS encryption. Properly configuring TLS ensures that all API server communications are encrypted and authenticated.",
+          "AdditionalInformation": "Without TLS encryption, all communications with the API server are transmitted in plaintext, allowing attackers to intercept credentials, authentication tokens, secrets, and other sensitive data. TLS encryption protects the confidentiality and integrity of all API communications, preventing man-in-the-middle attacks and credential theft. Properly configured TLS is a fundamental security requirement for Kubernetes clusters and should never be disabled in production environments.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Ensure that the API server only uses strong cryptographic ciphers",
+      "Checks": [
+        "apiserver_strong_ciphers_only"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server strong ciphers enforced",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The API server should be configured to use only strong cryptographic ciphers for TLS connections. Weak ciphers can be exploited by attackers to decrypt communications or perform downgrade attacks. Configuring a restricted set of strong ciphers ensures that all TLS connections use modern, secure encryption algorithms.",
+          "AdditionalInformation": "Using weak or outdated cryptographic ciphers exposes TLS connections to various attacks including BEAST, CRIME, and padding oracle attacks. Even if TLS is enabled, weak ciphers can be exploited to decrypt traffic or downgrade security. Restricting the API server to strong ciphers ensures that all connections use modern, secure encryption that is resistant to known attacks. This is particularly important for the API server as it handles highly sensitive authentication tokens and cluster data.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.3",
+      "Description": "Ensure that etcd uses TLS encryption for client connections",
+      "Checks": [
+        "etcd_tls_encryption"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd TLS encryption for clients configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Etcd must use TLS to encrypt client connections from the API server and other etcd clients. The --cert-file and --key-file arguments specify the certificate and private key for TLS. Encrypting etcd client connections protects all cluster data in transit, including secrets and sensitive configuration.",
+          "AdditionalInformation": "Etcd contains all Kubernetes cluster data, including secrets, configurations, and state. Without TLS encryption, this data is transmitted in plaintext and could be intercepted by attackers with network access. Unencrypted etcd traffic exposes all cluster secrets and configuration to network sniffing attacks. Enabling TLS encryption for etcd client connections is absolutely critical for protecting cluster data confidentiality and preventing credential theft through network interception.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4",
+      "Description": "Ensure that etcd peer connections use TLS encryption",
+      "Checks": [
+        "etcd_peer_tls_config"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd peer TLS encryption configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "In a multi-node etcd cluster, etcd instances communicate with each other to replicate data and maintain consensus. The --peer-cert-file and --peer-key-file arguments configure TLS encryption for peer communication. This ensures that etcd replication traffic is encrypted and authenticated.",
+          "AdditionalInformation": "Etcd peer communications contain all cluster data being replicated between etcd instances. Without TLS encryption, this data is transmitted in plaintext across the network, potentially exposing all secrets and configuration to network attackers. Additionally, without peer authentication, malicious etcd instances could join the cluster. Configuring TLS for peer connections ensures that etcd replication is both encrypted and authenticated, protecting data confidentiality and cluster integrity.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.5",
+      "Description": "Ensure that auto-TLS is not enabled for etcd",
+      "Checks": [
+        "etcd_no_auto_tls"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd auto-TLS disabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Etcd supports auto-TLS mode which automatically generates self-signed certificates. While this enables TLS encryption, it does not provide authentication because clients cannot verify the certificate. The --auto-tls argument should be set to false, and properly signed certificates should be used instead.",
+          "AdditionalInformation": "Auto-TLS enables encryption but does not provide authentication, making it vulnerable to man-in-the-middle attacks. Attackers can intercept connections and present their own certificates, as clients have no way to verify certificate authenticity. While auto-TLS is better than no encryption, it should never be used in production environments. Properly issued and validated certificates provide both encryption and authentication, ensuring that clients are connecting to legitimate etcd servers.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.6",
+      "Description": "Ensure that peer auto-TLS is not enabled for etcd",
+      "Checks": [
+        "etcd_no_peer_auto_tls"
+      ],
+      "Attributes": [
+        {
+          "Title": "Etcd peer auto-TLS disabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The --peer-auto-tls argument enables automatic generation of self-signed certificates for etcd peer communication. Like client auto-TLS, this provides encryption without authentication. Peer auto-TLS should be disabled and proper certificates should be used to ensure both encryption and authentication of etcd cluster members.",
+          "AdditionalInformation": "Without proper peer authentication, malicious etcd instances could join the cluster and access or manipulate all cluster data. Auto-TLS for peer connections provides encryption but no authentication, allowing attackers to impersonate etcd cluster members. Using properly issued peer certificates ensures that only authorized etcd instances can join the cluster and participate in data replication, protecting cluster data integrity and preventing unauthorized access.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.7",
+      "Description": "Ensure that the kubelet uses TLS certificates",
+      "Checks": [
+        "kubelet_tls_cert_and_key"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet TLS certificates configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The kubelet should use TLS certificates for secure communication with the API server and other components. Properly configured TLS certificates ensure that kubelet communications are encrypted and that the kubelet's identity can be authenticated. This protects pod data, logs, and metrics in transit.",
+          "AdditionalInformation": "Communications between the API server and kubelet include sensitive data such as pod specifications, secrets, logs, and exec session data. Without TLS encryption, this data is transmitted in plaintext and could be intercepted by attackers. TLS certificates also enable mutual authentication, ensuring that both the API server and kubelet can verify each other's identity. Properly configured kubelet TLS prevents credential theft, data interception, and man-in-the-middle attacks on kubelet communications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.8",
+      "Description": "Ensure that the kubelet only uses strong cryptographic ciphers",
+      "Checks": [
+        "kubelet_strong_ciphers_only"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet strong ciphers enforced",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The kubelet should be configured to use only strong cryptographic ciphers for TLS connections. Weak or outdated ciphers can be exploited to compromise the confidentiality of kubelet communications. Restricting the kubelet to strong ciphers ensures secure encryption of all data transmitted to and from the kubelet.",
+          "AdditionalInformation": "Even with TLS enabled, using weak cryptographic ciphers exposes kubelet communications to various cryptographic attacks. Attackers could potentially decrypt traffic, steal credentials, or access sensitive pod data if weak ciphers are permitted. The kubelet handles highly sensitive data including pod specifications with secrets, container logs, and exec sessions. Enforcing strong ciphers ensures that this data remains confidential even if attackers can intercept network traffic.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.9",
+      "Description": "Ensure that the kubelet client certificate rotation is enabled",
+      "Checks": [
+        "kubelet_rotate_certificates"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet client certificate rotation enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The kubelet can automatically rotate its client certificates before they expire, requesting new certificates from the API server. Enabling certificate rotation through the RotateKubeletClientCertificate feature ensures that kubelets maintain valid certificates without manual intervention, preventing service disruptions and improving security through regular credential rotation.",
+          "AdditionalInformation": "Certificate expiration can cause kubelet disconnection from the API server, resulting in pod scheduling failures and cluster instability. Manual certificate renewal is error-prone and operationally burdensome. Automatic certificate rotation ensures continuous availability while implementing security best practices of regular credential rotation. This reduces the risk of compromised certificates being used long-term and ensures that kubelets maintain authenticated connections to the API server without manual intervention.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.10",
+      "Description": "Ensure that the RotateKubeletServerCertificate feature is enabled for the Controller Manager",
+      "Checks": [
+        "controllermanager_rotate_kubelet_server_cert"
+      ],
+      "Attributes": [
+        {
+          "Title": "Controller Manager kubelet server certificate rotation enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The RotateKubeletServerCertificate feature enables automatic rotation of kubelet serving certificates. When enabled in the Controller Manager, kubelets can automatically request new serving certificates before their current certificates expire, ensuring continuous TLS protection for kubelet serving endpoints.",
+          "AdditionalInformation": "Kubelet serving certificates are used to secure the kubelet's HTTPS endpoint. Without automatic rotation, expired certificates would break communication between the API server and kubelets, causing pod scheduling and management failures. Enabling server certificate rotation ensures that kubelet TLS certificates remain valid without manual renewal, improving both security through regular rotation and reliability by preventing certificate expiration issues.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.1.11",
+      "Description": "Ensure that the --root-ca-file argument is set for the Controller Manager",
+      "Checks": [
+        "controllermanager_root_ca_file_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "Controller Manager root CA file configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The Controller Manager needs the root CA certificate to verify service account tokens and to include in service account token secrets for pods to verify the API server. The --root-ca-file argument ensures that the Controller Manager has access to the trusted CA certificate for these operations.",
+          "AdditionalInformation": "Service accounts in pods use the CA certificate to verify the API server's TLS certificate when making authenticated requests. Without the correct root CA file, pods may not be able to verify the API server's identity, potentially accepting fraudulent certificates in man-in-the-middle attacks. The root CA file is essential for maintaining the chain of trust throughout the cluster and ensuring that service account authentication works correctly.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1",
+      "Description": "Ensure that the --encryption-provider-config argument is set for the API server",
+      "Checks": [
+        "apiserver_encryption_provider_config_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server encryption provider configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "The --encryption-provider-config argument specifies a configuration file that defines how secrets and other sensitive data are encrypted before being stored in etcd. Configuring encryption at rest ensures that even if etcd storage is compromised, sensitive data remains protected through encryption.",
+          "AdditionalInformation": "By default, Kubernetes stores secrets and other data in etcd in base64-encoded format, which is not encrypted. If an attacker gains access to etcd data files or backups, they can easily decode all secrets and sensitive information. Configuring encryption at rest using a KMS provider or other encryption mechanism ensures that data is encrypted before being written to etcd, protecting it from unauthorized access even if storage is compromised. This is a critical security control for protecting sensitive data like passwords, API tokens, and certificates.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2",
+      "Description": "Ensure that the --service-account-private-key-file argument is set for the Controller Manager",
+      "Checks": [
+        "controllermanager_service_account_private_key_file"
+      ],
+      "Attributes": [
+        {
+          "Title": "Controller Manager service account private key configured",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "The Controller Manager uses a private key to sign service account tokens. The --service-account-private-key-file argument specifies the key used for signing tokens. This key should be properly secured and should match the public key used by the API server to verify tokens, ensuring the integrity of service account authentication.",
+          "AdditionalInformation": "Service account tokens are cryptographically signed to ensure their authenticity and prevent tampering. The private key used for signing must be properly secured, as anyone with access to this key could forge service account tokens for any service account in the cluster. Using a dedicated private key file for service account token signing and ensuring it is properly secured prevents token forgery and maintains the integrity of service account authentication throughout the cluster.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "Ensure that the API server audit log path is configured",
+      "Checks": [
+        "apiserver_audit_log_path_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server audit log path configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "The Kubernetes API server can be configured to generate audit logs that record all requests made to the API. The --audit-log-path argument specifies the file path where audit logs should be written. Enabling audit logging is essential for security monitoring, compliance requirements, and incident investigation, as it provides a complete record of all API server activity including authentication attempts, authorization decisions, and resource modifications.",
+          "AdditionalInformation": "Without audit logging enabled, there is no record of API server activity, making it impossible to detect suspicious behavior, investigate security incidents, or meet compliance requirements. Audit logs provide critical visibility into cluster operations, including who accessed what resources, what actions were performed, and when they occurred. This is fundamental for security monitoring, forensic analysis, and compliance with security standards like CIS Kubernetes Benchmark, PCI DSS, and SOC 2. In managed Kubernetes environments, audit logs are typically sent to the cloud provider's logging service (CloudWatch, Cloud Logging, or Azure Monitor), but the audit-log-path setting ensures logs are captured.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Ensure that the API server audit log retention is set to 30 days or more",
+      "Checks": [
+        "apiserver_audit_log_maxage_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server audit log retention configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "The --audit-log-maxage argument specifies the maximum number of days to retain audit log files before they are deleted. A minimum retention period of 30 days is recommended to ensure that audit logs are available for security investigations, incident response, and compliance requirements. Longer retention periods may be required based on organizational policies or regulatory frameworks.",
+          "AdditionalInformation": "Audit logs are critical for incident investigation and forensic analysis. Retaining logs for at least 30 days ensures that security teams have sufficient historical data to investigate incidents, track suspicious activities over time, and meet compliance requirements. Many regulatory frameworks including PCI DSS, HIPAA, and SOC 2 require minimum log retention periods. Without adequate retention, critical evidence may be lost before security incidents are detected or investigated. In self-managed Kubernetes, proper retention ensures logs remain available for analysis.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.2.2",
+      "Description": "Ensure that the API server maintains sufficient audit log backups",
+      "Checks": [
+        "apiserver_audit_log_maxbackup_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server audit log backups configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "The --audit-log-maxbackup argument specifies the maximum number of audit log files to retain before old files are deleted. Setting an appropriate value (recommended 10 or more) ensures that sufficient audit history is preserved while managing disk space usage. Multiple log backups provide protection against log corruption and ensure continuous audit trail availability.",
+          "AdditionalInformation": "Maintaining multiple audit log backups provides redundancy and protection against log corruption or accidental deletion. If a single log file becomes corrupted, having multiple backups ensures that the audit trail remains intact. This is particularly important in self-managed Kubernetes environments where log files are stored locally. Configuring an appropriate number of backups balances the need for historical data with storage constraints, ensuring that audit logs remain available for investigation while preventing excessive disk usage that could impact cluster operations.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3",
+      "Description": "Ensure that the API server audit log file size is appropriately configured",
+      "Checks": [
+        "apiserver_audit_log_maxsize_set"
+      ],
+      "Attributes": [
+        {
+          "Title": "API Server audit log size limit configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "The --audit-log-maxsize argument specifies the maximum size in megabytes of an audit log file before it is rotated. Setting an appropriate value (recommended 100 MB or more) ensures that log files don't grow excessively large, which could make them difficult to process, transfer, and analyze. Proper log rotation based on size triggers automatic creation of new log files at reasonable intervals.",
+          "AdditionalInformation": "Rotating audit logs based on size ensures that individual log files remain manageable for processing, transfer, and analysis. Very large log files can be difficult to handle with standard tools and may cause issues with log management systems or SIEM solutions. Setting an appropriate maximum size triggers log rotation at reasonable intervals, creating manageable log files while ensuring continuous audit coverage without gaps during rotation. This is particularly important when audit logs need to be transferred to external systems for analysis or long-term storage.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2",
+      "Description": "Ensure that the kubelet event recording rate is appropriately configured",
+      "Checks": [
+        "kubelet_event_record_qps"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubelet event recording QPS configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "The eventRecordQPS setting controls the rate at which the kubelet records events. Events provide important information about pod lifecycle, container failures, resource issues, and node problems. Setting an appropriate queries-per-second (QPS) value ensures that important events are captured without overwhelming the event system or causing performance issues.",
+          "AdditionalInformation": "Kubernetes events are an important source of operational and security information about cluster activity. Setting the eventRecordQPS too low could result in missing important events like container failures, image pull errors, scheduling issues, or security-related warnings. However, setting it too high could lead to event flooding that impacts cluster performance. An appropriate value ensures that significant events including security-relevant activities are recorded for monitoring, troubleshooting, and incident investigation, while preventing excessive event generation that could impact cluster stability.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    }
+  ]
+}

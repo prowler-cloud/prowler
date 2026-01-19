@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
-
 export const getFindings = async ({
   page = 1,
   pageSize = 10,
@@ -33,6 +32,7 @@ export const getFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
+
     return handleApiResponse(findings);
   } catch (error) {
     console.error("Error fetching findings:", error);
@@ -70,6 +70,7 @@ export const getLatestFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
+
     return handleApiResponse(findings);
   } catch (error) {
     console.error("Error fetching findings:", error);
@@ -91,7 +92,12 @@ export const getMetadataInfo = async ({
 
   Object.entries(filters).forEach(([key, value]) => {
     // Define filters to exclude
-    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
+    const excludedFilters = [
+      "region__in",
+      "service__in",
+      "resource_type__in",
+      "resource_groups__in",
+    ];
     if (
       key !== "filter[search]" &&
       !excludedFilters.some((filter) => key.includes(filter))
@@ -126,7 +132,12 @@ export const getLatestMetadataInfo = async ({
 
   Object.entries(filters).forEach(([key, value]) => {
     // Define filters to exclude
-    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
+    const excludedFilters = [
+      "region__in",
+      "service__in",
+      "resource_type__in",
+      "resource_groups__in",
+    ];
     if (
       key !== "filter[search]" &&
       !excludedFilters.some((filter) => key.includes(filter))
