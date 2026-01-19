@@ -13,8 +13,9 @@ spec:
       app.kubernetes.io/name: {{ include "prowler.fullname" . }}-worker
   template:
     metadata:
-      {{- with .Values.worker.podAnnotations }}
       annotations:
+        secret-hash: "{{ printf "%s%s%s" (.Files.Get "templates/api/configmap.yaml" | sha256sum) (.Files.Get "templates/api/secret-valkey.yaml" | sha256sum) | sha256sum }}"
+      {{- with .Values.worker.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -52,14 +53,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "prowler.fullname" . }}-api
-            {{- if .Values.api.djangoConfigKeys.create }}
-            - secretRef:
-                name: {{ include "prowler.fullname" . }}-api-django-config-keys
-            {{- end }}
-            {{- if .Values.postgresql.enabled }}
-            - secretRef:
-                name: {{ include "prowler.fullname" . }}-api-postgres
-            {{- end }}
             {{- if .Values.valkey.enabled }}
             - secretRef:
                 name: {{ include "prowler.fullname" . }}-api-valkey
@@ -70,6 +63,9 @@ spec:
                 name: {{ $secret }}
             {{- end }}
             {{- end }}
+          env:
+            {{- include "prowler.django.env" . | nindent 12 }}
+            {{- include "prowler.postgresql.env" . | nindent 12 }}
           {{- with .Values.worker.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

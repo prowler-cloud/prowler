@@ -41,3 +41,74 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
+
+{{/*
+Django environment variables for api, worker, and worker_beat.
+*/}}
+{{- define "prowler.django.env" -}}
+- name: DJANGO_TOKEN_SIGNING_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.djangoTokenSigningKey.secretKeyRef.name }}
+      key: {{ .Values.djangoTokenSigningKey.secretKeyRef.key }}
+- name: DJANGO_TOKEN_VERIFYING_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.djangoTokenVerifyingKey.secretKeyRef.name }}
+      key: {{ .Values.djangoTokenVerifyingKey.secretKeyRef.key }}
+- name: DJANGO_SECRETS_ENCRYPTION_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.djangoSecretsEncryptionKey.secretKeyRef.name }}
+      key: {{ .Values.djangoSecretsEncryptionKey.secretKeyRef.key }}
+{{- end }}
+
+
+{{/*
+PostgreSQL environment variables for api, worker, and worker_beat.
+Outputs nothing when postgresql.enabled is false.
+*/}}
+{{- define "prowler.postgresql.env" -}}
+{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgresql.auth.username }}
+- name: POSTGRES_USER
+  value: {{ .Values.postgresql.auth.username | quote }}
+{{- end }}
+- name: POSTGRES_PASSWORD
+{{- if .Values.postgresql.auth.existingSecret }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.postgresql.auth.existingSecret }}
+      key: {{ required "postgresql.auth.secretKeys.userPasswordKey is required when using an existing secret" .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if .Values.postgresql.auth.password }}
+  value: {{ .Values.postgresql.auth.password | quote }}
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-postgresql
+      key: password
+{{- end }}
+- name: POSTGRES_DB
+  value: {{ .Values.postgresql.auth.database | quote }}
+- name: POSTGRES_HOST
+  value: {{ .Release.Name }}-postgresql
+- name: POSTGRES_PORT
+  value: {{ .Values.postgresql.port | quote }}
+- name: POSTGRES_ADMIN_USER
+  value: postgres
+- name: POSTGRES_ADMIN_PASSWORD
+{{- if .Values.postgresql.auth.existingSecret }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.postgresql.auth.existingSecret }}
+      key: {{ required "postgresql.auth.secretKeys.adminPasswordKey is required when using an existing secret" .Values.postgresql.auth.secretKeys.adminPasswordKey }}
+{{- else if .Values.postgresql.auth.postgresPassword }}
+  value: {{ .Values.postgresql.auth.postgresPassword | quote }}
+{{- else }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-postgresql
+      key: postgres-password
+{{- end }}
+{{- end }}
+{{- end }}

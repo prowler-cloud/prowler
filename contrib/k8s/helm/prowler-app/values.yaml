@@ -2,32 +2,20 @@
 nameOverride: ""
 fullnameOverride: ""
 
-postgresql:
-  # If enabled, it will create a Secret with the credentials.
-  # Otherwise, create a secret with the following and add it to the api deployment ":
-  # - POSTGRES_HOST
-  # - POSTGRES_PORT
-  # - POSTGRES_ADMIN_USER     - Existing user in charge of migrations, tables, permissions, RLS
-  # - POSTGRES_ADMIN_PASSWORD
-  # - POSTGRES_USER           - Will be created by ADMIN_USER
-  # - POSTGRES_PASSWORD
-  # - POSTGRES_DB             - Existing DB
-  enabled: true
-  image:
-    repository: "bitnami/postgresql"
-  global:
-    postgresql:
-      auth:
-        postgresPassword: postgres_password
-        database: prowler_db
-
-valkey:
-  # If enabled, it will create a Secret with the following.
-  # Otherwise, create a secret with
-  # - VALKEY_HOST
-  # - VALKEY_PORT
-  # - VALKEY_DB
-  enabled: true
+# Reference to the secret containing the API authentication secret.
+# Used to inject the environment variable for the API container.
+djangoTokenSigningKey:
+  secretKeyRef:
+    name: prowler-secret
+    key: DJANGO_TOKEN_SIGNING_KEY
+djangoTokenVerifyingKey:
+  secretKeyRef:
+    name: prowler-secret
+    key: DJANGO_TOKEN_VERIFYING_KEY
+djangoSecretsEncryptionKey:
+  secretKeyRef:
+    name: prowler-secret
+    key: DJANGO_SECRETS_ENCRYPTION_KEY
 
 ui:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
@@ -43,6 +31,18 @@ ui:
 
   # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   imagePullSecrets: []
+
+  # Reference to the secret containing the UI authentication secret.
+  # Used to inject the environment variable for the UI container.
+  # By default, expects a Secret named 'prowler-secret' with a key 'AUTH_SECRET'.
+  authSecret:
+    secretKeyRef:
+      name: prowler-secret
+      key: AUTH_SECRET
+
+  # Secret names to be used as env vars.
+  secrets: []
+    # - "prowler-ui-secret"
 
   # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
   serviceAccount:
@@ -186,15 +186,8 @@ api:
     DJANGO_STALE_WHILE_REVALIDATE: "60"
     DJANGO_MANAGE_DB_PARTITIONS: "True"
     DJANGO_BROKER_VISIBILITY_TIMEOUT: "86400"
-  djangoConfigKeys:
-    # Create secret with Django Keys
-    # If false, a secret needs to be created with the following:
-    # - DJANGO_TOKEN_SIGNING_KEY - obtain from `openssl genrsa -out private.pem 2048`
-    # - DJANGO_TOKEN_VERIFYING_KEY - obtain from `openssl rsa -in private.pem -pubout -out public.pem`
-    # - DJANGO_SECRETS_ENCRYPTION_KEY - obtain from `openssl rand -base64 32`
-    create: true
 
-  # Secret names to be used as env vars.
+  # Secret names to be used as env vars for api, worker, and worker_beat.
   secrets: []
     # - "prowler-api-keys"
 
@@ -320,7 +313,7 @@ api:
 
 worker:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
-  replicaCount: 2
+  replicaCount: 1
 
   # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
   image:
@@ -368,7 +361,7 @@ worker:
     # runAsNonRoot: true
     # runAsUser: 1000
 
-  resources:
+  resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
     # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -409,6 +402,24 @@ worker:
   tolerations: []
 
   affinity: {}
+
+  # KEDA ScaledObject configuration
+  keda:
+    # -- Set to `true` to enable KEDA for the worker pods
+    # Note: When both KEDA and HPA are enabled, the deployment will fail.
+    enabled: false
+    # -- The minimum number of replicas to use for the worker pods
+    minReplicas: 1
+    # -- The maximum number of replicas to use for the worker pods
+    maxReplicas: 2
+    # -- The polling interval in seconds for checking metrics
+    pollingInterval: 30
+    # -- The cooldown period in seconds for scaling
+    cooldownPeriod: 120
+    # -- The trigger type for scaling (cpu or memory)
+    triggerType: "postgresql"
+    # -- The target utilization percentage for the worker pods
+    value: "50"
 
 worker_beat:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
@@ -493,3 +504,29 @@ worker_beat:
   tolerations: []
 
   affinity: {}
+
+postgresql:
+  # -- Enable PostgreSQL deployment (via Bitnami Helm Chart). If you want to use an external Postgres server (or a managed one), set this to false
+  # If enabled, it will create a Secret with the credentials.
+  # Otherwise, create a secret with the following and add it to the api deployment:
+  # - POSTGRES_HOST
+  # - POSTGRES_PORT
+  # - POSTGRES_ADMIN_USER     - Existing user in charge of migrations, tables, permissions, RLS
+  # - POSTGRES_ADMIN_PASSWORD
+  # - POSTGRES_USER           - Will be created by ADMIN_USER
+  # - POSTGRES_PASSWORD
+  # - POSTGRES_DB             - Existing DB
+  enabled: true
+  image:
+    repository: "bitnami/postgresql"
+  auth:
+    database: prowler_db
+    username: prowler
+
+valkey:
+  # If enabled, it will create a Secret with the following.
+  # Otherwise, create a secret with
+  # - VALKEY_HOST
+  # - VALKEY_PORT
+  # - VALKEY_DB
+  enabled: true
