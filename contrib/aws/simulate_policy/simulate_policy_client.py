@@ -1,7 +1,7 @@
-# prowler/providers/aws/lib/simulate_policy_client.py
+# prowler/contrib/aws/simulate_policy_client.py
 from typing import Optional
 from prowler.providers.common.provider import Provider
-from prowler.providers.aws.lib.simulate_policy.simulate_policy_service import IamSimulator
+from prowler.contrib.aws.simulate_policy.simulate_policy_service import IamSimulator
 
 _iam_simulator_client: Optional[IamSimulator] = None
 
