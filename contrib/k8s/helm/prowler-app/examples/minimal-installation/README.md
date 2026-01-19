@@ -25,14 +25,19 @@ The example contains the following configuration files:
 ### `secret.yaml`
 Contains all required secrets for the Prowler installation. **Must be applied before installing the Helm chart**. Make sure to replace all placeholder values with secure values before applying.
 
-### `values.yaml` (Optional)
-Additional configuration to enable ingress:
+### `values.yaml`
 ```yaml
 ui:
+  # Note: You should set either `authUrl` if you use prowler behind a proxy or enable `ingress`.
+
+  # Example with authUrl:
+  # authUrl: example.prowler.com
+
+  # Example with ingress:
   ingress:
     enabled: true
     hosts:
-      - host: 127.0.0.1.nip.io
+      - host: example.prowler.com
         paths:
           - path: /
             pathType: ImplementationSpecific
