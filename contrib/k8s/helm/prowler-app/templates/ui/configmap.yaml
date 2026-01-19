@@ -9,7 +9,7 @@ data:
   AUTH_URL: "https://{{ .host }}"
   {{- end }}
   {{- else }}
-  AUTH_URL: "http://127.0.0.1:{{ .Values.ui.service.port }}"
+  AUTH_URL: {{ .Values.ui.authUrl | quote }}
   {{- end }}
   API_BASE_URL: "http://{{ include "prowler.fullname" . }}-api:{{ .Values.api.service.port }}/api/v1"
   NEXT_PUBLIC_API_BASE_URL: "http://{{ include "prowler.fullname" . }}-api:{{ .Values.api.service.port }}/api/v1"

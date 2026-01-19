@@ -370,6 +370,9 @@
                     },
                     "type": "object"
                 },
+                "authUrl": {
+                    "type": "string"
+                },
                 "autoscaling": {
                     "properties": {
                         "enabled": {
