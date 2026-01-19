@@ -14,6 +14,7 @@ from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, When
+from tasks.jobs.connection import _is_provider_not_found_error
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
@@ -39,7 +40,6 @@ from api.models import (
     MuteRule,
     Processor,
     Provider,
-    ProviderStatusChoices,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
@@ -764,6 +764,20 @@ def perform_prowler_scan(
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
+
+        # Skip scan if provider is marked as unavailable
+        if not provider_instance.available:
+            logger.info(
+                f"Skipping scan for provider {provider_id}: marked as unavailable"
+            )
+            scan_instance.state = StateChoices.FAILED
+            scan_instance.started_at = datetime.now(tz=timezone.utc)
+            scan_instance.completed_at = datetime.now(tz=timezone.utc)
+            scan_instance.save()
+            raise ProviderConnectionError(
+                f"Provider {provider_instance.provider} is marked as unavailable"
+            )
+
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
@@ -802,10 +816,14 @@ def perform_prowler_scan(
                     provider_instance, mutelist_processor
                 )
                 provider_instance.connected = True
-                provider_instance.status = ProviderStatusChoices.CONNECTED
             except Exception as e:
                 provider_instance.connected = False
-                provider_instance.status = ProviderStatusChoices.ERROR
+                # Mark provider as unavailable if the error indicates the account doesn't exist
+                if _is_provider_not_found_error(e):
+                    provider_instance.available = False
+                    logger.warning(
+                        f"Provider {provider_id} marked as unavailable: account not found"
+                    )
                 exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )

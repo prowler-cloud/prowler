@@ -3,18 +3,39 @@ from datetime import datetime, timezone
 import openai
 from celery.utils.log import get_task_logger
 
-from api.models import (
-    Integration,
-    LighthouseConfiguration,
-    Provider,
-    ProviderStatusChoices,
-)
+from api.models import Integration, LighthouseConfiguration, Provider
 from api.utils import (
     prowler_integration_connection_test,
     prowler_provider_connection_test,
 )
 
 logger = get_task_logger(__name__)
+
+
+def _is_provider_not_found_error(error: Exception) -> bool:
+    """
+    Check if the error indicates the provider account no longer exists.
+
+    Args:
+        error: The exception raised during connection test.
+
+    Returns:
+        bool: True if the error indicates the provider account doesn't exist.
+    """
+    error_str = str(error).lower()
+    not_found_patterns = [
+        "account not found",
+        "subscription not found",
+        "project not found",
+        "invalidclienttokenid",
+        "the security token included in the request is invalid",
+        "subscriptionnotfound",
+        "resource not found",
+        "does not exist",
+        "was not found",
+        "no such account",
+    ]
+    return any(pattern in error_str for pattern in not_found_patterns)
 
 
 def check_provider_connection(provider_id: str):
@@ -35,9 +56,16 @@ def check_provider_connection(provider_id: str):
     """
     provider_instance = Provider.objects.get(pk=provider_id)
 
-    # Set status to CHECKING before the connection test
-    provider_instance.status = ProviderStatusChoices.CHECKING
-    provider_instance.save(update_fields=["status"])
+    # Skip connection check if provider is marked as unavailable
+    if not provider_instance.available:
+        logger.info(
+            f"Skipping connection check for provider {provider_id}: marked as unavailable"
+        )
+        return {
+            "connected": False,
+            "error": "Provider is marked as unavailable",
+            "skipped": True,
+        }
 
     try:
         connection_result = prowler_provider_connection_test(provider_instance)
@@ -45,20 +73,30 @@ def check_provider_connection(provider_id: str):
         logger.warning(
             f"Unexpected exception checking {provider_instance.provider} provider connection: {str(e)}"
         )
-        # Set status to ERROR on exception
-        provider_instance.status = ProviderStatusChoices.ERROR
         provider_instance.connected = False
         provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
+
+        # Mark provider as unavailable if the error indicates the account doesn't exist
+        if _is_provider_not_found_error(e):
+            provider_instance.available = False
+            logger.warning(
+                f"Provider {provider_id} marked as unavailable: account not found"
+            )
+
         provider_instance.save()
         raise e
 
     provider_instance.connected = connection_result.is_connected
     provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
-    provider_instance.status = (
-        ProviderStatusChoices.CONNECTED
-        if connection_result.is_connected
-        else ProviderStatusChoices.ERROR
-    )
+
+    # Check if connection failed due to provider not found
+    if not connection_result.is_connected and connection_result.error:
+        if _is_provider_not_found_error(connection_result.error):
+            provider_instance.available = False
+            logger.warning(
+                f"Provider {provider_id} marked as unavailable: account not found"
+            )
+
     provider_instance.save()
 
     connection_error = f"{connection_result.error}" if connection_result.error else None

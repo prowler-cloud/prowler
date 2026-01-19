@@ -110,17 +110,6 @@ class PermissionChoices(models.TextChoices):
     NONE = "none", _("No permissions")
 
 
-class ProviderStatusChoices(models.TextChoices):
-    """
-    Represents the connection status states for a Provider.
-    """
-
-    PENDING = "pending", _("Pending")
-    CHECKING = "checking", _("Checking")
-    CONNECTED = "connected", _("Connected")
-    ERROR = "error", _("Error")
-
-
 class ActiveProviderManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
@@ -430,12 +419,9 @@ class Provider(RowLevelSecurityProtectedModel):
     )
     connected = models.BooleanField(null=True, blank=True)
     connection_last_checked_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=ProviderStatusChoices.choices,
-        default=ProviderStatusChoices.PENDING,
-        null=True,
-        blank=True,
+    available = models.BooleanField(
+        default=True,
+        help_text="Whether the provider account still exists. If False, connection checks are skipped.",
     )
     metadata = models.JSONField(default=dict, blank=True)
     scanner_args = models.JSONField(default=dict, blank=True)

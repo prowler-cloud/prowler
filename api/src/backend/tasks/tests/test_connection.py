@@ -9,17 +9,12 @@ from tasks.jobs.connection import (
     check_provider_connection,
 )
 
-from api.models import (
-    Integration,
-    LighthouseConfiguration,
-    Provider,
-    ProviderStatusChoices,
-)
+from api.models import Integration, LighthouseConfiguration, Provider
 
 
 @pytest.mark.django_db
-def test_provider_created_with_pending_status(tenants_fixture):
-    """Test that a newly created provider has PENDING status."""
+def test_provider_created_with_default_available(tenants_fixture):
+    """Test that a newly created provider has available=True by default."""
     provider = Provider.objects.create(
         provider="aws",
         uid="123456789012",
@@ -27,7 +22,7 @@ def test_provider_created_with_pending_status(tenants_fixture):
         tenant_id=tenants_fixture[0].id,
     )
 
-    assert provider.status == ProviderStatusChoices.PENDING
+    assert provider.available is True
     assert provider.connected is None
     assert provider.connection_last_checked_at is None
 
@@ -45,9 +40,6 @@ def test_check_provider_connection(
 ):
     provider = Provider.objects.create(**provider_data, tenant_id=tenants_fixture[0].id)
 
-    # Verify initial state is PENDING
-    assert provider.status == ProviderStatusChoices.PENDING
-
     mock_test_connection_result = MagicMock()
     mock_test_connection_result.is_connected = True
 
@@ -60,38 +52,8 @@ def test_check_provider_connection(
 
     mock_provider_connection_test.assert_called_once()
     assert provider.connected is True
-    assert provider.status == ProviderStatusChoices.CONNECTED
     assert provider.connection_last_checked_at is not None
     assert provider.connection_last_checked_at <= datetime.now(tz=timezone.utc)
-
-
-@patch("tasks.jobs.connection.Provider.objects.get")
-@patch("tasks.jobs.connection.prowler_provider_connection_test")
-@pytest.mark.django_db
-def test_check_provider_connection_sets_checking_status(
-    mock_provider_connection_test, mock_provider_get
-):
-    """Test that status is set to CHECKING before connection test runs."""
-    mock_provider_instance = MagicMock()
-    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
-    mock_provider_get.return_value = mock_provider_instance
-
-    captured_status = None
-
-    def capture_status_during_test(provider):
-        nonlocal captured_status
-        captured_status = provider.status
-        result = MagicMock()
-        result.is_connected = True
-        result.error = None
-        return result
-
-    mock_provider_connection_test.side_effect = capture_status_during_test
-
-    check_provider_connection(provider_id="provider_id")
-
-    # Verify status was CHECKING when prowler_provider_connection_test was called
-    assert captured_status == ProviderStatusChoices.CHECKING
 
 
 @patch("tasks.jobs.connection.Provider.objects.get")
@@ -115,6 +77,7 @@ def test_check_provider_connection_exception(
 ):
     mock_provider_instance = MagicMock()
     mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
+    mock_provider_instance.available = True
     mock_provider_get.return_value = mock_provider_instance
 
     mock_provider_connection_test.return_value = MagicMock()
@@ -125,12 +88,77 @@ def test_check_provider_connection_exception(
 
     assert result["connected"] is False
     assert result["error"] is not None
-
-    assert (
-        mock_provider_instance.save.call_count == 2
-    )  # Once for CHECKING, once for ERROR
+    assert mock_provider_instance.save.call_count == 1
     assert mock_provider_instance.connected is False
-    assert mock_provider_instance.status == ProviderStatusChoices.ERROR
+
+
+@pytest.mark.django_db
+def test_check_provider_connection_skips_unavailable_provider(tenants_fixture):
+    """Test that connection check is skipped when provider is marked as unavailable."""
+    provider = Provider.objects.create(
+        provider="aws",
+        uid="123456789012",
+        alias="aws-test",
+        available=False,
+        tenant_id=tenants_fixture[0].id,
+    )
+
+    result = check_provider_connection(provider_id=str(provider.id))
+
+    assert result["connected"] is False
+    assert result["error"] == "Provider is marked as unavailable"
+    assert result["skipped"] is True
+
+    provider.refresh_from_db()
+    # Provider should not have been modified
+    assert provider.connected is None
+    assert provider.connection_last_checked_at is None
+
+
+@patch("tasks.jobs.connection.Provider.objects.get")
+@patch("tasks.jobs.connection.prowler_provider_connection_test")
+@pytest.mark.django_db
+def test_check_provider_connection_marks_unavailable_on_not_found_error(
+    mock_provider_connection_test, mock_provider_get
+):
+    """Test that provider is marked as unavailable when account not found error occurs."""
+    mock_provider_instance = MagicMock()
+    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
+    mock_provider_instance.available = True
+    mock_provider_get.return_value = mock_provider_instance
+
+    mock_provider_connection_test.return_value = MagicMock()
+    mock_provider_connection_test.return_value.is_connected = False
+    mock_provider_connection_test.return_value.error = Exception(
+        "The security token included in the request is invalid"
+    )
+
+    result = check_provider_connection(provider_id="provider_id")
+
+    assert result["connected"] is False
+    assert mock_provider_instance.available is False
+    assert mock_provider_instance.connected is False
+
+
+@patch("tasks.jobs.connection.Provider.objects.get")
+@patch("tasks.jobs.connection.prowler_provider_connection_test")
+@pytest.mark.django_db
+def test_check_provider_connection_exception_marks_unavailable_on_not_found(
+    mock_provider_connection_test, mock_provider_get
+):
+    """Test that provider is marked as unavailable when connection test raises account not found exception."""
+    mock_provider_instance = MagicMock()
+    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
+    mock_provider_instance.available = True
+    mock_provider_get.return_value = mock_provider_instance
+
+    mock_provider_connection_test.side_effect = Exception("Account not found")
+
+    with pytest.raises(Exception, match="Account not found"):
+        check_provider_connection(provider_id="provider_id")
+
+    assert mock_provider_instance.available is False
+    assert mock_provider_instance.connected is False
 
 
 @pytest.mark.parametrize(

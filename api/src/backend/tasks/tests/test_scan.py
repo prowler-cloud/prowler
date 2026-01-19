@@ -34,7 +34,6 @@ from api.models import (
     Finding,
     MuteRule,
     Provider,
-    ProviderStatusChoices,
     Resource,
     Scan,
     StateChoices,
@@ -259,7 +258,6 @@ class TestPerformScan:
 
         provider.refresh_from_db()
         assert provider.connected is False
-        assert provider.status == ProviderStatusChoices.ERROR
         assert isinstance(provider.connection_last_checked_at, datetime)
 
     @pytest.mark.parametrize(

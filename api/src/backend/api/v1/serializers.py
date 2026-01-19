@@ -877,6 +877,7 @@ class ProviderSerializer(RLSSerializer):
             "provider",
             "uid",
             "alias",
+            "available",
             "connection",
             # "scanner_args",
             "secret",
@@ -890,7 +891,6 @@ class ProviderSerializer(RLSSerializer):
             "properties": {
                 "connected": {"type": "boolean"},
                 "last_checked_at": {"type": "string", "format": "date-time"},
-                "status": {"type": "string"},
             },
         }
     )
@@ -898,7 +898,6 @@ class ProviderSerializer(RLSSerializer):
         return {
             "connected": obj.connected,
             "last_checked_at": obj.connection_last_checked_at,
-            "status": obj.status,
         }
 
 
@@ -919,6 +918,7 @@ class ProviderIncludeSerializer(RLSSerializer):
             "provider",
             "uid",
             "alias",
+            "available",
             "connection",
             # "scanner_args",
         ]
@@ -929,7 +929,6 @@ class ProviderIncludeSerializer(RLSSerializer):
             "properties": {
                 "connected": {"type": "boolean"},
                 "last_checked_at": {"type": "string", "format": "date-time"},
-                "status": {"type": "string"},
             },
         }
     )
@@ -937,7 +936,6 @@ class ProviderIncludeSerializer(RLSSerializer):
         return {
             "connected": obj.connected,
             "last_checked_at": obj.connection_last_checked_at,
-            "status": obj.status,
         }
 
 
@@ -966,19 +964,23 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
     Serializer for updating the Provider model.
-    Only allows "alias" and "scanner_args" fields to be updated.
+    Only allows "alias", "available" and "scanner_args" fields to be updated.
     """
 
     class Meta:
         model = Provider
         fields = [
             "alias",
+            "available",
             # "scanner_args"
         ]
         extra_kwargs = {
             "alias": {
                 "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
-            }
+            },
+            "available": {
+                "help_text": "Whether the provider account still exists. Set to False if the provider is ephemeral and no longer exists.",
+            },
         }
 
 
