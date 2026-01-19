@@ -73,8 +73,10 @@ export const ComplianceHeader = ({
       {hasContent && (
         <div className="flex w-full items-start justify-between gap-6 sm:mb-8">
           <div className="flex flex-1 flex-col justify-end gap-4">
+            {/* Showed in the details page */}
             {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
 
+            {/* Showed in the compliance page */}
             {showProviders && <DataCompliance scans={scans} />}
             {!hideFilters && allFilters.length > 0 && (
               <DataTableFilterCustom filters={allFilters} />

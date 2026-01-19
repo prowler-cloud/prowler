@@ -48,6 +48,7 @@ metadata:
 | `ui` | `ui/AGENTS.md` |
 | `api` | `api/AGENTS.md` |
 | `sdk` | `prowler/AGENTS.md` |
+| `mcp_server` | `mcp_server/AGENTS.md` |
 
 Skills can have multiple scopes: `scope: [ui, api]`
 

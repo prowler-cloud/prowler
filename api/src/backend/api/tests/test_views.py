@@ -32,6 +32,10 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.response import Response
 
+from api.attack_paths import (
+    AttackPathsQueryDefinition,
+    AttackPathsQueryParameterDefinition,
+)
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
@@ -3600,6 +3604,420 @@ class TestTaskViewSet:
         )
         # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestAttackPathsScanViewSet:
+    @staticmethod
+    def _run_payload(query_id="aws-rds", parameters=None):
+        return {
+            "data": {
+                "type": "attack-paths-query-run-requests",
+                "attributes": {
+                    "id": query_id,
+                    "parameters": parameters or {},
+                },
+            }
+        }
+
+    def test_attack_paths_scans_list_returns_latest_entry_per_provider(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        other_provider = providers_fixture[1]
+
+        older_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.AVAILABLE,
+            progress=10,
+        )
+        latest_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            progress=95,
+        )
+        other_provider_scan = create_attack_paths_scan(
+            other_provider,
+            scan=scans_fixture[2],
+            state=StateChoices.FAILED,
+            progress=50,
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        ids = {item["id"] for item in data}
+        assert ids == {str(latest_scan.id), str(other_provider_scan.id)}
+        assert str(older_scan.id) not in ids
+
+        provider_entry = next(
+            item
+            for item in data
+            if item["relationships"]["provider"]["data"]["id"] == str(provider.id)
+        )
+
+        first_attributes = provider_entry["attributes"]
+        assert first_attributes["provider_alias"] == provider.alias
+        assert first_attributes["provider_type"] == provider.provider
+        assert first_attributes["provider_uid"] == provider.uid
+
+    def test_attack_paths_scans_list_respects_provider_group_visibility(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+        create_attack_paths_scan,
+    ):
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        membership = Membership.objects.filter(user=limited_user).first()
+        tenant = membership.tenant
+
+        allowed_provider = providers_fixture[0]
+        denied_provider = providers_fixture[1]
+
+        allowed_scan = create_attack_paths_scan(allowed_provider)
+        create_attack_paths_scan(denied_provider)
+
+        provider_group = ProviderGroup.objects.create(
+            name="limited-group",
+            tenant_id=tenant.id,
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        limited_role = limited_user.roles.first()
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_role,
+            provider_group=provider_group,
+        )
+
+        response = client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(allowed_scan.id)
+
+    def test_attack_paths_scan_retrieve(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            progress=80,
+        )
+
+        response = authenticated_client.get(
+            reverse("attack-paths-scans-detail", kwargs={"pk": attack_paths_scan.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(attack_paths_scan.id)
+        assert data["relationships"]["provider"]["data"]["id"] == str(provider.id)
+        assert data["attributes"]["state"] == StateChoices.COMPLETED
+
+    def test_attack_paths_scan_retrieve_not_found_for_foreign_tenant(
+        self, authenticated_client, create_attack_paths_scan
+    ):
+        other_tenant = Tenant.objects.create(name="Foreign AttackPaths Tenant")
+        foreign_provider = Provider.objects.create(
+            provider="aws",
+            uid="333333333333",
+            alias="foreign",
+            tenant_id=other_tenant.id,
+        )
+        foreign_scan = create_attack_paths_scan(foreign_provider)
+
+        response = authenticated_client.get(
+            reverse("attack-paths-scans-detail", kwargs={"pk": foreign_scan.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_attack_paths_queries_returns_catalog(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        definitions = [
+            AttackPathsQueryDefinition(
+                id="aws-rds",
+                name="RDS inventory",
+                description="List account RDS assets",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                parameters=[
+                    AttackPathsQueryParameterDefinition(name="ip", label="IP address")
+                ],
+            )
+        ]
+
+        with patch(
+            "api.v1.views.get_queries_for_provider", return_value=definitions
+        ) as mock_get_queries:
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_queries.assert_called_once_with(provider.provider)
+        payload = response.json()["data"]
+        assert len(payload) == 1
+        assert payload[0]["id"] == "aws-rds"
+        assert payload[0]["attributes"]["name"] == "RDS inventory"
+        assert payload[0]["attributes"]["parameters"][0]["name"] == "ip"
+
+    def test_attack_paths_queries_returns_404_when_catalog_missing(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(provider, scan=scans_fixture[0])
+
+        with patch("api.v1.views.get_queries_for_provider", return_value=[]):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "No queries found" in str(response.json())
+
+    def test_run_attack_paths_query_returns_graph(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_database="tenant-db",
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-rds",
+            name="RDS inventory",
+            description="List account RDS assets",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
+        )
+        prepared_parameters = {"provider_uid": provider.uid}
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [
+                {
+                    "id": "rel-1",
+                    "label": "OWNS",
+                    "source": "node-1",
+                    "target": "node-2",
+                    "properties": {},
+                }
+            ],
+        }
+
+        with (
+            patch(
+                "api.v1.views.get_query_by_id", return_value=query_definition
+            ) as mock_get_query,
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                return_value=prepared_parameters,
+            ) as mock_prepare,
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                return_value=graph_payload,
+            ) as mock_execute,
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-rds"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_query.assert_called_once_with("aws-rds")
+        mock_prepare.assert_called_once_with(
+            query_definition,
+            {},
+            attack_paths_scan.provider.uid,
+        )
+        mock_execute.assert_called_once_with(
+            attack_paths_scan,
+            query_definition,
+            prepared_parameters,
+        )
+        result = response.json()["data"]
+        attributes = result["attributes"]
+        assert attributes["nodes"] == graph_payload["nodes"]
+        assert attributes["relationships"] == graph_payload["relationships"]
+
+    def test_run_attack_paths_query_requires_completed_scan(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.EXECUTING,
+        )
+
+        response = authenticated_client.post(
+            reverse(
+                "attack-paths-scans-queries-run", kwargs={"pk": attack_paths_scan.id}
+            ),
+            data=self._run_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "must be completed" in response.json()["errors"][0]["detail"]
+
+    def test_run_attack_paths_query_requires_graph_database(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_database=None,
+        )
+
+        response = authenticated_client.post(
+            reverse(
+                "attack-paths-scans-queries-run", kwargs={"pk": attack_paths_scan.id}
+            ),
+            data=self._run_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert "does not reference a graph database" in str(response.json())
+
+    def test_run_attack_paths_query_unknown_query(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        with patch("api.v1.views.get_query_by_id", return_value=None):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("unknown-query"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Unknown Attack Paths query" in response.json()["errors"][0]["detail"]
+
+    def test_run_attack_paths_query_returns_404_when_no_nodes_found(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-empty",
+            name="empty",
+            description="",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+        )
+
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                return_value={"provider_uid": provider.uid},
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                return_value={"nodes": [], "relationships": []},
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-empty"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        payload = response.json()
+        if "data" in payload:
+            attributes = payload["data"].get("attributes", {})
+            assert attributes.get("nodes") == []
+            assert attributes.get("relationships") == []
+        else:
+            assert "errors" in payload
 
 
 @pytest.mark.django_db
@@ -9730,7 +10148,7 @@ class TestLighthouseConfigViewSet:
                 "type": "lighthouse-configurations",
                 "attributes": {
                     "name": "OpenAI",
-                    "api_key": "sk-test1234567890T3BlbkFJtest1234567890",
+                    "api_key": "sk-fake-test-key-for-unit-testing-only",
                     "model": "gpt-4o",
                     "temperature": 0.7,
                     "max_tokens": 4000,
@@ -11192,7 +11610,7 @@ class TestLighthouseTenantConfigViewSet:
         provider_config = LighthouseProviderConfiguration.objects.create(
             tenant_id=tenants_fixture[0].id,
             provider_type="openai",
-            credentials=b'{"api_key": "sk-test1234567890T3BlbkFJtest1234567890"}',
+            credentials=b'{"api_key": "sk-fake-test-key-for-unit-testing-only"}',
             is_active=True,
         )
 
@@ -11328,7 +11746,7 @@ class TestLighthouseProviderConfigViewSet:
                 "type": "lighthouse-providers",
                 "attributes": {
                     "provider_type": "testprovider",
-                    "credentials": {"api_key": "sk-testT3BlbkFJkey"},
+                    "credentials": {"api_key": "sk-fake-test-key-1234"},
                 },
             }
         }
@@ -11360,7 +11778,7 @@ class TestLighthouseProviderConfigViewSet:
         "credentials",
         [
             {},  # empty credentials
-            {"token": "sk-testT3BlbkFJkey"},  # wrong key name
+            {"token": "sk-fake-test-key-1234"},  # wrong key name
             {"api_key": "ks-invalid-format"},  # wrong format
         ],
     )
@@ -11384,7 +11802,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_valid_credentials_success(self, authenticated_client):
         """OpenAI provider with valid sk-xxx format should succeed"""
-        valid_key = "sk-abc123T3BlbkFJxyz456"
+        valid_key = "sk-fake-abc-test-key-xyz"
         payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11409,7 +11827,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_provider_duplicate_per_tenant(self, authenticated_client):
         """If an OpenAI provider exists for tenant, creating again should error"""
-        valid_key = "sk-dup123T3BlbkFJdup456"
+        valid_key = "sk-fake-dup-test-key-456"
         payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11438,7 +11856,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_patch_base_url_and_is_active(self, authenticated_client):
         """After creating, should be able to patch base_url and is_active"""
-        valid_key = "sk-patch123T3BlbkFJpatch456"
+        valid_key = "sk-fake-patch-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11478,7 +11896,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_openai_patch_invalid_credentials(self, authenticated_client):
         """PATCH with invalid credentials.api_key should error (400)"""
-        valid_key = "sk-ok123T3BlbkFJok456"
+        valid_key = "sk-fake-ok-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11514,7 +11932,7 @@ class TestLighthouseProviderConfigViewSet:
         assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_openai_get_masking_and_fields_filter(self, authenticated_client):
-        valid_key = "sk-get123T3BlbkFJget456"
+        valid_key = "sk-fake-get-test-key-456"
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -11560,7 +11978,7 @@ class TestLighthouseProviderConfigViewSet:
         provider = LighthouseProviderConfiguration.objects.create(
             tenant_id=tenant.id,
             provider_type="openai",
-            credentials=b'{"api_key":"sk-test123T3BlbkFJ"}',
+            credentials=b'{"api_key":"sk-fake-test-key-123"}',
             is_active=True,
         )
 
