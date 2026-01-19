@@ -27,18 +27,111 @@ The app leverages the following supporting infrastructure:
 
 ## Setup
 
-Prowler requires an existing PostgreSQL database and a DB user with the necessary permissions to create tables and run migrations.
+This guide walks you through installing Prowler App using Helm. For a minimal installation example, see the [minimal installation example](./examples/minimal-installation/).
 
-On startup, the Prowler API will run migrations and create a new user defined on the following environment variable:
+### Prerequisites
+
+- Kubernetes cluster (1.24+)
+- Helm 3.x installed
+- `kubectl` configured to access your cluster
+- Access to the Prowler Helm chart repository (or local chart)
+
+### Step 1: Create Required Secrets
+
+Before installing the Helm chart, you must create a Kubernetes Secret containing the required authentication keys and secrets.
+
+1. **Generate the required keys and secrets:**
+
+   ```bash
+   # Generate Django token signing key (private key)
+   openssl genrsa -out private.pem 2048
+
+   # Generate Django token verifying key (public key)
+   openssl rsa -in private.pem -pubout -out public.pem
+
+   # Generate Django secrets encryption key
+   openssl rand -base64 32
+
+   # Generate Auth secret
+   openssl rand -base64 32
+   ```
+
+2. **Create the secret file:**
+
+   Create a file named `secrets.yaml` with the following structure:
+
+   ```yaml
+   apiVersion: v1
+   kind: Secret
+   type: Opaque
+   metadata:
+     name: prowler-secret
+   stringData:
+     DJANGO_TOKEN_SIGNING_KEY: |
+       -----BEGIN PRIVATE KEY-----
+       [paste your private key here]
+       -----END PRIVATE KEY-----
+
+     DJANGO_TOKEN_VERIFYING_KEY: |
+       -----BEGIN PUBLIC KEY-----
+       [paste your public key here]
+       -----END PUBLIC KEY-----
+
+     DJANGO_SECRETS_ENCRYPTION_KEY: "[paste your encryption key here]"
+
+     AUTH_SECRET: "[paste your auth secret here]"
+   ```
+
+   > **Note:** You can use the [example secrets file](./examples/minimal-installation/secrets.yaml) as a template, but **always replace the placeholder values with your own secure keys** before applying.
+
+3. **Apply the secret to your cluster:**
+
+   ```bash
+   kubectl apply -f secrets.yaml
+   ```
+
+### Step 2: Configure Values
+
+Create a `values.yaml` file to customize your installation. At minimum, you need to configure the UI access method.
+
+**Option A: Using Ingress (Recommended for production)**
 
 ```yaml
-POSTGRES_USER: prowler
-POSTGRES_PASSWORD: prowler_password
+ui:
+  ingress:
+    enabled: true
+    hosts:
+      - host: prowler.example.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
 ```
 
-This Chart uses Bitnami's Charts to deploy [PostgreSQL](https://artifacthub.io/packages/helm/bitnami/postgresql) and [Vakey official helm chart](https://valkey.io/valkey-helm/), but keep in mind, this is not production ready. Going this way, the Chart sets up the secrets for Prowler to connect to the PostgreSQL database and Valkey.
+**Option B: Using authUrl (For proxy setups)**
 
-To connect to existing PostgreSQL and Valkey instances. Create a `Secret` containing the correct credentials, as specified in the [values.yaml](values.yaml) file similar to the one in [the example file](./examples/minimal-installation/secrets.yaml).
+```yaml
+ui:
+  authUrl: prowler.example.com
+```
+
+> **Note:** See the [minimal installation example](./examples/minimal-installation/values.yaml) for a complete reference.
+
+### Step 3: Install the Chart
+
+Install Prowler App using Helm:
+
+```bash
+helm install prowler prowler/prowler-app -f values.yaml
+```
+
+### Using Existing PostgreSQL and Valkey Instances
+
+By default, this Chart uses Bitnami's Charts to deploy [PostgreSQL](https://artifacthub.io/packages/helm/bitnami/postgresql) and [Valkey official helm chart](https://valkey.io/valkey-helm/). **Note:** This default setup is not production-ready.
+
+To connect to existing PostgreSQL and Valkey instances:
+
+1. Create a `Secret` containing the correct database and message broker credentials
+2. Reference the secret in the [values.yaml](values.yaml) file api->secrets list
 
 ## Contributing
 
