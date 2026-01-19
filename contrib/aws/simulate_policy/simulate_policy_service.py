@@ -1,4 +1,4 @@
-# prowler/providers/aws/lib/simulate_policy_service.py
+# prowler/contrib/aws/simulate_policy_service.py
 
 import json
 import logging
@@ -56,7 +56,7 @@ logger.setLevel(logging.INFO)
 # ----------------------------------------------------------------------
 # In your custom check:
 #
-#   from prowler.providers.aws.lib.simulate_policy.simulate_policy_client import get_iam_simulator_client
+#   from prowler.contrib.aws.simulate_policy.simulate_policy_client import get_iam_simulator_client
 #
 #   iam_sim = get_iam_simulator_client()
 #   policy_data = iam_sim.get_role_policy_data(role_name=role_name)
