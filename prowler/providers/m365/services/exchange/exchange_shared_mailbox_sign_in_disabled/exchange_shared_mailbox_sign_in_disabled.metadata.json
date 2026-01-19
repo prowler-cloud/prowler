@@ -1,0 +1,36 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_shared_mailbox_sign_in_disabled",
+  "CheckTitle": "Shared mailbox has sign-in blocked",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Shared Mailbox",
+  "ResourceGroup": "IAM",
+  "Description": "Shared mailboxes are used for collaboration and should not permit direct sign-in. This check verifies that the **AccountEnabled** property is set to `false` in Entra ID for all shared mailboxes, preventing direct authentication.",
+  "Risk": "When sign-in is enabled on shared mailboxes, users with the password can bypass delegation controls and access the mailbox directly. This undermines **accountability** since actions cannot be attributed to individual users, and it increases the attack surface for credential-based attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/about-shared-mailboxes"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "$sharedMailboxes = Get-Mailbox -RecipientTypeDetails SharedMailbox; foreach ($mailbox in $sharedMailboxes) { Set-MsolUser -UserPrincipalName $mailbox.UserPrincipalName -BlockCredential $true }",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft 365 admin center\n2. Navigate to Users > Active users\n3. Search for the shared mailbox\n4. Select the shared mailbox and click Block sign-in\n5. Confirm the action",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Block sign-in for all shared mailboxes to ensure users can only access them through delegation. This enforces accountability and reduces security risks from shared credentials.",
+      "Url": "https://hub.prowler.com/check/exchange_shared_mailbox_sign_in_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Based on CIS Microsoft 365 Foundations Benchmark v5.0.0 - Requirement 1.2.2"
+}
