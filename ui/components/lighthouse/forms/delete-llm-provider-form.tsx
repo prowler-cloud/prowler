@@ -9,8 +9,7 @@ import * as z from "zod";
 import { deleteLighthouseProviderByType } from "@/actions/lighthouse/lighthouse";
 import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { Form, FormButtons } from "@/components/ui/form";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 const formSchema = z.object({
@@ -57,34 +56,19 @@ export const DeleteLLMProviderForm = ({
   return (
     <Form {...form}>
       <form action={onSubmitClient}>
-        <input type="hidden" name="providerType" value={providerType} />
-        <div className="flex w-full justify-center sm:gap-6">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            onPress={() => setIsOpen(false)}
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
-
-          <CustomButton
-            type="submit"
-            ariaLabel="Delete"
-            className="w-full"
-            variant="solid"
-            color="danger"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <DeleteIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Delete</span>}
-          </CustomButton>
-        </div>
+        <input
+          type="hidden"
+          name="providerType"
+          value={providerType}
+          aria-label="Provider Type"
+        />
+        <FormButtons
+          setIsOpen={setIsOpen}
+          submitText="Delete"
+          submitColor="danger"
+          rightIcon={<DeleteIcon size={24} />}
+          isDisabled={isLoading}
+        />
       </form>
     </Form>
   );

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail** activity is analyzed for **identities** executing high-risk actions linked to **privilege escalation** (e.g., `Attach*Policy`, `PassRole`, `AssumeRole`, `CreateAccessKey`). Identities exceeding a configurable share of such events within a *recent time window* are highlighted for investigation.",
   "Risk": "Escalation patterns can grant elevated entitlements, enabling:\n- Confidentiality loss via unauthorized data/secret access\n- Integrity compromise by changing IAM policies/roles\n- Availability impact by tampering with logging or resources\nThis also facilitates lateral movement and persistence.",
   "RelatedUrl": "",

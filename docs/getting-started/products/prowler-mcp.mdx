@@ -19,12 +19,11 @@ The Prowler MCP Server provides three main integration points:
 ### 1. Prowler Cloud and Prowler App (Self-Managed)
 
 Full access to Prowler Cloud platform and self-managed Prowler App for:
-- **Provider Management**: Create, configure, and manage cloud providers (AWS, Azure, GCP, etc.).
-- **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments.
-- **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments.
-- **Compliance Reporting**: Generate compliance reports for various frameworks (CIS, PCI-DSS, HIPAA, etc.).
-- **Secrets Management**: Securely manage provider credentials and connection details.
-- **Processor Configuration**: Set up the [Prowler Mutelist](/user-guide/tutorials/prowler-app-mute-findings) to mute findings.
+- **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
+- **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
+- **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
+- **Resource Inventory**: Search and view detailed information about your audited resources
+- **Muting Management**: Create and manage muting lists/rules to suppress non-relevant findings
 
 ### 2. Prowler Hub
 
@@ -49,7 +48,10 @@ The following diagram illustrates the Prowler MCP Server architecture and its in
 <img className="block dark:hidden" src="/images/prowler_mcp_schema_light.png" alt="Prowler MCP Server Schema" />
 <img className="hidden dark:block" src="/images/prowler_mcp_schema_dark.png" alt="Prowler MCP Server Schema" />
 
-The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components: Prowler Cloud/App for security operations, Prowler Hub for security knowledge, and Prowler Documentation for guidance and reference.
+The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components:
+- Prowler Cloud/App for security operations
+- Prowler Hub for security knowledge
+- Prowler Documentation for guidance and reference.
 
 ## Use Cases
 
@@ -57,12 +59,12 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 
 **Security Operations**
 - "Show me all critical findings from my AWS production accounts"
-- "What is my compliance status for the PCI standards accross all my AWS accounts according to the latest Prowler scan results?"
-- "Register my new AWS account in Prowler and run an scheduled scan every day"
+- "Register my new AWS account in Prowler and run a scheduled scan every day"
+- "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
 
 **Security Research**
-- "Explain what the S3 bucket public access check does"
-- "Find all checks related to encryption at rest"
+- "Explain what the S3 bucket public access Prowler check does"
+- "Find all Prowler checks related to encryption at rest"
 - "What is the latest version of the CIS that Prowler is covering per provider?"
 
 **Documentation & Learning**

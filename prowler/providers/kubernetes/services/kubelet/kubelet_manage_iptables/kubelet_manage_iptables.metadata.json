@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubelet is configured to manage iptables, which keeps the iptables configuration in sync with the dynamic pod network configuration. Allowing the Kubelet to manage iptables helps to avoid network communication issues between pods/containers.",
   "Risk": "If kubelet does not manage iptables, manual configurations might conflict with dynamic pod networking, causing communication issues.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",

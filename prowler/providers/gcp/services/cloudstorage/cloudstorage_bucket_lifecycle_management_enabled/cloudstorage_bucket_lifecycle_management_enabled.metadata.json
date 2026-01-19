@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Google Cloud Storage buckets** are evaluated for the presence of **lifecycle management** with at least one valid rule (supported action and non-empty condition) to automatically transition or delete objects and optimize storage costs.",
   "Risk": "Buckets without lifecycle rules can accumulate stale data, increase storage costs, and fail to meet data retention and internal compliance requirements.",
   "RelatedUrl": "",

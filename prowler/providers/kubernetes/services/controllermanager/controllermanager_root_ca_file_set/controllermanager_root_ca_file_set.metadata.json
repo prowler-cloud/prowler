@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the Kubernetes Controller Manager is configured with the --root-ca-file argument set to a certificate bundle file, allowing pods to verify the API server's serving certificate.",
   "Risk": "Not setting the root CA file can expose pods to man-in-the-middle attacks due to unverified TLS connections to the API server.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
