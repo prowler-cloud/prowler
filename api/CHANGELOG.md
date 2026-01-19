@@ -12,6 +12,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
 - Attack Paths scans for AWS providers with new Neo4j Docker service, new Celery task, new `AttackPathsScan` model and new endpoints under `/api/v1/attack-paths-scans` [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
 
+### Security
+- `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
+
 ---
 
 ## [1.17.2] (Prowler v5.16.2)
