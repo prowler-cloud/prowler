@@ -2,33 +2,37 @@
   "Provider": "openstack",
   "CheckID": "keystone_projects_enabled",
   "CheckTitle": "Keystone project is enabled",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/OpenStack Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards"
+  ],
   "ServiceName": "keystone",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OpenStackProject",
-  "Description": "Keystone projects must remain enabled so tenants and services tied to them can authenticate and isolate resources correctly.",
-  "Risk": "Disabled projects block assigned users and services from obtaining tokens, disrupting control plane authentication and dependent workloads.",
+  "ResourceGroup": "IAM",
+  "Description": "**Keystone projects** are evaluated to ensure they remain **enabled**. Projects serve as resource containers and authorization scopes; they must stay enabled for assigned **tenants** and **services** to authenticate, obtain tokens, and isolate workloads.",
+  "Risk": "Disabling a project immediately blocks all assigned users and service accounts from obtaining authentication tokens. This disrupts:\n- **Availability**: workloads lose access to OpenStack APIs, halting operations\n- **Integrity**: configuration changes and automation pipelines fail\n- **Confidentiality**: valid users cannot access their own resources\nIt can trigger cascading failures across dependent services and violate SLAs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.openstack.org/keystone/latest/admin/cli-manage-projects.html",
-    "https://docs.openstack.org/api-ref/identity/v3/index.html"
+    "https://docs.openstack.org/api-ref/identity/v3/index.html",
+    "https://docs.openstack.org/keystone/latest/admin/tokens-overview.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "openstack project set --enable <project_id>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Access the Horizon dashboard or use OpenStack CLI\n2. Navigate to Identity > Projects (or use `openstack project list --disabled`)\n3. Locate the disabled project\n4. Execute `openstack project set --enable <project_id>`\n5. Verify with `openstack project show <project_id>` (check `enabled: True`)\n6. Test authentication for users assigned to this project",
+      "Terraform": "```hcl\n# Terraform: ensure Keystone project is enabled\nresource \"openstack_identity_project_v3\" \"project\" {\n  name        = \"<project_name>\"\n  domain_id   = \"<domain_id>\"\n  enabled     = true  # Critical: must be true to allow authentication\n  description = \"Production project\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review tenant lifecycle regularly and keep active Keystone projects enabled so legitimate users and services can authenticate.",
-      "Url": "https://docs.openstack.org/keystone/latest/admin/cli-manage-projects.html"
+      "Text": "Maintain a **project lifecycle policy**:\n- Keep production projects **enabled** at all times\n- Use **tags** or **metadata** to track project status (active, deprecated, staging)\n- Disable projects only during **decommissioning** with stakeholder approval\n- Implement **monitoring** to alert on unexpected project state changes\n- Document which services and users depend on each project\n- Require **MFA** and approvals before disabling critical projects",
+      "Url": "https://hub.prowler.com/check/keystone_projects_enabled"
     }
   },
   "Categories": [
-    "identity"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

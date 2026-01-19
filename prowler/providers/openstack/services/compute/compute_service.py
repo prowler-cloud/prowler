@@ -9,37 +9,25 @@ from prowler.lib.logger import logger
 from prowler.providers.openstack.lib.service.service import OpenStackService
 
 
-@dataclass
-class ComputeInstance:
-    """Represents an OpenStack compute instance (VM)."""
-
-    id: str
-    name: str
-    status: str
-    flavor_id: str
-    security_groups: List[str]
-    region: str
-    project_id: str
-
-
 class Compute(OpenStackService):
     """Service wrapper using openstacksdk compute APIs."""
 
     def __init__(self, provider) -> None:
         super().__init__(__class__.__name__, provider)
         self.client = self.connection.compute
-        self.instances: List[ComputeInstance] = self._list_instances()
+        self.instances: List[ComputeInstance] = []
+        self._list_instances()
 
-    def _list_instances(self) -> List[ComputeInstance]:
+    def _list_instances(self) -> None:
         """List all compute instances in the current project."""
-        instances: List[ComputeInstance] = []
+        logger.info("Compute - Listing instances...")
         try:
             for server in self.client.servers():
                 # Extract security group names (handle None case)
                 sg_list = getattr(server, "security_groups", None) or []
                 security_groups = [sg.get("name", "") for sg in sg_list]
 
-                instances.append(
+                self.instances.append(
                     ComputeInstance(
                         id=getattr(server, "id", ""),
                         name=getattr(server, "name", ""),
@@ -60,4 +48,16 @@ class Compute(OpenStackService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing compute instances: {error}"
             )
-        return instances
+
+
+@dataclass
+class ComputeInstance:
+    """Represents an OpenStack compute instance (VM)."""
+
+    id: str
+    name: str
+    status: str
+    flavor_id: str
+    security_groups: List[str]
+    region: str
+    project_id: str
