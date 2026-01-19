@@ -263,7 +263,6 @@ export const checkTaskStatus = async (
     const task = await getTask(taskId);
 
     if (task.error) {
-      // eslint-disable-next-line no-console
       console.error(`Error retrieving task: ${task.error}`);
       return { completed: false, error: task.error };
     }
