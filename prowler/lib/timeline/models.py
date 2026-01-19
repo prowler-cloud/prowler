@@ -1,5 +1,3 @@
-"""Data models for timeline events."""
-
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -18,11 +16,12 @@ class TimelineEvent(BaseModel):
     event_name: str
     event_source: str
     actor: str
-    actor_uid: Optional[str] = None  # Full ARN/identifier for the actor
-    actor_type: str
+    actor_uid: Optional[str] = None
+    actor_type: Optional[str] = None
     source_ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-    request_parameters: Optional[Dict[str, Any]] = None
-    response_elements: Optional[Dict[str, Any]] = None
+    request_data: Optional[Dict[str, Any]] = None
+    response_data: Optional[Dict[str, Any]] = None
     error_code: Optional[str] = None
     error_message: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None

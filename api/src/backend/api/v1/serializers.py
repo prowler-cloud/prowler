@@ -3988,7 +3988,6 @@ class ResourceEventSerializer(drf_serializers.Serializer):
 
     Uses vanilla DRF Serializer (not JSON:API) to avoid auto-generated
     fields[resource-events] sparse fieldsets parameter in OpenAPI schema.
-    This endpoint returns fixed CloudTrail data, not a database model.
     """
 
     # Map event_id from the SDK model to id for JSON:API compliance
