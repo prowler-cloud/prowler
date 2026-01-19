@@ -234,11 +234,9 @@ class Repository(GithubService):
                 codeowners_exists = None
             else:
                 codeowners_exists = False
-            delete_branch_on_merge = (
-                repo.delete_branch_on_merge
-                if repo.delete_branch_on_merge is not None
-                else False
-            )
+            # GitHub API only returns delete_branch_on_merge with Administration: Read and Write
+            # With Read-only permission, it returns None - set to None for MANUAL status
+            delete_branch_on_merge = repo.delete_branch_on_merge
 
             require_pr = False
             approval_cnt = 0
