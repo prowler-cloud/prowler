@@ -141,6 +141,31 @@ cd api && poetry run pytest -x --tb=short
 
 ## Resources
 
+### Local References
 - **File Locations**: See [references/file-locations.md](references/file-locations.md)
+- **Modeling Decisions**: See [references/modeling-decisions.md](references/modeling-decisions.md)
+
+### Related Skills
 - **Generic DRF Patterns**: Use `django-drf` skill
 - **API Testing**: Use `prowler-test-api` skill
+
+### Context7 MCP (Recommended)
+
+**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
+
+When implementing or debugging Prowler-specific patterns, query these libraries via `mcp_context7_query-docs`:
+
+| Library | Context7 ID | Use For |
+|---------|-------------|---------|
+| **Celery** | `/websites/celeryq_dev_en_stable` | Task patterns, queues, error handling |
+| **django-celery-beat** | `/celery/django-celery-beat` | Periodic task scheduling |
+| **Django** | `/websites/djangoproject_en_5_2` | Models, ORM, constraints, indexes |
+
+**Example queries:**
+```
+mcp_context7_query-docs(libraryId="/websites/celeryq_dev_en_stable", query="shared_task decorator retry patterns")
+mcp_context7_query-docs(libraryId="/celery/django-celery-beat", query="periodic task database scheduler")
+mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints CheckConstraint UniqueConstraint")
+```
+
+> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.

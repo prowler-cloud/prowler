@@ -41,7 +41,7 @@ When implementing a new endpoint, review these patterns in order:
 | 5 | **Permissions** | `api/decorators.py` | `required_permissions`, `set_required_permissions()` |
 | 6 | **Pagination** | `api/pagination.py` | Custom pagination class if needed |
 | 7 | **URL Routing** | `api/v1/urls.py` | `trailing_slash=False`, kebab-case paths |
-| 8 | **OpenAPI Schema** | `api/v1/views.py` | `@extend_schema_view` decorators |
+| 8 | **OpenAPI Schema** | `api/v1/views.py` | `@extend_schema_view` with drf-spectacular |
 | 9 | **Tests** | `api/tests/test_views.py` | JSON:API content type, fixture patterns |
 
 > **Full file paths**: See [references/file-locations.md](references/file-locations.md)
@@ -115,8 +115,33 @@ cd api && poetry run make lint
 
 ## Resources
 
+### Local References
 - **File Locations**: See [references/file-locations.md](references/file-locations.md)
 - **JSON:API Conventions**: See [references/json-api-conventions.md](references/json-api-conventions.md)
+
+### Context7 MCP (Recommended)
+
+**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
+
+When implementing or debugging, query these libraries via `mcp_context7_query-docs`:
+
+| Library | Context7 ID | Use For |
+|---------|-------------|---------|
+| **Django** | `/websites/djangoproject_en_5_2` | Models, ORM, migrations |
+| **DRF** | `/websites/django-rest-framework` | ViewSets, serializers, permissions |
+| **drf-spectacular** | `/tfranzel/drf-spectacular` | OpenAPI schema, `@extend_schema` |
+
+**Example queries:**
+```
+mcp_context7_query-docs(libraryId="/websites/django-rest-framework", query="ViewSet get_queryset best practices")
+mcp_context7_query-docs(libraryId="/tfranzel/drf-spectacular", query="extend_schema examples for custom actions")
+mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints and indexes")
+```
+
+> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.
+
+### External Docs
 - **DRF Docs**: https://www.django-rest-framework.org/
 - **DRF JSON:API**: https://django-rest-framework-json-api.readthedocs.io/
+- **drf-spectacular**: https://drf-spectacular.readthedocs.io/
 - **django-filter**: https://django-filter.readthedocs.io/
