@@ -26,6 +26,7 @@
   "dependencies": {
     "@ai-sdk/react": "2.0.111",
     "@aws-sdk/client-bedrock-runtime": "3.948.0",
+    "@extractus/feed-extractor": "7.1.7",
     "@heroui/react": "2.8.4",
     "@hookform/resolvers": "5.2.2",
     "@internationalized/date": "3.10.0",
@@ -92,7 +93,6 @@
     "react-markdown": "10.1.0",
     "recharts": "2.15.4",
     "require-in-the-middle": "8.0.1",
-    "rss-parser": "3.13.0",
     "server-only": "0.0.1",
     "sharp": "0.33.5",
     "shiki": "3.20.0",

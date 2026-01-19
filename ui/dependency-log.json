@@ -17,6 +17,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@extractus/feed-extractor",
+    "from": "7.1.7",
+    "to": "7.1.7",
+    "strategy": "installed",
+    "generatedAt": "2026-01-19T15:06:16.239Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@heroui/react",
     "from": "2.8.4",
     "to": "2.8.4",
@@ -545,14 +553,6 @@
   },
   {
     "section": "dependencies",
-    "name": "rss-parser",
-    "from": "3.13.0",
-    "to": "3.13.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
     "name": "server-only",
     "from": "0.0.1",
     "to": "0.0.1",
@@ -678,6 +678,14 @@
     "to": "5.2.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@next/eslint-plugin-next",
+    "from": "16.1.3",
+    "to": "16.1.3",
+    "strategy": "installed",
+    "generatedAt": "2026-01-19T14:49:57.304Z"
   },
   {
     "section": "devDependencies",
