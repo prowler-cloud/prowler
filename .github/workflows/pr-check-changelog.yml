@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   check-changelog:
-    if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false || github.actor == 'dependabot[bot]'
+    if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
