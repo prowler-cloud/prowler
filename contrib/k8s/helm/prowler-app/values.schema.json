@@ -92,14 +92,6 @@
                     },
                     "type": "object"
                 },
-                "djangoConfigKeys": {
-                    "properties": {
-                        "create": {
-                            "type": "boolean"
-                        }
-                    },
-                    "type": "object"
-                },
                 "image": {
                     "properties": {
                         "pullPolicy": {
@@ -275,6 +267,54 @@
             },
             "type": "object"
         },
+        "djangoSecretsEncryptionKey": {
+            "properties": {
+                "secretKeyRef": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "djangoTokenSigningKey": {
+            "properties": {
+                "secretKeyRef": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "djangoTokenVerifyingKey": {
+            "properties": {
+                "secretKeyRef": {
+                    "properties": {
+                        "key": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
         "fullnameOverride": {
             "type": "string"
         },
@@ -283,26 +323,24 @@
         },
         "postgresql": {
             "properties": {
+                "auth": {
+                    "properties": {
+                        "database": {
+                            "type": "string"
+                        },
+                        "username": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
                 "enabled": {
                     "type": "boolean"
                 },
-                "global": {
+                "image": {
                     "properties": {
-                        "postgresql": {
-                            "properties": {
-                                "auth": {
-                                    "properties": {
-                                        "database": {
-                                            "type": "string"
-                                        },
-                                        "postgresPassword": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
+                        "repository": {
+                            "type": "string"
                         }
                     },
                     "type": "object"
@@ -314,6 +352,22 @@
             "properties": {
                 "affinity": {
                     "properties": {},
+                    "type": "object"
+                },
+                "authSecret": {
+                    "properties": {
+                        "secretKeyRef": {
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
                     "type": "object"
                 },
                 "autoscaling": {
@@ -451,6 +505,9 @@
                     "properties": {},
                     "type": "object"
                 },
+                "secrets": {
+                    "type": "array"
+                },
                 "securityContext": {
                     "properties": {},
                     "type": "object"
@@ -498,17 +555,6 @@
         },
         "valkey": {
             "properties": {
-                "architecture": {
-                    "type": "string"
-                },
-                "auth": {
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean"
-                        }
-                    },
-                    "type": "object"
-                },
                 "enabled": {
                     "type": "boolean"
                 }
@@ -569,6 +615,32 @@
                 },
                 "imagePullSecrets": {
                     "type": "array"
+                },
+                "keda": {
+                    "properties": {
+                        "cooldownPeriod": {
+                            "type": "integer"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "maxReplicas": {
+                            "type": "integer"
+                        },
+                        "minReplicas": {
+                            "type": "integer"
+                        },
+                        "pollingInterval": {
+                            "type": "integer"
+                        },
+                        "triggerType": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
                 },
                 "livenessProbe": {
                     "properties": {},

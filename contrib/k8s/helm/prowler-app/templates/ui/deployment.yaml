@@ -13,8 +13,9 @@ spec:
       app.kubernetes.io/name: {{ include "prowler.fullname" . }}-ui
   template:
     metadata:
-      {{- with .Values.ui.podAnnotations }}
       annotations:
+        secret-hash: {{ .Files.Get "templates/ui/configmap.yaml" | sha256sum }}
+      {{- with .Values.ui.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -45,9 +46,21 @@ spec:
             - name: http
               containerPort: {{ .Values.ui.service.port }}
               protocol: TCP
+          env:
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ui.authSecret.secretKeyRef.name }}
+                  key: {{ .Values.ui.authSecret.secretKeyRef.key }}
           envFrom:
             - configMapRef:
                 name: {{ include "prowler.fullname" . }}-ui
+            {{- with .Values.ui.secrets }}
+            {{- range $index, $secret := . }}
+            - secretRef:
+                name: {{ $secret }}
+            {{- end }}
+            {{- end }}
           {{- with .Values.ui.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
