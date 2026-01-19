@@ -19,7 +19,9 @@
         "groups": [
           {
             "group": "Welcome",
-            "pages": ["introduction"]
+            "pages": [
+              "introduction"
+            ]
           },
           {
             "group": "Prowler Cloud",
@@ -49,7 +51,9 @@
           },
           {
             "group": "Prowler Lighthouse AI",
-            "pages": ["getting-started/products/prowler-lighthouse-ai"]
+            "pages": [
+              "getting-started/products/prowler-lighthouse-ai"
+            ]
           },
           {
             "group": "Prowler MCP Server",
@@ -156,7 +160,9 @@
               "user-guide/cli/tutorials/quick-inventory",
               {
                 "group": "Tutorials",
-                "pages": ["user-guide/cli/tutorials/parallel-execution"]
+                "pages": [
+                  "user-guide/cli/tutorials/parallel-execution"
+                ]
               }
             ]
           },
@@ -243,8 +249,17 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
                 "group": "LLM",
-                "pages": ["user-guide/providers/llm/getting-started-llm"]
+                "pages": [
+                  "user-guide/providers/llm/getting-started-llm"
+                ]
               },
               {
                 "group": "Oracle Cloud Infrastructure",
@@ -257,7 +272,9 @@
           },
           {
             "group": "Compliance",
-            "pages": ["user-guide/compliance/tutorials/threatscore"]
+            "pages": [
+              "user-guide/compliance/tutorials/threatscore"
+            ]
           }
         ]
       },
@@ -274,8 +291,9 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse",
-              "developer-guide/mcp-server"
+              "developer-guide/lighthouse-architecture",
+              "developer-guide/mcp-server",
+              "developer-guide/ai-skills"
             ]
           },
           {
@@ -284,6 +302,7 @@
               "developer-guide/aws-details",
               "developer-guide/azure-details",
               "developer-guide/gcp-details",
+              "developer-guide/alibabacloud-details",
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
@@ -298,7 +317,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",
@@ -311,15 +331,21 @@
       },
       {
         "tab": "Security",
-        "pages": ["security"]
+        "pages": [
+          "security"
+        ]
       },
       {
-        "tab": "Contact Us",
-        "pages": ["contact"]
+        "tab": "Support",
+        "pages": [
+          "support"
+        ]
       },
       {
         "tab": "Troubleshooting",
-        "pages": ["troubleshooting"]
+        "pages": [
+          "troubleshooting"
+        ]
       },
       {
         "tab": "About Us",
@@ -433,6 +459,10 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
+    },
+    {
+      "source": "/contact",
+      "destination": "/support"
     }
   ]
 }

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudWatch Logs** for CloudTrail include a metric filter that matches unauthorized API errors (`$.errorCode=\"*UnauthorizedOperation\"` or `$.errorCode=\"AccessDenied*\"`) and a linked alarm that triggers when events match the filter.",
   "Risk": "Without alerting on **unauthorized API calls**, permission probing and failed access by compromised identities can go unnoticed. Attackers can enumerate services, pivot, and attempt privilege escalation, threatening data **confidentiality** and **integrity**.",
   "RelatedUrl": "",

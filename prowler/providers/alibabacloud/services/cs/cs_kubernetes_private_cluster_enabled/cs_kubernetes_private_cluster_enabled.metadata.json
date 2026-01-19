@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "A **private cluster** is a cluster that makes your master inaccessible from the public internet.\n\nIn a private cluster, nodes do not have public IP addresses, so your workloads run in an environment that is isolated from the internet. Nodes and masters communicate with each other privately using **VPC peering**.",
   "Risk": "Exposing the **API server endpoint** to the public internet increases the attack surface of your cluster. Attackers can attempt to probe for vulnerabilities, perform **brute force attacks**, or exploit misconfigurations if the API server is publicly accessible.\n\nUsing a private cluster significantly reduces network security risks.",
   "RelatedUrl": "",

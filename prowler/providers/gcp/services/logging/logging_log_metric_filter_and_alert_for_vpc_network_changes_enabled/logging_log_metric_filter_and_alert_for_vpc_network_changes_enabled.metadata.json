@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure That the Log Metric Filter and Alerts Exist for VPC Network Changes.",
   "Risk": "Monitoring changes to a VPC will help ensure VPC traffic flow is not getting impacted.",
   "RelatedUrl": "",
