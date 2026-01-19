@@ -21,6 +21,8 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
+      neo4j:
+        condition: service_healthy
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "prod"
@@ -71,6 +73,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  neo4j:
+    image: graphstack/dozerdb:5.26.3.0
+    hostname: "neo4j"
+    volumes:
+      - ./_data/neo4j:/data
+    environment:
+      # We can't add our .env file because some of our current variables are not compatible with Neo4j env vars
+      # Auth
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      # Memory limits
+      - NEO4J_dbms_max__databases=${NEO4J_DBMS_MAX__DATABASES:-1000000}
+      - NEO4J_server_memory_pagecache_size=${NEO4J_SERVER_MEMORY_PAGECACHE_SIZE:-1G}
+      - NEO4J_server_memory_heap_initial__size=${NEO4J_SERVER_MEMORY_HEAP_INITIAL__SIZE:-1G}
+      - NEO4J_server_memory_heap_max__size=${NEO4J_SERVER_MEMORY_HEAP_MAX__SIZE:-1G}
+      # APOC
+      - apoc.export.file.enabled=${NEO4J_POC_EXPORT_FILE_ENABLED:-true}
+      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED:-true}
+      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG:-true}
+      - "NEO4J_PLUGINS=${NEO4J_PLUGINS:-[\"apoc\"]}"
+      - "NEO4J_dbms_security_procedures_allowlist=${NEO4J_DBMS_SECURITY_PROCEDURES_ALLOWLIST:-apoc.*}"
+      - "NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED:-apoc.*}"
+      # Networking
+      - "dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS:-0.0.0.0:7687}"
+    ports:
+      - ${NEO4J_PORT:-7687}:7687
+    healthcheck:
+        test: ["CMD", "wget", "--no-verbose", "http://localhost:7474"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}

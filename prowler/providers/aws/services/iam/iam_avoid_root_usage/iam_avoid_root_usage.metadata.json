@@ -1,34 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "iam_avoid_root_usage",
-  "CheckTitle": "Avoid the use of the root accounts",
+  "CheckTitle": "AWS account root user has not been used in the last day",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "iam",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsIamUser",
   "ResourceGroup": "IAM",
-  "Description": "Avoid the use of the root account",
-  "Risk": "The root account has unrestricted access to all resources in the AWS account. It is highly recommended that the use of this account be avoided.",
+  "Description": "**AWS IAM root user** activity is assessed by inspecting `last-used` timestamps for the root password and access keys. The finding indicates when the root identity has been used recently for console or programmatic access.",
+  "Risk": "Recent **root usage** expands blast radius:\n- Data exfiltration (**confidentiality**)\n- Policy/key tampering (**integrity**)\n- Resource deletion and billing changes (**availability**)\nRoutine use reduces anomaly visibility and eases **account takeover** impact.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/root-account-used-recently.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the AWS Management Console as the root user\n2. In the top-right, click your account name > Security credentials\n3. Under Access keys for the root user, delete all existing keys\n4. Sign out of the root user and do not use it again\n5. Wait 24 hours (until the root user has not been accessed for a full day) for the check to pass",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Follow the remediation instructions of the Ensure IAM policies are attached only to groups or roles recommendation.",
-      "Url": "http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+      "Text": "Minimize `root` usage by applying **least privilege** with admin roles or federated SSO and temporary credentials.\n- Enforce **MFA** on root\n- Avoid or remove root access keys\n- Require multi-person approval\n- **Monitor and alert** on any root sign-in\n- Use org guardrails for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/iam_avoid_root_usage"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

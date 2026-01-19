@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { AttackSurfaceItem } from "@/actions/overview";
 import { Card, CardContent } from "@/components/shadcn";
-import { mapProviderFiltersForFindings } from "@/lib";
 
 interface AttackSurfaceCardItemProps {
   item: AttackSurfaceItem;
@@ -28,9 +27,6 @@ export function AttackSurfaceCardItem({
         params.set(key, String(value));
       }
     });
-
-    // Map provider filters for findings page compatibility
-    mapProviderFiltersForFindings(params);
 
     return `/findings?${params.toString()}`;
   };

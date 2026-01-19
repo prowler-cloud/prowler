@@ -32,6 +32,11 @@ def set_mocked_gcp_provider(
     provider.identity = GCPIdentityInfo(
         profile=profile,
     )
+    provider.audit_config = {
+        "mig_min_zones": 2,
+        "max_unused_account_days": 30,
+    }
+    provider.fixer_config = {}
 
     return provider
 
@@ -59,6 +64,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_access_policies_calls(client)
     mock_api_instance_group_managers_calls(client)
     mock_api_images_calls(client)
+    mock_api_snapshots_calls(client)
 
     return client
 
@@ -1103,6 +1109,34 @@ def mock_api_sink_calls(client: MagicMock):
     }
     client.sinks().list_next.return_value = None
 
+    client.entries().list().execute.return_value = {
+        "entries": [
+            {
+                "insertId": "audit-log-entry-1",
+                "timestamp": "2024-01-15T10:30:00Z",
+                "receiveTimestamp": "2024-01-15T10:30:01Z",
+                "resource": {
+                    "type": "gce_instance",
+                    "labels": {
+                        "instance_id": "test-instance-1",
+                        "project_id": GCP_PROJECT_ID,
+                    },
+                },
+                "protoPayload": {
+                    "serviceName": "compute.googleapis.com",
+                    "methodName": "v1.compute.instances.insert",
+                    "resourceName": "projects/test-project/zones/us-central1-a/instances/test-instance-1",
+                    "authenticationInfo": {
+                        "principalEmail": "user@example.com",
+                    },
+                    "requestMetadata": {
+                        "callerIp": "192.168.1.1",
+                    },
+                },
+            },
+        ]
+    }
+
 
 def mock_api_services_calls(client: MagicMock):
     client.services().list().execute.return_value = {
@@ -1311,3 +1345,8 @@ def mock_api_images_calls(client: MagicMock):
         return return_value
 
     client.images().getIamPolicy = mock_get_image_iam_policy
+
+
+def mock_api_snapshots_calls(client: MagicMock):
+    client.snapshots().list().execute.return_value = {"items": []}
+    client.snapshots().list_next.return_value = None

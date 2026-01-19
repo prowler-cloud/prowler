@@ -80,6 +80,23 @@ prowler dashboard
 ```
 ![Prowler Dashboard](docs/images/products/dashboard.png)
 
+
+## Attack Paths
+
+Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+
+- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
+- The following environment variables so Django and Celery can connect:
+
+  | Variable | Description | Default |
+  | --- | --- | --- |
+  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
+
+
 # Prowler at a Glance
 > [!Tip]
 > For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
@@ -309,6 +326,45 @@ Prowler can be executed across various environments, offering flexibility to mee
 And many more environments.
 
 ![Architecture](docs/img/architecture.png)
+
+# 🤖 AI Skills for Development
+
+Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants understand Prowler's codebase patterns and conventions.
+
+## What are AI Skills?
+
+Skills are structured instructions that give AI assistants the context they need to write code that follows Prowler's standards. They include:
+
+- **Coding patterns** for each component (SDK, API, UI, MCP Server)
+- **Testing conventions** (pytest, Playwright)
+- **Architecture guidelines** (Clean Architecture, RLS patterns)
+- **Framework-specific rules** (React 19, Next.js 15, Django DRF, Tailwind 4)
+
+## Available Skills
+
+| Category | Skills |
+|----------|--------|
+| **Generic** | `typescript`, `react-19`, `nextjs-15`, `tailwind-4`, `playwright`, `pytest`, `django-drf`, `zod-4`, `zustand-5`, `ai-sdk-5` |
+| **Prowler** | `prowler`, `prowler-api`, `prowler-ui`, `prowler-mcp`, `prowler-sdk-check`, `prowler-test-ui`, `prowler-test-api`, `prowler-test-sdk`, `prowler-compliance`, `prowler-provider`, `prowler-pr`, `prowler-docs` |
+
+## Setup
+
+```bash
+./skills/setup.sh
+```
+
+This configures skills for AI coding assistants that follow the [agentskills.io](https://agentskills.io) standard:
+
+| Tool | Configuration |
+|------|---------------|
+| **Claude Code** | `.claude/skills/` (symlink) |
+| **OpenCode** | `.claude/skills/` (symlink) |
+| **Codex (OpenAI)** | `.codex/skills/` (symlink) |
+| **GitHub Copilot** | `.github/skills/` (symlink) |
+| **Gemini CLI** | `.gemini/skills/` (symlink) |
+
+> **Note:** Restart your AI coding assistant after running setup to load the skills.
+> Gemini CLI requires `experimental.skills` enabled in settings.
 
 # 📖 Documentation
 
