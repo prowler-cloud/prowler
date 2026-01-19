@@ -1,5 +1,3 @@
-"""Tests for prowler.lib.timeline.models module."""
-
 from datetime import datetime, timezone
 
 import pytest
@@ -55,7 +53,10 @@ class TestTimelineEvent:
         )
 
         assert event.event_id == "full-event-id-456"
-        assert event.actor_uid == "arn:aws:sts::123456789012:assumed-role/admin-role/session"
+        assert (
+            event.actor_uid
+            == "arn:aws:sts::123456789012:assumed-role/admin-role/session"
+        )
         assert event.source_ip_address == "192.168.1.100"
         assert event.user_agent == "aws-cli/2.0.0"
         assert event.request_parameters == {"bucket": "my-bucket", "acl": "private"}

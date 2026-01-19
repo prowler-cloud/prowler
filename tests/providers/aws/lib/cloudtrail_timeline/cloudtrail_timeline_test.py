@@ -1,5 +1,3 @@
-"""Tests for CloudTrail timeline service."""
-
 import json
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -250,13 +248,17 @@ class TestCloudTrailTimeline:
 
         # Default: write_events_only=True
         timeline = CloudTrailTimeline(session=mock_session)
-        result = timeline.get_resource_timeline(region="us-east-1", resource_id="sg-123")
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="sg-123"
+        )
 
         # Only the write event should be returned
         assert len(result) == 1
         assert result[0]["event_name"] == "CreateSecurityGroup"
 
-    def test_get_resource_timeline_includes_read_events_when_disabled(self, mock_session):
+    def test_get_resource_timeline_includes_read_events_when_disabled(
+        self, mock_session
+    ):
         """Verify all events returned when write_events_only=False."""
         events = [
             {
@@ -285,7 +287,9 @@ class TestCloudTrailTimeline:
 
         # Disable filtering
         timeline = CloudTrailTimeline(session=mock_session, write_events_only=False)
-        result = timeline.get_resource_timeline(region="us-east-1", resource_id="sg-123")
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="sg-123"
+        )
 
         # All events should be returned
         assert len(result) == 2
