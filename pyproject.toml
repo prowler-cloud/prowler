@@ -11,7 +11,7 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License"
 ]
 dependencies = [
-  "awsipranges==0.3.3",
+  "awsipranges==0.3.4",
   "alive-progress==3.3.0",
   "azure-identity==1.21.0",
   "azure-keyvault-keys==4.10.0",
