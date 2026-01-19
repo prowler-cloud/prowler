@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -87,33 +86,32 @@ export default async function Scans({
     <ContentLayout title="Scans" icon="lucide:timer">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        {!hasManageScansPermission ? (
-          <CustomBanner
-            title={"Access Denied"}
-            message={"You don't have permission to launch the scan."}
+        <>
+          {!hasManageScansPermission ? (
+            <CustomBanner
+              title={"Access Denied"}
+              message={"You don't have permission to launch the scan."}
+            />
+          ) : thereIsNoProvidersConnected ? (
+            <>
+              <NoProvidersConnected />
+            </>
+          ) : (
+            <LaunchScanWorkflow providers={providerInfo} />
+          )}
+        </>
+        <div className="flex flex-col gap-6">
+          <ScansFilters
+            providerUIDs={providerUIDs}
+            providerDetails={providerDetails}
           />
-        ) : thereIsNoProvidersConnected ? (
-          <>
-            <Spacer y={8} />
-            <NoProvidersConnected />
-            <Spacer y={8} />
-          </>
-        ) : (
-          <LaunchScanWorkflow providers={providerInfo} />
-        )}
-
-        <ScansFilters
-          providerUIDs={providerUIDs}
-          providerDetails={providerDetails}
-        />
-        <Spacer y={8} />
-        <div className="flex items-center justify-end gap-4">
-          <MutedFindingsConfigButton />
+          <div className="flex items-center justify-end">
+            <MutedFindingsConfigButton />
+          </div>
+          <Suspense fallback={<SkeletonTableScans />}>
+            <SSRDataTableScans searchParams={resolvedSearchParams} />
+          </Suspense>
         </div>
-        <Spacer y={8} />
-        <Suspense fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={resolvedSearchParams} />
-        </Suspense>
       </>
     </ContentLayout>
   );
@@ -148,9 +146,12 @@ const SSRDataTableScans = async ({
     include: "provider",
   });
 
-  // Process scans with provider information from included data
+  const scans = scansData?.data;
+  const included = scansData?.included;
+  const meta = scansData && "meta" in scansData ? scansData.meta : undefined;
+
   const expandedScansData =
-    scansData?.data?.map((scan: any) => {
+    scans?.map((scan: ScanProps) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
@@ -158,8 +159,9 @@ const SSRDataTableScans = async ({
       }
 
       // Find the provider data in the included array
-      const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+      const providerData = included?.find(
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
@@ -181,7 +183,7 @@ const SSRDataTableScans = async ({
       key={`scans-${Date.now()}`}
       columns={ColumnGetScans}
       data={expandedScansData || []}
-      metadata={scansData?.meta}
+      metadata={meta}
     />
   );
 };

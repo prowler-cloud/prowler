@@ -284,7 +284,10 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
-        OCI = "oci", _("Oracle Cloud Infrastructure")
+        MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
+        IAC = "iac", _("IaC")
+        ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
+        ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -356,14 +359,45 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
-    def validate_oci_uid(value):
+    def validate_iac_uid(value):
+        # Validate that it's a valid repository URL (git URL format)
+        if not re.match(
+            r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail="IaC provider ID must be a valid repository URL (e.g., https://github.com/user/repo or https://github.com/user/repo.git).",
+                code="iac-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_oraclecloud_uid(value):
         if not re.match(
             r"^ocid1\.([a-z0-9_-]+)\.([a-z0-9_-]+)\.([a-z0-9_-]*)\.([a-z0-9]+)$", value
         ):
             raise ModelValidationError(
                 detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
                 "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
-                code="oci-uid",
+                code="oraclecloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_mongodbatlas_uid(value):
+        if not re.match(r"^[0-9a-fA-F]{24}$", value):
+            raise ModelValidationError(
+                detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
+                code="mongodbatlas-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_alibabacloud_uid(value):
+        if not re.match(r"^\d{16}$", value):
+            raise ModelValidationError(
+                detail="Alibaba Cloud account ID must be exactly 16 digits.",
+                code="alibabacloud-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -401,7 +435,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "uid", "is_deleted"),
+                fields=("tenant_id", "provider", "uid"),
+                condition=Q(is_deleted=False),
                 name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(
@@ -591,6 +626,101 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
+class AttackPathsScan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    progress = models.IntegerField(default=0)
+
+    # Timing
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(
+        null=True, blank=True, help_text="Duration in seconds"
+    )
+
+    # Relationship to the provider and optional prowler Scan and celery Task
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    scan = models.ForeignKey(
+        "Scan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    task = models.ForeignKey(
+        "Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+
+    # Cartography specific metadata
+    update_tag = models.BigIntegerField(
+        null=True, blank=True, help_text="Cartography update tag (epoch)"
+    )
+    graph_database = models.CharField(max_length=63, null=True, blank=True)
+    is_graph_database_deleted = models.BooleanField(default=False)
+    ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_paths_scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                name="aps_prov_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "state", "-inserted_at"],
+                name="aps_state_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="aps_scan_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="aps_active_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(is_graph_database_deleted=False),
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "-completed_at"],
+                name="aps_completed_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(
+                    state=StateChoices.COMPLETED,
+                    is_graph_database_deleted=False,
+                ),
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-scans"
+
+
 class ResourceTag(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -669,6 +799,12 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
+    groups = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Groups for categorization (e.g., compute, storage, IAM)",
+    )
 
     failed_findings_count = models.IntegerField(default=0)
 
@@ -691,14 +827,19 @@ class Resource(RowLevelSecurityProtectedModel):
             self.clear_tags()
             return
 
-        # Add new relationships with the tenant_id field
+        # Add new relationships with the tenant_id field; avoid touching the
+        # Resource row unless a mapping is actually created to prevent noisy
+        # updates during scans.
+        mapping_created = False
         for tag in tags:
-            ResourceTagMapping.objects.update_or_create(
+            _, created = ResourceTagMapping.objects.update_or_create(
                 tag=tag, resource=self, tenant_id=self.tenant_id
             )
+            mapping_created = mapping_created or created
 
-        # Save the instance
-        self.save()
+        if mapping_created:
+            # Only bump updated_at when the tag set truly changed
+            self.save(update_fields=["updated_at"])
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resources"
@@ -823,6 +964,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     muted_reason = models.TextField(
         blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
     )
+    muted_at = models.DateTimeField(
+        null=True, blank=True, help_text="Timestamp when this finding was muted"
+    )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Denormalize resource data for performance
@@ -838,6 +982,19 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         models.CharField(max_length=100),
         blank=True,
         null=True,
+    )
+
+    # Check metadata denormalization
+    categories = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Categories from check metadata for efficient filtering",
+    )
+    resource_groups = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Resource group from check metadata for efficient filtering",
     )
 
     # Relationships
@@ -1343,33 +1500,68 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
             ),
         ]
         indexes = [
-            models.Index(fields=["tenant_id", "scan_id"], name="cro_tenant_scan_idx"),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id"],
-                name="cro_scan_comp_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "scan_id", "compliance_id", "region"],
                 name="cro_scan_comp_reg_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
-                name="cro_scan_comp_req_idx",
-            ),
-            models.Index(
-                fields=[
-                    "tenant_id",
-                    "scan_id",
-                    "compliance_id",
-                    "requirement_id",
-                    "region",
-                ],
-                name="cro_scan_comp_req_reg_idx",
             ),
         ]
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-overviews"
+
+
+class ComplianceOverviewSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance overview aggregated across ALL regions.
+    One row per (scan_id, compliance_id) combination.
+
+    This table optimizes the common case where users view overall compliance
+    without filtering by region. For region-specific views, the detailed
+    ComplianceRequirementOverview table is used instead.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_summaries",
+        related_query_name="compliance_summary",
+    )
+
+    compliance_id = models.TextField(blank=False)
+
+    # Pre-aggregated scores (computed across ALL regions)
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_overview_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "compliance_id"),
+                name="unique_compliance_summary_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="cos_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overview-summaries"
 
 
 class ScanSummary(RowLevelSecurityProtectedModel):
@@ -1435,6 +1627,65 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scan-summaries"
+
+
+class DailySeveritySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated daily severity counts per provider.
+    Used by findings_severity/timeseries endpoint for efficient queries.
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    date = models.DateField()
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="daily_severity_summaries",
+        related_query_name="daily_severity_summary",
+    )
+
+    # Aggregated fail counts by severity
+    critical = models.IntegerField(default=0)
+    high = models.IntegerField(default=0)
+    medium = models.IntegerField(default=0)
+    low = models.IntegerField(default=0)
+    informational = models.IntegerField(default=0)
+    muted = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "daily_severity_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider", "date"),
+                name="unique_daily_severity_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="dss_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="dss_tenant_provider_idx",
+            ),
+        ]
 
 
 class Integration(RowLevelSecurityProtectedModel):
@@ -1829,6 +2080,125 @@ class ResourceScanSummary(RowLevelSecurityProtectedModel):
         ]
 
 
+class ScanCategorySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated category metrics per scan by severity.
+
+    Stores one row per (category, severity) combination per scan for efficient
+    overview queries. Categories come from check_metadata.categories.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="category_summaries",
+        related_query_name="category_summary",
+    )
+
+    category = models.CharField(max_length=100)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_category_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="scs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "category", "severity"),
+                name="unique_category_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-category-summaries"
+
+
+class ScanGroupSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated resource group metrics per scan by severity.
+
+    Stores one row per (resource_group, severity) combination per scan for efficient
+    overview queries. Resource groups come from check_metadata.Group.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="resource_group_summaries",
+        related_query_name="resource_group_summary",
+    )
+
+    resource_group = models.CharField(max_length=50)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+    resources_count = models.IntegerField(
+        default=0, help_text="Count of distinct resource_uid values"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_resource_group_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="srgs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
+                name="unique_resource_group_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-resource-group-summaries"
+
+
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores configuration and API keys for LLM services.
@@ -1935,6 +2305,59 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         resource_name = "lighthouse-configurations"
 
 
+class MuteRule(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    # Rule metadata
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        help_text="Human-readable name for this rule",
+    )
+    reason = models.TextField(
+        validators=[MinLengthValidator(3)],
+        max_length=500,
+        help_text="Reason for muting",
+    )
+    enabled = models.BooleanField(
+        default=True, help_text="Whether this rule is currently enabled"
+    )
+
+    # Audit fields
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_mute_rules",
+        help_text="User who created this rule",
+    )
+
+    # Rule criteria - array of finding UIDs
+    finding_uids = ArrayField(
+        models.CharField(max_length=255), help_text="List of finding UIDs to mute"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "mute_rules"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_mute_rule_name_per_tenant",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "mute-rules"
+
+
 class Processor(RowLevelSecurityProtectedModel):
     class ProcessorChoices(models.TextChoices):
         MUTELIST = "mutelist", _("Mutelist")
@@ -1983,6 +2406,8 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     class LLMProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
+        BEDROCK = "bedrock", _("AWS Bedrock")
+        OPENAI_COMPATIBLE = "openai_compatible", _("OpenAI Compatible")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -2104,7 +2529,7 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "lighthouse-config"
+        resource_name = "lighthouse-configurations"
 
 
 class LighthouseProviderModels(RowLevelSecurityProtectedModel):
@@ -2151,5 +2576,288 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_configuration"],
                 name="lh_prov_models_cfg_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-models"
+
+
+class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
+    """
+    Stores historical ThreatScore metrics for a given scan.
+    Snapshots are created automatically after each ThreatScore report generation.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    compliance_id = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+        help_text="Compliance framework ID (e.g., 'prowler_threatscore_aws')",
+    )
+
+    # Overall ThreatScore metrics
+    overall_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Overall ThreatScore percentage (0-100)",
+    )
+
+    # Score improvement/degradation compared to previous snapshot
+    score_delta = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Score change compared to previous snapshot (positive = improvement)",
+    )
+
+    # Section breakdown stored as JSON
+    # Format: {"1. IAM": 85.5, "2. Attack Surface": 92.3, ...}
+    section_scores = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="ThreatScore breakdown by section",
+    )
+
+    # Critical requirements metadata stored as JSON
+    # Format: [{"requirement_id": "...", "risk_level": 5, "weight": 150, ...}, ...]
+    critical_requirements = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of critical failed requirements (risk >= 4)",
+    )
+
+    # Summary statistics
+    total_requirements = models.IntegerField(
+        default=0,
+        help_text="Total number of requirements evaluated",
+    )
+
+    passed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with PASS status",
+    )
+
+    failed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with FAIL status",
+    )
+
+    manual_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with MANUAL status",
+    )
+
+    total_findings = models.IntegerField(
+        default=0,
+        help_text="Total number of findings across all requirements",
+    )
+
+    passed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with PASS status",
+    )
+
+    failed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with FAIL status",
+    )
+
+    def __str__(self):
+        return f"ThreatScore {self.overall_score}% for scan {self.scan_id} ({self.inserted_at})"
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "threatscore_snapshots"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="threatscore_snap_t_scan_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="threatscore_snap_t_prov_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                name="threatscore_snap_t_time_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "threatscore-snapshots"
+
+
+class AttackSurfaceOverview(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated attack surface metrics per scan.
+
+    Stores counts for each attack surface type (internet-exposed, secrets,
+    privilege-escalation, ec2-imdsv1) to enable fast overview queries.
+    """
+
+    class AttackSurfaceTypeChoices(models.TextChoices):
+        INTERNET_EXPOSED = "internet-exposed", _("Internet Exposed")
+        SECRETS = "secrets", _("Exposed Secrets")
+        PRIVILEGE_ESCALATION = "privilege-escalation", _("Privilege Escalation")
+        EC2_IMDSV1 = "ec2-imdsv1", _("EC2 IMDSv1 Enabled")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="attack_surface_overviews",
+        related_query_name="attack_surface_overview",
+    )
+
+    attack_surface_type = models.CharField(
+        max_length=50,
+        choices=AttackSurfaceTypeChoices.choices,
+    )
+
+    # Finding counts
+    total_findings = models.IntegerField(default=0)  # All findings (PASS + FAIL)
+    failed_findings = models.IntegerField(default=0)  # Non-muted failed findings
+    muted_failed_findings = models.IntegerField(default=0)  # Muted failed findings
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_surface_overviews"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "attack_surface_type"),
+                name="unique_attack_surface_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="attack_surf_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-surface-overviews"
+
+
+class ProviderComplianceScore(RowLevelSecurityProtectedModel):
+    """
+    Compliance requirement status from latest completed scan per provider.
+
+    Used for efficient compliance watchlist queries with FAIL-dominant aggregation
+    across multiple providers. Updated via atomic upsert after each scan completion.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    compliance_id = models.TextField()
+    requirement_id = models.TextField()
+    requirement_status = StatusEnumField(choices=StatusChoices)
+
+    scan_completed_at = models.DateTimeField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "provider_compliance_scores"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "compliance_id", "requirement_id"),
+                name="unique_provider_compliance_req",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "compliance_id"],
+                name="pcs_tenant_prov_comp_idx",
+            ),
+        ]
+
+
+class TenantComplianceSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance counts per tenant with FAIL-dominant logic applied.
+
+    One row per (tenant, compliance_id). Used for fast watchlist queries when
+    no provider filter is applied. Recalculated after each scan by aggregating
+    across all providers with FAIL-dominant logic at requirement level.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    compliance_id = models.TextField()
+
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "tenant_compliance_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "compliance_id"),
+                name="unique_tenant_compliance_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]

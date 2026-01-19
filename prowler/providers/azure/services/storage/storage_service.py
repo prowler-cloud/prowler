@@ -141,10 +141,12 @@ class Storage(AzureService):
                                     container_delete_retention_policy,
                                     "enabled",
                                     False,
-                                ),
+                                )
+                                or False,
                                 days=getattr(
                                     container_delete_retention_policy, "days", 0
-                                ),
+                                )
+                                or 0,
                             ),
                             versioning_enabled=versioning_enabled,
                         )
@@ -220,12 +222,14 @@ class Storage(AzureService):
                                 share_delete_retention_policy,
                                 "enabled",
                                 False,
-                            ),
+                            )
+                            or False,
                             days=getattr(
                                 share_delete_retention_policy,
                                 "days",
                                 0,
-                            ),
+                            )
+                            or 0,
                         ),
                         smb_protocol_settings=SMBProtocolSettings(
                             channel_encryption=(
@@ -241,6 +245,11 @@ class Storage(AzureService):
                         ),
                     )
                 except Exception as error:
+                    if "File is not supported for the account." in str(error).strip():
+                        logger.warning(
+                            f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
                     logger.error(
                         f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

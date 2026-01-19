@@ -1,165 +1,181 @@
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { createSupervisor } from "@langchain/langgraph-supervisor";
-import { ChatOpenAI } from "@langchain/openai";
+import { createAgent } from "langchain";
 
-import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import {
-  complianceAgentPrompt,
-  findingsAgentPrompt,
-  overviewAgentPrompt,
-  providerAgentPrompt,
-  resourcesAgentPrompt,
-  rolesAgentPrompt,
-  scansAgentPrompt,
-  supervisorPrompt,
-  userInfoAgentPrompt,
-} from "@/lib/lighthouse/prompts";
+  getProviderCredentials,
+  getTenantConfig,
+} from "@/actions/lighthouse/lighthouse";
+import { TOOLS_UNAVAILABLE_MESSAGE } from "@/lib/lighthouse/constants";
+import type { ProviderType } from "@/lib/lighthouse/llm-factory";
+import { createLLM } from "@/lib/lighthouse/llm-factory";
 import {
-  getProviderCheckDetailsTool,
-  getProviderChecksTool,
-} from "@/lib/lighthouse/tools/checks";
+  getMCPTools,
+  initializeMCPClient,
+  isMCPAvailable,
+} from "@/lib/lighthouse/mcp-client";
 import {
-  getComplianceFrameworksTool,
-  getComplianceOverviewTool,
-  getCompliancesOverviewTool,
-} from "@/lib/lighthouse/tools/compliances";
-import {
-  getFindingsTool,
-  getMetadataInfoTool,
-} from "@/lib/lighthouse/tools/findings";
-import {
-  getFindingsBySeverityTool,
-  getFindingsByStatusTool,
-  getProvidersOverviewTool,
-} from "@/lib/lighthouse/tools/overview";
-import {
-  getProvidersTool,
-  getProviderTool,
-} from "@/lib/lighthouse/tools/providers";
-import {
-  getLatestResourcesTool,
-  getResourcesTool,
-  getResourceTool,
-} from "@/lib/lighthouse/tools/resources";
-import { getRolesTool, getRoleTool } from "@/lib/lighthouse/tools/roles";
-import { getScansTool, getScanTool } from "@/lib/lighthouse/tools/scans";
-import {
-  getMyProfileInfoTool,
-  getUsersTool,
-} from "@/lib/lighthouse/tools/users";
+  generateUserDataSection,
+  LIGHTHOUSE_SYSTEM_PROMPT_TEMPLATE,
+} from "@/lib/lighthouse/system-prompt";
+import { describeTool, executeTool } from "@/lib/lighthouse/tools/meta-tool";
 import { getModelParams } from "@/lib/lighthouse/utils";
 
-export async function initLighthouseWorkflow() {
-  const apiKey = await getAIKey();
-  const lighthouseConfig = await getLighthouseConfig();
+export interface RuntimeConfig {
+  model?: string;
+  provider?: string;
+  businessContext?: string;
+  currentData?: string;
+}
 
-  const modelParams = getModelParams(lighthouseConfig);
+/**
+ * Truncate description to specified length
+ */
+function truncateDescription(desc: string | undefined, maxLen: number): string {
+  if (!desc) return "No description available";
 
-  // Initialize models without API keys
-  const llm = new ChatOpenAI({
-    model: lighthouseConfig.model,
-    apiKey: apiKey,
-    tags: ["agent"],
-    ...modelParams,
-  });
+  const cleaned = desc.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
 
-  const supervisorllm = new ChatOpenAI({
-    model: lighthouseConfig.model,
-    apiKey: apiKey,
+  if (cleaned.length <= maxLen) return cleaned;
+
+  return cleaned.substring(0, maxLen) + "...";
+}
+
+/**
+ * Tools explicitly allowed for the LLM to list and execute.
+ * Follows the principle of least privilege - only these tools are accessible.
+ * All other tools are blocked by default.
+ */
+const ALLOWED_TOOLS = new Set([
+  // === Prowler Hub Tools - read-only ===
+  "prowler_hub_list_checks",
+  "prowler_hub_semantic_search_checks",
+  "prowler_hub_get_check_details",
+  "prowler_hub_get_check_code",
+  "prowler_hub_get_check_fixer",
+  "prowler_hub_list_compliances",
+  "prowler_hub_semantic_search_compliances",
+  "prowler_hub_get_compliance_details",
+  "prowler_hub_list_providers",
+  "prowler_hub_get_provider_services",
+  // === Prowler Docs Tools - read-only ===
+  "prowler_docs_search",
+  "prowler_docs_get_document",
+  // === Prowler App Tools - read-only ===
+  // Findings
+  "prowler_app_search_security_findings",
+  "prowler_app_get_finding_details",
+  "prowler_app_get_findings_overview",
+  // Providers
+  "prowler_app_search_providers",
+  // Scans
+  "prowler_app_list_scans",
+  "prowler_app_get_scan",
+  // Muting
+  "prowler_app_get_mutelist",
+  "prowler_app_list_mute_rules",
+  "prowler_app_get_mute_rule",
+  // Compliance
+  "prowler_app_get_compliance_overview",
+  "prowler_app_get_compliance_framework_state_details",
+  // Resources
+  "prowler_app_list_resources",
+  "prowler_app_get_resource",
+  "prowler_app_get_resources_overview",
+]);
+
+/**
+ * Check if a tool is allowed for LLM access.
+ * Returns true only if the tool is explicitly in the whitelist.
+ */
+export function isAllowedTool(toolName: string): boolean {
+  return ALLOWED_TOOLS.has(toolName);
+}
+
+/**
+ * Generate dynamic tool listing from MCP tools.
+ * Only includes tools that are explicitly whitelisted.
+ */
+function generateToolListing(): string {
+  if (!isMCPAvailable()) {
+    return TOOLS_UNAVAILABLE_MESSAGE;
+  }
+
+  const mcpTools = getMCPTools();
+
+  if (mcpTools.length === 0) {
+    return TOOLS_UNAVAILABLE_MESSAGE;
+  }
+
+  // Only include whitelisted tools
+  const safeTools = mcpTools.filter((tool) => isAllowedTool(tool.name));
+
+  let listing = "\n## Available Prowler Tools\n\n";
+  listing += `${safeTools.length} tools loaded from Prowler MCP\n\n`;
+
+  for (const tool of safeTools) {
+    const desc = truncateDescription(tool.description, 150);
+    listing += `- **${tool.name}**: ${desc}\n`;
+  }
+
+  listing +=
+    "\nUse describe_tool with exact tool name to see full schema and parameters.\n";
+
+  return listing;
+}
+
+export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
+  await initializeMCPClient();
+
+  const toolListing = generateToolListing();
+
+  let systemPrompt = LIGHTHOUSE_SYSTEM_PROMPT_TEMPLATE.replace(
+    "{{TOOL_LISTING}}",
+    toolListing,
+  );
+
+  // Add user-provided data section if available
+  const userDataSection = generateUserDataSection(
+    runtimeConfig?.businessContext,
+    runtimeConfig?.currentData,
+  );
+
+  if (userDataSection) {
+    systemPrompt += userDataSection;
+  }
+
+  const tenantConfigResult = await getTenantConfig();
+  const tenantConfig = tenantConfigResult?.data?.attributes;
+
+  const defaultProvider = tenantConfig?.default_provider || "openai";
+  const defaultModels = tenantConfig?.default_models || {};
+  const defaultModel = defaultModels[defaultProvider] || "gpt-5.2";
+
+  const providerType = (runtimeConfig?.provider ||
+    defaultProvider) as ProviderType;
+  const modelId = runtimeConfig?.model || defaultModel;
+
+  // Get credentials
+  const providerConfig = await getProviderCredentials(providerType);
+  const { credentials, base_url: baseUrl } = providerConfig;
+
+  // Get model params
+  const modelParams = getModelParams({ model: modelId });
+
+  // Initialize LLM
+  const llm = createLLM({
+    provider: providerType,
+    model: modelId,
+    credentials,
+    baseUrl,
     streaming: true,
-    tags: ["supervisor"],
-    ...modelParams,
+    tags: ["lighthouse-agent"],
+    modelParams,
   });
 
-  const providerAgent = createReactAgent({
-    llm: llm,
-    tools: [getProvidersTool, getProviderTool],
-    name: "provider_agent",
-    prompt: providerAgentPrompt,
+  const agent = createAgent({
+    model: llm,
+    tools: [describeTool, executeTool],
+    systemPrompt,
   });
 
-  const userInfoAgent = createReactAgent({
-    llm: llm,
-    tools: [getUsersTool, getMyProfileInfoTool],
-    name: "user_info_agent",
-    prompt: userInfoAgentPrompt,
-  });
-
-  const scansAgent = createReactAgent({
-    llm: llm,
-    tools: [getScansTool, getScanTool],
-    name: "scans_agent",
-    prompt: scansAgentPrompt,
-  });
-
-  const complianceAgent = createReactAgent({
-    llm: llm,
-    tools: [
-      getCompliancesOverviewTool,
-      getComplianceOverviewTool,
-      getComplianceFrameworksTool,
-    ],
-    name: "compliance_agent",
-    prompt: complianceAgentPrompt,
-  });
-
-  const findingsAgent = createReactAgent({
-    llm: llm,
-    tools: [
-      getFindingsTool,
-      getMetadataInfoTool,
-      getProviderChecksTool,
-      getProviderCheckDetailsTool,
-    ],
-    name: "findings_agent",
-    prompt: findingsAgentPrompt,
-  });
-
-  const overviewAgent = createReactAgent({
-    llm: llm,
-    tools: [
-      getProvidersOverviewTool,
-      getFindingsByStatusTool,
-      getFindingsBySeverityTool,
-    ],
-    name: "overview_agent",
-    prompt: overviewAgentPrompt,
-  });
-
-  const rolesAgent = createReactAgent({
-    llm: llm,
-    tools: [getRolesTool, getRoleTool],
-    name: "roles_agent",
-    prompt: rolesAgentPrompt,
-  });
-
-  const resourcesAgent = createReactAgent({
-    llm: llm,
-    tools: [getResourceTool, getResourcesTool, getLatestResourcesTool],
-    name: "resources_agent",
-    prompt: resourcesAgentPrompt,
-  });
-
-  const agents = [
-    userInfoAgent,
-    providerAgent,
-    overviewAgent,
-    scansAgent,
-    complianceAgent,
-    findingsAgent,
-    rolesAgent,
-    resourcesAgent,
-  ];
-
-  // Create supervisor workflow
-  const workflow = createSupervisor({
-    agents: agents,
-    llm: supervisorllm,
-    prompt: supervisorPrompt,
-    outputMode: "last_message",
-  });
-
-  // Compile and run
-  const app = workflow.compile();
-  return app;
+  return agent;
 }

@@ -1,10 +1,9 @@
-import React from "react";
-
 import { getProvider } from "@/actions/providers/providers";
 import {
   AddViaCredentialsForm,
   AddViaRoleForm,
 } from "@/components/providers/workflow/forms";
+import { SelectViaAlibabaCloud } from "@/components/providers/workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import {
   AddViaServiceAccountForm,
@@ -30,8 +29,8 @@ export default async function AddCredentialsPage({ searchParams }: Props) {
     const formData = new FormData();
     formData.append("id", providerId);
     const providerResponse = await getProvider(formData);
-    if (providerResponse.success && providerResponse.data) {
-      providerUid = providerResponse.data.attributes?.uid;
+    if (providerResponse?.data?.attributes?.uid) {
+      providerUid = providerResponse.data.attributes.uid;
     }
   }
 
@@ -42,6 +41,8 @@ export default async function AddCredentialsPage({ searchParams }: Props) {
       if (providerType === "github")
         return <SelectViaGitHub initialVia={via} />;
       if (providerType === "m365") return <SelectViaM365 initialVia={via} />;
+      if (providerType === "alibabacloud")
+        return <SelectViaAlibabaCloud initialVia={via} />;
       return null;
 
     case "credentials":

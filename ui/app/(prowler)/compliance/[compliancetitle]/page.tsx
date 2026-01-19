@@ -1,35 +1,37 @@
 import { Spacer } from "@heroui/spacer";
-import Image from "next/image";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import {
-  BarChart,
-  BarChartSkeleton,
   ClientAccordionWrapper,
+  ComplianceDownloadButton,
   ComplianceHeader,
-  ComplianceScanInfo,
-  HeatmapChart,
-  HeatmapChartSkeleton,
-  PieChart,
-  PieChartSkeleton,
+  RequirementsStatusCard,
+  RequirementsStatusCardSkeleton,
+  // SectionsFailureRateCard,
+  // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  ThreatScoreBreakdownCard,
+  ThreatScoreBreakdownCardSkeleton,
+  TopFailedSectionsCard,
+  TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import { cn } from "@/lib/utils";
 import {
   AttributesData,
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
-
-import { ThreatScoreDownloadButton } from "./threatscore-download-button";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -41,38 +43,6 @@ interface ComplianceDetailSearchParams {
   page?: string;
   pageSize?: string;
 }
-
-const ComplianceIconSmall = ({
-  logoPath,
-  title,
-}: {
-  logoPath: string;
-  title: string;
-}) => {
-  return (
-    <div className="relative h-6 w-6 shrink-0">
-      <Image
-        src={logoPath}
-        alt={`${title} logo`}
-        fill
-        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
-      />
-    </div>
-  );
-};
-
-const ChartsWrapper = ({
-  children,
-}: {
-  children: React.ReactNode;
-  logoPath?: string;
-}) => {
-  return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
-      {children}
-    </div>
-  );
-};
 
 export default async function ComplianceDetail({
   params,
@@ -98,8 +68,8 @@ export default async function ComplianceDetail({
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
-    ? `Compliance Details: ${formattedTitle} - ${version}`
-    : `Compliance Details: ${formattedTitle}`;
+    ? `${formattedTitle} - ${version}`
+    : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
 
@@ -120,59 +90,80 @@ export default async function ComplianceDetail({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Detect if this is a ThreatScore compliance view
+  const isThreatScore = complianceId?.includes("prowler_threatscore");
+
+  // Fetch ThreatScore data if applicable
+  let threatScoreData = null;
+  if (isThreatScore && selectedScanId) {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
+
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        overallScore: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
+  }
+
   // Use compliance_name from attributes if available, otherwise fallback to formatted title
   const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
-  const finalPageTitle = complianceName
-    ? `Compliance Details: ${complianceName}`
-    : pageTitle;
+  const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
 
   return (
-    <ContentLayout
-      title={finalPageTitle}
-      icon={
-        logoPath ? (
-          <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
-        ) : (
-          "fluent-mdl2:compliance-audit"
-        )
-      }
-    >
-      {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start">
-          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-            <ComplianceScanInfo scan={selectedScan} />
-          </div>
-          <Spacer y={8} />
-        </div>
-      )}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+    <ContentLayout title={finalPageTitle}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
           <ComplianceHeader
             scans={[]}
             uniqueRegions={uniqueRegions}
             showSearch={false}
             framework={compliancetitle}
             showProviders={false}
+            logoPath={logoPath}
+            complianceTitle={compliancetitle}
+            selectedScan={selectedScan}
           />
         </div>
-        {attributesData?.data?.[0]?.attributes?.framework ===
-          "ProwlerThreatScore" &&
-          selectedScanId && (
-            <div className="flex-shrink-0 pt-1">
-              <ThreatScoreDownloadButton scanId={selectedScanId} />
+        {(() => {
+          const framework = attributesData?.data?.[0]?.attributes?.framework;
+          const reportType = getReportTypeForFramework(framework);
+
+          return selectedScanId && reportType ? (
+            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType={reportType}
+                label="Download report"
+              />
             </div>
-          )}
+          ) : null;
+        })()}
       </div>
 
       <Suspense
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <ChartsWrapper logoPath={logoPath}>
-              <PieChartSkeleton />
-              <BarChartSkeleton />
-              <HeatmapChartSkeleton />
-            </ChartsWrapper>
+            {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-6 md:grid-cols-2",
+                isThreatScore && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+              )}
+            >
+              {isThreatScore && (
+                <div className="md:col-span-2 xl:col-span-1">
+                  <ThreatScoreBreakdownCardSkeleton />
+                </div>
+              )}
+              <RequirementsStatusCardSkeleton />
+              <TopFailedSectionsCardSkeleton />
+              {/* <SectionsFailureRateCardSkeleton /> */}
+            </div>
             <SkeletonAccordion />
           </div>
         }
@@ -182,8 +173,8 @@ export default async function ComplianceDetail({
           scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
-          logoPath={logoPath}
           attributesData={attributesData}
+          threatScoreData={threatScoreData}
         />
       </Suspense>
     </ContentLayout>
@@ -195,15 +186,18 @@ const SSRComplianceContent = async ({
   scanId,
   region,
   filter,
-  logoPath,
   attributesData,
+  threatScoreData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
-  logoPath?: string;
   attributesData: AttributesData;
+  threatScoreData: {
+    overallScore: number;
+    sectionScores: Record<string, number>;
+  } | null;
 }) => {
   const requirementsData = await getComplianceRequirements({
     complianceId,
@@ -215,11 +209,11 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <ChartsWrapper logoPath={logoPath}>
-          <PieChart pass={0} fail={0} manual={0} />
-          <BarChart sections={[]} />
-          <HeatmapChart categories={[]} />
-        </ChartsWrapper>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <RequirementsStatusCard pass={0} fail={0} manual={0} />
+          <TopFailedSectionsCard sections={[]} />
+          {/* <SectionsFailureRateCard categories={[]} /> */}
+        </div>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
@@ -232,7 +226,7 @@ const SSRComplianceContent = async ({
     requirementsData,
     filter,
   );
-  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
+  // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -242,21 +236,39 @@ const SSRComplianceContent = async ({
     { pass: 0, fail: 0, manual: 0 },
   );
   const accordionItems = mapper.toAccordionItems(data, scanId);
-  const topFailedSections = mapper.getTopFailedSections(data);
+  const topFailedResult = mapper.getTopFailedSections(data);
 
   return (
     <div className="flex flex-col gap-8">
-      <ChartsWrapper logoPath={logoPath}>
-        <PieChart
+      {/* Charts section */}
+      {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 md:grid-cols-2",
+          threatScoreData && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+        )}
+      >
+        {threatScoreData && (
+          <div className="md:col-span-2 xl:col-span-1">
+            <ThreatScoreBreakdownCard
+              overallScore={threatScoreData.overallScore}
+              sectionScores={threatScoreData.sectionScores}
+            />
+          </div>
+        )}
+        <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}
           manual={totalRequirements.manual}
         />
-        <BarChart sections={topFailedSections} />
-        <HeatmapChart categories={categoryHeatmapData} />
-      </ChartsWrapper>
+        <TopFailedSectionsCard
+          sections={topFailedResult.items}
+          dataType={topFailedResult.type}
+        />
+        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+      </div>
 
-      <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
+      <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}

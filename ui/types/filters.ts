@@ -11,6 +11,7 @@ export interface FilterOption {
   labelCheckboxGroup: string;
   values: string[];
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
+  labelFormatter?: (value: string) => string;
   index?: number;
   showSelectAll?: boolean;
   defaultToSelectAll?: boolean;
@@ -24,6 +25,7 @@ export interface CustomDropdownFilterProps {
 
 export enum FilterType {
   SCAN = "scan__in",
+  PROVIDER = "provider__in",
   PROVIDER_UID = "provider_uid__in",
   PROVIDER_TYPE = "provider_type__in",
   REGION = "region__in",
@@ -32,4 +34,6 @@ export enum FilterType {
   SEVERITY = "severity__in",
   STATUS = "status__in",
   DELTA = "delta__in",
+  CATEGORY = "category__in",
+  RESOURCE_GROUPS = "resource_groups__in",
 }

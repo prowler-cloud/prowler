@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_rdp_port",
   "CheckTitle": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 3389",
   "CheckType": [
@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:network:vcn",
   "Severity": "high",
   "ResourceType": "OciVcn",
+  "ResourceGroup": "network",
   "Description": "Security lists should not allow unrestricted RDP access from the internet.",
   "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",

@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_ssl_strict",
+  "CheckTitle": "SSL/TLS encryption mode is set to Full (Strict)",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **SSL/TLS encryption mode** by checking if the mode is set to `Full (Strict)` to ensure **end-to-end encryption** with certificate validation.",
+  "Risk": "Without **strict SSL mode**, traffic between Cloudflare and origin may use unvalidated or unencrypted connections.\n- **Confidentiality**: sensitive data can be intercepted in transit via man-in-the-middle attacks\n- **Integrity**: responses can be modified without detection between Cloudflare and origin\n- **Compliance**: may violate PCI-DSS, HIPAA, and other regulatory requirements for encrypted transport",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Overview\n3. Under SSL/TLS encryption mode, select Full (strict)\n4. Ensure your origin server has a valid SSL certificate installed (Cloudflare Origin CA or publicly trusted CA)",
+      "Terraform": "```hcl\n# Set SSL/TLS mode to Full (Strict) for end-to-end encryption\nresource \"cloudflare_zone_setting\" \"ssl\" {\n  zone_id    = \"<ZONE_ID>\"\n  setting_id = \"ssl\"\n  value      = \"strict\" # Critical: ensures certificate validation between Cloudflare and origin\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **SSL/TLS mode** to `Full (Strict)` and install a valid certificate on your origin server.\n- Use **Cloudflare Origin CA certificates** for seamless integration\n- Ensure origin server presents a valid certificate matching your domain\n- Enable **Authenticated Origin Pulls** for additional security",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_ssl_strict"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

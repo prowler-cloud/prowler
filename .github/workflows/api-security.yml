@@ -5,16 +5,10 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-security.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-security.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,16 +33,20 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
+          files: |
+            api/**
+            .github/workflows/api-security.yml
           files_ignore: |
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/AGENTS.md
 
       - name: Setup Python with Poetry
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -63,9 +61,9 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
-        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
-        run: poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
+        run: poetry run safety check --ignore 79023,79027,82754
+        # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
+        # TODO: 82754 filelock TOCTOU symlink vulnerability - transitive dep, awaiting upstream fix
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

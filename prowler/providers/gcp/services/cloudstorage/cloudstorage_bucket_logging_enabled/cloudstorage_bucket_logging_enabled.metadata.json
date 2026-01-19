@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_logging_enabled",
+  "CheckTitle": "Cloud Storage buckets have Usage and Storage Logs enabled",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Google Cloud Storage buckets** are evaluated to ensure that **Usage and Storage Logs** are enabled. Enabling these logs provides detailed visibility into access requests, usage patterns, and storage activity within each bucket.",
+  "Risk": "Buckets without Usage and Storage Logs enabled lack visibility into access and storage activity, which increases the risk of undetected data exfiltration, misuse, or configuration errors.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-usage-and-storage-logs.html",
+    "https://cloud.google.com/storage/docs/access-logs"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gsutil logging set on -b gs://<LOGGING_BUCKET> -o <LOG_OBJECT_PREFIX> gs://<BUCKET_NAME>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "```hcl\n# Example: enable Usage and Storage Logs on a Cloud Storage bucket\nresource \"google_storage_bucket\" \"example\" {\n  name     = var.bucket_name\n  location = var.location\n\n  logging {\n    log_bucket        = var.log_bucket_name\n    log_object_prefix = \"${var.bucket_name}/\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable Usage and Storage Logs for all Cloud Storage buckets to track access, detect anomalies, and maintain audit visibility of data operations.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Buckets missing the 'logging.logBucket' configuration are treated as having Usage and Storage Logs disabled. The 'logObjectPrefix' field is optional and defaults to the bucket name."
+}

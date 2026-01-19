@@ -24,7 +24,7 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
       onOpenChange={onOpenChange}
       size={size}
       classNames={{
-        base: "dark:bg-prowler-blue-800",
+        base: "border border-border-neutral-secondary bg-bg-neutral-secondary",
         closeButton: "rounded-md",
       }}
       backdrop="blur"

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.15.0
+  version: 1.18.0
   description: |-
     Prowler API specification.
 
@@ -280,6 +280,439 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: API key was successfully revoked
+  /api/v1/attack-paths-scans:
+    get:
+      operationId: attack_paths_scans_list
+      description: Retrieve Attack Paths scans for the tenant with support for filtering,
+        ordering, and pagination.
+      summary: List Attack Paths scans
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[completed_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[started_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+          x-spec-enum-id: d38ba07264e1ed34
+          enum:
+          - available
+          - cancelled
+          - completed
+          - executing
+          - failed
+          - scheduled
+        description: |-
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: d38ba07264e1ed34
+            enum:
+            - available
+            - cancelled
+            - completed
+            - executing
+            - failed
+            - scheduled
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+        explode: false
+        style: form
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - started_at
+            - -started_at
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsScanList'
+          description: ''
+  /api/v1/attack-paths-scans/{id}:
+    get:
+      operationId: attack_paths_scans_retrieve
+      description: Fetch full details for a specific Attack Paths scan.
+      summary: Retrieve Attack Paths scan details
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AttackPathsScanResponse'
+          description: ''
+  /api/v1/attack-paths-scans/{id}/queries:
+    get:
+      operationId: attack_paths_scans_queries_retrieve
+      description: Retrieve the catalog of Attack Paths queries available for this
+        Attack Paths scan.
+      summary: List attack paths queries
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsQueryList'
+          description: ''
+        '404':
+          description: No queries found for the selected provider
+  /api/v1/attack-paths-scans/{id}/queries/run:
+    post:
+      operationId: attack_paths_scans_queries_run_create
+      description: Execute the selected Attack Paths query against the Attack Paths
+        graph and return the resulting subgraph.
+      summary: Execute an Attack Paths query
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      tags:
+      - Attack Paths
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+        '400':
+          description: Bad request (e.g., Unknown Attack Paths query for the selected
+            provider)
+        '404':
+          description: No attack paths found for the given query and parameters
+        '500':
+          description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
@@ -711,6 +1144,8 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -723,6 +1158,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -866,18 +1314,36 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -885,22 +1351,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -910,7 +1382,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -940,6 +1415,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -1197,6 +1685,8 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1257,6 +1747,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1397,18 +1900,36 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1416,22 +1937,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1441,7 +1968,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1471,6 +2001,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -1706,6 +2249,8 @@ paths:
             - severity
             - check_id
             - check_metadata
+            - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1718,6 +2263,19 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1836,18 +2394,36 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1855,22 +2431,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -1880,7 +2462,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -1910,6 +2495,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2127,9 +2725,24 @@ paths:
             - services
             - regions
             - resource_types
+            - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2273,18 +2886,36 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2292,22 +2923,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2317,7 +2954,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2347,6 +2987,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2577,9 +3230,24 @@ paths:
             - services
             - regions
             - resource_types
+            - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -2698,18 +3366,36 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2717,22 +3403,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -2742,7 +3434,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -2772,6 +3467,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -3585,7 +4293,7 @@ paths:
       summary: Get Lighthouse AI Tenant config
       parameters:
       - in: query
-        name: fields[lighthouse-config]
+        name: fields[lighthouse-configurations]
         schema:
           type: array
           items:
@@ -3690,7 +4398,7 @@ paths:
       summary: List all LLM models
       parameters:
       - in: query
-        name: fields[LighthouseProviderModels]
+        name: fields[lighthouse-models]
         schema:
           type: array
           items:
@@ -3727,26 +4435,34 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 80350f3ab09becd9
+          x-spec-enum-id: 30bc523cb9ec0e8b
           enum:
+          - bedrock
           - openai
+          - openai_compatible
         description: |-
           LLM provider name
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 80350f3ab09becd9
+            x-spec-enum-id: 30bc523cb9ec0e8b
             enum:
+            - bedrock
             - openai
+            - openai_compatible
         description: |-
           Multiple values may be separated by commas.
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
         explode: false
         style: form
       - name: filter[search]
@@ -3811,7 +4527,7 @@ paths:
       summary: Retrieve LLM model details
       parameters:
       - in: query
-        name: fields[LighthouseProviderModels]
+        name: fields[lighthouse-models]
         schema:
           type: array
           items:
@@ -3849,7 +4565,7 @@ paths:
     get:
       operationId: lighthouse_providers_list
       description: Retrieve all LLM provider configurations for the current tenant
-      summary: List all LLM provider configs
+      summary: List all LLM provider configurations
       parameters:
       - in: query
         name: fields[lighthouse-providers]
@@ -3876,26 +4592,34 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 80350f3ab09becd9
+          x-spec-enum-id: 30bc523cb9ec0e8b
           enum:
+          - bedrock
           - openai
+          - openai_compatible
         description: |-
           LLM provider name
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 80350f3ab09becd9
+            x-spec-enum-id: 30bc523cb9ec0e8b
             enum:
+            - bedrock
             - openai
+            - openai_compatible
         description: |-
           Multiple values may be separated by commas.
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
         explode: false
         style: form
       - name: filter[search]
@@ -3957,7 +4681,7 @@ paths:
       operationId: lighthouse_providers_create
       description: Create a per-tenant configuration for an LLM provider. Only one
         configuration per provider type is allowed per tenant.
-      summary: Create LLM provider config
+      summary: Create LLM provider configuration
       tags:
       - Lighthouse AI
       requestBody:
@@ -3986,7 +4710,7 @@ paths:
       operationId: lighthouse_providers_retrieve
       description: Get details for a specific provider configuration in the current
         tenant.
-      summary: Retrieve LLM provider config
+      summary: Retrieve LLM provider configuration
       parameters:
       - in: query
         name: fields[lighthouse-providers]
@@ -4026,7 +4750,7 @@ paths:
     patch:
       operationId: lighthouse_providers_partial_update
       description: Partially update a provider configuration (e.g., base_url, is_active).
-      summary: Update LLM provider config
+      summary: Update LLM provider configuration
       parameters:
       - in: path
         name: id
@@ -4062,7 +4786,7 @@ paths:
       operationId: lighthouse_providers_destroy
       description: Delete a provider configuration. Any tenant defaults that reference
         this provider are cleared during deletion.
-      summary: Delete LLM provider config
+      summary: Delete LLM provider configuration
       parameters:
       - in: path
         name: id
@@ -4121,7 +4845,7 @@ paths:
     post:
       operationId: lighthouse_providers_refresh_models_create
       description: Fetch available models for this provider configuration and upsert
-        into catalog.
+        into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.
       summary: Refresh LLM models catalog
       parameters:
       - in: path
@@ -4156,6 +4880,743 @@ paths:
                         result: null
                         task_args: null
                         metadata: null
+          description: ''
+  /api/v1/mute-rules:
+    get:
+      operationId: mute_rules_list
+      description: Retrieve a list of all mute rules with filtering options.
+      summary: List all mute rules
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[created_by]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[enabled]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[reason__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - enabled
+            - -enabled
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMuteRuleList'
+          description: ''
+    post:
+      operationId: mute_rules_create
+      description: Create a new mute rule by providing finding IDs, name, and reason.
+        The rule will immediately mute the selected findings and launch a background
+        task to mute all historical findings with matching UIDs.
+      summary: Create a new mute rule
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleCreateResponse'
+          description: ''
+  /api/v1/mute-rules/{id}:
+    get:
+      operationId: mute_rules_retrieve
+      description: Fetch detailed information about a specific mute rule by ID.
+      summary: Retrieve a mute rule
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleResponse'
+          description: ''
+    patch:
+      operationId: mute_rules_partial_update
+      description: Update certain fields of an existing mute rule (e.g., name, reason,
+        enabled).
+      summary: Partially update a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+    delete:
+      operationId: mute_rules_destroy
+      description: 'Remove a mute rule from the system. Note: Previously muted findings
+        remain muted.'
+      summary: Delete a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/overviews/attack-surfaces:
+    get:
+      operationId: overviews_attack_surfaces_list
+      description: Retrieve aggregated attack surface metrics from latest completed
+        scans per provider.
+      summary: Get attack surface overview
+      parameters:
+      - in: query
+        name: fields[attack-surface-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - muted_failed_findings
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - muted_failed_findings
+            - -muted_failed_findings
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackSurfaceOverviewList'
+          description: ''
+  /api/v1/overviews/categories:
+    get:
+      operationId: overviews_categories_list
+      description: 'Retrieve aggregated category metrics from latest completed scans
+        per provider. Returns one row per category with total, failed, and new failed
+        findings counts, plus a severity breakdown showing failed findings per severity
+        level. '
+      summary: Get category overview
+      parameters:
+      - in: query
+        name: fields[category-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryOverviewList'
+          description: ''
+  /api/v1/overviews/compliance-watchlist:
+    get:
+      operationId: overviews_compliance_watchlist_list
+      description: 'Retrieve compliance metrics with FAIL-dominant aggregation. Without
+        filters: uses pre-aggregated TenantComplianceSummary. With provider filters:
+        queries ProviderComplianceScore with FAIL-dominant logic where any FAIL in
+        a requirement marks it as failed.'
+      summary: Get compliance watchlist overview
+      parameters:
+      - in: query
+        name: fields[compliance-watchlist-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - compliance_id
+            - requirements_passed
+            - requirements_failed
+            - requirements_manual
+            - total_requirements
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - compliance_id
+            - -compliance_id
+            - requirements_passed
+            - -requirements_passed
+            - requirements_failed
+            - -requirements_failed
+            - requirements_manual
+            - -requirements_manual
+            - total_requirements
+            - -total_requirements
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComplianceWatchlistOverviewList'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -4230,15 +5691,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4246,22 +5710,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4271,7 +5741,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4411,15 +5884,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4427,22 +5903,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4452,7 +5934,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4530,6 +6015,160 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
           description: ''
+  /api/v1/overviews/findings_severity/timeseries:
+    get:
+      operationId: overviews_findings_severity_timeseries_retrieve
+      description: Retrieve daily aggregated findings data grouped by severity levels
+        over a date range. Returns one data point per day with counts of failed findings
+        by severity (critical, high, medium, low, informational) and muted findings.
+        Days without scans are filled forward with the most recent known values. Use
+        date_from (required) and date_to filters to specify the range.
+      summary: Get findings severity data over time
+      parameters:
+      - in: query
+        name: fields[findings-severity-over-time]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - critical
+            - high
+            - medium
+            - low
+            - informational
+            - muted
+            - scan_ids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[date_from]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_to]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - critical
+            - -critical
+            - high
+            - -high
+            - medium
+            - -medium
+            - low
+            - -low
+            - informational
+            - -informational
+            - muted
+            - -muted
+            - scan_ids
+            - -scan_ids
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingsSeverityOverTimeResponse'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
@@ -4595,13 +6234,355 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderCountResponse'
           description: ''
+  /api/v1/overviews/regions:
+    get:
+      operationId: overviews_regions_retrieve
+      description: Retrieve an aggregated summary of findings grouped by region. The
+        response includes the total, passed, failed, and muted findings for each region
+        based on the latest completed scans per provider. Standard overview filters
+        (inserted_at, provider filters, region filters, etc.) are supported.
+      summary: Get findings data by region
+      parameters:
+      - in: query
+        name: fields[regions-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - provider_type
+            - region
+            - total
+            - fail
+            - muted
+            - pass
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - provider_type
+            - -provider_type
+            - region
+            - -region
+            - total
+            - -total
+            - fail
+            - -fail
+            - muted
+            - -muted
+            - pass
+            - -pass
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewRegionResponse'
+          description: ''
+  /api/v1/overviews/resource-groups:
+    get:
+      operationId: overviews_resource_groups_list
+      description: Retrieve aggregated resource group metrics from latest completed
+        scans per provider. Returns one row per resource group with total, failed,
+        and new failed findings counts, plus a severity breakdown showing failed findings
+        per severity level, and a count of distinct resources evaluated per group.
+      summary: Get resource group overview
+      parameters:
+      - in: query
+        name: fields[resource-group-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - resources_count
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 684bf4173d2b754f
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 684bf4173d2b754f
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_group]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - resources_count
+            - -resources_count
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceGroupOverviewList'
+          description: ''
   /api/v1/overviews/services:
     get:
       operationId: overviews_services_retrieve
       description: Retrieve an aggregated summary of findings grouped by service.
         The response includes the total count of findings for each service, as long
-        as there are at least one finding for that service. At least one of the `inserted_at`
-        filters must be provided.
+        as there are at least one finding for that service.
       summary: Get findings data by service
       parameters:
       - in: query
@@ -4658,15 +6639,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4674,22 +6658,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -4699,7 +6689,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -4755,6 +6748,90 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewServiceResponse'
+          description: ''
+  /api/v1/overviews/threatscore:
+    get:
+      operationId: overviews_threatscore_retrieve
+      description: Retrieve ThreatScore metrics. By default, returns the latest snapshot
+        for each provider. Use snapshot_id to retrieve a specific historical snapshot.
+      summary: Get ThreatScore snapshots
+      parameters:
+      - in: query
+        name: fields[threatscore-snapshots]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - inserted_at
+            - scan
+            - provider
+            - compliance_id
+            - overall_score
+            - score_delta
+            - section_scores
+            - critical_requirements
+            - total_requirements
+            - passed_requirements
+            - failed_requirements
+            - manual_requirements
+            - total_findings
+            - passed_findings
+            - failed_findings
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - scan
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - in: query
+        name: provider_id
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific provider ID
+      - in: query
+        name: provider_id__in
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
+      - in: query
+        name: provider_type
+        schema:
+          type: string
+        description: Filter by provider type (aws, azure, gcp, etc.)
+      - in: query
+        name: provider_type__in
+        schema:
+          type: string
+        description: Filter by multiple provider types (comma-separated)
+      - in: query
+        name: snapshot_id
+        schema:
+          type: string
+          format: uuid
+        description: Retrieve a specific snapshot by ID. If not provided, returns
+          latest snapshots.
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ThreatScoreSnapshotResponse'
           description: ''
   /api/v1/processors:
     get:
@@ -5385,15 +7462,18 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5401,22 +7481,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5426,22 +7512,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5449,22 +7541,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -5474,7 +7572,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - name: filter[search]
@@ -6009,10 +8110,27 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -6072,15 +8190,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6088,22 +8209,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6113,7 +8240,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6334,6 +8464,10 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -6393,10 +8527,27 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -6441,15 +8592,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6457,22 +8611,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6482,7 +8642,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6649,9 +8812,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -6711,15 +8888,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6727,22 +8907,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -6752,7 +8938,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -6940,9 +9129,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -6987,15 +9190,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7003,22 +9209,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7028,7 +9240,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -7826,15 +10041,18 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 6f034074d7104650
+          x-spec-enum-id: 684bf4173d2b754f
           enum:
+          - alibabacloud
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
-          - oci
+          - mongodbatlas
+          - oraclecloud
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7842,22 +10060,28 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 684bf4173d2b754f
             enum:
+            - alibabacloud
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
-            - oci
+            - mongodbatlas
+            - oraclecloud
         description: |-
           Multiple values may be separated by commas.
 
@@ -7867,7 +10091,10 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
         explode: false
         style: form
       - in: query
@@ -8203,6 +10430,138 @@ paths:
           description: CSV file containing the compliance report
         '404':
           description: Compliance report not found
+  /api/v1/scans/{id}/ens:
+    get:
+      operationId: scans_ens_retrieve
+      description: Download ENS RD2022 compliance report (e.g., 'ens_rd2022_aws')
+        as a PDF file.
+      summary: Retrieve ENS RD2022 compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the ENS compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no ENS reports, or the ENS report generation task
+            has not started yet
+  /api/v1/scans/{id}/nis2:
+    get:
+      operationId: scans_nis2_retrieve
+      description: Download NIS2 compliance report (Directive (EU) 2022/2555) as a
+        PDF file.
+      summary: Retrieve NIS2 compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the NIS2 compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no NIS2 reports, or the NIS2 report generation
+            task has not started yet
   /api/v1/scans/{id}/report:
     get:
       operationId: scans_report_retrieve
@@ -9799,6 +12158,415 @@ paths:
           description: ''
 components:
   schemas:
+    AttackPathsNode:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-nodes
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            labels:
+              type: array
+              items:
+                type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - labels
+          - properties
+    AttackPathsQuery:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-queries
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            provider:
+              type: string
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsQueryParameter'
+          required:
+          - id
+          - name
+          - description
+          - provider
+          - parameters
+    AttackPathsQueryParameter:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-parameters
+        id: {}
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            label:
+              type: string
+            data_type:
+              type: string
+              default: string
+            description:
+              type: string
+              nullable: true
+            placeholder:
+              type: string
+              nullable: true
+          required:
+          - name
+          - label
+    AttackPathsQueryResult:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-results
+        attributes:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsNode'
+            relationships:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsRelationship'
+          required:
+          - nodes
+          - relationships
+    AttackPathsQueryRunRequestRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - attack-paths-query-run-requests
+            attributes:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 1
+                parameters:
+                  type: object
+                  additionalProperties: {}
+              required:
+              - id
+      required:
+      - data
+    AttackPathsRelationship:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-relationships
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            label:
+              type: string
+            source:
+              type: string
+            target:
+              type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - label
+          - source
+          - target
+          - properties
+    AttackPathsScan:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-scans
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            state:
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              type: string
+              description: |-
+                * `available` - Available
+                * `scheduled` - Scheduled
+                * `executing` - Executing
+                * `completed` - Completed
+                * `failed` - Failed
+                * `cancelled` - Cancelled
+              x-spec-enum-id: d38ba07264e1ed34
+              readOnly: true
+            progress:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+            provider_alias:
+              type: string
+              readOnly: true
+            provider_type:
+              type: string
+              readOnly: true
+            provider_uid:
+              type: string
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+            duration:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              nullable: true
+              description: Duration in seconds
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+            task:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - tasks
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+          required:
+          - provider
+    AttackPathsScanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttackPathsScan'
+      required:
+      - data
+    AttackSurfaceOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-surface-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            muted_failed_findings:
+              type: integer
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - muted_failed_findings
+    CategoryOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - category-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - severity
     ComplianceOverview:
       type: object
       required:
@@ -9948,6 +12716,43 @@ components:
                 type: string
           required:
           - regions
+    ComplianceWatchlistOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - compliance-watchlist-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            compliance_id:
+              type: string
+            requirements_passed:
+              type: integer
+            requirements_failed:
+              type: integer
+            requirements_manual:
+              type: integer
+            total_requirements:
+              type: integer
+          required:
+          - id
+          - compliance_id
+          - requirements_passed
+          - requirements_failed
+          - requirements_manual
+          - total_requirements
     Finding:
       type: object
       required:
@@ -10015,6 +12820,17 @@ components:
               type: string
               maxLength: 100
             check_metadata: {}
+            categories:
+              type: array
+              items:
+                type: string
+                maxLength: 100
+              nullable: true
+              description: Categories from check metadata for efficient filtering
+            resource_groups:
+              type: string
+              nullable: true
+              description: Resource group from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -10165,10 +12981,19 @@ components:
               type: array
               items:
                 type: string
+            categories:
+              type: array
+              items:
+                type: string
+            groups:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - resource_types
+          - categories
     FindingMetadataResponse:
       type: object
       properties:
@@ -10181,6 +13006,60 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Finding'
+      required:
+      - data
+    FindingsSeverityOverTime:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - findings-severity-over-time
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              format: date
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            informational:
+              type: integer
+            muted:
+              type: integer
+            scan_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+          required:
+          - id
+          - critical
+          - high
+          - medium
+          - low
+          - informational
+          - muted
+          - scan_ids
+    FindingsSeverityOverTimeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingsSeverityOverTime'
       required:
       - data
     Integration:
@@ -11670,12 +14549,16 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               description: |-
                 LLM provider name
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
@@ -11707,18 +14590,84 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               description: |-
-                LLM provider name
+                LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
               nullable: true
-              maxLength: 200
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
             credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
               writeOnly: true
             is_active:
               type: boolean
@@ -11747,18 +14696,86 @@ components:
                 provider_type:
                   enum:
                   - openai
+                  - bedrock
+                  - openai_compatible
                   type: string
-                  x-spec-enum-id: 80350f3ab09becd9
+                  x-spec-enum-id: 30bc523cb9ec0e8b
                   description: |-
-                    LLM provider name
+                    LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
 
                     * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
                 base_url:
                   type: string
                   format: uri
                   nullable: true
-                  maxLength: 200
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
                 credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
                   writeOnly: true
                 is_active:
                   type: boolean
@@ -11804,19 +14821,85 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               readOnly: true
               description: |-
                 LLM provider name
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
               nullable: true
-              maxLength: 200
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
             credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
               writeOnly: true
             is_active:
               type: boolean
@@ -11840,7 +14923,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - LighthouseProviderModels
+          - lighthouse-models
         id:
           type: string
           format: uuid
@@ -11913,7 +14996,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - lighthouse-config
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -11950,7 +15033,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - lighthouse-config
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -12059,6 +15142,272 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    MuteRule:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              description: Whether this rule is currently enabled
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    MuteRuleCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              readOnly: true
+              description: Whether this rule is currently enabled
+            finding_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              writeOnly: true
+              description: List of Finding IDs to mute (will be converted to UIDs)
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+          - finding_ids
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    MuteRuleCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  readOnly: true
+                  description: Whether this rule is currently enabled
+                finding_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  writeOnly: true
+                  description: List of Finding IDs to mute (will be converted to UIDs)
+                finding_uids:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  readOnly: true
+                  description: List of finding UIDs that are muted by this rule
+              required:
+              - name
+              - reason
+              - finding_ids
+            relationships:
+              type: object
+              properties:
+                created_by:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - users
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
+      required:
+      - data
+    MuteRuleCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRuleCreate'
+      required:
+      - data
+    MuteRuleResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRule'
       required:
       - data
     OpenApiResponseResponse:
@@ -12215,6 +15564,53 @@ components:
           $ref: '#/components/schemas/OverviewProvider'
       required:
       - data
+    OverviewRegion:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - regions-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              readOnly: true
+            provider_type:
+              type: string
+            region:
+              type: string
+            total:
+              type: integer
+            fail:
+              type: integer
+            muted:
+              type: integer
+            pass:
+              type: integer
+          required:
+          - provider_type
+          - region
+          - total
+          - fail
+          - muted
+          - pass
+    OverviewRegionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewRegion'
+      required:
+      - data
     OverviewService:
       type: object
       required:
@@ -12300,6 +15696,42 @@ components:
           $ref: '#/components/schemas/OverviewSeverity'
       required:
       - data
+    PaginatedAttackPathsQueryList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsQuery'
+      required:
+      - data
+    PaginatedAttackPathsScanList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsScan'
+      required:
+      - data
+    PaginatedAttackSurfaceOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackSurfaceOverview'
+      required:
+      - data
+    PaginatedCategoryOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryOverview'
+      required:
+      - data
     PaginatedComplianceOverviewAttributesList:
       type: object
       properties:
@@ -12325,6 +15757,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ComplianceOverview'
+      required:
+      - data
+    PaginatedComplianceWatchlistOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceWatchlistOverview'
       required:
       - data
     PaginatedFindingList:
@@ -12399,6 +15840,15 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - data
+    PaginatedMuteRuleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MuteRule'
+      required:
+      - data
     PaginatedProcessorList:
       type: object
       properties:
@@ -12433,6 +15883,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderSecret'
+      required:
+      - data
+    PaginatedResourceGroupOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceGroupOverview'
       required:
       - data
     PaginatedResourceList:
@@ -12877,19 +16336,87 @@ components:
                 provider_type:
                   enum:
                   - openai
+                  - bedrock
+                  - openai_compatible
                   type: string
-                  x-spec-enum-id: 80350f3ab09becd9
+                  x-spec-enum-id: 30bc523cb9ec0e8b
                   readOnly: true
                   description: |-
                     LLM provider name
 
                     * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
                 base_url:
                   type: string
                   format: uri
                   nullable: true
-                  maxLength: 200
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
                 credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
                   writeOnly: true
                 is_active:
                   type: boolean
@@ -12911,7 +16438,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - lighthouse-config
+              - lighthouse-configurations
             id:
               type: string
               format: uuid
@@ -12924,6 +16451,44 @@ components:
                   type: string
                   maxLength: 50
                 default_models: {}
+      required:
+      - data
+    PatchedMuteRuleUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  description: Whether this rule is currently enabled
       required:
       - data
     PatchedProcessorUpdateRequest:
@@ -13397,6 +16962,17 @@ components:
                     - github_app_id
                     - github_app_key
                   - type: object
+                    title: IaC Repository Credentials
+                    properties:
+                      repository_url:
+                        type: string
+                        description: Repository URL to scan for IaC files.
+                      access_token:
+                        type: string
+                        description: Optional access token for private repositories.
+                    required:
+                    - repository_url
+                  - type: object
                     title: Oracle Cloud Infrastructure (OCI) API Key Credentials
                     properties:
                       user:
@@ -13429,6 +17005,56 @@ components:
                     - fingerprint
                     - tenancy
                     - region
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
+                  - type: object
+                    title: Alibaba Cloud Static Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID for authentication.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret for authentication.
+                      security_token:
+                        type: string
+                        description: The STS security token for temporary credentials
+                          (optional).
+                    required:
+                    - access_key_id
+                    - access_key_secret
+                  - type: object
+                    title: Alibaba Cloud RAM Role Assumption
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID of the RAM user
+                          that will assume the role.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret of the RAM
+                          user that will assume the role.
+                      role_session_name:
+                        type: string
+                        description: An identifier for the role session (optional,
+                          defaults to 'ProwlerSession').
+                    required:
+                    - role_arn
+                    - access_key_id
+                    - access_key_secret
                   writeOnly: true
               required:
               - secret
@@ -14423,7 +18049,10 @@ components:
               - kubernetes
               - m365
               - github
-              - oci
+              - mongodbatlas
+              - iac
+              - oraclecloud
+              - alibabacloud
               type: string
               description: |-
                 * `aws` - AWS
@@ -14432,8 +18061,11 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
-                * `oci` - Oracle Cloud Infrastructure
-              x-spec-enum-id: 6f034074d7104650
+                * `mongodbatlas` - MongoDB Atlas
+                * `iac` - IaC
+                * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
+              x-spec-enum-id: 684bf4173d2b754f
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -14545,9 +18177,12 @@ components:
               - kubernetes
               - m365
               - github
-              - oci
+              - mongodbatlas
+              - iac
+              - oraclecloud
+              - alibabacloud
               type: string
-              x-spec-enum-id: 6f034074d7104650
+              x-spec-enum-id: 684bf4173d2b754f
               description: |-
                 Type of provider to create.
 
@@ -14557,7 +18192,10 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
-                * `oci` - Oracle Cloud Infrastructure
+                * `mongodbatlas` - MongoDB Atlas
+                * `iac` - IaC
+                * `oraclecloud` - Oracle Cloud Infrastructure
+                * `alibabacloud` - Alibaba Cloud
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -14601,9 +18239,12 @@ components:
                   - kubernetes
                   - m365
                   - github
-                  - oci
+                  - mongodbatlas
+                  - iac
+                  - oraclecloud
+                  - alibabacloud
                   type: string
-                  x-spec-enum-id: 6f034074d7104650
+                  x-spec-enum-id: 684bf4173d2b754f
                   description: |-
                     Type of provider to create.
 
@@ -14613,7 +18254,10 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
-                    * `oci` - Oracle Cloud Infrastructure
+                    * `mongodbatlas` - MongoDB Atlas
+                    * `iac` - IaC
+                    * `oraclecloud` - Oracle Cloud Infrastructure
+                    * `alibabacloud` - Alibaba Cloud
                 uid:
                   type: string
                   minLength: 3
@@ -15323,6 +18967,17 @@ components:
                 - github_app_id
                 - github_app_key
               - type: object
+                title: IaC Repository Credentials
+                properties:
+                  repository_url:
+                    type: string
+                    description: Repository URL to scan for IaC files.
+                  access_token:
+                    type: string
+                    description: Optional access token for private repositories.
+                required:
+                - repository_url
+              - type: object
                 title: Oracle Cloud Infrastructure (OCI) API Key Credentials
                 properties:
                   user:
@@ -15353,6 +19008,56 @@ components:
                 - fingerprint
                 - tenancy
                 - region
+              - type: object
+                title: MongoDB Atlas API Key
+                properties:
+                  atlas_public_key:
+                    type: string
+                    description: MongoDB Atlas API public key.
+                  atlas_private_key:
+                    type: string
+                    description: MongoDB Atlas API private key.
+                required:
+                - atlas_public_key
+                - atlas_private_key
+              - type: object
+                title: Alibaba Cloud Static Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID for authentication.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret for authentication.
+                  security_token:
+                    type: string
+                    description: The STS security token for temporary credentials
+                      (optional).
+                required:
+                - access_key_id
+                - access_key_secret
+              - type: object
+                title: Alibaba Cloud RAM Role Assumption
+                properties:
+                  role_arn:
+                    type: string
+                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID of the RAM user that
+                      will assume the role.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret of the RAM user
+                      that will assume the role.
+                  role_session_name:
+                    type: string
+                    description: An identifier for the role session (optional, defaults
+                      to 'ProwlerSession').
+                required:
+                - role_arn
+                - access_key_id
+                - access_key_secret
               writeOnly: true
           required:
           - secret_type
@@ -15623,6 +19328,17 @@ components:
                     - github_app_id
                     - github_app_key
                   - type: object
+                    title: IaC Repository Credentials
+                    properties:
+                      repository_url:
+                        type: string
+                        description: Repository URL to scan for IaC files.
+                      access_token:
+                        type: string
+                        description: Optional access token for private repositories.
+                    required:
+                    - repository_url
+                  - type: object
                     title: Oracle Cloud Infrastructure (OCI) API Key Credentials
                     properties:
                       user:
@@ -15655,6 +19371,56 @@ components:
                     - fingerprint
                     - tenancy
                     - region
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
+                  - type: object
+                    title: Alibaba Cloud Static Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID for authentication.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret for authentication.
+                      security_token:
+                        type: string
+                        description: The STS security token for temporary credentials
+                          (optional).
+                    required:
+                    - access_key_id
+                    - access_key_secret
+                  - type: object
+                    title: Alibaba Cloud RAM Role Assumption
+                    properties:
+                      role_arn:
+                        type: string
+                        description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                      access_key_id:
+                        type: string
+                        description: The Alibaba Cloud access key ID of the RAM user
+                          that will assume the role.
+                      access_key_secret:
+                        type: string
+                        description: The Alibaba Cloud access key secret of the RAM
+                          user that will assume the role.
+                      role_session_name:
+                        type: string
+                        description: An identifier for the role session (optional,
+                          defaults to 'ProwlerSession').
+                    required:
+                    - role_arn
+                    - access_key_id
+                    - access_key_secret
                   writeOnly: true
               required:
               - secret_type
@@ -15941,6 +19707,17 @@ components:
                 - github_app_id
                 - github_app_key
               - type: object
+                title: IaC Repository Credentials
+                properties:
+                  repository_url:
+                    type: string
+                    description: Repository URL to scan for IaC files.
+                  access_token:
+                    type: string
+                    description: Optional access token for private repositories.
+                required:
+                - repository_url
+              - type: object
                 title: Oracle Cloud Infrastructure (OCI) API Key Credentials
                 properties:
                   user:
@@ -15971,6 +19748,56 @@ components:
                 - fingerprint
                 - tenancy
                 - region
+              - type: object
+                title: MongoDB Atlas API Key
+                properties:
+                  atlas_public_key:
+                    type: string
+                    description: MongoDB Atlas API public key.
+                  atlas_private_key:
+                    type: string
+                    description: MongoDB Atlas API private key.
+                required:
+                - atlas_public_key
+                - atlas_private_key
+              - type: object
+                title: Alibaba Cloud Static Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID for authentication.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret for authentication.
+                  security_token:
+                    type: string
+                    description: The STS security token for temporary credentials
+                      (optional).
+                required:
+                - access_key_id
+                - access_key_secret
+              - type: object
+                title: Alibaba Cloud RAM Role Assumption
+                properties:
+                  role_arn:
+                    type: string
+                    description: The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).
+                  access_key_id:
+                    type: string
+                    description: The Alibaba Cloud access key ID of the RAM user that
+                      will assume the role.
+                  access_key_secret:
+                    type: string
+                    description: The Alibaba Cloud access key secret of the RAM user
+                      that will assume the role.
+                  role_session_name:
+                    type: string
+                    description: An identifier for the role session (optional, defaults
+                      to 'ProwlerSession').
+                required:
+                - role_arn
+                - access_key_id
+                - access_key_secret
               writeOnly: true
           required:
           - secret
@@ -16059,6 +19886,26 @@ components:
             failed_findings_count:
               type: integer
               readOnly: true
+            metadata:
+              type: string
+              readOnly: true
+              nullable: true
+            details:
+              type: string
+              readOnly: true
+              nullable: true
+            partition:
+              type: string
+              readOnly: true
+              nullable: true
+            groups:
+              type: array
+              items:
+                type: string
+                maxLength: 100
+              readOnly: true
+              nullable: true
+              description: Groups for categorization (e.g., compute, storage, IAM)
             type:
               type: string
               readOnly: true
@@ -16120,6 +19967,44 @@ components:
               readOnly: true
           required:
           - provider
+    ResourceGroupOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-group-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            resources_count:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - resources_count
+          - severity
     ResourceMetadata:
       type: object
       required:
@@ -16150,10 +20035,15 @@ components:
               type: array
               items:
                 type: string
+            groups:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - types
+          - groups
     ResourceMetadataResponse:
       type: object
       properties:
@@ -17024,7 +20914,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/ProviderGroup'
+          $ref: '#/components/schemas/MuteRule'
       required:
       - data
     Task:
@@ -17529,6 +21419,143 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Tenant'
+      required:
+      - data
+    ThreatScoreSnapshot:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - threatscore-snapshots
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            compliance_id:
+              type: string
+              readOnly: true
+              description: Compliance framework ID (e.g., 'prowler_threatscore_aws')
+            overall_score:
+              type: string
+              format: decimal
+              pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+              readOnly: true
+              description: Overall ThreatScore percentage (0-100)
+            score_delta:
+              type: string
+              format: decimal
+              pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+              readOnly: true
+              nullable: true
+              description: Score change compared to previous snapshot (positive =
+                improvement)
+            section_scores:
+              readOnly: true
+              description: ThreatScore breakdown by section
+            critical_requirements:
+              readOnly: true
+              description: List of critical failed requirements (risk >= 4)
+            total_requirements:
+              type: integer
+              readOnly: true
+              description: Total number of requirements evaluated
+            passed_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with PASS status
+            failed_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with FAIL status
+            manual_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with MANUAL status
+            total_findings:
+              type: integer
+              readOnly: true
+              description: Total number of findings across all requirements
+            passed_findings:
+              type: integer
+              readOnly: true
+              description: Number of findings with PASS status
+            failed_findings:
+              type: integer
+              readOnly: true
+              description: Number of findings with FAIL status
+        relationships:
+          type: object
+          properties:
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    ThreatScoreSnapshotResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ThreatScoreSnapshot'
       required:
       - data
     Token:
@@ -18036,6 +22063,8 @@ tags:
     revoking tasks that have not started.
 - name: Scan
   description: Endpoints for triggering manual scans and viewing scan results.
+- name: Attack Paths
+  description: Endpoints for Attack Paths scan status and executing Attack Paths queries.
 - name: Schedule
   description: Endpoints for managing scan schedules, allowing configuration of automated
     scans with different scheduling options.
@@ -18068,3 +22097,7 @@ tags:
 - name: API Keys
   description: Endpoints for API keys management. These can be used as an alternative
     to JWT authorization.
+- name: Mute Rules
+  description: Endpoints for simple mute rules management. These can be used as an
+    alternative to the Mutelist Processor if you need to mute specific findings across
+    your tenant with a specific reason.

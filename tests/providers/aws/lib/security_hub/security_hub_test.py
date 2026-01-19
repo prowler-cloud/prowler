@@ -133,7 +133,7 @@ class TestSecurityHub:
                 (
                     "root",
                     WARNING,
-                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/",
+                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.com/user-guide/providers/aws/securityhub#aws-security-hub-integration-with-prowler",
                 )
             ]
 
@@ -1376,7 +1376,7 @@ class TestSecurityHub:
                 (
                     "root",
                     WARNING,
-                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/",
+                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.com/user-guide/providers/aws/securityhub#aws-security-hub-integration-with-prowler",
                 ),
             ]
 

@@ -16,6 +16,9 @@ shadcn/
 │   └── resource-stats-card/
 │       ├── resource-stats-card.tsx
 │       ├── resource-stats-card.example.tsx
+├── tabs/
+│   ├── tabs.tsx                # Base tab components
+│   ├── generic-tabs.tsx        # Generic reusable tabs with lazy loading
 ├── index.ts                    # Barrel exports
 └── README.md
 ```
@@ -27,7 +30,82 @@ All shadcn components can be imported from `@/components/shadcn`:
 ```tsx
 import { Card, CardHeader, CardContent } from "@/components/shadcn";
 import { ResourceStatsCard } from "@/components/shadcn";
+import { GenericTabs, type TabItem } from "@/components/shadcn";
 ```
+
+### GenericTabs Component
+
+The `GenericTabs` component provides a flexible, lazy-loaded tabs interface. Content is only rendered when the tab is active, improving performance.
+
+**Basic Example:**
+
+```tsx
+import { lazy } from "react";
+import { GenericTabs, type TabItem } from "@/components/shadcn";
+
+const OverviewContent = lazy(() => import("./OverviewContent"));
+const DetailsContent = lazy(() => import("./DetailsContent"));
+
+const tabs: TabItem[] = [
+  {
+    id: "overview",
+    label: "Overview",
+    content: OverviewContent,
+  },
+  {
+    id: "details",
+    label: "Details",
+    content: DetailsContent,
+  },
+];
+
+export function MyComponent() {
+  return <GenericTabs tabs={tabs} defaultTabId="overview" />;
+}
+```
+
+**With Icons and Props:**
+
+```tsx
+import { Eye, Settings } from "lucide-react";
+import { GenericTabs, type TabItem } from "@/components/shadcn";
+
+const tabs: TabItem[] = [
+  {
+    id: "view",
+    label: "View",
+    icon: <Eye size={16} />,
+    content: ViewContent,
+    contentProps: { data: myData },
+  },
+  {
+    id: "config",
+    label: "Config",
+    icon: <Settings size={16} />,
+    content: ConfigContent,
+  },
+];
+
+export function MyComponent() {
+  return (
+    <GenericTabs
+      tabs={tabs}
+      defaultTabId="view"
+      onTabChange={(tabId) => console.log("Active tab:", tabId)}
+    />
+  );
+}
+```
+
+**Props:**
+
+- `tabs` - Array of `TabItem` objects
+- `defaultTabId` - Initial active tab ID (defaults to first tab)
+- `className` - Wrapper class
+- `listClassName` - TabsList class
+- `triggerClassName` - TabsTrigger class
+- `contentClassName` - TabsContent class
+- `onTabChange` - Callback fired when tab changes
 
 ## Adding New shadcn Components
 

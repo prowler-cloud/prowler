@@ -93,8 +93,14 @@ The following list includes all the Azure checks with configurable variables tha
 ## GCP
 
 ### Configurable Checks
+The following list includes all the GCP checks with configurable variables that can be changed in the configuration yaml file:
 
-## Kubernetes
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `compute_configuration_changes`                              | `compute_audit_log_lookback_days`                | Integer         |
+| `compute_instance_group_multiple_zones`                      | `mig_min_zones`                                  | Integer         |
+
+## Kubernetes
 
 ### Configurable Checks
 The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
@@ -548,6 +554,12 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # gcp.compute_configuration_changes
+  # Number of days to look back for Compute Engine configuration changes in audit logs
+  compute_audit_log_lookback_days: 1
+  # gcp.compute_instance_group_multiple_zones
+  # Minimum number of zones a MIG should span for high availability
+  mig_min_zones: 2
 
 # Kubernetes Configuration
 kubernetes:

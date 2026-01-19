@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**AWS Lambda** function resource-based policies are assessed for **public access**. The finding identifies policies with wildcard or empty `Principal` that allow actions like `lambda:InvokeFunction` to any principal.",
   "Risk": "**Public invocation** lets outsiders run code under the function's IAM role.\n\nImpacts:\n- **Confidentiality**: data exfiltration via backend access\n- **Integrity**: unauthorized state changes from side effects\n- **Availability/cost**: invocation floods causing throttling and spend spikes",
   "RelatedUrl": "",

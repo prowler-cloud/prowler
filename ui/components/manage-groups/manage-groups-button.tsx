@@ -1,20 +1,17 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
+import Link from "next/link";
 
-import { CustomButton } from "../ui/custom";
+import { Button } from "@/components/shadcn";
 
 export const ManageGroupsButton = () => {
   return (
-    <CustomButton
-      asLink="/manage-groups"
-      ariaLabel="Manage Groups"
-      variant="dashed"
-      color="warning"
-      size="md"
-      startContent={<SettingsIcon size={20} />}
-    >
-      Manage Groups
-    </CustomButton>
+    <Button asChild variant="outline">
+      <Link href="/manage-groups">
+        <SettingsIcon size={20} />
+        Manage Groups
+      </Link>
+    </Button>
   );
 };

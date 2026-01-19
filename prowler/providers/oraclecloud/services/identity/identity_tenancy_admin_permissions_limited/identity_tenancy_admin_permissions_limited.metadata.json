@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_tenancy_admin_permissions_limited",
   "CheckTitle": "Ensure permissions on all resources are given only to the tenancy administrator group",
   "CheckType": [
@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "high",
   "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
   "Description": "Only the tenancy administrator group should have permissions to manage all resources in the tenancy.",
   "Risk": "Not meeting this IAM requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",

@@ -38,8 +38,9 @@ class Organization(GithubService):
         org_names_to_check = set()
 
         try:
-            for client in getattr(self, "clients", []) or []:
-                if getattr(self.provider, "organizations", None):
+            clients = getattr(self, "clients", [])
+            for client in clients:
+                if self.provider.organizations:
                     org_names_to_check.update(self.provider.organizations)
 
                 # If repositories are specified without organizations, don't perform organization checks
@@ -147,22 +148,74 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        repo_creation_settings = {
+            "members_can_create_repositories": None,
+            "members_can_create_public_repositories": None,
+            "members_can_create_private_repositories": None,
+            "members_can_create_internal_repositories": None,
+            "members_allowed_repository_creation_type": None,
+        }
 
-        # Base permission (default repository permission for members)
-        base_perm: Optional[str] = None
-        try:
-            base_perm = getattr(org, "default_repository_permission", None)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            base_perm = None
+        def _extract_flag(attribute: str, expected_type: type):
+            """Return attribute value if it matches expected type and is not a mock placeholder."""
+            try:
+                value = getattr(org, attribute, None)
+                if hasattr(value, "_mock_parent"):
+                    return None
+                if expected_type is bool and isinstance(value, bool):
+                    return value
+                if expected_type is str and isinstance(value, str):
+                    return value
+                return None
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+
+        repo_creation_settings["members_can_create_repositories"] = _extract_flag(
+            "members_can_create_repositories", bool
+        )
+        repo_creation_settings["members_can_create_public_repositories"] = (
+            _extract_flag("members_can_create_public_repositories", bool)
+        )
+        repo_creation_settings["members_can_create_private_repositories"] = (
+            _extract_flag("members_can_create_private_repositories", bool)
+        )
+        repo_creation_settings["members_can_create_internal_repositories"] = (
+            _extract_flag("members_can_create_internal_repositories", bool)
+        )
+        repo_creation_settings["members_allowed_repository_creation_type"] = (
+            _extract_flag("members_allowed_repository_creation_type", str)
+        )
+
+        base_permission_raw = _extract_flag("default_repository_permission", str)
+        base_permission = (
+            base_permission_raw.lower()
+            if isinstance(base_permission_raw, str)
+            else None
+        )
 
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
-            base_permission=base_perm,
+            members_can_create_repositories=repo_creation_settings[
+                "members_can_create_repositories"
+            ],
+            members_can_create_public_repositories=repo_creation_settings[
+                "members_can_create_public_repositories"
+            ],
+            members_can_create_private_repositories=repo_creation_settings[
+                "members_can_create_private_repositories"
+            ],
+            members_can_create_internal_repositories=repo_creation_settings[
+                "members_can_create_internal_repositories"
+            ],
+            members_allowed_repository_creation_type=repo_creation_settings[
+                "members_allowed_repository_creation_type"
+            ],
+            base_permission=base_permission,
         )
 
 
@@ -172,4 +225,9 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    members_can_create_repositories: Optional[bool] = None
+    members_can_create_public_repositories: Optional[bool] = None
+    members_can_create_private_repositories: Optional[bool] = None
+    members_can_create_internal_repositories: Optional[bool] = None
+    members_allowed_repository_creation_type: Optional[str] = None
     base_permission: Optional[str] = None

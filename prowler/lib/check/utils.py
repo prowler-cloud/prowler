@@ -26,7 +26,7 @@ def recover_checks_from_provider(
             # We need to exclude common shared libraries in services
             if (
                 check_module_name.count(".") == 6
-                and "lib" not in check_module_name
+                and ".lib." not in check_module_name
                 and (not check_module_name.endswith("_fixer") or include_fixers)
             ):
                 check_path = module_name.module_finder.path
@@ -46,14 +46,8 @@ def recover_checks_from_provider(
 
 # List all available modules in the selected provider and service
 def list_modules(provider: str, service: str):
-    # Map CLI provider names to directory names (for cases where they differ)
-    provider_directory_map = {
-        "oci": "oraclecloud",  # OCI SDK conflict avoidance
-    }
-    provider_directory = provider_directory_map.get(provider, provider)
-
     # This module path requires the full path including "prowler."
-    module_path = f"prowler.providers.{provider_directory}.services"
+    module_path = f"prowler.providers.{provider}.services"
     if service:
         module_path += f".{service}"
     return walk_packages(

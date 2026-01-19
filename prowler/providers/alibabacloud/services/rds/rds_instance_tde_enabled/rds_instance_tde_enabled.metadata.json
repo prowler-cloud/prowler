@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_tde_enabled",
+  "CheckTitle": "TDE is set to Enabled on for applicable database instance",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Enable **Transparent Data Encryption (TDE)** on every RDS instance. RDS Database TDE helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and log files at rest.\n\nNo changes to the application are required.",
+  "Risk": "**Data at rest** that is not encrypted is vulnerable to unauthorized access if the underlying storage media or backups are compromised.\n\nTDE protects against physical theft and unauthorized access to storage systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/33510.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-sql-database-tde.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyDBInstanceTDE --DBInstanceId <instance_id> --TDEStatus Enabled",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_db_instance\" \"example\" {\n  engine           = \"MySQL\"\n  engine_version   = \"8.0\"\n  instance_type    = \"rds.mysql.s1.small\"\n  instance_storage = 20\n  tde_status       = \"Enabled\"\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Go to **Data Security** > **TDE** tab\n3. Find TDE Status and click the switch next to **Disabled**\n4. Choose automatically generated key or custom key\n5. Click **Confirm**",
+      "Url": "https://hub.prowler.com/check/rds_instance_tde_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
