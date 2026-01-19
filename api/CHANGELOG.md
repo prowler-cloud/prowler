@@ -15,6 +15,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Deduplicated scheduled scans for long-running providers [(#9829)](https://github.com/prowler-cloud/prowler/pull/9829)
 
+### Security
+- `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
+
 ---
 
 ## [1.17.2] (Prowler v5.16.2)
