@@ -8,12 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.containerservice/managedclusters",
-  "Description": "AKS clusters expose a **private control plane FQDN** and agent pools have `enable_node_public_ip=false`.\n\nThe evaluation focuses on the presence of a private FQDN and the absence of public IPs on nodes.",
+  "ResourceGroup": "container",
+  "Description": "**AKS clusters** expose a **private control plane FQDN** and agent pools have `enable_node_public_ip=false`.\n\nThe evaluation focuses on the presence of a private FQDN and the absence of public IPs on nodes.",
   "Risk": "Exposed node IPs or a publicly reachable API increase attack surface, impacting **confidentiality** and **integrity**.\n- Internet scans reach kubelet, NodePort, or management agents\n- Exploits enable RCE and **lateral movement**\n- Metadata/secret theft leads to **credential compromise**\n\n**Availability** is at risk from DDoS on exposed endpoints.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/aks/private-clusters?tabs=azure-portal",
-    "https://learn.microsoft.com/en-us/azure/aks/access-private-cluster?tabs=azure-cli"
+    "https://learn.microsoft.com/en-us/azure/aks/access-private-cluster?tabs=azure-cli",
+    "https://support.icompaas.com/support/solutions/articles/62000234657-ensure-clusters-are-created-with-private-endpoint-enabled-and-public-access-disabled",
+    "https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-cis-aks17-542"
   ],
   "Remediation": {
     "Code": {
@@ -29,7 +32,8 @@
   },
   "Categories": [
     "internet-exposed",
-    "trust-boundaries"
+    "trust-boundaries",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

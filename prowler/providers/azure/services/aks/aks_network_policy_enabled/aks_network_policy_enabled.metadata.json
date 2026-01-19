@@ -6,15 +6,16 @@
   "ServiceName": "aks",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.containerservice/managedclusters",
-  "Description": "AKS clusters enforce **Kubernetes network policies** so that pod-to-pod traffic is governed by explicit ingress and egress rules. The finding evaluates whether a cluster has network policy enforcement enabled to support fine-grained, label-based segmentation between workloads.",
+  "ResourceGroup": "container",
+  "Description": "**AKS clusters** enforce **Kubernetes network policies** so that pod-to-pod traffic is governed by explicit ingress and egress rules. The finding evaluates whether a cluster has network policy enforcement enabled to support fine-grained, label-based segmentation between workloads.",
   "Risk": "Without network policy, pods can talk to any pod:\n- Easy lateral movement after a pod compromise\n- Unrestricted access to backend services and data\n- Covert exfiltration/C2 via East-West traffic\n\nThis harms **confidentiality** and **integrity** and amplifies the blast radius of runtime exploits.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-kubernetes-policies/bc_azr_kubernetes_4#terraform",
     "https://learn.microsoft.com/en-us/azure/aks/use-network-policies",
-    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-network-security#ns-2-connect-private-networks-together"
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-network-security#ns-2-connect-private-networks-together",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AKS/enable-network-policy-support.html"
   ],
   "Remediation": {
     "Code": {
