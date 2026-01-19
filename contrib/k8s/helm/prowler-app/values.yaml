@@ -81,6 +81,9 @@ ui:
     # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
     port: 3000
 
+  # The URL of the UI. This is only set if ingress is disabled.
+  authUrl: ""
+
   # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
   ingress:
     enabled: false
