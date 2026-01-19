@@ -9,6 +9,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+
+# Use vanilla DRF serializer to avoid JSON:API sparse fieldsets parameter in schema, for the resource/:id/events endpoint
+from rest_framework import serializers as drf_serializers
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -3980,23 +3983,28 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
 # Resource Events Serializers
 
 
-class ResourceEventSerializer(serializers.Serializer):
-    """Serializer for resource events (modification history)."""
+class ResourceEventSerializer(drf_serializers.Serializer):
+    """Serializer for resource events (modification history).
+
+    Uses vanilla DRF Serializer (not JSON:API) to avoid auto-generated
+    fields[resource-events] sparse fieldsets parameter in OpenAPI schema.
+    This endpoint returns fixed CloudTrail data, not a database model.
+    """
 
     # Map event_id from the SDK model to id for JSON:API compliance
-    id = serializers.CharField(source="event_id")
-    event_time = serializers.DateTimeField()
-    event_name = serializers.CharField()
-    event_source = serializers.CharField()
-    actor = serializers.CharField()
-    actor_uid = serializers.CharField(allow_null=True, required=False)
-    actor_type = serializers.CharField()
-    source_ip_address = serializers.CharField(allow_null=True, required=False)
-    user_agent = serializers.CharField(allow_null=True, required=False)
-    request_parameters = serializers.JSONField(allow_null=True, required=False)
-    response_elements = serializers.JSONField(allow_null=True, required=False)
-    error_code = serializers.CharField(allow_null=True, required=False)
-    error_message = serializers.CharField(allow_null=True, required=False)
+    id = drf_serializers.CharField(source="event_id")
+    event_time = drf_serializers.DateTimeField()
+    event_name = drf_serializers.CharField()
+    event_source = drf_serializers.CharField()
+    actor = drf_serializers.CharField()
+    actor_uid = drf_serializers.CharField(allow_null=True, required=False)
+    actor_type = drf_serializers.CharField()
+    source_ip_address = drf_serializers.CharField(allow_null=True, required=False)
+    user_agent = drf_serializers.CharField(allow_null=True, required=False)
+    request_parameters = drf_serializers.JSONField(allow_null=True, required=False)
+    response_elements = drf_serializers.JSONField(allow_null=True, required=False)
+    error_code = drf_serializers.CharField(allow_null=True, required=False)
+    error_message = drf_serializers.CharField(allow_null=True, required=False)
 
     class Meta:
         resource_name = "resource-events"

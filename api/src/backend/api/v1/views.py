@@ -3018,15 +3018,18 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             raise UpstreamAuthenticationError()
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
+            logger.error(
+                f"Provider API error retrieving events: {str(e)}",
+                exc_info=True,
+            )
             # AccessDenied means the credentials don't have the required permissions
             if error_code in ("AccessDenied", "AccessDeniedException"):
                 raise UpstreamAccessDeniedError()
 
             raise UpstreamServiceUnavailableError()
         except Exception as e:
-            logger.error(f"Error retrieving timeline: {str(e)}", exc_info=True)
             sentry_sdk.capture_exception(e)
-            raise UpstreamInternalError(detail="Failed to retrieve timeline")
+            raise UpstreamInternalError(detail="Failed to retrieve events")
 
 
 @extend_schema_view(
