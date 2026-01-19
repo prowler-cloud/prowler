@@ -44,7 +44,10 @@ class exchange_shared_mailbox_sign_in_disabled(Check):
                 shared_mailbox.external_directory_object_id
             )
 
-            if entra_user and entra_user.account_enabled:
+            if not entra_user:
+                report.status = "FAIL"
+                report.status_extended = f"Shared mailbox {shared_mailbox.user_principal_name} could not be found in Entra ID for verification."
+            elif entra_user.account_enabled:
                 report.status = "FAIL"
                 report.status_extended = f"Shared mailbox {shared_mailbox.user_principal_name} has sign-in enabled."
             else:

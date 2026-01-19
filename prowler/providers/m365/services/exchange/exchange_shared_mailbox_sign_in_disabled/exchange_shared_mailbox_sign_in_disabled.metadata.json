@@ -13,11 +13,12 @@
   "Risk": "When sign-in is enabled on shared mailboxes, users with the password can bypass delegation controls and access the mailbox directly. This undermines **accountability** since actions cannot be attributed to individual users, and it increases the attack surface for credential-based attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/about-shared-mailboxes"
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/about-shared-mailboxes",
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/create-a-shared-mailbox#block-sign-in-for-the-shared-mailbox-account"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "$sharedMailboxes = Get-Mailbox -RecipientTypeDetails SharedMailbox; foreach ($mailbox in $sharedMailboxes) { Set-MsolUser -UserPrincipalName $mailbox.UserPrincipalName -BlockCredential $true }",
+      "CLI": "Get-EXOMailbox -RecipientTypeDetails SharedMailbox | ForEach-Object { Update-MgUser -UserId $_.ExternalDirectoryObjectId -AccountEnabled:$false }",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft 365 admin center\n2. Navigate to Users > Active users\n3. Search for the shared mailbox\n4. Select the shared mailbox and click Block sign-in\n5. Confirm the action",
       "Terraform": ""
