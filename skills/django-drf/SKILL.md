@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "2.0"
+  version: "1.1.0"
   scope: [root, api]
   auto_invoke:
     - "Creating ViewSets, serializers, or filters in api/"
