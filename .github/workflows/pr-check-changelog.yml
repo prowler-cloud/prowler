@@ -42,14 +42,16 @@ jobs:
             ui/**
             prowler/**
             mcp_server/**
+            poetry.lock
+            pyproject.toml
 
       - name: Check for folder changes and changelog presence
         id: check-folders
         run: |
           missing_changelogs=""
 
-          # Check api folder
           if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]]; then
+            # Check monitored folders
             for folder in $MONITORED_FOLDERS; do
               # Get files changed in this folder
               changed_in_folder=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^${folder}/" || true)
@@ -64,6 +66,22 @@ jobs:
                 fi
               fi
             done
+
+            # Check root-level dependency files (poetry.lock, pyproject.toml)
+            # These are associated with the prowler folder changelog
+            root_deps_changed=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E "^(poetry\.lock|pyproject\.toml)$" || true)
+            if [ -n "$root_deps_changed" ]; then
+              echo "Detected changes in root dependency files: $root_deps_changed"
+              # Check if prowler/CHANGELOG.md was already updated (might have been caught above)
+              prowler_changelog_updated=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^prowler/CHANGELOG.md$" || true)
+              if [ -z "$prowler_changelog_updated" ]; then
+                # Only add if prowler wasn't already flagged
+                if ! echo "$missing_changelogs" | grep -q "prowler"; then
+                  echo "No changelog update found for root dependency changes"
+                  missing_changelogs="${missing_changelogs}- \`prowler\` (root dependency files changed)"$'\n'
+                fi
+              fi
+            fi
           fi
 
           {
