@@ -64,7 +64,6 @@ from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
-    AuthenticationFailed,
     MethodNotAllowed,
     NotFound,
     PermissionDenied,
@@ -101,7 +100,13 @@ from api.compliance import (
 )
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
-from api.exceptions import TaskFailedException
+from api.exceptions import (
+    TaskFailedException,
+    UpstreamAccessDeniedError,
+    UpstreamAuthenticationError,
+    UpstreamInternalError,
+    UpstreamServiceUnavailableError,
+)
 from api.filters import (
     AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
@@ -2878,9 +2883,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         responses={
             200: ResourceEventSerializer(many=True),
             400: OpenApiResponse(description="Invalid provider or parameters"),
-            401: OpenApiResponse(description="Provider credentials not available"),
-            403: OpenApiResponse(
-                description="Access denied - missing required permissions"
+            500: OpenApiResponse(description="Unexpected error retrieving events"),
+            502: OpenApiResponse(
+                description="Provider credentials invalid, expired, or lack required permissions"
             ),
             503: OpenApiResponse(description="Provider service unavailable"),
         },
@@ -2898,11 +2903,14 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         # Validate provider
         if resource.provider.provider != "aws":
             raise ValidationError(
-                {
-                    "detail": "Events are only available for AWS resources",
-                    "provider": resource.provider.provider,
-                },
-                code="invalid_provider",
+                [
+                    {
+                        "detail": "Events are only available for AWS resources",
+                        "status": "400",
+                        "source": {"pointer": "/data/attributes/provider"},
+                        "code": "invalid_provider",
+                    }
+                ]
             )
 
         # Validate and parse lookback_days from query params
@@ -3001,75 +3009,24 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             return Response(serializer.data)
 
         except NoCredentialsError:
-            raise AuthenticationFailed(
-                detail="Credentials not found for this provider",
-                code="no_credentials",
-            )
-        except AWSCredentialsError as e:
-            # Handles expired tokens, invalid keys, profile not found, etc.
             # 502 because this is an upstream auth failure, not API auth failure
-            logger.warning(f"AWS credentials error: {str(e)}")
-            return Response(
-                {
-                    "errors": [
-                        {
-                            "detail": "Provider credentials are invalid or expired. Please reconnect the provider.",
-                            "status": "502",
-                            "code": "upstream_auth_failed",
-                        }
-                    ]
-                },
-                status=status.HTTP_502_BAD_GATEWAY,
+            raise UpstreamAuthenticationError(
+                detail="Credentials not found for this provider. Please reconnect the provider."
             )
+        except AWSCredentialsError:
+            # Handles expired tokens, invalid keys, profile not found, etc.
+            raise UpstreamAuthenticationError()
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
-            logger.error(
-                f"Provider API error retrieving timeline: {str(e)}",
-                exc_info=True,
-            )
-
             # AccessDenied means the credentials don't have the required permissions
             if error_code in ("AccessDenied", "AccessDeniedException"):
-                return Response(
-                    {
-                        "errors": [
-                            {
-                                "detail": "Access denied. The provider credentials do not have the required permissions.",
-                                "status": "403",
-                                "code": "access_denied",
-                            }
-                        ]
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+                raise UpstreamAccessDeniedError()
 
-            return Response(
-                {
-                    "errors": [
-                        {
-                            "detail": "Unable to communicate with the provider. Please try again later.",
-                            "status": "503",
-                            "code": "service_unavailable",
-                        }
-                    ]
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+            raise UpstreamServiceUnavailableError()
         except Exception as e:
             logger.error(f"Error retrieving timeline: {str(e)}", exc_info=True)
             sentry_sdk.capture_exception(e)
-            return Response(
-                {
-                    "errors": [
-                        {
-                            "detail": "Failed to retrieve timeline",
-                            "status": "500",
-                            "code": "internal_error",
-                        }
-                    ]
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            raise UpstreamInternalError(detail="Failed to retrieve timeline")
 
 
 @extend_schema_view(

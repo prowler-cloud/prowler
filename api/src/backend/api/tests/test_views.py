@@ -4580,9 +4580,9 @@ class TestResourceViewSet:
             reverse("resource-events", kwargs={"pk": resource.id})
         )
 
-        # AuthenticationFailed raises 401
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["errors"][0]["code"] == "no_credentials"
+        # 502 because this is an upstream auth failure, not API auth failure
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+        assert response.json()["errors"][0]["code"] == "upstream_auth_failed"
 
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
@@ -4626,12 +4626,9 @@ class TestResourceViewSet:
             reverse("resource-events", kwargs={"pk": resource.id})
         )
 
-        # AccessDenied returns 403
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        # JSON:API renderer double-wraps the custom error response
-        response_data = response.json()
-        errors = response_data["errors"]["errors"]
-        assert errors[0]["code"] == "access_denied"
+        # AccessDenied returns 502 (upstream error, not user's fault)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+        assert response.json()["errors"][0]["code"] == "upstream_access_denied"
 
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
@@ -4677,10 +4674,7 @@ class TestResourceViewSet:
 
         # Non-AccessDenied errors return 503
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        # JSON:API renderer double-wraps the custom error response
-        response_data = response.json()
-        errors = response_data["errors"]["errors"]
-        assert errors[0]["code"] == "service_unavailable"
+        assert response.json()["errors"][0]["code"] == "service_unavailable"
 
 
 @pytest.mark.django_db
