@@ -1,5 +1,5 @@
-import logging
 import atexit
+import logging
 import os
 import sys
 from pathlib import Path
@@ -42,8 +42,14 @@ class ApiConfig(AppConfig):
             self._ensure_crypto_keys()
 
         if not getattr(settings, "TESTING", False):
-            graph_database.init_driver()
-            atexit.register(graph_database.close_driver)
+            try:
+                graph_database.init_driver()
+                atexit.register(graph_database.close_driver)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to initialize Neo4j driver: {e}. "
+                    "Attack paths features will be unavailable until Neo4j is reachable."
+                )
 
         load_prowler_compliance()
 
