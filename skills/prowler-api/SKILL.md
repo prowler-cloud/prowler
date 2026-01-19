@@ -1,29 +1,84 @@
 ---
 name: prowler-api
 description: >
-  Prowler API patterns: JSON:API, RLS, RBAC, providers, Celery tasks.
-  Trigger: When working in api/ on models/serializers/viewsets/filters/tasks involving tenant isolation (RLS), RBAC, JSON:API, or provider lifecycle.
+  Prowler API patterns: RLS, RBAC, providers, Celery tasks.
+  Trigger: When working in api/ on models/serializers/viewsets/filters/tasks involving tenant isolation (RLS), RBAC, or provider lifecycle.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "2.0"
   scope: [root, api]
   auto_invoke: "Creating/modifying models, views, serializers"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
+---
+
+## When to Use
+
+Use this skill for **Prowler-specific** patterns:
+- Row-Level Security (RLS) / tenant isolation
+- RBAC permissions and role checks
+- Provider lifecycle and validation
+- Celery tasks with tenant context
+
+For **generic DRF patterns** (ViewSets, Serializers, Filters, JSON:API), use `django-drf` skill.
+
 ---
 
 ## Critical Rules
 
 - ALWAYS use `rls_transaction(tenant_id)` when querying outside ViewSet context
 - ALWAYS use `get_role()` before checking permissions (returns FIRST role only)
-- NEVER access `Provider.objects` without RLS context in Celery tasks
 - ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order
+- NEVER access `Provider.objects` without RLS context in Celery tasks
+- NEVER bypass RLS by using raw SQL or `connection.cursor()`
 
 ---
 
-## 1. Providers (10 Supported)
+## Implementation Checklist
 
-UID validation is dynamic: `getattr(self, f"validate_{self.provider}_uid")(self.uid)`
+When implementing Prowler-specific API features:
+
+| # | Pattern | Reference | Key Points |
+|---|---------|-----------|------------|
+| 1 | **RLS Models** | `api/models.py` | Inherit `RowLevelSecurityProtectedModel`, add `tenant_id` |
+| 2 | **RLS Transactions** | `api/db_utils.py` | Use `rls_transaction(tenant_id)` context manager |
+| 3 | **RBAC Permissions** | `api/rbac/permissions.py` | `get_role()`, `get_providers()`, `Permissions` enum |
+| 4 | **Provider Validation** | `api/models.py` | `validate_<provider>_uid()` methods on `Provider` model |
+| 5 | **Celery Tasks** | `tasks/tasks.py` | `@set_tenant`, `@handle_provider_deletion`, `RLSTask` base |
+| 6 | **RLS Serializers** | `api/v1/serializers.py` | Inherit `RLSSerializer` to auto-inject `tenant_id` |
+
+> **Full file paths**: See [references/file-locations.md](references/file-locations.md)
+
+---
+
+## Decision Trees
+
+### Which Base Model?
+```
+Tenant-scoped data       → RowLevelSecurityProtectedModel
+Global/shared data       → models.Model (rare)
+Soft-deletable           → Add is_deleted + custom manager
+```
+
+### Which Manager?
+```
+Normal queries           → Model.objects (excludes deleted)
+Include deleted records  → Model.all_objects
+Celery task context      → Must use rls_transaction() first
+```
+
+### Celery Task Decorator Order?
+```
+@shared_task(base=RLSTask, name="...", queue="...")
+@set_tenant                    # First: sets tenant context
+@handle_provider_deletion      # Second: handles deleted providers
+def my_task(tenant_id, provider_id):
+    pass
+```
+
+---
+
+## Providers (10 Supported)
 
 | Provider | UID Format | Example |
 |----------|-----------|---------|
@@ -42,98 +97,50 @@ UID validation is dynamic: `getattr(self, f"validate_{self.provider}_uid")(self.
 
 ---
 
-## 2. Row-Level Security (RLS)
+## RBAC Permissions
 
-```python
-from api.db_utils import rls_transaction
-
-with rls_transaction(tenant_id):
-    providers = Provider.objects.filter(connected=True)
-    # PostgreSQL enforces tenant_id automatically
-```
-
-Models inherit from `RowLevelSecurityProtectedModel` with `RowLevelSecurityConstraint`.
-
----
-
-## 3. Managers
-
-```python
-Provider.objects.all()       # Only is_deleted=False
-Provider.all_objects.all()   # All including deleted
-Finding.objects.all()        # Only from active providers
-```
+| Permission | Controls |
+|------------|----------|
+| `MANAGE_USERS` | User CRUD, role assignments |
+| `MANAGE_ACCOUNT` | Tenant settings |
+| `MANAGE_BILLING` | Billing/subscription |
+| `MANAGE_PROVIDERS` | Provider CRUD |
+| `MANAGE_INTEGRATIONS` | Integration config |
+| `MANAGE_SCANS` | Scan execution |
+| `UNLIMITED_VISIBILITY` | See all providers (bypasses provider_groups) |
 
 ---
 
-## 4. RBAC
+## Celery Queues
 
-```python
-from api.rbac.permissions import get_role, get_providers, Permissions
-
-user_role = get_role(self.request.user)  # Returns FIRST role only
-
-if user_role.unlimited_visibility:
-    queryset = Provider.objects.filter(tenant_id=tenant_id)
-else:
-    queryset = get_providers(user_role)  # Filtered by provider_groups
-```
-
-**Permissions**: `MANAGE_USERS`, `MANAGE_ACCOUNT`, `MANAGE_BILLING`, `MANAGE_PROVIDERS`, `MANAGE_INTEGRATIONS`, `MANAGE_SCANS`, `UNLIMITED_VISIBILITY`
-
----
-
-## 5. Celery Tasks
-
-```python
-@shared_task(base=RLSTask, name="task-name", queue="scans")
-@set_tenant
-@handle_provider_deletion
-def my_task(tenant_id: str, provider_id: str):
-    pass
-```
-
-**Queues**: Check `tasks/tasks.py`. Common: `scans`, `overview`, `compliance`, `integrations`.
-
-**Orchestration**: Use `chain()` for sequential, `group()` for parallel.
-
----
-
-## 6. JSON:API Format
-
-```python
-content_type = "application/vnd.api+json"
-
-# Request
-{"data": {"type": "providers", "attributes": {"provider": "aws", "uid": "123456789012"}}}
-
-# Response access
-response.json()["data"]["attributes"]["alias"]
-```
-
----
-
-## 7. Serializers
-
-| Pattern | Usage |
-|---------|-------|
-| `ProviderSerializer` | Read (list/retrieve) |
-| `ProviderCreateSerializer` | POST |
-| `ProviderUpdateSerializer` | PATCH |
-| `RLSSerializer` | Auto-injects tenant_id |
+| Queue | Purpose |
+|-------|---------|
+| `scans` | Prowler scan execution |
+| `overview` | Dashboard aggregations |
+| `compliance` | Compliance report generation |
+| `integrations` | External integrations (Jira, etc.) |
 
 ---
 
 ## Commands
 
 ```bash
-cd api && poetry run python manage.py migrate      # Run migrations
-cd api && poetry run python manage.py shell        # Django shell
-cd api && poetry run celery -A config.celery worker -l info  # Start worker
+# Development
+cd api && poetry run python src/backend/manage.py runserver
+cd api && poetry run python src/backend/manage.py shell
+
+# Celery
+cd api && poetry run celery -A config.celery worker -l info -Q scans,overview
+cd api && poetry run celery -A config.celery beat -l info
+
+# Testing
+cd api && poetry run pytest -x --tb=short
 ```
 
 ---
 
 ## Resources
 
-- **Documentation**: See [references/api-docs.md](references/api-docs.md) for local file paths and documentation
+- **File Locations**: See [references/file-locations.md](references/file-locations.md)
+- **Generic DRF Patterns**: Use `django-drf` skill
+- **API Testing**: Use `prowler-test-api` skill

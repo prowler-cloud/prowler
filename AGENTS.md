@@ -51,6 +51,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding DRF pagination or permissions | `django-drf` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
 | After creating/modifying a skill | `skill-sync` |
@@ -58,6 +59,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Building AI chat features | `ai-sdk-5` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
+| Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
@@ -67,7 +69,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | General Prowler development questions | `prowler` |
-| Generic DRF patterns | `django-drf` |
+| Implementing JSON:API endpoints | `django-drf` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |

@@ -13,9 +13,11 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding DRF pagination or permissions | `django-drf` |
 | Create PR that requires changelog entry | `prowler-changelog` |
+| Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating/modifying models, views, serializers | `prowler-api` |
-| Generic DRF patterns | `django-drf` |
+| Implementing JSON:API endpoints | `django-drf` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
