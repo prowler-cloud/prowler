@@ -2,91 +2,389 @@
 title: 'Getting Started with GitHub'
 ---
 
-## Prowler App
+This guide walks you through setting up GitHub security scanning with Prowler. Choose your preferred interface below:
+
+<Note>
+**Understanding GitHub Scan Scope**
+
+Prowler can scan either:
+- **User Repositories**: All repositories owned by or accessible to a specific GitHub user
+- **Organizations**: Repositories and organization-level settings
+
+**Important**: Scanning user repositories does NOT include organization-level checks (MFA requirements, security policies, etc.). To scan organizations, you must explicitly configure them.
+
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud/App" icon="cloud" href="#prowler-cloudapp">
+    Web-based interface with centralized management
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Command-line interface for local or automated scans
+  </Card>
+</CardGroup>
+
+---
+
+## Prowler Cloud/App
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/9ETI84Xpu2g" title="Prowler Cloud Onboarding Github" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
 > Walkthrough video onboarding a GitHub Account using GitHub App.
 
+### Prerequisites
+
+Before adding GitHub to Prowler Cloud/App, ensure you have:
+
+1. **GitHub Account Access**
+   - Personal GitHub account, OR
+   - Admin access to a GitHub organization
+
+2. **Authentication Credentials**
+   - Choose one method (see [Authentication Guide](/user-guide/providers/github/authentication)):
+     - **Fine-Grained Personal Access Token** (Recommended)
+     - OAuth App Token
+     - GitHub App Credentials (Not Recommended - limited data access)
+
 ### Step 1: Access Prowler Cloud/App
 
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
-2. Go to "Configuration" > "Cloud Providers"
+2. Go to **Configuration** → **Cloud Providers**
 
     ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
 
-3. Click "Add Cloud Provider"
+3. Click **Add Cloud Provider**
 
     ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
 
-4. Select "GitHub"
+4. Select **GitHub**
 
     ![Select GitHub](/images/providers/select-github.png)
 
-5. Add the GitHub Account ID (username or organization name) and an optional alias, then click "Next"
+### Step 2: Configure GitHub Account
+
+5. Add the **GitHub Account ID** and an optional alias:
+   - **Account ID**: Your GitHub username (e.g., `username`) or organization name (e.g., `org-name`)
+   - **Alias** (optional): Friendly name for this connection (e.g., `My Personal Repos` or `Prowler Org`)
 
     ![Add GitHub Account ID](/images/providers/add-github-account-id.png)
 
-### Step 2: Choose the preferred authentication method
+6. Click **Next**
 
-6. Choose the preferred authentication method:
+### Step 3: Choose Authentication Method
+
+<Note>
+**Recommended: Fine-Grained Personal Access Token**
+
+We strongly recommend using **Fine-Grained Personal Access Tokens** because they provide:
+- Best data access for comprehensive security scanning
+- Granular permission control
+- Resource-specific access
+
+**GitHub Apps are NOT recommended** - they provide the most limited access to GitHub data for security scanning purposes.
+</Note>
+
+7. Select your preferred authentication method:
 
     ![Select auth method](/images/providers/select-auth-method.png)
 
-7. Configure the authentication method:
-
 <Tabs>
-  <Tab title="Personal Access Token">
+  <Tab title="Personal Access Token (Recommended)">
     ![Configure Personal Access Token](/images/providers/auth-pat.png)
 
-    For more details on how to create a Personal Access Token, see [Authentication > Personal Access Token](/user-guide/providers/github/authentication#personal-access-token-pat).
+    **Recommended method** - provides the best data access for security scanning.
+
+    1. Enter your Fine-Grained Personal Access Token
+    2. Click **Verify** to test the connection
+    3. Click **Save**
+
+    **Don't have a token yet?** See [How to create a Personal Access Token](/user-guide/providers/github/authentication#create-a-fine-grained-personal-access-token)
   </Tab>
+
   <Tab title="OAuth App Token">
     ![Configure OAuth App Token](/images/providers/auth-oauth.png)
 
-    For more details on how to create an OAuth App Token, see [Authentication > OAuth App Token](/user-guide/providers/github/authentication#oauth-app-token).
+    For applications requiring user consent and delegated permissions.
+
+    1. Enter your OAuth App Token
+    2. Click **Verify** to test the connection
+    3. Click **Save**
+
+    **Don't have an OAuth token?** See [How to create an OAuth App Token](/user-guide/providers/github/authentication#oauth-app-token)
   </Tab>
-  <Tab title="GitHub App">
+
+  <Tab title="GitHub App (Not Recommended)">
     ![Configure GitHub App](/images/providers/auth-github-app.png)
 
-    For more details on how to create a GitHub App, see [Authentication > GitHub App](/user-guide/providers/github/authentication#github-app-credentials).
+    <Warning>
+    **Not recommended** - most limited data access. Use only if required by organization policy.
+    </Warning>
+
+    1. Enter your GitHub App ID
+    2. Upload or paste your Private Key (`.pem` file)
+    3. Click **Verify** to test the connection
+    4. Click **Save**
+
+    **Don't have a GitHub App?** See [How to create a GitHub App](/user-guide/providers/github/authentication#github-app-credentials)
   </Tab>
 </Tabs>
+
+
+8. Click **Start Scan** to begin your first security assessment
+
+### Step 5: View Results
+
+Once the scan completes, you can:
+- View security findings in the dashboard
+- Export results in multiple formats (JSON, CSV, HTML)
+- Set up continuous scanning schedules
+- Configure alerts for critical findings
+
+---
+
 ## Prowler CLI
 
-### Automatic Login Method Detection
+### Prerequisites
 
-If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
+Before running Prowler CLI for GitHub, ensure you have:
+
+1. **Prowler Installed**
+   ```bash
+   # Install via pip
+   pip install prowler
+
+   # Or via poetry
+   poetry install
+   ```
+
+2. **Authentication Credentials**
+   - Choose one method (see [Authentication Guide](/user-guide/providers/github/authentication)):
+     - **Fine-Grained Personal Access Token** (Recommended)
+     - OAuth App Token
+     - GitHub App Credentials (Not Recommended)
+
+### Authentication Setup
+
+Prowler CLI automatically detects authentication credentials using environment variables in this order:
 
 1. `GITHUB_PERSONAL_ACCESS_TOKEN`
 2. `GITHUB_OAUTH_APP_TOKEN`
-3. `GITHUB_APP_ID` and `GITHUB_APP_KEY` (where the key is the content of the private key file)
+3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
-<Note>
-Ensure the corresponding environment variables are set up before running Prowler for automatic detection when not specifying the login method.
+<Tabs>
+  <Tab title="Environment Variables (Recommended)">
+```bash
+# Personal Access Token (Recommended)
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxxxxxxxxxx"
 
-</Note>
-For more details on how to set up authentication with GitHub, see [Authentication > GitHub](/user-guide/providers/github/authentication).
+# OAuth App Token
+export GITHUB_OAUTH_APP_TOKEN="oauth_token_here"
 
-### Personal Access Token (PAT)
-
-Use this method by providing your personal access token directly.
-
-```console
-prowler github --personal-access-token pat
+# GitHub App
+export GITHUB_APP_ID="123456"
+export GITHUB_APP_KEY="$(cat /path/to/private-key.pem)"
 ```
 
-### OAuth App Token
+Then run Prowler without additional flags:
+```bash
+prowler github
+```
+  </Tab>
 
-Authenticate using an OAuth app token.
+  <Tab title="CLI Flags">
+```bash
+# Personal Access Token
+prowler github --personal-access-token ghp_xxxxxxxxxxxx
 
-```console
-prowler github --oauth-app-token oauth_token
+# OAuth App Token
+prowler github --oauth-app-token oauth_token_here
+
+# GitHub App
+prowler github --github-app-id 123456 --github-app-key-path /path/to/private-key.pem
+```
+  </Tab>
+</Tabs>
+
+**Don't have credentials yet?** See the [Authentication Guide](/user-guide/providers/github/authentication) for step-by-step instructions.
+
+### Scan Scope: Understanding What Gets Scanned
+
+<Warning>
+**Critical: User Scans vs Organization Scans**
+
+The scan scope depends entirely on how you invoke Prowler CLI:
+
+| Command | What Gets Scanned | Organization Checks Included? |
+|---------|------------------|-------------------------------|
+| `prowler github` | All repositories the token has access to |
+| `prowler github --repository owner/repo` | Single specified repository |
+| `prowler github --organization org-name` | Organization repos + org settings |
+| `prowler github --organization org-name --repository owner/repo` | Organization + single repository |
+
+**Key Points:**
+- Scanning **user repositories** does NOT run organization-level checks
+- To audit organization MFA, security policies, etc., you MUST use `--organization`
+- If you're a member of multiple organizations, specify each one explicitly
+
+</Warning>
+
+### Scanning User Repositories
+
+Scan repositories owned by your user account:
+
+```bash
+# Scan all repositories accessible to your token
+prowler github
+
+# Scan a specific repository
+prowler github --repository username/my-repo
+
+# Scan multiple specific repositories
+prowler github --repository username/repo1 --repository username/repo2
 ```
 
-### GitHub App Credentials
-Use GitHub App credentials by specifying the App ID and the private key path.
+**What gets scanned:**
+- Repository security settings
+- Branch protection rules
+- Secret scanning configuration
+- Dependabot settings
+- Organization-level policies (not included)
 
-```console
-prowler github --github-app-id app_id --github-app-key-path app_key_path
+### Scanning Organizations
+
+Scan organization repositories and organization-level security settings:
+
+```bash
+# Scan a single organization
+prowler github --organization prowler-cloud
+
+# Scan multiple organizations
+prowler github --organization org1 --organization org2
+
+# Scan organization and specific repositories within it
+prowler github --organization my-org --repository my-org/critical-repo
 ```
+
+**What gets scanned:**
+- All organization repositories
+- Repository security settings
+- Organization MFA requirements
+- Organization security policies
+- Member access and permissions
+
+### Filtering Scans
+
+Customize your scan scope with these options:
+
+```bash
+# Run only critical severity checks
+prowler github --severity critical
+
+# Run specific checks
+prowler github --checks repository_default_branch_protection_enabled,organization_members_mfa_required
+
+# Exclude specific checks
+prowler github --excluded-checks repository_archived
+
+# Scan with specific compliance framework
+prowler github --compliance cis_1.0_github
+
+# Output results in specific format
+prowler github --output-formats json,csv,html
+```
+
+### Example Workflows
+
+<Tabs>
+  <Tab title="Quick Security Assessment">
+```bash
+# Scan your personal repositories for critical issues
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxx"
+prowler github --severity critical high
+```
+  </Tab>
+
+  <Tab title="Organization Compliance Audit">
+```bash
+# Full organization scan with CIS compliance
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxx"
+prowler github \
+  --organization prowler-cloud \
+  --compliance cis_1.0_github \
+  --output-formats json,html
+```
+  </Tab>
+
+  <Tab title="CI/CD Integration">
+```bash
+# Scan specific repository in CI pipeline
+prowler github \
+  --personal-access-token "$GITHUB_TOKEN" \
+  --repository "$GITHUB_REPOSITORY" \
+  --severity critical \
+  --output-formats json
+
+# Exit with non-zero if critical findings
+if grep -q '"Status": "FAIL".*"Severity": "critical"' prowler-output*.json; then
+  echo "Critical security issues found!"
+  exit 1
+fi
+```
+  </Tab>
+
+  <Tab title="Multi-Organization Scan">
+```bash
+# Scan multiple organizations you're part of
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxx"
+prowler github \
+  --organization org1 \
+  --organization org2 \
+  --organization org3 \
+  --output-formats csv
+```
+  </Tab>
+</Tabs>
+
+### Viewing Results
+
+Prowler CLI generates results in multiple formats:
+
+```bash
+# Results are saved in ./output/ directory by default
+ls output/
+
+# View HTML report in browser
+open output/prowler-output-*.html
+
+# Parse JSON results with jq
+cat output/prowler-output-*.json | jq '.findings[] | select(.Status=="FAIL")'
+
+# Import CSV into spreadsheet
+open output/prowler-output-*.csv
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication Guide" icon="key" href="/user-guide/providers/github/authentication">
+    Detailed permissions and token creation
+  </Card>
+  <Card title="Available Checks" icon="list-check" href="https://hub.prowler.com/github">
+    Browse all GitHub security checks
+  </Card>
+  <Card title="Compliance Frameworks" icon="shield-check" href="https://hub.prowler.com/compliance">
+    CIS, NIST, and other frameworks
+  </Card>
+  <Card title="Troubleshooting" icon="circle-question" href="/user-guide/providers/github/authentication#troubleshooting">
+    Common issues and solutions
+  </Card>
+</CardGroup>
+
+## Additional Resources
+
+- [GitHub REST API Documentation](https://docs.github.com/en/rest)
+- [Fine-Grained Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+- [GitHub Security Best Practices](https://docs.github.com/en/code-security)
+- [Prowler CLI Reference](/user-guide/cli-reference)
