@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_automatic_https_rewrites_enabled",
+  "CheckTitle": "Automatic HTTPS Rewrites is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Automatic HTTPS Rewrites** configuration by checking if it is enabled to automatically rewrite insecure HTTP links to HTTPS, resolving **mixed content issues** and enhancing site security.",
+  "Risk": "Without **Automatic HTTPS Rewrites**, pages may contain mixed content where HTTP resources load over HTTPS pages.\n- **Confidentiality**: insecure resources can be intercepted and modified by attackers\n- **Integrity**: browsers block or warn about mixed content, indicating potential tampering\n- **User Experience**: security warnings degrade trust and some browsers block mixed content entirely",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to Automatic HTTPS Rewrites\n4. Toggle the setting to On\n5. Verify that your site loads correctly without mixed content warnings",
+      "Terraform": "```hcl\n# Enable Automatic HTTPS Rewrites to fix mixed content\nresource \"cloudflare_zone_settings_override\" \"https_rewrites\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    automatic_https_rewrites = \"on\" # Critical: automatically rewrites HTTP URLs to HTTPS\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Automatic HTTPS Rewrites** as part of a comprehensive HTTPS strategy.\n- Automatically fixes mixed content by rewriting HTTP URLs to HTTPS\n- Combine with **Always Use HTTPS** and **HSTS** for defense in depth\n- Works best when all resources are available over HTTPS\n- Monitor for resources that cannot be rewritten and fix them at the source",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_automatic_https_rewrites_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This feature works best when combined with Always Use HTTPS to ensure the entire site is served over HTTPS. Some resources may not be rewritable if they don't support HTTPS."
+}

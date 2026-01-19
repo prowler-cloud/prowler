@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service** Secure LDAP (LDAPS) certificates are assessed for upcoming expiration by comparing each directory's certificate expiration to the current time and identifying those with `<= 90` days remaining.",
   "Risk": "Expired LDAPS certificates cause TLS handshakes to fail, blocking directory binds and queries and disrupting authentication and app integrations (availability). If clients fall back to plain LDAP, credentials and directory data can be intercepted or altered (confidentiality and integrity).",
   "RelatedUrl": "",

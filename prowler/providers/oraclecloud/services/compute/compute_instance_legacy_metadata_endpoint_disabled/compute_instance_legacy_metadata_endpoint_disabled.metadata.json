@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:compute:instance",
   "Severity": "medium",
   "ResourceType": "OciComputeInstance",
+  "ResourceGroup": "compute",
   "Description": "The legacy Instance Metadata Service (IMDS) v1 endpoints do not use session authentication. Disabling the legacy endpoints helps prevent unauthorized access to instance metadata.",
   "Risk": "If legacy metadata endpoints are enabled, attackers who gain access to the instance may be able to access instance metadata without authentication, potentially exposing sensitive information.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/gettingmetadata.htm",

@@ -31,11 +31,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: ./**
           files_ignore: |
@@ -47,6 +47,7 @@ jobs:
             ui/**
             dashboard/**
             mcp_server/**
+            skills/**
             README.md
             mkdocs.yml
             .backportrc.json
@@ -55,6 +56,7 @@ jobs:
             examples/**
             .gitignore
             contrib/**
+            **/AGENTS.md
 
       - name: Install Poetry
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -62,7 +64,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
@@ -75,7 +77,7 @@ jobs:
       - name: Check if AWS files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-aws
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/aws/**
@@ -189,7 +191,7 @@ jobs:
 
       - name: Upload AWS coverage to Codecov
         if: steps.changed-aws.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -200,7 +202,7 @@ jobs:
       - name: Check if Azure files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-azure
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/azure/**
@@ -213,7 +215,7 @@ jobs:
 
       - name: Upload Azure coverage to Codecov
         if: steps.changed-azure.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -224,7 +226,7 @@ jobs:
       - name: Check if GCP files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-gcp
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/gcp/**
@@ -237,7 +239,7 @@ jobs:
 
       - name: Upload GCP coverage to Codecov
         if: steps.changed-gcp.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -248,7 +250,7 @@ jobs:
       - name: Check if Kubernetes files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-kubernetes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/kubernetes/**
@@ -261,7 +263,7 @@ jobs:
 
       - name: Upload Kubernetes coverage to Codecov
         if: steps.changed-kubernetes.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -272,7 +274,7 @@ jobs:
       - name: Check if GitHub files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-github
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/github/**
@@ -285,7 +287,7 @@ jobs:
 
       - name: Upload GitHub coverage to Codecov
         if: steps.changed-github.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -296,7 +298,7 @@ jobs:
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-nhn
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/nhn/**
@@ -309,7 +311,7 @@ jobs:
 
       - name: Upload NHN coverage to Codecov
         if: steps.changed-nhn.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -320,7 +322,7 @@ jobs:
       - name: Check if M365 files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-m365
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/m365/**
@@ -333,7 +335,7 @@ jobs:
 
       - name: Upload M365 coverage to Codecov
         if: steps.changed-m365.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -344,7 +346,7 @@ jobs:
       - name: Check if IaC files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-iac
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/iac/**
@@ -357,7 +359,7 @@ jobs:
 
       - name: Upload IaC coverage to Codecov
         if: steps.changed-iac.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -368,7 +370,7 @@ jobs:
       - name: Check if MongoDB Atlas files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-mongodbatlas
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/mongodbatlas/**
@@ -381,7 +383,7 @@ jobs:
 
       - name: Upload MongoDB Atlas coverage to Codecov
         if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -392,7 +394,7 @@ jobs:
       - name: Check if OCI files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-oraclecloud
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/**/oraclecloud/**
@@ -405,7 +407,7 @@ jobs:
 
       - name: Upload OCI coverage to Codecov
         if: steps.changed-oraclecloud.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -416,7 +418,7 @@ jobs:
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-lib
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/lib/**
@@ -429,7 +431,7 @@ jobs:
 
       - name: Upload Lib coverage to Codecov
         if: steps.changed-lib.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -440,7 +442,7 @@ jobs:
       - name: Check if Config files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-config
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: |
             ./prowler/config/**
@@ -453,7 +455,7 @@ jobs:
 
       - name: Upload Config coverage to Codecov
         if: steps.changed-config.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:

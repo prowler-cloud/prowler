@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's process ID namespace. Containers with hostPID can inspect and interact with processes outside of the container, potentially leading to privilege escalation.",
   "Risk": "Allowing containers to share the host's PID namespace without strict control can lead to security risks and potential privilege escalations.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

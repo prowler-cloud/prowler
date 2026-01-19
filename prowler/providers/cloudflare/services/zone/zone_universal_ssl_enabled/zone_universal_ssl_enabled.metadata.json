@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_universal_ssl_enabled",
+  "CheckTitle": "Universal SSL is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Universal SSL** configuration by checking if it is enabled to provide **free SSL/TLS certificates** for the domain and its subdomains, enabling secure HTTPS connections.",
+  "Risk": "Without **Universal SSL**, visitors cannot establish HTTPS connections to your site.\n- **Confidentiality**: all traffic is unencrypted and vulnerable to interception and eavesdropping\n- **Integrity**: HTTP responses can be modified in transit by attackers (content injection, malware)\n- **Trust**: browsers display security warnings degrading user trust and experience",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to Universal SSL\n4. Ensure the status shows Active\n5. If disabled, click Enable Universal SSL\n6. Wait for certificate issuance (typically within 24 hours for new domains)",
+      "Terraform": "```hcl\n# Note: Universal SSL is enabled by default on Cloudflare\n# To explicitly manage SSL settings, use zone_settings_override\nresource \"cloudflare_zone_settings_override\" \"ssl_settings\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    ssl = \"full\" # Critical: enables SSL/TLS encryption\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Universal SSL** to provide HTTPS capability for your domain.\n- Universal SSL is the foundation for transport security\n- Required before implementing HSTS or other HTTPS-dependent features\n- Cloudflare automatically renews certificates before expiration\n- Consider upgrading to Advanced Certificate Manager for additional control",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_universal_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Universal SSL is enabled by default for all Cloudflare zones. If it was previously disabled, re-enabling may take up to 24 hours for certificate issuance."
+}

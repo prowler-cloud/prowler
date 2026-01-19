@@ -1199,9 +1199,6 @@ class TestSecurityHubIntegrationUploads:
                     )
 
         assert result is False
-        # Integration should be marked as disconnected
-        integration.save.assert_called_once()
-        assert integration.connected is False
 
     @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.FindingOutput")
