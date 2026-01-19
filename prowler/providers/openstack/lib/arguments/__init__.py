@@ -1,1 +1,0 @@
-"""OpenStack CLI argument definitions."""
