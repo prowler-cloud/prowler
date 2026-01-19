@@ -1066,6 +1066,14 @@ class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "name",
         ]
 
+    def validate_provider(self, provider):
+        if not provider.available:
+            raise serializers.ValidationError(
+                "Cannot create scan for unavailable provider. "
+                "The provider no longer exists."
+            )
+        return provider
+
     def create(self, validated_data):
         # provider = validated_data.get("provider")
 

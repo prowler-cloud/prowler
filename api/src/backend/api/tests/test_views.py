@@ -1712,6 +1712,20 @@ class TestProviderViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_providers_connection_unavailable_provider(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that connection check returns 400 for unavailable provider."""
+        provider1, *_ = providers_fixture
+        provider1.available = False
+        provider1.save()
+
+        response = authenticated_client.post(
+            reverse("provider-connection", kwargs={"pk": provider1.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "provider_unavailable"
+
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
         (
@@ -2886,6 +2900,35 @@ class TestScanViewSet:
         assert (
             response.json()["errors"][0]["source"]["pointer"] == "/data/attributes/name"
         )
+
+    def test_scans_create_unavailable_provider(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that creating a scan for an unavailable provider returns 400."""
+        provider1, *_ = providers_fixture
+        provider1.available = False
+        provider1.save()
+
+        scan_json_payload = {
+            "data": {
+                "type": "scans",
+                "attributes": {
+                    "name": "Test Scan",
+                    "trigger": Scan.TriggerChoices.MANUAL,
+                },
+                "relationships": {
+                    "provider": {"data": {"type": "providers", "id": str(provider1.id)}}
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("scan-list"),
+            data=scan_json_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "unavailable provider" in response.json()["errors"][0]["detail"].lower()
 
     def test_scans_partial_update(self, authenticated_client, scans_fixture):
         scan1, *_ = scans_fixture

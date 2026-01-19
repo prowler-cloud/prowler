@@ -115,52 +115,6 @@ def test_check_provider_connection_skips_unavailable_provider(tenants_fixture):
     assert provider.connection_last_checked_at is None
 
 
-@patch("tasks.jobs.connection.Provider.objects.get")
-@patch("tasks.jobs.connection.prowler_provider_connection_test")
-@pytest.mark.django_db
-def test_check_provider_connection_marks_unavailable_on_not_found_error(
-    mock_provider_connection_test, mock_provider_get
-):
-    """Test that provider is marked as unavailable when account not found error occurs."""
-    mock_provider_instance = MagicMock()
-    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
-    mock_provider_instance.available = True
-    mock_provider_get.return_value = mock_provider_instance
-
-    mock_provider_connection_test.return_value = MagicMock()
-    mock_provider_connection_test.return_value.is_connected = False
-    mock_provider_connection_test.return_value.error = Exception(
-        "The security token included in the request is invalid"
-    )
-
-    result = check_provider_connection(provider_id="provider_id")
-
-    assert result["connected"] is False
-    assert mock_provider_instance.available is False
-    assert mock_provider_instance.connected is False
-
-
-@patch("tasks.jobs.connection.Provider.objects.get")
-@patch("tasks.jobs.connection.prowler_provider_connection_test")
-@pytest.mark.django_db
-def test_check_provider_connection_exception_marks_unavailable_on_not_found(
-    mock_provider_connection_test, mock_provider_get
-):
-    """Test that provider is marked as unavailable when connection test raises account not found exception."""
-    mock_provider_instance = MagicMock()
-    mock_provider_instance.provider = Provider.ProviderChoices.AWS.value
-    mock_provider_instance.available = True
-    mock_provider_get.return_value = mock_provider_instance
-
-    mock_provider_connection_test.side_effect = Exception("Account not found")
-
-    with pytest.raises(Exception, match="Account not found"):
-        check_provider_connection(provider_id="provider_id")
-
-    assert mock_provider_instance.available is False
-    assert mock_provider_instance.connected is False
-
-
 @pytest.mark.parametrize(
     "lighthouse_data",
     [

@@ -14,7 +14,6 @@ from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, When
-from tasks.jobs.connection import _is_provider_not_found_error
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
@@ -818,12 +817,6 @@ def perform_prowler_scan(
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                # Mark provider as unavailable if the error indicates the account doesn't exist
-                if _is_provider_not_found_error(e):
-                    provider_instance.available = False
-                    logger.warning(
-                        f"Provider {provider_id} marked as unavailable: account not found"
-                    )
                 exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )

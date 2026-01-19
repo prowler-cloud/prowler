@@ -260,6 +260,34 @@ class TestPerformScan:
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
 
+    @patch("api.db_utils.rls_transaction")
+    def test_perform_prowler_scan_unavailable_provider(
+        self,
+        mock_rls_transaction,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test that scan fails immediately for unavailable provider."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        # Mark provider as unavailable
+        provider.available = False
+        provider.save()
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+        checks_to_execute = ["check1", "check2"]
+
+        with pytest.raises(ProviderConnectionError, match="marked as unavailable"):
+            perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.FAILED
+
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
         [

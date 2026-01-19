@@ -12,32 +12,6 @@ from api.utils import (
 logger = get_task_logger(__name__)
 
 
-def _is_provider_not_found_error(error: Exception) -> bool:
-    """
-    Check if the error indicates the provider account no longer exists.
-
-    Args:
-        error: The exception raised during connection test.
-
-    Returns:
-        bool: True if the error indicates the provider account doesn't exist.
-    """
-    error_str = str(error).lower()
-    not_found_patterns = [
-        "account not found",
-        "subscription not found",
-        "project not found",
-        "invalidclienttokenid",
-        "the security token included in the request is invalid",
-        "subscriptionnotfound",
-        "resource not found",
-        "does not exist",
-        "was not found",
-        "no such account",
-    ]
-    return any(pattern in error_str for pattern in not_found_patterns)
-
-
 def check_provider_connection(provider_id: str):
     """
     Business logic to check the connection status of a provider.
@@ -76,26 +50,11 @@ def check_provider_connection(provider_id: str):
         provider_instance.connected = False
         provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
 
-        # Mark provider as unavailable if the error indicates the account doesn't exist
-        if _is_provider_not_found_error(e):
-            provider_instance.available = False
-            logger.warning(
-                f"Provider {provider_id} marked as unavailable: account not found"
-            )
-
         provider_instance.save()
         raise e
 
     provider_instance.connected = connection_result.is_connected
     provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
-
-    # Check if connection failed due to provider not found
-    if not connection_result.is_connected and connection_result.error:
-        if _is_provider_not_found_error(connection_result.error):
-            provider_instance.available = False
-            logger.warning(
-                f"Provider {provider_id} marked as unavailable: account not found"
-            )
 
     provider_instance.save()
 

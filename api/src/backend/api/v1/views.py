@@ -1551,7 +1551,23 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Provider, pk=pk)
+        provider = get_object_or_404(Provider, pk=pk)
+
+        if not provider.available:
+            return Response(
+                data={
+                    "errors": [
+                        {
+                            "detail": "Cannot check connection for unavailable provider. "
+                            "The provider no longer exists.",
+                            "status": "400",
+                            "code": "provider_unavailable",
+                        }
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         with transaction.atomic():
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
