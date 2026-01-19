@@ -184,7 +184,7 @@ const downloadFile = async (
         title: "Download Complete",
         description: successMessage,
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Download Failed",

@@ -153,7 +153,7 @@ export const TestConnectionForm = ({
               setIsRedirecting(true);
               router.push("/scans");
             }
-          } catch (error) {
+          } catch (_error) {
             form.setError("providerId", {
               type: "server",
               message: "An unexpected error occurred. Please try again.",

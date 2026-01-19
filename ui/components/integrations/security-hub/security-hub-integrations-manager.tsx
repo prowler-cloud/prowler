@@ -93,7 +93,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -125,7 +125,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -176,7 +176,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
