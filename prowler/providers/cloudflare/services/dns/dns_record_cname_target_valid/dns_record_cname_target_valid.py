@@ -59,12 +59,12 @@ class dns_record_cname_target_valid(Check):
 
             if is_valid:
                 report.status = "PASS"
-                report.status_extended = f"{record.type} record '{record.name}' points to valid target '{target}'."
+                report.status_extended = f"{record.type} record {record.name} points to valid target {target}."
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"{record.type} record '{record.name}' points to potentially dangling "
-                    f"target '{target}' - {risk_desc}."
+                    f"{record.type} record {record.name} points to potentially dangling "
+                    f"target {target} - {risk_desc}."
                 )
             findings.append(report)
 

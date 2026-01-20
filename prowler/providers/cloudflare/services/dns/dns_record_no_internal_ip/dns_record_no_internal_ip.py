@@ -43,14 +43,14 @@ class dns_record_no_internal_ip(Check):
             if not is_internal:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"DNS record '{record.name}' ({record.type}) points to "
-                    f"public IP address '{record.content}'."
+                    f"DNS record {record.name} ({record.type}) points to "
+                    f"public IP address {record.content}."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"DNS record '{record.name}' ({record.type}) exposes "
-                    f"internal IP address '{record.content}' - information disclosure risk."
+                    f"DNS record {record.name} ({record.type}) exposes "
+                    f"internal IP address {record.content} - information disclosure risk."
                 )
             findings.append(report)
 

@@ -40,10 +40,10 @@ class dns_record_proxied(Check):
 
             if record.proxied:
                 report.status = "PASS"
-                report.status_extended = f"DNS record '{record.name}' ({record.type}) is proxied through Cloudflare."
+                report.status_extended = f"DNS record {record.name} ({record.type}) is proxied through Cloudflare."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"DNS record '{record.name}' ({record.type}) is not proxied through Cloudflare."
+                report.status_extended = f"DNS record {record.name} ({record.type}) is not proxied through Cloudflare."
             findings.append(report)
 
         return findings

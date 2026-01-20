@@ -11,7 +11,6 @@ class DNS(CloudflareService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.provider = provider
         self.records: list["CloudflareDNSRecord"] = []
         self._list_dns_records()
 

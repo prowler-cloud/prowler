@@ -11,7 +11,6 @@ class Firewall(CloudflareService):
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.provider = provider
         self.rules: list["CloudflareFirewallRule"] = []
         self._list_rulesets()
 

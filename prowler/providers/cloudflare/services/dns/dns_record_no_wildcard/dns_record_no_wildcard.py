@@ -48,11 +48,11 @@ class dns_record_no_wildcard(Check):
 
             if not is_wildcard:
                 report.status = "PASS"
-                report.status_extended = f"DNS record '{record.name}' ({record.type}) is not a wildcard record."
+                report.status_extended = f"DNS record {record.name} ({record.type}) is not a wildcard record."
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"DNS record '{record.name}' ({record.type}) is a wildcard record - "
+                    f"DNS record {record.name} ({record.type}) is a wildcard record - "
                     f"may expose unintended services."
                 )
             findings.append(report)
