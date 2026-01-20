@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Settings",
+  "ResourceGroup": "collaboration",
   "Description": "",
   "Risk": "Allowing unrestricted third-party cloud storage services in Teams increases the risk of data exfiltration, compliance violations, and unauthorized access to sensitive information. Users may store or share data through unapproved platforms with weaker security controls.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps",

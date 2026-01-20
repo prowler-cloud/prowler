@@ -1,6 +1,6 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
+import { getProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
   getLatestResources,
@@ -8,10 +8,11 @@ import {
   getResources,
 } from "@/actions/resources";
 import { FilterControls } from "@/components/filters";
+import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ColumnResources } from "@/components/resources/table/column-resources";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   extractFiltersAndQuery,
@@ -19,6 +20,10 @@ import {
   hasDateOrScanFilter,
   replaceFieldKey,
 } from "@/lib";
+import {
+  createProviderDetailsMappingById,
+  extractProviderIds,
+} from "@/lib/provider-helpers";
 import { ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
@@ -35,45 +40,41 @@ export default async function Resources({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  const metadataInfoData = await (
-    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
-  )({
-    query,
-    filters: outputFilters,
-    sort: encodedSort,
-  });
+  const [metadataInfoData, providersData] = await Promise.all([
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+      query,
+      filters: outputFilters,
+      sort: encodedSort,
+    }),
+    getProviders({ pageSize: 50 }),
+  ]);
 
-  // Extract unique regions, services, types, and names from the metadata endpoint
+  // Extract unique regions, services, groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
+  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
+
+  // Extract provider IDs and details
+  const providerIds = providersData ? extractProviderIds(providersData) : [];
+  const providerDetails = providersData
+    ? createProviderDetailsMappingById(providerIds, providersData)
+    : [];
 
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
-      <DataTableFilterCustom
-        filters={[
-          {
-            key: "region",
-            labelCheckboxGroup: "Region",
-            values: uniqueRegions,
-          },
-          {
-            key: "type",
-            labelCheckboxGroup: "Type",
-            values: uniqueResourceTypes,
-          },
-          {
-            key: "service",
-            labelCheckboxGroup: "Service",
-            values: uniqueServices,
-          },
-        ]}
-      />
-      <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <div className="flex flex-col gap-6">
+        <ResourcesFilters
+          providerIds={providerIds}
+          providerDetails={providerDetails}
+          uniqueRegions={uniqueRegions}
+          uniqueServices={uniqueServices}
+          uniqueGroups={uniqueGroups}
+        />
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
     </ContentLayout>
   );
 }

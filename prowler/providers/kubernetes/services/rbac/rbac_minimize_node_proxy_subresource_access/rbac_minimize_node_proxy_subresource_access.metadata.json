@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NodeProxySubResource",
+  "ResourceGroup": "container",
   "Description": "This check ensures that access to the proxy sub-resource of node objects is restricted. Access to this sub-resource can grant privileges to use the Kubelet API directly, bypassing Kubernetes API controls like audit logging and admission control, potentially leading to privilege escalation.",
   "Risk": "Unauthorized access to the proxy sub-resource of node objects can lead to significant security vulnerabilities, including privilege escalation.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesWorkerNode",
+  "ResourceGroup": "container",
   "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has permissions set to 600 or more restrictive. This ensures the integrity and security of the node's configuration.",
   "Risk": "Improper permissions on kubelet.conf can expose sensitive configuration data, potentially leading to cluster security compromises.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",

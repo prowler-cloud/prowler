@@ -29,7 +29,7 @@ runs:
       run: |
         BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
         echo "Using branch: $BRANCH_NAME"
-        sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+        sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
 
     - name: Install poetry
       shell: bash

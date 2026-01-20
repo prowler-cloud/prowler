@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "messaging",
   "Description": "**MSK Connect connectors** are evaluated for **in-transit encryption** using `TLS` on client connections to Kafka brokers and connected systems.",
   "Risk": "Without **TLS**, data streams can be **intercepted** or **modified** in transit. Attackers on the path can perform **man-in-the-middle**, replay, or message **tampering**, exposing records and secrets. This degrades **confidentiality** and **integrity** and can enable unauthorized access to downstream systems.",
   "RelatedUrl": "",

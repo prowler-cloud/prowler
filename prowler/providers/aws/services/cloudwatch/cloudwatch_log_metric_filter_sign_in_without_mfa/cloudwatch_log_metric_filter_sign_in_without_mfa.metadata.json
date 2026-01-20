@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail logs** in CloudWatch are assessed for a metric filter and alarm that detect console logins where `$.eventName = ConsoleLogin` and `$.additionalEventData.MFAUsed != \\\"Yes\\\"`.\n\nThis reflects whether alerting exists for sign-ins that occur without **MFA**.",
   "Risk": "Without alerting on non-MFA console logins, successful use of stolen passwords can go **undetected**, enabling:\n- Unauthorized console access and IAM changes\n- Data exfiltration or deletion\n\nImpacts: loss of **confidentiality** and **integrity**, and potential **availability** disruption.",
   "RelatedUrl": "",

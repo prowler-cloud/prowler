@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with an appropriate audit log file size limit. Setting --audit-log-maxsize to 100 MB or as per business requirements helps manage the size of log files and prevents them from growing excessively large.",
   "Risk": "Without an appropriate audit log file size limit, log files can grow excessively large, potentially leading to storage issues and difficulty in log analysis.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",

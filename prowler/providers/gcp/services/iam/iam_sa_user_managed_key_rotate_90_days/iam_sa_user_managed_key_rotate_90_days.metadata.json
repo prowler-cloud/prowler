@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "ServiceAccountKey",
+  "ResourceGroup": "IAM",
   "Description": "Ensure User-Managed/External Keys for Service Accounts Are Rotated Every 90 Days",
   "Risk": "Service Account keys should be rotated to ensure that data cannot be accessed with an old key that might have been lost, cracked, or stolen.",
   "RelatedUrl": "",
