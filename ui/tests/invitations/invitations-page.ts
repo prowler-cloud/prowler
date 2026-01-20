@@ -1,9 +1,8 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
+
 import { BasePage } from "../base-page";
 
-
 export class InvitationsPage extends BasePage {
-  
   // Page heading
   readonly pageHeadingSendInvitation: Locator;
   readonly pageHeadingInvitations: Locator;
@@ -18,17 +17,26 @@ export class InvitationsPage extends BasePage {
   readonly reviewInvitationDetailsButton: Locator;
   readonly shareUrl: Locator;
 
-
   constructor(page: Page) {
     super(page);
 
     // Page heading
-    this.pageHeadingInvitations = page.getByRole("heading", { name: "Invitations" });
-    this.pageHeadingSendInvitation = page.getByRole("heading", { name: "Send Invitation" });
+    this.pageHeadingInvitations = page.getByRole("heading", {
+      name: "Invitations",
+    });
+    this.pageHeadingSendInvitation = page.getByRole("heading", {
+      name: "Send Invitation",
+    });
 
     // Button to invite a new user
-    this.inviteButton = page.getByRole("link", { name: "Send Invitation", exact: true });
-    this.sendInviteButton = page.getByRole("button", { name: "Send Invitation", exact: true });
+    this.inviteButton = page.getByRole("link", {
+      name: "Send Invitation",
+      exact: true,
+    });
+    this.sendInviteButton = page.getByRole("button", {
+      name: "Send Invitation",
+      exact: true,
+    });
 
     // Form inputs
     this.emailInput = page.getByRole("textbox", { name: "Email" });
@@ -37,15 +45,21 @@ export class InvitationsPage extends BasePage {
     this.roleSelect = page.getByRole("button", { name: /Role|Select a role/i });
 
     // Form details
-    this.reviewInvitationDetailsButton = page.getByRole('button', { name: /Review Invitation Details/i });
+    this.reviewInvitationDetailsButton = page.getByRole("button", {
+      name: /Review Invitation Details/i,
+    });
 
     // Multiple strategies to find the share URL
-    this.shareUrl = page.locator('a[href*="/sign-up?invitation_token="], [data-testid="share-url"], .share-url, code, pre').first();
+    this.shareUrl = page
+      .locator(
+        'a[href*="/sign-up?invitation_token="], [data-testid="share-url"], .share-url, code, pre',
+      )
+      .first();
   }
 
   async goto(): Promise<void> {
     // Navigate to the invitations page
-    
+
     await super.goto("/invitations");
   }
 
@@ -86,7 +100,9 @@ export class InvitationsPage extends BasePage {
     await this.roleSelect.click();
 
     // Prefer ARIA role option inside listbox
-    const option = this.page.getByRole("option", { name: new RegExp(`^${role}$`, "i") });
+    const option = this.page.getByRole("option", {
+      name: new RegExp(`^${role}$`, "i"),
+    });
 
     if (await option.count()) {
       await option.first().click();
@@ -108,7 +124,7 @@ export class InvitationsPage extends BasePage {
 
     // Get the share url text content
     const text = await this.shareUrl.textContent();
-    
+
     if (!text) {
       throw new Error("Share url not found");
     }

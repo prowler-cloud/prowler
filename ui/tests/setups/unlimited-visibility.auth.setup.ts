@@ -1,4 +1,5 @@
 import { test as authUnlimitedVisibilitySetup } from "@playwright/test";
+
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
 const unlimitedVisibilityUserFile =
@@ -13,7 +14,7 @@ authUnlimitedVisibilitySetup(
 
     if (!unlimitedVisibilityEmail || !unlimitedVisibilityPassword) {
       throw new Error(
-        "E2E_UNLIMITED_VISIBILITY_USER and E2E_UNLIMITED_VISIBILITY_PASSWORD environment variables are required"
+        "E2E_UNLIMITED_VISIBILITY_USER and E2E_UNLIMITED_VISIBILITY_PASSWORD environment variables are required",
       );
     }
 
@@ -23,7 +24,7 @@ authUnlimitedVisibilitySetup(
         email: unlimitedVisibilityEmail,
         password: unlimitedVisibilityPassword,
       },
-      unlimitedVisibilityUserFile
+      unlimitedVisibilityUserFile,
     );
-  }
+  },
 );

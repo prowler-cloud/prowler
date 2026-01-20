@@ -1,8 +1,9 @@
-import { Locator, Page, expect } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
+
 import {
+  AWS_CREDENTIAL_OPTIONS,
   AWSProviderCredential,
   AWSProviderData,
-  AWS_CREDENTIAL_OPTIONS,
   ProvidersPage,
 } from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
@@ -81,7 +82,7 @@ export async function addAWSProvider(
   page: Page,
   accountId: string,
   accessKey: string,
-  secretKey: string
+  secretKey: string,
 ): Promise<void> {
   // Prepare test data for AWS provider
   const awsProviderData: AWSProviderData = {
@@ -119,7 +120,7 @@ export async function addAWSProvider(
 
   // Select static credentials type
   await providersPage.selectCredentialsType(
-    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
+    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
   );
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
@@ -136,7 +137,7 @@ export async function addAWSProvider(
 
 export async function deleteProviderIfExists(
   page: ProvidersPage,
-  providerUID: string
+  providerUID: string,
 ): Promise<void> {
   // Delete the provider if it exists
 

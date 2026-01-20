@@ -1,9 +1,9 @@
-import { test, expect } from "@playwright/test";
-import { SignInPage } from "../sign-in-base/sign-in-base-page";
-import { HomePage } from "../home/home-page";
-import { ScansPage } from "../scans/scans-page";
-import { ProvidersPage } from "../providers/providers-page";
+import { expect, test } from "@playwright/test";
+
 import { TEST_CREDENTIALS } from "../helpers";
+import { ProvidersPage } from "../providers/providers-page";
+import { ScansPage } from "../scans/scans-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
 test.describe("Session Error Messages", () => {
   // Increase timeout for tests that involve session operations under load
@@ -65,14 +65,10 @@ test.describe("Session Error Messages", () => {
     { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-004"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
-      const homePage = new HomePage(page);
       const scansPage = new ScansPage(page);
       const providersPage = new ProvidersPage(page);
 
-      // Login first
-      await signInPage.goto();
-      await signInPage.login(TEST_CREDENTIALS.VALID);
-      await homePage.verifyPageLoaded();
+      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       // Navigate to a specific page (just need to be on a protected route)
       await scansPage.goto();

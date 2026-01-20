@@ -1,7 +1,8 @@
 import { test } from "@playwright/test";
-import { SignUpPage } from "./sign-up-page";
-import { SignInPage } from "../sign-in-base/sign-in-base-page";
+
 import { makeSuffix } from "../helpers";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
+import { SignUpPage } from "./sign-up-page";
 
 test.describe("Sign Up Flow", () => {
   test(
@@ -11,7 +12,9 @@ test.describe("Sign Up Flow", () => {
       const password = process.env.E2E_NEW_USER_PASSWORD;
 
       if (!password) {
-        throw new Error("E2E_NEW_USER_PASSWORD environment variable is not set");
+        throw new Error(
+          "E2E_NEW_USER_PASSWORD environment variable is not set",
+        );
       }
 
       const signUpPage = new SignUpPage(page);

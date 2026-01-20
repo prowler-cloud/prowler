@@ -1,7 +1,8 @@
 import { test } from "@playwright/test";
-import { ScansPage } from "./scans-page";
+
+import { addAWSProvider, deleteProviderIfExists } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
-import { deleteProviderIfExists, addAWSProvider } from "../helpers";
+import { ScansPage } from "./scans-page";
 
 // Scans E2E suite scaffold
 test.describe("Scans", () => {
@@ -40,7 +41,6 @@ test.describe("Scans", () => {
         tag: ["@e2e", "@scans", "@critical", "@serial", "@SCAN-E2E-001"],
       },
       async ({ page }) => {
-
         const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
 
         if (!accountId) {
@@ -63,8 +63,6 @@ test.describe("Scans", () => {
 
         // Verify the scan was launched
         await scansPage.verifyScanLaunched("E2E Test Scan - On Demand");
-
-
       },
     );
   });

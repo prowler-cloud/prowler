@@ -1,10 +1,10 @@
-import { test, expect } from "@playwright/test";
-import { SignInPage } from "../sign-in-base/sign-in-base-page";
-import { SignUpPage } from "../sign-up/sign-up-page";
-import { HomePage } from "../home/home-page";
+import { test } from "@playwright/test";
+
+import { TEST_CREDENTIALS } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
 import { ScansPage } from "../scans/scans-page";
-import { TEST_CREDENTIALS } from "../helpers";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
+import { SignUpPage } from "../sign-up/sign-up-page";
 
 test.describe("Middleware Error Handling", () => {
   // Increase timeout for tests that involve multiple navigations under load
@@ -32,13 +32,10 @@ test.describe("Middleware Error Handling", () => {
     { tag: ["@e2e", "@auth", "@middleware", "@AUTH-MW-E2E-002"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
-      const homePage = new HomePage(page);
       const providersPage = new ProvidersPage(page);
       const scansPage = new ScansPage(page);
 
-      await signInPage.goto();
-      await signInPage.login(TEST_CREDENTIALS.VALID);
-      await homePage.verifyPageLoaded();
+      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await providersPage.goto();
       await providersPage.verifyPageLoaded();

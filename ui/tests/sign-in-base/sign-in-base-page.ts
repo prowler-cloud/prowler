@@ -1,4 +1,5 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
+
 import { BasePage } from "../base-page";
 import { HomePage } from "../home/home-page";
 
@@ -73,7 +74,7 @@ export class SignInPage extends BasePage {
 
     // Error messages - form validation errors appear as <p> with specific classes
     this.errorMessages = page.locator(
-      "p.text-destructive, p.text-sm.text-destructive"
+      "p.text-destructive, p.text-sm.text-destructive",
     );
 
     // SAML specific elements - use text matching
@@ -180,7 +181,7 @@ export class SignInPage extends BasePage {
 
   async verifyNavigationLinks(): Promise<void> {
     await expect(
-      this.page.getByText("Need to create an account?")
+      this.page.getByText("Need to create an account?"),
     ).toBeVisible();
     await expect(this.signUpLink).toBeVisible();
   }
@@ -189,8 +190,18 @@ export class SignInPage extends BasePage {
     await this.homePage.verifyPageLoaded();
   }
 
+  /**
+   * Complete login flow: navigates to sign-in, logs in, and verifies success.
+   * Use this when you need to authenticate from scratch in a test.
+   */
+  async loginAndVerify(credentials: SignInCredentials): Promise<void> {
+    await this.goto();
+    await this.login(credentials);
+    await this.verifySuccessfulLogin();
+  }
+
   async verifyLoginError(
-    errorMessage: string = "Invalid email or password"
+    errorMessage: string = "Invalid email or password",
   ): Promise<void> {
     // Error messages appear as <p> elements with destructive styling
     await expect(this.page.getByText(errorMessage).first()).toBeVisible();
@@ -215,7 +226,9 @@ export class SignInPage extends BasePage {
 
   async verifyFormValidation(): Promise<void> {
     // Check for common validation messages - they appear as <p> elements
-    const emailError = this.page.getByText("Please enter a valid email address.");
+    const emailError = this.page.getByText(
+      "Please enter a valid email address.",
+    );
     const passwordError = this.page.getByText("Password is required.");
 
     // At least one validation error should be visible
@@ -239,13 +252,13 @@ export class SignInPage extends BasePage {
 
   async verifyAriaLabels(): Promise<void> {
     await expect(
-      this.page.getByRole("textbox", { name: "Email" })
+      this.page.getByRole("textbox", { name: "Email" }),
     ).toBeVisible();
     await expect(
-      this.page.getByRole("textbox", { name: "Password" })
+      this.page.getByRole("textbox", { name: "Password" }),
     ).toBeVisible();
     await expect(
-      this.page.getByRole("button", { name: "Log in" })
+      this.page.getByRole("button", { name: "Log in" }),
     ).toBeVisible();
   }
 
@@ -343,8 +356,7 @@ export class SignInPage extends BasePage {
       name: "SAML Authentication Error",
     });
     if (await samlError.isVisible()) {
-      // Handle SAML error if present
-      console.log("SAML authentication error detected");
+      // SAML error detected - test may need to handle this case
     }
   }
 
@@ -373,20 +385,15 @@ export class SignInPage extends BasePage {
    */
   async authenticateAndSaveState(
     credentials: SignInCredentials,
-    storagePath: string
+    storagePath: string,
   ): Promise<void> {
     if (!credentials.email || !credentials.password) {
       throw new Error(
-        "Email and password are required for authentication and save state"
+        "Email and password are required for authentication and save state",
       );
     }
 
-    // Perform authentication steps
-    await this.goto();
-    await this.login(credentials);
-    await this.verifySuccessfulLogin();
-
-    // Save authentication state
+    await this.loginAndVerify(credentials);
     await this.page.context().storageState({ path: storagePath });
   }
 }

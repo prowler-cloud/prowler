@@ -1,9 +1,10 @@
 import { test } from "@playwright/test";
-import { InvitationsPage } from "./invitations-page";
+
 import { makeSuffix } from "../helpers";
-import { SignUpPage } from "../sign-up/sign-up-page";
-import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { UserProfilePage } from "../profile/profile-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
+import { SignUpPage } from "../sign-up/sign-up-page";
+import { InvitationsPage } from "./invitations-page";
 
 test.describe("New user invitation", () => {
   // Invitations page object
@@ -22,8 +23,7 @@ test.describe("New user invitation", () => {
     {
       tag: ["@critical", "@e2e", "@invitations", "@INVITATION-E2E-001"],
     },
-    async ({ page, browser }) => {
-
+    async ({ browser }) => {
       // Test data from environment variables
       const password = process.env.E2E_NEW_USER_PASSWORD;
       const organizationId = process.env.E2E_ORGANIZATION_ID;
@@ -61,7 +61,9 @@ test.describe("New user invitation", () => {
       const shareUrl = await invitationsPage.getShareUrl();
 
       // Navigate to the share url with a new context to avoid cookies from the admin context
-      const inviteContext = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+      const inviteContext = await browser.newContext({
+        storageState: { cookies: [], origins: [] },
+      });
       const signUpPage = new SignUpPage(await inviteContext.newPage());
 
       // Navigate to the share url
@@ -92,7 +94,9 @@ test.describe("New user invitation", () => {
       await signInPage.verifySuccessfulLogin();
 
       // Navigate to the user profile page
-      const userProfilePage = new UserProfilePage(await inviteContext.newPage());
+      const userProfilePage = new UserProfilePage(
+        await inviteContext.newPage(),
+      );
       await userProfilePage.goto();
 
       // Verify if user is added to the organization

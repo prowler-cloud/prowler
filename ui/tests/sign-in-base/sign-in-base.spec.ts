@@ -1,8 +1,9 @@
-import { test, expect } from "@playwright/test";
-import { SignInPage } from "./sign-in-base-page";
-import { SignUpPage } from "../sign-up/sign-up-page";
+import { expect, test } from "@playwright/test";
+
+import { ERROR_MESSAGES, getSession, TEST_CREDENTIALS, URLS } from "../helpers";
 import { HomePage } from "../home/home-page";
-import { TEST_CREDENTIALS, ERROR_MESSAGES, URLS, getSession } from "../helpers";
+import { SignUpPage } from "../sign-up/sign-up-page";
+import { SignInPage } from "./sign-in-base-page";
 
 test.describe("Login Flow", () => {
   let signInPage: SignInPage;
@@ -119,9 +120,7 @@ test.describe("Session Persistence", () => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
 
-      await signInPage.goto();
-      await signInPage.login(TEST_CREDENTIALS.VALID);
-      await signInPage.verifySuccessfulLogin();
+      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await page.reload();
       await homePage.verifyPageLoaded();
@@ -148,9 +147,7 @@ test.describe("Session Persistence", () => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
 
-      await signInPage.goto();
-      await signInPage.login(TEST_CREDENTIALS.VALID);
-      await signInPage.verifySuccessfulLogin();
+      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await homePage.signOut();
       await signInPage.verifyLogoutSuccess();
@@ -168,9 +165,7 @@ test.describe("Session Persistence", () => {
       const authPage = await authContext.newPage();
 
       const signInPage = new SignInPage(authPage);
-      await signInPage.goto();
-      await signInPage.login(TEST_CREDENTIALS.VALID);
-      await signInPage.verifySuccessfulLogin();
+      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       const authSession = await getSession(authPage);
       expect(authSession).toBeTruthy();
@@ -247,7 +242,9 @@ test.describe("Accessibility", () => {
 
   test(
     "should be navigable with keyboard",
-    { tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-017"] },
+    {
+      tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-017"],
+    },
     async () => {
       await signInPage.verifyKeyboardNavigation();
     },
@@ -255,7 +252,9 @@ test.describe("Accessibility", () => {
 
   test(
     "should have proper ARIA labels",
-    { tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-018"] },
+    {
+      tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-018"],
+    },
     async () => {
       await signInPage.verifyAriaLabels();
     },
