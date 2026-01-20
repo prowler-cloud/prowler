@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
   "Description": "It is recommended that a query and alarm be established for **RAM Role** creation, deletion, and updating activities.",
   "Risk": "Monitoring **role creation**, **deletion**, and **updating** activities will help in identifying potential **malicious actions** at an early stage.\n\nUnauthorized role changes could lead to privilege escalation.",
   "RelatedUrl": "",

@@ -1,20 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_identity_without_admin_privileges",
-  "CheckTitle": "Azure Function app managed identity is not assigned Owner, Contributor, User Access Administrator, or Role Based Access Control Administrator roles",
+  "CheckTitle": "Function app managed identity is not assigned Owner, Contributor, User Access Administrator, or Role Based Access Control Administrator roles",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.web/sites",
-  "Description": "Azure Functions with managed identities are evaluated for assignments to broad **administrative roles**: **Owner**, **Contributor**, **User Access Administrator**, **RBAC Administrator**.\n\nThe finding highlights functions whose identity carries elevated permissions beyond normal runtime needs.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** with managed identities are evaluated for assignments to broad **administrative roles**: **Owner**, **Contributor**, **User Access Administrator**, **RBAC Administrator**.\n\nThe finding highlights functions whose identity carries elevated permissions beyond normal runtime needs.",
   "Risk": "Admin rights on a function's identity expose the control plane.\n- Confidentiality: read secrets and data\n- Integrity: alter configs, grant roles, deploy changes\n- Availability: stop or delete resources\nA runtime compromise can enable **lateral movement** and **privilege escalation** across the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-admin-permissions.html",
     "https://docs.microsoft.com/en-us/azure/architecture/framework/security/design-identity-authorization#use-the-principle-of-least-privilege",
-    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview-for-developers",
     "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview"
   ],
   "Remediation": {

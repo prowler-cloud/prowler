@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure Function App** is configured to send telemetry to **Application Insights** when application settings include `APPLICATIONINSIGHTS_CONNECTION_STRING` or `APPINSIGHTS_INSTRUMENTATIONKEY`.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** are configured to send telemetry to **Application Insights** when application settings include `APPLICATIONINSIGHTS_CONNECTION_STRING` or `APPINSIGHTS_INSTRUMENTATIONKEY`.",
   "Risk": "Without this telemetry, **visibility** into exceptions, dependencies, and performance is lost, reducing **availability** and delaying response. Gaps in traces mask anomalous traffic and failures, enabling prolonged outages and undermining **integrity** of processing (e.g., undetected retries or timeouts).",
   "RelatedUrl": "",
   "AdditionalURLs": [

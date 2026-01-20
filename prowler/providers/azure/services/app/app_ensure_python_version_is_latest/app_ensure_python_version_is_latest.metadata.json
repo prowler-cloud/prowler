@@ -1,18 +1,18 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_python_version_is_latest",
-  "CheckTitle": "App Service web app uses the latest stable Python version",
+  "CheckTitle": "App Service web app uses the latest supported Python version or 3.12 by default",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure App Service** web apps using **Python** are assessed to confirm the runtime is the **latest supported version** (e.g., `3.12`). The evaluation reads the app's stack configuration to detect Python usage and compares the configured runtime against the defined latest baseline.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** using **Python** are assessed to confirm the runtime is the **latest supported version** (e.g., `3.12`). The evaluation reads the app's stack configuration to detect Python usage and compares the configured runtime against the defined latest baseline.",
   "Risk": "Outdated **Python runtimes** weaken security and reliability:\n- Compromise confidentiality via known interpreter/SSL flaws\n- Undermine integrity through RCE and package exploitation\n- Reduce availability when deprecated versions lose patches and break under load",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-python-version-is-the-latest-if-used-to-run-the-web-app",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-python.html",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-language-python#configure-python-version"

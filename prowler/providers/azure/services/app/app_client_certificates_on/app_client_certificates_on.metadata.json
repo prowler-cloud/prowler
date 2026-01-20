@@ -8,19 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites/config",
+  "ResourceGroup": "serverless",
   "Description": "**Azure App Service apps** enforce **mutual TLS** when `client certificate mode` is set to `Required`, meaning every inbound request must present a valid client certificate that the app can validate.",
   "Risk": "Without **mTLS**, clients aren't cryptographically authenticated at the transport layer. Adversaries can reach endpoints using spoofed sources or stolen tokens, leading to unauthorized data access (confidentiality), request tampering (integrity), and automated abuse that degrades service (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
-    "https://www.starwindsoftware.com/blog/mutual-tls-mtls-or-client-certificate-authentication-with-an-azure-application-gateway-and-an-app-service-application/",
-    "https://video2.skills-academy.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth",
-    "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth?tabs=azurecli",
-    "https://konradmisniakiewicz.wordpress.com/2017/12/11/web-app-in-azure-security-check-list-and-guidelines/",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_7#terraform",
     "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-4-authenticate-server-and-services",
-    "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth",
-    "https://stackoverflow.com/questions/72260003/tls-mutual-authentication-for-azure-app-service"
+    "https://learn.microsoft.com/en-us/azure/app-service/app-service-web-configure-tls-mutual-auth"
   ],
   "Remediation": {
     "Code": {

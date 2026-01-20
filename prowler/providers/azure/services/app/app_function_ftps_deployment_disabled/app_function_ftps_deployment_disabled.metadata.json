@@ -1,14 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_ftps_deployment_disabled",
-  "CheckTitle": "Azure Function has FTP and FTPS deployments disabled",
+  "CheckTitle": "Function app has FTP and FTPS deployments disabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
-  "Description": "Azure Function apps are evaluated for the `ftps_state` setting that controls **FTP/FTPS deployment endpoints**. Values `AllAllowed` or `FtpsOnly` indicate deployment over FTP/FTPS is enabled, while `Disabled` indicates both endpoints are turned off.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** are evaluated for the `ftps_state` setting that controls **FTP/FTPS deployment endpoints**. Values `AllAllowed` or `FtpsOnly` indicate deployment over FTP/FTPS is enabled, while `Disabled` indicates both endpoints are turned off.",
   "Risk": "Enabled **FTP/FTPS deployment** undermines confidentiality and integrity. FTP exposes credentials in cleartext; FTPS still presents a public basic-auth endpoint susceptible to brute force and credential reuse. Compromise enables **unauthorized code pushes**, leading to RCE, data leakage, and service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [

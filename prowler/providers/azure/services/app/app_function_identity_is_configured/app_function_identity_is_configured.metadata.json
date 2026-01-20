@@ -1,25 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_identity_is_configured",
-  "CheckTitle": "Azure Function has a system-assigned or user-assigned managed identity enabled",
+  "CheckTitle": "Function app has a system-assigned or user-assigned managed identity enabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
+  "ResourceGroup": "serverless",
   "Description": "**Azure Function Apps** are evaluated for an enabled **managed identity** (`SystemAssigned` or `UserAssigned`) configured on the app.\n\nThe finding indicates whether an identity is present to support token-based access to other Azure resources.",
   "Risk": "Without **managed identities**, apps rely on stored secrets/keys, risking:\n- Confidentiality loss from leaked credentials\n- Integrity tampering via unauthorized writes\n- Availability outages from secret expiry/rotation\n\nCompromised keys enable unauthorized access and lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Functions/azure-function-system-assigned-identity.html",
     "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity",
-    "https://blog.johnfolberth.com/azure-managed-identities-user-vs-system-assigned/",
-    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
-    "https://learn.microsoft.com/en-us/answers/questions/1696360/azure-function-app-using-system-assigned-managed-i",
-    "https://stackoverflow.com/questions/69451720/unable-to-use-user-managed-identity-with-azure-function-app",
-    "https://stackoverflow.com/questions/78772444/azure-subscriber-function-not-running-with-managed-identity",
-    "https://www.red-gate.com/simple-talk/cloud/azure/azure-function-and-user-assigned-managed-identities/"
+    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview"
   ],
   "Remediation": {
     "Code": {

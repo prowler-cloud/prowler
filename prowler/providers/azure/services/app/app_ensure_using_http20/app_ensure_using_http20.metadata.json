@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure App Service apps** are evaluated for **HTTP/2 support** via the `http20_enabled` configuration, indicating whether the site serves traffic using the HTTP/2 protocol",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** are evaluated for **HTTP/2 support** via the `http20_enabled` configuration, indicating whether the site serves traffic using the HTTP/2 protocol",
   "Risk": "Without **HTTP/2**, apps remain on **HTTP/1.1**, increasing connection overhead and head-of-line blocking, which can reduce **availability** under load. Inefficient use of TLS sessions raises **DoS susceptibility** and degrades user experience, impacting service reliability",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
     "https://azure.microsoft.com/en-us/blog/announcing-http-2-support-in-azure-app-service/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-http-2-for-app-service-web-applications.html",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings"

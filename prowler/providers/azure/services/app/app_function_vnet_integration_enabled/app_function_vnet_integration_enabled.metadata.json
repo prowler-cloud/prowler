@@ -1,14 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_vnet_integration_enabled",
-  "CheckTitle": "Azure Function has Virtual Network integration enabled",
+  "CheckTitle": "Function app has Virtual Network integration enabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure Function App** configured with **Virtual Network integration** uses a chosen subnet so outbound traffic is routed via the VNet and can reach private or service-endpoint-secured resources.\n\nThe finding reflects whether a function app is associated with a subnet resource ID.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** configured with **Virtual Network integration** uses a chosen subnet so outbound traffic is routed via the VNet and can reach private or service-endpoint-secured resources.\n\nThe finding reflects whether a function app is associated with a subnet resource ID.",
   "Risk": "Without VNet integration, function apps send egress directly to the public Internet and cannot reach private endpoints.\n\nThis weakens confidentiality and integrity by bypassing NSG/UDR controls, enables data exfiltration from compromised code, and may force exposing backends publicly, increasing attack surface.",
   "RelatedUrl": "",
   "AdditionalURLs": [

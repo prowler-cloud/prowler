@@ -1,6 +1,7 @@
 import {
   CloudCog,
   Cog,
+  GitBranch,
   Group,
   Mail,
   MessageCircleQuestion,
@@ -66,6 +67,19 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
         },
       ],
     },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/attack-paths",
+          label: "Attack Paths",
+          icon: GitBranch,
+          active: pathname.startsWith("/attack-paths"),
+          highlight: true,
+        },
+      ],
+    },
+
     {
       groupLabel: "",
       menus: [

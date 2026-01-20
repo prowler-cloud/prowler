@@ -1,23 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "app_http_logs_enabled",
-  "CheckTitle": "Azure App Service app has HTTP logs enabled in diagnostic settings",
+  "CheckTitle": "App Service web app has HTTP logs enabled in diagnostic settings",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "microsoft.web/sites",
-  "Description": "Azure App Service diagnostic settings include **HTTP request logging** when the `AppServiceHTTPLogs` category (or the `allLogs` group) is enabled to capture web access events.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** diagnostic settings include **HTTP request logging** when the `AppServiceHTTPLogs` category (or the `allLogs` group) is enabled to capture web access events.",
   "Risk": "Without **HTTP access logs**, visibility into requests is lost, hindering **detection** of brute force, probing, and injection attempts. This weakens **forensics** and reduces **confidentiality** and **integrity** by masking data access paths and blocking reliable incident timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
-    "https://stackoverflow.com/questions/61540726/sending-azure-app-service-http-logs-from-diagnostics-settings-to-azure-monitor-l",
-    "https://stackoverflow.com/questions/52402682/enable-diagnostics-logs-for-app-service-using-arm-template",
-    "https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs",
-    "https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs",
-    "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-that-app-service-enables-http-logging#terraform"
+    "https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs"
   ],
   "Remediation": {
     "Code": {

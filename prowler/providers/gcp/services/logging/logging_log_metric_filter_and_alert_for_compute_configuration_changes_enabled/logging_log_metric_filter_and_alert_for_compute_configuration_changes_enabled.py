@@ -1,0 +1,50 @@
+from prowler.lib.check.models import Check, Check_Report_GCP
+from prowler.providers.gcp.services.logging.logging_client import logging_client
+from prowler.providers.gcp.services.monitoring.monitoring_client import (
+    monitoring_client,
+)
+
+
+class logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled(
+    Check
+):
+    def execute(self) -> Check_Report_GCP:
+        findings = []
+        projects_with_metric = set()
+        for metric in logging_client.metrics:
+            if 'protoPayload.serviceName="compute.googleapis.com"' in metric.filter:
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource=metric,
+                    location=logging_client.region,
+                    resource_name=metric.name if metric.name else "Log Metric Filter",
+                )
+                projects_with_metric.add(metric.project_id)
+                report.status = "FAIL"
+                report.status_extended = f"Log metric filter {metric.name} found but no alerts associated in project {metric.project_id}."
+                for alert_policy in monitoring_client.alert_policies:
+                    for filter in alert_policy.filters:
+                        if metric.name in filter:
+                            report.status = "PASS"
+                            report.status_extended = f"Log metric filter {metric.name} found with alert policy {alert_policy.display_name} associated in project {metric.project_id}."
+                            break
+                findings.append(report)
+
+        for project in logging_client.project_ids:
+            if project not in projects_with_metric:
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource=logging_client.projects[project],
+                    project_id=project,
+                    location=logging_client.region,
+                    resource_name=(
+                        logging_client.projects[project].name
+                        if logging_client.projects[project].name
+                        else "GCP Project"
+                    ),
+                )
+                report.status = "FAIL"
+                report.status_extended = f"There are no log metric filters or alerts associated for Compute Engine configuration changes in project {project}."
+                findings.append(report)
+
+        return findings

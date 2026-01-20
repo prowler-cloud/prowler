@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_hotlink_protection_enabled",
+  "CheckTitle": "Hotlink Protection is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Hotlink Protection** (Scrape Shield) configuration by checking if it is enabled to prevent other websites from directly linking to **images and media**, consuming bandwidth without authorization.",
+  "Risk": "Without **Hotlink Protection**, external websites can embed your media directly.\n- **Confidentiality**: content may be used without proper attribution or permission\n- **Integrity**: unauthorized use of media may misrepresent your brand\n- **Availability**: bandwidth theft increases costs and may degrade performance",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/scrape-shield/hotlink-protection/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Scrape Shield (or Security > Settings in newer UI)\n3. Scroll to Hotlink Protection\n4. Toggle the setting to On\n5. Review allowed referrers if legitimate integrations require access",
+      "Terraform": "```hcl\n# Enable Hotlink Protection to prevent bandwidth theft\nresource \"cloudflare_zone_settings_override\" \"hotlink_protection\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    hotlink_protection = \"on\" # Blocks unauthorized embedding of your media resources\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Hotlink Protection** to prevent unauthorized embedding of your media.\n- Blocks requests to images when HTTP referer does not match your domain\n- Reduces bandwidth costs from unauthorized embedding\n- Review allowed referrers for legitimate integrations\n- Part of the Scrape Shield feature set for comprehensive protection",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_hotlink_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Hotlink Protection blocks requests to images when the HTTP referer does not match your domain. May need configuration for legitimate third-party embedding use cases."
+}

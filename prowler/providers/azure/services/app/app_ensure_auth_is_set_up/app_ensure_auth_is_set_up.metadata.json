@@ -1,25 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_auth_is_set_up",
-  "CheckTitle": "Azure App Service app has App Service Authentication enabled",
+  "CheckTitle": "App Service app has App Service Authentication enabled",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
+  "ResourceGroup": "serverless",
   "Description": "**Azure App Service** can enforce built-in **Authentication/Authorization** (Easy Auth) so requests are authenticated by a provider before reaching app code.\n\nThis evaluates whether platform auth is enabled for the app and an identity provider is configured.",
   "Risk": "Without platform **authentication**, apps may accept **anonymous requests**, enabling unauthorized access to APIs and data. Attackers can enumerate endpoints and bypass weak app checks, risking data exposure (C), unauthorized changes (I), and automated abuse impacting availability (A).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-app-service-authentication.html",
     "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service",
-    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#website-contributor",
-    "https://www.geeksforgeeks.org/cloud-computing/how-to-use-azure-active-directory-to-manage-user-authentication-and-authorization/",
-    "https://parveensingh.com/easy-auth-for-azure-app-service/",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_2#terraform",
-    "https://medium.com/geekculture/easyauth-in-functions-app-with-azure-active-directory-29c01cad8477",
     "https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization"
   ],
   "Remediation": {

@@ -16,7 +16,6 @@ import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
-import { Button } from "@/components/shadcn";
 import type { FindingProps } from "@/types/components";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -92,22 +91,16 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         onComplete={handleMuteComplete}
       />
 
-      <div className="flex items-center justify-center px-2">
+      <div className="flex items-center justify-end">
         <Dropdown
           className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
           placement="bottom"
         >
-          <DropdownTrigger>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              className="size-7 rounded-full"
-            >
-              <VerticalDotsIcon
-                size={16}
-                className="text-text-neutral-secondary"
-              />
-            </Button>
+          <DropdownTrigger aria-label="Finding actions">
+            <VerticalDotsIcon
+              size={20}
+              className="text-text-neutral-secondary"
+            />
           </DropdownTrigger>
           <DropdownMenu
             closeOnSelect

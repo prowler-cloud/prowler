@@ -1,22 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_php_version_is_latest",
-  "CheckTitle": "App Service web app uses the latest PHP version",
+  "CheckTitle": "App Service web app uses the latest supported PHP version or 8.2 by default",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure App Service** web apps running **PHP** are evaluated to ensure the runtime is configured to the **latest supported** release. The finding compares the app's PHP stack (from `linuxFxVersion` or `php_version`) with the newest available version.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** running **PHP** are evaluated to ensure the runtime is configured to the **latest supported** release. The finding compares the app's PHP stack (from `linuxFxVersion` or `php_version`) with the newest available version.",
   "Risk": "Using **outdated PHP** enables exploitation of known flaws, including **remote code execution**, causing secret disclosure (confidentiality), unauthorized changes (integrity), and crashes or downtime (availability). Deprecated versions lack patches, widening exposure and instability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-php.html",
-    "https://video2.skills-academy.com/en-us/answers/questions/835092/app-service-php-stack-image",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-language-php?pivots=platform-linux#set-php-version",
-    "https://learn.microsoft.com/en-us/answers/questions/1725847/php-8-3-vulnerability-cve-2024-4577",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-php-version-is-the-latest-if-used-to-run-the-web-app#terraform",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#general-settings"
   ],
   "Remediation": {

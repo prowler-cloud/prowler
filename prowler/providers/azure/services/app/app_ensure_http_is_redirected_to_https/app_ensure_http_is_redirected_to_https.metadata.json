@@ -1,19 +1,18 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_http_is_redirected_to_https",
-  "CheckTitle": "Azure App Service web app redirects HTTP to HTTPS",
+  "CheckTitle": "App Service web app redirects HTTP to HTTPS",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.web/sites",
+  "ResourceGroup": "serverless",
   "Description": "**Azure App Service web apps** redirect `HTTP` traffic to `HTTPS` when the `HTTPS Only` setting is enabled. This evaluation identifies apps that do not force secure transport by checking whether plaintext requests are automatically redirected to encrypted endpoints.",
   "Risk": "Leaving **HTTP accessible** enables **man-in-the-middle** interception, credential and cookie theft, and response tampering. This undermines **confidentiality** and **integrity**, and can lead to session hijacking or downgrade attacks that bypass TLS.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_5#terraform",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-https",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-https-only-traffic.html#",
     "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"

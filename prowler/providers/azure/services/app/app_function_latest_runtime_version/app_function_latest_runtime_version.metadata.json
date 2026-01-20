@@ -1,14 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "app_function_latest_runtime_version",
-  "CheckTitle": "Azure Function uses the latest supported runtime version (~4)",
+  "CheckTitle": "Function app uses the latest supported runtime version (~4)",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure Function Apps** are assessed for the **runtime version** set via `FUNCTIONS_EXTENSION_VERSION`. The finding identifies apps not configured to use the current supported major version `~4`.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** are assessed for the **runtime version** set via `FUNCTIONS_EXTENSION_VERSION`. The finding identifies apps not configured to use the current supported major version `~4`.",
   "Risk": "Outdated Functions runtimes erode CIA:\n- **Confidentiality**: known flaws enable unauthorized data access.\n- **Integrity**: RCE or binding bugs allow code tampering.\n- **Availability**: missing fixes cause crashes and scale faults.\n\nEnd-of-support versions (e.g., 2.x/3.x) lack security patches, increasing exploitability.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -1,25 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "app_register_with_identity",
-  "CheckTitle": "App Service app has a managed identity configured",
+  "CheckTitle": "App Service web app has a managed identity configured",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure App Service app** is configured with a **managed identity** (`identity`: `SystemAssigned` or `UserAssigned`) for token-based access to Azure resources without embedded credentials",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** are configured with a **managed identity** (`identity`: `SystemAssigned` or `UserAssigned`) for token-based access to Azure resources without embedded credentials",
   "Risk": "**Missing managed identity** drives reliance on stored secrets. Leaked credentials enable **unauthorized access** to SQL, Storage, or Key Vault, leading to **data exfiltration**, tampering, and lateral movement. Secret expiry or revocation can break connectivity, degrading **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
-    "https://learn.microsoft.com/en-us/azure/app-service/overview-managed-identity",
     "https://learn.microsoft.com/en-us/azure/azure-app-configuration/howto-integrate-azure-managed-service-identity",
-    "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service",
-    "https://learn.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-sql-database",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad?tabs=workforce-tenant",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-registration-with-microsoft-entra-id.html",
-    "https://docs.prowler.com/checks/azure/azure-iam-policies/bc_azr_iam_1#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-registration-with-microsoft-entra-id.html"
   ],
   "Remediation": {
     "Code": {

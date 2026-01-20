@@ -1,26 +1,22 @@
 {
   "Provider": "azure",
   "CheckID": "app_ftp_deployment_disabled",
-  "CheckTitle": "App Service app has FTP disabled or FTPS-only enforced",
+  "CheckTitle": "App Service web app has FTP disabled or FTPS-only enforced",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.web/sites",
-  "Description": "**Azure App Service** apps are evaluated for **FTP exposure** via the `ftpsState` setting. Values `FtpsOnly` or `Disabled` indicate FTP is not allowed; `AllAllowed` means both FTP and FTPS are accepted.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** are evaluated for **FTP exposure** via the `ftpsState` setting. Values `FtpsOnly` or `Disabled` indicate FTP is not allowed; `AllAllowed` means both FTP and FTPS are accepted.",
   "Risk": "Allowing **FTP (unencrypted)** exposes credentials on public endpoints, enabling **credential theft** and **session hijacking**.\n\nCompromise grants write access to code and content, enabling **malicious deployments**, backdoors, and data leakage, degrading **integrity** and **confidentiality**-with greater blast radius if shared, user-scope publishing credentials are used.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/app-service/deploy-ftp?tabs=portal",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/ftp-access-disabled.html",
     "https://learn.microsoft.com/en-gb/answers/questions/1323820/can-i-create-an-azure-policy-that-disables-both-ft",
-    "https://www.burgerhout.org/how-i-moved-my-website-to-azure-app-service/",
-    "https://azureappservices.blogspot.com/2020/11/disable-ftp-in-azure-app-service-using.html",
-    "https://stackoverflow.com/questions/43061946/azure-web-apps-removing-ftp-access/52136735",
-    "https://github.com/Azure/azure-policy/issues/190",
-    "https://icompaas.freshdesk.com/support/solutions/articles/62000234759-ensure-ftp-state-is-set-to-ftps-only-or-disabled-",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-ftp-deployments-are-disabled#terraform"
+    "https://icompaas.freshdesk.com/support/solutions/articles/62000234759-ensure-ftp-state-is-set-to-ftps-only-or-disabled-"
   ],
   "Remediation": {
     "Code": {

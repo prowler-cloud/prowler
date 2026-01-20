@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSInstance",
+  "ResourceGroup": "compute",
   "Description": "Installing **endpoint protection systems** (like **Security Center** for Alibaba Cloud) provides real-time protection capability that helps identify and remove viruses, spyware, and other malicious software.\n\nConfigurable alerts notify when known malicious software attempts to install itself or run on ECS instances.",
   "Risk": "ECS instances without **endpoint protection** are vulnerable to **malware**, **viruses**, and other security threats.\n\nEndpoint protection provides real-time monitoring and protection capabilities essential for detecting and preventing security incidents.",
   "RelatedUrl": "",

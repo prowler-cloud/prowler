@@ -1,25 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "app_minimum_tls_version_12",
-  "CheckTitle": "App Service app has minimum TLS version set to 1.2 or 1.3",
+  "CheckTitle": "App Service web app has minimum TLS version set to 1.2 or 1.3",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.web/sites/config",
-  "Description": "**Azure App Service** apps are assessed for the configured minimum TLS version for HTTPS. The expected baseline is `1.2` or `1.3`; settings that permit lower versions indicate acceptance of legacy TLS during client negotiation.",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure App Service web apps** are assessed for the configured minimum TLS version for HTTPS. The expected baseline is `1.2` or `1.3`; settings that permit lower versions indicate acceptance of legacy TLS during client negotiation.",
   "Risk": "Allowing `TLS 1.0/1.1` enables protocol downgrades and weak cipher negotiation, exposing HTTPS traffic to **MITM** interception, credential theft, and tampering. This undermines the **confidentiality** and **integrity** of sessions and data in transit, and can enable account takeover via stolen tokens.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/+azure/app-service/overview-tls",
-    "https://portal.azure.com",
     "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-tls-versions",
-    "https://stackoverflow.com/questions/65916747/azure-app-service-minimum-tls-version-need-to-make-host-registry-tweaks-too",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-tls-encryption-in-use.html",
-    "https://brainxx.site/blog/secure-web-apps-enforcing-latest",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_6#terraform",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit",
     "https://icompaas.freshdesk.com/support/solutions/articles/62000234773-ensure-that-minimum-tls-version-is-set-to-tls-v1-2-or-higher"
   ],
   "Remediation": {

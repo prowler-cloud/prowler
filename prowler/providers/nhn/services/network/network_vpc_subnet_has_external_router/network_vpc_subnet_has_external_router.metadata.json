@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VPC",
+  "ResourceGroup": "network",
   "Description": "Checks if VPC allows access from the public internet, by verifying if an external router is configured.",
   "Risk": "",
   "RelatedUrl": "",
