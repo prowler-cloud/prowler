@@ -7,6 +7,32 @@ from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
 
 
+# Cmdlets that require Microsoft Defender for Office 365 licensing
+DEFENDER_ATP_CMDLETS = [
+    "Get-SafeAttachmentPolicy",
+    "Get-SafeAttachmentRule",
+    "Get-SafeLinksPolicy",
+    "Get-SafeLinksRule",
+]
+
+
+def _is_cmdlet_not_found_error(error: Exception) -> bool:
+    """
+    Check if an error is due to a cmdlet not being recognized.
+
+    This typically indicates that the required Microsoft Defender for Office 365
+    license is not available for the tenant.
+
+    Args:
+        error: The exception to check.
+
+    Returns:
+        bool: True if the error indicates a missing cmdlet, False otherwise.
+    """
+    error_str = str(error).lower()
+    return "is not recognized as a name of a cmdlet" in error_str
+
+
 class Defender(M365Service):
     """
     Microsoft Defender for Office 365 service class.
@@ -431,9 +457,16 @@ class Defender(M365Service):
                         )
                     )
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if _is_cmdlet_not_found_error(error):
+                logger.warning(
+                    "Safe Attachments cmdlets are not available. "
+                    "This feature requires Microsoft Defender for Office 365 (Plan 1 or Plan 2) licensing. "
+                    "Safe Attachments checks will be skipped."
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         return safe_attachments_policies
 
 
