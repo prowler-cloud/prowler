@@ -113,6 +113,9 @@ class Test_dns_record_proxied:
             assert result[0].resource_name == "www.example.com"
             assert result[0].status == "PASS"
             assert "is proxied through Cloudflare" in result[0].status_extended
+            # DNS records should have zone_name as region
+            assert result[0].region == ZONE_NAME
+            assert result[0].zone_name == ZONE_NAME
 
     def test_a_record_not_proxied(self):
         dns_client = mock.MagicMock
