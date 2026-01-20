@@ -1,7 +1,15 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { SignInPage, SignInCredentials } from "./auth/auth-page";
-import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
+import {
+  AWSProviderCredential,
+  AWSProviderData,
+  AWS_CREDENTIAL_OPTIONS,
+  ProvidersPage,
+} from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
+
+// ===========================================
+// Constants
+// ===========================================
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -18,8 +26,8 @@ export const URLS = {
 
 export const TEST_CREDENTIALS = {
   VALID: {
-    email: process.env.E2E_USER || "e2e@prowler.com",
-    password: process.env.E2E_PASSWORD || "Thisisapassword123@",
+    email: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
+    password: process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
   },
   INVALID: {
     email: "invalid@example.com",
@@ -31,146 +39,9 @@ export const TEST_CREDENTIALS = {
   },
 } as const;
 
-export async function goToLogin(page: Page) {
-  await page.goto("/sign-in");
-}
-
-export async function goToSignUp(page: Page) {
-  await page.goto("/sign-up");
-}
-
-export async function fillLoginForm(
-  page: Page,
-  email: string,
-  password: string,
-) {
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-}
-
-export async function submitLoginForm(page: Page) {
-  await page.getByRole("button", { name: "Log in" }).click();
-}
-
-export async function login(
-  page: Page,
-  credentials: { email: string; password: string } = TEST_CREDENTIALS.VALID,
-) {
-  await fillLoginForm(page, credentials.email, credentials.password);
-  await submitLoginForm(page);
-}
-
-export async function verifySuccessfulLogin(page: Page) {
-  await expect(page).toHaveURL("/");
-  await expect(page.locator("main")).toBeVisible();
-  await expect(
-    page
-      .getByLabel("Breadcrumbs")
-      .getByRole("heading", { name: "Overview", exact: true }),
-  ).toBeVisible();
-}
-
-export async function verifyLoginError(
-  page: Page,
-  errorMessage = "Invalid email or password",
-) {
-  // There may be multiple field-level errors with the same text; assert at least one is visible
-  await expect(page.getByText(errorMessage).first()).toBeVisible();
-  await expect(page).toHaveURL("/sign-in");
-}
-
-export async function toggleSamlMode(page: Page) {
-  await page.getByText("Continue with SAML SSO").click();
-}
-
-export async function goBackFromSaml(page: Page) {
-  await page.getByText("Back").click();
-}
-
-export async function verifySamlModeActive(page: Page) {
-  await expect(page.getByText("Sign in with SAML SSO")).toBeVisible();
-  await expect(page.getByLabel("Password")).not.toBeVisible();
-  await expect(page.getByText("Back")).toBeVisible();
-}
-
-export async function verifyNormalModeActive(page: Page) {
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-}
-
-export async function logout(page: Page) {
-  const navbar = page.locator("header");
-  await navbar.waitFor({ state: "visible" });
-  await navbar.getByRole("button", { name: "Sign out" }).click();
-}
-
-export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL(/\/sign-in/);
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-}
-
-export async function verifyLoadingState(page: Page) {
-  const submitButton = page.getByRole("button", { name: "Log in" });
-  await expect(submitButton).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByText("Loading")).toBeVisible();
-}
-
-export async function verifyLoginFormElements(page: Page) {
-  await expect(page).toHaveTitle(/Prowler/);
-  await expect(page.locator('svg[width="300"]')).toBeVisible();
-
-  // Verify form elements
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
-
-  // Verify OAuth buttons
-  await expect(page.getByText("Continue with Google")).toBeVisible();
-  await expect(page.getByText("Continue with Github")).toBeVisible();
-  await expect(page.getByText("Continue with SAML SSO")).toBeVisible();
-
-  // Verify navigation links
-  await expect(page.getByText("Need to create an account?")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
-}
-
-/**
- * @deprecated Use pageObject.verifyPageLoaded() instead.
- * Waiting for specific UI elements is more reliable than load states.
- */
-export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("load");
-}
-
-export async function verifyDashboardRoute(page: Page) {
-  await expect(page).toHaveURL("/");
-}
-
-export async function authenticateAndSaveState(
-  page: Page,
-  email: string,
-  password: string,
-  storagePath: string,
-) {
-  if (!email || !password) {
-    throw new Error(
-      "Email and password are required for authentication and save state",
-    );
-  }
-
-  // Create SignInPage instance
-  const signInPage = new SignInPage(page);
-  const credentials: SignInCredentials = { email, password };
-
-  // Perform authentication steps using Page Object Model
-  await signInPage.goto();
-  await signInPage.login(credentials);
-  await signInPage.verifySuccessfulLogin();
-
-  // Save authentication state
-  await page.context().storageState({ path: storagePath });
-}
+// ===========================================
+// Utility Functions
+// ===========================================
 
 /**
  * Generate a random base36 suffix of specified length
@@ -183,6 +54,10 @@ export function makeSuffix(len: number): string {
   }
   return s.slice(0, len);
 }
+
+// ===========================================
+// Session Helpers
+// ===========================================
 
 export async function getSession(page: Page) {
   const response = await page.request.get("/api/auth/session");
@@ -198,12 +73,15 @@ export async function verifySessionValid(page: Page) {
   return session;
 }
 
+// ===========================================
+// Provider Helpers
+// ===========================================
 
 export async function addAWSProvider(
   page: Page,
   accountId: string,
   accessKey: string,
-  secretKey: string,
+  secretKey: string
 ): Promise<void> {
   // Prepare test data for AWS provider
   const awsProviderData: AWSProviderData = {
@@ -241,7 +119,7 @@ export async function addAWSProvider(
 
   // Select static credentials type
   await providersPage.selectCredentialsType(
-    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
   );
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
@@ -256,7 +134,10 @@ export async function addAWSProvider(
   await scansPage.verifyPageLoaded();
 }
 
-export async function deleteProviderIfExists(page: ProvidersPage, providerUID: string): Promise<void> {
+export async function deleteProviderIfExists(
+  page: ProvidersPage,
+  providerUID: string
+): Promise<void> {
   // Delete the provider if it exists
 
   // Navigate to providers page
@@ -313,7 +194,6 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
 
   // Wait for filtering to complete (max 0 or 1 data rows)
   await expect(async () => {
-
     await findProviderRow();
     const count = await allRows.count();
 
@@ -341,11 +221,7 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   }
 
   // Find and click the action button (last cell = actions column)
-  const actionButton = targetRow
-    .locator("td")
-    .last()
-    .locator("button")
-    .first();
+  const actionButton = targetRow.locator("td").last().locator("button").first();
 
   // Ensure the button is in view before clicking (handles horizontal scroll)
   await actionButton.scrollIntoViewIfNeeded();

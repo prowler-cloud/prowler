@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { SignInPage } from "./auth-page";
+import { SignInPage } from "./sign-in-base-page";
 import { SignUpPage } from "../sign-up/sign-up-page";
 import { HomePage } from "../home/home-page";
-import { TEST_CREDENTIALS, ERROR_MESSAGES, URLS } from "../helpers";
+import { TEST_CREDENTIALS, ERROR_MESSAGES, URLS, getSession } from "../helpers";
 
 test.describe("Login Flow", () => {
   let signInPage: SignInPage;
@@ -14,7 +14,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should display login form elements",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-001"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-001"] },
     async () => {
       await signInPage.verifyPageLoaded();
       await signInPage.verifyFormElements();
@@ -28,7 +28,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should successfully login with valid credentials",
-    { tag: ["@critical", "@e2e", "@signin", "@SIGNIN-E2E-002"] },
+    { tag: ["@critical", "@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-002"] },
     async () => {
       await signInPage.login(TEST_CREDENTIALS.VALID);
       await signInPage.verifySuccessfulLogin();
@@ -37,7 +37,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should show error message with invalid credentials",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-003"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-003"] },
     async () => {
       await signInPage.login(TEST_CREDENTIALS.INVALID);
       await signInPage.verifyLoginError(ERROR_MESSAGES.INVALID_CREDENTIALS);
@@ -46,7 +46,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should handle empty form submission",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-004"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-004"] },
     async () => {
       await signInPage.submitForm();
       await signInPage.verifyFormValidation();
@@ -56,7 +56,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should validate email format",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-005"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-005"] },
     async () => {
       await signInPage.login(TEST_CREDENTIALS.INVALID_EMAIL_FORMAT);
       await signInPage.verifyFormValidation();
@@ -66,7 +66,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should require password when email is filled",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-006"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-006"] },
     async () => {
       await signInPage.fillEmail(TEST_CREDENTIALS.VALID.email);
       await signInPage.submitForm();
@@ -79,7 +79,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should toggle SAML SSO mode",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-007"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-007"] },
     async () => {
       await signInPage.toggleSamlMode();
       await signInPage.verifySamlModeActive();
@@ -90,7 +90,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should show loading state during form submission",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-008"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-008"] },
     async () => {
       await signInPage.fillCredentials(TEST_CREDENTIALS.VALID);
       await signInPage.submitForm();
@@ -100,7 +100,7 @@ test.describe("Login Flow", () => {
 
   test(
     "should handle SAML authentication flow",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-009"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-009"] },
     async () => {
       const samlEmail = "user@saml-domain.com";
       await signInPage.toggleSamlMode();
@@ -114,7 +114,7 @@ test.describe("Login Flow", () => {
 test.describe("Session Persistence", () => {
   test(
     "should maintain session after browser refresh",
-    { tag: ["@critical", "@e2e", "@signin", "@SIGNIN-E2E-010"] },
+    { tag: ["@critical", "@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-010"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -131,7 +131,7 @@ test.describe("Session Persistence", () => {
 
   test(
     "should redirect to login when accessing protected route without session",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-011"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-011"] },
     async ({ page }) => {
       const homePage = new HomePage(page);
       const signInPage = new SignInPage(page);
@@ -143,7 +143,7 @@ test.describe("Session Persistence", () => {
 
   test(
     "should logout successfully",
-    { tag: ["@critical", "@e2e", "@signin", "@SIGNIN-E2E-012"] },
+    { tag: ["@critical", "@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-012"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -162,7 +162,7 @@ test.describe("Session Persistence", () => {
 
   test(
     "should handle session timeout gracefully",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-013"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-013"] },
     async ({ browser }) => {
       const authContext = await browser.newContext();
       const authPage = await authContext.newPage();
@@ -172,8 +172,7 @@ test.describe("Session Persistence", () => {
       await signInPage.login(TEST_CREDENTIALS.VALID);
       await signInPage.verifySuccessfulLogin();
 
-      const authResponse = await authPage.request.get("/api/auth/session");
-      const authSession = await authResponse.json();
+      const authSession = await getSession(authPage);
       expect(authSession).toBeTruthy();
       expect(authSession.user).toBeTruthy();
 
@@ -184,9 +183,8 @@ test.describe("Session Persistence", () => {
       await unauthPage.goto(URLS.PROFILE);
       await unauthSignInPage.verifyOnSignInPage();
 
-      const unauthResponse = await unauthPage.request.get("/api/auth/session");
-      const unauthSessionText = await unauthResponse.text();
-      expect(unauthSessionText).toBe("null");
+      const unauthSession = await getSession(unauthPage);
+      expect(unauthSession).toBeNull();
 
       await authPage.close();
       await authContext.close();
@@ -199,7 +197,7 @@ test.describe("Session Persistence", () => {
 test.describe("Navigation", () => {
   test(
     "should navigate to sign up page",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-014"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-014"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const signUpPage = new SignUpPage(page);
@@ -212,7 +210,7 @@ test.describe("Navigation", () => {
 
   test(
     "should navigate from sign up back to sign in",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-015"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-015"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const signUpPage = new SignUpPage(page);
@@ -225,7 +223,7 @@ test.describe("Navigation", () => {
 
   test(
     "should handle browser back button correctly",
-    { tag: ["@e2e", "@signin", "@SIGNIN-E2E-016"] },
+    { tag: ["@e2e", "@sign-in-base", "@SIGN-IN-BASE-E2E-016"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const signUpPage = new SignUpPage(page);
@@ -249,7 +247,7 @@ test.describe("Accessibility", () => {
 
   test(
     "should be navigable with keyboard",
-    { tag: ["@e2e", "@signin", "@accessibility", "@SIGNIN-E2E-017"] },
+    { tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-017"] },
     async () => {
       await signInPage.verifyKeyboardNavigation();
     },
@@ -257,7 +255,7 @@ test.describe("Accessibility", () => {
 
   test(
     "should have proper ARIA labels",
-    { tag: ["@e2e", "@signin", "@accessibility", "@SIGNIN-E2E-018"] },
+    { tag: ["@e2e", "@sign-in-base", "@accessibility", "@SIGN-IN-BASE-E2E-018"] },
     async () => {
       await signInPage.verifyAriaLabels();
     },

@@ -52,9 +52,15 @@ export class SignInPage extends BasePage {
     this.form = page.locator("form");
 
     // Social authentication buttons
-    this.googleButton = page.getByRole("button", { name: "Continue with Google" });
-    this.githubButton = page.getByRole("button", { name: "Continue with Github" });
-    this.samlButton = page.getByRole("button", { name: "Continue with SAML SSO" });
+    this.googleButton = page.getByRole("button", {
+      name: "Continue with Google",
+    });
+    this.githubButton = page.getByRole("button", {
+      name: "Continue with Github",
+    });
+    this.samlButton = page.getByRole("button", {
+      name: "Continue with SAML SSO",
+    });
 
     // Navigation elements
     this.signUpLink = page.getByRole("link", { name: "Sign up" });
@@ -66,10 +72,14 @@ export class SignInPage extends BasePage {
     this.pageTitle = page.getByText("Sign in", { exact: true });
 
     // Error messages - form validation errors appear as <p> with specific classes
-    this.errorMessages = page.locator("p.text-destructive, p.text-sm.text-destructive");
+    this.errorMessages = page.locator(
+      "p.text-destructive, p.text-sm.text-destructive"
+    );
 
     // SAML specific elements - use text matching
-    this.samlModeTitle = page.getByText("Sign in with SAML SSO", { exact: true });
+    this.samlModeTitle = page.getByText("Sign in with SAML SSO", {
+      exact: true,
+    });
     this.samlEmailInput = page.getByRole("textbox", { name: "Email" });
   }
 
@@ -169,7 +179,9 @@ export class SignInPage extends BasePage {
   }
 
   async verifyNavigationLinks(): Promise<void> {
-    await expect(this.page.getByText("Need to create an account?")).toBeVisible();
+    await expect(
+      this.page.getByText("Need to create an account?")
+    ).toBeVisible();
     await expect(this.signUpLink).toBeVisible();
   }
 
@@ -177,7 +189,9 @@ export class SignInPage extends BasePage {
     await this.homePage.verifyPageLoaded();
   }
 
-  async verifyLoginError(errorMessage: string = "Invalid email or password"): Promise<void> {
+  async verifyLoginError(
+    errorMessage: string = "Invalid email or password"
+  ): Promise<void> {
     // Error messages appear as <p> elements with destructive styling
     await expect(this.page.getByText(errorMessage).first()).toBeVisible();
     await expect(this.page).toHaveURL("/sign-in");
@@ -224,9 +238,15 @@ export class SignInPage extends BasePage {
   }
 
   async verifyAriaLabels(): Promise<void> {
-    await expect(this.page.getByRole("textbox", { name: "Email" })).toBeVisible();
-    await expect(this.page.getByRole("textbox", { name: "Password" })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Log in" })).toBeVisible();
+    await expect(
+      this.page.getByRole("textbox", { name: "Email" })
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("textbox", { name: "Password" })
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("button", { name: "Log in" })
+    ).toBeVisible();
   }
 
   // Utility methods
@@ -240,8 +260,6 @@ export class SignInPage extends BasePage {
     const passwordValue = await this.passwordInput.inputValue();
     return emailValue.length > 0 && passwordValue.length > 0;
   }
-
-  // Browser interaction methods
 
   // Session management methods
   async logout(): Promise<void> {
@@ -321,7 +339,9 @@ export class SignInPage extends BasePage {
 
   // Error handling methods
   async handleSamlError(): Promise<void> {
-    const samlError = this.page.getByRole("alert", { name: "SAML Authentication Error" });
+    const samlError = this.page.getByRole("alert", {
+      name: "SAML Authentication Error",
+    });
     if (await samlError.isVisible()) {
       // Handle SAML error if present
       console.log("SAML authentication error detected");
@@ -338,5 +358,35 @@ export class SignInPage extends BasePage {
 
   async waitForRedirect(expectedUrl: string): Promise<void> {
     await this.page.waitForURL(expectedUrl);
+  }
+
+  // ===========================================
+  // Authentication Setup Methods
+  // ===========================================
+
+  /**
+   * Authenticate and save the browser state to a file.
+   * Used by auth setup projects to create reusable authenticated sessions.
+   *
+   * @param credentials - User credentials (email and password)
+   * @param storagePath - Path to save the authentication state file
+   */
+  async authenticateAndSaveState(
+    credentials: SignInCredentials,
+    storagePath: string
+  ): Promise<void> {
+    if (!credentials.email || !credentials.password) {
+      throw new Error(
+        "Email and password are required for authentication and save state"
+      );
+    }
+
+    // Perform authentication steps
+    await this.goto();
+    await this.login(credentials);
+    await this.verifySuccessfulLogin();
+
+    // Save authentication state
+    await this.page.context().storageState({ path: storagePath });
   }
 }

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { SignInPage } from "./auth-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { HomePage } from "../home/home-page";
-import { TEST_CREDENTIALS, URLS, getSession, verifySessionValid } from "../helpers";
+import { TEST_CREDENTIALS, getSession, verifySessionValid } from "../helpers";
 
 test.describe("Token Refresh Flow", () => {
   // Increase timeout for tests that involve session operations under load
@@ -9,7 +9,7 @@ test.describe("Token Refresh Flow", () => {
 
   test(
     "should refresh access token when expired",
-    { tag: ["@e2e", "@signin", "@token", "@AUTH-TOKEN-E2E-001"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-001"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -34,7 +34,7 @@ test.describe("Token Refresh Flow", () => {
 
   test(
     "should handle concurrent requests with token refresh",
-    { tag: ["@e2e", "@signin", "@token", "@AUTH-TOKEN-E2E-002"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-002"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -64,7 +64,7 @@ test.describe("Token Refresh Flow", () => {
 
   test(
     "should preserve user permissions after token refresh",
-    { tag: ["@e2e", "@signin", "@token", "@AUTH-TOKEN-E2E-003"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-003"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -93,7 +93,7 @@ test.describe("Token Refresh Flow", () => {
 
   test(
     "should clear session when cookies are removed",
-    { tag: ["@e2e", "@signin", "@token", "@AUTH-TOKEN-E2E-004"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-004"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);

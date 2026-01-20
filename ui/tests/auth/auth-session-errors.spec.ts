@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { SignInPage } from "./auth-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { HomePage } from "../home/home-page";
 import { ScansPage } from "../scans/scans-page";
 import { ProvidersPage } from "../providers/providers-page";
@@ -11,7 +11,7 @@ test.describe("Session Error Messages", () => {
 
   test(
     "should show RefreshAccessTokenError message",
-    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-001"] },
+    { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-001"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
 
@@ -29,7 +29,7 @@ test.describe("Session Error Messages", () => {
 
   test(
     "should show MissingRefreshToken error message",
-    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-002"] },
+    { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-002"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
 
@@ -46,7 +46,7 @@ test.describe("Session Error Messages", () => {
 
   test(
     "should show generic error for unknown error types",
-    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-003"] },
+    { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-003"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
 
@@ -62,7 +62,7 @@ test.describe("Session Error Messages", () => {
 
   test(
     "should include callbackUrl in redirect",
-    { tag: ["@e2e", "@signin", "@session", "@AUTH-SESSION-E2E-004"] },
+    { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-004"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
