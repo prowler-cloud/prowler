@@ -1,15 +1,6 @@
 import { Locator, Page, expect } from "@playwright/test";
-import {
-  AWSProviderCredential,
-  AWSProviderData,
-  AWS_CREDENTIAL_OPTIONS,
-  ProvidersPage,
-} from "./providers/providers-page";
+import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
-
-// ===========================================
-// Constants
-// ===========================================
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -39,10 +30,6 @@ export const TEST_CREDENTIALS = {
   },
 } as const;
 
-// ===========================================
-// Utility Functions
-// ===========================================
-
 /**
  * Generate a random base36 suffix of specified length
  * Used for creating unique test data to avoid conflicts
@@ -54,10 +41,6 @@ export function makeSuffix(len: number): string {
   }
   return s.slice(0, len);
 }
-
-// ===========================================
-// Session Helpers
-// ===========================================
 
 export async function getSession(page: Page) {
   const response = await page.request.get("/api/auth/session");
@@ -73,15 +56,12 @@ export async function verifySessionValid(page: Page) {
   return session;
 }
 
-// ===========================================
-// Provider Helpers
-// ===========================================
 
 export async function addAWSProvider(
   page: Page,
   accountId: string,
   accessKey: string,
-  secretKey: string
+  secretKey: string,
 ): Promise<void> {
   // Prepare test data for AWS provider
   const awsProviderData: AWSProviderData = {
@@ -119,7 +99,7 @@ export async function addAWSProvider(
 
   // Select static credentials type
   await providersPage.selectCredentialsType(
-    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
+    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
   );
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
@@ -134,10 +114,7 @@ export async function addAWSProvider(
   await scansPage.verifyPageLoaded();
 }
 
-export async function deleteProviderIfExists(
-  page: ProvidersPage,
-  providerUID: string
-): Promise<void> {
+export async function deleteProviderIfExists(page: ProvidersPage, providerUID: string): Promise<void> {
   // Delete the provider if it exists
 
   // Navigate to providers page
@@ -194,6 +171,7 @@ export async function deleteProviderIfExists(
 
   // Wait for filtering to complete (max 0 or 1 data rows)
   await expect(async () => {
+
     await findProviderRow();
     const count = await allRows.count();
 
@@ -221,7 +199,11 @@ export async function deleteProviderIfExists(
   }
 
   // Find and click the action button (last cell = actions column)
-  const actionButton = targetRow.locator("td").last().locator("button").first();
+  const actionButton = targetRow
+    .locator("td")
+    .last()
+    .locator("button")
+    .first();
 
   // Ensure the button is in view before clicking (handles horizontal scroll)
   await actionButton.scrollIntoViewIfNeeded();
