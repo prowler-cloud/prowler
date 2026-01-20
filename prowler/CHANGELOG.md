@@ -61,6 +61,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Security
 - `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
 
+### Security
+- Updated `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
+
 ---
 
 ## [5.16.2] (Prowler v5.16.2) (UNRELEASED)

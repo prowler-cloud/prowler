@@ -13,6 +13,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths scans for AWS providers with new Neo4j Docker service, new Celery task, new `AttackPathsScan` model and new endpoints under `/api/v1/attack-paths-scans` [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
 
 ### Security
+- Updated `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
 - `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
 - `django-allauth[saml]` to v65.13.0 to address [CVE-2025-65431](https://nvd.nist.gov/vuln/detail/CVE-2025-65431)
 
