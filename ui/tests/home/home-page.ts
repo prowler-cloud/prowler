@@ -68,10 +68,6 @@ export class HomePage extends BasePage {
     await this.overviewHeading.click();
   }
 
-  async openUserMenu(): Promise<void> {
-    // No dropdown menu - sign out is a direct button
-  }
-
   async signOut(): Promise<void> {
     // Wait for navbar to be visible before clicking sign out
     const navbar = this.page.locator("header");

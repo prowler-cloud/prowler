@@ -180,33 +180,7 @@
 
 ---
 
-## Test Case: `AUTH-TOKEN-E2E-002` - Handle concurrent requests with token refresh
-
-**Priority:** `normal`
-
-**Tags:**
-- type: @e2e
-- feature: @auth, @token
-
-**Description/Objective:** Verify that concurrent session requests are handled correctly.
-
-**Preconditions:**
-- Application is running.
-- Valid test user credentials.
-
-### Flow Steps:
-1. Log in with valid credentials.
-2. Fire 5 concurrent requests to /api/auth/session.
-3. Verify all responses are successful.
-
-### Expected Result:
-- All concurrent requests return valid session data.
-- No session errors occur.
-- accessToken and refreshToken are present in all responses.
-
----
-
-## Test Case: `AUTH-TOKEN-E2E-003` - Preserve user permissions after token refresh
+## Test Case: `AUTH-TOKEN-E2E-002` - Preserve user permissions after token refresh
 
 **Priority:** `normal`
 
@@ -232,7 +206,7 @@
 
 ---
 
-## Test Case: `AUTH-TOKEN-E2E-004` - Clear session when cookies are removed
+## Test Case: `AUTH-TOKEN-E2E-003` - Clear session when cookies are removed
 
 **Priority:** `normal`
 

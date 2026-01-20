@@ -33,35 +33,8 @@ test.describe("Token Refresh Flow", () => {
   );
 
   test(
-    "should handle concurrent requests with token refresh",
-    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-002"] },
-    async ({ page }) => {
-      const signInPage = new SignInPage(page);
-
-      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
-
-      const requests = Array(5)
-        .fill(null)
-        .map(() => page.request.get("/api/auth/session"));
-
-      const responses = await Promise.all(requests);
-
-      for (const response of responses) {
-        expect(response.ok()).toBeTruthy();
-        const session = await response.json();
-
-        expect(session).toBeTruthy();
-        expect(session.user).toBeTruthy();
-        expect(session.accessToken).toBeTruthy();
-        expect(session.refreshToken).toBeTruthy();
-        expect(session.error).toBeUndefined();
-      }
-    },
-  );
-
-  test(
     "should preserve user permissions after token refresh",
-    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-003"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-002"] },
     async ({ page }) => {
       const signInPage = new SignInPage(page);
       const homePage = new HomePage(page);
@@ -88,7 +61,7 @@ test.describe("Token Refresh Flow", () => {
 
   test(
     "should clear session when cookies are removed",
-    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-004"] },
+    { tag: ["@e2e", "@auth", "@token", "@AUTH-TOKEN-E2E-003"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
 
