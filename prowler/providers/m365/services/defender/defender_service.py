@@ -8,7 +8,20 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 
 class Defender(M365Service):
+    """
+    Microsoft Defender for Office 365 service class.
+
+    This class provides methods to retrieve various Defender policies and configurations
+    including malware, antiphishing, spam, DKIM, and Safe Attachments settings.
+    """
+
     def __init__(self, provider: M365Provider):
+        """
+        Initialize the Defender service.
+
+        Args:
+            provider: The M365Provider instance for authentication and configuration.
+        """
         super().__init__(provider)
         self.malware_policies = []
         self.outbound_spam_policies = {}
@@ -20,6 +33,7 @@ class Defender(M365Service):
         self.inbound_spam_policies = []
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
+        self.safe_attachments_policies = []
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -33,6 +47,7 @@ class Defender(M365Service):
                 self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
+                self.safe_attachments_policies = self._get_safe_attachments_policies()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -387,6 +402,40 @@ class Defender(M365Service):
             )
         return report_submission_policy
 
+    def _get_safe_attachments_policies(self):
+        """
+        Retrieve Safe Attachments policies from Microsoft Defender for Office 365.
+
+        Returns:
+            list[SafeAttachmentsPolicy]: A list of Safe Attachments policy objects.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Attachments policies...")
+        safe_attachments_policies = []
+        try:
+            policies_data = self.powershell.get_safe_attachments_policy()
+            if not policies_data:
+                return safe_attachments_policies
+            if isinstance(policies_data, dict):
+                policies_data = [policies_data]
+            for policy in policies_data:
+                if policy:
+                    safe_attachments_policies.append(
+                        SafeAttachmentsPolicy(
+                            name=policy.get("Name", ""),
+                            identity=policy.get("Identity", ""),
+                            enable=policy.get("Enable", False),
+                            action=policy.get("Action", ""),
+                            quarantine_tag=policy.get("QuarantineTag", ""),
+                            redirect=policy.get("Redirect", False),
+                            redirect_address=policy.get("RedirectAddress", ""),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_attachments_policies
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -478,3 +527,26 @@ class ReportSubmissionPolicy(BaseModel):
     report_phish_addresses: list[str]
     report_chat_message_enabled: bool
     report_chat_message_to_customized_address_enabled: bool
+
+
+class SafeAttachmentsPolicy(BaseModel):
+    """
+    Data model for Safe Attachments policy settings.
+
+    Attributes:
+        name: The name of the policy.
+        identity: The unique identifier of the policy.
+        enable: Whether the policy is enabled.
+        action: The action to take on malicious attachments (Allow, Block, Replace, DynamicDelivery).
+        quarantine_tag: The quarantine policy applied to detected messages.
+        redirect: Whether to redirect messages with detected attachments.
+        redirect_address: The email address to redirect messages to.
+    """
+
+    name: str
+    identity: str
+    enable: bool
+    action: str
+    quarantine_tag: str
+    redirect: bool
+    redirect_address: str

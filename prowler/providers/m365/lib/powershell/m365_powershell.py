@@ -823,6 +823,29 @@ class M365PowerShell(PowerShellSession):
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_safe_attachments_policy(self) -> dict:
+        """
+        Get Safe Attachments Policy.
+
+        Retrieves the Safe Attachments policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Attachments policy settings in JSON format.
+
+        Example:
+            >>> get_safe_attachments_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "Enable": true,
+                "Action": "Block",
+                "QuarantineTag": "AdminOnlyAccessPolicy"
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_user_account_status(self) -> dict:
         """
         Get User Account Status.
