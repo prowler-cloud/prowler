@@ -31,13 +31,12 @@ class zone_waf_owasp_ruleset_enabled(Check):
             )
 
             # Find OWASP managed rulesets for this zone
+            # Only match rulesets that explicitly contain "owasp" in the name
+            # The phase check was too broad as it matched any managed ruleset
             owasp_rulesets = [
                 ruleset
                 for ruleset in zone.waf_rulesets
-                if (
-                    "owasp" in (ruleset.name or "").lower()
-                    or ruleset.phase == "http_request_firewall_managed"
-                )
+                if "owasp" in (ruleset.name or "").lower()
             ]
 
             if owasp_rulesets:
