@@ -28,7 +28,7 @@ class compute_instance_on_host_maintenance_migrate(Check):
                     report.status_extended = (
                         f"VM Instance {instance.name} is a {vm_type} VM and has On Host Maintenance set to TERMINATE. "
                         f"{vm_type.capitalize()} VMs cannot use MIGRATE and must always use TERMINATE. "
-                        f"If high availability is required, use a standard VM instead."
+                        f"If high availability is required, consider using a non-preemptible VM instead."
                     )
                 else:
                     report.status_extended = (
