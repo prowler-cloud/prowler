@@ -336,9 +336,9 @@
         ]
       },
       {
-        "tab": "Contact Us",
+        "tab": "Support",
         "pages": [
-          "contact"
+          "support"
         ]
       },
       {
@@ -459,6 +459,10 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
+    },
+    {
+      "source": "/contact",
+      "destination": "/support"
     }
   ]
 }

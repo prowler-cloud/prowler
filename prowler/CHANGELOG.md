@@ -54,6 +54,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Enhance `user_registration_details` perfomance and user `mfa` evaluation [(#9236)](https://github.com/prowler-cloud/prowler/pull/9236)
 - Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
 - Update AWS EC2 service metadata to new format [(#9549)](https://github.com/prowler-cloud/prowler/pull/9549)
+- Update Azure AI Search service metadata to new format [(#9087)](https://github.com/prowler-cloud/prowler/pull/9087)
+- Update Azure AKS service metadata to new format [(#9611)](https://github.com/prowler-cloud/prowler/pull/9611)
+- Update Azure API Management service metadata to new format [(#9612)](https://github.com/prowler-cloud/prowler/pull/9612)
+
+### Security
+- `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
 
 ### Security
 - Updated `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
