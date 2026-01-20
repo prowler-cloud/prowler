@@ -13,6 +13,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Provider and Group filters to Resources page [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
 - Compliance Watchlist component in Overview page [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
 - Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
+- Resource group label filter to Resources page [(#9820)](https://github.com/prowler-cloud/prowler/pull/9820)
 
 ### 🔄 Changed
 

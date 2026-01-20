@@ -128,7 +128,11 @@ pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.16.0"
 pytest-xdist = "3.6.1"
-safety = "3.2.9"
+safety = "3.7.0"
+filelock = [
+  {version = "3.20.3", python = ">=3.10"},
+  {version = "3.19.1", python = "<3.10"}
+]
 vulture = "2.14"
 
 [tool.poetry-version-plugin]

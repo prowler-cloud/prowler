@@ -12,10 +12,14 @@ All notable changes to the **Prowler API** are documented in this file.
 - `group` filter for `GET /findings` and `GET /findings/metadata/latest` endpoints [(#9694)](https://github.com/prowler-cloud/prowler/pull/9694)
 - `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
 - Attack Paths: `/api/v1/attack-paths-scans` for AWS providers backed by Neo4j [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
+- Attack Paths scans for AWS providers with new Neo4j Docker service, new Celery task, new `AttackPathsScan` model and new endpoints under `/api/v1/attack-paths-scans` [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
 
 ### Security
+- Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
+- `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
+- `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490) [(#9818)](https://github.com/prowler-cloud/prowler/pull/9818)
+- `django-allauth[saml]` to v65.13.0 to address [CVE-2025-65431](https://nvd.nist.gov/vuln/detail/CVE-2025-65431) [(#9575)](https://github.com/prowler-cloud/prowler/pull/9575)
 
-- Dependencies patched: Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
 
 ---
 

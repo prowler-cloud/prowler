@@ -8,10 +8,11 @@ import {
   getResources,
 } from "@/actions/resources";
 import { FilterControls } from "@/components/filters";
+import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ColumnResources } from "@/components/resources/table/column-resources";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   extractFiltersAndQuery,
@@ -63,30 +64,12 @@ export default async function Resources({
     <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
       <div className="flex flex-col gap-6">
-        <DataTableFilterCustom
-          filters={[
-            {
-              key: "provider__in",
-              labelCheckboxGroup: "Provider",
-              values: providerIds,
-              valueLabelMapping: providerDetails,
-            },
-            {
-              key: "region__in",
-              labelCheckboxGroup: "Region",
-              values: uniqueRegions,
-            },
-            {
-              key: "service__in",
-              labelCheckboxGroup: "Service",
-              values: uniqueServices,
-            },
-            {
-              key: "groups__in",
-              labelCheckboxGroup: "Group",
-              values: uniqueGroups,
-            },
-          ]}
+        <ResourcesFilters
+          providerIds={providerIds}
+          providerDetails={providerDetails}
+          uniqueRegions={uniqueRegions}
+          uniqueServices={uniqueServices}
+          uniqueGroups={uniqueGroups}
         />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
           <SSRDataTable searchParams={resolvedSearchParams} />
