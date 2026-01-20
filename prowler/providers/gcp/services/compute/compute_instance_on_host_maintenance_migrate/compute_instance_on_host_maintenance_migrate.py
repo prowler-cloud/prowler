@@ -16,10 +16,6 @@ class compute_instance_on_host_maintenance_migrate(Check):
     def execute(self) -> list[Check_Report_GCP]:
         findings = []
         for instance in compute_client.instances:
-            # Skip preemptible and Spot VMs as they cannot use MIGRATE
-            if instance.preemptible or instance.provisioning_model == "SPOT":
-                continue
-
             report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
 
             if instance.on_host_maintenance == "MIGRATE":
@@ -27,10 +23,18 @@ class compute_instance_on_host_maintenance_migrate(Check):
                 report.status_extended = f"VM Instance {instance.name} has On Host Maintenance set to MIGRATE."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"VM Instance {instance.name} has On Host Maintenance set to "
-                    f"{instance.on_host_maintenance} instead of MIGRATE."
-                )
+                if instance.preemptible or instance.provisioning_model == "SPOT":
+                    vm_type = "preemptible" if instance.preemptible else "Spot"
+                    report.status_extended = (
+                        f"VM Instance {instance.name} is a {vm_type} VM and has On Host Maintenance set to TERMINATE. "
+                        f"{vm_type.capitalize()} VMs cannot use MIGRATE and must always use TERMINATE. "
+                        f"If high availability is required, use a standard VM instead."
+                    )
+                else:
+                    report.status_extended = (
+                        f"VM Instance {instance.name} has On Host Maintenance set to "
+                        f"{instance.on_host_maintenance} instead of MIGRATE."
+                    )
 
             findings.append(report)
 

@@ -270,7 +270,7 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             assert result[0].location == "us-east1"
             assert result[0].project_id == GCP_PROJECT_ID
 
-    def test_preemptible_instance_skipped(self):
+    def test_preemptible_instance_fails_with_explanation(self):
         compute_client = mock.MagicMock()
 
         with (
@@ -314,9 +314,16 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             check = compute_instance_on_host_maintenance_migrate()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+            )
+            assert result[0].resource_id == "4444444444"
+            assert result[0].resource_name == "preemptible-instance"
 
-    def test_spot_instance_skipped(self):
+    def test_spot_instance_fails_with_explanation(self):
         compute_client = mock.MagicMock()
 
         with (
@@ -360,7 +367,14 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             check = compute_instance_on_host_maintenance_migrate()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+            )
+            assert result[0].resource_id == "5555555555"
+            assert result[0].resource_name == "spot-instance"
 
     def test_mixed_with_preemptible_and_spot(self):
         compute_client = mock.MagicMock()
@@ -463,9 +477,13 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             check = compute_instance_on_host_maintenance_migrate()
             result = check.execute()
 
-            assert len(result) == 2
+            assert len(result) == 4
 
             pass_result = next(r for r in result if r.resource_id == "6666666666")
+            preemptible_result = next(
+                r for r in result if r.resource_id == "7777777777"
+            )
+            spot_result = next(r for r in result if r.resource_id == "8888888888")
             fail_result = next(r for r in result if r.resource_id == "9999999999")
 
             assert pass_result.status == "PASS"
@@ -474,6 +492,20 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
                 == "VM Instance regular-instance-pass has On Host Maintenance set to MIGRATE."
             )
             assert pass_result.resource_name == "regular-instance-pass"
+
+            assert preemptible_result.status == "FAIL"
+            assert (
+                preemptible_result.status_extended
+                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+            )
+            assert preemptible_result.resource_name == "preemptible-instance"
+
+            assert spot_result.status == "FAIL"
+            assert (
+                spot_result.status_extended
+                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+            )
+            assert spot_result.resource_name == "spot-instance"
 
             assert fail_result.status == "FAIL"
             assert (
