@@ -77,16 +77,17 @@ class dns_record_cname_target_valid(Check):
         - CNAME: hostname
         - MX: priority hostname (e.g., "10 mail.example.com")
         - NS: hostname
-        - SRV: priority weight port hostname (e.g., "10 5 5060 sip.example.com")
+        - SRV: Cloudflare returns "weight port hostname" (e.g., "5 80 sip.example.com")
         """
         if record_type == "MX":
             # MX format: "priority hostname"
             parts = content.split(None, 1)
             return parts[1] if len(parts) > 1 else content
         elif record_type == "SRV":
-            # SRV format: "priority weight port hostname"
+            # SRV format from Cloudflare: "weight port hostname"
             parts = content.split()
-            return parts[3] if len(parts) > 3 else content
+            # Target is the last part (hostname)
+            return parts[-1] if parts else content
         else:
             # CNAME and NS are just hostnames
             return content
