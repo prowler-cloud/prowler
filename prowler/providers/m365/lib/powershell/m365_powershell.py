@@ -837,6 +837,57 @@ class M365PowerShell(PowerShellSession):
             json_parse=True,
         )
 
+    def get_safe_links_policy(self) -> dict:
+        """
+        Get Safe Links Policy.
+
+        Retrieves the current Safe Links policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links policy settings in JSON format.
+
+        Example:
+            >>> get_safe_links_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "EnableSafeLinksForEmail": true,
+                "EnableSafeLinksForTeams": true,
+                "EnableSafeLinksForOffice": true,
+                "TrackClicks": true,
+                "AllowClickThrough": false,
+                "ScanUrls": true,
+                "EnableForInternalSenders": true,
+                "DeliverMessageAfterScan": true,
+                "DisableUrlRewrite": false
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_links_rule(self) -> dict:
+        """
+        Get Safe Links Rule.
+
+        Retrieves the current Safe Links rule settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links rule settings in JSON format.
+
+        Example:
+            >>> get_safe_links_rule()
+            {
+                "Name": "Safe Links Rule",
+                "State": "Enabled",
+                "Priority": 0,
+                "SafeLinksPolicy": "Policy Name"
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
