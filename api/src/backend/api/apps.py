@@ -41,15 +41,28 @@ class ApiConfig(AppConfig):
         if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
             self._ensure_crypto_keys()
 
-        if not getattr(settings, "TESTING", False):
-            try:
-                graph_database.init_driver()
-                atexit.register(graph_database.close_driver)
-            except Exception as e:
-                logger.warning(
-                    f"Failed to initialize Neo4j driver: {e}. "
-                    "Attack paths features will be unavailable until Neo4j is reachable."
-                )
+        # Commands that don't need Neo4j
+        SKIP_NEO4J_DJANGO_COMMANDS = [
+            "migrate",
+            "makemigrations",
+            "check",
+            "help",
+            "showmigrations",
+            "check_and_fix_socialaccount_sites_migration",
+        ]
+
+        if getattr(settings, "TESTING", False) or (
+            "manage.py" in sys.argv
+            and len(sys.argv) > 1
+            and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+        ):
+            logger.info(
+                "Skipping Neo4j initialization because of the current Django command or testing"
+            )
+
+        else:
+            graph_database.init_driver()
+            atexit.register(graph_database.close_driver)
 
         load_prowler_compliance()
 
