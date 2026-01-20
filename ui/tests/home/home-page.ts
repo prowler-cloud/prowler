@@ -1,8 +1,8 @@
-import { expect, Locator, Page } from "@playwright/test";
-
+import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 export class HomePage extends BasePage {
+
   // Main content elements
   readonly mainContent: Locator;
   readonly breadcrumbs: Locator;
@@ -26,10 +26,7 @@ export class HomePage extends BasePage {
     // Main content elements
     this.mainContent = page.locator("main");
     this.breadcrumbs = page.getByRole("navigation", { name: "Breadcrumbs" });
-    this.overviewHeading = page.getByRole("heading", {
-      name: "Overview",
-      exact: true,
-    });
+    this.overviewHeading = page.getByRole("heading", { name: "Overview", exact: true });
 
     // Navigation elements
     this.navigationMenu = page.locator("nav");

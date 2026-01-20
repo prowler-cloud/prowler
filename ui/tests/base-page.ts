@@ -1,4 +1,4 @@
-import { expect, Locator, Page } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 
 /**
  * Base page object class containing common functionality
@@ -77,17 +77,11 @@ export abstract class BasePage {
     await expect(element).not.toBeVisible();
   }
 
-  async verifyElementText(
-    element: Locator,
-    expectedText: string,
-  ): Promise<void> {
+  async verifyElementText(element: Locator, expectedText: string): Promise<void> {
     await expect(element).toHaveText(expectedText);
   }
 
-  async verifyElementContainsText(
-    element: Locator,
-    expectedText: string,
-  ): Promise<void> {
+  async verifyElementContainsText(element: Locator, expectedText: string): Promise<void> {
     await expect(element).toContainText(expectedText);
   }
 
@@ -99,9 +93,7 @@ export abstract class BasePage {
     }
   }
 
-  async verifyAriaLabels(
-    elements: { locator: Locator; expectedLabel: string }[],
-  ): Promise<void> {
+  async verifyAriaLabels(elements: { locator: Locator; expectedLabel: string }[]): Promise<void> {
     for (const { locator, expectedLabel } of elements) {
       await expect(locator).toHaveAttribute("aria-label", expectedLabel);
     }
@@ -109,7 +101,7 @@ export abstract class BasePage {
 
   // Common utility methods
   async getElementText(element: Locator): Promise<string> {
-    return (await element.textContent()) || "";
+    return await element.textContent() || "";
   }
 
   async getElementValue(element: Locator): Promise<string> {
@@ -126,9 +118,7 @@ export abstract class BasePage {
 
   // Common error handling methods
   async getFormErrors(): Promise<string[]> {
-    const errorElements = await this.page
-      .locator('[role="alert"], .error-message, [data-testid="error"]')
-      .all();
+    const errorElements = await this.page.locator('[role="alert"], .error-message, [data-testid="error"]').all();
     const errors: string[] = [];
 
     for (const element of errorElements) {
@@ -147,33 +137,29 @@ export abstract class BasePage {
   }
 
   // Common wait methods
-  async waitForElement(
-    element: Locator,
-    timeout: number = 5000,
-  ): Promise<void> {
+  async waitForElement(element: Locator, timeout: number = 5000): Promise<void> {
+
     await element.waitFor({ timeout });
   }
 
-  async waitForElementToDisappear(
-    element: Locator,
-    timeout: number = 5000,
-  ): Promise<void> {
+  async waitForElementToDisappear(element: Locator, timeout: number = 5000): Promise<void> {
+
     await element.waitFor({ state: "hidden", timeout });
   }
 
-  async waitForUrl(
-    expectedUrl: string | RegExp,
-    timeout: number = 5000,
-  ): Promise<void> {
+  async waitForUrl(expectedUrl: string | RegExp, timeout: number = 5000): Promise<void> {
+
     await this.page.waitForURL(expectedUrl, { timeout });
   }
 
   // Common screenshot methods
   async takeScreenshot(name: string): Promise<void> {
+
     await this.page.screenshot({ path: `screenshots/${name}.png` });
   }
 
   async takeElementScreenshot(element: Locator, name: string): Promise<void> {
+
     await element.screenshot({ path: `screenshots/${name}.png` });
   }
 }

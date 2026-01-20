@@ -1,5 +1,4 @@
-import { expect, Locator, Page } from "@playwright/test";
-
+import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 export interface SignUpData {
@@ -13,6 +12,7 @@ export interface SignUpData {
 }
 
 export class SignUpPage extends BasePage {
+
   // Form inputs
   readonly nameInput: Locator;
   readonly companyInput: Locator;
@@ -39,9 +39,7 @@ export class SignUpPage extends BasePage {
 
     this.submitButton = page.getByRole("button", { name: "Sign up" });
     this.loginLink = page.getByRole("link", { name: "Log in" });
-    this.termsCheckbox = page.getByRole("checkbox", {
-      name: /I agree with the/i,
-    });
+    this.termsCheckbox = page.getByRole("checkbox", { name: /I agree with the/i });
   }
 
   async goto(): Promise<void> {
@@ -52,7 +50,7 @@ export class SignUpPage extends BasePage {
   async gotoInvite(shareUrl: string): Promise<void> {
     // Navigate to the share url
 
-    await super.goto(shareUrl);
+    await  super.goto(shareUrl);
   }
 
   async verifyPageLoaded(): Promise<void> {

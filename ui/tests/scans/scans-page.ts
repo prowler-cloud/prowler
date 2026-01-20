@@ -1,38 +1,31 @@
-import { expect, Locator, Page } from "@playwright/test";
-
+import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 // Scan page
 export class ScansPage extends BasePage {
+
   // Main content elements
   readonly scanTable: Locator;
 
-  // Scan provider selection elements
-  readonly scanProviderSelect: Locator;
-  readonly scanAliasInput: Locator;
-  readonly startNowButton: Locator;
+    // Scan provider selection elements
+    readonly scanProviderSelect: Locator;
+    readonly scanAliasInput: Locator;
+    readonly startNowButton: Locator;
 
-  // Scan state elements
-  readonly successToast: Locator;
+    // Scan state elements
+    readonly successToast: Locator;
+
 
   constructor(page: Page) {
     super(page);
 
     // Scan provider selection elements
-    this.scanProviderSelect = page
-      .getByRole("combobox")
-      .filter({ hasText: "Choose a cloud provider" });
-    this.scanAliasInput = page.getByRole("textbox", {
-      name: "Scan label (optional)",
-    });
-    this.startNowButton = page.getByRole("button", {
-      name: /Start now|Start scan now/i,
-    });
+    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a cloud provider' })
+    this.scanAliasInput = page.getByRole("textbox", { name: "Scan label (optional)" });
+    this.startNowButton = page.getByRole("button", { name: /Start now|Start scan now/i });
 
     // Scan state elements
-    this.successToast = page.getByRole("alert", {
-      name: /The scan was launched successfully\.?/i,
-    });
+    this.successToast = page.getByRole("alert", { name: /The scan was launched successfully\.?/i });
 
     // Main content elements
     this.scanTable = page.locator("table");
@@ -74,9 +67,7 @@ export class ScansPage extends BasePage {
     // Verify the scan was launched
 
     // Verify the success toast is visible
-    await this.successToast
-      .waitFor({ state: "visible", timeout: 5000 })
-      .catch(() => {});
+    await this.successToast.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
 
     // Wait for the scans table to be visible
     await expect(this.scanTable).toBeVisible();
@@ -92,6 +83,7 @@ export class ScansPage extends BasePage {
 
     // Basic state/assertion hint: queued/available/executing (non-blocking if not present)
     await rowWithAlias.textContent().then((text) => {
+
       if (!text) return;
 
       const hasExpectedState = /executing|available|queued/i.test(text);
@@ -102,6 +94,7 @@ export class ScansPage extends BasePage {
       }
     });
   }
+
 
   async verifyScheduledScanStatus(accountId: string): Promise<void> {
     // Verifies that:
@@ -126,4 +119,5 @@ export class ScansPage extends BasePage {
       ignoreCase: true,
     });
   }
+
 }

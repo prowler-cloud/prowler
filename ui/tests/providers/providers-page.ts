@@ -1,5 +1,4 @@
-import { expect, Locator, Page } from "@playwright/test";
-
+import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 // AWS provider data

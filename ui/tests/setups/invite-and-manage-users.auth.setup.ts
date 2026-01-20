@@ -1,5 +1,4 @@
 import { test as authInviteAndManageUsersSetup } from "@playwright/test";
-
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
 const inviteAndManageUsersUserFile =
@@ -15,7 +14,7 @@ authInviteAndManageUsersSetup(
 
     if (!inviteAndManageUsersEmail || !inviteAndManageUsersPassword) {
       throw new Error(
-        "E2E_INVITE_AND_MANAGE_USERS_USER and E2E_INVITE_AND_MANAGE_USERS_PASSWORD environment variables are required",
+        "E2E_INVITE_AND_MANAGE_USERS_USER and E2E_INVITE_AND_MANAGE_USERS_PASSWORD environment variables are required"
       );
     }
 
@@ -25,7 +24,7 @@ authInviteAndManageUsersSetup(
         email: inviteAndManageUsersEmail,
         password: inviteAndManageUsersPassword,
       },
-      inviteAndManageUsersUserFile,
+      inviteAndManageUsersUserFile
     );
-  },
+  }
 );
