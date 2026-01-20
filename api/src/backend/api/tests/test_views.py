@@ -4711,7 +4711,9 @@ class TestResourceViewSet:
             "Unauthenticated requests should return 401, not 404."
         )
 
-    def test_events_cross_tenant_returns_404(self, authenticated_client, tenants_fixture):
+    def test_events_cross_tenant_returns_404(
+        self, authenticated_client, tenants_fixture
+    ):
         """Test events endpoint returns 404 for resources in other tenants (RLS).
 
         Users cannot access resources belonging to other tenants due to
@@ -4775,13 +4777,16 @@ class TestResourceViewSet:
         tenant = tenants_fixture[0]
         expired_payload = {
             "token_type": "access",
-            "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # Expired 1 hour ago
+            "exp": datetime.now(timezone.utc)
+            - timedelta(hours=1),  # Expired 1 hour ago
             "iat": datetime.now(timezone.utc) - timedelta(hours=2),
             "jti": str(uuid4()),
             "user_id": str(uuid4()),
             "tenant_id": str(tenant.id),
         }
-        expired_token = jwt.encode(expired_payload, settings.SECRET_KEY, algorithm="HS256")
+        expired_token = jwt.encode(
+            expired_payload, settings.SECRET_KEY, algorithm="HS256"
+        )
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {expired_token}")
@@ -4820,16 +4825,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
-            f"Expected 401 for malformed token but got {response.status_code}"
-        )
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), f"Expected 401 for malformed token but got {response.status_code}"
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
-            f"Expected 401 for empty bearer token but got {response.status_code}"
-        )
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), f"Expected 401 for empty bearer token but got {response.status_code}"
 
 
 @pytest.mark.django_db
