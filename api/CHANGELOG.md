@@ -14,7 +14,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Security
 - `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
-- Updated `Django-Allauth` to `65.14.0` for vulnerabilities `CVE-2025-65430` and `CVE-2025-65431` [(#9827)](https://github.com/prowler-cloud/prowler/pull/9827)
 
 ---
 
