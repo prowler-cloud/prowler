@@ -14,6 +14,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Security
 - `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
+- `django-allauth[saml]` to v65.13.0 to address [CVE-2025-65431](https://nvd.nist.gov/vuln/detail/CVE-2025-65431)
 
 ---
 
