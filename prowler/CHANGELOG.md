@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `Cloudflare` Bot protection, WAF, Privacy, Anti-Scraping and Zone configuration checks [(#9425)](https://github.com/prowler-cloud/prowler/pull/9425)
 
 ### Changed
+- GitHub provider enhanced documentation and `repository_branch_delete_on_merge_enabled` logic [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 - Update AWS Step Functions service metadata to new format [(#9432)](https://github.com/prowler-cloud/prowler/pull/9432)
 - Update AWS Route 53 service metadata to new format [(#9406)](https://github.com/prowler-cloud/prowler/pull/9406)
 - Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
