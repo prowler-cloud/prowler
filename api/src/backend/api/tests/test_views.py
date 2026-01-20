@@ -4676,6 +4676,161 @@ class TestResourceViewSet:
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert response.json()["errors"][0]["code"] == "service_unavailable"
 
+    def test_events_unauthenticated_returns_401(self, providers_fixture):
+        """Test events endpoint returns 401 when no credentials are provided.
+
+        This ensures the endpoint follows API conventions where missing authentication
+        returns 401 Unauthorized, not 404 Not Found.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-unauth-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Use unauthenticated client (no JWT token)
+        unauthenticated_client = APIClient()
+
+        response = unauthenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # Must return 401 Unauthorized, not 404 Not Found
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 Unauthorized but got {response.status_code}. "
+            "Unauthenticated requests should return 401, not 404."
+        )
+
+    def test_events_cross_tenant_returns_404(self, authenticated_client, tenants_fixture):
+        """Test events endpoint returns 404 for resources in other tenants (RLS).
+
+        Users cannot access resources belonging to other tenants due to
+        Row-Level Security. The resource should appear to not exist.
+        """
+        from api.models import Provider, Resource
+
+        # tenant3 (tenants_fixture[2]) has no membership for the test user
+        isolated_tenant = tenants_fixture[2]
+
+        # Create provider in the isolated tenant
+        other_tenant_provider = Provider.objects.create(
+            provider="aws",
+            uid="999999999999",
+            alias="other_tenant_aws",
+            tenant_id=isolated_tenant.id,
+        )
+
+        # Create resource in the OTHER tenant (not the authenticated user's tenant)
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:999999999999:instance/i-other-tenant",
+            name="Other Tenant Resource",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=other_tenant_provider,
+            tenant_id=isolated_tenant.id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # RLS hides resources from other tenants - should appear as not found
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_events_expired_token_returns_401(self, providers_fixture, tenants_fixture):
+        """Test events endpoint returns 401 when JWT token is expired.
+
+        Expired tokens should return 401 Unauthorized, not 404 Not Found.
+        This ensures authentication errors are properly distinguished from
+        resource not found errors.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-expired-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Create an expired JWT token
+        tenant = tenants_fixture[0]
+        expired_payload = {
+            "token_type": "access",
+            "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # Expired 1 hour ago
+            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "jti": str(uuid4()),
+            "user_id": str(uuid4()),
+            "tenant_id": str(tenant.id),
+        }
+        expired_token = jwt.encode(expired_payload, settings.SECRET_KEY, algorithm="HS256")
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {expired_token}")
+
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+
+        # Must return 401 Unauthorized, not 404 Not Found
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 Unauthorized but got {response.status_code}. "
+            "Expired tokens should return 401, not 404."
+        )
+
+    def test_events_invalid_token_returns_401(self, providers_fixture):
+        """Test events endpoint returns 401 when JWT token is completely invalid.
+
+        Malformed or invalid tokens should return 401 Unauthorized, not 404 Not Found.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-invalid-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        client = APIClient()
+
+        # Test with completely malformed token
+        client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
+
+        # Test with empty bearer token
+        client.credentials(HTTP_AUTHORIZATION="Bearer ")
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
+
 
 @pytest.mark.django_db
 class TestFindingViewSet:
