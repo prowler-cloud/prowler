@@ -318,7 +318,7 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, consider using a non-preemptible VM instead."
             )
             assert result[0].resource_id == "4444444444"
             assert result[0].resource_name == "preemptible-instance"
@@ -371,7 +371,7 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, consider using a non-preemptible VM instead."
             )
             assert result[0].resource_id == "5555555555"
             assert result[0].resource_name == "spot-instance"
@@ -496,14 +496,14 @@ class TestComputeInstanceOnHostMaintenanceMigrate:
             assert preemptible_result.status == "FAIL"
             assert (
                 preemptible_result.status_extended
-                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+                == "VM Instance preemptible-instance is a preemptible VM and has On Host Maintenance set to TERMINATE. Preemptible VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, consider using a non-preemptible VM instead."
             )
             assert preemptible_result.resource_name == "preemptible-instance"
 
             assert spot_result.status == "FAIL"
             assert (
                 spot_result.status_extended
-                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, use a standard VM instead."
+                == "VM Instance spot-instance is a Spot VM and has On Host Maintenance set to TERMINATE. Spot VMs cannot use MIGRATE and must always use TERMINATE. If high availability is required, consider using a non-preemptible VM instead."
             )
             assert spot_result.resource_name == "spot-instance"
 
