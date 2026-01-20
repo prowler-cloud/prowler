@@ -43,7 +43,9 @@ class defender_safe_attachments_policy_enabled(Check):
                     misconfigured_settings.append("Enable is not True")
 
                 if policy.action != "Block":
-                    misconfigured_settings.append(f"Action is {policy.action}, not Block")
+                    misconfigured_settings.append(
+                        f"Action is {policy.action}, not Block"
+                    )
 
                 if policy.quarantine_tag != "AdminOnlyAccessPolicy":
                     misconfigured_settings.append(
