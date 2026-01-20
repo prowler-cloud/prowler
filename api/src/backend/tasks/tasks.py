@@ -368,7 +368,12 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, bind=True, name="attack-paths-scan-perform", queue="attack-paths-scans")
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="attack-paths-scan-perform",
+    queue="attack-paths-scans",
+)
 def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     """
     Execute an Attack Paths scan for the given provider within the current tenant RLS context.
