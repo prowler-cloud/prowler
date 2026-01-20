@@ -19,6 +19,7 @@ Use this skill for **Prowler-specific** patterns:
 - RBAC permissions and role checks
 - Provider lifecycle and validation
 - Celery tasks with tenant context
+- Multi-database architecture (4-database setup)
 
 For **generic DRF patterns** (ViewSets, Serializers, Filters, JSON:API), use `django-drf` skill.
 
@@ -29,8 +30,44 @@ For **generic DRF patterns** (ViewSets, Serializers, Filters, JSON:API), use `dj
 - ALWAYS use `rls_transaction(tenant_id)` when querying outside ViewSet context
 - ALWAYS use `get_role()` before checking permissions (returns FIRST role only)
 - ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order
+- ALWAYS use explicit through models for M2M relationships (required for RLS)
 - NEVER access `Provider.objects` without RLS context in Celery tasks
 - NEVER bypass RLS by using raw SQL or `connection.cursor()`
+- NEVER use Django's default M2M - RLS requires through models with `tenant_id`
+
+> **Note**: `rls_transaction()` accepts both UUID objects and strings - it converts internally via `str(value)`.
+
+---
+
+## Architecture Overview
+
+### 4-Database Architecture
+
+| Database | Alias | Purpose | RLS |
+|----------|-------|---------|-----|
+| `default` | `prowler_user` | Standard API queries | **Yes** |
+| `admin` | `admin` | Migrations, auth bypass | No |
+| `replica` | `prowler_user` | Read-only queries | **Yes** |
+| `admin_replica` | `admin` | Admin read replica | No |
+
+```python
+# When to use admin (bypasses RLS)
+from api.db_router import MainRouter
+User.objects.using(MainRouter.admin_db).get(id=user_id)  # Auth lookups
+
+# Standard queries use default (RLS enforced)
+Provider.objects.filter(connected=True)  # Requires rls_transaction context
+```
+
+### RLS Transaction Flow
+
+```
+Request → Authentication → BaseRLSViewSet.initial()
+                                    │
+                                    ├─ Extract tenant_id from JWT
+                                    ├─ SET api.tenant_id = 'uuid' (PostgreSQL)
+                                    └─ All queries now tenant-scoped
+```
 
 ---
 
@@ -40,12 +77,13 @@ When implementing Prowler-specific API features:
 
 | # | Pattern | Reference | Key Points |
 |---|---------|-----------|------------|
-| 1 | **RLS Models** | `api/models.py` | Inherit `RowLevelSecurityProtectedModel`, add `tenant_id` |
+| 1 | **RLS Models** | `api/rls.py` | Inherit `RowLevelSecurityProtectedModel`, add constraint |
 | 2 | **RLS Transactions** | `api/db_utils.py` | Use `rls_transaction(tenant_id)` context manager |
 | 3 | **RBAC Permissions** | `api/rbac/permissions.py` | `get_role()`, `get_providers()`, `Permissions` enum |
 | 4 | **Provider Validation** | `api/models.py` | `validate_<provider>_uid()` methods on `Provider` model |
 | 5 | **Celery Tasks** | `tasks/tasks.py` | `@set_tenant`, `@handle_provider_deletion`, `RLSTask` base |
 | 6 | **RLS Serializers** | `api/v1/serializers.py` | Inherit `RLSSerializer` to auto-inject `tenant_id` |
+| 7 | **Through Models** | `api/models.py` | ALL M2M must use explicit through with `tenant_id` |
 
 > **Full file paths**: See [references/file-locations.md](references/file-locations.md)
 
@@ -56,8 +94,9 @@ When implementing Prowler-specific API features:
 ### Which Base Model?
 ```
 Tenant-scoped data       → RowLevelSecurityProtectedModel
-Global/shared data       → models.Model (rare)
-Soft-deletable           → Add is_deleted + custom manager
+Global/shared data       → models.Model + BaseSecurityConstraint (rare)
+Partitioned time-series  → PostgresPartitionedModel + RowLevelSecurityProtectedModel
+Soft-deletable           → Add is_deleted + ActiveProviderManager
 ```
 
 ### Which Manager?
@@ -65,6 +104,14 @@ Soft-deletable           → Add is_deleted + custom manager
 Normal queries           → Model.objects (excludes deleted)
 Include deleted records  → Model.all_objects
 Celery task context      → Must use rls_transaction() first
+```
+
+### Which Database?
+```
+Standard API queries     → default (automatic via ViewSet)
+Read-only operations     → replica (automatic for GET in BaseRLSViewSet)
+Auth/admin operations    → MainRouter.admin_db
+Cross-tenant lookups     → MainRouter.admin_db (use sparingly!)
 ```
 
 ### Celery Task Decorator Order?
@@ -78,7 +125,81 @@ def my_task(tenant_id, provider_id):
 
 ---
 
-## Providers (10 Supported)
+## RLS Model Pattern
+
+```python
+from api.rls import RowLevelSecurityProtectedModel, RowLevelSecurityConstraint
+
+class MyModel(RowLevelSecurityProtectedModel):
+    # tenant FK inherited from parent
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "my_models"
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "my-models"
+```
+
+### M2M Relationships (MUST use through models)
+
+```python
+class Resource(RowLevelSecurityProtectedModel):
+    tags = models.ManyToManyField(
+        ResourceTag,
+        through="ResourceTagMapping",  # REQUIRED for RLS
+    )
+
+class ResourceTagMapping(RowLevelSecurityProtectedModel):
+    # Through model MUST have tenant_id for RLS
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    tag = models.ForeignKey(ResourceTag, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+```
+
+---
+
+## Async Task Response Pattern (202 Accepted)
+
+For long-running operations, return 202 with task reference:
+
+```python
+@action(detail=True, methods=["post"], url_name="connection")
+def connection(self, request, pk=None):
+    with transaction.atomic():
+        task = check_provider_connection_task.delay(
+            provider_id=pk, tenant_id=self.request.tenant_id
+        )
+    prowler_task = Task.objects.get(id=task.id)
+    serializer = TaskSerializer(prowler_task)
+    return Response(
+        data=serializer.data,
+        status=status.HTTP_202_ACCEPTED,
+        headers={"Content-Location": reverse("task-detail", kwargs={"pk": prowler_task.id})}
+    )
+```
+
+---
+
+## Providers (11 Supported)
 
 | Provider | UID Format | Example |
 |----------|-----------|---------|
@@ -109,6 +230,18 @@ def my_task(tenant_id, provider_id):
 | `MANAGE_SCANS` | Scan execution |
 | `UNLIMITED_VISIBILITY` | See all providers (bypasses provider_groups) |
 
+### RBAC Visibility Pattern
+
+```python
+def get_queryset(self):
+    user_role = get_role(self.request.user)
+    if user_role.unlimited_visibility:
+        return Model.objects.filter(tenant_id=self.request.tenant_id)
+    else:
+        # Filter by provider_groups assigned to role
+        return Model.objects.filter(provider__in=get_providers(user_role))
+```
+
 ---
 
 ## Celery Queues
@@ -119,6 +252,41 @@ def my_task(tenant_id, provider_id):
 | `overview` | Dashboard aggregations |
 | `compliance` | Compliance report generation |
 | `integrations` | External integrations (Jira, etc.) |
+
+---
+
+## UUIDv7 for Partitioned Tables
+
+`Finding` and `ResourceFindingMapping` use UUIDv7 for time-based partitioning:
+
+```python
+from uuid6 import uuid7
+from api.uuid_utils import uuid7_start, uuid7_end, datetime_to_uuid7
+
+# Partition-aware filtering
+start = uuid7_start(datetime_to_uuid7(date_from))
+end = uuid7_end(datetime_to_uuid7(date_to), settings.FINDINGS_TABLE_PARTITION_MONTHS)
+queryset.filter(id__gte=start, id__lt=end)
+```
+
+**Why UUIDv7?** Time-ordered UUIDs enable PostgreSQL to prune partitions during range queries.
+
+---
+
+## Batch Operations with RLS
+
+```python
+from api.db_utils import batch_delete, create_objects_in_batches, update_objects_in_batches
+
+# Delete in batches (RLS-aware)
+batch_delete(tenant_id, queryset, batch_size=1000)
+
+# Bulk create with RLS
+create_objects_in_batches(tenant_id, Finding, objects, batch_size=500)
+
+# Bulk update with RLS
+update_objects_in_batches(tenant_id, Finding, objects, fields=["status"], batch_size=500)
+```
 
 ---
 
@@ -144,6 +312,7 @@ cd api && poetry run pytest -x --tb=short
 ### Local References
 - **File Locations**: See [references/file-locations.md](references/file-locations.md)
 - **Modeling Decisions**: See [references/modeling-decisions.md](references/modeling-decisions.md)
+- **Configuration**: See [references/configuration.md](references/configuration.md)
 
 ### Related Skills
 - **Generic DRF Patterns**: Use `django-drf` skill

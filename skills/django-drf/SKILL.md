@@ -19,9 +19,10 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 - ALWAYS separate serializers by operation: Read / Create / Update / Include
 - ALWAYS use `filterset_class` for complex filtering (not `filterset_fields`)
-- ALWAYS validate unknown fields in write serializers
+- ALWAYS validate unknown fields in write serializers (inherit `BaseWriteSerializer`)
 - ALWAYS use `select_related`/`prefetch_related` in `get_queryset()` to avoid N+1
 - ALWAYS handle `swagger_fake_view` in `get_queryset()` for schema generation
+- ALWAYS use `@extend_schema_field` for OpenAPI docs on `SerializerMethodField`
 - NEVER put business logic in serializers - use services/utils
 - NEVER use auto-increment PKs - use UUIDv4 or UUIDv7
 - NEVER use trailing slashes in URLs (`trailing_slash=False`)
@@ -37,8 +38,8 @@ When implementing a new endpoint, review these patterns in order:
 | 1 | **Models** | `api/models.py` | UUID PK, `inserted_at`/`updated_at`, `JSONAPIMeta.resource_name` |
 | 2 | **ViewSets** | `api/base_views.py`, `api/v1/views.py` | Inherit `BaseRLSViewSet`, `get_queryset()` with N+1 prevention |
 | 3 | **Serializers** | `api/v1/serializers.py` | Separate Read/Create/Update/Include, inherit `BaseWriteSerializer` |
-| 4 | **Filters** | `api/filters.py` | Use `filterset_class`, inherit `BaseProviderFilter` if applicable |
-| 5 | **Permissions** | `api/decorators.py` | `required_permissions`, `set_required_permissions()` |
+| 4 | **Filters** | `api/filters.py` | Use `filterset_class`, inherit base filter classes |
+| 5 | **Permissions** | `api/base_views.py` | `required_permissions`, `set_required_permissions()` |
 | 6 | **Pagination** | `api/pagination.py` | Custom pagination class if needed |
 | 7 | **URL Routing** | `api/v1/urls.py` | `trailing_slash=False`, kebab-case paths |
 | 8 | **OpenAPI Schema** | `api/v1/views.py` | `@extend_schema_view` with drf-spectacular |
@@ -58,6 +59,14 @@ PATCH update      → <Model>UpdateSerializer
 ?include=...      → <Model>IncludeSerializer
 ```
 
+### Which Base Serializer?
+```
+Read-only serializer   → BaseModelSerializerV1
+Write with tenant_id   → RLSSerializer (auto-injects tenant_id)
+Write with validation  → RLSSerializer + BaseWriteSerializer (combined)
+Non-model data        → BaseSerializerV1
+```
+
 ### Which Filter Base?
 ```
 Direct FK to Provider  → BaseProviderFilter
@@ -67,9 +76,10 @@ No provider relation  → FilterSet
 
 ### Which Base ViewSet?
 ```
-RLS-protected model  → BaseRLSViewSet
+RLS-protected model  → BaseRLSViewSet (most common)
 Tenant operations    → BaseTenantViewset
 User operations      → BaseUserViewset
+No RLS required      → BaseViewSet (rare)
 ```
 
 ### Resource Name Format?
@@ -78,6 +88,285 @@ Single word model     → plural lowercase           (Provider → providers)
 Multi-word model      → plural lowercase kebab     (ProviderGroup → provider-groups)
 Through/join model    → parent-child pattern       (UserRoleRelationship → user-roles)
 Aggregation/overview  → descriptive kebab plural   (ComplianceOverview → compliance-overviews)
+```
+
+---
+
+## Serializer Patterns
+
+### Base Class Hierarchy
+
+```python
+# Read serializer (most common)
+class ProviderSerializer(RLSSerializer):
+    class Meta:
+        model = Provider
+        fields = ["id", "provider", "uid", "alias", "connected", "inserted_at"]
+
+# Write serializer (validates unknown fields)
+class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = Provider
+        fields = ["provider", "uid", "alias"]
+
+# Include serializer (sparse fields for ?include=)
+class ProviderIncludeSerializer(RLSSerializer):
+    class Meta:
+        model = Provider
+        fields = ["id", "alias"]  # Minimal fields
+```
+
+### SerializerMethodField with OpenAPI
+
+```python
+from drf_spectacular.utils import extend_schema_field
+
+class ProviderSerializer(RLSSerializer):
+    connection = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field({
+        "type": "object",
+        "properties": {
+            "connected": {"type": "boolean"},
+            "last_checked_at": {"type": "string", "format": "date-time"},
+        },
+    })
+    def get_connection(self, obj):
+        return {
+            "connected": obj.connected,
+            "last_checked_at": obj.connection_last_checked_at,
+        }
+```
+
+### Included Serializers (JSON:API)
+
+```python
+class ScanSerializer(RLSSerializer):
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+```
+
+### Sensitive Data Masking
+
+```python
+def to_representation(self, instance):
+    data = super().to_representation(instance)
+    # Mask by default, expose only on explicit request
+    fields_param = self.context.get("request").query_params.get("fields[my-model]", "")
+    if "api_key" in fields_param:
+        data["api_key"] = instance.api_key_decoded
+    else:
+        data["api_key"] = "****" if instance.api_key else None
+    return data
+```
+
+---
+
+## ViewSet Patterns
+
+### get_queryset() with N+1 Prevention
+
+**Always combine** `swagger_fake_view` check with `select_related`/`prefetch_related`:
+
+```python
+def get_queryset(self):
+    # REQUIRED: Return empty queryset for OpenAPI schema generation
+    if getattr(self, "swagger_fake_view", False):
+        return Provider.objects.none()
+
+    # N+1 prevention: eager load relationships
+    return Provider.objects.select_related(
+        "tenant",
+    ).prefetch_related(
+        "provider_groups",
+        Prefetch("tags", queryset=ProviderTag.objects.filter(tenant_id=self.request.tenant_id)),
+    )
+```
+
+> **Why swagger_fake_view?** drf-spectacular introspects ViewSets to generate OpenAPI schemas. Without this check, it executes real queries and can fail without request context.
+
+### Action-Specific Serializers
+
+```python
+def get_serializer_class(self):
+    if self.action == "create":
+        return ProviderCreateSerializer
+    elif self.action == "partial_update":
+        return ProviderUpdateSerializer
+    elif self.action in ["connection", "destroy"]:
+        return TaskSerializer
+    return ProviderSerializer
+```
+
+### Dynamic Permissions per Action
+
+```python
+class ProviderViewSet(BaseRLSViewSet):
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
+
+    def set_required_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            self.required_permissions = []  # Read-only = no permission
+        else:
+            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
+```
+
+### Cache Decorator
+
+```python
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+
+CACHE_DECORATOR = cache_control(
+    max_age=django_settings.CACHE_MAX_AGE,
+    stale_while_revalidate=django_settings.CACHE_STALE_WHILE_REVALIDATE,
+)
+
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ProviderViewSet(BaseRLSViewSet):
+    pass
+```
+
+### Custom Actions
+
+```python
+# Detail action (operates on single object)
+@action(detail=True, methods=["post"], url_name="connection")
+def connection(self, request, pk=None):
+    instance = self.get_object()
+    # Process instance...
+
+# List action (operates on collection)
+@action(detail=False, methods=["get"], url_name="metadata")
+def metadata(self, request):
+    queryset = self.filter_queryset(self.get_queryset())
+    # Aggregate over queryset...
+```
+
+---
+
+## Filter Patterns
+
+### Base Filter Classes
+
+```python
+class BaseProviderFilter(FilterSet):
+    """For models with direct FK to Provider"""
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(field_name="provider__provider", choices=Provider.ProviderChoices.choices)
+
+class BaseScanProviderFilter(FilterSet):
+    """For models with FK to Scan (Scan has FK to Provider)"""
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+```
+
+### Custom Multi-Value Filters
+
+```python
+class UUIDInFilter(BaseInFilter, UUIDFilter):
+    pass
+
+class CharInFilter(BaseInFilter, CharFilter):
+    pass
+
+class ChoiceInFilter(BaseInFilter, ChoiceFilter):
+    pass
+```
+
+### ArrayField Filtering
+
+```python
+# Single value contains
+region = CharFilter(method="filter_region")
+
+def filter_region(self, queryset, name, value):
+    return queryset.filter(resource_regions__contains=[value])
+
+# Multi-value overlap
+region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
+```
+
+### Date Range Validation
+
+```python
+def filter_queryset(self, queryset):
+    # Require date filter for performance
+    if not (date_filters_provided):
+        raise ValidationError([{
+            "detail": "At least one date filter is required",
+            "status": 400,
+            "source": {"pointer": "/data/attributes/inserted_at"},
+            "code": "required",
+        }])
+
+    # Validate max range
+    if date_range > settings.FINDINGS_MAX_DAYS_IN_RANGE:
+        raise ValidationError(...)
+
+    return super().filter_queryset(queryset)
+```
+
+### Dynamic FilterSet Selection
+
+```python
+def get_filterset_class(self):
+    if self.action in ["latest", "metadata_latest"]:
+        return LatestFindingFilter
+    return FindingFilter
+```
+
+### Enum Field Override
+
+```python
+class Meta:
+    model = Finding
+    filter_overrides = {
+        FindingDeltaEnumField: {"filter_class": CharFilter},
+        StatusEnumField: {"filter_class": CharFilter},
+        SeverityEnumField: {"filter_class": CharFilter},
+    }
+```
+
+---
+
+## Performance Patterns
+
+### PaginateByPkMixin
+
+For large querysets with expensive joins:
+
+```python
+class PaginateByPkMixin:
+    def paginate_by_pk(self, request, base_queryset, manager,
+                       select_related=None, prefetch_related=None):
+        # 1. Get PKs only (cheap)
+        pk_list = base_queryset.values_list("id", flat=True)
+        page = self.paginate_queryset(pk_list)
+
+        # 2. Fetch full objects for just the page
+        queryset = manager.filter(id__in=page)
+        if select_related:
+            queryset = queryset.select_related(*select_related)
+        if prefetch_related:
+            queryset = queryset.prefetch_related(*prefetch_related)
+
+        # 3. Re-sort to preserve DB ordering
+        queryset = sorted(queryset, key=lambda obj: page.index(obj.id))
+        return self.get_paginated_response(self.get_serializer(queryset, many=True).data)
+```
+
+### Prefetch in Serializers
+
+```python
+def get_tags(self, obj):
+    # Use prefetched tags if available
+    if hasattr(obj, "prefetched_tags"):
+        return {tag.key: tag.value for tag in obj.prefetched_tags}
+    # Fallback (causes N+1 if not prefetched)
+    return obj.get_tags(self.context.get("tenant_id"))
 ```
 
 ---
@@ -92,6 +381,23 @@ Aggregation/overview  → descriptive kebab plural   (ComplianceOverview → com
 | Serializer (include) | `<Model>IncludeSerializer` | `ProviderIncludeSerializer` |
 | Filter | `<Model>Filter` | `ProviderFilter` |
 | ViewSet | `<Model>ViewSet` | `ProviderViewSet` |
+
+---
+
+## OpenAPI Documentation
+
+```python
+from drf_spectacular.utils import extend_schema, extend_schema_view
+
+@extend_schema_view(
+    list=extend_schema(tags=["Provider"], summary="List all providers"),
+    retrieve=extend_schema(tags=["Provider"], summary="Retrieve provider"),
+    create=extend_schema(tags=["Provider"], summary="Create provider"),
+)
+@extend_schema(tags=["Provider"])
+class ProviderViewSet(BaseRLSViewSet):
+    pass
+```
 
 ---
 

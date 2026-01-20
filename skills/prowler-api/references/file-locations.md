@@ -1,5 +1,14 @@
 # Prowler API File Locations
 
+## Configuration
+
+| Purpose | File Path | Key Items |
+|---------|-----------|-----------|
+| **Django Settings** | `api/src/backend/config/settings.py` | REST_FRAMEWORK, SIMPLE_JWT, DATABASES |
+| **Celery Config** | `api/src/backend/config/celery.py` | Celery app, queues, task routing |
+| **URL Routing** | `api/src/backend/config/urls.py` | Main URL patterns |
+| **Database Router** | `api/src/backend/api/db_router.py` | `MainRouter` (4-database architecture) |
+
 ## RLS (Row-Level Security)
 
 | Pattern | File Path | Key Classes/Functions |
@@ -8,14 +17,16 @@
 | **RLS Transaction** | `api/src/backend/api/db_utils.py` | `rls_transaction()` context manager |
 | **RLS Serializer** | `api/src/backend/api/v1/serializers.py` | `RLSSerializer` - auto-injects tenant_id |
 | **Tenant Model** | `api/src/backend/api/rls.py` | `Tenant` model |
+| **Partitioning** | `api/src/backend/api/partitions.py` | `PartitionManager`, UUIDv7 partitioning |
 
 ## RBAC (Role-Based Access Control)
 
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
 | **Permissions** | `api/src/backend/api/rbac/permissions.py` | `Permissions` enum, `get_role()`, `get_providers()` |
-| **Role Model** | `api/src/backend/api/models.py` | `Role`, `UserRoleRelationship` |
+| **Role Model** | `api/src/backend/api/models.py` | `Role`, `UserRoleRelationship`, `RoleProviderGroupRelationship` |
 | **Permission Decorator** | `api/src/backend/api/decorators.py` | `@check_permissions`, `HasPermissions` |
+| **Visibility Filter** | `api/src/backend/api/rbac/` | Provider group visibility filtering |
 
 ## Providers
 
@@ -26,6 +37,21 @@
 | **Provider Secret** | `api/src/backend/api/models.py` | `ProviderSecret` model |
 | **Provider Groups** | `api/src/backend/api/models.py` | `ProviderGroup`, `ProviderGroupMembership` |
 
+## Serializers
+
+| Pattern | File Path | Key Classes/Functions |
+|---------|-----------|----------------------|
+| **Base Serializers** | `api/src/backend/api/v1/serializers.py` | `BaseModelSerializerV1`, `RLSSerializer`, `BaseWriteSerializer` |
+| **ViewSet Helpers** | `api/src/backend/api/v1/serializers.py` | `get_serializer_class_for_view()` |
+
+## ViewSets
+
+| Pattern | File Path | Key Classes/Functions |
+|---------|-----------|----------------------|
+| **Base ViewSets** | `api/src/backend/api/v1/views.py` | `BaseViewSet`, `BaseRLSViewSet`, `BaseTenantViewset`, `BaseUserViewset` |
+| **Custom Actions** | `api/src/backend/api/v1/views.py` | `@action(detail=True)` patterns |
+| **Filters** | `api/src/backend/api/filters.py` | `BaseProviderFilter`, `BaseScanProviderFilter`, `CommonFindingFilters` |
+
 ## Celery Tasks
 
 | Pattern | File Path | Key Classes/Functions |
@@ -35,6 +61,7 @@
 | **Task Decorators** | `api/src/backend/tasks/utils.py` | `@set_tenant`, `@handle_provider_deletion` |
 | **Celery Config** | `api/src/backend/config/celery.py` | Celery app configuration |
 | **Beat Schedule** | `api/src/backend/tasks/beat.py` | Periodic task scheduling |
+| **Task Jobs** | `api/src/backend/tasks/jobs/` | `scan.py`, `deletion.py`, `backfill.py`, `export.py` |
 
 ## Key Line References
 
@@ -70,6 +97,15 @@ def my_task(tenant_id: str, provider_id: str):
     with rls_transaction(tenant_id):
         provider = Provider.objects.get(pk=provider_id)
 ```
+
+## Tests
+
+| Type | Path |
+|------|------|
+| **Central Fixtures** | `api/src/backend/conftest.py` |
+| **API Tests** | `api/src/backend/api/tests/` |
+| **Integration Tests** | `api/src/backend/api/tests/integration/` |
+| **Task Tests** | `api/src/backend/tasks/tests/` |
 
 ## Related Skills
 
