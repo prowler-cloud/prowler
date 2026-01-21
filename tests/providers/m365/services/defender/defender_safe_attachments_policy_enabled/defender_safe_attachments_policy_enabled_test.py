@@ -5,7 +5,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 class Test_defender_safe_attachments_policy_enabled:
     def test_no_safe_attachments_policies(self):
-        """Test when there are no Safe Attachments policies configured."""
+        """Test FAIL when there are no Safe Attachments policies configured."""
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
@@ -31,7 +31,12 @@ class Test_defender_safe_attachments_policy_enabled:
 
             check = defender_safe_attachments_policy_enabled()
             result = check.execute()
-            assert len(result) == 0
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "No Safe Attachments policies found" in result[0].status_extended
+            assert result[0].resource_name == "Safe Attachments"
+            assert result[0].resource_id == "safe_attachments_policies"
 
     def test_builtin_protection_policy_properly_configured(self):
         """Test PASS when Built-In Protection Policy has Enable=True, Action=Block, QuarantineTag=AdminOnlyAccessPolicy."""

@@ -27,6 +27,23 @@ class defender_safe_attachments_policy_enabled(Check):
         """
         findings = []
 
+        # FAIL if no Safe Attachments policies exist
+        if not defender_client.safe_attachments_policies:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=defender_client,
+                resource_name="Safe Attachments",
+                resource_id="safe_attachments_policies",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "No Safe Attachments policies found. Safe Attachments provides "
+                "protection against malicious email attachments and requires "
+                "Microsoft Defender for Office 365 (Plan 1 or Plan 2) licensing."
+            )
+            findings.append(report)
+            return findings
+
         for policy in defender_client.safe_attachments_policies:
             report = CheckReportM365(
                 metadata=self.metadata(),
