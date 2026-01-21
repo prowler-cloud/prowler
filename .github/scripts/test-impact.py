@@ -51,6 +51,23 @@ def matches_pattern(file_path: str, pattern: str) -> bool:
     return fnmatch.fnmatch(file_path, pattern)
 
 
+def filter_ignored_files(
+    changed_files: list[str], ignored_paths: list[str]
+) -> list[str]:
+    """Filter out files that match ignored patterns."""
+    filtered = []
+    for file_path in changed_files:
+        is_ignored = False
+        for pattern in ignored_paths:
+            if matches_pattern(file_path, pattern):
+                print(f"  [IGNORED] {file_path} matches {pattern}", file=sys.stderr)
+                is_ignored = True
+                break
+        if not is_ignored:
+            filtered.append(file_path)
+    return filtered
+
+
 def check_critical_paths(changed_files: list[str], critical_paths: list[str]) -> bool:
     """Check if any changed file matches critical paths."""
     for file_path in changed_files:
@@ -158,6 +175,26 @@ def main():
 
     # Load configuration
     config = load_config()
+
+    # Filter out ignored files (docs, configs, etc.)
+    ignored_paths = config.get("ignored", {}).get("paths", [])
+    changed_files = filter_ignored_files(changed_files, ignored_paths)
+
+    if not changed_files:
+        print("\nAll changed files are ignored (docs, configs, etc.)", file=sys.stderr)
+        print("No tests needed.", file=sys.stderr)
+        set_github_output("run-all", "false")
+        set_github_output("sdk-tests", "")
+        set_github_output("api-tests", "")
+        set_github_output("ui-e2e", "")
+        set_github_output("modules", "none-ignored")
+        set_github_output("has-tests", "false")
+        return
+
+    print(
+        f"\n{len(changed_files)} files remain after filtering ignored paths",
+        file=sys.stderr,
+    )
 
     # Check critical paths
     critical_paths = config.get("critical", {}).get("paths", [])

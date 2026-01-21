@@ -3,6 +3,40 @@
 #
 # Usage: Changes to paths in 'critical' always run all tests.
 #        Changes to paths in 'modules' run only the mapped tests.
+#        Changes to paths in 'ignored' don't trigger any tests.
+
+# Ignored paths - changes here don't trigger any tests
+# Documentation, configs, and other non-code files
+ignored:
+  paths:
+    # Documentation
+    - docs/**
+    - "*.md"
+    - "**/*.md"
+    - mkdocs.yml
+    
+    # Config files that don't affect runtime
+    - .gitignore
+    - .gitattributes
+    - .editorconfig
+    - .pre-commit-config.yaml
+    - .backportrc.json
+    - CODEOWNERS
+    - LICENSE
+    
+    # IDE/Editor configs
+    - .vscode/**
+    - .idea/**
+    
+    # Examples and contrib (not production code)
+    - examples/**
+    - contrib/**
+    
+    # Skills (AI agent configs, not runtime)
+    - skills/**
+    
+    # Permissions docs
+    - permissions/**
 
 # Critical paths - changes here run ALL tests
 # These are foundational/shared code that can affect anything
