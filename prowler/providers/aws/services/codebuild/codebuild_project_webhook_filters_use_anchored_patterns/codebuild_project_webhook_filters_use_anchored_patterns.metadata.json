@@ -1,0 +1,36 @@
+{
+  "Provider": "aws",
+  "CheckID": "codebuild_project_webhook_filters_use_anchored_patterns",
+  "CheckTitle": "CodeBuild project webhook filters use properly anchored regex patterns",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "codebuild",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
+  "Description": "AWS CodeBuild webhook filters using `ACTOR_ACCOUNT_ID`, `HEAD_REF`, or `BASE_REF` have regex patterns properly anchored with `^` (start) and `$` (end) to prevent substring matching attacks.",
+  "Risk": "Unanchored webhook filter patterns expose CI/CD pipelines to the **CodeBreach** vulnerability. Attackers can create GitHub accounts with IDs containing trusted IDs as substrings to bypass authentication and execute unauthorized builds. **Confidentiality**: AWS credentials and secrets may be leaked via build logs or artifacts. **Integrity**: Malicious code can be injected into builds, compromising the software supply chain. **Availability**: Resources can be exhausted through unauthorized build abuse.",
+  "RelatedUrl": "https://www.wiz.io/blog/wiz-research-codebreach-vulnerability-aws-codebuild",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws codebuild update-webhook --project-name <PROJECT_NAME> --filter-groups '[[{\"type\":\"ACTOR_ACCOUNT_ID\",\"pattern\":\"^123456$|^234567$\"}]]'",
+      "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-codebuild-project-webhookfilter.html",
+      "Other": "1. Open AWS Console and navigate to CodeBuild. 2. Select the project with webhook filters. 3. Click Edit and go to Primary source webhook events. 4. For each filter using ACTOR_ACCOUNT_ID, HEAD_REF, or BASE_REF, update patterns to include ^ at start and $ at end (e.g., change '123456|234567' to '^123456$|^234567$'). 5. Save changes.",
+      "Terraform": "resource \"aws_codebuild_webhook\" \"example\" {\n  project_name = aws_codebuild_project.example.name\n  filter_group {\n    filter {\n      type    = \"ACTOR_ACCOUNT_ID\"\n      pattern = \"^123456$|^234567$\"\n    }\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Always anchor webhook filter patterns with ^ (start) and $ (end). For multiple values use: ^value1$|^value2$. Example vulnerable pattern: '16024985|755743|48153483' should be '^16024985$|^755743$|^48153483$'.",
+      "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/github-webhook.html"
+    }
+  },
+  "Categories": [
+    "software-supply-chain",
+    "ci-cd"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check targets the CodeBreach vulnerability disclosed by Wiz Research. The vulnerability allows attackers to bypass ACTOR_ACCOUNT_ID filters by creating GitHub accounts with IDs that contain trusted IDs as substrings."
+}
