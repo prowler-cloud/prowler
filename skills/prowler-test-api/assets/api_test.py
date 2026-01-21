@@ -178,7 +178,7 @@ class TestAsyncOperations:
         mock_delete_task.assert_called_once()
 
     @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_prowler_scan_task.delay")
+    @patch("api.v1.views.perform_scan_task.delay")
     def test_trigger_scan_returns_202(
         self,
         mock_scan_task,

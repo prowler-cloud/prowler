@@ -57,8 +57,8 @@
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
 | **Task Definitions** | `api/src/backend/tasks/tasks.py` | All `@shared_task` definitions |
-| **RLS Task Base** | `api/src/backend/tasks/__init__.py` | `RLSTask` base class |
-| **Task Decorators** | `api/src/backend/tasks/utils.py` | `@set_tenant`, `@handle_provider_deletion` |
+| **RLS Task Base** | `api/src/backend/config/celery.py` | `RLSTask` base class |
+| **Task Decorators** | `api/src/backend/api/decorators.py` | `@set_tenant`, `@handle_provider_deletion` |
 | **Celery Config** | `api/src/backend/config/celery.py` | Celery app configuration |
 | **Beat Schedule** | `api/src/backend/tasks/beat.py` | Periodic task scheduling |
 | **Task Jobs** | `api/src/backend/tasks/jobs/` | `scan.py`, `deletion.py`, `backfill.py`, `export.py` |

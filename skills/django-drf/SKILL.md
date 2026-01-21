@@ -64,9 +64,9 @@ PATCH update      → <Model>UpdateSerializer
 ### Which Base Serializer?
 ```
 Read-only serializer   → BaseModelSerializerV1
-Write with tenant_id   → RLSSerializer (auto-injects tenant_id)
-Write with validation  → RLSSerializer + BaseWriteSerializer (combined)
-Non-model data        → BaseSerializerV1
+Create with tenant_id  → RLSSerializer + BaseWriteSerializer (auto-injects tenant_id on create)
+Update with validation → BaseWriteSerializer (tenant_id already exists on object)
+Non-model data         → BaseSerializerV1
 ```
 
 ### Which Filter Base?

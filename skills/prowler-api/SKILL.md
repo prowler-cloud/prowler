@@ -81,7 +81,7 @@ When implementing Prowler-specific API features:
 | 2 | **RLS Transactions** | `api/db_utils.py` | Use `rls_transaction(tenant_id)` context manager |
 | 3 | **RBAC Permissions** | `api/rbac/permissions.py` | `get_role()`, `get_providers()`, `Permissions` enum |
 | 4 | **Provider Validation** | `api/models.py` | `validate_<provider>_uid()` methods on `Provider` model |
-| 5 | **Celery Tasks** | `tasks/tasks.py` | `@set_tenant`, `@handle_provider_deletion`, `RLSTask` base |
+| 5 | **Celery Tasks** | `tasks/tasks.py`, `api/decorators.py`, `config/celery.py` | Task definitions, decorators (`@set_tenant`, `@handle_provider_deletion`), `RLSTask` base |
 | 6 | **RLS Serializers** | `api/v1/serializers.py` | Inherit `RLSSerializer` to auto-inject `tenant_id` |
 | 7 | **Through Models** | `api/models.py` | ALL M2M must use explicit through with `tenant_id` |
 
