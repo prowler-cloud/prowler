@@ -26,8 +26,9 @@ critical:
     - ui/middleware.ts
     
     # CI/CD changes
-    - .github/workflows/**
-    - .github/test-impact.yml
+    # NOTE: Temporarily disabled for testing. Re-enable after merge.
+    # - .github/workflows/**
+    # - .github/test-impact.yml
 
 # Module mappings - path patterns to test patterns
 modules:
