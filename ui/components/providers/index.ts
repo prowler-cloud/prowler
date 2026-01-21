@@ -1,3 +1,4 @@
+// Test impact analysis - this comment triggers provider tests only
 export * from "../../store/ui/store-initializer";
 export * from "./add-provider-button";
 export * from "./credentials-update-info";
