@@ -1,0 +1,76 @@
+---
+title: 'Security & Compliance'
+---
+
+**Prowler secures itself with Prowler.** As an open-source cloud security platform trusted by thousands of organizations, Prowler applies the same rigorous security standards internally that customers achieve externally.
+
+All security tooling, configurations, and CI/CD pipelines are publicly available in the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler). Transparency is fundamental to open-source security.
+
+## Software Security
+
+All Prowler code goes through the same security pipeline, whether running on Prowler Cloud or self-managed infrastructure: DAST, SAST, SCA, container scanning, and secrets detection on every build.
+
+<Card title="Software Security" icon="code" href="/security/software-security">
+  Security tools and practices applied to all Prowler code.
+</Card>
+
+## Prowler Cloud vs Self-Managed
+
+| | Prowler Cloud | Self-Managed |
+|--|---------------|--------------|
+| **Deployment** | Fully managed SaaS | Own infrastructure |
+| **Region** | EU (Ireland) | Any region or provider |
+| **Compliance** | SOC 2 Type II, AWS FTR | Organization responsibility |
+| **Data Control** | Prowler managed | Full control |
+| **Encryption** | AES-256 at rest, TLS 1.2+ in transit | Configurable |
+| **Backups** | Automated | Organization responsibility |
+| **Updates** | Automatic | Manual |
+
+<Note>
+Self-Managed includes Prowler App and Prowler CLI. They can run anywhere — any cloud provider, any region, on-premises, or air-gapped environments. Full control over data residency and infrastructure decisions. See the [Prowler App Installation Guide](/getting-started/installation/prowler-app) to get started.
+</Note>
+
+---
+
+## Prowler Cloud
+
+This section covers security and compliance for **Prowler Cloud**, the managed infrastructure.
+
+### Trust & Compliance
+
+Prowler Cloud holds compliance certifications and undergoes regular audits.
+
+| Certification | Status |
+|---------------|--------|
+| **SOC 2 Type II** | [View on Trust Portal](https://trust.prowler.com) |
+| **AWS Foundational Technical Review (FTR)** | Passed — [Details](https://aws.amazon.com/partners/foundational-technical-review/) |
+
+Compliance data and reports: [trust.prowler.com](https://trust.prowler.com)
+
+### Security
+
+<Columns cols={3}>
+  <Card title="Encryption" icon="lock" href="/security/encryption">
+    Data encrypted at rest (AES-256) and in transit (TLS 1.2+).
+  </Card>
+  <Card title="Data Regions" icon="globe" href="/security/data-regions">
+    EU-hosted infrastructure with high availability and disaster recovery.
+  </Card>
+  <Card title="Networking" icon="network-wired" href="/security/networking">
+    Static egress IPs for firewall allowlisting.
+  </Card>
+</Columns>
+
+### Privacy
+
+Prowler Cloud is GDPR compliant in regard to the ["right to be forgotten"](https://gdpr.eu/right-to-be-forgotten/). When an account is deleted, user information is removed from online and backup systems within 10 calendar days.
+
+---
+
+## Report a Vulnerability
+
+Found a security issue? Report it through the [responsible disclosure](https://prowler.com/.well-known/security.txt) process.
+
+## Contact
+
+For security inquiries or general support, visit the [Support page](/support).

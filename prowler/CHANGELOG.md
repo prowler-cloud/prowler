@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `TLS/SSL`, `records` and `email` checks for `zone` service [(#9424)](https://github.com/prowler-cloud/prowler/pull/9424)
 - `compute_snapshot_not_outdated` check for GCP provider [(#9774)](https://github.com/prowler-cloud/prowler/pull/9774)
 - `compute_project_os_login_2fa_enabled` check for GCP provider [(#9839)](https://github.com/prowler-cloud/prowler/pull/9839)
+- `compute_instance_on_host_maintenance_migrate` check for GCP provider [(#9834)](https://github.com/prowler-cloud/prowler/pull/9834)
 - CIS 1.12 compliance framework for Kubernetes [(#9778)](https://github.com/prowler-cloud/prowler/pull/9778)
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
@@ -61,6 +62,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Security
 - `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490)
+
+### Security
+- Updated `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
 
 ---
 
