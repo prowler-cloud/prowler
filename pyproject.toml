@@ -115,6 +115,10 @@ bandit = "1.8.3"
 black = "25.1.0"
 coverage = "7.6.12"
 docker = "7.1.0"
+filelock = [
+  {version = "3.20.3", python = ">=3.10"},
+  {version = "3.19.1", python = "<3.10"}
+]
 flake8 = "7.1.2"
 freezegun = "1.5.1"
 marshmallow = ">=3.15.0,<4.0.0"
@@ -129,7 +133,7 @@ pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.16.0"
 pytest-xdist = "3.6.1"
-safety = "3.2.9"
+safety = "3.7.0"
 vulture = "2.14"
 
 [tool.poetry-version-plugin]
