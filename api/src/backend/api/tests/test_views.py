@@ -4375,15 +4375,21 @@ class TestResourceViewSet:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["errors"][0]["code"] == "invalid_provider"
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "invalid_provider"
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["pointer"] == "/data/attributes/provider"
+        assert "AWS" in error["detail"]
 
     @pytest.mark.parametrize(
-        "lookback_days,expected_status,expected_code",
+        "lookback_days,expected_status,expected_code,expected_detail_contains",
         [
-            ("abc", status.HTTP_400_BAD_REQUEST, "invalid"),  # Non-integer
-            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Below min
-            ("91", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Above max (90)
-            ("-5", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Negative
+            ("abc", status.HTTP_400_BAD_REQUEST, "invalid", "valid integer"),
+            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
+            ("91", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
+            ("-5", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
         ],
     )
     def test_events_invalid_lookback_days(
@@ -4393,8 +4399,9 @@ class TestResourceViewSet:
         lookback_days,
         expected_status,
         expected_code,
+        expected_detail_contains,
     ):
-        """Test events endpoint validates lookback_days parameter."""
+        """Test events endpoint validates lookback_days with JSON:API compliant errors."""
         from api.models import Resource
 
         aws_provider = providers_fixture[0]  # AWS provider from fixture
@@ -4415,7 +4422,60 @@ class TestResourceViewSet:
         )
 
         assert response.status_code == expected_status
-        assert response.json()["errors"][0]["code"] == expected_code
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == expected_code
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["parameter"] == "lookback_days"
+        assert expected_detail_contains in error["detail"]
+
+    @pytest.mark.parametrize(
+        "page_size,expected_status,expected_code,expected_detail_contains",
+        [
+            ("abc", status.HTTP_400_BAD_REQUEST, "invalid", "valid integer"),
+            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+            ("51", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+            ("-1", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+        ],
+    )
+    def test_events_invalid_page_size(
+        self,
+        authenticated_client,
+        providers_fixture,
+        page_size,
+        expected_status,
+        expected_code,
+        expected_detail_contains,
+    ):
+        """Test events endpoint validates page[size] with JSON:API compliant errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-pagesize-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"page[size]": page_size},
+        )
+
+        assert response.status_code == expected_status
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == expected_code
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["parameter"] == "page[size]"
+        assert expected_detail_contains in error["detail"]
 
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
@@ -4485,6 +4545,14 @@ class TestResourceViewSet:
         events = response_data["data"]
 
         assert len(events) == 2
+
+        # Verify JSON:API structure: type and id are present
+        assert events[0]["type"] == "resource-events"
+        assert events[0]["id"] == "event-1-id"
+        assert events[1]["type"] == "resource-events"
+        assert events[1]["id"] == "event-2-id"
+
+        # Verify attributes
         assert events[0]["attributes"]["event_name"] == "RunInstances"
         assert events[0]["attributes"]["actor"] == "admin@example.com"
         assert events[1]["attributes"]["event_name"] == "StopInstances"
@@ -4582,7 +4650,12 @@ class TestResourceViewSet:
 
         # 502 because this is an upstream auth failure, not API auth failure
         assert response.status_code == status.HTTP_502_BAD_GATEWAY
-        assert response.json()["errors"][0]["code"] == "upstream_auth_failed"
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_auth_failed"
+        assert error["status"] == "502"  # Must be string per JSON:API spec
+        assert "detail" in error
 
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
@@ -4628,7 +4701,12 @@ class TestResourceViewSet:
 
         # AccessDenied returns 502 (upstream error, not user's fault)
         assert response.status_code == status.HTTP_502_BAD_GATEWAY
-        assert response.json()["errors"][0]["code"] == "upstream_access_denied"
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_access_denied"
+        assert error["status"] == "502"  # Must be string per JSON:API spec
+        assert "detail" in error
 
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
@@ -4674,7 +4752,12 @@ class TestResourceViewSet:
 
         # Non-AccessDenied errors return 503
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        assert response.json()["errors"][0]["code"] == "service_unavailable"
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "service_unavailable"
+        assert error["status"] == "503"  # Must be string per JSON:API spec
+        assert "detail" in error
 
     def test_events_unauthenticated_returns_401(self, providers_fixture):
         """Test events endpoint returns 401 when no credentials are provided.

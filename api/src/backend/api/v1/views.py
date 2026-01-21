@@ -2922,8 +2922,14 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 lookback_days = int(lookback_days_str)
             except (ValueError, TypeError):
                 raise ValidationError(
-                    {"lookback_days": "Must be a valid integer"},
-                    code="invalid",
+                    [
+                        {
+                            "detail": "lookback_days must be a valid integer",
+                            "status": "400",
+                            "source": {"parameter": "lookback_days"},
+                            "code": "invalid",
+                        }
+                    ]
                 )
 
             if not (
@@ -2932,13 +2938,17 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 <= self.EVENTS_MAX_LOOKBACK_DAYS
             ):
                 raise ValidationError(
-                    {
-                        "lookback_days": (
-                            f"Must be between {self.EVENTS_MIN_LOOKBACK_DAYS} "
-                            f"and {self.EVENTS_MAX_LOOKBACK_DAYS}"
-                        )
-                    },
-                    code="out_of_range",
+                    [
+                        {
+                            "detail": (
+                                f"lookback_days must be between {self.EVENTS_MIN_LOOKBACK_DAYS} "
+                                f"and {self.EVENTS_MAX_LOOKBACK_DAYS}"
+                            ),
+                            "status": "400",
+                            "source": {"parameter": "lookback_days"},
+                            "code": "out_of_range",
+                        }
+                    ]
                 )
 
         # Validate and parse page[size] from query params (JSON:API pagination)
@@ -2950,21 +2960,31 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 page_size = int(page_size_str)
             except (ValueError, TypeError):
                 raise ValidationError(
-                    {"page[size]": "Must be a valid integer"},
-                    code="invalid",
+                    [
+                        {
+                            "detail": "page[size] must be a valid integer",
+                            "status": "400",
+                            "source": {"parameter": "page[size]"},
+                            "code": "invalid",
+                        }
+                    ]
                 )
 
             if not (
                 self.EVENTS_MIN_PAGE_SIZE <= page_size <= self.EVENTS_MAX_PAGE_SIZE
             ):
                 raise ValidationError(
-                    {
-                        "page[size]": (
-                            f"Must be between {self.EVENTS_MIN_PAGE_SIZE} "
-                            f"and {self.EVENTS_MAX_PAGE_SIZE}"
-                        )
-                    },
-                    code="out_of_range",
+                    [
+                        {
+                            "detail": (
+                                f"page[size] must be between {self.EVENTS_MIN_PAGE_SIZE} "
+                                f"and {self.EVENTS_MAX_PAGE_SIZE}"
+                            ),
+                            "status": "400",
+                            "source": {"parameter": "page[size]"},
+                            "code": "out_of_range",
+                        }
+                    ]
                 )
 
         # Parse include_read_events (default: false)
