@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
 - `TLS/SSL`, `records` and `email` checks for `zone` service [(#9424)](https://github.com/prowler-cloud/prowler/pull/9424)
 - `compute_snapshot_not_outdated` check for GCP provider [(#9774)](https://github.com/prowler-cloud/prowler/pull/9774)
+- `compute_instance_on_host_maintenance_migrate` check for GCP provider [(#9834)](https://github.com/prowler-cloud/prowler/pull/9834)
 - CIS 1.12 compliance framework for Kubernetes [(#9778)](https://github.com/prowler-cloud/prowler/pull/9778)
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
