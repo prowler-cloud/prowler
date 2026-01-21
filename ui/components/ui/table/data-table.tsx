@@ -6,15 +6,15 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   OnChangeFn,
+  PaginationState,
   Row,
   RowSelectionState,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Table,
@@ -24,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTableClientPagination } from "@/components/ui/table/data-table-client-pagination";
+import { ClientSideSearch } from "@/components/ui/table/data-table-client-search";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { FilterOption, MetaDataProps } from "@/types";
@@ -41,6 +43,12 @@ interface DataTableProviderProps<TData, TValue> {
   getRowCanSelect?: (row: Row<TData>) => boolean;
   /** Show search bar in the table toolbar */
   showSearch?: boolean;
+  /** Enable client-side pagination (for data already loaded in memory) */
+  clientSidePagination?: boolean;
+  /** Default page size for client-side pagination */
+  defaultPageSize?: number;
+  /** Function to filter data for client-side search. Returns true if row matches search term */
+  clientSearchFilter?: (row: TData, searchTerm: string) => boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -53,18 +61,37 @@ export function DataTable<TData, TValue>({
   onRowSelectionChange,
   getRowCanSelect,
   showSearch = false,
+  clientSidePagination = false,
+  defaultPageSize = 10,
+  clientSearchFilter,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: defaultPageSize,
+  });
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+
+  // Filter data for client-side search
+  const filteredData =
+    clientSearchFilter && clientSearchTerm
+      ? data.filter((row) => clientSearchFilter(row, clientSearchTerm))
+      : data;
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    if (clientSidePagination) {
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }
+  }, [clientSearchTerm, clientSidePagination]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     enableSorting: true,
-    // Use getRowCanSelect function if provided, otherwise use boolean
     enableRowSelection: getRowCanSelect ?? enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -78,22 +105,51 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  // Calculate pagination info for client-side pagination
+  const totalPages = clientSidePagination
+    ? Math.ceil(filteredData.length / pagination.pageSize)
+    : 1;
+
   // Calculate selection key to force header re-render when selection changes
   const selectionKey = rowSelection
     ? Object.keys(rowSelection).filter((k) => rowSelection[k]).length
     : 0;
 
   // Format total entries count
-  const totalEntries = metadata?.pagination?.count ?? 0;
+  const totalEntries = clientSidePagination
+    ? filteredData.length
+    : (metadata?.pagination?.count ?? 0);
   const formattedTotal = totalEntries.toLocaleString();
+  const showToolbar = showSearch || metadata || clientSidePagination;
+  const useClientSearch = showSearch && clientSearchFilter;
+
+  // For client-side pagination, manually slice the data
+  const paginatedRows = clientSidePagination
+    ? table
+        .getRowModel()
+        .rows.slice(
+          pagination.pageIndex * pagination.pageSize,
+          (pagination.pageIndex + 1) * pagination.pageSize,
+        )
+    : table.getRowModel().rows;
 
   return (
     <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
       {/* Table Toolbar */}
-      {(showSearch || metadata) && (
+      {showToolbar && (
         <div className="flex items-center justify-between">
-          <div>{showSearch && <DataTableSearch />}</div>
-          {metadata && (
+          <div>
+            {showSearch &&
+              (useClientSearch ? (
+                <ClientSideSearch
+                  value={clientSearchTerm}
+                  onChange={setClientSearchTerm}
+                />
+              ) : (
+                <DataTableSearch />
+              ))}
+          </div>
+          {(metadata || clientSidePagination) && (
             <span className="text-text-neutral-secondary text-sm">
               {formattedTotal} Total Entries
             </span>
@@ -120,8 +176,8 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
+          {paginatedRows?.length ? (
+            paginatedRows.map((row) => (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
@@ -142,10 +198,26 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-      {metadata && (
+      {metadata && !clientSidePagination && (
         <DataTablePagination
           metadata={metadata}
           disableScroll={disableScroll}
+        />
+      )}
+      {clientSidePagination && data.length > 0 && (
+        <DataTableClientPagination
+          currentPage={pagination.pageIndex + 1}
+          totalPages={totalPages}
+          pageSize={pagination.pageSize}
+          onPageChange={(page) =>
+            setPagination((prev: PaginationState) => ({
+              ...prev,
+              pageIndex: page - 1,
+            }))
+          }
+          onPageSizeChange={(size) =>
+            setPagination({ pageIndex: 0, pageSize: size })
+          }
         />
       )}
     </div>
