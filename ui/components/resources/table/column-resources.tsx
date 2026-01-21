@@ -1,12 +1,20 @@
 "use client";
 
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownSection,
+  DropdownTrigger,
+} from "@heroui/dropdown";
+import { Snippet } from "@heroui/snippet";
 import { ColumnDef } from "@tanstack/react-table";
-import { Database } from "lucide-react";
+import { AlertTriangle, Eye, MoreVertical } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-import { InfoIcon } from "@/components/icons";
-import { EntityInfo, SnippetChip } from "@/components/ui/entities";
-import { TriggerSheet } from "@/components/ui/sheet";
+import { CopyIcon, DoneIcon } from "@/components/icons";
+import { EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderType, ResourceProps } from "@/types";
 
@@ -19,12 +27,6 @@ const getResourceData = (
   return row.original.attributes?.[field];
 };
 
-const getChipStyle = (count: number) => {
-  if (count === 0) return "bg-green-100 text-green-800";
-  if (count >= 10) return "bg-red-100 text-red-800";
-  if (count >= 1) return "bg-yellow-100 text-yellow-800";
-};
-
 const getProviderData = (
   row: { original: ResourceProps },
   field: keyof ResourceProps["relationships"]["provider"]["data"]["attributes"],
@@ -35,61 +37,149 @@ const getProviderData = (
   );
 };
 
-const ResourceDetailsCell = ({ row }: { row: any }) => {
+// Component for resource name that opens the detail drawer
+const ResourceNameCell = ({ row }: { row: { original: ResourceProps } }) => {
   const searchParams = useSearchParams();
   const resourceId = searchParams.get("resourceId");
   const isOpen = resourceId === row.original.id;
+  const resourceName = row.original.attributes?.name;
+  const resourceUid = row.original.attributes?.uid;
+  const displayName =
+    typeof resourceName === "string" && resourceName.trim().length > 0
+      ? resourceName
+      : "Unnamed resource";
 
   return (
-    <div className="flex w-9 items-center justify-center">
-      <TriggerSheet
-        triggerComponent={
-          <InfoIcon className="text-button-primary" size={16} />
-        }
-        title="Resource Details"
-        description="View the Resource details"
+    <div className="flex items-center gap-2">
+      <ResourceDetail
+        resourceDetails={row.original}
         defaultOpen={isOpen}
-      >
-        <ResourceDetail
-          resourceId={row.original.id}
-          initialResourceData={row.original}
+        trigger={
+          <div className="max-w-[200px]">
+            <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
+              {displayName}
+            </p>
+          </div>
+        }
+      />
+      {resourceUid && (
+        <Snippet
+          className="h-6 min-w-0 bg-transparent p-0"
+          classNames={{
+            base: "bg-transparent p-0 min-w-0",
+            pre: "hidden",
+            copyButton:
+              "text-text-neutral-secondary hover:text-text-neutral-primary min-w-0",
+          }}
+          size="sm"
+          hideSymbol
+          copyIcon={<CopyIcon size={14} />}
+          checkIcon={<DoneIcon size={14} />}
+          codeString={resourceUid}
         />
-      </TriggerSheet>
+      )}
     </div>
   );
 };
 
+// Component for failed findings badge with warning style
+const FailedFindingsBadge = ({ count }: { count: number }) => {
+  if (count === 0) {
+    return (
+      <span className="inline-flex h-6 items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
+        0
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex h-6 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-semibold text-red-800 dark:bg-red-900/30 dark:text-red-400">
+      <AlertTriangle className="h-3 w-3" />
+      {count}
+    </span>
+  );
+};
+
+// Row actions dropdown
+const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const resourceName = row.original.attributes?.name || "Resource";
+
+  return (
+    <>
+      <div className="flex items-center justify-end">
+        <Dropdown
+          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
+          placement="bottom"
+        >
+          <DropdownTrigger aria-label="Resource actions">
+            <button className="text-text-neutral-secondary hover:text-text-neutral-primary focus:outline-none">
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </DropdownTrigger>
+          <DropdownMenu
+            closeOnSelect
+            aria-label="Resource actions"
+            color="default"
+            variant="flat"
+          >
+            <DropdownSection title="Actions">
+              <DropdownItem
+                key="view"
+                description={`View details for ${resourceName}`}
+                textValue="View details"
+                startContent={<Eye className="h-4 w-4" />}
+                onPress={() => setIsDrawerOpen(true)}
+              >
+                View details
+              </DropdownItem>
+            </DropdownSection>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
+
+      <ResourceDetail
+        resourceDetails={row.original}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        trigger={<span className="hidden" />}
+      />
+    </>
+  );
+};
+
+// Column definitions for resources table
 export const ColumnResources: ColumnDef<ResourceProps>[] = [
-  {
-    id: "moreInfo",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Details" />
-    ),
-    cell: ({ row }) => <ResourceDetailsCell row={row} />,
-    enableSorting: false,
-  },
+  // Resource Name column
   {
     accessorKey: "resourceName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Resource name" />
+      <DataTableColumnHeader column={column} title="Resource Name" />
+    ),
+    cell: ({ row }) => <ResourceNameCell row={row} />,
+    enableSorting: false,
+  },
+  // Provider Account column
+  {
+    accessorKey: "provider",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Provider Account" />
     ),
     cell: ({ row }) => {
-      const resourceName = getResourceData(row, "name");
-      const displayName =
-        typeof resourceName === "string" && resourceName.trim().length > 0
-          ? resourceName
-          : "Unnamed resource";
-
+      const provider = getProviderData(row, "provider");
+      const alias = getProviderData(row, "alias");
+      const uid = getProviderData(row, "uid");
       return (
-        <SnippetChip
-          value={displayName}
-          className="max-w-[320px]"
-          icon={<Database size={16} />}
+        <EntityInfo
+          cloudProvider={provider as ProviderType}
+          entityAlias={alias && typeof alias === "string" ? alias : undefined}
+          entityId={uid && typeof uid === "string" ? uid : undefined}
         />
       );
     },
     enableSorting: false,
   },
+  // Failed Findings column
   {
     accessorKey: "failedFindings",
     header: ({ column }) => (
@@ -101,84 +191,67 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
         "failed_findings_count",
       ) as number;
 
-      return (
-        <span
-          className={`ml-10 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-semibold text-yellow-800 ${getChipStyle(failedFindingsCount)}`}
-        >
-          {failedFindingsCount}
-        </span>
-      );
+      return <FailedFindingsBadge count={failedFindingsCount ?? 0} />;
     },
     enableSorting: false,
   },
-  {
-    accessorKey: "region",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Region"} param="region" />
-    ),
-    cell: ({ row }) => {
-      const region = getResourceData(row, "region");
-
-      return (
-        <div className="w-[80px] text-xs">
-          {typeof region === "string" ? region : "Invalid region"}
-        </div>
-      );
-    },
-  },
+  // Resource Type column
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="type" />
+      <DataTableColumnHeader
+        column={column}
+        title="Resource Type"
+        param="type"
+      />
     ),
     cell: ({ row }) => {
       const type = getResourceData(row, "type");
 
       return (
-        <div className="max-w-[150px] text-xs break-words whitespace-nowrap">
-          {typeof type === "string" ? type : "Invalid type"}
-        </div>
+        <p className="text-text-neutral-primary max-w-[150px] truncate text-sm">
+          {typeof type === "string" ? type : "-"}
+        </p>
       );
     },
   },
+  // Region column
+  {
+    accessorKey: "region",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Region" param="region" />
+    ),
+    cell: ({ row }) => {
+      const region = getResourceData(row, "region");
+
+      return (
+        <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
+          {typeof region === "string" ? region : "-"}
+        </p>
+      );
+    },
+  },
+  // Service column
   {
     accessorKey: "service",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Service"}
-        param="service"
-      />
+      <DataTableColumnHeader column={column} title="Service" param="service" />
     ),
     cell: ({ row }) => {
       const service = getResourceData(row, "service");
 
       return (
-        <div className="max-w-96 truncate text-xs">
-          {typeof service === "string" ? service : "Invalid region"}
-        </div>
+        <p className="text-text-neutral-primary max-w-[150px] truncate text-sm">
+          {typeof service === "string" ? service : "-"}
+        </p>
       );
     },
   },
+  // Actions column
   {
-    accessorKey: "provider",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Cloud Provider" />
-    ),
-    cell: ({ row }) => {
-      const provider = getProviderData(row, "provider");
-      const alias = getProviderData(row, "alias");
-      const uid = getProviderData(row, "uid");
-      return (
-        <>
-          <EntityInfo
-            cloudProvider={provider as ProviderType}
-            entityAlias={alias && typeof alias === "string" ? alias : undefined}
-            entityId={uid && typeof uid === "string" ? uid : undefined}
-          />
-        </>
-      );
-    },
+    id: "actions",
+    header: () => <div className="w-10" />,
+    cell: ({ row }) => <ResourceRowActions row={row} />,
     enableSorting: false,
   },
 ];

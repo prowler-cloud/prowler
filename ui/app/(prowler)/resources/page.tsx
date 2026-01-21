@@ -5,14 +5,14 @@ import {
   getLatestMetadataInfo,
   getLatestResources,
   getMetadataInfo,
+  getResourceById,
   getResources,
 } from "@/actions/resources";
-import { FilterControls } from "@/components/filters";
+import { ResourceDetailsSheet } from "@/components/resources/resource-details-sheet";
 import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
-import { ColumnResources } from "@/components/resources/table/column-resources";
+import { ResourcesTableWithSelection } from "@/components/resources/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
 import {
   createDict,
   extractFiltersAndQuery,
@@ -40,14 +40,42 @@ export default async function Resources({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  const [metadataInfoData, providersData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-      query,
-      filters: outputFilters,
-      sort: encodedSort,
-    }),
-    getProviders({ pageSize: 50 }),
-  ]);
+  // Check if there's a specific resource ID to fetch
+  const resourceId = resolvedSearchParams.resourceId?.toString();
+
+  const [metadataInfoData, providersData, resourceByIdData] = await Promise.all(
+    [
+      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+        query,
+        filters: outputFilters,
+        sort: encodedSort,
+      }),
+      getProviders({ pageSize: 50 }),
+      resourceId
+        ? getResourceById(resourceId, { include: ["provider"] })
+        : Promise.resolve(null),
+    ],
+  );
+
+  // Process the resource data to match the expected structure
+  const processedResource = resourceByIdData?.data
+    ? (() => {
+        const resource = resourceByIdData.data;
+        const providerDict = createDict("providers", resourceByIdData);
+
+        const provider = {
+          data: providerDict[resource.relationships?.provider?.data?.id],
+        };
+
+        return {
+          ...resource,
+          relationships: {
+            ...resource.relationships,
+            provider,
+          },
+        } as ResourceProps;
+      })()
+    : null;
 
   // Extract unique regions, services, groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -62,19 +90,22 @@ export default async function Resources({
 
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
-      <FilterControls search date />
-      <div className="flex flex-col gap-6">
+      <div className="mb-6">
         <ResourcesFilters
+          providers={providersData?.data || []}
           providerIds={providerIds}
           providerDetails={providerDetails}
           uniqueRegions={uniqueRegions}
           uniqueServices={uniqueServices}
           uniqueGroups={uniqueGroups}
         />
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-          <SSRDataTable searchParams={resolvedSearchParams} />
-        </Suspense>
       </div>
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
+        <SSRDataTable searchParams={resolvedSearchParams} />
+      </Suspense>
+      {processedResource && (
+        <ResourceDetailsSheet resource={processedResource} />
+      )}
     </ContentLayout>
   );
 }
@@ -150,9 +181,7 @@ const SSRDataTable = async ({
           <p>{resourcesData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={`resources-${Date.now()}`}
-        columns={ColumnResources}
+      <ResourcesTableWithSelection
         data={expandedResources || []}
         metadata={resourcesData?.meta}
       />

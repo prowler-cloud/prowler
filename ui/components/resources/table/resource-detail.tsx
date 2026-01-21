@@ -2,21 +2,47 @@
 
 import { Snippet } from "@heroui/snippet";
 import { Spinner } from "@heroui/spinner";
-import { Tooltip } from "@heroui/tooltip";
-import { ExternalLink, InfoIcon } from "lucide-react";
+import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
+import { ExternalLink, Link, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { getFindingById } from "@/actions/findings";
 import { getResourceById } from "@/actions/resources";
+import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import { DataTableRowActions } from "@/components/findings/table";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import {
+  Checkbox,
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import {
   DateWithTime,
   getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
-import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+import {
+  DataTable,
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import { FindingProps, ProviderType, ResourceProps } from "@/types";
@@ -37,6 +63,8 @@ interface ResourceFinding {
   attributes: {
     status: "PASS" | "FAIL" | "MANUAL";
     severity: SeverityLevel;
+    muted?: boolean;
+    updated_at?: string;
     check_metadata?: {
       checktitle?: string;
     };
@@ -97,13 +125,115 @@ const buildCustomBreadcrumbs = (
   return breadcrumbs;
 };
 
+// Column definitions for findings table
+const getResourceFindingsColumns = (
+  rowSelection: RowSelectionState,
+  selectableRowCount: number,
+  onNavigate: (id: string) => void,
+): ColumnDef<ResourceFinding>[] => {
+  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
+  const isAllSelected =
+    selectedCount > 0 && selectedCount === selectableRowCount;
+  const isSomeSelected =
+    selectedCount > 0 && selectedCount < selectableRowCount;
+
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            isAllSelected ? true : isSomeSelected ? "indeterminate" : false
+          }
+          onCheckedChange={(checked) =>
+            table.toggleAllPageRowsSelected(checked === true)
+          }
+          aria-label="Select all"
+          disabled={selectableRowCount === 0}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={!!rowSelection[row.id]}
+          disabled={row.original.attributes.muted}
+          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <StatusFindingBadge status={row.original.attributes.status || "-"} />
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "finding",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Finding" />
+      ),
+      cell: ({ row }) => (
+        <button
+          onClick={() => onNavigate(row.original.id)}
+          className="text-text-neutral-primary hover:text-button-tertiary max-w-[300px] cursor-pointer truncate text-left text-sm hover:underline"
+        >
+          {row.original.attributes.check_metadata?.checktitle ||
+            "Unknown check"}
+        </button>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "severity",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Severity" />
+      ),
+      cell: ({ row }) => (
+        <SeverityBadge severity={row.original.attributes.severity || "-"} />
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "updated_at",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Time" />
+      ),
+      cell: ({ row }) => (
+        <DateWithTime dateTime={row.original.attributes.updated_at || "-"} />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => (
+        <DataTableRowActions row={row as unknown as Row<FindingProps>} />
+      ),
+      enableSorting: false,
+    },
+  ];
+};
+
+interface ResourceDetailProps {
+  resourceDetails: ResourceProps;
+  trigger?: ReactNode;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 export const ResourceDetail = ({
-  resourceId,
-  initialResourceData,
-}: {
-  resourceId: string;
-  initialResourceData: ResourceProps;
-}) => {
+  resourceDetails,
+  trigger,
+  open,
+  defaultOpen = false,
+  onOpenChange,
+}: ResourceDetailProps) => {
   const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
@@ -113,6 +243,22 @@ export const ResourceDetail = ({
   const [findingDetails, setFindingDetails] = useState<FindingProps | null>(
     null,
   );
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const resource = resourceDetails;
+  const resourceId = resource.id;
+  const attributes = resource.attributes;
+  const providerData = resource.relationships.provider.data.attributes;
+
+  const copyResourceUrl = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("resourceId", resourceId);
+    const url = `${window.location.origin}${pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+  };
 
   useEffect(() => {
     const loadFindings = async () => {
@@ -125,10 +271,8 @@ export const ResourceDetail = ({
         });
 
         if (resourceData?.data) {
-          // Get tags from the detailed resource data
           setResourceTags(resourceData.data.attributes.tags || {});
 
-          // Create dictionary for findings and expand them
           if (resourceData.data.relationships?.findings) {
             const findingsDict = createDict("findings", resourceData);
             const findings =
@@ -166,21 +310,19 @@ export const ResourceDetail = ({
         "resources,scan.provider",
       );
       if (findingData?.data) {
-        // Create dictionaries for resources, scans, and providers
         const resourceDict = createDict("resources", findingData);
         const scanDict = createDict("scans", findingData);
         const providerDict = createDict("providers", findingData);
 
-        // Expand the finding with its corresponding resource, scan, and provider
         const finding = findingData.data;
         const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const resource =
+        const foundResource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
         const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
         const expandedFinding = {
           ...finding,
-          relationships: { scan, resource, provider },
+          relationships: { scan, resource: foundResource, provider },
         };
 
         setFindingDetails(expandedFinding);
@@ -195,27 +337,15 @@ export const ResourceDetail = ({
     setFindingDetails(null);
   };
 
-  if (!initialResourceData) {
-    return (
-      <div className="flex min-h-96 flex-col items-center justify-center gap-4 rounded-lg p-8">
-        <Spinner size="lg" />
-        <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
-          Loading resource details...
-        </p>
-      </div>
-    );
-  }
+  const handleMuteComplete = () => {
+    setRowSelection({});
+    router.refresh();
+  };
 
-  const resource = initialResourceData;
-  const attributes = resource.attributes;
-  const providerData = resource.relationships.provider.data.attributes;
-
-  // Filter only failed findings and sort by severity
+  // Filter and sort failed findings by severity
   const failedFindings = findingsData
-    .filter(
-      (finding: ResourceFinding) => finding?.attributes?.status === "FAIL",
-    )
-    .sort((a: ResourceFinding, b: ResourceFinding) => {
+    .filter((f) => f?.attributes?.status === "FAIL")
+    .sort((a, b) => {
       const severityA = (a?.attributes?.severity?.toLowerCase() ||
         "informational") as SeverityLevel;
       const severityB = (b?.attributes?.severity?.toLowerCase() ||
@@ -224,6 +354,24 @@ export const ResourceDetail = ({
         (SEVERITY_ORDER[severityA] ?? 999) - (SEVERITY_ORDER[severityB] ?? 999)
       );
     });
+
+  const selectableRowCount = failedFindings.filter(
+    (f) => !f.attributes.muted,
+  ).length;
+
+  const getRowCanSelect = (row: Row<ResourceFinding>): boolean =>
+    !row.original.attributes.muted;
+
+  const selectedFindingIds = Object.keys(rowSelection)
+    .filter((key) => rowSelection[key])
+    .map((idx) => failedFindings[parseInt(idx)]?.id)
+    .filter(Boolean);
+
+  const columns = getResourceFindingsColumns(
+    rowSelection,
+    selectableRowCount,
+    navigateToFinding,
+  );
 
   // Build Git URL for IaC resources
   const gitUrl =
@@ -236,60 +384,91 @@ export const ResourceDetail = ({
         )
       : null;
 
-  if (selectedFindingId) {
-    const findingTitle =
-      findingDetails?.attributes?.check_metadata?.checktitle ||
-      "Finding Detail";
+  // Content when viewing a finding detail (breadcrumb navigation)
+  const findingTitle =
+    findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
 
-    return (
-      <div className="flex flex-col gap-4">
-        <BreadcrumbNavigation
-          mode="custom"
-          customItems={buildCustomBreadcrumbs(
-            attributes.name,
-            findingTitle,
-            handleBackToResource,
-          )}
-        />
+  const findingContent = (
+    <div className="flex flex-col gap-4">
+      <BreadcrumbNavigation
+        mode="custom"
+        customItems={buildCustomBreadcrumbs(
+          attributes.name,
+          findingTitle,
+          handleBackToResource,
+        )}
+      />
 
-        {findingDetails && <FindingDetail findingDetails={findingDetails} />}
-      </div>
-    );
-  }
+      {findingDetails && <FindingDetail findingDetails={findingDetails} />}
+    </div>
+  );
 
-  return (
-    <div className="flex flex-col gap-6 rounded-lg">
-      {/* Resource Details section */}
-      <Card variant="base" padding="lg">
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <div className="flex flex-row items-center justify-start gap-2">
-            <CardTitle>Resource Details</CardTitle>
-            {providerData.provider === "iac" && gitUrl && (
-              <Tooltip content="Go to Resource in the Repository" size="sm">
+  // Main resource content
+  const resourceContent = (
+    <div className="flex min-w-0 flex-col gap-4 rounded-lg">
+      {/* Header */}
+      <div className="flex flex-col gap-2">
+        {/* Row 1: Provider logo */}
+        <div className="flex flex-wrap items-center gap-4">
+          {getProviderLogo(providerData.provider as ProviderType)}
+          {providerData.provider === "iac" && gitUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <a
                   href={gitUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-bg-data-info mt-1 inline-flex cursor-pointer"
+                  className="text-bg-data-info inline-flex items-center gap-1 text-sm"
                   aria-label="Open resource in repository"
                 >
-                  <ExternalLink size={16} className="inline" />
+                  <ExternalLink size={16} />
+                  View in Repository
                 </a>
-              </Tooltip>
-            )}
-          </div>
-          {getProviderLogo(providerData.provider as ProviderType)}
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+              </TooltipTrigger>
+              <TooltipContent>Go to Resource in the Repository</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        {/* Row 2: Title with copy link */}
+        <h2 className="text-text-neutral-primary line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium">
+          {renderValue(attributes.name)}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={copyResourceUrl}
+                className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
+                aria-label="Copy resource link to clipboard"
+              >
+                <Link size={16} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Copy resource link to clipboard</TooltipContent>
+          </Tooltip>
+        </h2>
+
+        {/* Row 3: Last Updated */}
+        <div className="text-text-neutral-tertiary text-sm">
+          <span className="text-text-neutral-secondary mr-1">
+            Last Updated:
+          </span>
+          <DateWithTime inline dateTime={attributes.updated_at || "-"} />
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="findings">
+            Findings {failedFindings.length > 0 && `(${failedFindings.length})`}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="flex flex-col gap-4">
           <InfoField label="Resource UID" variant="simple">
-            <Snippet
-              className="border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-lg border py-1"
-              hideSymbol
-            >
-              <span className="text-xs whitespace-pre-line">
-                {renderValue(attributes.uid)}
-              </span>
-            </Snippet>
+            <CodeSnippet value={attributes.uid} />
           </InfoField>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -340,7 +519,7 @@ export const ResourceDetail = ({
                   >
                     {JSON.stringify(parsedMetadata, null, 2)}
                   </Snippet>
-                  <pre className="minimal-scrollbar mr-10 max-h-[100px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                  <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
                     {JSON.stringify(parsedMetadata, null, 2)}
                   </pre>
                 </div>
@@ -350,7 +529,7 @@ export const ResourceDetail = ({
 
           {resourceTags && Object.entries(resourceTags).length > 0 ? (
             <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+              <h4 className="text-text-neutral-secondary text-sm font-bold">
                 Tags
               </h4>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -362,79 +541,84 @@ export const ResourceDetail = ({
               </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Failed findings associated with this resource section */}
-      <Card variant="base" padding="lg">
-        <CardHeader>
-          <CardTitle>Failed findings associated with this resource</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* Findings Tab */}
+        <TabsContent value="findings" className="flex flex-col gap-4">
           {findingsLoading ? (
             <div className="flex items-center justify-center gap-2 py-8">
               <Spinner size="sm" />
-              <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
+              <p className="text-text-neutral-secondary text-sm">
                 Loading findings...
               </p>
             </div>
           ) : failedFindings.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
-                Total failed findings: {failedFindings.length}
-              </p>
-              {failedFindings.map((finding: ResourceFinding, index: number) => {
-                const { attributes: findingAttrs, id } = finding;
-
-                // Handle cases where finding might not have all attributes
-                if (!findingAttrs) {
-                  return (
-                    <div
-                      key={index}
-                      className="shadow-small dark:bg-prowler-blue-400 flex flex-col gap-2 rounded-lg px-4 py-2"
-                    >
-                      <p className="text-sm text-red-600">
-                        Finding {id} - No attributes available
-                      </p>
-                    </div>
-                  );
-                }
-
-                const { severity, check_metadata, status } = findingAttrs;
-                const checktitle =
-                  check_metadata?.checktitle || "Unknown check";
-
-                return (
-                  <button
-                    key={index}
-                    onClick={() => navigateToFinding(id)}
-                    className="shadow-small border-border-neutral-tertiary bg-bg-neutral-tertiary flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="dark:text-prowler-theme-pale/90 text-left text-sm font-medium text-gray-800">
-                        {checktitle}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <SeverityBadge severity={severity || "-"} />
-                        <StatusFindingBadge status={status || "-"} />
-                        <InfoIcon
-                          className="text-button-primary cursor-pointer"
-                          size={16}
-                          onClick={() => navigateToFinding(id)}
-                        />
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <>
+              <DataTable
+                columns={columns}
+                data={failedFindings}
+                enableRowSelection
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+                getRowCanSelect={getRowCanSelect}
+                showSearch
+                clientSidePagination
+                defaultPageSize={10}
+                clientSearchFilter={(row, searchTerm) => {
+                  const term = searchTerm.toLowerCase();
+                  const title =
+                    row.attributes.check_metadata?.checktitle?.toLowerCase() ||
+                    "";
+                  const severity = row.attributes.severity?.toLowerCase() || "";
+                  return title.includes(term) || severity.includes(term);
+                }}
+              />
+              {selectedFindingIds.length > 0 && (
+                <FloatingMuteButton
+                  selectedCount={selectedFindingIds.length}
+                  selectedFindingIds={selectedFindingIds}
+                  onComplete={handleMuteComplete}
+                />
+              )}
+            </>
           ) : (
-            <p className="dark:text-prowler-theme-pale/80 text-gray-600">
+            <p className="text-text-neutral-secondary py-8 text-center">
               No failed findings found for this resource.
             </p>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+
+  // Determine which content to show
+  const content = selectedFindingId ? findingContent : resourceContent;
+
+  // If no trigger, render content directly (inline mode)
+  if (!trigger) {
+    return content;
+  }
+
+  // With trigger, wrap in Drawer
+  return (
+    <Drawer
+      direction="right"
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
+    >
+      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>Resource Details</DrawerTitle>
+          <DrawerDescription>View the resource details</DrawerDescription>
+        </DrawerHeader>
+        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+          <X className="size-4" />
+          <span className="sr-only">Close</span>
+        </DrawerClose>
+        {content}
+      </DrawerContent>
+    </Drawer>
   );
 };
