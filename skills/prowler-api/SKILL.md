@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1.0"
+  version: "1.2.0"
   scope: [root, api]
   auto_invoke: "Creating/modifying models, views, serializers"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -290,6 +290,97 @@ update_objects_in_batches(tenant_id, Finding, objects, fields=["status"], batch_
 
 ---
 
+## Security Patterns
+
+> **Full examples**: See [assets/security_patterns.py](assets/security_patterns.py)
+
+### Tenant Isolation Summary
+
+| Pattern | Rule |
+|---------|------|
+| **RLS in ViewSets** | Automatic via `BaseRLSViewSet` - tenant_id from JWT |
+| **RLS in Celery** | MUST use `@set_tenant` + `rls_transaction(tenant_id)` |
+| **Cross-tenant validation** | Defense-in-depth: verify `obj.tenant_id == request.tenant_id` |
+| **Never trust user input** | Use `request.tenant_id` from JWT, never `request.data.get("tenant_id")` |
+| **Admin DB bypass** | Only for cross-tenant admin ops - exposes ALL tenants' data |
+
+### Celery Task Security Summary
+
+| Pattern | Rule |
+|---------|------|
+| **Named tasks only** | NEVER use dynamic task names from user input |
+| **Validate arguments** | Check UUID format before database queries |
+| **Safe queuing** | Use `transaction.on_commit()` to enqueue AFTER commit |
+| **Modern retries** | Use `autoretry_for`, `retry_backoff`, `retry_jitter` |
+| **Time limits** | Set `soft_time_limit` and `time_limit` to prevent hung tasks |
+| **Idempotency** | Use `update_or_create` or idempotency keys |
+
+### Quick Reference
+
+```python
+# Safe task queuing - task only enqueued after transaction commits
+with transaction.atomic():
+    provider = Provider.objects.create(**data)
+    transaction.on_commit(
+        lambda: verify_provider_connection.delay(
+            tenant_id=str(request.tenant_id),
+            provider_id=str(provider.id)
+        )
+    )
+
+# Modern retry pattern
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    autoretry_for=(ConnectionError, TimeoutError, OperationalError),
+    retry_backoff=True,
+    retry_backoff_max=600,
+    retry_jitter=True,
+    max_retries=5,
+    soft_time_limit=300,
+    time_limit=360,
+)
+@set_tenant
+def sync_provider_data(self, tenant_id, provider_id):
+    with rls_transaction(tenant_id):
+        # ... task logic
+        pass
+
+# Idempotent task - safe to retry
+@shared_task(base=RLSTask, acks_late=True)
+@set_tenant
+def process_finding(tenant_id, finding_uid, data):
+    with rls_transaction(tenant_id):
+        Finding.objects.update_or_create(uid=finding_uid, defaults=data)
+```
+
+---
+
+## Production Deployment Checklist
+
+> **Full settings**: See [references/production-settings.md](references/production-settings.md)
+
+Run before every production deployment:
+
+```bash
+cd api && poetry run python src/backend/manage.py check --deploy
+```
+
+### Critical Settings
+
+| Setting | Production Value | Risk if Wrong |
+|---------|-----------------|---------------|
+| `DEBUG` | `False` | Exposes stack traces, settings, SQL queries |
+| `SECRET_KEY` | Env var, rotated | Session hijacking, CSRF bypass |
+| `ALLOWED_HOSTS` | Explicit list | Host header attacks |
+| `SECURE_SSL_REDIRECT` | `True` | Credentials sent over HTTP |
+| `SESSION_COOKIE_SECURE` | `True` | Session cookies over HTTP |
+| `CSRF_COOKIE_SECURE` | `True` | CSRF tokens over HTTP |
+| `SECURE_HSTS_SECONDS` | `31536000` (1 year) | Downgrade attacks |
+| `CONN_MAX_AGE` | `60` or higher | Connection pool exhaustion |
+
+---
+
 ## Commands
 
 ```bash
@@ -303,6 +394,9 @@ cd api && poetry run celery -A config.celery beat -l info
 
 # Testing
 cd api && poetry run pytest -x --tb=short
+
+# Production checks
+cd api && poetry run python src/backend/manage.py check --deploy
 ```
 
 ---
@@ -313,6 +407,8 @@ cd api && poetry run pytest -x --tb=short
 - **File Locations**: See [references/file-locations.md](references/file-locations.md)
 - **Modeling Decisions**: See [references/modeling-decisions.md](references/modeling-decisions.md)
 - **Configuration**: See [references/configuration.md](references/configuration.md)
+- **Production Settings**: See [references/production-settings.md](references/production-settings.md)
+- **Security Patterns**: See [assets/security_patterns.py](assets/security_patterns.py)
 
 ### Related Skills
 - **Generic DRF Patterns**: Use `django-drf` skill

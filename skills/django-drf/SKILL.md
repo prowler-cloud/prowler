@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1.0"
+  version: "1.2.0"
   scope: [root, api]
   auto_invoke:
     - "Creating ViewSets, serializers, or filters in api/"
@@ -26,6 +26,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - NEVER put business logic in serializers - use services/utils
 - NEVER use auto-increment PKs - use UUIDv4 or UUIDv7
 - NEVER use trailing slashes in URLs (`trailing_slash=False`)
+
+> **Note:** `swagger_fake_view` is specific to **drf-spectacular** for OpenAPI schema generation.
 
 ---
 
@@ -401,6 +403,55 @@ class ProviderViewSet(BaseRLSViewSet):
 
 ---
 
+## API Security Patterns
+
+> **Full examples**: See [assets/security_patterns.py](assets/security_patterns.py)
+
+| Pattern | Key Points |
+|---------|------------|
+| **Input Validation** | Use `validate_<field>()` for sanitization, `validate()` for cross-field |
+| **Prevent Mass Assignment** | ALWAYS use explicit `fields` list, NEVER `__all__` or `exclude` |
+| **Object-Level Permissions** | Implement `has_object_permission()` for ownership checks |
+| **Rate Limiting** | Configure `DEFAULT_THROTTLE_RATES`, use per-view throttles for sensitive endpoints |
+| **Prevent Info Disclosure** | Generic error messages, return 404 not 403 for unauthorized (prevents enumeration) |
+| **SQL Injection** | ALWAYS use ORM parameterization, NEVER string interpolation in raw SQL |
+
+### Quick Reference
+
+```python
+# Input validation in serializer
+def validate_uid(self, value):
+    value = value.strip().lower()
+    if not re.match(r'^[a-z0-9-]+$', value):
+        raise serializers.ValidationError("Invalid format")
+    return value
+
+# Explicit fields (prevent mass assignment)
+class Meta:
+    fields = ["name", "email"]  # GOOD: whitelist
+    read_only_fields = ["id", "inserted_at"]  # System fields
+
+# Object permission
+class IsOwnerOrReadOnly(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        return obj.owner == request.user
+
+# Throttling for sensitive endpoints
+class BurstRateThrottle(UserRateThrottle):
+    rate = "10/minute"
+
+# Safe error messages (prevent enumeration)
+def get_object(self):
+    try:
+        return super().get_object()
+    except Http404:
+        raise NotFound("Resource not found")  # Generic, no internal IDs
+```
+
+---
+
 ## Commands
 
 ```bash
@@ -424,6 +475,7 @@ cd api && poetry run make lint
 ### Local References
 - **File Locations**: See [references/file-locations.md](references/file-locations.md)
 - **JSON:API Conventions**: See [references/json-api-conventions.md](references/json-api-conventions.md)
+- **Security Patterns**: See [assets/security_patterns.py](assets/security_patterns.py)
 
 ### Context7 MCP (Recommended)
 
