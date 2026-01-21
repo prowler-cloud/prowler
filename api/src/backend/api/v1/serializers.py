@@ -979,6 +979,283 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
         }
 
 
+class ProviderBatchItemSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = Provider
+        fields = ["alias", "provider", "uid"]
+
+    def validate(self, attrs):
+        provider_type = attrs.get("provider")
+        uid = attrs.get("uid")
+        if provider_type and uid:
+            validator_method = getattr(Provider, f"validate_{provider_type}_uid", None)
+            if validator_method:
+                validator_method(uid)
+        return attrs
+
+
+class ProviderBatchCreateSerializer(BaseSerializerV1):
+    """Serializer for batch creation of providers with all-or-nothing semantics (JSON:API compliant)."""
+
+    class Meta:
+        resource_name = "providers-batch"
+
+    def validate(self, attrs):
+        data = self.initial_data.get("data", [])
+
+        if not isinstance(data, list):
+            raise ValidationError({"data": "Must be an array of provider objects"})
+
+        if len(data) > settings.API_BATCH_MAX_SIZE:
+            raise ValidationError(
+                {"data": f"Maximum {settings.API_BATCH_MAX_SIZE} providers per batch"}
+            )
+
+        if len(data) == 0:
+            raise ValidationError({"data": "At least one provider required"})
+
+        seen_uids = {}
+        all_errors = []
+        validated_items = []
+        tenant_id = self.context.get("tenant_id")
+
+        for idx, item in enumerate(data):
+            current_errors = []
+            item_type = item.get("type")
+
+            if not item_type:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+            elif item_type != "providers":
+                current_errors.append(
+                    {
+                        "detail": f"Invalid type '{item_type}'. Expected 'providers'.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+
+            item_attrs = item.get("attributes", {})
+            if not item_attrs:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/attributes"},
+                    }
+                )
+                all_errors.extend(current_errors)
+                continue
+
+            provider_type = item_attrs.get("provider")
+            uid = item_attrs.get("uid")
+            key = (provider_type, uid)
+
+            # Validate provider type before any DB queries
+            valid_provider_types = [choice.value for choice in Provider.ProviderChoices]
+            provider_type_valid = provider_type in valid_provider_types
+
+            if not provider_type:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/attributes/provider"},
+                    }
+                )
+            elif not provider_type_valid:
+                current_errors.append(
+                    {
+                        "detail": f"Invalid provider type '{provider_type}'. Must be one of: {', '.join(valid_provider_types)}.",
+                        "source": {"pointer": f"/data/{idx}/attributes/provider"},
+                    }
+                )
+
+            if key in seen_uids:
+                current_errors.append(
+                    {
+                        "detail": f"Duplicate UID '{uid}' at index {idx} (first at {seen_uids[key]})",
+                        "source": {"pointer": f"/data/{idx}/attributes/uid"},
+                    }
+                )
+            else:
+                seen_uids[key] = idx
+
+            # Only check DB if provider type is valid (to avoid enum errors)
+            if (
+                provider_type_valid
+                and uid
+                and Provider.objects.filter(
+                    tenant_id=tenant_id,
+                    provider=provider_type,
+                    uid=uid,
+                    is_deleted=False,
+                ).exists()
+            ):
+                current_errors.append(
+                    {
+                        "detail": f"Provider with uid '{uid}' already exists",
+                        "source": {"pointer": f"/data/{idx}/attributes/uid"},
+                    }
+                )
+
+            item_serializer = ProviderBatchItemSerializer(
+                data=item_attrs, context=self.context
+            )
+            if not item_serializer.is_valid():
+                for field, field_errors in item_serializer.errors.items():
+                    current_errors.append(
+                        {
+                            "detail": str(field_errors[0]),
+                            "source": {"pointer": f"/data/{idx}/attributes/{field}"},
+                        }
+                    )
+
+            if current_errors:
+                all_errors.extend(current_errors)
+            else:
+                validated_items.append(
+                    {"index": idx, "data": item_serializer.validated_data}
+                )
+
+        # All-or-nothing: if any errors, fail the entire batch
+        if all_errors:
+            raise ValidationError(all_errors)
+
+        attrs["_validated_items"] = validated_items
+        return attrs
+
+
+class ProviderBatchUpdateItemSerializer(BaseWriteSerializer):
+    """Serializer for validating individual provider update items in batch."""
+
+    class Meta:
+        model = Provider
+        fields = ["alias"]
+
+
+class ProviderBatchUpdateSerializer(BaseSerializerV1):
+    """Serializer for batch update of providers with all-or-nothing semantics (JSON:API compliant)."""
+
+    class Meta:
+        resource_name = "providers-batch"
+
+    def validate(self, attrs):
+        data = self.initial_data.get("data", [])
+
+        if not isinstance(data, list):
+            raise ValidationError({"data": "Must be an array of provider objects"})
+
+        if len(data) > settings.API_BATCH_MAX_SIZE:
+            raise ValidationError(
+                {"data": f"Maximum {settings.API_BATCH_MAX_SIZE} providers per batch"}
+            )
+
+        if len(data) == 0:
+            raise ValidationError({"data": "At least one provider required"})
+
+        all_errors = []
+        validated_items = []
+        tenant_id = self.context.get("tenant_id")
+        seen_ids = {}
+
+        for idx, item in enumerate(data):
+            current_errors = []
+            item_type = item.get("type")
+            item_id = item.get("id")
+
+            if not item_type:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+            elif item_type != "providers":
+                current_errors.append(
+                    {
+                        "detail": f"Invalid type '{item_type}'. Expected 'providers'.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+
+            if not item_id:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+                all_errors.extend(current_errors)
+                continue
+
+            if item_id in seen_ids:
+                current_errors.append(
+                    {
+                        "detail": f"Duplicate provider ID '{item_id}' at index {idx} (first at {seen_ids[item_id]})",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+            else:
+                seen_ids[item_id] = idx
+
+            try:
+                provider = Provider.objects.get(
+                    id=item_id, tenant_id=tenant_id, is_deleted=False
+                )
+            except Provider.DoesNotExist:
+                current_errors.append(
+                    {
+                        "detail": f"Provider '{item_id}' not found.",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+                all_errors.extend(current_errors)
+                continue
+
+            item_attrs = item.get("attributes", {})
+            if not item_attrs:
+                current_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/attributes"},
+                    }
+                )
+                all_errors.extend(current_errors)
+                continue
+
+            item_serializer = ProviderBatchUpdateItemSerializer(
+                data=item_attrs, context=self.context
+            )
+            if not item_serializer.is_valid():
+                for field, field_errors in item_serializer.errors.items():
+                    current_errors.append(
+                        {
+                            "detail": str(field_errors[0]),
+                            "source": {"pointer": f"/data/{idx}/attributes/{field}"},
+                        }
+                    )
+
+            if current_errors:
+                all_errors.extend(current_errors)
+            else:
+                validated_items.append(
+                    {
+                        "index": idx,
+                        "provider": provider,
+                        **item_serializer.validated_data,
+                    }
+                )
+
+        # All-or-nothing: if any errors, fail the entire batch
+        if all_errors:
+            raise ValidationError(all_errors)
+
+        attrs["_validated_items"] = validated_items
+        return attrs
+
+
 # Scans
 
 
@@ -1773,6 +2050,446 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_attrs = super().validate(attrs)
         self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
         return validated_attrs
+
+
+class ProviderSecretBatchItemSerializer(BaseWriteProviderSecretSerializer):
+    """Serializer for an individual item in the batch of secrets."""
+
+    secret = ProviderSecretField(write_only=True)
+
+    class Meta:
+        model = ProviderSecret
+        fields = ["name", "secret_type", "secret"]
+
+    def validate(self, attrs):
+        # Provider is passed via context since it's validated separately
+        provider = self.context.get("provider")
+        secret_type = attrs.get("secret_type")
+        secret = attrs.get("secret")
+
+        if provider and secret_type and secret:
+            self.validate_secret_based_on_provider(
+                provider.provider, secret_type, secret
+            )
+        return attrs
+
+
+class ProviderSecretBatchCreateSerializer(BaseSerializerV1):
+    """
+    Serializer for batch creation of provider secrets.
+
+    Supports to-many relationship format where one secret definition can be
+    associated with multiple providers. Each provider creates a separate secret.
+
+    JSON:API compliant: all-or-nothing for hard errors, soft skips for providers
+    that already have secrets (reported in meta.skipped).
+    """
+
+    class Meta:
+        resource_name = "provider-secrets-batch"
+
+    def _extract_providers_data(self, relationships, idx):
+        """
+        Extract providers data from relationships, supporting both formats:
+        - to-one: relationships.provider.data (single object) - backwards compatible
+        - to-many: relationships.providers.data (array) - new format
+
+        Returns (providers_list, errors) where providers_list is normalized to array.
+        """
+        errors = []
+
+        # Try to-many format first (providers plural)
+        providers_rel = relationships.get("providers", {})
+        providers_data = providers_rel.get("data")
+
+        if providers_data is not None:
+            # to-many format
+            if isinstance(providers_data, dict):
+                # Single object in to-many field - normalize to array
+                providers_data = [providers_data]
+            elif not isinstance(providers_data, list):
+                errors.append(
+                    {
+                        "detail": "Must be an array of provider resource identifiers.",
+                        "source": {
+                            "pointer": f"/data/{idx}/relationships/providers/data"
+                        },
+                    }
+                )
+                return None, errors
+            return providers_data, errors
+
+        # Fall back to to-one format (provider singular) for backwards compatibility
+        provider_rel = relationships.get("provider", {})
+        provider_data = provider_rel.get("data")
+
+        if provider_data is not None:
+            if isinstance(provider_data, dict):
+                return [provider_data], errors
+            else:
+                errors.append(
+                    {
+                        "detail": "Must be a provider resource identifier object.",
+                        "source": {
+                            "pointer": f"/data/{idx}/relationships/provider/data"
+                        },
+                    }
+                )
+                return None, errors
+
+        # No providers relationship found
+        errors.append(
+            {
+                "detail": "Providers relationship is required.",
+                "source": {"pointer": f"/data/{idx}/relationships/providers"},
+            }
+        )
+        return None, errors
+
+    def validate(self, attrs):
+        data = self.initial_data.get("data", [])
+
+        if not isinstance(data, list):
+            raise ValidationError(
+                {"data": "Must be an array of provider-secret objects"}
+            )
+
+        if len(data) > settings.API_BATCH_MAX_SIZE:
+            raise ValidationError(
+                {"data": f"Maximum {settings.API_BATCH_MAX_SIZE} secrets per batch"}
+            )
+
+        if len(data) == 0:
+            raise ValidationError({"data": "At least one secret required"})
+
+        hard_errors = []  # Will cause full batch failure
+        skipped_providers = []  # Already have secrets, reported in meta
+        validated_items = []
+        tenant_id = self.context.get("tenant_id")
+        seen_providers = {}  # Track duplicates across the entire batch
+
+        for idx, item in enumerate(data):
+            item_type = item.get("type")
+
+            # Validate type
+            if not item_type:
+                hard_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+                continue
+            elif item_type != "provider-secrets":
+                hard_errors.append(
+                    {
+                        "detail": f"Invalid type '{item_type}'. Expected 'provider-secrets'.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+                continue
+
+            # Validate attributes
+            item_attrs = item.get("attributes", {})
+            if not item_attrs:
+                hard_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/attributes"},
+                    }
+                )
+                continue
+
+            # Extract providers (supports both to-one and to-many formats)
+            relationships = item.get("relationships", {})
+            providers_data, extract_errors = self._extract_providers_data(
+                relationships, idx
+            )
+            if extract_errors:
+                hard_errors.extend(extract_errors)
+                continue
+
+            if not providers_data:
+                hard_errors.append(
+                    {
+                        "detail": "At least one provider is required.",
+                        "source": {
+                            "pointer": f"/data/{idx}/relationships/providers/data"
+                        },
+                    }
+                )
+                continue
+
+            # Process each provider in the relationship
+            for prov_idx, prov_data in enumerate(providers_data):
+                provider_id = (
+                    prov_data.get("id") if isinstance(prov_data, dict) else None
+                )
+                provider_type = (
+                    prov_data.get("type") if isinstance(prov_data, dict) else None
+                )
+
+                # Validate provider resource identifier
+                if not provider_id:
+                    hard_errors.append(
+                        {
+                            "detail": "Provider id is required.",
+                            "source": {
+                                "pointer": f"/data/{idx}/relationships/providers/data/{prov_idx}/id"
+                            },
+                        }
+                    )
+                    continue
+
+                if provider_type and provider_type != "providers":
+                    hard_errors.append(
+                        {
+                            "detail": f"Invalid type '{provider_type}'. Expected 'providers'.",
+                            "source": {
+                                "pointer": f"/data/{idx}/relationships/providers/data/{prov_idx}/type"
+                            },
+                        }
+                    )
+                    continue
+
+                # Check for duplicate provider in entire batch
+                if provider_id in seen_providers:
+                    prev_idx, prev_prov_idx = seen_providers[provider_id]
+                    hard_errors.append(
+                        {
+                            "detail": f"Duplicate provider '{provider_id}' (first at data/{prev_idx}/providers/{prev_prov_idx}).",
+                            "source": {
+                                "pointer": f"/data/{idx}/relationships/providers/data/{prov_idx}"
+                            },
+                        }
+                    )
+                    continue
+
+                seen_providers[provider_id] = (idx, prov_idx)
+
+                # Validate provider exists and belongs to tenant
+                try:
+                    provider = Provider.objects.get(
+                        id=provider_id, tenant_id=tenant_id, is_deleted=False
+                    )
+                except Provider.DoesNotExist:
+                    hard_errors.append(
+                        {
+                            "detail": f"Provider '{provider_id}' not found.",
+                            "source": {
+                                "pointer": f"/data/{idx}/relationships/providers/data/{prov_idx}"
+                            },
+                        }
+                    )
+                    continue
+
+                # Soft skip: provider already has a secret
+                if ProviderSecret.objects.filter(
+                    provider_id=provider_id, tenant_id=tenant_id
+                ).exists():
+                    skipped_providers.append(
+                        {
+                            "provider_id": str(provider_id),
+                            "source_index": idx,
+                            "reason": "Provider already has a secret.",
+                        }
+                    )
+                    continue
+
+                # Validate secret attributes for this specific provider
+                item_context = {**self.context, "provider": provider}
+                item_serializer = ProviderSecretBatchItemSerializer(
+                    data=item_attrs, context=item_context
+                )
+
+                if not item_serializer.is_valid():
+                    for field, field_errors in item_serializer.errors.items():
+                        pointer = f"/data/{idx}/attributes/{field}"
+                        hard_errors.append(
+                            {
+                                "detail": str(field_errors[0]),
+                                "source": {"pointer": pointer},
+                            }
+                        )
+                    continue
+
+                validated_items.append(
+                    {
+                        "source_index": idx,
+                        **item_serializer.validated_data,
+                        "provider": provider,
+                    }
+                )
+
+        # All-or-nothing: if any hard errors, fail the entire batch
+        if hard_errors:
+            raise ValidationError(hard_errors)
+
+        attrs["_validated_items"] = validated_items
+        attrs["_skipped_providers"] = skipped_providers
+        return attrs
+
+
+class ProviderSecretBatchUpdateItemSerializer(BaseWriteProviderSecretSerializer):
+    """Serializer for validating individual provider secret update items in batch."""
+
+    secret = ProviderSecretField(write_only=True, required=False)
+
+    class Meta:
+        model = ProviderSecret
+        fields = ["name", "secret_type", "secret"]
+        extra_kwargs = {
+            "name": {"required": False},
+            "secret_type": {"required": False},
+        }
+
+    def validate(self, attrs):
+        provider = self.context.get("provider")
+        secret_type = attrs.get("secret_type")
+        secret = attrs.get("secret")
+
+        if provider and secret_type and secret:
+            self.validate_secret_based_on_provider(
+                provider.provider, secret_type, secret
+            )
+        elif provider and secret and not secret_type:
+            existing_secret = ProviderSecret.objects.filter(provider=provider).first()
+            if existing_secret:
+                self.validate_secret_based_on_provider(
+                    provider.provider, existing_secret.secret_type, secret
+                )
+        return attrs
+
+
+class ProviderSecretBatchUpdateSerializer(BaseSerializerV1):
+    """
+    Serializer for batch update of provider secrets.
+
+    JSON:API compliant with all-or-nothing semantics for validation errors.
+    """
+
+    class Meta:
+        resource_name = "provider-secrets-batch"
+
+    def validate(self, attrs):
+        data = self.initial_data.get("data", [])
+
+        if not isinstance(data, list):
+            raise ValidationError(
+                {"data": "Must be an array of provider-secret objects"}
+            )
+
+        if len(data) > settings.API_BATCH_MAX_SIZE:
+            raise ValidationError(
+                {"data": f"Maximum {settings.API_BATCH_MAX_SIZE} secrets per batch"}
+            )
+
+        if len(data) == 0:
+            raise ValidationError({"data": "At least one secret required"})
+
+        hard_errors = []  # Will cause full batch failure
+        validated_items = []
+        tenant_id = self.context.get("tenant_id")
+        seen_ids = {}
+
+        for idx, item in enumerate(data):
+            item_type = item.get("type")
+            item_id = item.get("id")
+
+            # Validate type
+            if not item_type:
+                hard_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+                continue
+            elif item_type != "provider-secrets":
+                hard_errors.append(
+                    {
+                        "detail": f"Invalid type '{item_type}'. Expected 'provider-secrets'.",
+                        "source": {"pointer": f"/data/{idx}/type"},
+                    }
+                )
+                continue
+
+            # Validate id
+            if not item_id:
+                hard_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+                continue
+
+            # Check for duplicate id in batch
+            if item_id in seen_ids:
+                hard_errors.append(
+                    {
+                        "detail": f"Duplicate secret ID '{item_id}' (first at data/{seen_ids[item_id]}).",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+                continue
+
+            seen_ids[item_id] = idx
+
+            # Validate secret exists and belongs to tenant
+            try:
+                provider_secret = ProviderSecret.objects.select_related("provider").get(
+                    id=item_id, tenant_id=tenant_id
+                )
+            except ProviderSecret.DoesNotExist:
+                hard_errors.append(
+                    {
+                        "detail": f"Provider secret '{item_id}' not found.",
+                        "source": {"pointer": f"/data/{idx}/id"},
+                    }
+                )
+                continue
+
+            # Validate attributes
+            item_attrs = item.get("attributes", {})
+            if not item_attrs:
+                hard_errors.append(
+                    {
+                        "detail": "This field is required.",
+                        "source": {"pointer": f"/data/{idx}/attributes"},
+                    }
+                )
+                continue
+
+            item_context = {**self.context, "provider": provider_secret.provider}
+
+            item_serializer = ProviderSecretBatchUpdateItemSerializer(
+                data=item_attrs, context=item_context
+            )
+            if not item_serializer.is_valid():
+                for field, field_errors in item_serializer.errors.items():
+                    hard_errors.append(
+                        {
+                            "detail": str(field_errors[0]),
+                            "source": {"pointer": f"/data/{idx}/attributes/{field}"},
+                        }
+                    )
+                continue
+
+            validated_items.append(
+                {
+                    "source_index": idx,
+                    "provider_secret": provider_secret,
+                    **item_serializer.validated_data,
+                }
+            )
+
+        # All-or-nothing: if any hard errors, fail the entire batch
+        if hard_errors:
+            raise ValidationError(hard_errors)
+
+        attrs["_validated_items"] = validated_items
+        return attrs
 
 
 # Invitations

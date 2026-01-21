@@ -3,7 +3,6 @@ import glob
 import json
 import logging
 import os
-
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -11,7 +10,6 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
-
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -46,7 +44,7 @@ from django.db.models import (
     Window,
 )
 from django.db.models.functions import Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -72,15 +70,30 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.parsers import JSONParser
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
-from api.attack_paths import (
-    get_queries_for_provider,
-    get_query_by_id,
-    views_helpers as attack_paths_views_helpers,
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
+
+from api.attack_paths import get_queries_for_provider, get_query_by_id
+from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -90,6 +103,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
@@ -102,7 +116,6 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
-    AttackPathsScanFilter,
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
     MembershipFilter,
@@ -124,6 +137,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackPathsScan,
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
@@ -131,7 +145,6 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
-    AttackPathsScan,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -177,9 +190,9 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsQueryResultSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
-    AttackPathsQueryResultSerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
     CategoryOverviewSerializer,
@@ -223,11 +236,15 @@ from api.v1.serializers import (
     ProcessorCreateSerializer,
     ProcessorSerializer,
     ProcessorUpdateSerializer,
+    ProviderBatchCreateSerializer,
+    ProviderBatchUpdateSerializer,
     ProviderCreateSerializer,
     ProviderGroupCreateSerializer,
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
+    ProviderSecretBatchCreateSerializer,
+    ProviderSecretBatchUpdateSerializer,
     ProviderSecretCreateSerializer,
     ProviderSecretSerializer,
     ProviderSecretUpdateSerializer,
@@ -262,23 +279,6 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
-)
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -1543,11 +1543,25 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return ProviderCreateSerializer
+        elif self.action == "batch_create":
+            return ProviderBatchCreateSerializer
+        elif self.action == "batch_update":
+            return ProviderBatchUpdateSerializer
         elif self.action == "partial_update":
             return ProviderUpdateSerializer
         elif self.action in ["connection", "destroy"]:
             return TaskSerializer
         return super().get_serializer_class()
+
+    def get_parsers(self):
+        # Check action_map since self.action is not set yet during parser initialization
+        action_map = getattr(self, "action_map", {})
+        if (
+            "batch_create" in action_map.values()
+            or "batch_update" in action_map.values()
+        ):
+            return [JSONParser()]
+        return super().get_parsers()
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1612,6 +1626,193 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
                 )
             },
         )
+
+    @extend_schema(
+        tags=["Provider"],
+        summary="Batch create providers",
+        description="Create multiple providers in a single atomic operation. JSON:API compliant with all-or-nothing semantics. Secrets must be added separately via the provider secrets endpoint.",
+        request={
+            "application/json": {
+                "type": "object",
+                "required": ["data"],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of provider objects to create (max 100)",
+                        "items": {
+                            "type": "object",
+                            "required": ["type", "attributes"],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["providers"],
+                                    "description": "Must be 'providers'",
+                                },
+                                "attributes": {
+                                    "type": "object",
+                                    "required": ["provider", "uid"],
+                                    "properties": {
+                                        "provider": {
+                                            "type": "string",
+                                            "enum": [
+                                                "aws",
+                                                "azure",
+                                                "gcp",
+                                                "kubernetes",
+                                                "github",
+                                                "m365",
+                                            ],
+                                            "description": "Cloud provider type",
+                                        },
+                                        "uid": {
+                                            "type": "string",
+                                            "description": "Provider unique identifier (e.g., AWS 12-digit account ID)",
+                                        },
+                                        "alias": {
+                                            "type": "string",
+                                            "description": "Optional display name",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses={
+            201: OpenApiResponse(
+                response=ProviderSerializer(many=True),
+                description="All providers created successfully",
+            ),
+            400: OpenApiResponse(
+                description="Validation errors - entire batch rejected (all-or-nothing)"
+            ),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="batch",
+        url_name="batch",
+        parser_classes=[JSONParser],
+    )
+    def batch_create(self, request):
+        serializer = ProviderBatchCreateSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        # All-or-nothing: raise ValidationError if any item fails validation
+        serializer.is_valid(raise_exception=True)
+
+        validated_items = serializer.validated_data.get("_validated_items", [])
+
+        # Create all providers
+        created_provider_ids = []
+        for item in validated_items:
+            item_data = item["data"]
+            provider = Provider.objects.create(tenant_id=request.tenant_id, **item_data)
+            created_provider_ids.append(provider.id)
+
+        created_providers = (
+            Provider.objects.filter(id__in=created_provider_ids)
+            .select_related("secret")
+            .prefetch_related("provider_groups")
+        )
+
+        response_serializer = ProviderSerializer(
+            created_providers, many=True, context=self.get_serializer_context()
+        )
+
+        return Response(data=response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["Provider"],
+        summary="Batch update providers",
+        description="Update multiple providers in a single atomic operation. JSON:API compliant with all-or-nothing semantics. Only alias can be updated.",
+        request={
+            "application/json": {
+                "type": "object",
+                "required": ["data"],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of provider objects to update (max 100)",
+                        "items": {
+                            "type": "object",
+                            "required": ["type", "id", "attributes"],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["providers"],
+                                    "description": "Must be 'providers'",
+                                },
+                                "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "Provider UUID to update",
+                                },
+                                "attributes": {
+                                    "type": "object",
+                                    "properties": {
+                                        "alias": {
+                                            "type": "string",
+                                            "description": "New display name for the provider",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses={
+            200: OpenApiResponse(
+                response=ProviderSerializer(many=True),
+                description="All providers updated successfully",
+            ),
+            400: OpenApiResponse(
+                description="Validation errors - entire batch rejected (all-or-nothing)"
+            ),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["patch"],
+        url_path="batch",
+        url_name="batch-update",
+        parser_classes=[JSONParser],
+    )
+    def batch_update(self, request):
+        serializer = ProviderBatchUpdateSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        # All-or-nothing: raise ValidationError if any item fails validation
+        serializer.is_valid(raise_exception=True)
+
+        validated_items = serializer.validated_data.get("_validated_items", [])
+
+        # Update all providers
+        updated_provider_ids = []
+        for item_data in validated_items:
+            item_data.pop("index")
+            provider = item_data.pop("provider")
+            for key, value in item_data.items():
+                setattr(provider, key, value)
+            provider.save()
+            updated_provider_ids.append(provider.id)
+
+        updated_providers = (
+            Provider.objects.filter(id__in=updated_provider_ids)
+            .select_related("secret")
+            .prefetch_related("provider_groups")
+        )
+
+        response_serializer = ProviderSerializer(
+            updated_providers, many=True, context=self.get_serializer_context()
+        )
+
+        return Response(data=response_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -3322,9 +3523,262 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return ProviderSecretCreateSerializer
+        elif self.action == "batch_create":
+            return ProviderSecretBatchCreateSerializer
+        elif self.action == "batch_update":
+            return ProviderSecretBatchUpdateSerializer
         elif self.action == "partial_update":
             return ProviderSecretUpdateSerializer
         return super().get_serializer_class()
+
+    def get_parsers(self):
+        # Check action_map since self.action is not set yet during parser initialization
+        action_map = getattr(self, "action_map", {})
+        if (
+            "batch_create" in action_map.values()
+            or "batch_update" in action_map.values()
+        ):
+            return [JSONParser()]
+        return super().get_parsers()
+
+    @extend_schema(
+        tags=["Provider"],
+        summary="Batch create provider secrets",
+        description=(
+            "Create multiple provider secrets in a single atomic operation. "
+            "Supports to-many relationships where one secret definition can be "
+            "associated with multiple providers. JSON:API compliant with all-or-nothing "
+            "semantics for hard errors. Providers that already have secrets are skipped "
+            "and reported in meta.skipped."
+        ),
+        request={
+            "application/json": {
+                "type": "object",
+                "required": ["data"],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of provider-secret objects (max 100)",
+                        "items": {
+                            "type": "object",
+                            "required": ["type", "attributes", "relationships"],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["provider-secrets"],
+                                },
+                                "attributes": {
+                                    "type": "object",
+                                    "required": ["secret_type", "secret"],
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "secret_type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "static",
+                                                "role",
+                                                "service_account",
+                                            ],
+                                        },
+                                        "secret": {
+                                            "type": "object",
+                                            "description": "Credentials (varies by provider/secret_type)",
+                                        },
+                                    },
+                                },
+                                "relationships": {
+                                    "type": "object",
+                                    "required": ["providers"],
+                                    "properties": {
+                                        "providers": {
+                                            "type": "object",
+                                            "description": "To-many relationship: one secret can be created for multiple providers",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "required": ["type", "id"],
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string",
+                                                                "enum": ["providers"],
+                                                            },
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses={
+            201: OpenApiResponse(
+                description=(
+                    "All secrets created successfully. Response includes meta.skipped "
+                    "if any providers were skipped because they already have secrets."
+                ),
+            ),
+            400: OpenApiResponse(
+                description="Validation errors - entire batch rejected (all-or-nothing)"
+            ),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="batch",
+        url_name="batch",
+        parser_classes=[JSONParser],
+    )
+    def batch_create(self, request):
+        serializer = ProviderSecretBatchCreateSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        # All-or-nothing: raises ValidationError on any hard error
+        serializer.is_valid(raise_exception=True)
+
+        validated_items = serializer.validated_data.get("_validated_items", [])
+        skipped_providers = serializer.validated_data.get("_skipped_providers", [])
+
+        # Create all validated secrets
+        created_secret_ids = []
+        for item_data in validated_items:
+            item_data.pop("source_index", None)
+            provider = item_data.pop("provider")
+            secret = ProviderSecret.objects.create(
+                tenant_id=request.tenant_id, provider=provider, **item_data
+            )
+            created_secret_ids.append(secret.id)
+
+        created_secrets = ProviderSecret.objects.filter(
+            id__in=created_secret_ids
+        ).select_related("provider")
+
+        response_serializer = ProviderSecretSerializer(
+            created_secrets, many=True, context=self.get_serializer_context()
+        )
+
+        # Include skipped providers in meta if any
+        if skipped_providers:
+            # Use JsonResponse for custom meta - builds JSON:API structure manually
+            return JsonResponse(
+                {
+                    "data": response_serializer.data,
+                    "meta": {"skipped": skipped_providers},
+                },
+                status=201,
+            )
+
+        # Standard response without meta
+        return Response(data=response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["Provider"],
+        summary="Batch update provider secrets",
+        description=(
+            "Update multiple provider secrets in a single atomic operation. "
+            "JSON:API compliant with all-or-nothing semantics."
+        ),
+        request={
+            "application/json": {
+                "type": "object",
+                "required": ["data"],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of provider-secret objects (max 100)",
+                        "items": {
+                            "type": "object",
+                            "required": ["type", "id", "attributes"],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["provider-secrets"],
+                                },
+                                "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "description": "Provider secret UUID to update",
+                                },
+                                "attributes": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "secret_type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "static",
+                                                "role",
+                                                "service_account",
+                                            ],
+                                        },
+                                        "secret": {
+                                            "type": "object",
+                                            "description": "Credentials (varies by provider/secret_type)",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        responses={
+            200: OpenApiResponse(
+                response=ProviderSecretSerializer(many=True),
+                description="All secrets updated successfully",
+            ),
+            400: OpenApiResponse(
+                description="Validation errors - entire batch rejected (all-or-nothing)"
+            ),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["patch"],
+        url_path="batch",
+        url_name="batch-update",
+        parser_classes=[JSONParser],
+    )
+    def batch_update(self, request):
+        serializer = ProviderSecretBatchUpdateSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        # All-or-nothing: raises ValidationError on any hard error
+        serializer.is_valid(raise_exception=True)
+
+        validated_items = serializer.validated_data.get("_validated_items", [])
+
+        # Update all validated secrets
+        updated_secret_ids = []
+        for item_data in validated_items:
+            item_data.pop("source_index", None)
+            provider_secret = item_data.pop("provider_secret")
+            for key, value in item_data.items():
+                setattr(provider_secret, key, value)
+            provider_secret.save()
+            updated_secret_ids.append(provider_secret.id)
+
+        updated_secrets = ProviderSecret.objects.filter(
+            id__in=updated_secret_ids
+        ).select_related("provider")
+
+        response_serializer = ProviderSecretSerializer(
+            updated_secrets, many=True, context=self.get_serializer_context()
+        )
+
+        return Response(data=response_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

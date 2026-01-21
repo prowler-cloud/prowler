@@ -7703,6 +7703,233 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderCreateResponse'
           description: ''
+  /api/v1/providers/batch:
+    post:
+      operationId: providers_batch_create
+      description: |
+        Create multiple providers in a single atomic operation.
+        JSON:API compliant with all-or-nothing semantics.
+        Secrets must be added separately via the provider secrets endpoint.
+      summary: Batch create providers
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: providers
+                        description: Resource type identifier (should be "providers")
+                      attributes:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                            enum:
+                            - alibabacloud
+                            - aws
+                            - azure
+                            - gcp
+                            - github
+                            - iac
+                            - kubernetes
+                            - m365
+                            - mongodbatlas
+                            - oraclecloud
+                            description: Type of cloud provider
+                          uid:
+                            type: string
+                            description: Unique identifier for the provider (e.g., AWS account ID, Azure subscription ID)
+                          alias:
+                            type: string
+                            description: Human-readable name for the provider
+                        required:
+                        - provider
+                        - uid
+                    required:
+                    - type
+                    - attributes
+                  maxItems: 100
+                  minItems: 1
+              required:
+              - data
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+              examples:
+                success:
+                  summary: All providers created successfully
+                  value:
+                    data:
+                      - type: providers
+                        id: "550e8400-e29b-41d4-a716-446655440001"
+                        attributes:
+                          provider: aws
+                          uid: "123456789012"
+                          alias: "AWS Production"
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T10:30:00Z"
+                      - type: providers
+                        id: "550e8400-e29b-41d4-a716-446655440002"
+                        attributes:
+                          provider: gcp
+                          uid: "my-gcp-project"
+                          alias: "GCP Staging"
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T10:30:00Z"
+          description: All providers created successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+              examples:
+                validation_errors:
+                  summary: Validation errors - entire batch rejected (all-or-nothing)
+                  value:
+                    errors:
+                      - detail: "Invalid AWS account ID format. Must be 12 digits."
+                        source:
+                          pointer: "/data/0/attributes/uid"
+                      - detail: "Provider with uid '111111111111' already exists"
+                        source:
+                          pointer: "/data/1/attributes/uid"
+          description: Validation errors - entire batch rejected (all-or-nothing)
+    patch:
+      operationId: providers_batch_update
+      description: |
+        Update multiple providers in a single atomic operation.
+        JSON:API compliant with all-or-nothing semantics.
+        Only alias can be updated.
+      summary: Batch update providers
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description: Array of provider objects to update (max 100)
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: providers
+                        description: Resource type identifier (should be "providers")
+                      id:
+                        type: string
+                        format: uuid
+                        description: Provider UUID to update
+                      attributes:
+                        type: object
+                        properties:
+                          alias:
+                            type: string
+                            description: New display name for the provider
+                    required:
+                    - type
+                    - id
+                    - attributes
+                  maxItems: 100
+                  minItems: 1
+              required:
+              - data
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+              examples:
+                success:
+                  summary: All providers updated successfully
+                  value:
+                    data:
+                      - type: providers
+                        id: "550e8400-e29b-41d4-a716-446655440001"
+                        attributes:
+                          provider: aws
+                          uid: "123456789012"
+                          alias: "AWS Production (Updated)"
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T11:00:00Z"
+          description: All providers updated successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                          description: Error message
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                              description: JSON pointer to the error location (e.g., /data/0/id)
+              examples:
+                validation_errors:
+                  summary: All items failed validation
+                  value:
+                    errors:
+                      - detail: "Provider '550e8400-e29b-41d4-a716-446655440099' not found"
+                        source:
+                          pointer: "/data/0/id"
+                      - detail: "This field is required."
+                        source:
+                          pointer: "/data/1/id"
+          description: Validation errors - entire batch rejected (all-or-nothing)
   /api/v1/providers/{id}:
     get:
       operationId: providers_retrieve
@@ -7992,6 +8219,304 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderSecretCreateResponse'
           description: ''
+  /api/v1/providers/secrets/batch:
+    post:
+      operationId: providers_secrets_batch_create
+      description: |
+        Create multiple provider secrets in a single atomic operation.
+        Supports to-many relationships where one secret definition can be associated with multiple providers.
+        JSON:API compliant with all-or-nothing semantics for hard errors.
+        Providers that already have secrets are skipped and reported in meta.skipped.
+      summary: Batch create provider secrets
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description: Array of provider-secret objects (max 100)
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: provider-secrets
+                        description: Resource type identifier (should be "provider-secrets")
+                      attributes:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: Human-readable name for the secret
+                          secret_type:
+                            type: string
+                            enum:
+                            - static
+                            - role
+                            - service_account
+                            description: Type of secret/authentication method
+                          secret:
+                            type: object
+                            description: Credentials object (varies by provider/secret_type)
+                        required:
+                        - secret_type
+                        - secret
+                      relationships:
+                        type: object
+                        properties:
+                          providers:
+                            type: object
+                            description: To-many relationship - one secret definition can create secrets for multiple providers
+                            properties:
+                              data:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - providers
+                                    id:
+                                      type: string
+                                      format: uuid
+                                  required:
+                                  - type
+                                  - id
+                            required:
+                            - data
+                        required:
+                        - providers
+                    required:
+                    - type
+                    - attributes
+                    - relationships
+                  maxItems: 100
+                  minItems: 1
+              required:
+              - data
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderSecret'
+                  meta:
+                    type: object
+                    description: Contains skipped providers info if any were skipped
+                    properties:
+                      skipped:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            provider_id:
+                              type: string
+                              format: uuid
+                            source_index:
+                              type: integer
+                              description: Index of the item in the request that contained this provider
+                            reason:
+                              type: string
+              examples:
+                all_created:
+                  summary: All secrets created successfully
+                  value:
+                    data:
+                      - type: provider-secrets
+                        id: "660e8400-e29b-41d4-a716-446655440001"
+                        attributes:
+                          name: "AWS Production Credentials"
+                          secret_type: role
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T10:30:00Z"
+                        relationships:
+                          provider:
+                            data:
+                              type: providers
+                              id: "550e8400-e29b-41d4-a716-446655440001"
+                some_skipped:
+                  summary: Some providers skipped (already have secrets)
+                  value:
+                    data:
+                      - type: provider-secrets
+                        id: "660e8400-e29b-41d4-a716-446655440001"
+                        attributes:
+                          name: "Shared AWS Secret"
+                          secret_type: static
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T10:30:00Z"
+                        relationships:
+                          provider:
+                            data:
+                              type: providers
+                              id: "550e8400-e29b-41d4-a716-446655440002"
+                    meta:
+                      skipped:
+                        - provider_id: "550e8400-e29b-41d4-a716-446655440001"
+                          source_index: 0
+                          reason: "Provider already has a secret."
+          description: Provider secrets created successfully. May include meta.skipped if some providers were skipped.
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                          description: Error message
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                              description: JSON pointer to the error location (e.g., /data/0/attributes/secret_type)
+              examples:
+                validation_errors:
+                  summary: Validation errors - entire batch rejected (all-or-nothing)
+                  value:
+                    errors:
+                      - detail: "Role secret type is not supported for GCP providers"
+                        source:
+                          pointer: "/data/0/attributes/secret_type"
+                      - detail: "Provider '550e8400-e29b-41d4-a716-446655440099' not found."
+                        source:
+                          pointer: "/data/1/relationships/providers/data/0"
+          description: Validation errors - entire batch rejected (all-or-nothing)
+    patch:
+      operationId: providers_secrets_batch_update
+      description: |
+        Update multiple provider secrets in a single atomic operation.
+        JSON:API compliant with all-or-nothing semantics.
+      summary: Batch update provider secrets
+      tags:
+      - Provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description: Array of provider-secret objects to update (max 100)
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: provider-secrets
+                        description: Resource type identifier (should be "provider-secrets")
+                      id:
+                        type: string
+                        format: uuid
+                        description: Provider secret UUID to update
+                      attributes:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: Human-readable name for the secret
+                          secret_type:
+                            type: string
+                            enum:
+                            - static
+                            - role
+                            - service_account
+                            description: Type of secret/authentication method
+                          secret:
+                            type: object
+                            description: Credentials object (varies by provider/secret_type)
+                    required:
+                    - type
+                    - id
+                    - attributes
+                  maxItems: 100
+                  minItems: 1
+              required:
+              - data
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderSecret'
+              examples:
+                all_updated:
+                  summary: All secrets updated successfully
+                  value:
+                    data:
+                      - type: provider-secrets
+                        id: "660e8400-e29b-41d4-a716-446655440001"
+                        attributes:
+                          name: "AWS Production Credentials (Updated)"
+                          secret_type: role
+                          inserted_at: "2025-01-20T10:30:00Z"
+                          updated_at: "2025-01-20T11:00:00Z"
+                        relationships:
+                          provider:
+                            data:
+                              type: providers
+                              id: "550e8400-e29b-41d4-a716-446655440001"
+          description: All provider secrets updated successfully
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                          description: Error message
+                        source:
+                          type: object
+                          properties:
+                            pointer:
+                              type: string
+                              description: JSON pointer to the error location (e.g., /data/0/id)
+              examples:
+                validation_errors:
+                  summary: Validation errors - entire batch rejected (all-or-nothing)
+                  value:
+                    errors:
+                      - detail: "Provider secret '660e8400-e29b-41d4-a716-446655440099' not found."
+                        source:
+                          pointer: "/data/0/id"
+                      - detail: "This field is required."
+                        source:
+                          pointer: "/data/1/id"
+          description: Validation errors - entire batch rejected (all-or-nothing)
   /api/v1/providers/secrets/{id}:
     get:
       operationId: providers_secrets_retrieve

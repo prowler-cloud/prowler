@@ -112,6 +112,18 @@ urlpatterns = [
         name="providersecret-list",
     ),
     path(
+        "providers/secrets/batch",
+        ProviderSecretViewSet.as_view(
+            {"post": "batch_create", "patch": "batch_update"}
+        ),
+        name="providersecret-batch",
+    ),
+    path(
+        "providers/batch",
+        ProviderViewSet.as_view({"post": "batch_create", "patch": "batch_update"}),
+        name="provider-batch",
+    ),
+    path(
         "providers/secrets/<uuid:pk>",
         ProviderSecretViewSet.as_view(
             {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
