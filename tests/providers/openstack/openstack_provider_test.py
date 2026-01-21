@@ -15,7 +15,10 @@ from prowler.config.config import (
 from prowler.providers.common.models import Connection
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAuthenticationError,
+    OpenStackCloudNotFoundError,
+    OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
+    OpenStackInvalidConfigError,
 )
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
@@ -600,3 +603,423 @@ class TestOpenstackProvider:
         assert identity.username == "test-user"
         assert identity.project_id == "test-project"
         assert identity.region_name == "RegionOne"
+
+
+class TestOpenstackProviderCloudsYaml:
+    """Test suite for OpenStack Provider clouds.yaml support."""
+
+    @pytest.fixture(autouse=True)
+    def clean_openstack_env(self, monkeypatch):
+        """Ensure clean OpenStack environment for all tests."""
+        openstack_env_vars = [
+            "OS_AUTH_URL",
+            "OS_USERNAME",
+            "OS_PASSWORD",
+            "OS_PROJECT_ID",
+            "OS_REGION_NAME",
+            "OS_CLOUD",
+            "OS_IDENTITY_API_VERSION",
+            "OS_USER_DOMAIN_NAME",
+            "OS_PROJECT_DOMAIN_NAME",
+        ]
+        for env_var in openstack_env_vars:
+            monkeypatch.delenv(env_var, raising=False)
+
+    def test_clouds_yaml_explicit_file_path(self, tmp_path):
+        """Test loading clouds.yaml from an explicit file path."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: yaml-user
+      password: yaml-password
+      project_id: yaml-project-id
+      user_domain_name: YamlUserDomain
+      project_domain_name: YamlProjectDomain
+    region_name: RegionOne
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = "yaml-user-id"
+        mock_connection.current_project_id = "yaml-project-id"
+
+        mock_user = MagicMock()
+        mock_user.name = "yaml-user"
+        mock_connection.identity.get_user.return_value = mock_user
+
+        mock_project = MagicMock()
+        mock_project.name = "yaml-project"
+        mock_connection.identity.get_project.return_value = mock_project
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            provider = OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+            assert provider.session.auth_url == "https://openstack.example.com:5000/v3"
+            assert provider.session.username == "yaml-user"
+            assert provider.session.project_id == "yaml-project-id"
+            assert provider.session.region_name == "RegionOne"
+            assert provider.session.user_domain_name == "YamlUserDomain"
+            assert provider.session.project_domain_name == "YamlProjectDomain"
+            assert provider.identity.username == "yaml-user"
+
+    def test_clouds_yaml_with_explicit_cloud_name(self, tmp_path):
+        """Test loading clouds.yaml with an explicit cloud name."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  default-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: default-user
+      password: default-password
+      project_id: default-project-id
+    region_name: RegionOne
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "default-project-id"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            # Explicitly specify the cloud name
+            provider = OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="default-cloud",
+            )
+
+            assert provider.session.auth_url == "https://openstack.example.com:5000/v3"
+            assert provider.session.username == "default-user"
+            assert provider.session.project_id == "default-project-id"
+
+    def test_clouds_yaml_file_without_cloud_name(self, tmp_path):
+        """Test error when clouds.yaml file is provided without cloud name."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+"""
+        )
+
+        with pytest.raises(OpenStackInvalidConfigError) as excinfo:
+            OpenstackProvider(clouds_yaml_file=str(clouds_yaml))
+
+        assert "Cloud name (--clouds-yaml-cloud) is required" in str(excinfo.value)
+
+    def test_clouds_yaml_file_not_found(self):
+        """Test error when clouds.yaml file does not exist."""
+        with pytest.raises(OpenStackConfigFileNotFoundError) as excinfo:
+            OpenstackProvider(
+                clouds_yaml_file="/nonexistent/path/to/clouds.yaml",
+                clouds_yaml_cloud="test-cloud",
+            )
+
+        assert "clouds.yaml file not found" in str(excinfo.value)
+
+    def test_clouds_yaml_cloud_not_found(self, tmp_path):
+        """Test error when specified cloud is not in clouds.yaml."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  existing-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+"""
+        )
+
+        with pytest.raises(OpenStackCloudNotFoundError) as excinfo:
+            OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="nonexistent-cloud",
+            )
+
+        assert "Cloud 'nonexistent-cloud' not found" in str(excinfo.value)
+
+    def test_clouds_yaml_missing_required_fields(self, tmp_path):
+        """Test error when clouds.yaml is missing required fields."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  incomplete-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      # Missing password and other required fields
+    region_name: RegionOne
+"""
+        )
+
+        with pytest.raises(OpenStackInvalidConfigError) as excinfo:
+            OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="incomplete-cloud",
+            )
+
+        assert "Missing required fields" in str(excinfo.value)
+        assert "password" in str(excinfo.value)
+
+    def test_clouds_yaml_malformed_yaml(self, tmp_path):
+        """Test error when clouds.yaml is malformed."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  malformed-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+    - invalid: yaml: structure
+"""
+        )
+
+        with pytest.raises(OpenStackInvalidConfigError):
+            OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="malformed-cloud",
+            )
+
+    def test_clouds_yaml_with_project_name(self, tmp_path):
+        """Test clouds.yaml using project_name instead of project_id."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_name: test-project-name
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: RegionOne
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "test-project-id"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            provider = OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+            # project_name should be used when project_id is not available
+            assert provider.session.project_id == "test-project-name"
+
+    def test_clouds_yaml_priority_over_env_vars(self, tmp_path, monkeypatch):
+        """Test that clouds.yaml takes priority over environment variables."""
+        # Set environment variables that should be ignored
+        monkeypatch.setenv("OS_AUTH_URL", "https://env.example.com:5000/v3")
+        monkeypatch.setenv("OS_USERNAME", "env-user")
+        monkeypatch.setenv("OS_PASSWORD", "env-password")
+        monkeypatch.setenv("OS_PROJECT_ID", "env-project")
+        monkeypatch.setenv("OS_REGION_NAME", "EnvRegion")
+
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://yaml.example.com:5000/v3
+      username: yaml-user
+      password: yaml-password
+      project_id: yaml-project-id
+    region_name: YamlRegion
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "yaml-project-id"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            provider = OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+            # Should use clouds.yaml values, not environment variables
+            assert provider.session.auth_url == "https://yaml.example.com:5000/v3"
+            assert provider.session.username == "yaml-user"
+            assert provider.session.project_id == "yaml-project-id"
+            assert provider.session.region_name == "YamlRegion"
+
+    def test_test_connection_with_clouds_yaml(self, tmp_path):
+        """Test static test_connection method with clouds.yaml."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            connection_result = OpenstackProvider.test_connection(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+                raise_on_exception=False,
+            )
+
+            assert isinstance(connection_result, Connection)
+            assert connection_result.is_connected is True
+            assert connection_result.error is None
+            mock_connect.assert_called_once()
+
+    def test_test_connection_clouds_yaml_file_not_found(self):
+        """Test test_connection error when clouds.yaml file does not exist."""
+        connection_result = OpenstackProvider.test_connection(
+            clouds_yaml_file="/nonexistent/path/to/clouds.yaml",
+            clouds_yaml_cloud="test-cloud",
+            raise_on_exception=False,
+        )
+
+        assert isinstance(connection_result, Connection)
+        assert connection_result.is_connected is False
+        assert isinstance(connection_result.error, OpenStackConfigFileNotFoundError)
+
+    def test_test_connection_clouds_yaml_cloud_not_found(self, tmp_path):
+        """Test test_connection error when cloud is not in clouds.yaml."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  existing-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+"""
+        )
+
+        connection_result = OpenstackProvider.test_connection(
+            clouds_yaml_file=str(clouds_yaml),
+            clouds_yaml_cloud="nonexistent-cloud",
+            raise_on_exception=False,
+        )
+
+        assert isinstance(connection_result, Connection)
+        assert connection_result.is_connected is False
+        assert isinstance(connection_result.error, OpenStackCloudNotFoundError)
+
+    def test_backward_compatibility_env_vars_still_work(self, monkeypatch):
+        """Test that existing environment variable authentication still works (backward compatibility)."""
+        monkeypatch.setenv("OS_AUTH_URL", "https://openstack.example.com:5000/v3")
+        monkeypatch.setenv("OS_USERNAME", "test-user")
+        monkeypatch.setenv("OS_PASSWORD", "test-password")
+        monkeypatch.setenv("OS_PROJECT_ID", "test-project")
+        monkeypatch.setenv("OS_REGION_NAME", "RegionOne")
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "test-project"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            # Initialize without clouds.yaml parameters
+            provider = OpenstackProvider()
+
+            # Should use environment variables as before
+            assert provider.session.auth_url == "https://openstack.example.com:5000/v3"
+            assert provider.session.username == "test-user"
+            assert provider.session.project_id == "test-project"
+
+    def test_backward_compatibility_explicit_params_still_work(self):
+        """Test that explicit parameter authentication still works (backward compatibility)."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "test-project"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.openstack.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            # Initialize with explicit parameters (no clouds.yaml)
+            provider = OpenstackProvider(
+                auth_url="https://openstack.example.com:5000/v3",
+                username="test-user",
+                password="test-password",
+                project_id="test-project",
+                region_name="RegionOne",
+            )
+
+            # Should use explicit parameters as before
+            assert provider.session.auth_url == "https://openstack.example.com:5000/v3"
+            assert provider.session.username == "test-user"
+            assert provider.session.project_id == "test-project"

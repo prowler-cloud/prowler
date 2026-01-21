@@ -1,7 +1,9 @@
 from os import environ
+from pathlib import Path
 from typing import Optional
 
 import openstack
+import openstack.config
 from colorama import Fore, Style
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
@@ -17,7 +19,10 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAuthenticationError,
+    OpenStackCloudNotFoundError,
+    OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
+    OpenStackInvalidConfigError,
     OpenStackSessionError,
 )
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
@@ -44,6 +49,8 @@ class OpenstackProvider(Provider):
 
     def __init__(
         self,
+        clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
         username: Optional[str] = None,
@@ -61,6 +68,8 @@ class OpenstackProvider(Provider):
         logger.info("Instantiating OpenStack Provider...")
 
         self._session = self.setup_session(
+            clouds_yaml_file=clouds_yaml_file,
+            clouds_yaml_cloud=clouds_yaml_cloud,
             auth_url=auth_url,
             identity_api_version=identity_api_version,
             username=username,
@@ -123,6 +132,8 @@ class OpenstackProvider(Provider):
 
     @staticmethod
     def setup_session(
+        clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
         username: Optional[str] = None,
@@ -132,7 +143,21 @@ class OpenstackProvider(Provider):
         user_domain_name: Optional[str] = None,
         project_domain_name: Optional[str] = None,
     ) -> OpenStackSession:
-        """Collect authentication information from explicit parameters or environment variables."""
+        """Collect authentication information from clouds.yaml, explicit parameters, or environment variables.
+
+        Authentication priority:
+        1. clouds.yaml file (if clouds_yaml_file or clouds_yaml_cloud provided)
+        2. Explicit parameters + environment variable fallback
+        """
+        # Priority 1: clouds.yaml authentication
+        if clouds_yaml_file or clouds_yaml_cloud:
+            logger.info("Using clouds.yaml configuration for authentication")
+            return OpenstackProvider._setup_session_from_clouds_yaml(
+                clouds_yaml_file=clouds_yaml_file,
+                clouds_yaml_cloud=clouds_yaml_cloud,
+            )
+
+        # Priority 2: Explicit parameters + environment variable fallback (existing behavior)
         provided_overrides = {
             "OS_AUTH_URL": auth_url,
             "OS_USERNAME": username,
@@ -180,6 +205,120 @@ class OpenstackProvider(Provider):
         )
 
     @staticmethod
+    def _setup_session_from_clouds_yaml(
+        clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_cloud: Optional[str] = None,
+    ) -> OpenStackSession:
+        """Setup session from clouds.yaml configuration file.
+
+        Args:
+            clouds_yaml_file: Path to clouds.yaml file. If None, standard locations are searched.
+            clouds_yaml_cloud: Cloud name to use from clouds.yaml. Required when using clouds.yaml.
+
+        Returns:
+            OpenStackSession configured from clouds.yaml
+
+        Raises:
+            OpenStackConfigFileNotFoundError: If clouds.yaml file not found
+            OpenStackCloudNotFoundError: If specified cloud not found in clouds.yaml
+            OpenStackInvalidConfigError: If clouds.yaml is malformed or missing required fields
+        """
+        try:
+            # Cloud name is required when using clouds.yaml
+            if not clouds_yaml_cloud:
+                raise OpenStackInvalidConfigError(
+                    file=clouds_yaml_file,
+                    message="Cloud name (--clouds-yaml-cloud) is required when using clouds.yaml file",
+                )
+
+            # Determine config file path
+            if clouds_yaml_file:
+                # Use explicit path
+                config_path = Path(clouds_yaml_file).expanduser()
+                if not config_path.exists():
+                    raise OpenStackConfigFileNotFoundError(
+                        file=str(config_path),
+                        message=f"clouds.yaml file not found at {config_path}",
+                    )
+                logger.info(f"Loading clouds.yaml from {config_path}")
+                # Load OpenStack configuration with explicit file
+                os_config = openstack.config.OpenStackConfig(
+                    config_files=[str(config_path)]
+                )
+            else:
+                # Search standard locations if cloud name is provided
+                logger.info(
+                    "Searching for clouds.yaml in standard locations: "
+                    "~/.config/openstack/clouds.yaml, /etc/openstack/clouds.yaml, ./clouds.yaml"
+                )
+                # Load OpenStack configuration from standard locations (don't pass config_files)
+                os_config = openstack.config.OpenStackConfig()
+
+            # Get cloud configuration
+            logger.info(f"Loading cloud configuration for '{clouds_yaml_cloud}'")
+
+            try:
+                cloud_config = os_config.get_one(cloud=clouds_yaml_cloud)
+            except openstack_exceptions.OpenStackCloudException as error:
+                if "cloud" in str(error).lower() and "not found" in str(error).lower():
+                    raise OpenStackCloudNotFoundError(
+                        file=clouds_yaml_file,
+                        original_exception=error,
+                        message=f"Cloud '{clouds_yaml_cloud}' not found in clouds.yaml configuration",
+                    )
+                raise OpenStackInvalidConfigError(
+                    file=clouds_yaml_file,
+                    original_exception=error,
+                    message=f"Failed to load cloud configuration: {error}",
+                )
+
+            # Extract authentication parameters from cloud config
+            auth_dict = cloud_config.config.get("auth", {})
+
+            # Validate required fields
+            required_fields = ["auth_url", "username", "password"]
+            missing_fields = [
+                field for field in required_fields if not auth_dict.get(field)
+            ]
+            if missing_fields:
+                raise OpenStackInvalidConfigError(
+                    file=clouds_yaml_file,
+                    message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
+                )
+
+            # Build OpenStackSession from cloud config
+            return OpenStackSession(
+                auth_url=auth_dict.get("auth_url"),
+                identity_api_version=str(
+                    cloud_config.config.get("identity_api_version", "3")
+                ),
+                username=auth_dict.get("username"),
+                password=auth_dict.get("password"),
+                project_id=auth_dict.get("project_id") or auth_dict.get("project_name"),
+                region_name=cloud_config.config.get("region_name"),
+                user_domain_name=auth_dict.get("user_domain_name", "Default"),
+                project_domain_name=auth_dict.get("project_domain_name", "Default"),
+            )
+
+        except (
+            OpenStackConfigFileNotFoundError,
+            OpenStackCloudNotFoundError,
+            OpenStackInvalidConfigError,
+        ):
+            # Re-raise our custom exceptions
+            raise
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                f"Failed to load clouds.yaml configuration: {error}"
+            )
+            raise OpenStackInvalidConfigError(
+                file=clouds_yaml_file,
+                original_exception=error,
+                message=f"Failed to load clouds.yaml configuration: {error}",
+            )
+
+    @staticmethod
     def _create_connection(
         session: OpenStackSession,
     ) -> OpenStackConnection:
@@ -191,9 +330,10 @@ class OpenstackProvider(Provider):
         or environment variables read by Prowler itself in setup_session()).
         """
         try:
+            # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
             conn = openstack.connect(
-                load_yaml_config=False,  # Don't load from clouds.yaml
-                load_envvars=False,  # Don't load from OS_* env vars
+                load_yaml_config=False,
+                load_envvars=False,
                 **session.as_sdk_config(),
             )
             conn.authorize()
@@ -256,6 +396,8 @@ class OpenstackProvider(Provider):
 
     @staticmethod
     def test_connection(
+        clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
         username: Optional[str] = None,
@@ -272,6 +414,8 @@ class OpenstackProvider(Provider):
         the entire provider. Useful for API validation before storing credentials.
 
         Args:
+            clouds_yaml_file: Path to clouds.yaml configuration file
+            clouds_yaml_cloud: Cloud name from clouds.yaml to use
             auth_url: OpenStack Keystone authentication URL
             identity_api_version: Keystone API version (default: "3")
             username: OpenStack username
@@ -289,8 +433,12 @@ class OpenstackProvider(Provider):
             OpenStackCredentialsError: If raise_on_exception=True and credentials are invalid
             OpenStackAuthenticationError: If raise_on_exception=True and authentication fails
             OpenStackSessionError: If raise_on_exception=True and connection fails
+            OpenStackConfigFileNotFoundError: If raise_on_exception=True and clouds.yaml not found
+            OpenStackCloudNotFoundError: If raise_on_exception=True and cloud not in clouds.yaml
+            OpenStackInvalidConfigError: If raise_on_exception=True and clouds.yaml is malformed
 
         Examples:
+            >>> # Test with explicit credentials
             >>> OpenstackProvider.test_connection(
             ...     auth_url="https://openstack.example.com:5000/v3",
             ...     username="admin",
@@ -299,10 +447,19 @@ class OpenstackProvider(Provider):
             ...     region_name="RegionOne"
             ... )
             Connection(is_connected=True, error=None)
+
+            >>> # Test with clouds.yaml
+            >>> OpenstackProvider.test_connection(
+            ...     clouds_yaml_file="~/.config/openstack/clouds.yaml",
+            ...     clouds_yaml_cloud="production"
+            ... )
+            Connection(is_connected=True, error=None)
         """
         try:
             # Setup session with provided credentials
             session = OpenstackProvider.setup_session(
+                clouds_yaml_file=clouds_yaml_file,
+                clouds_yaml_cloud=clouds_yaml_cloud,
                 auth_url=auth_url,
                 identity_api_version=identity_api_version,
                 username=username,
@@ -319,17 +476,14 @@ class OpenstackProvider(Provider):
             logger.info("OpenStack provider: Connection test successful")
             return Connection(is_connected=True)
 
-        except OpenStackCredentialsError as error:
-            logger.error(f"OpenStack connection test failed: {error}")
-            if raise_on_exception:
-                raise
-            return Connection(is_connected=False, error=error)
-        except OpenStackAuthenticationError as error:
-            logger.error(f"OpenStack connection test failed: {error}")
-            if raise_on_exception:
-                raise
-            return Connection(is_connected=False, error=error)
-        except OpenStackSessionError as error:
+        except (
+            OpenStackCredentialsError,
+            OpenStackAuthenticationError,
+            OpenStackSessionError,
+            OpenStackConfigFileNotFoundError,
+            OpenStackCloudNotFoundError,
+            OpenStackInvalidConfigError,
+        ) as error:
             logger.error(f"OpenStack connection test failed: {error}")
             if raise_on_exception:
                 raise

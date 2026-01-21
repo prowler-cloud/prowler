@@ -295,6 +295,8 @@ class Provider(ABC):
                     )
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
+                        clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
                         auth_url=getattr(arguments, "os_auth_url", None),
                         identity_api_version=getattr(
                             arguments, "os_identity_api_version", None
