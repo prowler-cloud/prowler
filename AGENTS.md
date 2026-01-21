@@ -40,6 +40,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
 | `prowler-changelog` | Changelog entries (keepachangelog.com) | [SKILL.md](skills/prowler-changelog/SKILL.md) |
 | `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
+| `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
@@ -50,17 +51,21 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
+| -- | `prowler-commit` |
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
+| After completing code changes | `prowler-commit` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
+| Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
+| Creating a git commit | `prowler-commit` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
