@@ -129,8 +129,8 @@ def set_github_output(name: str, value: str):
                 f.write(f"{name}<<{delimiter}\n{value}\n{delimiter}\n")
             else:
                 f.write(f"{name}={value}\n")
-    # Always print for debugging
-    print(f"::set-output name={name}::{value}", file=sys.stderr)
+    # Print for debugging (without deprecated format)
+    print(f"  {name}={value}", file=sys.stderr)
 
 
 def main():

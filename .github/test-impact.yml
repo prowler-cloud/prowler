@@ -25,10 +25,9 @@ critical:
     - ui/config/**
     - ui/middleware.ts
     
-    # CI/CD changes - TEMPORARILY DISABLED FOR TESTING
-    # TODO: Re-enable after validating test impact analysis works
-    # - .github/workflows/**
-    # - .github/test-impact.yml
+    # CI/CD changes
+    - .github/workflows/**
+    - .github/test-impact.yml
 
 # Module mappings - path patterns to test patterns
 modules:
