@@ -6,12 +6,11 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0.0"
+  version: "1.1.0"
   scope: [root, api, ui, prowler, mcp_server]
   auto_invoke:
     - "Creating a git commit"
     - "Committing changes"
-    - "After completing code changes"
 ---
 
 ## Critical Rules
@@ -22,6 +21,8 @@ metadata:
 - NEVER be overly specific (avoid counts like "6 subsections", "3 files")
 - NEVER include implementation details in the title
 - NEVER use `-n` flag unless user explicitly requests it
+- NEVER use `git push --force` or `git push -f` (destructive, rewrites history)
+- NEVER proactively offer to commit - wait for user to explicitly request it
 
 ---
 

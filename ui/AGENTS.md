@@ -20,7 +20,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|
 | -- | `prowler-commit` |
 | Add changelog entry for a PR or feature | `prowler-changelog` |
-| After completing code changes | `prowler-commit` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
 | Committing changes | `prowler-commit` |

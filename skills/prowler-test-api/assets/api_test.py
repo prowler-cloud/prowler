@@ -273,3 +273,99 @@ class TestSoftDelete:
 
         # all_objects includes deleted
         assert provider in Provider.all_objects.all()
+
+
+# =============================================================================
+# CELERY TASK TESTING
+# =============================================================================
+
+
+@pytest.mark.django_db
+class TestCeleryTaskLogic:
+    """Example: Testing Celery task logic directly with apply()."""
+
+    def test_task_logic_directly(self, tenants_fixture, providers_fixture):
+        """Use apply() for synchronous execution without Celery worker."""
+        from tasks.tasks import check_provider_connection_task
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        # Execute task synchronously (no broker needed)
+        result = check_provider_connection_task.apply(
+            kwargs={"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+        )
+
+        assert result.successful()
+        assert result.result["connected"] is True
+
+
+@pytest.mark.django_db
+class TestCeleryCanvas:
+    """Example: Testing Canvas (chain/group) task orchestration."""
+
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.group")
+    def test_post_scan_workflow(self, mock_group, mock_chain, tenants_fixture):
+        """Mock chain/group to verify task orchestration."""
+        from tasks.tasks import _perform_scan_complete_tasks
+
+        tenant = tenants_fixture[0]
+
+        # Mock chain.apply_async
+        mock_chain_instance = Mock()
+        mock_chain.return_value = mock_chain_instance
+
+        _perform_scan_complete_tasks(str(tenant.id), "scan-123", "provider-456")
+
+        # Verify chain was called
+        assert mock_chain.called
+        mock_chain_instance.apply_async.assert_called()
+
+
+@pytest.mark.django_db
+class TestSetTenantDecorator:
+    """Example: Testing @set_tenant decorator behavior."""
+
+    @patch("api.decorators.connection")
+    def test_sets_rls_context(self, mock_conn, tenants_fixture, providers_fixture):
+        """Verify @set_tenant sets RLS context via SET_CONFIG_QUERY."""
+        from tasks.tasks import check_provider_connection_task
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        # Call task with tenant_id - decorator sets RLS and pops it
+        check_provider_connection_task.apply(
+            kwargs={"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+        )
+
+        # Verify SET_CONFIG_QUERY was executed
+        mock_conn.cursor.return_value.__enter__.return_value.execute.assert_called()
+
+
+@pytest.mark.django_db
+class TestBeatScheduling:
+    """Example: Testing Beat scheduled task creation."""
+
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
+    def test_schedule_provider_scan(self, mock_apply, providers_fixture):
+        """Verify periodic task is created with correct settings."""
+        from django_celery_beat.models import PeriodicTask
+
+        from tasks.beat import schedule_provider_scan
+
+        provider = providers_fixture[0]
+        mock_apply.return_value = Mock(id="task-123")
+
+        schedule_provider_scan(provider)
+
+        # Verify periodic task created
+        assert PeriodicTask.objects.filter(
+            name=f"scan-perform-scheduled-{provider.id}"
+        ).exists()
+
+        # Verify immediate execution with countdown
+        mock_apply.assert_called_once()
+        call_kwargs = mock_apply.call_args
+        assert call_kwargs.kwargs.get("countdown") == 5

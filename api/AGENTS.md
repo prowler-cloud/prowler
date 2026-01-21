@@ -15,7 +15,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | -- | `prowler-commit` |
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
-| After completing code changes | `prowler-commit` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
