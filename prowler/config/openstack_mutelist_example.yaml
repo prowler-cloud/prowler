@@ -6,14 +6,14 @@
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "f60368c2d0e04193bd61e14ae5754eeb":  # Your OVH OpenStack project ID
+    "example-project-id":  # Your OpenStack project ID
       Checks:
         "compute_instance_security_groups_attached":
           Regions:
             - "EU-WEST-PAR"
           Resources:
             - "prowler-test-fail"  # Mute by instance name
-            - "ba6056d9-104a-4a22-afda-b68589ed9867"  # Mute by instance ID
+            - "example-instance-id"  # Mute by instance ID
           Description: "Mute prowler-test-fail instance in compute_instance_security_groups_attached check"
         "compute_*":
           Regions:
