@@ -76,7 +76,6 @@ def get_session(database: str | None = None) -> Iterator[RetryableSession]:
     try:
         session_wrapper = RetryableSession(
             session_factory=lambda: get_driver().session(database=database),
-            close_driver=close_driver,  # Just to avoid circular imports
             max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
         )
         yield session_wrapper

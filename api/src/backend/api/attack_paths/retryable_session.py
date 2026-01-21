@@ -17,11 +17,9 @@ class RetryableSession:
     def __init__(
         self,
         session_factory: Callable[[], neo4j.Session],
-        close_driver: Callable[[], None],  # Just to avoid circular imports
         max_retries: int,
     ) -> None:
         self._session_factory = session_factory
-        self._close_driver = close_driver
         self._max_retries = max(0, max_retries)
         self._session = self._session_factory()
 
