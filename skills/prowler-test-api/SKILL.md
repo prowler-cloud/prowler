@@ -98,7 +98,9 @@ def test_cross_tenant_access_denied(self, authenticated_client, tenants_fixture)
 
 ---
 
-## 4. Async Task Testing
+## 4. Celery Task Testing
+
+### 4.1 Testing Views That Trigger Tasks
 
 **Mock BOTH `.delay()` AND `Task.objects.get`**:
 
@@ -113,6 +115,114 @@ def test_async_delete(self, mock_task, mock_task_get, authenticated_client, prov
 
     response = authenticated_client.delete(reverse("provider-detail", kwargs={"pk": provider.id}))
     assert response.status_code == status.HTTP_202_ACCEPTED
+    mock_task.assert_called_once()
+```
+
+### 4.2 Testing Task Logic Directly
+
+Use `apply()` for synchronous execution without Celery worker:
+
+```python
+@pytest.mark.django_db
+def test_task_logic_directly(self, tenants_fixture, providers_fixture):
+    tenant = tenants_fixture[0]
+    provider = providers_fixture[0]
+
+    # Execute task synchronously (no broker needed)
+    result = check_provider_connection_task.apply(
+        kwargs={"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+    )
+
+    assert result.successful()
+    assert result.result["connected"] is True
+```
+
+### 4.3 Testing Canvas (chain/group)
+
+Mock the entire chain to verify task orchestration:
+
+```python
+@patch("tasks.tasks.chain")
+@patch("tasks.tasks.group")
+def test_post_scan_workflow(self, mock_group, mock_chain, tenants_fixture):
+    tenant = tenants_fixture[0]
+
+    # Mock chain.apply_async
+    mock_chain_instance = Mock()
+    mock_chain.return_value = mock_chain_instance
+
+    _perform_scan_complete_tasks(str(tenant.id), "scan-123", "provider-456")
+
+    # Verify chain was called
+    assert mock_chain.called
+    mock_chain_instance.apply_async.assert_called()
+```
+
+### 4.4 Why NOT to Use `task_always_eager`
+
+> **Warning:** `CELERY_TASK_ALWAYS_EAGER = True` is NOT recommended for testing.
+
+| Problem | Impact |
+|---------|--------|
+| No actual task serialization | Misses argument type errors |
+| No broker interaction | Hides connection issues |
+| Different execution context | `self.request` behaves differently |
+| Results not stored by default | `task.result` returns `None` |
+
+**Instead, use:**
+- `task.apply()` for synchronous execution
+- Mocking for isolation
+- `pytest-celery` for integration tests
+
+### 4.5 Testing Tasks with `@set_tenant`
+
+The `@set_tenant` decorator pops `tenant_id` from kwargs (unless `keep_tenant=True`).
+
+```python
+from unittest.mock import patch, Mock
+from tasks.tasks import check_provider_connection_task
+
+@pytest.mark.django_db
+class TestSetTenantDecorator:
+    @patch("api.decorators.connection")
+    def test_sets_rls_context(self, mock_conn, tenants_fixture, providers_fixture):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        # Call task with tenant_id - decorator sets RLS and pops it
+        check_provider_connection_task.apply(
+            kwargs={"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+        )
+
+        # Verify SET_CONFIG_QUERY was executed
+        mock_conn.cursor.return_value.__enter__.return_value.execute.assert_called()
+```
+
+### 4.6 Testing Beat Scheduled Tasks
+
+```python
+from unittest.mock import patch, Mock
+from django_celery_beat.models import PeriodicTask
+from tasks.beat import schedule_provider_scan
+
+@pytest.mark.django_db
+class TestBeatScheduling:
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
+    def test_schedule_provider_scan(self, mock_apply, providers_fixture):
+        provider = providers_fixture[0]
+        mock_apply.return_value = Mock(id="task-123")
+
+        schedule_provider_scan(provider)
+
+        # Verify periodic task created
+        assert PeriodicTask.objects.filter(
+            name=f"scan-perform-scheduled-{provider.id}"
+        ).exists()
+
+        # Verify immediate execution with countdown
+        mock_apply.assert_called_once()
+        call_kwargs = mock_apply.call_args
+        assert call_kwargs.kwargs.get("countdown") == 5
 ```
 
 ---

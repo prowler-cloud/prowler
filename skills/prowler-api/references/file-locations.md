@@ -57,11 +57,26 @@
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
 | **Task Definitions** | `api/src/backend/tasks/tasks.py` | All `@shared_task` definitions |
-| **RLS Task Base** | `api/src/backend/config/celery.py` | `RLSTask` base class |
+| **RLS Task Base** | `api/src/backend/config/celery.py` | `RLSTask` base class (creates APITask on dispatch) |
 | **Task Decorators** | `api/src/backend/api/decorators.py` | `@set_tenant`, `@handle_provider_deletion` |
-| **Celery Config** | `api/src/backend/config/celery.py` | Celery app configuration |
-| **Beat Schedule** | `api/src/backend/tasks/beat.py` | Periodic task scheduling |
-| **Task Jobs** | `api/src/backend/tasks/jobs/` | `scan.py`, `deletion.py`, `backfill.py`, `export.py` |
+| **Celery Config** | `api/src/backend/config/celery.py` | Celery app, broker settings, visibility timeout |
+| **Django Settings** | `api/src/backend/config/settings/celery.py` | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` |
+| **Beat Schedule** | `api/src/backend/tasks/beat.py` | `schedule_provider_scan()`, `PeriodicTask` creation |
+| **Task Utilities** | `api/src/backend/tasks/utils.py` | `batched()`, `get_next_execution_datetime()` |
+
+### Task Jobs (Business Logic)
+
+| Job File | Purpose |
+|----------|---------|
+| `tasks/jobs/scan.py` | `perform_prowler_scan()`, `aggregate_findings()`, `aggregate_attack_surface()` |
+| `tasks/jobs/deletion.py` | `delete_provider()`, `delete_tenant()` |
+| `tasks/jobs/backfill.py` | Historical data backfill operations |
+| `tasks/jobs/export.py` | Output file generation (CSV, JSON, HTML) |
+| `tasks/jobs/report.py` | PDF report generation (ThreatScore, ENS, NIS2) |
+| `tasks/jobs/connection.py` | Provider/integration connection checks |
+| `tasks/jobs/integrations.py` | S3, Security Hub, Jira uploads |
+| `tasks/jobs/muting.py` | Historical findings muting |
+| `tasks/jobs/attack_paths/` | Attack paths scan (Neo4j/Cartography) |
 
 ## Key Line References
 

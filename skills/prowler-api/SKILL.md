@@ -249,9 +249,251 @@ def get_queryset(self):
 | Queue | Purpose |
 |-------|---------|
 | `scans` | Prowler scan execution |
-| `overview` | Dashboard aggregations |
+| `overview` | Dashboard aggregations (severity, attack surface) |
 | `compliance` | Compliance report generation |
-| `integrations` | External integrations (Jira, etc.) |
+| `integrations` | External integrations (Jira, S3, Security Hub) |
+| `deletion` | Provider/tenant deletion (async) |
+| `backfill` | Historical data backfill operations |
+| `scan-reports` | Output generation (CSV, JSON, HTML, PDF) |
+
+---
+
+## Task Composition (Canvas)
+
+Use Celery's Canvas primitives for complex workflows:
+
+### Chain (Sequential)
+
+```python
+from celery import chain
+
+# Tasks run sequentially: A → B → C
+chain(
+    task_a.si(tenant_id=tenant_id),
+    task_b.si(tenant_id=tenant_id),
+    task_c.si(tenant_id=tenant_id),
+).apply_async()
+```
+
+### Group (Parallel)
+
+```python
+from celery import group
+
+# Tasks run in parallel: A, B, C simultaneously
+group(
+    task_a.si(tenant_id=tenant_id),
+    task_b.si(tenant_id=tenant_id),
+    task_c.si(tenant_id=tenant_id),
+).apply_async()
+```
+
+### Combined Patterns (Real Example)
+
+```python
+# From tasks/tasks.py - Post-scan workflow
+chain(
+    perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+    group(
+        aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        generate_outputs_task.si(scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id),
+    ),
+    group(
+        generate_compliance_reports_task.si(tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id),
+        check_integrations_task.si(tenant_id=tenant_id, provider_id=provider_id, scan_id=scan_id),
+    ),
+).apply_async()
+```
+
+> **Note:** Use `.si()` (signature immutable) to prevent result passing between tasks. Use `.s()` if you need to pass results.
+
+---
+
+## Beat Scheduling (Periodic Tasks)
+
+### Creating a Scheduled Task
+
+```python
+import json
+from datetime import datetime, timedelta, timezone
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
+# 1. Create or get the schedule
+schedule, _ = IntervalSchedule.objects.get_or_create(
+    every=24,
+    period=IntervalSchedule.HOURS,
+)
+
+# 2. Create the periodic task
+periodic_task = PeriodicTask.objects.create(
+    interval=schedule,
+    name=f"scan-perform-scheduled-{provider_id}",  # Unique name
+    task="scan-perform-scheduled",  # Task name (not function name)
+    kwargs=json.dumps({
+        "tenant_id": str(tenant_id),
+        "provider_id": str(provider_id),
+    }),
+    one_off=False,
+    start_time=datetime.now(timezone.utc) + timedelta(hours=24),
+)
+```
+
+### Deleting a Scheduled Task
+
+```python
+PeriodicTask.objects.filter(name=f"scan-perform-scheduled-{provider_id}").delete()
+```
+
+### Avoiding Race Conditions
+
+```python
+# Use countdown to ensure DB transaction commits before task runs
+perform_scheduled_scan_task.apply_async(
+    kwargs={"tenant_id": tenant_id, "provider_id": provider_id},
+    countdown=5,  # Wait 5 seconds
+)
+```
+
+---
+
+## Advanced Task Patterns
+
+### Accessing Task Metadata with `bind=True`
+
+```python
+@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
+    task_id = self.request.id  # Current task ID
+    retries = self.request.retries  # Number of retries so far
+
+    # Use task_id for tracking
+    scan_instance.task_id = task_id
+    scan_instance.save()
+```
+
+### Logging with `get_task_logger`
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@shared_task(base=RLSTask, name="my-task")
+@set_tenant
+def my_task(provider_id: str):
+    # tenant_id is NOT in signature - @set_tenant pops it from kwargs
+    # but RLS context is already set by the decorator
+    logger.info(f"Processing provider {provider_id}")
+    logger.warning("Potential issue detected")
+    logger.error("Failed to process")
+
+# Call with tenant_id in kwargs (decorator handles it)
+my_task.delay(provider_id="...", tenant_id="...")
+```
+
+### Handling `SoftTimeLimitExceeded`
+
+```python
+from celery.exceptions import SoftTimeLimitExceeded
+
+@shared_task(
+    base=RLSTask,
+    soft_time_limit=300,  # 5 minutes - raises SoftTimeLimitExceeded
+    time_limit=360,       # 6 minutes - kills task (SIGKILL)
+)
+@set_tenant(keep_tenant=True)  # keep_tenant=True to pass tenant_id to function
+def long_running_task(tenant_id: str, scan_id: str):
+    try:
+        for batch in large_dataset:
+            process_batch(batch)
+    except SoftTimeLimitExceeded:
+        logger.warning(f"Task soft limit exceeded for scan {scan_id}, saving progress...")
+        save_partial_progress(scan_id)
+        raise  # Re-raise to mark task as failed
+```
+
+### `@set_tenant` Behavior
+
+| Mode | `tenant_id` in kwargs | `tenant_id` passed to function |
+|------|----------------------|-------------------------------|
+| `@set_tenant` (default) | Popped (removed) | NO - function doesn't receive it |
+| `@set_tenant(keep_tenant=True)` | Read but kept | YES - function receives it |
+
+```python
+# Example: @set_tenant (default) - tenant_id NOT in function signature
+@shared_task(base=RLSTask, name="provider-connection-check")
+@set_tenant
+def check_provider_connection_task(provider_id: str):  # No tenant_id param
+    return check_provider_connection(provider_id=provider_id)
+
+# Example: @set_tenant(keep_tenant=True) - tenant_id IN function signature
+@shared_task(base=RLSTask, name="scan-report", queue="scan-reports")
+@set_tenant(keep_tenant=True)
+def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):  # Has tenant_id
+    # tenant_id available for use inside the function
+    pass
+```
+
+### Deferred Execution with `countdown` and `eta`
+
+```python
+# Execute after 30 seconds
+my_task.apply_async(kwargs={...}, countdown=30)
+
+# Execute at specific time
+from datetime import datetime, timezone
+my_task.apply_async(
+    kwargs={...},
+    eta=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc)
+)
+```
+
+---
+
+## Celery Configuration
+
+### Broker Settings (config/celery.py)
+
+```python
+from celery import Celery
+
+celery_app = Celery("tasks")
+celery_app.config_from_object("django.conf:settings", namespace="CELERY")
+
+# Visibility timeout - CRITICAL for long-running tasks
+# If task takes longer than this, broker assumes worker died and re-queues
+BROKER_VISIBILITY_TIMEOUT = 86400  # 24 hours for scan tasks
+
+celery_app.conf.broker_transport_options = {
+    "visibility_timeout": BROKER_VISIBILITY_TIMEOUT
+}
+celery_app.conf.result_backend_transport_options = {
+    "visibility_timeout": BROKER_VISIBILITY_TIMEOUT
+}
+
+# Result settings
+celery_app.conf.update(
+    result_extended=True,   # Store additional task metadata
+    result_expires=None,    # Never expire results (we manage cleanup)
+)
+```
+
+### Django Settings (config/settings/celery.py)
+
+```python
+CELERY_BROKER_URL = f"redis://{VALKEY_HOST}:{VALKEY_PORT}/{VALKEY_DB}"
+CELERY_RESULT_BACKEND = "django-db"  # Store results in PostgreSQL  # trufflehog:ignore
+CELERY_TASK_TRACK_STARTED = True     # Track when tasks start
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+```
+
+### Global Time Limits (Optional)
+
+```python
+# In settings.py - applies to ALL tasks
+CELERY_TASK_SOFT_TIME_LIMIT = 3600   # 1 hour soft limit
+CELERY_TASK_TIME_LIMIT = 3660        # 1 hour + 1 minute hard limit
+```
 
 ---
 
