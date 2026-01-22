@@ -19,7 +19,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az acr update --name <registry-name> --public-network-enabled false",
-      "NativeIaC": "```bicep\n// Azure Container Registry with public network access disabled\nresource <example_resource_name> 'Microsoft.ContainerRegistry/registries@2023-06-01-preview' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: 'Basic'\n  }\n  properties: {\n    publicNetworkAccess: 'Disabled' // Critical: disables the public endpoint to prevent unrestricted access\n  }\n}\n```",
+      "NativeIaC": "```bicep\n// Azure Container Registry with public network access disabled\nresource <example_resource_name> 'Microsoft.ContainerRegistry/registries@2025-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: 'Basic'\n  }\n  properties: {\n    publicNetworkAccess: 'Disabled' // Critical: disables the public endpoint to prevent unrestricted access\n  }\n}\n```",
       "Other": "1. In the Azure portal, go to your Container Registry\n2. Select Settings > Networking\n3. On Public access, set Allow public network access to Disabled\n4. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_container_registry\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<location>\"\n  sku                 = \"Basic\"\n\n  public_network_access_enabled = false # Critical: disables public endpoint to block unrestricted access\n}\n```"
     },

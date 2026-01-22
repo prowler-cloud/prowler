@@ -18,7 +18,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az acr update --name <RegistryName> --resource-group <ResourceGroupName> --admin-enabled false",
-      "NativeIaC": "```bicep\n// Azure Container Registry with admin user disabled\nresource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: '<SKU_NAME>'\n  }\n  properties: {\n    adminUserEnabled: false // Critical: disables the admin user to pass the check\n  }\n}\n```",
+      "NativeIaC": "```bicep\n// Azure Container Registry with admin user disabled\nresource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: '<SKU_NAME>'\n  }\n  properties: {\n    adminUserEnabled: false // Critical: disables the admin user to pass the check\n  }\n}\n```",
       "Other": "1. In Azure Portal, go to Container registries and select your registry\n2. Under Settings, open Access keys\n3. Set Admin user to Disabled\n4. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_container_registry\" \"example\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<location>\"\n  sku                 = \"<SKU_NAME>\"\n\n  admin_enabled = false # Critical: disables ACR admin user to pass the check\n}\n```"
     },
