@@ -37,8 +37,7 @@ export default async function Findings({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const { searchParamsKey, encodedSort } =
-    extractSortAndKey(resolvedSearchParams);
+  const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // Check if the searchParams contain any date or scan filter
@@ -101,7 +100,6 @@ export default async function Findings({
         const resourceId = finding.relationships?.resources?.data?.[0]?.id;
         const scan = scanId ? scanDict[scanId] : undefined;
         const providerId = scan?.relationships?.provider?.data?.id;
-
         const resource = resourceId ? resourceDict[resourceId] : undefined;
         const provider = providerId ? providerDict[providerId] : undefined;
 

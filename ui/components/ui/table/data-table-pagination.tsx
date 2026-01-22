@@ -53,8 +53,12 @@ export function DataTablePagination({
 
   if (!metadata) return null;
 
-  const { currentPage: metaCurrentPage, totalPages, totalEntries, itemsPerPageOptions } =
-    getPaginationInfo(metadata);
+  const {
+    currentPage: metaCurrentPage,
+    totalPages,
+    totalEntries,
+    itemsPerPageOptions,
+  } = getPaginationInfo(metadata);
 
   // For prefixed pagination, read current page from URL instead of metadata
   const currentPage = paramPrefix

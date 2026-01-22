@@ -106,7 +106,9 @@ export function DataTable<TData, TValue>({
       {/* Table Toolbar */}
       {showToolbar && (
         <div className="flex items-center justify-between">
-          <div>{showSearch && <DataTableSearch paramPrefix={paramPrefix} />}</div>
+          <div>
+            {showSearch && <DataTableSearch paramPrefix={paramPrefix} />}
+          </div>
           {metadata && (
             <span className="text-text-neutral-secondary text-sm">
               {formattedTotal} Total Entries

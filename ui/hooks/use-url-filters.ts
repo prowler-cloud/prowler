@@ -61,7 +61,7 @@ export const useUrlFilters = () => {
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
       });
     },
-    [router, searchParams, pathname],
+    [router, searchParams, pathname, startTransition],
   );
 
   const clearFilter = useCallback(
@@ -80,7 +80,7 @@ export const useUrlFilters = () => {
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
       });
     },
-    [router, searchParams, pathname],
+    [router, searchParams, pathname, startTransition],
   );
 
   const clearAllFilters = useCallback(() => {
@@ -96,7 +96,7 @@ export const useUrlFilters = () => {
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
-  }, [router, searchParams, pathname]);
+  }, [router, searchParams, pathname, startTransition]);
 
   const hasFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
