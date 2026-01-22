@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 - Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
 
 ---
 
@@ -69,7 +70,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure AI Search service metadata to new format [(#9087)](https://github.com/prowler-cloud/prowler/pull/9087)
 - Update Azure AKS service metadata to new format [(#9611)](https://github.com/prowler-cloud/prowler/pull/9611)
 - Update Azure API Management service metadata to new format [(#9612)](https://github.com/prowler-cloud/prowler/pull/9612)
-- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
 
 ### Fixed
 
