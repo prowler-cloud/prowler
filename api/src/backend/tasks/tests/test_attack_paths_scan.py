@@ -494,7 +494,11 @@ class TestAttackPathsProwlerHelpers:
 
         # _enrich_and_flatten_batch queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
-        result = prowler_module._enrich_and_flatten_batch([finding_dict])
+        with patch(
+            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "default",
+        ):
+            result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 1
         assert result[0]["resource_uid"] == resource.uid
@@ -576,7 +580,11 @@ class TestAttackPathsProwlerHelpers:
 
         # _enrich_and_flatten_batch queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
-        result = prowler_module._enrich_and_flatten_batch([finding_dict])
+        with patch(
+            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "default",
+        ):
+            result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 3
         result_resource_uids = {r["resource_uid"] for r in result}
@@ -587,12 +595,12 @@ class TestAttackPathsProwlerHelpers:
             assert r["id"] == str(finding.id)
             assert r["status"] == "FAIL"
 
-    def test_enrich_and_flatten_batch_no_resources_logs_warning(
+    def test_enrich_and_flatten_batch_no_resources_skips(
         self,
         tenants_fixture,
         providers_fixture,
     ):
-        """Finding without resources should log warning and be skipped"""
+        """Finding without resources should be skipped"""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -640,15 +648,18 @@ class TestAttackPathsProwlerHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        # Mock logger to verify warning is logged for orphan findings
-        with patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger:
+        # Mock logger to verify no warning is emitted
+        with (
+            patch(
+                "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+                "default",
+            ),
+            patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger,
+        ):
             result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 0
-        mock_logger.warning.assert_called_once()
-        warning_message = mock_logger.warning.call_args[0][0]
-        assert str(finding.id) in warning_message
-        assert "no associated resources" in warning_message
+        mock_logger.warning.assert_not_called()
 
     def test_generator_is_lazy(self, providers_fixture):
         """Generator should not execute queries until iterated"""
