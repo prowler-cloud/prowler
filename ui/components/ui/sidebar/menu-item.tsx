@@ -36,7 +36,8 @@ export const MenuItem = ({
   const pathname = usePathname();
   // Extract only the pathname from href (without query parameters) for comparison
   const hrefPathname = href.split("?")[0];
-  const isActive = active !== undefined ? active : pathname.startsWith(hrefPathname);
+  const isActive =
+    active !== undefined ? active : pathname.startsWith(hrefPathname);
 
   // Show tooltip always for Prowler Hub, or when sidebar is collapsed
   const showTooltip = label === "Prowler Hub" ? !!tooltip : !isOpen;

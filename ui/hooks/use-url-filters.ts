@@ -25,7 +25,8 @@ export const useUrlFilters = () => {
   const [localIsPending, localStartTransition] = useTransition();
 
   const isPending = sharedTransition?.isPending ?? localIsPending;
-  const startTransition = sharedTransition?.startTransition ?? localStartTransition;
+  const startTransition =
+    sharedTransition?.startTransition ?? localStartTransition;
 
   const updateFilter = useCallback(
     (key: string, value: string | string[] | null) => {
