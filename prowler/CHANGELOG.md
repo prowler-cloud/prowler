@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.18.0] (Prowler UNRELEASED)
+
+### Changed
+
+- Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+
+---
+
 ## [5.17.0] (Prowler v5.17.0)
 
 ### Added
