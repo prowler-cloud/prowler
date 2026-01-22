@@ -8,16 +8,17 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler for OpenStack allows you to audit your OpenStack cloud infrastructure for security misconfigurations, including compute instances, networking, identity and access management, storage, and more.
 
+<Warning>
+Prowler currently supports **public cloud OpenStack providers** (OVH, Infomaniak, Vexxhost, etc.). Support for self-deployed OpenStack environments is not yet available and will be added in future releases.
+</Warning>
+
 ## Prerequisites
 
 Before running Prowler with the OpenStack provider, ensure you have:
 
-1. An OpenStack cloud account with at least one project
-2. OpenStack credentials with read-only access to the services you want to audit
-3. One of the following authentication methods configured (see [Authentication](/user-guide/providers/openstack/authentication)):
-   - A **clouds.yaml** configuration file (recommended)
-   - **Environment variables** with OpenStack credentials
-   - **Command-line arguments** with credentials
+1. An OpenStack public cloud account with at least one project
+2. Access to the Horizon dashboard or provider control panel
+3. Prowler CLI installed (see [Installation](/getting-started/installation/prowler-cli))
 
 <Note>
 Prowler requires OpenStack Identity API (Keystone) v3. Older versions are not supported.
@@ -36,79 +37,61 @@ Prowler requires OpenStack Identity API (Keystone) v3. Older versions are not su
 
 ### Step 1: Set Up Authentication
 
-Prowler supports three authentication methods. Choose the one that best fits your workflow:
+The quickest way to get started is using the `clouds.yaml` file downloaded from your OpenStack provider:
 
-#### Method 1: clouds.yaml Configuration File (Recommended)
+1. **Create an OpenStack user** in your provider's control panel (OVH, Infomaniak, etc.)
+2. **Access Horizon** (the OpenStack dashboard) from your provider
+3. **Navigate to Project → API Access**
+4. **Download the OpenStack clouds.yaml File** from the dropdown
+5. **Save the file** to `~/.config/openstack/clouds.yaml` (create the directory if needed)
 
-Create `~/.config/openstack/clouds.yaml`:
+```bash
+# Create the directory
+mkdir -p ~/.config/openstack
+
+# Move the downloaded file
+mv ~/Downloads/clouds.yaml ~/.config/openstack/clouds.yaml
+
+# Set secure permissions
+chmod 600 ~/.config/openstack/clouds.yaml
+```
+
+The downloaded file will contain all necessary credentials in the correct format:
 
 ```yaml
 clouds:
-  my-openstack:
+  openstack:
     auth:
-      auth_url: https://openstack.example.com:5000/v3
-      username: your-username
-      password: your-password
+      auth_url: https://auth.example-public-cloud.com/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
       project_id: your-project-id
       user_domain_name: Default
       project_domain_name: Default
-    region_name: RegionOne
+    region_name: GRA7
     identity_api_version: "3"
 ```
 
-#### Method 2: Environment Variables
-
-```bash
-export OS_AUTH_URL="https://openstack.example.com:5000/v3"
-export OS_USERNAME="your-username"
-export OS_PASSWORD="your-password"
-export OS_PROJECT_ID="your-project-id"
-export OS_REGION_NAME="RegionOne"
-```
-
-#### Method 3: Command-Line Arguments
-
-```bash
-# Pass credentials directly via CLI flags
-prowler openstack \
-  --auth-url https://openstack.example.com:5000/v3 \
-  --username your-username \
-  --password your-password \
-  --project-id your-project-id \
-  --region-name RegionOne
-```
-
 <Note>
-For detailed authentication instructions, including how to obtain credentials from different providers, see the [OpenStack Authentication guide](/user-guide/providers/openstack/authentication).
+For detailed step-by-step instructions with screenshots, see the [OpenStack Authentication guide](/user-guide/providers/openstack/authentication).
 </Note>
 
 ### Step 2: Run Your First Scan
 
-Run a baseline scan of your OpenStack cloud using the authentication method configured in Step 1:
+Run a baseline scan of your OpenStack cloud:
 
-**Using clouds.yaml (default location):**
 ```bash
-prowler openstack --clouds-yaml-cloud my-openstack
+prowler openstack --clouds-yaml-cloud openstack
 ```
 
-**Using clouds.yaml (custom location):**
-```bash
-prowler openstack --clouds-yaml-file /path/to/clouds.yaml --clouds-yaml-cloud my-openstack
-```
+Replace `openstack` with your cloud name if you customized it in the `clouds.yaml` file (e.g., `ovh-production`).
 
-**Using environment variables:**
-```bash
-prowler openstack
-```
+**Using a custom file location:**
 
-**Using command-line arguments:**
+If you saved `clouds.yaml` to a different location:
+
 ```bash
-prowler openstack \
-  --auth-url https://openstack.example.com:5000/v3 \
-  --username your-username \
-  --password your-password \
-  --project-id your-project-id \
-  --region-name RegionOne
+prowler openstack --clouds-yaml-file /path/to/clouds.yaml --clouds-yaml-cloud openstack
 ```
 
 Prowler will automatically discover and audit all supported OpenStack services in your project.
@@ -118,7 +101,7 @@ Prowler will automatically discover and audit all supported OpenStack services i
 Prowler outputs findings to the console and generates reports in multiple formats:
 
 ```console
-$ prowler openstack --clouds-yaml-cloud my-openstack
+$ prowler openstack --clouds-yaml-cloud openstack
 
        ___
       / _ \_ __ _____      _| | ___ _ __

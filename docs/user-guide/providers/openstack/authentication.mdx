@@ -2,176 +2,327 @@
 title: 'OpenStack Authentication'
 ---
 
-Prowler for OpenStack supports the following authentication methods:
-
-- [**clouds.yaml Configuration File**](#cloudsyaml-configuration-file-recommended) (**Recommended**)
-- [**Environment Variables**](#environment-variables)
-- [**Command-Line Arguments**](#command-line-arguments)
-
-## Required Credentials
-
-Prowler requires the following information to authenticate with OpenStack:
-
-| Credential | Description | Example |
-|------------|-------------|---------|
-| `OS_AUTH_URL` | Keystone authentication endpoint | `https://openstack.example.com:5000/v3` |
-| `OS_USERNAME` | OpenStack username | `admin` |
-| `OS_PASSWORD` | OpenStack password | `your-secure-password` |
-| `OS_PROJECT_ID` | Project or tenant identifier | `my-project-id` or UUID |
-| `OS_REGION_NAME` | Region name | `RegionOne` |
-| `OS_IDENTITY_API_VERSION` | Keystone API version (optional) | `3` (default) |
-| `OS_USER_DOMAIN_NAME` | User domain name (optional) | `Default` (default) |
-| `OS_PROJECT_DOMAIN_NAME` | Project domain name (optional) | `Default` (default) |
-
 <Warning>
-Ensure your OpenStack user has read-only access to all services you want to audit. If permissions are missing, some checks may fail or return incomplete results.
+Prowler currently supports **public cloud OpenStack providers** (OVH, Infomaniak, Vexxhost, etc.). Support for self-deployed OpenStack environments is not yet available and will be added in future releases.
 </Warning>
 
-## clouds.yaml Configuration File (Recommended)
+This guide shows how to obtain OpenStack credentials and configure Prowler to scan your OpenStack infrastructure using the recommended `clouds.yaml` authentication method.
 
-The `clouds.yaml` file is the standard OpenStack configuration format. This method is recommended because it:
-- Centralizes OpenStack credentials for multiple clouds
-- Is supported by all OpenStack clients and tools
-- Allows easy switching between different OpenStack environments
-- Keeps credentials separate from command-line history
+## Quick Start: Getting Your OpenStack Credentials
 
-### Step 1: Locate or Create clouds.yaml
+### Step 1: Create an OpenStack User (Public Cloud Provider)
 
-Prowler searches for `clouds.yaml` in these locations (in order):
+Before using Prowler, create a dedicated user in your OpenStack public cloud account. The process varies by provider:
 
-1. Current directory: `./clouds.yaml`
-2. User configuration: `~/.config/openstack/clouds.yaml`
-3. System-wide: `/etc/openstack/clouds.yaml`
+**OVH Public Cloud:**
+1. Log into the [OVH Control Panel](https://www.ovh.com/manager/)
+2. Navigate to **Public Cloud** → Select your project
+3. Click on **Users & Roles** in the left sidebar
+4. Click **Create User** or **Add User**
+5. Enter a username (e.g., `prowler-audit`)
+6. Assign appropriate roles (see [Read-Only Credentials](#read-only-credentials) section below)
+7. Click **Generate** to create the user
+8. **Save the password immediately** - it's only shown once
 
-Create the directory if it doesn't exist:
+**Other Public Cloud Providers:**
+- **Infomaniak**: Follow similar steps in your Public Cloud management interface
+- **Vexxhost**: Use the account dashboard to create OpenStack users
+- **Fuga Cloud**: Access user management through your account portal
 
-```bash
-mkdir -p ~/.config/openstack
-```
+<!-- SCREENSHOT LOCATION 1: OVH Control Panel showing Users & Roles page with "Create User" button -->
 
-### Step 2: Configure clouds.yaml
+### Step 2: Access the Horizon Dashboard
 
-Create or edit `~/.config/openstack/clouds.yaml` with your OpenStack credentials:
+Horizon is the standard OpenStack web interface available across all OpenStack providers. Access it through your provider:
 
-```yaml
-clouds:
-  production:
-    auth:
-      auth_url: https://openstack.example.com:5000/v3
-      username: admin
-      password: your-secure-password
-      project_id: my-project-id
-      user_domain_name: Default
-      project_domain_name: Default
-    region_name: RegionOne
-    identity_api_version: "3"
-```
+**OVH Public Cloud:**
+1. From the OVH Control Panel, go to **Public Cloud** → Your project
+2. Click on **Horizon** in the left sidebar
+3. Or directly access Horizon at the URL provided by OVH (typically shown in the dashboard)
+4. Log in with the user credentials created in Step 1
 
-You can define multiple cloud configurations:
-
-```yaml
-clouds:
-  production:
-    auth:
-      auth_url: https://prod.example.com:5000/v3
-      username: prod-user
-      password: prod-password
-      project_id: prod-project
-      user_domain_name: Default
-      project_domain_name: Default
-    region_name: RegionOne
-    identity_api_version: "3"
-
-  staging:
-    auth:
-      auth_url: https://staging.example.com:5000/v3
-      username: staging-user
-      password: staging-password
-      project_id: staging-project
-      user_domain_name: Default
-      project_domain_name: Default
-    region_name: RegionOne
-    identity_api_version: "3"
-```
-
-### Step 3: Use clouds.yaml With Prowler
-
-Run Prowler specifying the cloud name from your `clouds.yaml`:
-
-```bash
-prowler openstack --clouds-yaml-cloud production
-```
-
-Or specify a custom `clouds.yaml` file path:
-
-```bash
-prowler openstack --clouds-yaml-file /path/to/clouds.yaml --clouds-yaml-cloud production
-```
+**Other Providers:**
+- Look for "OpenStack Dashboard", "Horizon", or "Web Console" links in your account portal
+- The Horizon interface is standardized, so the following steps work across all providers
 
 <Note>
-The `--clouds-yaml-cloud` parameter is required when using `clouds.yaml` authentication.
+The Horizon dashboard interface is standardized across OpenStack providers, though branding and colors may vary. The navigation and functionality remain consistent.
 </Note>
 
-## Environment Variables
+<!-- SCREENSHOT LOCATION 2: How to access Horizon from OVH Control Panel (showing the Horizon button/link) -->
 
-Environment variables provide a flexible way to authenticate when `clouds.yaml` is not available or when you need to override specific values.
+### Step 3: Navigate to API Access
 
-### Step 1: Set Required Environment Variables
+Once logged into Horizon:
+
+1. In the left sidebar, click on **Project**
+2. Navigate to **API Access**
+3. You'll see the API Access page with information about your OpenStack endpoints
+
+<!-- SCREENSHOT LOCATION 3: Horizon dashboard showing navigation: Project → API Access -->
+
+### Step 4: Download the clouds.yaml File
+
+The `clouds.yaml` file contains all necessary credentials in the correct format for Prowler:
+
+1. On the API Access page, look for the **Download OpenStack RC File** dropdown button
+2. Click the dropdown and select **OpenStack clouds.yaml File**
+3. The file will be downloaded to your computer
+
+<!-- SCREENSHOT LOCATION 4: API Access page with "Download OpenStack RC File" dropdown showing "OpenStack clouds.yaml File" option highlighted -->
+
+<Note>
+The clouds.yaml file contains your password in plain text. Ensure you store it securely with appropriate file permissions (see [Security Best Practices](#security-best-practices) below).
+</Note>
+
+### Step 5: Configure clouds.yaml for Prowler
+
+You have two options for using the downloaded `clouds.yaml` file:
+
+#### Option 1: Use the Default Location (Recommended)
+
+Save the file to the default OpenStack configuration directory:
+
+```bash
+# Create the directory if it doesn't exist
+mkdir -p ~/.config/openstack
+
+# Move or copy the downloaded clouds.yaml file
+mv ~/Downloads/clouds.yaml ~/.config/openstack/clouds.yaml
+
+# Set secure file permissions
+chmod 600 ~/.config/openstack/clouds.yaml
+```
+
+The downloaded file will look similar to this:
+
+```yaml
+clouds:
+  openstack:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      project_name: your-project-name
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: GRA7
+    interface: public
+    identity_api_version: 3
+```
+
+You can customize the cloud name (e.g., change `openstack` to `ovh-production`):
+
+```yaml
+clouds:
+  ovh-production:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: GRA7
+    identity_api_version: "3"
+```
+
+#### Option 2: Use a Custom Location
+
+Keep the file in any location and specify the path when running Prowler:
+
+```bash
+# Save the clouds.yaml file anywhere
+mv ~/Downloads/clouds.yaml /path/to/my/clouds.yaml
+
+# Set secure file permissions
+chmod 600 /path/to/my/clouds.yaml
+```
+
+### Step 6: Run Prowler
+
+Now you can scan your OpenStack infrastructure:
+
+**Using the default location:**
+```bash
+prowler openstack --clouds-yaml-cloud openstack
+```
+
+Or if you customized the cloud name:
+```bash
+prowler openstack --clouds-yaml-cloud ovh-production
+```
+
+**Using a custom location:**
+```bash
+prowler openstack --clouds-yaml-file /path/to/my/clouds.yaml --clouds-yaml-cloud openstack
+```
+
+That's it! Prowler will authenticate with your OpenStack cloud and begin scanning.
+
+## Managing Multiple OpenStack Environments
+
+To scan multiple OpenStack projects or providers, add multiple cloud configurations to your `clouds.yaml`:
+
+```yaml
+clouds:
+  ovh-production:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-prod
+      password: prod-password
+      project_id: prod-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: GRA7
+    identity_api_version: "3"
+
+  ovh-staging:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-staging
+      password: staging-password
+      project_id: staging-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: SBG5
+    identity_api_version: "3"
+
+  infomaniak-production:
+    auth:
+      auth_url: https://api.pub1.infomaniak.cloud/identity/v3
+      username: infomaniak-user
+      password: infomaniak-password
+      project_id: infomaniak-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: dc3-a
+    identity_api_version: "3"
+```
+
+Then scan each environment separately:
+
+```bash
+prowler openstack --clouds-yaml-cloud ovh-production --output-directory ./reports/ovh-prod/
+prowler openstack --clouds-yaml-cloud ovh-staging --output-directory ./reports/ovh-staging/
+prowler openstack --clouds-yaml-cloud infomaniak-production --output-directory ./reports/infomaniak/
+```
+
+## Read-Only Credentials
+
+For security auditing, Prowler only needs **read-only access** to your OpenStack resources. This section explains how to configure read-only permissions.
+
+### Understanding OpenStack Roles
+
+OpenStack uses a role-based access control (RBAC) system. Common read-only roles include:
+
+| Role | Access Level | Recommended for Prowler |
+|------|--------------|------------------------|
+| **Reader** | Read-only access to all resources | ✅ **Recommended** |
+| **Viewer** | Read-only access (older deployments) | ✅ **Recommended** |
+| **Member** | Read and limited write access | ⚠️ Too permissive |
+| **Admin** | Full administrative access | ❌ **Not recommended** |
+
+<Warning>
+Avoid using administrator or member roles for security auditing. Reader or Viewer roles provide sufficient access for Prowler while maintaining security best practices.
+</Warning>
+
+### Assigning Read-Only Roles
+
+The method for assigning roles varies by provider:
+
+#### OVH Public Cloud
+
+OVH provides pre-configured read-only roles:
+
+1. When creating a user (Users & Roles page), select:
+   - **Compute Operator** (read-only compute access)
+   - **ObjectStore Operator** (read-only object storage access)
+   - **Network Operator** (read-only network access)
+
+2. Alternatively, assign the **Viewer** role for global read-only access
+
+#### Generic OpenStack (via Horizon)
+
+For other OpenStack providers or self-managed deployments:
+
+1. Log into Horizon as an administrator
+2. Navigate to **Identity** → **Projects**
+3. Click on your project → **Manage Members**
+4. Find your Prowler user
+5. Assign the **Reader** or **Viewer** role
+6. Remove any **Member** or **Admin** roles
+
+#### Command-Line Assignment (Advanced)
+
+If you have OpenStack CLI access, assign the reader role:
+
+```bash
+# Assign reader role to user for a project
+openstack role add --user prowler-audit --project my-project reader
+
+# Verify role assignments
+openstack role assignment list --user prowler-audit --project my-project
+```
+
+### Verifying Read-Only Access
+
+After assigning read-only roles, verify the user cannot make changes:
+
+1. Log into Horizon with the Prowler user credentials
+2. Attempt to create or modify a resource (e.g., create an instance)
+3. The action should be denied or the UI should show read-only mode
+
+<Note>
+Some OpenStack deployments may use custom role names. Consult your OpenStack administrator to identify the appropriate read-only role for your environment.
+</Note>
+
+## Alternative Authentication Methods
+
+While `clouds.yaml` is the recommended method, Prowler also supports these alternatives:
+
+### Environment Variables
+
+Set OpenStack credentials as environment variables:
 
 ```bash
 export OS_AUTH_URL="https://openstack.example.com:5000/v3"
-export OS_USERNAME="admin"
+export OS_USERNAME="prowler-audit"
 export OS_PASSWORD="your-secure-password"
-export OS_PROJECT_ID="my-project-id"
+export OS_PROJECT_ID="your-project-id"
 export OS_REGION_NAME="RegionOne"
-```
-
-### Step 2: Set Optional Environment Variables
-
-```bash
 export OS_IDENTITY_API_VERSION="3"
 export OS_USER_DOMAIN_NAME="Default"
 export OS_PROJECT_DOMAIN_NAME="Default"
 ```
 
-<Note>
-If optional variables are not set, Prowler uses these defaults:
-- `OS_IDENTITY_API_VERSION`: `3`
-- `OS_USER_DOMAIN_NAME`: `Default`
-- `OS_PROJECT_DOMAIN_NAME`: `Default`
-</Note>
-
-### Step 3: Run Prowler
+Then run Prowler:
 
 ```bash
 prowler openstack
 ```
 
-## Command-Line Arguments
-
-Command-line arguments take precedence over environment variables but not over `clouds.yaml`. This method is useful for quick tests or automated scripts.
-
-### Available Arguments
-
-Run Prowler with explicit credentials:
+You can also source the OpenStack RC file downloaded from Horizon:
 
 ```bash
-prowler openstack \
-  --auth-url https://openstack.example.com:5000/v3 \
-  --username admin \
-  --password your-secure-password \
-  --project-id my-project-id \
-  --region-name RegionOne
+# Download "OpenStack RC File v3" from Horizon API Access page
+source openrc.sh
+# Enter password when prompted
+
+prowler openstack
 ```
 
-### Optional Arguments
+### Command-Line Arguments
+
+Pass credentials directly via CLI flags:
 
 ```bash
 prowler openstack \
   --auth-url https://openstack.example.com:5000/v3 \
-  --username admin \
+  --username prowler-audit \
   --password your-secure-password \
-  --project-id my-project-id \
+  --project-id your-project-id \
   --region-name RegionOne \
   --identity-api-version 3 \
   --user-domain-name Default \
@@ -179,7 +330,7 @@ prowler openstack \
 ```
 
 <Warning>
-Avoid passing passwords directly via command-line arguments in production environments, as they may appear in shell history or process listings. Use `clouds.yaml` or environment variables instead.
+Avoid passing passwords via command-line arguments in production environments. Commands may appear in shell history, process listings, or logs. Use `clouds.yaml` or environment variables instead.
 </Warning>
 
 ## Authentication Priority
@@ -187,237 +338,94 @@ Avoid passing passwords directly via command-line arguments in production enviro
 When multiple authentication methods are configured, Prowler uses this priority order:
 
 1. **clouds.yaml** (if `--clouds-yaml-file` or `--clouds-yaml-cloud` is provided)
-2. **Command-line arguments + Environment variables** (command-line arguments override environment variables)
+2. **Command-line arguments + Environment variables** (CLI arguments override environment variables)
 
-## How to Obtain OpenStack Credentials
+## Security Best Practices
 
-The method for obtaining OpenStack credentials depends on your OpenStack provider. Below are general instructions and provider-specific guides.
+### File Permissions
 
-### General Instructions
-
-For most OpenStack deployments:
-
-1. **Log into OpenStack Dashboard (Horizon)**
-   - Access your OpenStack web interface (usually at `https://your-openstack-domain/dashboard`)
-
-2. **Navigate to API Access**
-   - Go to **Project → API Access**
-   - Or **Identity → Projects → Your Project → API Access**
-
-3. **Download OpenStack RC File**
-   - Click **Download OpenStack RC File v3**
-   - This file contains environment variables with your credentials
-   - Source the file: `source openrc.sh` (it will prompt for your password)
-
-4. **Create Application Credentials (Recommended)**
-   - Go to **Identity → Application Credentials**
-   - Click **Create Application Credential**
-   - Give it a descriptive name (e.g., "Prowler Security Audit")
-   - Optionally restrict roles or set expiration
-   - Download the `clouds.yaml` file or copy the credentials
-
-### OVH Public Cloud
-
-OVH is one of the largest OpenStack providers. Follow these steps to obtain credentials:
-
-#### Step 1: Access OVH Control Panel
-
-1. Log into the OVH Control Panel at [https://www.ovh.com/manager/](https://www.ovh.com/manager/)
-2. Navigate to **Public Cloud** in the left menu
-3. Select your Public Cloud project
-
-#### Step 2: Create an OpenStack User
-
-1. Click on **Users & Roles** in the left sidebar
-2. Click **Create User** or **Add User**
-3. Enter a username (e.g., "prowler-audit")
-4. Assign appropriate roles:
-   - **Administrator**: Full read/write access (not recommended for security audits)
-   - **Compute Operator**: Read-only access to compute resources
-   - **ObjectStore Operator**: Read-only access to object storage
-   - **For security audits**: Select read-only roles for all services
-
-5. Click **Generate** to create the user
-6. **Save the password immediately** - OVH only shows it once
-
-#### Step 3: Download OpenStack Configuration
-
-1. After creating the user, click on the **wrench icon** next to the user
-2. Select **Download OpenStack configuration file**
-3. Choose **OpenStack RC file v3** or **clouds.yaml**
-
-**OpenStack RC file example:**
-```bash
-#!/usr/bin/env bash
-export OS_AUTH_URL=https://auth.cloud.ovh.net/v3
-export OS_IDENTITY_API_VERSION=3
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_USERNAME="user-xxxxxxxxxx"
-export OS_PROJECT_ID="project-id-xxxx"
-export OS_REGION_NAME="GRA7"
-if [ -z "$OS_PASSWORD" ]; then
-    echo "Please enter your OpenStack Password: "
-    read -sr OS_PASSWORD_INPUT
-    export OS_PASSWORD=$OS_PASSWORD_INPUT
-fi
-```
-
-**clouds.yaml example:**
-```yaml
-clouds:
-  ovh:
-    auth:
-      auth_url: https://auth.cloud.ovh.net/v3
-      username: user-xxxxxxxxxx
-      password: your-password-here
-      project_id: project-id-xxxx
-      user_domain_name: Default
-      project_domain_name: Default
-    region_name: GRA7
-    identity_api_version: "3"
-```
-
-#### Step 4: Run Prowler With OVH Credentials
-
-**Using clouds.yaml:**
-```bash
-# Save the clouds.yaml to ~/.config/openstack/clouds.yaml
-mkdir -p ~/.config/openstack
-nano ~/.config/openstack/clouds.yaml
-# Paste the configuration above
-
-# Run Prowler
-prowler openstack --clouds-yaml-cloud ovh
-```
-
-**Using environment variables:**
-```bash
-# Source the RC file
-source openrc.sh
-# Enter password when prompted
-
-# Run Prowler
-prowler openstack
-```
-
-#### OVH-Specific Notes
-
-- **Auth URL**: OVH uses `https://auth.cloud.ovh.net/v3`
-- **Regions**: OVH has multiple regions (GRA7, SBG5, BHS5, DE1, UK1, WAW1, etc.)
-- **Project ID**: Your OVH project ID (visible in the control panel)
-- **OpenStack Version**: OVH runs recent OpenStack versions with standard APIs
-
-<Note>
-OVH Public Cloud provides full OpenStack API compatibility. All standard OpenStack features and Prowler checks are supported.
-</Note>
-
-### Other OpenStack Providers
-
-Other popular OpenStack providers include:
-
-- **Infomaniak**: Public Cloud service in Switzerland
-  - Auth URL: `https://api.pub1.infomaniak.cloud/identity/v3`
-  - Regions: `dc3-a`, `dc3-b` (Geneva datacenters)
-
-- **Vexxhost**: Canadian OpenStack provider
-  - Auth URL: Available in your account dashboard
-  - Follow the general instructions above
-
-- **Fuga Cloud**: Netherlands-based OpenStack provider
-  - Auth URL: Available in your account dashboard
-  - Follow the general instructions above
-
-- **Private OpenStack**: If you run your own OpenStack deployment
-  - Consult your OpenStack administrator
-  - Request read-only credentials for security auditing
-  - Download the OpenStack RC file or `clouds.yaml` from Horizon
-
-## Best Practices
-
-### Security Recommendations
-
-- **Use clouds.yaml with proper file permissions** - Set permissions to `600` to prevent unauthorized access:
-  ```bash
-  chmod 600 ~/.config/openstack/clouds.yaml
-  ```
-- **Use Application Credentials** - They can be scoped and revoked without changing your main password
-- **Use read-only roles** - Grant minimum necessary permissions for security auditing
-- **Rotate credentials regularly** - Create new credentials periodically and revoke old ones
-- **Avoid hardcoding passwords** - Use environment variables or `clouds.yaml` instead of command-line arguments
-- **Store credentials securely** - Consider using a secrets manager for production environments
-
-### Multi-Cloud Management
-
-When auditing multiple OpenStack clouds, use `clouds.yaml` with different cloud names:
-
-```yaml
-clouds:
-  production:
-    auth:
-      auth_url: https://prod.example.com:5000/v3
-      # ... production credentials ...
-  staging:
-    auth:
-      auth_url: https://staging.example.com:5000/v3
-      # ... staging credentials ...
-  ovh-project-1:
-    auth:
-      auth_url: https://auth.cloud.ovh.net/v3
-      # ... OVH project 1 credentials ...
-  ovh-project-2:
-    auth:
-      auth_url: https://auth.cloud.ovh.net/v3
-      # ... OVH project 2 credentials ...
-```
-
-Run audits against different clouds:
+Protect your `clouds.yaml` file from unauthorized access:
 
 ```bash
-prowler openstack --clouds-yaml-cloud production
-prowler openstack --clouds-yaml-cloud staging
-prowler openstack --clouds-yaml-cloud ovh-project-1
+# Set read/write for owner only
+chmod 600 ~/.config/openstack/clouds.yaml
+
+# Verify permissions
+ls -la ~/.config/openstack/clouds.yaml
+# Should show: -rw------- (600)
 ```
+
+### Credential Management
+
+- **Use dedicated audit users**: Create separate OpenStack users specifically for Prowler audits
+- **Use read-only roles**: Assign only Reader or Viewer roles to limit access
+- **Rotate credentials regularly**: Change passwords and regenerate credentials periodically
+- **Use Application Credentials**: For advanced setups, use OpenStack Application Credentials with scoped permissions and expiration dates
+- **Avoid hardcoding passwords**: Never commit `clouds.yaml` files with passwords to version control
+- **Use secrets managers**: For production environments, consider using tools like HashiCorp Vault or AWS Secrets Manager to store credentials
+
+### Network Security
+
+- **Use HTTPS**: Always connect to OpenStack endpoints via HTTPS
+- **Verify SSL certificates**: Avoid using `--insecure` flag in production
+- **Restrict network access**: Use firewall rules to limit access to OpenStack APIs
+- **Use VPN or private networks**: When possible, run Prowler from within your private network
 
 ## Troubleshooting
 
 ### "Missing mandatory OpenStack environment variables" Error
 
-This error occurs when required credentials are not set. Ensure all mandatory variables are configured:
+This error occurs when required credentials are not configured:
 
 ```bash
 # Check current environment variables
 env | grep OS_
 
-# Verify all required variables are set
-echo $OS_AUTH_URL
-echo $OS_USERNAME
-echo $OS_PASSWORD
-echo $OS_PROJECT_ID
-echo $OS_REGION_NAME
+# Verify clouds.yaml exists and is readable
+cat ~/.config/openstack/clouds.yaml
 ```
+
+**Solution**: Ensure all required credentials are configured using one of the authentication methods above.
 
 ### "Failed to create OpenStack connection" Error
 
 This error indicates authentication failure. Verify:
 
-- Auth URL is correct and accessible
-- Username and password are correct
-- Project ID exists and you have access
-- Network connectivity to the OpenStack endpoint
-- SSL/TLS certificates are valid (use `--insecure` flag only for testing)
+- ✅ Auth URL is correct and accessible: `curl -k https://auth-url/v3`
+- ✅ Username and password are correct
+- ✅ Project ID exists and you have access
+- ✅ Network connectivity to the OpenStack endpoint
+- ✅ SSL/TLS certificates are valid
+
+**Solution**: Test authentication using the OpenStack CLI:
+
+```bash
+openstack --os-cloud openstack server list
+```
+
+If this fails, your credentials or network connectivity need attention.
 
 ### "Cloud 'name' not found in clouds.yaml" Error
 
 This error occurs when the specified cloud name doesn't exist in `clouds.yaml`:
 
+**Solution**:
 - Verify the cloud name matches exactly (case-sensitive)
-- Check the `clouds.yaml` file location
-- Ensure proper YAML syntax
+- Check your `clouds.yaml` file for the correct cloud name:
+  ```bash
+  cat ~/.config/openstack/clouds.yaml
+  ```
+- Ensure proper YAML syntax (use a YAML validator if needed)
 
 ### "Unable to enrich OpenStack identity information" Warning
 
-This warning is non-critical. Prowler continues with basic identity information if it cannot retrieve additional details from Keystone.
+This warning is **non-critical**. Prowler continues with basic identity information if it cannot retrieve additional details from Keystone.
+
+**Common causes**:
+- User lacks permissions to read identity information
+- Temporary API connectivity issue
+
+**Solution**: This warning can typically be ignored. If you want to resolve it, ensure your user has the Reader role on the identity service.
 
 ### SSL Certificate Errors
 
@@ -428,4 +436,49 @@ If encountering SSL certificate errors with self-signed certificates:
 prowler openstack --insecure
 ```
 
-For production, add the certificate to your system's trust store or configure OpenStack SDK to use custom CA certificates.
+**Production solution**: Add the certificate to your system's trust store:
+
+```bash
+# Linux (Ubuntu/Debian)
+sudo cp custom-ca.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates
+
+# macOS
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain custom-ca.crt
+```
+
+### Permission Denied Errors
+
+If specific checks fail due to insufficient permissions:
+
+1. Verify role assignments:
+   ```bash
+   openstack role assignment list --user prowler-audit --project your-project
+   ```
+
+2. Ensure the user has Reader or Viewer roles
+
+3. Check if specific services require additional permissions (consult your OpenStack administrator)
+
+## Next Steps
+
+- [Getting Started with OpenStack](/user-guide/providers/openstack/getting-started-openstack) - Run your first scan
+- [OpenStack Services](/user-guide/providers/openstack/services) - Learn about supported services and checks
+- [Compliance Frameworks](/user-guide/cli/tutorials/compliance) - Map findings to compliance standards
+- [Mutelist](/user-guide/cli/tutorials/mutelist) - Suppress known findings and false positives
+
+## Additional Resources
+
+### Provider-Specific Documentation
+
+- **OVH Public Cloud**: [OpenStack Documentation](https://docs.ovh.com/gb/en/public-cloud/)
+- **Infomaniak**: [Public Cloud Guide](https://www.infomaniak.com/en/hosting/public-cloud)
+- **Vexxhost**: [OpenStack Documentation](https://docs.vexxhost.com/)
+- **Fuga Cloud**: [User Documentation](https://my.fuga.cloud/docs/)
+
+### OpenStack References
+
+- [OpenStack Documentation](https://docs.openstack.org/)
+- [OpenStack Security Guide](https://docs.openstack.org/security-guide/)
+- [Application Credentials](https://docs.openstack.org/keystone/latest/user/application_credentials.html)
+- [clouds.yaml Format](https://docs.openstack.org/python-openstackclient/latest/configuration/index.html)
