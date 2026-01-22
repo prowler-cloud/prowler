@@ -32,7 +32,6 @@ class ApiConfig(AppConfig):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
         from api.attack_paths import database as graph_database
-        from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
@@ -66,8 +65,6 @@ class ApiConfig(AppConfig):
         else:
             graph_database.init_driver()
             atexit.register(graph_database.close_driver)
-
-        load_prowler_compliance()
 
     def _ensure_crypto_keys(self):
         """
