@@ -8,7 +8,7 @@ import { Input } from "@/components/shadcn/input/input";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { cn } from "@/lib/utils";
 
-const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_DEBOUNCE_MS = 500;
 
 export const DataTableSearch = () => {
   const searchParams = useSearchParams();
