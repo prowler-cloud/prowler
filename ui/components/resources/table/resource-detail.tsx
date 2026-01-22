@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
-import { getFindingById } from "@/actions/findings";
+import { getFindingById, getLatestFindings } from "@/actions/findings";
 import { getResourceById } from "@/actions/resources";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { DataTableRowActions } from "@/components/findings/table";
@@ -38,39 +38,31 @@ import {
 import {
   DataTable,
   DataTableColumnHeader,
+  Severity,
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
-import { FindingProps, ProviderType, ResourceProps } from "@/types";
-
-const SEVERITY_ORDER = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-  informational: 4,
-} as const;
-
-type SeverityLevel = keyof typeof SEVERITY_ORDER;
+import {
+  FindingProps,
+  MetaDataProps,
+  ProviderType,
+  ResourceProps,
+} from "@/types";
 
 interface ResourceFinding {
   type: "findings";
   id: string;
   attributes: {
     status: "PASS" | "FAIL" | "MANUAL";
-    severity: SeverityLevel;
+    severity: Severity;
     muted?: boolean;
     updated_at?: string;
     check_metadata?: {
       checktitle?: string;
     };
   };
-}
-
-interface FindingReference {
-  id: string;
 }
 
 const renderValue = (value: string | null | undefined) => {
@@ -233,6 +225,8 @@ export const ResourceDetail = ({
   onOpenChange,
 }: ResourceDetailProps) => {
   const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
+  const [findingsMetadata, setFindingsMetadata] =
+    useState<MetaDataProps | null>(null);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
@@ -241,11 +235,18 @@ export const ResourceDetail = ({
   const [findingDetails, setFindingDetails] = useState<FindingProps | null>(
     null,
   );
+  const [findingDetailLoading, setFindingDetailLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [activeTab, setActiveTab] = useState("overview");
   const [metadataCopied, setMetadataCopied] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Read pagination and search from URL with prefix to avoid conflicts with main table
+  const currentPage = parseInt(searchParams.get("findingsPage") || "1", 10);
+  const pageSize = parseInt(searchParams.get("findingsPageSize") || "10", 10);
+  const searchQuery = searchParams.get("findingsSearch") || "";
 
   const resource = resourceDetails;
   const resourceId = resource.id;
@@ -265,49 +266,68 @@ export const ResourceDetail = ({
     setTimeout(() => setMetadataCopied(false), 2000);
   };
 
+  // Load resource tags (separate from findings)
+  useEffect(() => {
+    const loadResourceTags = async () => {
+      try {
+        const resourceData = await getResourceById(resourceId, {
+          fields: ["tags"],
+        });
+        if (resourceData?.data) {
+          setResourceTags(resourceData.data.attributes.tags || {});
+        }
+      } catch (err) {
+        console.error("Error loading resource tags:", err);
+        setResourceTags({});
+      }
+    };
+
+    if (resourceId) {
+      loadResourceTags();
+    }
+  }, [resourceId]);
+
+  // Load findings with server-side pagination and search
   useEffect(() => {
     const loadFindings = async () => {
       setFindingsLoading(true);
 
       try {
-        const resourceData = await getResourceById(resourceId, {
-          include: ["findings"],
-          fields: ["tags", "findings"],
+        const findingsResponse = await getLatestFindings({
+          page: currentPage,
+          pageSize,
+          query: searchQuery,
+          sort: "severity,-inserted_at",
+          filters: {
+            "filter[resource_uid]": attributes.uid,
+            "filter[status]": "FAIL",
+          },
         });
 
-        if (resourceData?.data) {
-          setResourceTags(resourceData.data.attributes.tags || {});
-
-          if (resourceData.data.relationships?.findings) {
-            const findingsDict = createDict("findings", resourceData);
-            const findings =
-              resourceData.data.relationships.findings.data?.map(
-                (finding: FindingReference) => findingsDict[finding.id],
-              ) || [];
-            setFindingsData(findings as ResourceFinding[]);
-          } else {
-            setFindingsData([]);
-          }
+        if (findingsResponse?.data) {
+          setFindingsMetadata(findingsResponse.meta || null);
+          setFindingsData(findingsResponse.data as ResourceFinding[]);
         } else {
           setFindingsData([]);
-          setResourceTags({});
+          setFindingsMetadata(null);
         }
       } catch (err) {
         console.error("Error loading findings:", err);
         setFindingsData([]);
-        setResourceTags({});
+        setFindingsMetadata(null);
       } finally {
         setFindingsLoading(false);
       }
     };
 
-    if (resourceId) {
+    if (attributes.uid) {
       loadFindings();
     }
-  }, [resourceId]);
+  }, [attributes.uid, currentPage, pageSize, searchQuery]);
 
   const navigateToFinding = async (findingId: string) => {
     setSelectedFindingId(findingId);
+    setFindingDetailLoading(true);
 
     try {
       const findingData = await getFindingById(
@@ -334,12 +354,15 @@ export const ResourceDetail = ({
       }
     } catch (error) {
       console.error("Error fetching finding:", error);
+    } finally {
+      setFindingDetailLoading(false);
     }
   };
 
   const handleBackToResource = () => {
     setSelectedFindingId(null);
     setFindingDetails(null);
+    setFindingDetailLoading(false);
   };
 
   const handleMuteComplete = () => {
@@ -347,22 +370,20 @@ export const ResourceDetail = ({
     router.refresh();
   };
 
-  // Filter and sort failed findings by severity
-  const failedFindings = findingsData
-    .filter((f) => f?.attributes?.status === "FAIL")
-    .sort((a, b) => {
-      const severityA = (a?.attributes?.severity?.toLowerCase() ||
-        "informational") as SeverityLevel;
-      const severityB = (b?.attributes?.severity?.toLowerCase() ||
-        "informational") as SeverityLevel;
-      return (
-        (SEVERITY_ORDER[severityA] ?? 999) - (SEVERITY_ORDER[severityB] ?? 999)
-      );
-    });
+  // Findings are already filtered (FAIL only) and sorted by the server
+  const failedFindings = findingsData;
 
   const selectableRowCount = failedFindings.filter(
     (f) => !f.attributes.muted,
   ).length;
+
+  // Reset selection when page changes
+  useEffect(() => {
+    setRowSelection({});
+  }, [currentPage, pageSize]);
+
+  // Calculate total findings from metadata for tab title
+  const totalFindings = findingsMetadata?.pagination?.count || 0;
 
   const getRowCanSelect = (row: Row<ResourceFinding>): boolean =>
     !row.original.attributes.muted;
@@ -399,12 +420,21 @@ export const ResourceDetail = ({
         mode="custom"
         customItems={buildCustomBreadcrumbs(
           attributes.name,
-          findingTitle,
+          findingDetailLoading ? "Loading..." : findingTitle,
           handleBackToResource,
         )}
       />
 
-      {findingDetails && <FindingDetail findingDetails={findingDetails} />}
+      {findingDetailLoading ? (
+        <div className="flex items-center justify-center gap-2 py-8">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <p className="text-text-neutral-secondary text-sm">
+            Loading finding details...
+          </p>
+        </div>
+      ) : (
+        findingDetails && <FindingDetail findingDetails={findingDetails} />
+      )}
     </div>
   );
 
@@ -469,11 +499,11 @@ export const ResourceDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="findings">
-            Findings {failedFindings.length > 0 && `(${failedFindings.length})`}
+            Findings {totalFindings > 0 && `(${totalFindings})`}
           </TabsTrigger>
         </TabsList>
 
@@ -567,26 +597,19 @@ export const ResourceDetail = ({
                 Loading findings...
               </p>
             </div>
-          ) : failedFindings.length > 0 ? (
+          ) : (
             <>
               <DataTable
                 columns={columns}
                 data={failedFindings}
+                metadata={findingsMetadata ?? undefined}
+                showSearch
+                paramPrefix="findings"
+                disableScroll
                 enableRowSelection
                 rowSelection={rowSelection}
                 onRowSelectionChange={setRowSelection}
                 getRowCanSelect={getRowCanSelect}
-                showSearch
-                clientSidePagination
-                defaultPageSize={10}
-                clientSearchFilter={(row, searchTerm) => {
-                  const term = searchTerm.toLowerCase();
-                  const title =
-                    row.attributes.check_metadata?.checktitle?.toLowerCase() ||
-                    "";
-                  const severity = row.attributes.severity?.toLowerCase() || "";
-                  return title.includes(term) || severity.includes(term);
-                }}
               />
               {selectedFindingIds.length > 0 && (
                 <FloatingMuteButton
@@ -596,10 +619,6 @@ export const ResourceDetail = ({
                 />
               )}
             </>
-          ) : (
-            <p className="text-text-neutral-secondary py-8 text-center">
-              No failed findings found for this resource.
-            </p>
           )}
         </TabsContent>
       </Tabs>
