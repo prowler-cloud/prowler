@@ -10,6 +10,19 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.18.1] (Prowler v5.17.1)
+
+### 🔄 Changed
+
+- Improve API startup process by `manage.py` argument detection [(#9856)](https://github.com/prowler-cloud/prowler/pull/9856)
+- Deleting providers don't try to delete a `None` Neo4j database when an Attack Paths scan is scheduled [(#9858)](https://github.com/prowler-cloud/prowler/pull/9858)
+
+### 🐞 Fixed
+
+- Use replica database for reading Findings to add them to the Attack Paths graph [(#9861)](https://github.com/prowler-cloud/prowler/pull/9861)
+
+---
+
 ## [1.18.0] (Prowler v5.17.0)
 
 ### 🚀 Added
