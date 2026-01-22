@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircleIcon, SearchIcon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Input } from "@/components/shadcn/input/input";
@@ -10,8 +10,15 @@ import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 500;
 
-export const DataTableSearch = () => {
+interface DataTableSearchProps {
+  /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsSearch") */
+  paramPrefix?: string;
+}
+
+export const DataTableSearch = ({ paramPrefix = "" }: DataTableSearchProps) => {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const { updateFilter } = useUrlFilters();
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,18 +28,22 @@ export const DataTableSearch = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Determine param names based on prefix
+  const searchParam = paramPrefix ? `${paramPrefix}Search` : "filter[search]";
+  const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
+
   // Keep expanded if there's a value or input is focused
   const shouldStayExpanded = value.length > 0 || isFocused;
 
   // Sync with URL on mount
   useEffect(() => {
-    const searchFromUrl = searchParams.get("filter[search]") || "";
+    const searchFromUrl = searchParams.get(searchParam) || "";
     setValue(searchFromUrl);
     // If there's a search value, start expanded
     if (searchFromUrl) {
       setIsExpanded(true);
     }
-  }, [searchParams]);
+  }, [searchParams, searchParam]);
 
   // Handle input change with debounce
   const handleChange = (newValue: string) => {
@@ -42,15 +53,32 @@ export const DataTableSearch = () => {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    if (newValue) {
+    // If using prefix, handle URL updates directly instead of useUrlFilters
+    if (paramPrefix) {
       setIsLoading(true);
       debounceTimeoutRef.current = setTimeout(() => {
-        updateFilter("search", newValue);
+        const params = new URLSearchParams(searchParams.toString());
+        if (newValue) {
+          params.set(searchParam, newValue);
+        } else {
+          params.delete(searchParam);
+        }
+        params.set(pageParam, "1"); // Reset to first page
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
         setIsLoading(false);
       }, SEARCH_DEBOUNCE_MS);
     } else {
-      setIsLoading(false);
-      updateFilter("search", null);
+      // Original behavior for non-prefixed search
+      if (newValue) {
+        setIsLoading(true);
+        debounceTimeoutRef.current = setTimeout(() => {
+          updateFilter("search", newValue);
+          setIsLoading(false);
+        }, SEARCH_DEBOUNCE_MS);
+      } else {
+        setIsLoading(false);
+        updateFilter("search", null);
+      }
     }
   };
 

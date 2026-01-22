@@ -24,6 +24,8 @@ import { MetaDataProps } from "@/types";
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
   disableScroll?: boolean;
+  /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
+  paramPrefix?: string;
 }
 
 const NAV_BUTTON_STYLES = {
@@ -35,18 +37,29 @@ const NAV_BUTTON_STYLES = {
 export function DataTablePagination({
   metadata,
   disableScroll = false,
+  paramPrefix = "",
 }: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialPageSize = searchParams.get("pageSize") ?? "10";
+
+  // Determine param names based on prefix
+  const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
+  const pageSizeParam = paramPrefix ? `${paramPrefix}PageSize` : "pageSize";
+
+  const initialPageSize = searchParams.get(pageSizeParam) ?? "10";
 
   const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
 
   if (!metadata) return null;
 
-  const { currentPage, totalPages, totalEntries, itemsPerPageOptions } =
+  const { currentPage: metaCurrentPage, totalPages, totalEntries, itemsPerPageOptions } =
     getPaginationInfo(metadata);
+
+  // For prefixed pagination, read current page from URL instead of metadata
+  const currentPage = paramPrefix
+    ? parseInt(searchParams.get(pageParam) || "1", 10)
+    : metaCurrentPage;
 
   const createPageUrl = (pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);
@@ -60,7 +73,7 @@ export function DataTablePagination({
       return `${pathname}?${params.toString()}`;
     }
 
-    params.set("page", pageNumber.toString());
+    params.set(pageParam, pageNumber.toString());
 
     // Ensure that scanId, id and version are preserved
     if (scanId) params.set("scanId", scanId);
@@ -94,8 +107,8 @@ export function DataTablePagination({
                 const id = searchParams.get("id");
                 const version = searchParams.get("version");
 
-                params.set("pageSize", value);
-                params.set("page", "1");
+                params.set(pageSizeParam, value);
+                params.set(pageParam, "1");
 
                 // Ensure that scanId, id and version are preserved
                 if (scanId) params.set("scanId", scanId);
