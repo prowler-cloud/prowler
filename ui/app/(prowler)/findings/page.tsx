@@ -16,6 +16,7 @@ import {
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
+import { FilterTransitionWrapper } from "@/contexts";
 import {
   createDict,
   createScanDetailsMapping,
@@ -148,24 +149,26 @@ export default async function Findings({
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <div className="mb-6">
-        <FindingsFilters
-          providers={providersData?.data || []}
-          providerIds={providerIds}
-          providerDetails={providerDetails}
-          completedScans={completedScans || []}
-          completedScanIds={completedScanIds}
-          scanDetails={scanDetails}
-          uniqueRegions={uniqueRegions}
-          uniqueServices={uniqueServices}
-          uniqueResourceTypes={uniqueResourceTypes}
-          uniqueCategories={uniqueCategories}
-          uniqueGroups={uniqueGroups}
-        />
-      </div>
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <FilterTransitionWrapper>
+        <div className="mb-6">
+          <FindingsFilters
+            providers={providersData?.data || []}
+            providerIds={providerIds}
+            providerDetails={providerDetails}
+            completedScans={completedScans || []}
+            completedScanIds={completedScanIds}
+            scanDetails={scanDetails}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueResourceTypes={uniqueResourceTypes}
+            uniqueCategories={uniqueCategories}
+            uniqueGroups={uniqueGroups}
+          />
+        </div>
+        <Suspense fallback={<SkeletonTableFindings />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </FilterTransitionWrapper>
       {processedFinding && <FindingDetailsSheet finding={processedFinding} />}
     </ContentLayout>
   );

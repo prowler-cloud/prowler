@@ -28,6 +28,8 @@ import { DataTableClientPagination } from "@/components/ui/table/data-table-clie
 import { ClientSideSearch } from "@/components/ui/table/data-table-client-search";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { useFilterTransitionOptional } from "@/contexts";
+import { cn } from "@/lib";
 import { FilterOption, MetaDataProps } from "@/types";
 
 interface DataTableProviderProps<TData, TValue> {
@@ -72,6 +74,10 @@ export function DataTable<TData, TValue>({
     pageSize: defaultPageSize,
   });
   const [clientSearchTerm, setClientSearchTerm] = useState("");
+
+  // Get transition state from context for loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const isPending = filterTransition?.isPending ?? false;
 
   // Filter data for client-side search
   const filteredData =
@@ -134,7 +140,12 @@ export function DataTable<TData, TValue>({
     : table.getRowModel().rows;
 
   return (
-    <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
+    <div
+      className={cn(
+        "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4 transition-opacity duration-200",
+        isPending && "pointer-events-none opacity-60",
+      )}
+    >
       {/* Table Toolbar */}
       {showToolbar && (
         <div className="flex items-center justify-between">

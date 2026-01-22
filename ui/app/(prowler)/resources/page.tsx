@@ -13,6 +13,7 @@ import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ResourcesTableWithSelection } from "@/components/resources/table";
 import { ContentLayout } from "@/components/ui";
+import { FilterTransitionWrapper } from "@/contexts";
 import {
   createDict,
   extractFiltersAndQuery,
@@ -90,19 +91,21 @@ export default async function Resources({
 
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
-      <div className="mb-6">
-        <ResourcesFilters
-          providers={providersData?.data || []}
-          providerIds={providerIds}
-          providerDetails={providerDetails}
-          uniqueRegions={uniqueRegions}
-          uniqueServices={uniqueServices}
-          uniqueGroups={uniqueGroups}
-        />
-      </div>
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <FilterTransitionWrapper>
+        <div className="mb-6">
+          <ResourcesFilters
+            providers={providersData?.data || []}
+            providerIds={providerIds}
+            providerDetails={providerDetails}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueGroups={uniqueGroups}
+          />
+        </div>
+        <Suspense fallback={<SkeletonTableResources />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </FilterTransitionWrapper>
       {processedResource && (
         <ResourceDetailsSheet resource={processedResource} />
       )}
