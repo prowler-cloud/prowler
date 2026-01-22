@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Generator
 
 import neo4j
+
 from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
@@ -14,7 +15,7 @@ from prowler.config import config as ProwlerConfig
 
 logger = get_task_logger(__name__)
 
-BATCH_SIZE = env.int("DJANGO_NEO4J_INSERT_BATCH_SIZE", 500)
+BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 1000)
 
 INDEX_STATEMENTS = [
     "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
@@ -85,9 +86,8 @@ def create_indexes(neo4j_session: neo4j.Session) -> None:
     Code based on Cartography version 0.122.0, specifically on `cartography.intel.create_indexes.run`.
     """
 
-    logger.info("Creating indexes for Prowler node types.")
+    logger.info("Creating indexes for Prowler Findings node types")
     for statement in INDEX_STATEMENTS:
-        logger.debug("Executing statement: %s", statement)
         run_write_query(neo4j_session, statement)
 
 
@@ -118,6 +118,10 @@ def get_provider_last_scan_findings(
     """
     offset = 0
 
+    logger.info(
+        f"Starting findings fetch for scan {scan_id} (tenant {prowler_api_provider.tenant_id}) with batch size {BATCH_SIZE}"
+    )
+
     while True:
         with rls_transaction(prowler_api_provider.tenant_id):
             findings_batch = list(
@@ -141,7 +145,14 @@ def get_provider_last_scan_findings(
                 .order_by("id")[offset : offset + BATCH_SIZE]
             )
 
+            logger.info(
+                f"Iteration offset={offset} fetched {len(findings_batch)} findings"
+            )
+
             if not findings_batch:
+                logger.info(
+                    f"No findings returned for offset {offset}; stopping pagination"
+                )
                 break
 
             enriched_batch = _enrich_and_flatten_batch(findings_batch)
@@ -151,6 +162,8 @@ def get_provider_last_scan_findings(
             yield enriched_batch
 
         offset += BATCH_SIZE
+
+    logger.info(f"Finished fetching findings for scan {scan_id}")
 
 
 def _enrich_and_flatten_batch(
@@ -180,7 +193,6 @@ def _enrich_and_flatten_batch(
         resource_uids = finding_resources.get(f["id"], [])
 
         if not resource_uids:
-            logger.warning(f"Finding {f['id']} has no associated resources, skipping")
             continue
 
         for resource_uid in resource_uids:
