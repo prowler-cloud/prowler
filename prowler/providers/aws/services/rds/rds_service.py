@@ -59,7 +59,9 @@ class RDS(AWSService):
                                 endpoint=instance.get("Endpoint", {}),
                                 engine=instance["Engine"],
                                 engine_version=instance["EngineVersion"],
-                                engine_lifecycle_support=instance.get("EngineLifecycleSupport"),
+                                engine_lifecycle_support=instance.get(
+                                    "EngineLifecycleSupport"
+                                ),
                                 status=instance["DBInstanceStatus"],
                                 public=instance.get("PubliclyAccessible", False),
                                 encrypted=instance["StorageEncrypted"],
