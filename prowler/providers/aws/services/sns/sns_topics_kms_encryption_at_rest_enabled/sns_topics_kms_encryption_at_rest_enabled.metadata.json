@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSnsTopic",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon SNS topics** are assessed for **server-side encryption** with **AWS KMS**. Topics lacking a configured KMS key (e.g., missing `kms_master_key_id`) are identified as unencrypted at rest.",
   "Risk": "Without KMS-backed SSE, SNS stores message bodies unencrypted at rest, undermining **confidentiality**.\n\nPrivileged insiders or compromised service components could access plaintext during persistence windows, causing data exposure. You also lose KMS controls such as key policies, rotation, and detailed audit trails.",
   "RelatedUrl": "",

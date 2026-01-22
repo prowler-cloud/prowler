@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "ResourceGroup": "compute",
   "Description": "**EC2 Auto Scaling groups** use **Capacity Rebalancing** to act on EC2 `rebalance` recommendations by launching replacement Spot instances and terminating at-risk ones after they are healthy.\n\n*Assesses whether this proactive replacement behavior is enabled.*",
   "Risk": "Without **Capacity Rebalancing**, Spot interruptions can drop targets and reduce capacity, causing timeouts, 5xx spikes, and backlog growth. The two-minute notice is often insufficient, reducing service **availability** and increasing the chance of cascading failures and slow recovery.",
   "RelatedUrl": "",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsMskCluster",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MSK clusters** are evaluated for use of the latest supported **Apache Kafka version**. Provisioned clusters are compared to the most recent release, while **serverless clusters** are treated as automatically managed for versioning.",
   "Risk": "Outdated Kafka enables exploitation of known flaws and weak cryptography, risking data exposure or tampering (**confidentiality/integrity**). Missing fixes increase broker crashes and partition instability (**availability**). After end of support, silent auto-upgrades can trigger unexpected behavior and compatibility issues.",
   "RelatedUrl": "",

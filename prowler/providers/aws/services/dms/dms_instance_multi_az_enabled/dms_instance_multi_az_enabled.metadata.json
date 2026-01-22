@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationInstance",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS replication instances** are evaluated for **Multi-AZ** configuration. Instances with `multi_az` enabled are treated as having a cross-AZ standby; those without it are identified as single-AZ.",
   "Risk": "Without **Multi-AZ**, a single-AZ failure or maintenance event can halt migrations, causing extended downtime (**availability**) and replication gaps or rollbacks (**integrity**). Tasks may stall, increase cutover risk, and require manual recovery when the replication instance is unavailable.",
   "RelatedUrl": "",

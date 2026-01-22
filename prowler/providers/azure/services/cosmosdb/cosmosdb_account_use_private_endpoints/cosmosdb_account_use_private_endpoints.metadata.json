@@ -8,18 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
   "Description": "**Azure Cosmos DB accounts** are assessed for **private endpoint connections** that keep data-plane traffic on private IPs within authorized virtual networks.",
   "Risk": "Without **private endpoints**, access may use public endpoints or broad IP rules, enabling:\n- interception and credential replay\n- unauthorized queries and data exfiltration\n- lateral movement via exposed paths\n\nThis degrades **confidentiality** and can impact **availability** under abusive traffic.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/private-link/tutorial-private-endpoint-cosmosdb-portal",
-    "https://docs.kertos.io/en/article/verify-that-that-private-endpoints-are-used-where-possible",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/CosmosDB/use-private-endpoints.html",
-    "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/analytical-store-private-endpoints",
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
-    "https://stackoverflow.com/questions/77098284/azure-vnet-peering-with-private-endpoints",
-    "https://github.com/Azure-Samples/Azure-Functions-Private-Endpoints"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints?tabs=arm-bicep",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/CosmosDB/use-private-endpoints.html"
   ],
   "Remediation": {
     "Code": {

@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
   "Description": "**Azure Cosmos DB accounts** configured to use **Microsoft Entra ID** with **Azure RBAC** by disabling key-based credentials (`disableLocalAuth=true`). Clients authenticate with identities rather than account keys.",
   "Risk": "With local/key-based auth enabled, **long-lived account keys** can be leaked or shared, enabling unauthorized reads/writes and tampering. Access bypasses **MFA** and granular **RBAC**, hindering rotation/revocation and increasing persistence and lateral movement risks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-connect-role-based-access-control?pivots=azure-cli"
   ],
   "Remediation": {
     "Code": {

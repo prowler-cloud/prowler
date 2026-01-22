@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "CloudFront distributions have the default cache behavior associated with **Field-Level Encryption** via `field_level_encryption_id`, targeting specified request fields for edge encryption.",
   "Risk": "Absent **field-level encryption**, sensitive inputs (PII, payment data, credentials) may surface in origin paths, logs, or middleware in plaintext. This undermines **confidentiality**, enables data exfiltration and insider misuse, and can lead to session or account compromise if tokens are captured.",
   "RelatedUrl": "",

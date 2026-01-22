@@ -1,3 +1,4 @@
+import atexit
 import logging
 import os
 import sys
@@ -30,14 +31,41 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
+        from api.attack_paths import database as graph_database
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
-        #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
+        #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
         #   `os.environ.get("RUN_MAIN")`: If it's not a Django command or using `runserver`,
         #                                 only the main process will do it
-        if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
+        if (len(sys.argv) >= 1 and "manage.py" not in sys.argv[0]) or os.environ.get(
+            "RUN_MAIN"
+        ):
             self._ensure_crypto_keys()
+
+        # Commands that don't need Neo4j
+        SKIP_NEO4J_DJANGO_COMMANDS = [
+            "migrate",
+            "makemigrations",
+            "check",
+            "help",
+            "showmigrations",
+            "check_and_fix_socialaccount_sites_migration",
+        ]
+
+        # Skip Neo4j initialization during tests or specific Django commands
+        if getattr(settings, "TESTING", False) or (
+            len(sys.argv) > 1
+            and "manage.py" in sys.argv[0]
+            and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+        ):
+            logger.info(
+                "Skipping Neo4j initialization because of the current Django command or testing"
+            )
+
+        else:
+            graph_database.init_driver()
+            atexit.register(graph_database.close_driver)
 
         load_prowler_compliance()
 
@@ -54,7 +82,7 @@ class ApiConfig(AppConfig):
         global _keys_initialized
 
         # Skip key generation if running tests
-        if hasattr(settings, "TESTING") and settings.TESTING:
+        if getattr(settings, "TESTING", False):
             return
 
         # Skip if already initialized in this process

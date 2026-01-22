@@ -1,23 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "cosmosdb_account_firewall_use_selected_networks",
-  "CheckTitle": "Azure Cosmos DB account firewall allows access only from selected networks",
+  "CheckTitle": "Cosmos DB account firewall allows access only from selected networks",
   "CheckType": [],
   "ServiceName": "cosmosdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
   "Description": "**Azure Cosmos DB accounts** limit connectivity to **selected networks** using virtual network rules and/or IP allowlists rather than permitting access from all networks.\n\nThe evaluation determines whether the account's network firewall enforces this restriction.",
   "Risk": "Access from all networks enlarges the attack surface. If keys or tokens are exposed or privileges are misconfigured, attackers anywhere can read or modify data, harming **confidentiality** and **integrity**.\n\nWeak segmentation also enables SSRF/pivot paths from Azure services and can impact **availability** through abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-vnet-service-endpoint",
     "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall",
-    "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
-    "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal",
-    "https://learn.microsoft.com/en-us/answers/questions/2116286/how-to-change-networking-to-connect-iothub-to-cosm",
-    "https://learn.microsoft.com/en-us/answers/questions/1006629/connect-to-cosmos-db-from-local-machine"
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal"
   ],
   "Remediation": {
     "Code": {

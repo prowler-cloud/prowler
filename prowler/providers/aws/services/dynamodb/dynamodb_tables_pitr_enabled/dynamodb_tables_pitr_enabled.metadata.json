@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
+  "ResourceGroup": "database",
   "Description": "**DynamoDB tables** have **Point-in-Time Recovery** (`PITR`) enabled",
   "Risk": "Without **PITR**, unintended or malicious writes/deletes cannot be precisely rolled back, leading to permanent data loss and corrupted state. Failures from buggy deployments, compromised credentials, or faulty batch jobs reduce data **integrity** and **availability**, and prolong incident recovery and forensic analysis.",
   "RelatedUrl": "",
