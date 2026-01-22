@@ -3,6 +3,7 @@ import glob
 import json
 import logging
 import os
+
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -10,6 +11,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -41,8 +43,9 @@ from django.db.models import (
     Sum,
     Value,
     When,
+    Window,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -72,23 +75,12 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    refresh_lighthouse_provider_models_task,
-)
 
+from api.attack_paths import (
+    get_queries_for_provider,
+    get_query_by_id,
+    views_helpers as attack_paths_views_helpers,
+)
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -101,6 +93,7 @@ from api.filters import (
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
+    ComplianceWatchlistFilter,
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
@@ -109,6 +102,7 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
+    AttackPathsScanFilter,
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
     MembershipFilter,
@@ -118,6 +112,7 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
+    ResourceGroupOverviewFilter,
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
@@ -136,6 +131,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    AttackPathsScan,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -144,6 +140,7 @@ from api.models import (
     MuteRule,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
@@ -158,11 +155,13 @@ from api.models import (
     SAMLToken,
     Scan,
     ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
     Task,
     TenantAPIKey,
+    TenantComplianceSummary,
     ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
@@ -178,6 +177,10 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsQueryRunRequestSerializer,
+    AttackPathsQuerySerializer,
+    AttackPathsQueryResultSerializer,
+    AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
@@ -185,6 +188,7 @@ from api.v1.serializers import (
     ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
+    ComplianceWatchlistOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
@@ -229,6 +233,7 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceGroupOverviewSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
     RoleCreateSerializer,
@@ -257,6 +262,23 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -359,7 +381,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.18.0"
+        spectacular_settings.VERSION = "1.19.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -400,6 +422,10 @@ class SchemaView(SpectacularAPIView):
             {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Attack Paths",
+                "description": "Endpoints for Attack Paths scan status and executing Attack Paths queries.",
             },
             {
                 "name": "Schedule",
@@ -2151,6 +2177,12 @@ class ScanViewSet(BaseRLSViewSet):
                 },
             )
 
+        attack_paths_db_utils.create_attack_paths_scan(
+            tenant_id=self.request.tenant_id,
+            scan_id=str(scan.id),
+            provider_id=str(scan.provider_id),
+        )
+
         prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])
@@ -2229,6 +2261,187 @@ class TaskViewSet(BaseRLSViewSet):
                 "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Attack Paths"],
+        summary="List Attack Paths scans",
+        description="Retrieve Attack Paths scans for the tenant with support for filtering, ordering, and pagination.",
+    ),
+    retrieve=extend_schema(
+        tags=["Attack Paths"],
+        summary="Retrieve Attack Paths scan details",
+        description="Fetch full details for a specific Attack Paths scan.",
+    ),
+    attack_paths_queries=extend_schema(
+        tags=["Attack Paths"],
+        summary="List attack paths queries",
+        description="Retrieve the catalog of Attack Paths queries available for this Attack Paths scan.",
+        responses={
+            200: OpenApiResponse(AttackPathsQuerySerializer(many=True)),
+            404: OpenApiResponse(
+                description="No queries found for the selected provider"
+            ),
+        },
+    ),
+    run_attack_paths_query=extend_schema(
+        tags=["Attack Paths"],
+        summary="Execute an Attack Paths query",
+        description="Execute the selected Attack Paths query against the Attack Paths graph and return the resulting subgraph.",
+        request=AttackPathsQueryRunRequestSerializer,
+        responses={
+            200: OpenApiResponse(AttackPathsQueryResultSerializer),
+            400: OpenApiResponse(
+                description="Bad request (e.g., Unknown Attack Paths query for the selected provider)"
+            ),
+            404: OpenApiResponse(
+                description="No attack paths found for the given query and parameters"
+            ),
+            500: OpenApiResponse(
+                description="Attack Paths query execution failed due to a database error"
+            ),
+        },
+    ),
+)
+class AttackPathsScanViewSet(BaseRLSViewSet):
+    queryset = AttackPathsScan.objects.all()
+    serializer_class = AttackPathsScanSerializer
+    http_method_names = ["get", "post"]
+    filterset_class = AttackPathsScanFilter
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "inserted_at",
+        "started_at",
+    ]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_SCANS]
+
+    def set_required_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            self.required_permissions = []
+
+        else:
+            self.required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_serializer_class(self):
+        if self.action == "run_attack_paths_query":
+            return AttackPathsQueryRunRequestSerializer
+
+        return super().get_serializer_class()
+
+    def get_queryset(self):
+        user_roles = get_role(self.request.user)
+        base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
+
+        if user_roles.unlimited_visibility:
+            queryset = base_queryset
+
+        else:
+            queryset = base_queryset.filter(provider__in=get_providers(user_roles))
+
+        return queryset.select_related("provider", "scan", "task")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        latest_per_provider = queryset.annotate(
+            latest_scan_rank=Window(
+                expression=RowNumber(),
+                partition_by=[F("provider_id")],
+                order_by=[F("inserted_at").desc()],
+            )
+        ).filter(latest_scan_rank=1)
+
+        page = self.paginate_queryset(latest_per_provider)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(latest_per_provider, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DELETE")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="queries",
+        url_name="queries",
+    )
+    def attack_paths_queries(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+
+        if not queries:
+            return Response(
+                {"detail": "No queries found for the selected provider"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = AttackPathsQuerySerializer(queries, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="queries/run",
+        url_name="queries-run",
+    )
+    def run_attack_paths_query(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if attack_paths_scan.state != StateChoices.COMPLETED:
+            raise ValidationError(
+                {
+                    "detail": "The Attack Paths scan must be completed before running Attack Paths queries"
+                }
+            )
+
+        if not attack_paths_scan.graph_database:
+            logger.error(
+                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
+            )
+            return Response(
+                {"detail": "The Attack Paths scan does not reference a graph database"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        payload = attack_paths_views_helpers.normalize_run_payload(request.data)
+        serializer = AttackPathsQueryRunRequestSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        query_definition = get_query_by_id(serializer.validated_data["id"])
+        if (
+            query_definition is None
+            or query_definition.provider != attack_paths_scan.provider.provider
+        ):
+            raise ValidationError(
+                {"id": "Unknown Attack Paths query for the selected provider"}
+            )
+
+        parameters = attack_paths_views_helpers.prepare_query_parameters(
+            query_definition,
+            serializer.validated_data.get("parameters", {}),
+            attack_paths_scan.provider.uid,
+        )
+
+        graph = attack_paths_views_helpers.execute_attack_paths_query(
+            attack_paths_scan, query_definition, parameters
+        )
+
+        status_code = status.HTTP_200_OK
+        if not graph.get("nodes"):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        response_serializer = AttackPathsQueryResultSerializer(graph)
+        return Response(response_serializer.data, status=status_code)
 
 
 @extend_schema_view(
@@ -2523,10 +2736,20 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get groups from Resource model (flatten ArrayField)
+        all_groups = Resource.objects.filter(
+            tenant_id=tenant_id,
+            groups__isnull=False,
+        ).values_list("groups", flat=True)
+        groups = sorted(
+            set(g for groups_list in all_groups if groups_list for g in groups_list)
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2583,10 +2806,20 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get groups from Resource model for resources in latest scans (flatten ArrayField)
+        all_groups = Resource.objects.filter(
+            tenant_id=tenant_id,
+            groups__isnull=False,
+        ).values_list("groups", flat=True)
+        groups = sorted(
+            set(g for groups_list in all_groups if groups_list for g in groups_list)
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "types": resource_types,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -3015,11 +3248,23 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     categories_set.update(categories_list)
             categories = sorted(categories_set)
 
+        # Get groups from ScanGroupSummary for latest scans
+        groups = list(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            .values_list("resource_group", flat=True)
+            .distinct()
+            .order_by("resource_group")
+        )
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
             "categories": categories,
+            "groups": groups,
         }
 
         serializer = self.get_serializer(data=result)
@@ -4093,6 +4338,30 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         filters=True,
         responses={200: CategoryOverviewSerializer(many=True)},
     ),
+    resource_groups=extend_schema(
+        summary="Get resource group overview",
+        description=(
+            "Retrieve aggregated resource group metrics from latest completed scans per provider. "
+            "Returns one row per resource group with total, failed, and new failed findings counts, "
+            "plus a severity breakdown showing failed findings per severity level, "
+            "and a count of distinct resources evaluated per group."
+        ),
+        tags=["Overview"],
+        filters=True,
+        responses={200: ResourceGroupOverviewSerializer(many=True)},
+    ),
+    compliance_watchlist=extend_schema(
+        summary="Get compliance watchlist overview",
+        description=(
+            "Retrieve compliance metrics with FAIL-dominant aggregation. "
+            "Without filters: uses pre-aggregated TenantComplianceSummary. "
+            "With provider filters: queries ProviderComplianceScore with FAIL-dominant logic "
+            "where any FAIL in a requirement marks it as failed."
+        ),
+        tags=["Overview"],
+        filters=True,
+        responses={200: ComplianceWatchlistOverviewSerializer(many=True)},
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4142,6 +4411,10 @@ class OverviewViewSet(BaseRLSViewSet):
             return AttackSurfaceOverviewSerializer
         elif self.action == "categories":
             return CategoryOverviewSerializer
+        elif self.action == "resource_groups":
+            return ResourceGroupOverviewSerializer
+        elif self.action == "compliance_watchlist":
+            return ComplianceWatchlistOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4155,8 +4428,12 @@ class OverviewViewSet(BaseRLSViewSet):
             return DailySeveritySummaryFilter
         elif self.action == "categories":
             return CategoryOverviewFilter
+        elif self.action == "resource_groups":
+            return ResourceGroupOverviewFilter
         elif self.action == "attack_surface":
             return AttackSurfaceOverviewFilter
+        elif self.action == "compliance_watchlist":
+            return ComplianceWatchlistFilter
         return None
 
     def filter_queryset(self, queryset):
@@ -4240,6 +4517,8 @@ class OverviewViewSet(BaseRLSViewSet):
             self.request.query_params, exclude_keys=set(exclude_keys or [])
         )
         filterset = filterset_class(normalized_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
         return filterset.qs
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
@@ -4256,9 +4535,10 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
     def _extract_provider_filters_from_params(self):
-        """Extract provider filters from query params to apply on Scan queryset."""
+        """Extract and validate provider filters from query params."""
         params = self.request.query_params
         filters = {}
+        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
 
         provider_id = params.get("filter[provider_id]")
         if provider_id:
@@ -4270,11 +4550,21 @@ class OverviewViewSet(BaseRLSViewSet):
 
         provider_type = params.get("filter[provider_type]")
         if provider_type:
+            if provider_type not in valid_provider_types:
+                raise ValidationError(
+                    {"provider_type": f"Invalid choice: {provider_type}"}
+                )
             filters["provider__provider"] = provider_type
 
         provider_type_in = params.get("filter[provider_type__in]")
         if provider_type_in:
-            filters["provider__provider__in"] = provider_type_in.split(",")
+            types = provider_type_in.split(",")
+            invalid = [t for t in types if t not in valid_provider_types]
+            if invalid:
+                raise ValidationError(
+                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
+                )
+            filters["provider__provider__in"] = types
 
         return filters
 
@@ -4984,6 +5274,181 @@ class OverviewViewSet(BaseRLSViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="resource-groups",
+        url_path="resource-groups",
+    )
+    def resource_groups(self, request):
+        tenant_id = request.tenant_id
+        provider_filters = self._extract_provider_filters_from_params()
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(
+            tenant_id, provider_filters
+        )
+
+        base_queryset = ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        provider_filter_keys = {
+            "provider_id",
+            "provider_id__in",
+            "provider_type",
+            "provider_type__in",
+        }
+        filtered_queryset = self._apply_filterset(
+            base_queryset,
+            ResourceGroupOverviewFilter,
+            exclude_keys=provider_filter_keys,
+        )
+
+        aggregation = (
+            filtered_queryset.values("resource_group", "severity")
+            .annotate(
+                total=Coalesce(Sum("total_findings"), 0),
+                failed=Coalesce(Sum("failed_findings"), 0),
+                new_failed=Coalesce(Sum("new_failed_findings"), 0),
+            )
+            .order_by("resource_group", "severity")
+        )
+
+        # Get resource_group-level resources_count:
+        # 1. Max per (scan, resource_group) to deduplicate within-scan severity rows
+        # 2. Sum across scans for cross-provider aggregation
+        scan_resource_group_resources = filtered_queryset.values(
+            "scan_id", "resource_group"
+        ).annotate(resources=Coalesce(Max("resources_count"), 0))
+        resources_by_resource_group = defaultdict(int)
+        for row in scan_resource_group_resources:
+            resources_by_resource_group[row["resource_group"]] += row["resources"]
+
+        resource_group_data = defaultdict(
+            lambda: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "new_failed_findings": 0,
+                "resources_count": 0,
+                "severity": {
+                    "informational": 0,
+                    "low": 0,
+                    "medium": 0,
+                    "high": 0,
+                    "critical": 0,
+                },
+            }
+        )
+
+        for row in aggregation:
+            grp = row["resource_group"]
+            sev = row["severity"]
+            resource_group_data[grp]["total_findings"] += row["total"]
+            resource_group_data[grp]["failed_findings"] += row["failed"]
+            resource_group_data[grp]["new_failed_findings"] += row["new_failed"]
+            if sev in resource_group_data[grp]["severity"]:
+                resource_group_data[grp]["severity"][sev] = row["failed"]
+
+        # Set resources_count from resource_group-level aggregation
+        for grp in resource_group_data:
+            resource_group_data[grp]["resources_count"] = (
+                resources_by_resource_group.get(grp, 0)
+            )
+
+        response_data = [
+            {"resource_group": grp, **data}
+            for grp, data in sorted(resource_group_data.items())
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="compliance-watchlist",
+        url_path="compliance-watchlist",
+    )
+    def compliance_watchlist(self, request):
+        """
+        Get compliance watchlist overview with FAIL-dominant aggregation.
+
+        Without filters: uses pre-aggregated TenantComplianceSummary (~70 rows).
+        With provider filters: queries ProviderComplianceScore with FAIL-dominant logic.
+        """
+        tenant_id = request.tenant_id
+        rbac_filter = self._get_provider_filter()
+        query_params = request.query_params
+
+        has_provider_filter = any(
+            key.startswith("filter[provider") for key in query_params.keys()
+        )
+        has_rbac_restriction = bool(rbac_filter)
+
+        if not has_provider_filter and not has_rbac_restriction:
+            response_data = list(
+                TenantComplianceSummary.objects.filter(tenant_id=tenant_id)
+                .values(
+                    "compliance_id",
+                    "requirements_passed",
+                    "requirements_failed",
+                    "requirements_manual",
+                    "total_requirements",
+                )
+                .order_by("compliance_id")
+            )
+        else:
+            base_queryset = ProviderComplianceScore.objects.filter(
+                tenant_id=tenant_id, **rbac_filter
+            )
+
+            filtered_queryset = self._apply_filterset(
+                base_queryset, ComplianceWatchlistFilter
+            )
+
+            aggregation = (
+                filtered_queryset.values("compliance_id", "requirement_id")
+                .annotate(
+                    has_fail=Sum(
+                        Case(When(requirement_status="FAIL", then=1), default=0)
+                    ),
+                    has_manual=Sum(
+                        Case(When(requirement_status="MANUAL", then=1), default=0)
+                    ),
+                )
+                .values("compliance_id", "requirement_id", "has_fail", "has_manual")
+            )
+
+            compliance_data = defaultdict(
+                lambda: {
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                    "total_requirements": 0,
+                }
+            )
+
+            for row in aggregation:
+                cid = row["compliance_id"]
+                compliance_data[cid]["total_requirements"] += 1
+
+                if row["has_fail"] and row["has_fail"] > 0:
+                    compliance_data[cid]["requirements_failed"] += 1
+                elif row["has_manual"] and row["has_manual"] > 0:
+                    compliance_data[cid]["requirements_manual"] += 1
+                else:
+                    compliance_data[cid]["requirements_passed"] += 1
+
+            response_data = [
+                {"compliance_id": cid, **data}
+                for cid, data in sorted(compliance_data.items())
+            ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
 
 @extend_schema(tags=["Schedule"])
 @extend_schema_view(
@@ -5653,7 +6118,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 
     @extend_schema(exclude=True)
     def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="DESTROY")
+        raise MethodNotAllowed(method="DELETE")
 
     @action(detail=True, methods=["delete"])
     def revoke(self, request, *args, **kwargs):

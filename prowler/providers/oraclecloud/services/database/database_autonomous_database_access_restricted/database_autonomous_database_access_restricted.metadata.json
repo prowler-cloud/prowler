@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:database:autonomousdatabase",
   "Severity": "high",
   "ResourceType": "AutonomousDatabase",
+  "ResourceGroup": "database",
   "Description": "Autonomous Shared Database instances should either have IP whitelisting configured or be deployed within a VCN to restrict network access and improve security posture.",
   "Risk": "Public or unrestricted Autonomous Database access increases the attack surface and risk of unauthorized access.",
   "RelatedUrl": "https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/autonomous-private-endpoints.html",

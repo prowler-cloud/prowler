@@ -8,14 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.containerregistry/registries",
-  "Description": "Azure Container Registry configuration indicates whether the registry permits **unrestricted public access** based on the `Public network access` setting.",
-  "Risk": "**Internet-exposed ACR** expands attack paths impacting CIA:\n- Confidentiality: unauthorized image pulls leak code/secrets\n- Integrity: compromised creds allow tampered image pushes (supply-chain)\n- Availability: pull storms or scans exhaust quotas, causing outages and cost spikes",
+  "ResourceGroup": "container",
+  "Description": "**Azure Container Registry** configuration indicates whether the registry permits **unrestricted public access** based on the `Public network access` setting.",
+  "Risk": "**Internet-exposed ACR** expands attack paths impacting **CIA**:\n- Confidentiality: unauthorized image pulls leak code/secrets\n- Integrity: compromised creds allow tampered image pushes (supply-chain)\n- Availability: pull storms or scans exhaust quotas, causing outages and cost spikes",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-GB/azure/container-registry/container-registry-access-selected-networks",
-    "https://luke.geek.nz/azure/hosted-agents-container-apps-job/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ContainerRegistry/disable-public-access.html",
-    "https://blog.zuehlke.cloud/2023/02/problems-with-protecting-azure-container-registry/",
     "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks"
   ],
   "Remediation": {

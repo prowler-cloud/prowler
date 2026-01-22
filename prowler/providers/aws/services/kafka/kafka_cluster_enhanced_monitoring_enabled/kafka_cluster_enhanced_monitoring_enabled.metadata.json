@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsMskCluster",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MSK clusters** are assessed for **enhanced monitoring** levels beyond `DEFAULT` (e.g., `PER_BROKER`, `PER_TOPIC_PER_BROKER`, `PER_TOPIC_PER_PARTITION`).\n\n*Serverless clusters* include enhanced monitoring by design; provisioned clusters are evaluated by their configured monitoring level.",
   "Risk": "Insufficient metrics limit visibility into **broker health**, **replication state**, and **consumer lag**, delaying response to incidents.\n\nThis increases risk of **availability loss** (saturation, throttling) and can mask **integrity issues** such as under-replicated partitions, raising data-loss impact during failures.",
   "RelatedUrl": "",

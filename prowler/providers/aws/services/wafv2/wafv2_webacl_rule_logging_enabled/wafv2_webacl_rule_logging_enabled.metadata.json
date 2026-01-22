@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAFv2 Web ACLs** are assessed to confirm that every associated **rule** and **rule group** has **CloudWatch metrics** enabled for visibility into rule evaluations and traffic",
   "Risk": "Absent **CloudWatch metrics**, WAF telemetry is lost, masking spikes, rule bypasses, and misconfigurations. This delays detection of SQLi/XSS probes and bot floods, risking data confidentiality, request integrity, and application availability.",
   "RelatedUrl": "",

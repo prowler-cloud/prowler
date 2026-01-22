@@ -1,27 +1,35 @@
 import uuid
+
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+
 from botocore.exceptions import ClientError
-from tasks.jobs.lighthouse_providers import (
-    _create_bedrock_client,
-    _extract_bedrock_credentials,
-)
-from tasks.tasks import (
-    _perform_scan_complete_tasks,
-    check_integrations_task,
-    check_lighthouse_provider_connection_task,
-    generate_outputs_task,
-    refresh_lighthouse_provider_models_task,
-    s3_integration_task,
-    security_hub_integration_task,
-)
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from api.models import (
     Integration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
+    Scan,
+    StateChoices,
+)
+from tasks.jobs.lighthouse_providers import (
+    _create_bedrock_client,
+    _extract_bedrock_credentials,
+)
+from tasks.tasks import (
+    _cleanup_orphan_scheduled_scans,
+    _perform_scan_complete_tasks,
+    check_integrations_task,
+    check_lighthouse_provider_connection_task,
+    generate_outputs_task,
+    perform_attack_paths_scan_task,
+    refresh_lighthouse_provider_models_task,
+    s3_integration_task,
+    security_hub_integration_task,
 )
 
 
@@ -726,26 +734,39 @@ class TestGenerateOutputs:
 
 class TestScanCompleteTasks:
     @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
-    @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_compliance_reports_task.si")
     @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=False)
     def test_scan_complete_tasks(
         self,
+        mock_can_run_attack_paths,
+        mock_attack_paths_task,
         mock_check_integrations_task,
         mock_compliance_reports_task,
         mock_outputs_task,
         mock_scan_summary_task,
+        mock_update_compliance_scores_task,
         mock_compliance_requirements_task,
+        mock_chain,
         mock_attack_surface_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
 
-        # Verify compliance requirements task is called
+        # Verify compliance requirements task is called via chain
         mock_compliance_requirements_task.assert_called_once_with(
-            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+            tenant_id="tenant-id", scan_id="scan-id"
+        )
+
+        # Verify update provider compliance scores task is called via chain
+        mock_update_compliance_scores_task.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id"
         )
 
         # Verify attack surface task is called
@@ -778,6 +799,67 @@ class TestScanCompleteTasks:
             tenant_id="tenant-id",
             provider_id="provider-id",
             scan_id="scan-id",
+        )
+
+        # Attack Paths task should be skipped when provider cannot run it
+        mock_attack_paths_task.assert_not_called()
+
+
+class TestAttackPathsTasks:
+    @staticmethod
+    @contextmanager
+    def _override_task_request(task, **attrs):
+        request = task.request
+        sentinel = object()
+        previous = {key: getattr(request, key, sentinel) for key in attrs}
+        for key, value in attrs.items():
+            setattr(request, key, value)
+
+        try:
+            yield
+        finally:
+            for key, prev in previous.items():
+                if prev is sentinel:
+                    if hasattr(request, key):
+                        delattr(request, key)
+                else:
+                    setattr(request, key, prev)
+
+    def test_perform_attack_paths_scan_task_calls_runner(self):
+        with (
+            patch("tasks.tasks.attack_paths_scan") as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-id"
+            ),
+        ):
+            mock_attack_paths_scan.return_value = {"status": "ok"}
+
+            result = perform_attack_paths_scan_task.run(
+                tenant_id="tenant-id", scan_id="scan-id"
+            )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-id"
+        )
+        assert result == {"status": "ok"}
+
+    def test_perform_attack_paths_scan_task_propagates_exception(self):
+        with (
+            patch(
+                "tasks.tasks.attack_paths_scan",
+                side_effect=RuntimeError("Exception to propagate"),
+            ) as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-error"
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="Exception to propagate"):
+                perform_attack_paths_scan_task.run(
+                    tenant_id="tenant-id", scan_id="scan-id"
+                )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-error"
         )
 
 
@@ -1715,3 +1797,343 @@ class TestRefreshLighthouseProviderModelsTask:
             assert result["deleted"] == 0
             assert "error" in result
             assert result["error"] is not None
+
+
+@pytest.mark.django_db
+class TestCleanupOrphanScheduledScans:
+    """Unit tests for _cleanup_orphan_scheduled_scans helper function."""
+
+    def _create_periodic_task(self, provider_id, tenant_id):
+        """Helper to create a PeriodicTask for testing."""
+        interval, _ = IntervalSchedule.objects.get_or_create(every=24, period="hours")
+        return PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-{provider_id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant_id}", "provider_id": "{provider_id}"}}',
+            enabled=True,
+        )
+
+    def test_cleanup_deletes_orphan_when_both_available_and_scheduled_exist(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that AVAILABLE scan is deleted when SCHEDULED also exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create orphan AVAILABLE scan
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan (next execution)
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_does_not_delete_when_only_available_exists(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that AVAILABLE scan is NOT deleted when no SCHEDULED exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create only AVAILABLE scan (normal first scan scenario)
+        available_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify nothing was deleted
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=available_scan.id).exists()
+
+    def test_cleanup_does_not_delete_when_only_scheduled_exists(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that nothing is deleted when only SCHEDULED exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create only SCHEDULED scan (normal subsequent scan scenario)
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify nothing was deleted
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_returns_zero_when_no_scans_exist(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup returns 0 when no scans exist."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Execute cleanup with no scans
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        assert deleted_count == 0
+
+    def test_cleanup_deletes_multiple_orphan_available_scans(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that multiple AVAILABLE orphan scans are all deleted."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create multiple orphan AVAILABLE scans
+        orphan_scan_1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+        orphan_scan_2 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify all orphans were deleted
+        assert deleted_count == 2
+        assert not Scan.objects.filter(id=orphan_scan_1.id).exists()
+        assert not Scan.objects.filter(id=orphan_scan_2.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_does_not_affect_different_provider(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects scans for the specified provider."""
+        tenant = tenants_fixture[0]
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+        periodic_task1 = self._create_periodic_task(provider1.id, tenant.id)
+        periodic_task2 = self._create_periodic_task(provider2.id, tenant.id)
+
+        # Create orphan scenario for provider1
+        orphan_scan_p1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task1.id,
+        )
+        scheduled_scan_p1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Create AVAILABLE scan for provider2 (should not be affected)
+        available_scan_p2 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task2.id,
+        )
+
+        # Execute cleanup for provider1 only
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider1.id),
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Verify only provider1's orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan_p1.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan_p1.id).exists()
+        assert Scan.objects.filter(id=available_scan_p2.id).exists()
+
+    def test_cleanup_does_not_affect_manual_scans(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects SCHEDULED trigger scans, not MANUAL."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create orphan AVAILABLE scheduled scan
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create AVAILABLE manual scan (should not be affected)
+        manual_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify only scheduled orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert Scan.objects.filter(id=manual_scan.id).exists()
+
+    def test_cleanup_does_not_affect_different_scheduler_task(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects scans with the specified scheduler_task_id."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task1 = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create another periodic task
+        interval, _ = IntervalSchedule.objects.get_or_create(every=24, period="hours")
+        periodic_task2 = PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-other-{provider.id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant.id}", "provider_id": "{provider.id}"}}',
+            enabled=True,
+        )
+
+        # Create orphan scenario for periodic_task1
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task1.id,
+        )
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Create AVAILABLE scan for periodic_task2 (should not be affected)
+        available_scan_other_task = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task2.id,
+        )
+
+        # Execute cleanup for periodic_task1 only
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Verify only periodic_task1's orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert Scan.objects.filter(id=available_scan_other_task.id).exists()

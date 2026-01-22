@@ -1,14 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_uses_private_link",
-  "CheckTitle": "Azure Container Registry uses a private endpoint (Private Link)",
+  "CheckTitle": "Container Registry uses a private endpoint (Private Link)",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.containerregistry/registries",
-  "Description": "Azure Container Registry access via **Private Endpoints** (Azure Private Link). Registries with `private endpoint connections` use private IPs; others rely on the public endpoint.",
+  "ResourceGroup": "container",
+  "Description": "**Azure Container Registry** access via **Private Endpoints** (Azure Private Link). Registries with `private endpoint connections` use private IPs; others rely on the public endpoint.",
   "Risk": "Publicly reachable registries expand attack surface for **credential stuffing**, token abuse, and scanning. A compromise enables unauthorized pull/push, causing image **data leakage** and **supply-chain tampering**. Public routing weakens network isolation, impacting the **confidentiality** and **integrity** of images and metadata.",
   "RelatedUrl": "",
   "AdditionalURLs": [

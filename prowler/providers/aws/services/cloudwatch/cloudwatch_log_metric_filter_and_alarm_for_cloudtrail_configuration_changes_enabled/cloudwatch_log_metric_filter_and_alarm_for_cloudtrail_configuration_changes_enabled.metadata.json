@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail logs** include a **metric filter** for trail configuration events (`CreateTrail`, `UpdateTrail`, `DeleteTrail`, `StartLogging`, `StopLogging`) with an associated **CloudWatch alarm** to alert on matches.\n\nEvaluates the presence of this filter-and-alarm monitoring.",
   "Risk": "Absent this monitoring, logging can be stopped or altered without notice, eroding visibility.\n\nThat enables covert activity and data exfiltration without audit evidence, harming confidentiality, the integrity of records, and the availability of reliable logs for detection and forensics.",
   "RelatedUrl": "",

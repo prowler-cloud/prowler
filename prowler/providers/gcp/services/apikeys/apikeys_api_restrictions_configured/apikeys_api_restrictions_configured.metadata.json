@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "API Key",
+  "ResourceGroup": "IAM",
   "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. If they are in use it is recommended to rotate API keys every 90 days.",
   "Risk": "Google Cloud Platform (GCP) API keys are simple encrypted strings that don't identify the user or the application that performs the API request. GCP API keys are typically accessible to clients, as they can be viewed publicly from within a browser, making it easy to discover and capture API keys.",
   "RelatedUrl": "",

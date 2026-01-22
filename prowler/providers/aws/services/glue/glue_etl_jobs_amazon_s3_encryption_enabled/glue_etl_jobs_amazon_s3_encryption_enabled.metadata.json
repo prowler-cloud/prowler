@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue ETL jobs** are validated to use **Amazon S3 at-rest encryption** (`SSE-S3` or `SSE-KMS`) when writing outputs, either through an attached security configuration or via job arguments. Jobs missing a security configuration or with S3 encryption disabled are identified.",
   "Risk": "Storing job outputs in S3 without **at-rest encryption** weakens **confidentiality**. Plaintext objects can be exposed via misconfigured bucket policies, compromised credentials, or media reuse, and lack **KMS key controls**, rotation, and audit trails-hindering incident response and compliance.",
   "RelatedUrl": "",

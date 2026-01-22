@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:objectstorage:bucket",
   "Severity": "medium",
   "ResourceType": "OciBucket",
+  "ResourceGroup": "storage",
   "Description": "Object Storage buckets should be encrypted with Customer Managed Keys.",
   "Risk": "Not meeting this storage security requirement increases data security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm",
