@@ -402,6 +402,9 @@ class TestAttackPathsProwlerHelpers:
         with patch(
             "tasks.jobs.attack_paths.prowler.rls_transaction",
             new=lambda *args, **kwargs: nullcontext(),
+        ), patch(
+            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "default",
         ):
             findings_data = prowler_module.get_provider_last_scan_findings(
                 provider,
