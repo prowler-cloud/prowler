@@ -2,9 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.17.0] (Prowler UNRELEASED)
+## [5.18.0] (Prowler UNRELEASED)
 
 ### Added
+
+- `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+- `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
+
+### Changed
+
+- Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
+
+---
+
+## [5.17.0] (Prowler v5.17.0)
+
+### Added
+
 - AI Skills pack for AI coding assistants (Claude Code, OpenCode, Codex) following agentskills.io standard [(#9728)](https://github.com/prowler-cloud/prowler/pull/9728)
 - Prowler ThreatScore for the Alibaba Cloud provider [(#9511)](https://github.com/prowler-cloud/prowler/pull/9511)
 - `compute_instance_group_multiple_zones` check for GCP provider [(#9566)](https://github.com/prowler-cloud/prowler/pull/9566)
@@ -20,12 +35,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_single_network_interface` check for GCP provider [(#9702)](https://github.com/prowler-cloud/prowler/pull/9702)
 - `compute_image_not_publicly_shared` check for GCP provider [(#9718)](https://github.com/prowler-cloud/prowler/pull/9718)
 - `compute_snapshot_not_outdated` check for GCP provider [(#9774)](https://github.com/prowler-cloud/prowler/pull/9774)
+- `compute_project_os_login_2fa_enabled` check for GCP provider [(#9839)](https://github.com/prowler-cloud/prowler/pull/9839)
 - `compute_instance_on_host_maintenance_migrate` check for GCP provider [(#9834)](https://github.com/prowler-cloud/prowler/pull/9834)
 - CIS 1.12 compliance framework for Kubernetes [(#9778)](https://github.com/prowler-cloud/prowler/pull/9778)
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
 - `Cloudflare` Bot protection, WAF, Privacy, Anti-Scraping and Zone configuration checks [(#9425)](https://github.com/prowler-cloud/prowler/pull/9425)
-- `OpenStack` provider support with Keystone and Compute services including 2 security checks [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 
 ### Changed
 
