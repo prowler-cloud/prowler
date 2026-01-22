@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.18.1] (Prowler v5.17.1)
+
+### Added
+
+- `provider_id` and `provider_id__in` filters for resources endpoints (`GET /resources` and `GET /resources/metadata/latest`) [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
+
+---
+
 ## [1.18.0] (Prowler v5.17.0)
 
 ### Added
