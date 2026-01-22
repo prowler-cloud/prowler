@@ -62,18 +62,22 @@ jobs:
         shell: bash
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: Setup pnpm cache
+      - name: Setup pnpm and Next.js cache
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          path: |
+            ${{ env.STORE_PATH }}
+            ${{ env.UI_WORKING_DIR }}/node_modules
+            ${{ env.UI_WORKING_DIR }}/.next/cache
+          key: ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/**/*.ts', 'ui/**/*.tsx', 'ui/**/*.js', 'ui/**/*.jsx') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-pnpm-nextjs-
 
       - name: Install dependencies
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
