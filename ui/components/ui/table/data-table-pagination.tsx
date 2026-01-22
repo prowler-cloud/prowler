@@ -39,7 +39,7 @@ export function DataTablePagination({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialPageSize = searchParams.get("pageSize") ?? "50";
+  const initialPageSize = searchParams.get("pageSize") ?? "10";
 
   const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
 
