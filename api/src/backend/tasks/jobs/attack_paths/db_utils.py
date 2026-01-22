@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
+from django.db.models import Q
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
@@ -153,9 +154,15 @@ def get_provider_graph_database_names(tenant_id: str, provider_id: str) -> list[
     Note: For accesing the `AttackPathsScan` we need to use `all_objects` manager because the provider is soft-deleted.
     """
     with rls_transaction(tenant_id):
-        graph_databases_names_qs = ProwlerAPIAttackPathsScan.all_objects.filter(
-            provider_id=provider_id,
-            is_graph_database_deleted=False,
-        ).values_list("graph_database", flat=True)
+        graph_databases_names_qs = (
+            ProwlerAPIAttackPathsScan.all_objects.filter(
+                ~Q(graph_database=""),
+                graph_database__isnull=False,
+                provider_id=provider_id,
+                is_graph_database_deleted=False,
+            )
+            .values_list("graph_database", flat=True)
+            .distinct()
+        )
 
         return list(graph_databases_names_qs)

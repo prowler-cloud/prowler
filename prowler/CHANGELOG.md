@@ -7,10 +7,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+- `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
 
 ### Changed
 
 - Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
 
 ---
 
