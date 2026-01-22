@@ -489,11 +489,9 @@ class TestAttackPathsProwlerHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        with patch(
-            "tasks.jobs.attack_paths.prowler.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
-        ):
-            result = prowler_module._enrich_and_flatten_batch([finding_dict])
+        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # No RLS mock needed - test DB doesn't enforce RLS policies
+        result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 1
         assert result[0]["resource_uid"] == resource.uid
@@ -573,11 +571,9 @@ class TestAttackPathsProwlerHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        with patch(
-            "tasks.jobs.attack_paths.prowler.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
-        ):
-            result = prowler_module._enrich_and_flatten_batch([finding_dict])
+        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # No RLS mock needed - test DB doesn't enforce RLS policies
+        result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 3
         result_resource_uids = {r["resource_uid"] for r in result}
@@ -641,13 +637,8 @@ class TestAttackPathsProwlerHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.prowler.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
-            ),
-            patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger,
-        ):
+        # Mock logger to verify warning is logged for orphan findings
+        with patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger:
             result = prowler_module._enrich_and_flatten_batch([finding_dict])
 
         assert len(result) == 0
