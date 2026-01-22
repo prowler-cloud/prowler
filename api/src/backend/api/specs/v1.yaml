@@ -8187,6 +8187,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
@@ -8589,6 +8604,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
@@ -8881,6 +8911,21 @@ paths:
           type: array
           items:
             type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
         description: Multiple values may be separated by commas.
         explode: false
         style: form
@@ -9183,6 +9228,21 @@ paths:
           type: array
           items:
             type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
         description: Multiple values may be separated by commas.
         explode: false
         style: form
@@ -22040,64 +22100,3 @@ components:
       bearerFormat: JWT
       description: Supports both JWT Bearer tokens and API Key authentication. Use
         `Bearer <token>` for JWT or `Api-Key <key>` for API keys.
-tags:
-- name: User
-  description: Endpoints for managing user accounts.
-- name: Token
-  description: Endpoints for token management, including obtaining a new token and
-    refreshing an existing token for authentication purposes.
-- name: Tenant
-  description: Endpoints for managing tenants, along with their memberships.
-- name: Invitation
-  description: Endpoints for tenant invitations management, allowing retrieval and
-    filtering of invitations, creating new invitations, accepting and revoking them.
-- name: Role
-  description: Endpoints for managing RBAC roles within tenants, allowing creation,
-    retrieval, updating, and deletion of role configurations and permissions.
-- name: Provider
-  description: Endpoints for managing providers (AWS, GCP, Azure, etc...).
-- name: Provider Group
-  description: Endpoints for managing provider groups.
-- name: Task
-  description: Endpoints for task management, allowing retrieval of task status and
-    revoking tasks that have not started.
-- name: Scan
-  description: Endpoints for triggering manual scans and viewing scan results.
-- name: Attack Paths
-  description: Endpoints for Attack Paths scan status and executing Attack Paths queries.
-- name: Schedule
-  description: Endpoints for managing scan schedules, allowing configuration of automated
-    scans with different scheduling options.
-- name: Resource
-  description: Endpoints for managing resources discovered by scans, allowing retrieval
-    and filtering of resource information.
-- name: Finding
-  description: Endpoints for managing findings, allowing retrieval and filtering of
-    findings that result from scans.
-- name: Processor
-  description: Endpoints for managing post-processors used to process Prowler findings,
-    including registration, configuration, and deletion of post-processing actions.
-- name: Compliance Overview
-  description: Endpoints for checking the compliance overview, allowing filtering
-    by scan, provider or compliance framework ID.
-- name: Overview
-  description: Endpoints for retrieving aggregated summaries of resources from the
-    system.
-- name: Integration
-  description: Endpoints for managing third-party integrations, including registration,
-    configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
-    services.
-- name: Lighthouse AI
-  description: Endpoints for managing Lighthouse AI configurations, including creation,
-    retrieval, updating, and deletion of configurations such as OpenAI keys, models,
-    and business context.
-- name: SAML
-  description: Endpoints for Single Sign-On authentication management via SAML for
-    seamless user authentication.
-- name: API Keys
-  description: Endpoints for API keys management. These can be used as an alternative
-    to JWT authorization.
-- name: Mute Rules
-  description: Endpoints for simple mute rules management. These can be used as an
-    alternative to the Mutelist Processor if you need to mute specific findings across
-    your tenant with a specific reason.
