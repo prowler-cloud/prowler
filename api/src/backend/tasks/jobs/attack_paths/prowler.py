@@ -4,6 +4,7 @@ from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
 
+from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import Provider, ResourceFindingMapping
 from config.env import env
@@ -95,8 +96,15 @@ def analysis(
     scan_id: str,
     config: CartographyConfig,
 ) -> None:
+    logger.info(f"Getting Prowler findings for AWS account {prowler_api_provider.uid}")
     findings_data = get_provider_last_scan_findings(prowler_api_provider, scan_id)
+
+    logger.info(f"Loading Prowler findings for AWS account {prowler_api_provider.uid}")
     load_findings(neo4j_session, findings_data, prowler_api_provider, config)
+
+    logger.info(
+        f"Cleaning up Prowler findings for AWS account {prowler_api_provider.uid}"
+    )
     cleanup_findings(neo4j_session, prowler_api_provider, config)
 
 
@@ -105,24 +113,28 @@ def get_provider_last_scan_findings(
     scan_id: str,
 ) -> list[dict[str, str]]:
     with rls_transaction(prowler_api_provider.tenant_id):
-        resource_finding_qs = ResourceFindingMapping.objects.filter(
-            finding__scan_id=scan_id,
-        ).values(
-            "resource__uid",
-            "finding__id",
-            "finding__uid",
-            "finding__inserted_at",
-            "finding__updated_at",
-            "finding__first_seen_at",
-            "finding__scan_id",
-            "finding__delta",
-            "finding__status",
-            "finding__status_extended",
-            "finding__severity",
-            "finding__check_id",
-            "finding__check_metadata__checktitle",
-            "finding__muted",
-            "finding__muted_reason",
+        resource_finding_qs = (
+            ResourceFindingMapping.objects.using(MainRouter.replica_db)
+            .filter(
+                finding__scan_id=scan_id,
+            )
+            .values(
+                "resource__uid",
+                "finding__id",
+                "finding__uid",
+                "finding__inserted_at",
+                "finding__updated_at",
+                "finding__first_seen_at",
+                "finding__scan_id",
+                "finding__delta",
+                "finding__status",
+                "finding__status_extended",
+                "finding__severity",
+                "finding__check_id",
+                "finding__check_metadata__checktitle",
+                "finding__muted",
+                "finding__muted_reason",
+            )
         )
 
         findings = []
