@@ -117,17 +117,24 @@ def get_provider_last_scan_findings(
 
     Memory efficient: never holds more than BATCH_SIZE findings in memory.
     """
-    offset = 0
 
     logger.info(
         f"Starting findings fetch for scan {scan_id} (tenant {prowler_api_provider.tenant_id}) with batch size {BATCH_SIZE}"
     )
 
+    iteration = 0
+    last_id = None
+
     while True:
+        iteration += 1
+
         with rls_transaction(prowler_api_provider.tenant_id, using=READ_REPLICA_ALIAS):
+            qs = Finding.objects.filter(scan_id=scan_id).order_by("id")
+            if last_id is not None:
+                qs = qs.filter(id__gt=last_id)
+
             findings_batch = list(
-                Finding.objects.filter(scan_id=scan_id)
-                .values(
+                qs.values(
                     "id",
                     "uid",
                     "inserted_at",
@@ -142,27 +149,25 @@ def get_provider_last_scan_findings(
                     "check_metadata__checktitle",
                     "muted",
                     "muted_reason",
-                )
-                .order_by("id")[offset : offset + BATCH_SIZE]
+                )[:BATCH_SIZE]
             )
 
             logger.info(
-                f"Iteration offset={offset} fetched {len(findings_batch)} findings"
+                f"Iteration #{iteration} fetched {len(findings_batch)} findings"
             )
 
             if not findings_batch:
                 logger.info(
-                    f"No findings returned for offset {offset}; stopping pagination"
+                    f"No findings returned for iteration #{iteration}; stopping pagination"
                 )
                 break
 
+            last_id = findings_batch[-1]["id"]
             enriched_batch = _enrich_and_flatten_batch(findings_batch)
 
         # Yield outside the transaction
         if enriched_batch:
             yield enriched_batch
-
-        offset += BATCH_SIZE
 
     logger.info(f"Finished fetching findings for scan {scan_id}")
 
