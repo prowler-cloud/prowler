@@ -4,6 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.18.0] (Prowler UNRELEASED)
 
+### Added
+
+- `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+
 ### Changed
 
 - Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
@@ -34,7 +38,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
 - `Cloudflare` Bot protection, WAF, Privacy, Anti-Scraping and Zone configuration checks [(#9425)](https://github.com/prowler-cloud/prowler/pull/9425)
-- `OpenStack` provider support with Keystone and Compute services including 2 security checks [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 
 ### Changed
 
