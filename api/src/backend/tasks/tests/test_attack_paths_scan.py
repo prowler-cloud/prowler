@@ -405,7 +405,7 @@ class TestAttackPathsProwlerHelpers:
             "tasks.jobs.attack_paths.prowler.rls_transaction",
             new=lambda *args, **kwargs: nullcontext(),
         ), patch(
-            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
             "default",
         ):
             # Generator yields batches, collect all findings from all batches
@@ -495,7 +495,7 @@ class TestAttackPathsProwlerHelpers:
         # _enrich_and_flatten_batch queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
         with patch(
-            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
             "default",
         ):
             result = prowler_module._enrich_and_flatten_batch([finding_dict])
@@ -581,7 +581,7 @@ class TestAttackPathsProwlerHelpers:
         # _enrich_and_flatten_batch queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
         with patch(
-            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
             "default",
         ):
             result = prowler_module._enrich_and_flatten_batch([finding_dict])
@@ -651,7 +651,7 @@ class TestAttackPathsProwlerHelpers:
         # Mock logger to verify no warning is emitted
         with (
             patch(
-                "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+                "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
                 "default",
             ),
             patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger,

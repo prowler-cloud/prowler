@@ -9,7 +9,7 @@ from celery.utils.log import get_task_logger
 from config.env import env
 from tasks.jobs.attack_paths.providers import get_node_uid_field, get_root_node_label
 
-from api.db_router import MainRouter
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Finding, Provider, ResourceFindingMapping
 from prowler.config import config as ProwlerConfig
@@ -124,10 +124,9 @@ def get_provider_last_scan_findings(
     )
 
     while True:
-        with rls_transaction(prowler_api_provider.tenant_id):
+        with rls_transaction(prowler_api_provider.tenant_id, using=READ_REPLICA_ALIAS):
             findings_batch = list(
-                Finding.objects.using(MainRouter.replica_db)
-                .filter(scan_id=scan_id)
+                Finding.objects.filter(scan_id=scan_id)
                 .values(
                     "id",
                     "uid",
@@ -180,11 +179,9 @@ def _enrich_and_flatten_batch(
     finding_ids = [f["id"] for f in findings_batch]
 
     # Single join: mapping -> resource
-    resource_mappings = (
-        ResourceFindingMapping.objects.using(MainRouter.replica_db)
-        .filter(finding_id__in=finding_ids)
-        .values_list("finding_id", "resource__uid")
-    )
+    resource_mappings = ResourceFindingMapping.objects.filter(
+        finding_id__in=finding_ids
+    ).values_list("finding_id", "resource__uid")
 
     # Build finding_id -> [resource_uids] mapping
     finding_resources = defaultdict(list)
