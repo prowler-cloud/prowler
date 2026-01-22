@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 - `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
+- `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 
 ### Changed
 
