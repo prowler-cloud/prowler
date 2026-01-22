@@ -84,7 +84,7 @@ services:
       # Auth
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
       # Memory limits
-      - NEO4J_dbms_max__databases=${NEO4J_DBMS_MAX__DATABASES:-1000000}
+      - NEO4J_dbms_max__databases=${NEO4J_DBMS_MAX__DATABASES:-1000}
       - NEO4J_server_memory_pagecache_size=${NEO4J_SERVER_MEMORY_PAGECACHE_SIZE:-1G}
       - NEO4J_server_memory_heap_initial__size=${NEO4J_SERVER_MEMORY_HEAP_INITIAL__SIZE:-1G}
       - NEO4J_server_memory_heap_max__size=${NEO4J_SERVER_MEMORY_HEAP_MAX__SIZE:-1G}
