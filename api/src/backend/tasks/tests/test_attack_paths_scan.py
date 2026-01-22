@@ -404,6 +404,9 @@ class TestAttackPathsProwlerHelpers:
         with patch(
             "tasks.jobs.attack_paths.prowler.rls_transaction",
             new=lambda *args, **kwargs: nullcontext(),
+        ), patch(
+            "tasks.jobs.attack_paths.prowler.MainRouter.replica_db",
+            "default",
         ):
             # Generator yields batches, collect all findings from all batches
             findings_batches = prowler_module.get_provider_last_scan_findings(
