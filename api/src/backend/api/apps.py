@@ -35,7 +35,7 @@ class ApiConfig(AppConfig):
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
-        #   `"manage.py" not in sys.argv[1]`: If an external server (e.g., Gunicorn) is running the app
+        #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
         #   `os.environ.get("RUN_MAIN")`: If it's not a Django command or using `runserver`,
         #                                 only the main process will do it
         if (len(sys.argv) >= 1 and "manage.py" not in sys.argv[0]) or os.environ.get(
