@@ -1,9 +1,7 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-import { Spinner } from "@heroui/spinner";
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { ExternalLink, Link, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Link, Loader2, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -244,6 +242,7 @@ export const ResourceDetail = ({
     null,
   );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [metadataCopied, setMetadataCopied] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -258,6 +257,12 @@ export const ResourceDetail = ({
     params.set("resourceId", resourceId);
     const url = `${window.location.origin}${pathname}?${params.toString()}`;
     navigator.clipboard.writeText(url);
+  };
+
+  const copyMetadata = async (metadata: Record<string, unknown>) => {
+    await navigator.clipboard.writeText(JSON.stringify(metadata, null, 2));
+    setMetadataCopied(true);
+    setTimeout(() => setMetadataCopied(false), 2000);
   };
 
   useEffect(() => {
@@ -407,52 +412,59 @@ export const ResourceDetail = ({
   const resourceContent = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
       {/* Header */}
-      <div className="flex flex-col gap-2">
-        {/* Row 1: Provider logo */}
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex items-center gap-4">
+        {/* Provider logo */}
+        <div className="shrink-0">
           {getProviderLogo(providerData.provider as ProviderType)}
-          {providerData.provider === "iac" && gitUrl && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={gitUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                  aria-label="Open resource in repository"
-                >
-                  <ExternalLink size={16} />
-                  View in Repository
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Go to Resource in the Repository</TooltipContent>
-            </Tooltip>
-          )}
         </div>
 
-        {/* Row 2: Title with copy link */}
-        <h2 className="text-text-neutral-primary line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium">
-          {renderValue(attributes.name)}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={copyResourceUrl}
-                className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
-                aria-label="Copy resource link to clipboard"
-              >
-                <Link size={16} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Copy resource link to clipboard</TooltipContent>
-          </Tooltip>
-        </h2>
+        {/* Details column */}
+        <div className="flex min-w-0 flex-col gap-1">
+          {/* Title with copy link and optional IaC link */}
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
+              {renderValue(attributes.name)}
+            </h2>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={copyResourceUrl}
+                  className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
+                  aria-label="Copy resource link to clipboard"
+                >
+                  <Link size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Copy resource link to clipboard</TooltipContent>
+            </Tooltip>
+            {providerData.provider === "iac" && gitUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={gitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
+                    aria-label="Open resource in repository"
+                  >
+                    <ExternalLink size={16} />
+                    View in Repository
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Go to Resource in the Repository
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
-        {/* Row 3: Last Updated */}
-        <div className="text-text-neutral-tertiary text-sm">
-          <span className="text-text-neutral-secondary mr-1">
-            Last Updated:
-          </span>
-          <DateWithTime inline dateTime={attributes.updated_at || "-"} />
+          {/* Last Updated */}
+          <div className="text-text-neutral-tertiary text-sm">
+            <span className="text-text-neutral-secondary mr-1">
+              Last Updated:
+            </span>
+            <DateWithTime inline dateTime={attributes.updated_at || "-"} />
+          </div>
         </div>
       </div>
 
@@ -510,15 +522,18 @@ export const ResourceDetail = ({
               Object.entries(parsedMetadata).length > 0 ? (
               <InfoField label="Metadata" variant="simple">
                 <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
-                  <Snippet
-                    className="absolute top-2 right-2 z-10 bg-transparent"
-                    classNames={{
-                      base: "bg-transparent p-0 min-w-0",
-                      pre: "hidden",
-                    }}
+                  <button
+                    type="button"
+                    onClick={() => copyMetadata(parsedMetadata)}
+                    className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
+                    aria-label="Copy metadata to clipboard"
                   >
-                    {JSON.stringify(parsedMetadata, null, 2)}
-                  </Snippet>
+                    {metadataCopied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </button>
                   <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
                     {JSON.stringify(parsedMetadata, null, 2)}
                   </pre>
@@ -547,7 +562,7 @@ export const ResourceDetail = ({
         <TabsContent value="findings" className="flex flex-col gap-4">
           {findingsLoading ? (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Spinner size="sm" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               <p className="text-text-neutral-secondary text-sm">
                 Loading findings...
               </p>
