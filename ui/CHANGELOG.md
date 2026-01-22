@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.17.1] (Prowler v5.17.1 Unreleased)
+
+### 🔄 Changed
+
+- Restyle resources view with improved resource detail drawer [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
+
+---
+
 ## [1.17.0] (Prowler v5.17.0)
 
 ### 🚀 Added
