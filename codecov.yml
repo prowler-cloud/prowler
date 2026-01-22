@@ -9,3 +9,7 @@ component_management:
 
 comment:
   layout: "header, diff, flags, components"
+
+flags:
+  api:
+    carryforward: true
