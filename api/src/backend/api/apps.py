@@ -1,5 +1,5 @@
-import logging
 import atexit
+import logging
 import os
 import sys
 from pathlib import Path
@@ -35,13 +35,35 @@ class ApiConfig(AppConfig):
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
-        #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
+        #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
         #   `os.environ.get("RUN_MAIN")`: If it's not a Django command or using `runserver`,
         #                                 only the main process will do it
-        if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
+        if (len(sys.argv) >= 1 and "manage.py" not in sys.argv[0]) or os.environ.get(
+            "RUN_MAIN"
+        ):
             self._ensure_crypto_keys()
 
-        if not getattr(settings, "TESTING", False):
+        # Commands that don't need Neo4j
+        SKIP_NEO4J_DJANGO_COMMANDS = [
+            "migrate",
+            "makemigrations",
+            "check",
+            "help",
+            "showmigrations",
+            "check_and_fix_socialaccount_sites_migration",
+        ]
+
+        # Skip Neo4j initialization during tests or specific Django commands
+        if getattr(settings, "TESTING", False) or (
+            len(sys.argv) > 1
+            and "manage.py" in sys.argv[0]
+            and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+        ):
+            logger.info(
+                "Skipping Neo4j initialization because of the current Django command or testing"
+            )
+
+        else:
             graph_database.init_driver()
             atexit.register(graph_database.close_driver)
 

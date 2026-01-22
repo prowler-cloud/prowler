@@ -17,11 +17,9 @@ class RetryableSession:
     def __init__(
         self,
         session_factory: Callable[[], neo4j.Session],
-        close_driver: Callable[[], None],  # Just to avoid circular imports
         max_retries: int,
     ) -> None:
         self._session_factory = session_factory
-        self._close_driver = close_driver
         self._max_retries = max(0, max_retries)
         self._session = self._session_factory()
 
@@ -58,7 +56,7 @@ class RetryableSession:
 
     def _call_with_retry(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
         attempt = 0
-        last_exc: neo4j.exceptions.ServiceUnavailable | None = None
+        last_exc: Exception | None = None
 
         while attempt <= self._max_retries:
             try:
@@ -66,7 +64,8 @@ class RetryableSession:
                 return method(*args, **kwargs)
 
             except (
-                neo4j.exceptions.ServiceUnavailable
+                neo4j.exceptions.ServiceUnavailable,
+                ConnectionResetError,
             ) as exc:  # pragma: no cover - depends on infra
                 last_exc = exc
                 attempt += 1
@@ -75,7 +74,7 @@ class RetryableSession:
                     raise
 
                 logger.warning(
-                    f"Neo4j session {method_name} failed with ServiceUnavailable ({attempt}/{self._max_retries} attempts). Retrying..."
+                    f"Neo4j session {method_name} failed with {type(exc).__name__} ({attempt}/{self._max_retries} attempts). Retrying..."
                 )
                 self._refresh_session()
 
@@ -83,7 +82,10 @@ class RetryableSession:
 
     def _refresh_session(self) -> None:
         if self._session is not None:
-            self._session.close()
+            try:
+                self._session.close()
+            except Exception:
+                # Best-effort close; failures just mean we open a new session below
+                pass
 
-        self._close_driver()
         self._session = self._session_factory()

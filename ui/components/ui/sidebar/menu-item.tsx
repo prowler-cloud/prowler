@@ -46,19 +46,12 @@ export const MenuItem = ({
           variant={isActive ? "menu-active" : "menu-inactive"}
           className={cn(
             isOpen ? "w-full justify-start" : "w-14 justify-center",
-            highlight &&
-              "relative overflow-hidden before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-emerald-500/20 before:via-teal-400/20 before:to-emerald-300/20 before:opacity-70",
           )}
           asChild
         >
           <Link href={href} target={target}>
-            <div className="relative z-10 flex items-center">
-              <span
-                className={cn(
-                  isOpen ? "mr-4" : "",
-                  highlight && "text-button-primary",
-                )}
-              >
+            <div className="flex items-center">
+              <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />
               </span>
               {isOpen && (
