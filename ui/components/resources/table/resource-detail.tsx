@@ -606,6 +606,7 @@ export const ResourceDetail = ({
       open={open}
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}
+      modal={false}
     >
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
       <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
