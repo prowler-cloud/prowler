@@ -59,6 +59,7 @@ def start_aws_ingestion(
     )
 
     # Starting with sync functions
+    logger.info(f"Syncing organizations for AWS account {prowler_api_provider.uid}")
     cartography_aws.organizations.sync(
         neo4j_session,
         {prowler_api_provider.alias: prowler_api_provider.uid},
@@ -84,13 +85,22 @@ def start_aws_ingestion(
     )
 
     if "permission_relationships" in requested_syncs:
+        logger.info(
+            f"Syncing function permission_relationships for AWS account {prowler_api_provider.uid}"
+        )
         cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 88)
 
     if "resourcegroupstaggingapi" in requested_syncs:
+        logger.info(
+            f"Syncing function resourcegroupstaggingapi for AWS account {prowler_api_provider.uid}"
+        )
         cartography_aws.RESOURCE_FUNCTIONS["resourcegroupstaggingapi"](**sync_args)
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 89)
 
+    logger.info(
+        f"Syncing ec2_iaminstanceprofile scoped analysis for AWS account {prowler_api_provider.uid}"
+    )
     cartography_aws.run_scoped_analysis_job(
         "aws_ec2_iaminstanceprofile.json",
         neo4j_session,
@@ -98,6 +108,9 @@ def start_aws_ingestion(
     )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 90)
 
+    logger.info(
+        f"Syncing lambda_ecr analysis for AWS account {prowler_api_provider.uid}"
+    )
     cartography_aws.run_analysis_job(
         "aws_lambda_ecr.json",
         neo4j_session,
@@ -105,6 +118,7 @@ def start_aws_ingestion(
     )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 91)
 
+    logger.info(f"Syncing metadata for AWS account {prowler_api_provider.uid}")
     cartography_aws.merge_module_sync_metadata(
         neo4j_session,
         group_type="AWSAccount",
@@ -118,6 +132,7 @@ def start_aws_ingestion(
     # Removing the added extra field
     del common_job_parameters["AWS_ID"]
 
+    logger.info(f"Syncing cleanup_job for AWS account {prowler_api_provider.uid}")
     cartography_aws.run_cleanup_job(
         "aws_post_ingestion_principals_cleanup.json",
         neo4j_session,
@@ -125,6 +140,7 @@ def start_aws_ingestion(
     )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 93)
 
+    logger.info(f"Syncing analysis for AWS account {prowler_api_provider.uid}")
     cartography_aws._perform_aws_analysis(
         requested_syncs, neo4j_session, common_job_parameters
     )

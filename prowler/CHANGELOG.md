@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.18.0] (Prowler UNRELEASED)
+
+### Added
+
+- `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
+- `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)
+
+### Changed
+
+- Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
+
+---
+
 ## [5.17.0] (Prowler v5.17.0)
 
 ### Added
