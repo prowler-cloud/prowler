@@ -331,8 +331,22 @@
       },
       {
         "tab": "Security",
-        "pages": [
-          "security"
+        "groups": [
+          {
+            "group": "Security & Compliance",
+            "pages": [
+              "security/index",
+              "security/software-security"
+            ]
+          },
+          {
+            "group": "Prowler Cloud",
+            "pages": [
+              "security/encryption",
+              "security/data-regions",
+              "security/networking"
+            ]
+          }
         ]
       },
       {
