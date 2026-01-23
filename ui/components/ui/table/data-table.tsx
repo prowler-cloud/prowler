@@ -44,6 +44,37 @@ interface DataTableProviderProps<TData, TValue> {
   showSearch?: boolean;
   /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
   paramPrefix?: string;
+
+  /*
+   * Controlled Mode Props
+   * ---------------------
+   * By default, DataTable uses URL params for pagination/search (via paramPrefix).
+   * This causes Next.js page re-renders on every interaction.
+   *
+   * For tables inside drawers/modals, use controlled mode instead:
+   * - Pass controlledPage, controlledPageSize, controlledSearch as state values
+   * - Pass onPageChange, onPageSizeChange, onSearchChange as state setters
+   * - This keeps state local, avoiding URL changes and unnecessary page re-renders
+   *
+   * Example:
+   *   const [page, setPage] = useState(1);
+   *   const [search, setSearch] = useState("");
+   *   <DataTable
+   *     controlledPage={page}
+   *     onPageChange={setPage}
+   *     controlledSearch={search}
+   *     onSearchChange={setSearch}
+   *     isLoading={isLoading}
+   *   />
+   */
+  controlledSearch?: string;
+  onSearchChange?: (value: string) => void;
+  controlledPage?: number;
+  controlledPageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  /** Show loading state with opacity overlay (for controlled mode) */
+  isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -57,13 +88,21 @@ export function DataTable<TData, TValue>({
   getRowCanSelect,
   showSearch = false,
   paramPrefix = "",
+  controlledSearch,
+  onSearchChange,
+  controlledPage,
+  controlledPageSize,
+  onPageChange,
+  onPageSizeChange,
+  isLoading = false,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Get transition state from context for loading indicator
   const filterTransition = useFilterTransitionOptional();
-  const isPending = filterTransition?.isPending ?? false;
+  // Use either context-based pending state or controlled isLoading prop
+  const isPending = (filterTransition?.isPending ?? false) || isLoading;
 
   const table = useReactTable({
     data,
@@ -107,7 +146,13 @@ export function DataTable<TData, TValue>({
       {showToolbar && (
         <div className="flex items-center justify-between">
           <div>
-            {showSearch && <DataTableSearch paramPrefix={paramPrefix} />}
+            {showSearch && (
+              <DataTableSearch
+                paramPrefix={paramPrefix}
+                controlledValue={controlledSearch}
+                onSearchChange={onSearchChange}
+              />
+            )}
           </div>
           {metadata && (
             <span className="text-text-neutral-secondary text-sm">
@@ -163,6 +208,10 @@ export function DataTable<TData, TValue>({
           metadata={metadata}
           disableScroll={disableScroll}
           paramPrefix={paramPrefix}
+          controlledPage={controlledPage}
+          controlledPageSize={controlledPageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       )}
     </div>
