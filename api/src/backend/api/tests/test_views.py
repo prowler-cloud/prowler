@@ -4447,9 +4447,7 @@ class TestResourceViewSet:
         self, authenticated_client, latest_scan_resource
     ):
         """Test that provider_id filter returns empty when no match."""
-        import uuid
-
-        non_existent_id = str(uuid.uuid4())
+        non_existent_id = str(uuid4())
         response = authenticated_client.get(
             reverse("resource-latest"),
             {"filter[provider_id]": non_existent_id},
