@@ -11,8 +11,8 @@ import {
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
 
 interface MuteFindingsModalProps {
@@ -44,6 +44,7 @@ export function MuteFindingsModal({
 
   useEffect(() => {
     if (state?.success) {
+      console.log("[MuteFindingsModal] success, calling onComplete:", !!onCompleteRef.current);
       toast({
         title: "Success",
         description: state.success,
@@ -65,8 +66,8 @@ export function MuteFindingsModal({
   };
 
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={onOpenChange}
       title="Mute Findings"
       size="lg"
@@ -125,6 +126,6 @@ export function MuteFindingsModal({
           isDisabled={isPending}
         />
       </form>
-    </CustomAlertModal>
+    </Modal>
   );
 }
