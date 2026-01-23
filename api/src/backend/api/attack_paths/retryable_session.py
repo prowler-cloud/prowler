@@ -64,9 +64,9 @@ class RetryableSession:
                 return method(*args, **kwargs)
 
             except (
-                neo4j.exceptions.ServiceUnavailable,
-                ConnectionResetError,
                 BrokenPipeError,
+                ConnectionResetError,
+                neo4j.exceptions.ServiceUnavailable,
             ) as exc:  # pragma: no cover - depends on infra
                 last_exc = exc
                 attempt += 1
