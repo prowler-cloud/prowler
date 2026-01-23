@@ -77,6 +77,7 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from api.attack_paths import (
+    database as graph_database,
     get_queries_for_provider,
     get_query_by_id,
     views_helpers as attack_paths_views_helpers,
@@ -2435,6 +2436,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         graph = attack_paths_views_helpers.execute_attack_paths_query(
             attack_paths_scan, query_definition, parameters
         )
+        graph_database.clear_cache(attack_paths_scan.graph_database)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
