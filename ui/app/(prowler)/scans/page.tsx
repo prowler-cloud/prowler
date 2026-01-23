@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -87,33 +86,32 @@ export default async function Scans({
     <ContentLayout title="Scans" icon="lucide:timer">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        {!hasManageScansPermission ? (
-          <CustomBanner
-            title={"Access Denied"}
-            message={"You don't have permission to launch the scan."}
+        <>
+          {!hasManageScansPermission ? (
+            <CustomBanner
+              title={"Access Denied"}
+              message={"You don't have permission to launch the scan."}
+            />
+          ) : thereIsNoProvidersConnected ? (
+            <>
+              <NoProvidersConnected />
+            </>
+          ) : (
+            <LaunchScanWorkflow providers={providerInfo} />
+          )}
+        </>
+        <div className="flex flex-col gap-6">
+          <ScansFilters
+            providerUIDs={providerUIDs}
+            providerDetails={providerDetails}
           />
-        ) : thereIsNoProvidersConnected ? (
-          <>
-            <Spacer y={8} />
-            <NoProvidersConnected />
-            <Spacer y={8} />
-          </>
-        ) : (
-          <LaunchScanWorkflow providers={providerInfo} />
-        )}
-
-        <ScansFilters
-          providerUIDs={providerUIDs}
-          providerDetails={providerDetails}
-        />
-        <Spacer y={8} />
-        <div className="flex items-center justify-end gap-4">
-          <MutedFindingsConfigButton />
+          <div className="flex items-center justify-end">
+            <MutedFindingsConfigButton />
+          </div>
+          <Suspense fallback={<SkeletonTableScans />}>
+            <SSRDataTableScans searchParams={resolvedSearchParams} />
+          </Suspense>
         </div>
-        <Spacer y={8} />
-        <Suspense fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={resolvedSearchParams} />
-        </Suspense>
       </>
     </ContentLayout>
   );

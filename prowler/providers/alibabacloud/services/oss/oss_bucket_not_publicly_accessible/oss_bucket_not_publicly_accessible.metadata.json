@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
   "Severity": "critical",
   "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
   "Description": "A bucket is a container used to store objects in **Object Storage Service (OSS)**. All objects in OSS are stored in buckets.\n\nIt is recommended that the access policy on OSS buckets does not allow **anonymous** and/or **public access**.",
   "Risk": "Allowing **anonymous** and/or **public access** grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data.\n\nPublic buckets can lead to **data breaches**, **unauthorized data access**, and **compliance violations**.",
   "RelatedUrl": "",

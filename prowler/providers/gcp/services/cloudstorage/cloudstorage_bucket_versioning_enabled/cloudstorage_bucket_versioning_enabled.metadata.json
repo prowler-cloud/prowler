@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Google Cloud Storage buckets** are evaluated to ensure that **Object Versioning** is enabled. Object Versioning preserves older versions of objects, allowing data recovery, maintaining audit trails, and protecting against accidental deletions or overwrites.",
   "Risk": "Buckets without Object Versioning enabled cannot recover previous object versions, which increases the risk of permanent data loss from accidental deletion or modification.",
   "RelatedUrl": "",

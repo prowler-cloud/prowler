@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue ETL jobs** should link a **security configuration** with **job bookmark encryption** enabled. Bookmark encryption must not be `DISABLED` (e.g., use `CSE-KMS`). Jobs lacking a security configuration are treated as not protecting bookmark metadata.",
   "Risk": "Unencrypted **job bookmarks** in S3 expose execution state and data pointers, reducing **confidentiality**. Altered bookmarks can trigger reruns, skips, or reprocessing, harming **integrity**. Missing security configs may also leave logs and temporary objects unencrypted.",
   "RelatedUrl": "",

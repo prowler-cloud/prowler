@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.authorization/policyassignments",
+  "ResourceGroup": "governance",
   "Description": "**Defender for Cloud default policy assignment** (`SecurityCenterBuiltIn`) uses enforcement mode `Default` rather than `DoNotEnforce`",
   "Risk": "With `DoNotEnforce`, policy effects like `deny` and `deployIfNotExists` aren't applied, letting insecure configs persist. This erodes **confidentiality** and **integrity** (exposed endpoints, weak encryption) and can affect **availability** via unpatched or misconfigured services, enabling compromise and lateral movement.",
   "RelatedUrl": "",

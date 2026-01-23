@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Disks",
+  "ResourceGroup": "storage",
   "Description": "Customer-Supplied Encryption Keys (CSEK) are a feature in Google Cloud Storage and Google Compute Engine. If you supply your own encryption keys, Google uses your key to protect the Google-generated keys used to encrypt and decrypt your data. By default, Google Compute Engine encrypts all data at rest. Compute Engine handles and manages this encryption for you without any additional actions on your part. However, if you wanted to control and manage this encryption yourself, you can provide your own encryption keys.",
   "Risk": "By default, Compute Engine service encrypts all data at rest. The cloud service manages this type of encryption without any additional actions from you and your application. However, if you want to fully control and manage instance disk encryption, you can provide your own encryption keys.",
   "RelatedUrl": "",

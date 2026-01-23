@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Sharepoint Settings",
+  "ResourceGroup": "collaboration",
   "Description": "Microsoft OneDrive allows users to sign in their cloud tenant account and begin syncing select folders or the entire contents of OneDrive to a local computer. By default, this includes any computer with OneDrive already installed, whether it is Entra Joined, Entra Hybrid Joined or Active Directory Domain joined. The recommended state for this setting is Allow syncing only on computers joined to specific domains Enabled: Specify the AD domain GUID(s).",
   "Risk": "Unmanaged devices can pose a security risk by allowing users to sync sensitive data to unauthorized devices, potentially leading to data leakage or unauthorized access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",

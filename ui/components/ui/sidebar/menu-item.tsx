@@ -20,6 +20,7 @@ interface MenuItemProps {
   target?: string;
   tooltip?: string;
   isOpen: boolean;
+  highlight?: boolean;
 }
 
 export const MenuItem = ({
@@ -30,6 +31,7 @@ export const MenuItem = ({
   target,
   tooltip,
   isOpen,
+  highlight,
 }: MenuItemProps) => {
   const pathname = usePathname();
   const isActive = active !== undefined ? active : pathname.startsWith(href);
@@ -52,7 +54,16 @@ export const MenuItem = ({
               <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />
               </span>
-              {isOpen && <p className="max-w-[200px] truncate">{label}</p>}
+              {isOpen && (
+                <p className="max-w-[200px] truncate">
+                  {label}
+                  {highlight && (
+                    <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      NEW
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </Link>
         </Button>

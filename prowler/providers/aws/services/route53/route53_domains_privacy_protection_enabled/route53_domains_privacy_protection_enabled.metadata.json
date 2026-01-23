@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "network",
   "Description": "**Route 53 domain** administrative contact has **privacy protection** enabled, so WHOIS queries return redacted or proxy details.\n\nEvaluates whether contact data is hidden instead of publicly listed.",
   "Risk": "**Public WHOIS contact data** exposes names, emails, phones, and addresses, enabling:\n- **Phishing/social engineering** of the registrar\n- **SIM-swap** or account takeover\n- **Domain hijacking**, affecting DNS integrity/availability\nIt also increases spam and targeted harassment.",
   "RelatedUrl": "",

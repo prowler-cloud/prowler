@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the Kubernetes Controller Manager is bound to the loopback address (127.0.0.1) to minimize the cluster's attack surface. Binding to the loopback address ensures that the Controller Manager API service is not exposed to unauthorized network access.",
   "Risk": "Binding the Controller Manager to a non-loopback address exposes sensitive health and metrics information without authentication or encryption.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
