@@ -1,4 +1,3 @@
-import atexit
 import logging
 import os
 import sys
@@ -31,7 +30,6 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
-        from api.attack_paths import database as graph_database
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
@@ -43,29 +41,8 @@ class ApiConfig(AppConfig):
         ):
             self._ensure_crypto_keys()
 
-        # Commands that don't need Neo4j
-        SKIP_NEO4J_DJANGO_COMMANDS = [
-            "migrate",
-            "makemigrations",
-            "check",
-            "help",
-            "showmigrations",
-            "check_and_fix_socialaccount_sites_migration",
-        ]
-
-        # Skip Neo4j initialization during tests or specific Django commands
-        if getattr(settings, "TESTING", False) or (
-            len(sys.argv) > 1
-            and "manage.py" in sys.argv[0]
-            and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
-        ):
-            logger.info(
-                "Skipping Neo4j initialization because of the current Django command or testing"
-            )
-
-        else:
-            graph_database.init_driver()
-            atexit.register(graph_database.close_driver)
+        # Neo4j driver is initialized lazily on first use (see api.attack_paths.database)
+        # This avoids connection attempts during regular scans that don't need graph database
 
         load_prowler_compliance()
 

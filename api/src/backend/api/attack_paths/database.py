@@ -1,13 +1,12 @@
+import atexit
 import logging
 import threading
-
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
-
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -21,6 +20,7 @@ SERVICE_UNAVAILABLE_MAX_RETRIES = 3
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
 _lock = threading.Lock()
+_atexit_registered = False
 
 # Base Neo4j functions
 
@@ -32,7 +32,7 @@ def get_uri() -> str:
 
 
 def init_driver() -> neo4j.Driver:
-    global _driver
+    global _driver, _atexit_registered
     if _driver is not None:
         return _driver
 
@@ -50,6 +50,11 @@ def init_driver() -> neo4j.Driver:
                 max_connection_pool_size=50,
             )
             _driver.verify_connectivity()
+
+            # Register cleanup handler on first initialization
+            if not _atexit_registered:
+                atexit.register(close_driver)
+                _atexit_registered = True
 
     return _driver
 
@@ -110,7 +115,9 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
         YIELD node
         DETACH DELETE node
         RETURN COUNT(node) AS deleted_nodes_count
-    """.replace("__ROOT_NODE_LABEL__", root_node_label)
+    """.replace(
+        "__ROOT_NODE_LABEL__", root_node_label
+    )
     parameters = {"root_node_id": root_node_id}
 
     with get_session(database) as session:
