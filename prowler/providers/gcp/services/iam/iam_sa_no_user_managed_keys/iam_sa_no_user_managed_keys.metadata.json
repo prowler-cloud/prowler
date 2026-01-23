@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "ServiceAccountKey",
+  "ResourceGroup": "IAM",
   "Description": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
   "Risk": "Anyone who has access to the keys will be able to access resources through the service account. GCP-managed keys are used by Cloud Platform services such as App Engine and Compute Engine. These keys cannot be downloaded. Google will keep the keys and automatically rotate them on an approximately weekly basis. User-managed keys are created, downloadable, and managed by users.",
   "RelatedUrl": "",

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
   "Description": "**AWS account** is subscribed to an **AWS Premium Support plan** (e.g., Business or Enterprise)",
   "Risk": "Without **Premium Support**, critical incidents face slower response, reducing **availability** and delaying containment of security events. Limited Trusted Advisor coverage lets **misconfigurations** persist, risking **data exposure** and **privilege misuse**. Lack of expert guidance increases change risk during production impacts.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafRegionalRuleGroup",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic Regional rule groups** are evaluated to confirm they contain at least one **rule**. Groups with no rule entries are considered empty.",
   "Risk": "An empty rule group contributes no filtering in a web ACL, letting requests bypass inspection within that group. This erodes **defense in depth** and can enable injection, brute-force, or bot traffic to reach applications, threatening **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

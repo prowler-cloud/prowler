@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DatabaseInstance",
+  "ResourceGroup": "database",
   "Description": "Ensure That Cloud SQL Database Instances Are Configured With Automated Backups",
   "Risk": "Backups provide a way to restore a Cloud SQL instance to recover lost data or recover from a problem with that instance. Automated backups need to be set for any instance that contains data that should be protected from loss or damage. This recommendation is applicable for SQL Server, PostgreSql, MySql generation 1 and MySql generation 2 instances.",
   "RelatedUrl": "",
