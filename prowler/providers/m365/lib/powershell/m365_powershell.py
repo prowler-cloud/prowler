@@ -823,6 +823,29 @@ class M365PowerShell(PowerShellSession):
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_atp_policy_for_o365(self) -> dict:
+        """
+        Get ATP Policy for Office 365.
+
+        Retrieves the current ATP (Advanced Threat Protection) policy settings for Office 365,
+        including Safe Attachments for SharePoint, OneDrive, and Teams, and Safe Documents settings.
+
+        Returns:
+            dict: ATP policy settings in JSON format.
+
+        Example:
+            >>> get_atp_policy_for_o365()
+            {
+                "Identity": "Default",
+                "EnableATPForSPOTeamsODB": true,
+                "EnableSafeDocs": true,
+                "AllowSafeDocsOpen": false
+            }
+        """
+        return self.execute(
+            "Get-AtpPolicyForO365 | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_user_account_status(self) -> dict:
         """
         Get User Account Status.

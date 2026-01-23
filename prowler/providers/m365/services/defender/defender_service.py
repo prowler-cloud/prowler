@@ -8,7 +8,34 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 
 class Defender(M365Service):
+    """
+    Microsoft 365 Defender service class.
+
+    This class provides methods to retrieve and manage Microsoft Defender for Office 365
+    security policies and configurations, including malware filters, spam policies,
+    anti-phishing settings, and ATP (Advanced Threat Protection) policies.
+
+    Attributes:
+        malware_policies (list): List of malware filter policies.
+        outbound_spam_policies (dict): Dictionary of outbound spam filter policies.
+        outbound_spam_rules (dict): Dictionary of outbound spam filter rules.
+        antiphishing_policies (dict): Dictionary of anti-phishing policies.
+        antiphishing_rules (dict): Dictionary of anti-phishing rules.
+        connection_filter_policy: Connection filter policy configuration.
+        dkim_configurations (list): List of DKIM signing configurations.
+        inbound_spam_policies (list): List of inbound spam filter policies.
+        inbound_spam_rules (dict): Dictionary of inbound spam filter rules.
+        report_submission_policy: Report submission policy configuration.
+        atp_policy_for_o365: ATP policy for Office 365 configuration.
+    """
+
     def __init__(self, provider: M365Provider):
+        """
+        Initialize the Defender service.
+
+        Args:
+            provider (M365Provider): The Microsoft 365 provider instance.
+        """
         super().__init__(provider)
         self.malware_policies = []
         self.outbound_spam_policies = {}
@@ -20,6 +47,7 @@ class Defender(M365Service):
         self.inbound_spam_policies = []
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
+        self.atp_policy_for_o365 = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -33,6 +61,7 @@ class Defender(M365Service):
                 self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
+                self.atp_policy_for_o365 = self._get_atp_policy_for_o365()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -350,6 +379,12 @@ class Defender(M365Service):
         return inbound_spam_rules
 
     def _get_report_submission_policy(self):
+        """
+        Get the Defender report submission policy.
+
+        Returns:
+            ReportSubmissionPolicy: The report submission policy configuration.
+        """
         logger.info("Microsoft365 - Getting Defender report submission policy...")
         report_submission_policy = None
         try:
@@ -386,6 +421,35 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return report_submission_policy
+
+    def _get_atp_policy_for_o365(self):
+        """
+        Get the ATP (Advanced Threat Protection) policy for Office 365.
+
+        Retrieves the ATP policy settings including Safe Attachments for SharePoint,
+        OneDrive, and Teams, as well as Safe Documents configuration.
+
+        Returns:
+            AtpPolicyForO365: The ATP policy configuration for Office 365.
+        """
+        logger.info("Microsoft365 - Getting ATP policy for Office 365...")
+        atp_policy = None
+        try:
+            policy = self.powershell.get_atp_policy_for_o365()
+            if policy:
+                atp_policy = AtpPolicyForO365(
+                    identity=policy.get("Identity", "Default"),
+                    enable_atp_for_spo_teams_odb=policy.get(
+                        "EnableATPForSPOTeamsODB", False
+                    ),
+                    enable_safe_docs=policy.get("EnableSafeDocs", False),
+                    allow_safe_docs_open=policy.get("AllowSafeDocsOpen", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return atp_policy
 
 
 class MalwarePolicy(BaseModel):
@@ -470,6 +534,8 @@ class InboundSpamRule(BaseModel):
 
 
 class ReportSubmissionPolicy(BaseModel):
+    """Model for Defender report submission policy configuration."""
+
     report_junk_to_customized_address: bool
     report_not_junk_to_customized_address: bool
     report_phish_to_customized_address: bool
@@ -478,3 +544,22 @@ class ReportSubmissionPolicy(BaseModel):
     report_phish_addresses: list[str]
     report_chat_message_enabled: bool
     report_chat_message_to_customized_address_enabled: bool
+
+
+class AtpPolicyForO365(BaseModel):
+    """
+    Model for ATP (Advanced Threat Protection) policy for Office 365.
+
+    Attributes:
+        identity: The identity of the ATP policy.
+        enable_atp_for_spo_teams_odb: Whether Safe Attachments is enabled for
+            SharePoint, OneDrive, and Microsoft Teams.
+        enable_safe_docs: Whether Safe Documents is enabled for clients in Protected View.
+        allow_safe_docs_open: Whether users can click through Protected View
+            even if Safe Documents identifies the file as malicious.
+    """
+
+    identity: str
+    enable_atp_for_spo_teams_odb: bool
+    enable_safe_docs: bool
+    allow_safe_docs_open: bool
