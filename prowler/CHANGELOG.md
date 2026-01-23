@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
 - Update Azure Container Registry service metadata to new format [(#9615)](https://github.com/prowler-cloud/prowler/pull/9615)
 - Update Azure Cosmos DB service metadata to new format [(#9616)](https://github.com/prowler-cloud/prowler/pull/9616)
+- Update Azure Databricks service metadata to new format [(#9617)](https://github.com/prowler-cloud/prowler/pull/9617)
 
 ---
 
