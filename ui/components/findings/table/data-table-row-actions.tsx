@@ -19,10 +19,9 @@ import { FindingsSelectionContext } from "./findings-selection-context";
 
 interface DataTableRowActionsProps {
   row: Row<FindingProps>;
-  onMuteComplete?: () => void;
 }
 
-export function DataTableRowActions({ row, onMuteComplete }: DataTableRowActionsProps) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const router = useRouter();
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);

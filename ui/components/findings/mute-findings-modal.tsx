@@ -44,12 +44,11 @@ export function MuteFindingsModal({
 
   useEffect(() => {
     if (state?.success) {
-      console.log("[MuteFindingsModal] success, calling onComplete:", !!onCompleteRef.current);
       toast({
         title: "Success",
         description: state.success,
       });
-      // Call onComplete BEFORE closing the modal to ensure router.refresh() executes
+
       onCompleteRef.current?.();
       onOpenChangeRef.current(false);
     } else if (state?.errors?.general) {
