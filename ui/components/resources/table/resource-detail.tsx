@@ -229,6 +229,7 @@ export const ResourceDetail = ({
     useState<MetaDataProps | null>(null);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
@@ -271,6 +272,7 @@ export const ResourceDetail = ({
       setCurrentPage(1);
       setPageSize(10);
       setSearchQuery("");
+      setHasInitiallyLoaded(false);
     }
   };
 
@@ -343,6 +345,7 @@ export const ResourceDetail = ({
         setFindingsMetadata(null);
       } finally {
         setFindingsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
 
@@ -635,33 +638,44 @@ export const ResourceDetail = ({
 
         {/* Findings Tab */}
         <TabsContent value="findings" className="flex flex-col gap-4">
-          <DataTable
-            columns={columns}
-            data={failedFindings}
-            metadata={findingsMetadata ?? undefined}
-            showSearch
-            disableScroll
-            enableRowSelection
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-            getRowCanSelect={getRowCanSelect}
-            controlledSearch={searchQuery}
-            onSearchChange={(value) => {
-              setSearchQuery(value);
-              setCurrentPage(1); // Reset to first page on search
-            }}
-            controlledPage={currentPage}
-            controlledPageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            isLoading={findingsLoading}
-          />
-          {selectedFindingIds.length > 0 && (
-            <FloatingMuteButton
-              selectedCount={selectedFindingIds.length}
-              selectedFindingIds={selectedFindingIds}
-              onComplete={handleMuteComplete}
-            />
+          {findingsLoading && !hasInitiallyLoaded ? (
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <p className="text-text-neutral-secondary text-sm">
+                Loading findings...
+              </p>
+            </div>
+          ) : (
+            <>
+              <DataTable
+                columns={columns}
+                data={failedFindings}
+                metadata={findingsMetadata ?? undefined}
+                showSearch
+                disableScroll
+                enableRowSelection
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+                getRowCanSelect={getRowCanSelect}
+                controlledSearch={searchQuery}
+                onSearchChange={(value) => {
+                  setSearchQuery(value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+                controlledPage={currentPage}
+                controlledPageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+                isLoading={findingsLoading}
+              />
+              {selectedFindingIds.length > 0 && (
+                <FloatingMuteButton
+                  selectedCount={selectedFindingIds.length}
+                  selectedFindingIds={selectedFindingIds}
+                  onComplete={handleMuteComplete}
+                />
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
