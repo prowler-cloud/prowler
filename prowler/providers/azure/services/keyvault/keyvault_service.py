@@ -1,5 +1,3 @@
-import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
@@ -32,24 +30,15 @@ class KeyVault(AzureService):
         3. Each vault's keys/secrets/monitor fetched in parallel
         """
         logger.info("KeyVault - Getting key_vaults...")
-        total_start = time.perf_counter()
         key_vaults = {}
 
         for subscription, client in self.clients.items():
             try:
                 key_vaults[subscription] = []
-
-                list_start = time.perf_counter()
                 vaults_list = list(client.vaults.list_by_subscription())
-                list_elapsed = time.perf_counter() - list_start
-                logger.info(f"KeyVault - list_by_subscription took {list_elapsed:.2f}s")
 
                 if not vaults_list:
                     continue
-
-                logger.info(
-                    f"KeyVault - Found {len(vaults_list)} vaults in subscription {subscription}"
-                )
 
                 # Prepare items for parallel processing
                 items = [
@@ -66,29 +55,19 @@ class KeyVault(AzureService):
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-        total_elapsed = time.perf_counter() - total_start
-        logger.info(f"KeyVault - _get_key_vaults TOTAL took {total_elapsed:.2f}s")
-
         return key_vaults
 
     def _process_single_keyvault(self, item: dict) -> Optional["KeyVaultInfo"]:
         """Process a single KeyVault in parallel."""
         subscription = item["subscription"]
         keyvault = item["keyvault"]
-        thread_id = threading.current_thread().name
 
         try:
-            start_time = time.perf_counter()
             resource_group = keyvault.id.split("/")[4]
             keyvault_name = keyvault.name
-            logger.info(
-                f"KeyVault - [{thread_id}] Processing vault {keyvault_name} START"
-            )
-
             keyvault_properties = keyvault.properties
 
             # Fetch keys, secrets, and monitor in parallel
-            parallel_start = time.perf_counter()
             with ThreadPoolExecutor(max_workers=3) as executor:
                 keys_future = executor.submit(
                     self._get_keys, subscription, resource_group, keyvault_name
@@ -106,14 +85,6 @@ class KeyVault(AzureService):
                 keys = keys_future.result()
                 secrets = secrets_future.result()
                 monitor_settings = monitor_future.result()
-            parallel_elapsed = time.perf_counter() - parallel_start
-
-            total_elapsed = time.perf_counter() - start_time
-            logger.info(
-                f"KeyVault - [{thread_id}] Vault {keyvault_name} DONE: "
-                f"parallel={parallel_elapsed:.2f}s, total={total_elapsed:.2f}s, "
-                f"keys={len(keys)}, secrets={len(secrets)}"
-            )
 
             return KeyVaultInfo(
                 id=getattr(keyvault, "id", ""),
@@ -167,10 +138,6 @@ class KeyVault(AzureService):
             return None
 
     def _get_keys(self, subscription, resource_group, keyvault_name):
-        thread_id = threading.current_thread().name
-        start_time = time.perf_counter()
-        logger.info(f"KeyVault - [{thread_id}] _get_keys({keyvault_name}) START")
-
         keys = []
         keys_dict = {}
 
@@ -228,12 +195,6 @@ class KeyVault(AzureService):
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
 
-        elapsed = time.perf_counter() - start_time
-        logger.info(
-            f"KeyVault - [{thread_id}] _get_keys({keyvault_name}) DONE: "
-            f"{len(keys)} keys in {elapsed:.2f}s"
-        )
-
         return keys
 
     def _get_single_rotation_policy(self, item: dict) -> tuple:
@@ -253,10 +214,6 @@ class KeyVault(AzureService):
             return (prop.name, None)
 
     def _get_secrets(self, subscription, resource_group, keyvault_name):
-        thread_id = threading.current_thread().name
-        start_time = time.perf_counter()
-        logger.info(f"KeyVault - [{thread_id}] _get_secrets({keyvault_name}) START")
-
         secrets = []
         try:
             client = self.clients[subscription]
@@ -289,19 +246,9 @@ class KeyVault(AzureService):
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        elapsed = time.perf_counter() - start_time
-        logger.info(
-            f"KeyVault - [{thread_id}] _get_secrets({keyvault_name}) DONE: "
-            f"{len(secrets)} secrets in {elapsed:.2f}s"
-        )
-
         return secrets
 
     def _get_vault_monitor_settings(self, keyvault_name, resource_group, subscription):
-        thread_id = threading.current_thread().name
-        start_time = time.perf_counter()
-        logger.info(f"KeyVault - [{thread_id}] _get_monitor({keyvault_name}) START")
-
         monitor_diagnostics_settings = []
         try:
             monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
@@ -313,12 +260,6 @@ class KeyVault(AzureService):
             logger.error(
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-        elapsed = time.perf_counter() - start_time
-        logger.info(
-            f"KeyVault - [{thread_id}] _get_monitor({keyvault_name}) DONE: "
-            f"{len(monitor_diagnostics_settings)} settings in {elapsed:.2f}s"
-        )
 
         return monitor_diagnostics_settings
 
