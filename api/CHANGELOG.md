@@ -2,9 +2,17 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.19.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
+
+---
+
 ## [1.18.1] (Prowler v5.17.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Improve API startup process by `manage.py` argument detection [(#9856)](https://github.com/prowler-cloud/prowler/pull/9856)
 - Deleting providers don't try to delete a `None` Neo4j database when an Attack Paths scan is scheduled [(#9858)](https://github.com/prowler-cloud/prowler/pull/9858)
@@ -13,9 +21,11 @@ All notable changes to the **Prowler API** are documented in this file.
 - Lazy load Neo4j driver [(#9868)](https://github.com/prowler-cloud/prowler/pull/9868)
 - Use `Findings.all_objects` to avoid the `ActiveProviderPartitionedManager` [(#9869)](https://github.com/prowler-cloud/prowler/pull/9869)
 
+---
+
 ## [1.18.0] (Prowler v5.17.0)
 
-### Added
+### 🚀 Added
 
 - `/api/v1/overviews/compliance-watchlist` endpoint to retrieve the compliance watchlist [(#9596)](https://github.com/prowler-cloud/prowler/pull/9596)
 - AlibabaCloud provider support [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
@@ -24,7 +34,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `provider_id` and `provider_id__in` filter aliases for findings endpoints to enable consistent frontend parameter naming [(#9701)](https://github.com/prowler-cloud/prowler/pull/9701)
 - Attack Paths: `/api/v1/attack-paths-scans` for AWS providers backed by Neo4j [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
 
-### Security
+### 🔐 Security
 
 - Django 5.1.15 (CVE-2025-64460, CVE-2025-13372), Werkzeug 3.1.4 (CVE-2025-66221), sqlparse 0.5.5 (PVE-2025-82038), fonttools 4.60.2 (CVE-2025-66034) [(#9730)](https://github.com/prowler-cloud/prowler/pull/9730)
 - `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
@@ -35,11 +45,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.17.1] (Prowler v5.16.1)
 
-### Changed
+### 🔄 Changed
 
 - Security Hub integration error when no regions [(#9635)](https://github.com/prowler-cloud/prowler/pull/9635)
 
-### Fixed
+### 🐞 Fixed
 
 - Orphan scheduled scans caused by transaction isolation during provider creation [(#9633)](https://github.com/prowler-cloud/prowler/pull/9633)
 
@@ -47,19 +57,19 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.17.0] (Prowler v5.16.0)
 
-### Added
+### 🚀 Added
 
 - New endpoint to retrieve and overview of the categories based on finding severities [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - Endpoints `GET /findings` and `GET /findings/latests` can now use the category filter [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - Account id, alias and provider name to PDF reporting table [(#9574)](https://github.com/prowler-cloud/prowler/pull/9574)
 
-### Changed
+### 🔄 Changed
 
 - Endpoint `GET /overviews/attack-surfaces` no longer returns the related check IDs [(#9529)](https://github.com/prowler-cloud/prowler/pull/9529)
 - OpenAI provider to only load chat-compatible models with tool calling support [(#9523)](https://github.com/prowler-cloud/prowler/pull/9523)
 - Increased execution delay for the first scheduled scan tasks to 5 seconds[(#9558)](https://github.com/prowler-cloud/prowler/pull/9558)
 
-### Fixed
+### 🐞 Fixed
 
 - Made `scan_id` a required filter in the compliance overview endpoint [(#9560)](https://github.com/prowler-cloud/prowler/pull/9560)
 - Reduced unnecessary UPDATE resources operations by only saving when tag mappings change, lowering write load during scans [(#9569)](https://github.com/prowler-cloud/prowler/pull/9569)
@@ -68,13 +78,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.16.1] (Prowler v5.15.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Race condition in scheduled scan creation by adding countdown to task [(#9516)](https://github.com/prowler-cloud/prowler/pull/9516)
 
 ## [1.16.0] (Prowler v5.15.0)
 
-### Added
+### 🚀 Added
 
 - New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
 - New endpoint `GET /api/v1/overviews/findings_severity/timeseries` to retrieve daily aggregated findings by severity level [(#9363)](https://github.com/prowler-cloud/prowler/pull/9363)
@@ -82,7 +92,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Exception handler for provider deletions during scans [(#9414)](https://github.com/prowler-cloud/prowler/pull/9414)
 - Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
 
-### Changed
+### 🔄 Changed
 
 - Error messages from Lighthouse celery tasks [(#9165)](https://github.com/prowler-cloud/prowler/pull/9165)
 - Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
@@ -91,7 +101,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.15.2] (Prowler v5.14.2)
 
-### Fixed
+### 🐞 Fixed
 
 - Unique constraint violation during compliance overviews task [(#9436)](https://github.com/prowler-cloud/prowler/pull/9436)
 - Division by zero error in ENS PDF report when all requirements are manual [(#9443)](https://github.com/prowler-cloud/prowler/pull/9443)
@@ -100,7 +110,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.15.1] (Prowler v5.14.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Fix typo in PDF reporting [(#9345)](https://github.com/prowler-cloud/prowler/pull/9345)
 - Fix IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
@@ -110,7 +120,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.15.0] (Prowler v5.14.0)
 
-### Added
+### 🚀 Added
 
 - IaC (Infrastructure as Code) provider support for remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
 - Extend `GET /api/v1/providers` with provider-type filters and optional pagination disable to support the new Overview filters [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
@@ -130,12 +140,12 @@ All notable changes to the **Prowler API** are documented in this file.
 - Enhanced compliance overview endpoint with provider filtering and latest scan aggregation [(#9244)](https://github.com/prowler-cloud/prowler/pull/9244)
 - New endpoint `GET /api/v1/overview/regions` to retrieve aggregated findings data by region [(#9273)](https://github.com/prowler-cloud/prowler/pull/9273)
 
-### Changed
+### 🔄 Changed
 
 - Optimized database write queries for scan related tasks [(#9190)](https://github.com/prowler-cloud/prowler/pull/9190)
 - Date filters are now optional for `GET /api/v1/overviews/services` endpoint; returns latest scan data by default [(#9248)](https://github.com/prowler-cloud/prowler/pull/9248)
 
-### Fixed
+### 🐞 Fixed
 
 - Scans no longer fail when findings have UIDs exceeding 300 characters; such findings are now skipped with detailed logging [(#9246)](https://github.com/prowler-cloud/prowler/pull/9246)
 - Updated unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers [(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
@@ -144,7 +154,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Severity overview endpoint now ignores muted findings as expected [(#9283)](https://github.com/prowler-cloud/prowler/pull/9283)
 - Fixed discrepancy between ThreatScore PDF report values and database calculations [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
-### Security
+### 🔐 Security
 
 - Django updated to the latest 5.1 security release, 5.1.14, due to problems with potential [SQL injection](https://github.com/prowler-cloud/prowler/security/dependabot/113) and [denial-of-service vulnerability](https://github.com/prowler-cloud/prowler/security/dependabot/114) [(#9176)](https://github.com/prowler-cloud/prowler/pull/9176)
 
@@ -152,7 +162,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.14.1] (Prowler v5.13.1)
 
-### Fixed
+### 🐞 Fixed
 
 - `/api/v1/overviews/providers` collapses data by provider type so the UI receives a single aggregated record per cloud family even when multiple accounts exist [(#9053)](https://github.com/prowler-cloud/prowler/pull/9053)
 - Added retry logic to database transactions to handle Aurora read replica connection failures during scale-down events [(#9064)](https://github.com/prowler-cloud/prowler/pull/9064)
@@ -162,7 +172,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.14.0] (Prowler v5.13.0)
 
-### Added
+### 🚀 Added
 
 - Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
 - `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
@@ -176,12 +186,12 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 - Add `provider_id__in` filter support to findings and findings severity overview endpoints [(#8951)](https://github.com/prowler-cloud/prowler/pull/8951)
 
-### Changed
+### 🔄 Changed
 
 - Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
 - Now at least one user with MANAGE_ACCOUNT permission is required in the tenant [(#8729)](https://github.com/prowler-cloud/prowler/pull/8729)
 
-### Security
+### 🔐 Security
 
 - Django updated to the latest 5.1 security release, 5.1.13, due to problems with potential [SQL injection](https://github.com/prowler-cloud/prowler/security/dependabot/104) and [directory traversals](https://github.com/prowler-cloud/prowler/security/dependabot/103) [(#8842)](https://github.com/prowler-cloud/prowler/pull/8842)
 
@@ -189,7 +199,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.13.2] (Prowler v5.12.3)
 
-### Fixed
+### 🐞 Fixed
 
 - 500 error when deleting user [(#8731)](https://github.com/prowler-cloud/prowler/pull/8731)
 
@@ -197,11 +207,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.13.1] (Prowler v5.12.2)
 
-### Changed
+### 🔄 Changed
 
 - Renamed compliance overview task queue to `compliance` [(#8755)](https://github.com/prowler-cloud/prowler/pull/8755)
 
-### Security
+### 🔐 Security
 
 - Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/pull/8693)
 
@@ -209,7 +219,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.13.0] (Prowler v5.12.0)
 
-### Added
+### 🚀 Added
 
 - Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
 - `GET /overviews/findings_severity` now supports `filter[status]` and `filter[status__in]` to aggregate by specific statuses (`FAIL`, `PASS`)[(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
@@ -219,13 +229,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.12.0] (Prowler v5.11.0)
 
-### Added
+### 🚀 Added
 
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
 - Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 - Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
 
-### Fixed
+### 🐞 Fixed
 
 - GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
 
@@ -233,12 +243,12 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.11.0] (Prowler v5.10.0)
 
-### Added
+### 🚀 Added
 
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 
-### Fixed
+### 🐞 Fixed
 
 - Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
 
@@ -246,7 +256,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.10.2] (Prowler v5.9.2)
 
-### Changed
+### 🔄 Changed
 
 - Optimized queries for resources views [(#8336)](https://github.com/prowler-cloud/prowler/pull/8336)
 
@@ -254,7 +264,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.1] (Prowler v5.9.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Calculate failed findings during scans to prevent heavy database queries [(#8322)](https://github.com/prowler-cloud/prowler/pull/8322)
 
@@ -262,28 +272,28 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.10.0] (Prowler v5.9.0)
 
-### Added
+### 🚀 Added
 
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
-### Changed
+### 🔄 Changed
 
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
 - Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 - Optimized include parameters for resources view [(#8229)](https://github.com/prowler-cloud/prowler/pull/8229)
 - Optimized overview background tasks [(#8300)](https://github.com/prowler-cloud/prowler/pull/8300)
 
-### Fixed
+### 🐞 Fixed
 
 - Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 - RBAC is now applied to `GET /overviews/providers` [(#8277)](https://github.com/prowler-cloud/prowler/pull/8277)
 
-### Changed
+### 🔄 Changed
 
 - `POST /schedules/daily` returns a `409 CONFLICT` if already created [(#8258)](https://github.com/prowler-cloud/prowler/pull/8258)
 
-### Security
+### 🔐 Security
 
 - Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
@@ -291,20 +301,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.9.1] (Prowler v5.8.1)
 
-### Added
+### 🚀 Added
 
 - Custom exception for provider connection errors during scans [(#8234)](https://github.com/prowler-cloud/prowler/pull/8234)
 
-### Changed
+### 🔄 Changed
 
 - Summary and overview tasks now use a dedicated queue and no longer propagate errors to compliance tasks [(#8214)](https://github.com/prowler-cloud/prowler/pull/8214)
 
-### Fixed
+### 🐞 Fixed
 
 - Scan with no resources will not trigger legacy code for findings metadata [(#8183)](https://github.com/prowler-cloud/prowler/pull/8183)
 - Invitation email comparison case-insensitive [(#8206)](https://github.com/prowler-cloud/prowler/pull/8206)
 
-### Removed
+### ❌ Removed
 
 - Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
@@ -312,18 +322,18 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.9.0] (Prowler v5.8.0)
 
-### Added
+### 🚀 Added
 
 - Support GCP Service Account key [(#7824)](https://github.com/prowler-cloud/prowler/pull/7824)
 - `GET /compliance-overviews` endpoints to retrieve compliance metadata and specific requirements statuses [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Lighthouse configuration support [(#7848)](https://github.com/prowler-cloud/prowler/pull/7848)
 
-### Changed
+### 🔄 Changed
 
 - Reworked `GET /compliance-overviews` to return proper requirement metrics [(#7877)](https://github.com/prowler-cloud/prowler/pull/7877)
 - Optional `user` and `password` for M365 provider [(#7992)](https://github.com/prowler-cloud/prowler/pull/7992)
 
-### Fixed
+### 🐞 Fixed
 
 - Scheduled scans are no longer deleted when their daily schedule run is disabled [(#8082)](https://github.com/prowler-cloud/prowler/pull/8082)
 
@@ -331,7 +341,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.5] (Prowler v5.7.5)
 
-### Fixed
+### 🐞 Fixed
 
 - Normalize provider UID to ensure safe and unique export directory paths [(#8007)](https://github.com/prowler-cloud/prowler/pull/8007).
 - Blank resource types in `/metadata` endpoints [(#8027)](https://github.com/prowler-cloud/prowler/pull/8027)
@@ -340,7 +350,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.4] (Prowler v5.7.4)
 
-### Removed
+### ❌ Removed
 
 - Reverted RLS transaction handling and DB custom backend [(#7994)](https://github.com/prowler-cloud/prowler/pull/7994)
 
@@ -348,15 +358,15 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.3] (Prowler v5.7.3)
 
-### Added
+### 🚀 Added
 
 - Database backend to handle already closed connections [(#7935)](https://github.com/prowler-cloud/prowler/pull/7935)
 
-### Changed
+### 🔄 Changed
 
 - Renamed field encrypted_password to password for M365 provider [(#7784)](https://github.com/prowler-cloud/prowler/pull/7784)
 
-### Fixed
+### 🐞 Fixed
 
 - Transaction persistence with RLS operations [(#7916)](https://github.com/prowler-cloud/prowler/pull/7916)
 - Reverted the change `get_with_retry` to use the original `get` method for retrieving tasks [(#7932)](https://github.com/prowler-cloud/prowler/pull/7932)
@@ -365,7 +375,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.2] (Prowler v5.7.2)
 
-### Fixed
+### 🐞 Fixed
 
 - Task lookup to use task_kwargs instead of task_args for scan report resolution [(#7830)](https://github.com/prowler-cloud/prowler/pull/7830)
 - Kubernetes UID validation to allow valid context names [(#7871)](https://github.com/prowler-cloud/prowler/pull/7871)
@@ -377,7 +387,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.1] (Prowler v5.7.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Added database index to improve performance on finding lookup [(#7800)](https://github.com/prowler-cloud/prowler/pull/7800)
 
@@ -385,7 +395,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.8.0] (Prowler v5.7.0)
 
-### Added
+### 🚀 Added
 
 - Huge improvements to `/findings/metadata` and resource related filters for findings [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690)
 - Improvements to `/overviews` endpoints [(#7690)](https://github.com/prowler-cloud/prowler/pull/7690)
@@ -397,7 +407,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.7.0] (Prowler v5.6.0)
 
-### Added
+### 🚀 Added
 
 - M365 as a new provider [(#7563)](https://github.com/prowler-cloud/prowler/pull/7563)
 - `compliance/` folder and ZIP‐export functionality for all compliance reports [(#7653)](https://github.com/prowler-cloud/prowler/pull/7653)
@@ -407,7 +417,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.6.0] (Prowler v5.5.0)
 
-### Added
+### 🚀 Added
 
 - Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167)
 - HTTP Security Headers [(#7289)](https://github.com/prowler-cloud/prowler/pull/7289)
@@ -419,7 +429,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.5.4] (Prowler v5.4.4)
 
-### Fixed
+### 🐞 Fixed
 
 - Bug with periodic tasks when trying to delete a provider [(#7466)](https://github.com/prowler-cloud/prowler/pull/7466)
 
@@ -427,7 +437,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.5.3] (Prowler v5.4.3)
 
-### Fixed
+### 🐞 Fixed
 
 - Duplicated scheduled scans handling [(#7401)](https://github.com/prowler-cloud/prowler/pull/7401)
 - Environment variable to configure the deletion task batch size [(#7423)](https://github.com/prowler-cloud/prowler/pull/7423)
@@ -436,7 +446,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.5.2] (Prowler v5.4.2)
 
-### Changed
+### 🔄 Changed
 
 - Refactored deletion logic and implemented retry mechanism for deletion tasks [(#7349)](https://github.com/prowler-cloud/prowler/pull/7349)
 
@@ -444,7 +454,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.5.1] (Prowler v5.4.1)
 
-### Fixed
+### 🐞 Fixed
 
 - Handle response in case local files are missing [(#7183)](https://github.com/prowler-cloud/prowler/pull/7183)
 - Race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172)
@@ -454,13 +464,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.5.0] (Prowler v5.4.0)
 
-### Added
+### 🚀 Added
 
 - Social login integration with Google and GitHub [(#6906)](https://github.com/prowler-cloud/prowler/pull/6906)
 - API scan report system, now all scans launched from the API will generate a compressed file with the report in OCSF, CSV and HTML formats [(#6878)](https://github.com/prowler-cloud/prowler/pull/6878)
 - Configurable Sentry integration [(#6874)](https://github.com/prowler-cloud/prowler/pull/6874)
 
-### Changed
+### 🔄 Changed
 
 - Optimized `GET /findings` endpoint to improve response time and size [(#7019)](https://github.com/prowler-cloud/prowler/pull/7019)
 
@@ -468,7 +478,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [v1.4.0] (Prowler v5.3.0)
 
-### Changed
+### 🔄 Changed
 
 - Daily scheduled scan instances are now created beforehand with `SCHEDULED` state [(#6700)](https://github.com/prowler-cloud/prowler/pull/6700)
 - Findings endpoints now require at least one date filter [(#6800)](https://github.com/prowler-cloud/prowler/pull/6800)

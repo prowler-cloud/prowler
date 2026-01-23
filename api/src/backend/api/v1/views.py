@@ -3,7 +3,6 @@ import glob
 import json
 import logging
 import os
-
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -11,7 +10,6 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
-
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -75,12 +73,26 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
-from api.attack_paths import (
-    get_queries_for_provider,
-    get_query_by_id,
-    views_helpers as attack_paths_views_helpers,
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
+
+from api.attack_paths import get_queries_for_provider, get_query_by_id
+from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -90,6 +102,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
@@ -102,7 +115,6 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
-    AttackPathsScanFilter,
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
     MembershipFilter,
@@ -124,6 +136,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackPathsScan,
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
@@ -131,7 +144,6 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
-    AttackPathsScan,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -177,9 +189,9 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsQueryResultSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
-    AttackPathsQueryResultSerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
     CategoryOverviewSerializer,
@@ -262,23 +274,6 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
-)
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -4199,7 +4194,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # If we couldn't determine from database, try each provider type
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
-                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
+                if compliance_id in get_compliance_frameworks(pt):
                     provider_type = pt
                     break
 

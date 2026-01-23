@@ -30,7 +30,6 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
-        from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
@@ -43,8 +42,6 @@ class ApiConfig(AppConfig):
 
         # Neo4j driver is initialized lazily on first use (see api.attack_paths.database)
         # This avoids connection attempts during regular scans that don't need graph database
-
-        load_prowler_compliance()
 
     def _ensure_crypto_keys(self):
         """
