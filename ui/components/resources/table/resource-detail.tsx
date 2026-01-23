@@ -12,6 +12,10 @@ import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { DataTableRowActions } from "@/components/findings/table";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
 import {
+  DeltaType,
+  NotificationIndicator,
+} from "@/components/findings/table/notification-indicator";
+import {
   Checkbox,
   Drawer,
   DrawerClose,
@@ -58,6 +62,8 @@ interface ResourceFinding {
     status: "PASS" | "FAIL" | "MANUAL";
     severity: Severity;
     muted?: boolean;
+    muted_reason?: string;
+    delta?: DeltaType;
     updated_at?: string;
     check_metadata?: {
       checktitle?: string;
@@ -129,26 +135,45 @@ const getResourceFindingsColumns = (
 
   return [
     {
+      id: "notification",
+      header: () => null,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center pr-4">
+          <NotificationIndicator
+            delta={row.original.attributes.delta}
+            isMuted={row.original.attributes.muted}
+            mutedReason={row.original.attributes.muted_reason}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       id: "select",
       header: ({ table }) => (
-        <Checkbox
-          checked={
-            isAllSelected ? true : isSomeSelected ? "indeterminate" : false
-          }
-          onCheckedChange={(checked) =>
-            table.toggleAllPageRowsSelected(checked === true)
-          }
-          aria-label="Select all"
-          disabled={selectableRowCount === 0}
-        />
+        <div className="ml-1 flex w-6 items-center justify-center pr-4">
+          <Checkbox
+            checked={
+              isAllSelected ? true : isSomeSelected ? "indeterminate" : false
+            }
+            onCheckedChange={(checked) =>
+              table.toggleAllPageRowsSelected(checked === true)
+            }
+            aria-label="Select all"
+            disabled={selectableRowCount === 0}
+          />
+        </div>
       ),
       cell: ({ row }) => (
-        <Checkbox
-          checked={!!rowSelection[row.id]}
-          disabled={row.original.attributes.muted}
-          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-          aria-label="Select row"
-        />
+        <div className="ml-1 flex w-6 items-center justify-center pr-4">
+          <Checkbox
+            checked={!!rowSelection[row.id]}
+            disabled={row.original.attributes.muted}
+            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+            aria-label="Select row"
+          />
+        </div>
       ),
       enableSorting: false,
     },
