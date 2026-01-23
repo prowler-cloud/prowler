@@ -122,6 +122,29 @@ class Codebuild(AWSService):
             project.tags = project_info.get("tags", [])
             project.service_role_arn = project_info.get("serviceRole", "")
             project.project_visibility = project_info.get("projectVisibility", "")
+
+            # Extract webhook configuration
+            webhook_data = project_info.get("webhook")
+            if webhook_data:
+                filter_groups = []
+                for fg in webhook_data.get("filterGroups", []):
+                    filters = []
+                    for f in fg:
+                        filters.append(
+                            WebhookFilter(
+                                type=f.get("type", ""),
+                                pattern=f.get("pattern", ""),
+                                exclude_matched_pattern=f.get(
+                                    "excludeMatchedPattern", False
+                                ),
+                            )
+                        )
+                    filter_groups.append(WebhookFilterGroup(filters=filters))
+
+                project.webhook = Webhook(
+                    filter_groups=filter_groups,
+                    branch_filter=webhook_data.get("branchFilter"),
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -209,6 +232,27 @@ class CloudWatchLogs(BaseModel):
     stream_name: str
 
 
+class WebhookFilter(BaseModel):
+    """Represents a single filter in a webhook filter group."""
+
+    type: str  # ACTOR_ACCOUNT_ID, HEAD_REF, BASE_REF, EVENT, etc.
+    pattern: str
+    exclude_matched_pattern: bool = False
+
+
+class WebhookFilterGroup(BaseModel):
+    """Represents a group of filters (AND logic within group)."""
+
+    filters: List[WebhookFilter] = []
+
+
+class Webhook(BaseModel):
+    """Represents the webhook configuration for a CodeBuild project."""
+
+    filter_groups: List[WebhookFilterGroup] = []
+    branch_filter: Optional[str] = None
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -224,6 +268,7 @@ class Project(BaseModel):
     cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
     project_visibility: Optional[str] = None
+    webhook: Optional[Webhook] = None
 
 
 class ExportConfig(BaseModel):
