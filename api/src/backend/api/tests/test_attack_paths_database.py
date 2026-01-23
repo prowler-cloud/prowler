@@ -1,8 +1,9 @@
 """
 Tests for Neo4j database lazy initialization.
 
-The Neo4j driver should only connect when actually needed (lazy initialization),
-not at Django app startup. This allows regular scans to run without Neo4j.
+The Neo4j driver connects on first use by default. API processes may
+eagerly initialize the driver during app startup, while Celery workers
+remain lazy. These tests validate the database module behavior itself.
 """
 
 import threading
