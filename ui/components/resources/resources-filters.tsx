@@ -11,13 +11,10 @@ import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
-import { FilterEntity } from "@/types";
 import { ProviderProps } from "@/types/providers";
 
 interface ResourcesFiltersProps {
   providers: ProviderProps[];
-  providerIds: string[];
-  providerDetails: { [id: string]: FilterEntity }[];
   uniqueRegions: string[];
   uniqueServices: string[];
   uniqueGroups: string[];

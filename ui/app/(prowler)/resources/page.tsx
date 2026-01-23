@@ -21,10 +21,6 @@ import {
   hasDateOrScanFilter,
   replaceFieldKey,
 } from "@/lib";
-import {
-  createProviderDetailsMappingById,
-  extractProviderIds,
-} from "@/lib/provider-helpers";
 import { ResourceProps, SearchParamsProps } from "@/types";
 
 export default async function Resources({
@@ -82,20 +78,12 @@ export default async function Resources({
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
-  // Extract provider IDs and details
-  const providerIds = providersData ? extractProviderIds(providersData) : [];
-  const providerDetails = providersData
-    ? createProviderDetailsMappingById(providerIds, providersData)
-    : [];
-
   return (
     <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterTransitionWrapper>
         <div className="mb-6">
           <ResourcesFilters
             providers={providersData?.data || []}
-            providerIds={providerIds}
-            providerDetails={providerDetails}
             uniqueRegions={uniqueRegions}
             uniqueServices={uniqueServices}
             uniqueGroups={uniqueGroups}
