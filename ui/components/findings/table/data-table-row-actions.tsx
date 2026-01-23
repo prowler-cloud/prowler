@@ -19,9 +19,13 @@ import { FindingsSelectionContext } from "./findings-selection-context";
 
 interface DataTableRowActionsProps {
   row: Row<FindingProps>;
+  onMuteComplete?: (findingIds: string[]) => void;
 }
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+export function DataTableRowActions({
+  row,
+  onMuteComplete,
+}: DataTableRowActionsProps) {
   const router = useRouter();
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
@@ -84,6 +88,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     // 1. If the muted finding was selected, its index now points to a different finding
     // 2. rowSelection uses indices (0, 1, 2...) not IDs, so after refresh the wrong findings would appear selected
     clearSelection();
+    if (onMuteComplete) {
+      onMuteComplete(getMuteIds());
+      return;
+    }
+
     router.refresh();
   };
 
@@ -130,7 +139,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             label={getMuteLabel()}
             description={getMuteDescription()}
             disabled={isMuted}
-            onSelect={() => setIsMuteModalOpen(true)}
+            onSelect={() => {
+              setIsMuteModalOpen(true);
+            }}
           />
           <ActionDropdownItem
             icon={<JiraIcon size={20} />}

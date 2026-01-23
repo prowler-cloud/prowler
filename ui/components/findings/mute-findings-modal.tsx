@@ -4,9 +4,10 @@ import { Input, Textarea } from "@heroui/input";
 import {
   Dispatch,
   SetStateAction,
-  useActionState,
   useEffect,
   useRef,
+  useState,
+  useTransition,
 } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
@@ -29,6 +30,8 @@ export function MuteFindingsModal({
   onComplete,
 }: MuteFindingsModalProps) {
   const { toast } = useToast();
+  const [state, setState] = useState<MuteRuleActionState | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   // Use refs to avoid stale closures in useEffect
   const onCompleteRef = useRef(onComplete);
@@ -37,18 +40,12 @@ export function MuteFindingsModal({
   const onOpenChangeRef = useRef(onOpenChange);
   onOpenChangeRef.current = onOpenChange;
 
-  const [state, formAction, isPending] = useActionState<
-    MuteRuleActionState,
-    FormData
-  >(createMuteRule, null);
-
   useEffect(() => {
     if (state?.success) {
       toast({
         title: "Success",
         description: state.success,
       });
-
       onCompleteRef.current?.();
       onOpenChangeRef.current(false);
     } else if (state?.errors?.general) {
@@ -71,7 +68,20 @@ export function MuteFindingsModal({
       title="Mute Findings"
       size="lg"
     >
-      <form action={formAction} className="flex flex-col gap-4">
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+
+          startTransition(() => {
+            void (async () => {
+              const result = await createMuteRule(null, formData);
+              setState(result);
+            })();
+          });
+        }}
+      >
         <input
           type="hidden"
           name="finding_ids"

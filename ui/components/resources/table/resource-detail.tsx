@@ -126,6 +126,7 @@ const getResourceFindingsColumns = (
   rowSelection: RowSelectionState,
   selectableRowCount: number,
   onNavigate: (id: string) => void,
+  onMuteComplete?: (findingIds: string[]) => void,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -227,7 +228,10 @@ const getResourceFindingsColumns = (
       id: "actions",
       header: () => <div className="w-10" />,
       cell: ({ row }) => (
-        <DataTableRowActions row={row as unknown as Row<FindingProps>} />
+        <DataTableRowActions
+          row={row as unknown as Row<FindingProps>}
+          onMuteComplete={onMuteComplete}
+        />
       ),
       enableSorting: false,
     },
@@ -255,6 +259,7 @@ export const ResourceDetail = ({
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  const [findingsReloadNonce, setFindingsReloadNonce] = useState(0);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
@@ -377,7 +382,14 @@ export const ResourceDetail = ({
     if (attributes.uid && isDrawerOpen) {
       loadFindings();
     }
-  }, [attributes.uid, currentPage, pageSize, searchQuery, isDrawerOpen]);
+  }, [
+    attributes.uid,
+    currentPage,
+    pageSize,
+    searchQuery,
+    isDrawerOpen,
+    findingsReloadNonce,
+  ]);
 
   const navigateToFinding = async (findingId: string) => {
     // Cancel any in-flight request
@@ -438,8 +450,12 @@ export const ResourceDetail = ({
     setFindingDetailLoading(false);
   };
 
-  const handleMuteComplete = () => {
+  const handleMuteComplete = (_findingIds?: string[]) => {
+    const ids =
+      _findingIds && _findingIds.length > 0 ? _findingIds : selectedFindingIds;
+
     setRowSelection({});
+    if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
     router.refresh();
   };
 
@@ -470,6 +486,7 @@ export const ResourceDetail = ({
     rowSelection,
     selectableRowCount,
     navigateToFinding,
+    handleMuteComplete,
   );
 
   // Build Git URL for IaC resources
