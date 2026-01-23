@@ -1,5 +1,13 @@
-import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/shadcn/dialog";
+import { cn } from "@/lib/utils";
 
 interface CustomAlertModalProps {
   isOpen: boolean;
@@ -10,41 +18,45 @@ interface CustomAlertModalProps {
   size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
-export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
+const sizeClasses = {
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-lg",
+  xl: "sm:max-w-xl",
+  "2xl": "sm:max-w-2xl",
+  "3xl": "sm:max-w-3xl",
+  "4xl": "sm:max-w-4xl",
+  "5xl": "sm:max-w-5xl",
+} as const;
+
+export const CustomAlertModal = ({
   isOpen,
   onOpenChange,
   title,
   description,
   children,
   size = "xl",
-}) => {
+}: CustomAlertModalProps) => {
   return (
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      size={size}
-      classNames={{
-        base: "border border-border-neutral-secondary bg-bg-neutral-secondary",
-        closeButton: "rounded-md",
-      }}
-      backdrop="blur"
-      placement="center"
-    >
-      <ModalContent className="py-4">
-        {(_onClose) => (
-          <>
-            <ModalHeader className="flex flex-col py-0">{title}</ModalHeader>
-            <ModalBody>
-              {description && (
-                <p className="text-small text-gray-600 dark:text-gray-300">
-                  {description}
-                </p>
-              )}
-              {children}
-            </ModalBody>
-          </>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent
+        className={cn(
+          "border-border-neutral-secondary bg-bg-neutral-secondary",
+          sizeClasses[size],
         )}
-      </ModalContent>
-    </Modal>
+      >
+        {title && (
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description && (
+              <DialogDescription className="text-small text-gray-600 dark:text-gray-300">
+                {description}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+        )}
+        {children}
+      </DialogContent>
+    </Dialog>
   );
 };

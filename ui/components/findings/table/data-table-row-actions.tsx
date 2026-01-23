@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
 import { Row } from "@tanstack/react-table";
 import { VolumeOff, VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,6 +9,14 @@ import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/shadcn/dropdown/dropdown";
 import type { FindingProps } from "@/types/components";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -92,61 +93,63 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       />
 
       <div className="flex items-center justify-end">
-        <Dropdown
-          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
-          placement="bottom"
-        >
-          <DropdownTrigger aria-label="Finding actions">
-            <VerticalDotsIcon
-              size={20}
-              className="text-text-neutral-secondary"
-            />
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Finding actions"
-            color="default"
-            variant="flat"
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Finding actions"
+              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            >
+              <VerticalDotsIcon
+                size={20}
+                className="text-text-neutral-secondary"
+              />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="border-border-neutral-secondary bg-bg-neutral-secondary w-56"
           >
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="mute"
-                description={getMuteDescription()}
-                textValue="Mute"
-                isDisabled={isMuted}
-                startContent={
-                  isMuted ? (
-                    <VolumeOff className="text-default-300 pointer-events-none size-5 shrink-0" />
-                  ) : (
-                    <VolumeX className="text-default-500 pointer-events-none size-5 shrink-0" />
-                  )
-                }
-                onPress={() => setIsMuteModalOpen(true)}
-              >
-                {isMuted ? "Muted" : "Mute"}
-                {!isMuted && isCurrentSelected && hasMultipleSelected && (
-                  <span className="ml-1 text-xs text-slate-500">
-                    ({selectedFindingIds.length})
-                  </span>
-                )}
-              </DropdownItem>
-              <DropdownItem
-                key="jira"
-                description="Create a Jira issue for this finding"
-                textValue="Send to Jira"
-                startContent={
-                  <JiraIcon
-                    size={20}
-                    className="text-default-500 pointer-events-none shrink-0"
-                  />
-                }
-                onPress={() => setIsJiraModalOpen(true)}
-              >
-                Send to Jira
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={isMuted}
+              onSelect={() => setIsMuteModalOpen(true)}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              {isMuted ? (
+                <VolumeOff className="text-muted-foreground size-5 shrink-0" />
+              ) : (
+                <VolumeX className="text-muted-foreground size-5 shrink-0" />
+              )}
+              <div className="flex flex-col">
+                <span>
+                  {isMuted ? "Muted" : "Mute"}
+                  {!isMuted && isCurrentSelected && hasMultipleSelected && (
+                    <span className="ml-1 text-xs text-slate-500">
+                      ({selectedFindingIds.length})
+                    </span>
+                  )}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {getMuteDescription()}
+                </span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setIsJiraModalOpen(true)}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <JiraIcon size={20} className="text-muted-foreground shrink-0" />
+              <div className="flex flex-col">
+                <span>Send to Jira</span>
+                <span className="text-muted-foreground text-xs">
+                  Create a Jira issue for this finding
+                </span>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
   );
