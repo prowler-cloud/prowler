@@ -30,11 +30,8 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
-<<<<<<< HEAD
-        from api.compliance import load_prowler_compliance
-=======
         from api.attack_paths import database as graph_database
->>>>>>> cb367da97 (fix(attack-paths): Start Neo4j at startup for API only (#9872))
+        from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
