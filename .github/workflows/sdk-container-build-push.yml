@@ -61,10 +61,10 @@ jobs:
       stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -115,7 +115,7 @@ jobs:
       message-ts: ${{ steps.slack-notification.outputs.ts }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Notify container push started
         id: slack-notification
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
@@ -169,7 +169,7 @@ jobs:
           AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Build and push SDK container for ${{ matrix.arch }}
         id: container-push
@@ -188,18 +188,18 @@ jobs:
   # Create and push multi-architecture manifest
   create-manifest:
     needs: [setup, container-build-push]
-    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    if: always() && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
       - name: Login to DockerHub
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -208,7 +208,7 @@ jobs:
           AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Create and push manifests for push event
         if: github.event_name == 'push'
@@ -252,7 +252,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Determine overall outcome
         id: outcome
@@ -280,8 +280,8 @@ jobs:
           update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
 
   dispatch-v3-deployment:
-    if: needs.setup.outputs.prowler_version_major == '3'
     needs: [setup, container-build-push]
+    if: always() && needs.setup.outputs.prowler_version_major == '3' && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -294,7 +294,7 @@ jobs:
 
       - name: Dispatch v3 deployment (latest)
         if: github.event_name == 'push'
-        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
@@ -303,7 +303,7 @@ jobs:
 
       - name: Dispatch v3 deployment (release)
         if: github.event_name == 'release'
-        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}

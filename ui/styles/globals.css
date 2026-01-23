@@ -28,6 +28,7 @@
   --bg-input-primary: var(--color-white);
   --border-input-primary: var(--color-slate-400);
   --border-input-primary-press: var(--color-slate-700);
+  --border-input-primary-pressed: #A7F3D0;
   --border-input-primary-fill: var(--color-slate-500);
 
   /* Text Colors */
@@ -54,6 +55,7 @@
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
   --bg-warning-primary: var(--color-orange-500);
+  --bg-warning-secondary: var(--color-orange-50);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
@@ -101,6 +103,7 @@
   --bg-input-primary: var(--color-neutral-900);
   --border-input-primary: var(--color-neutral-800);
   --border-input-primary-press: var(--color-neutral-800);
+  --border-input-primary-pressed: #A7F3D0;
   --border-input-primary-fill: var(--color-neutral-300);
 
   /* Text Colors */
@@ -127,6 +130,7 @@
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-warning-primary: var(--color-orange-400);
+  --bg-warning-secondary: var(--color-orange-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
 
@@ -185,6 +189,7 @@
   --color-bg-input-primary: var(--bg-input-primary);
   --color-border-input-primary: var(--border-input-primary);
   --color-border-input-primary-press: var(--border-input-primary-press);
+  --color-border-input-primary-pressed: var(--border-input-primary-pressed);
   --color-border-input-primary-fill: var(--border-input-primary-fill);
 
   /* Neutral Map Colors */
@@ -217,6 +222,7 @@
   --color-bg-pass: var(--bg-pass-primary);
   --color-bg-pass-secondary: var(--bg-pass-secondary);
   --color-bg-warning: var(--bg-warning-primary);
+  --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
 

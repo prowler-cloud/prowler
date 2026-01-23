@@ -6,9 +6,10 @@
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "microsoft.authorization/roleassignments",
-  "Description": "Azure subscription role assignments granting **User Access Administrator** are identified to surface principals able to manage access (`Azure RBAC`) at that scope.",
+  "ResourceGroup": "IAM",
+  "Description": "**Azure subscription role assignments** granting **User Access Administrator** are identified to surface principals able to manage access (`Azure RBAC`) at that scope.",
   "Risk": "Persistent `User Access Administrator` enables assigning high-privilege roles and reading control-plane data, enabling privilege escalation and unauthorized access. Impact: **confidentiality** (data exposure), **integrity** (unauthorized changes), **availability** (service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [

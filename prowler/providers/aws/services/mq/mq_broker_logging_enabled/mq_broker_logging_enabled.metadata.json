@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAmazonMQBroker",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MQ brokers** have logging to **CloudWatch Logs** enabled per engine type: **ActiveMQ** requires both `general` and `audit` logs; **RabbitMQ** requires `general` logs.",
   "Risk": "Missing broker logs creates blind spots in authentication events, administrative changes, and broker failures. Adversaries can act without detection, enabling unauthorized access and message tampering (confidentiality/integrity) and hindering incident response and root-cause analysis (availability).",
   "RelatedUrl": "",

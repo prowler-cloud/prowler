@@ -8,18 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.authorization/roledefinitions",
+  "ResourceGroup": "IAM",
   "Description": "**Azure custom RBAC roles** include the `Microsoft.Authorization/locks/*` action, indicating permission to administer **management locks** at subscription, resource group, or resource scope.",
   "Risk": "Absent a scoped custom role for `Microsoft.Authorization/locks/*`, lock control falls to broad roles (e.g., Owner), weakening **least privilege**. Locks can be disabled or altered, enabling unauthorized changes or deletion, harming **integrity** and **availability**, and reducing **separation of duties** and accountability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://journeyofthegeek.com/2024/05/08/azure-authorization-resource-locks-and-azure-policy-denyactions/",
     "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources?tabs=json",
-    "https://stackoverflow.com/questions/70376931/azure-find-out-which-permission-is-needed-for-certain-action",
-    "https://video2.skills-academy.com/en-us/azure/governance/blueprints/concepts/resource-locking",
-    "https://www.linkedin.com/pulse/managing-azure-rbac-terraform-sebastian-maas",
-    "https://rajurh85.medium.com/how-to-lock-your-azure-resources-8f1d6c93e846",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html",
-    "https://www.slideshare.net/slideshow/azure-governance-lesson-2-azure-locks/128556614"
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html"
   ],
   "Remediation": {
     "Code": {
