@@ -1,13 +1,12 @@
+import atexit
 import logging
 import threading
-
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
-
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -50,6 +49,9 @@ def init_driver() -> neo4j.Driver:
                 max_connection_pool_size=50,
             )
             _driver.verify_connectivity()
+
+            # Register cleanup handler (only runs once since we're inside the _driver is None block)
+            atexit.register(close_driver)
 
     return _driver
 
