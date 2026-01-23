@@ -1,18 +1,21 @@
-import neo4j
+from collections import defaultdict
+from typing import Generator
 
+import neo4j
 from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-
-from api.db_utils import rls_transaction
-from api.models import Provider, ResourceFindingMapping
 from config.env import env
-from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.providers import get_node_uid_field, get_root_node_label
+
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding, Provider, ResourceFindingMapping
+from prowler.config import config as ProwlerConfig
 
 logger = get_task_logger(__name__)
 
-BATCH_SIZE = env.int("NEO4J_INSERT_BATCH_SIZE", 500)
+BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 1000)
 
 INDEX_STATEMENTS = [
     "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
@@ -22,12 +25,18 @@ INDEX_STATEMENTS = [
 ]
 
 INSERT_STATEMENT_TEMPLATE = """
+    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
     UNWIND $findings_data AS finding_data
 
-    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
-    MATCH (account)-->(resource)
-        WHERE resource.__NODE_UID_FIELD__ = finding_data.resource_uid
-            OR resource.id = finding_data.resource_uid
+    OPTIONAL MATCH (account)-->(resource_by_uid)
+        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
+    WITH account, finding_data, resource_by_uid
+
+    OPTIONAL MATCH (account)-->(resource_by_id)
+        WHERE resource_by_uid IS NULL
+            AND resource_by_id.id = finding_data.resource_uid
+    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
+        WHERE resource IS NOT NULL
 
     MERGE (finding:ProwlerFinding {id: finding_data.id})
         ON CREATE SET
@@ -83,9 +92,8 @@ def create_indexes(neo4j_session: neo4j.Session) -> None:
     Code based on Cartography version 0.122.0, specifically on `cartography.intel.create_indexes.run`.
     """
 
-    logger.info("Creating indexes for Prowler node types.")
+    logger.info("Creating indexes for Prowler Findings node types")
     for statement in INDEX_STATEMENTS:
-        logger.debug("Executing statement: %s", statement)
         run_write_query(neo4j_session, statement)
 
 
@@ -103,58 +111,131 @@ def analysis(
 def get_provider_last_scan_findings(
     prowler_api_provider: Provider,
     scan_id: str,
-) -> list[dict[str, str]]:
-    with rls_transaction(prowler_api_provider.tenant_id):
-        resource_finding_qs = ResourceFindingMapping.objects.filter(
-            finding__scan_id=scan_id,
-        ).values(
-            "resource__uid",
-            "finding__id",
-            "finding__uid",
-            "finding__inserted_at",
-            "finding__updated_at",
-            "finding__first_seen_at",
-            "finding__scan_id",
-            "finding__delta",
-            "finding__status",
-            "finding__status_extended",
-            "finding__severity",
-            "finding__check_id",
-            "finding__check_metadata__checktitle",
-            "finding__muted",
-            "finding__muted_reason",
-        )
+) -> Generator[list[dict[str, str]], None, None]:
+    """
+    Generator that yields batches of finding-resource pairs.
 
-        findings = []
-        for resource_finding in resource_finding_qs:
-            findings.append(
+    Two-step query approach per batch:
+    1. Paginate findings for scan (single table, indexed by scan_id)
+    2. Batch-fetch resource UIDs via mapping table (single join)
+    3. Merge and yield flat structure for Neo4j
+
+    Memory efficient: never holds more than BATCH_SIZE findings in memory.
+    """
+
+    logger.info(
+        f"Starting findings fetch for scan {scan_id} (tenant {prowler_api_provider.tenant_id}) with batch size {BATCH_SIZE}"
+    )
+
+    iteration = 0
+    last_id = None
+
+    while True:
+        iteration += 1
+
+        with rls_transaction(prowler_api_provider.tenant_id, using=READ_REPLICA_ALIAS):
+            # Use all_objects to avoid the ActiveProviderManager's implicit JOIN
+            # through Scan -> Provider (to check is_deleted=False).
+            # The provider is already validated as active in this context.
+            qs = Finding.all_objects.filter(scan_id=scan_id).order_by("id")
+            if last_id is not None:
+                qs = qs.filter(id__gt=last_id)
+
+            findings_batch = list(
+                qs.values(
+                    "id",
+                    "uid",
+                    "inserted_at",
+                    "updated_at",
+                    "first_seen_at",
+                    "scan_id",
+                    "delta",
+                    "status",
+                    "status_extended",
+                    "severity",
+                    "check_id",
+                    "check_metadata__checktitle",
+                    "muted",
+                    "muted_reason",
+                )[:BATCH_SIZE]
+            )
+
+            logger.info(
+                f"Iteration #{iteration} fetched {len(findings_batch)} findings"
+            )
+
+            if not findings_batch:
+                logger.info(
+                    f"No findings returned for iteration #{iteration}; stopping pagination"
+                )
+                break
+
+            last_id = findings_batch[-1]["id"]
+            enriched_batch = _enrich_and_flatten_batch(findings_batch)
+
+        # Yield outside the transaction
+        if enriched_batch:
+            yield enriched_batch
+
+    logger.info(f"Finished fetching findings for scan {scan_id}")
+
+
+def _enrich_and_flatten_batch(
+    findings_batch: list[dict],
+) -> list[dict[str, str]]:
+    """
+    Fetch resource UIDs for a batch of findings and return flat structure.
+
+    One finding with 3 resources becomes 3 dicts (same output format as before).
+    Must be called within an RLS transaction context.
+    """
+    finding_ids = [f["id"] for f in findings_batch]
+
+    # Single join: mapping -> resource
+    resource_mappings = ResourceFindingMapping.objects.filter(
+        finding_id__in=finding_ids
+    ).values_list("finding_id", "resource__uid")
+
+    # Build finding_id -> [resource_uids] mapping
+    finding_resources = defaultdict(list)
+    for finding_id, resource_uid in resource_mappings:
+        finding_resources[finding_id].append(resource_uid)
+
+    # Flatten: one dict per (finding, resource) pair
+    results = []
+    for f in findings_batch:
+        resource_uids = finding_resources.get(f["id"], [])
+
+        if not resource_uids:
+            continue
+
+        for resource_uid in resource_uids:
+            results.append(
                 {
-                    "resource_uid": str(resource_finding["resource__uid"]),
-                    "id": str(resource_finding["finding__id"]),
-                    "uid": resource_finding["finding__uid"],
-                    "inserted_at": resource_finding["finding__inserted_at"],
-                    "updated_at": resource_finding["finding__updated_at"],
-                    "first_seen_at": resource_finding["finding__first_seen_at"],
-                    "scan_id": str(resource_finding["finding__scan_id"]),
-                    "delta": resource_finding["finding__delta"],
-                    "status": resource_finding["finding__status"],
-                    "status_extended": resource_finding["finding__status_extended"],
-                    "severity": resource_finding["finding__severity"],
-                    "check_id": str(resource_finding["finding__check_id"]),
-                    "check_title": resource_finding[
-                        "finding__check_metadata__checktitle"
-                    ],
-                    "muted": resource_finding["finding__muted"],
-                    "muted_reason": resource_finding["finding__muted_reason"],
+                    "resource_uid": str(resource_uid),
+                    "id": str(f["id"]),
+                    "uid": f["uid"],
+                    "inserted_at": f["inserted_at"],
+                    "updated_at": f["updated_at"],
+                    "first_seen_at": f["first_seen_at"],
+                    "scan_id": str(f["scan_id"]),
+                    "delta": f["delta"],
+                    "status": f["status"],
+                    "status_extended": f["status_extended"],
+                    "severity": f["severity"],
+                    "check_id": str(f["check_id"]),
+                    "check_title": f["check_metadata__checktitle"],
+                    "muted": f["muted"],
+                    "muted_reason": f["muted_reason"],
                 }
             )
 
-        return findings
+    return results
 
 
 def load_findings(
     neo4j_session: neo4j.Session,
-    findings_data: list[dict[str, str]],
+    findings_batches: Generator[list[dict[str, str]], None, None],
     prowler_api_provider: Provider,
     config: CartographyConfig,
 ) -> None:
@@ -172,15 +253,19 @@ def load_findings(
         "prowler_version": ProwlerConfig.prowler_version,
     }
 
-    total_length = len(findings_data)
-    for i in range(0, total_length, BATCH_SIZE):
-        parameters["findings_data"] = findings_data[i : i + BATCH_SIZE]
+    batch_num = 0
+    total_records = 0
+    for batch in findings_batches:
+        batch_num += 1
+        batch_size = len(batch)
+        total_records += batch_size
 
-        logger.info(
-            f"Loading findings batch {i // BATCH_SIZE + 1} / {(total_length + BATCH_SIZE - 1) // BATCH_SIZE}"
-        )
+        parameters["findings_data"] = batch
 
+        logger.info(f"Loading findings batch {batch_num} ({batch_size} records)")
         neo4j_session.run(query, parameters)
+
+    logger.info(f"Finished loading {total_records} records in {batch_num} batches")
 
 
 def cleanup_findings(
