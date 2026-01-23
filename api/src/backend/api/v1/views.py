@@ -77,10 +77,7 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from api.attack_paths import (
-<<<<<<< HEAD
-=======
     database as graph_database,
->>>>>>> a1637ec46 (fix(attack-paths): clear Neo4j database cache after scan and queries (#9877))
     get_queries_for_provider,
     get_query_by_id,
     views_helpers as attack_paths_views_helpers,
