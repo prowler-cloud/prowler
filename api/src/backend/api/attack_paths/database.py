@@ -128,8 +128,12 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
 def clear_cache(database: str) -> None:
     query = "CALL db.clearQueryCaches()"
 
-    with get_session(database) as session:
-        session.run(query)
+    try:
+        with get_session(database) as session:
+            session.run(query)
+
+    except GraphDatabaseQueryException as exc:
+        logging.warning(f"Failed to clear query cache for database `{database}`: {exc}")
 
 
 # Neo4j functions related to Prowler + Cartography
