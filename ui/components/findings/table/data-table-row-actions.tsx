@@ -10,22 +10,19 @@ import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/shadcn/dropdown/dropdown";
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 import type { FindingProps } from "@/types/components";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 interface DataTableRowActionsProps {
   row: Row<FindingProps>;
+  onMuteComplete?: () => void;
 }
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+export function DataTableRowActions({ row, onMuteComplete }: DataTableRowActionsProps) {
   const router = useRouter();
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
@@ -68,6 +65,21 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     return "Mute this finding";
   };
 
+  const getMuteLabel = () => {
+    if (isMuted) return "Muted";
+    if (!isMuted && isCurrentSelected && hasMultipleSelected) {
+      return (
+        <>
+          Mute
+          <span className="ml-1 text-xs text-slate-500">
+            ({selectedFindingIds.length})
+          </span>
+        </>
+      );
+    }
+    return "Mute";
+  };
+
   const handleMuteComplete = () => {
     // Always clear selection when a finding is muted because:
     // 1. If the muted finding was selected, its index now points to a different finding
@@ -93,8 +105,8 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       />
 
       <div className="flex items-center justify-end">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
+        <ActionDropdown
+          trigger={
             <button
               type="button"
               aria-label="Finding actions"
@@ -105,51 +117,29 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
                 className="text-text-neutral-secondary"
               />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="border-border-neutral-secondary bg-bg-neutral-secondary w-56"
-          >
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled={isMuted}
-              onSelect={() => setIsMuteModalOpen(true)}
-              className="flex cursor-pointer items-center gap-2"
-            >
-              {isMuted ? (
-                <VolumeOff className="text-muted-foreground size-5 shrink-0" />
+          }
+          ariaLabel="Finding actions"
+        >
+          <ActionDropdownItem
+            icon={
+              isMuted ? (
+                <VolumeOff className="size-5" />
               ) : (
-                <VolumeX className="text-muted-foreground size-5 shrink-0" />
-              )}
-              <div className="flex flex-col">
-                <span>
-                  {isMuted ? "Muted" : "Mute"}
-                  {!isMuted && isCurrentSelected && hasMultipleSelected && (
-                    <span className="ml-1 text-xs text-slate-500">
-                      ({selectedFindingIds.length})
-                    </span>
-                  )}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {getMuteDescription()}
-                </span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => setIsJiraModalOpen(true)}
-              className="flex cursor-pointer items-center gap-2"
-            >
-              <JiraIcon size={20} className="text-muted-foreground shrink-0" />
-              <div className="flex flex-col">
-                <span>Send to Jira</span>
-                <span className="text-muted-foreground text-xs">
-                  Create a Jira issue for this finding
-                </span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <VolumeX className="size-5" />
+              )
+            }
+            label={getMuteLabel()}
+            description={getMuteDescription()}
+            disabled={isMuted}
+            onSelect={() => setIsMuteModalOpen(true)}
+          />
+          <ActionDropdownItem
+            icon={<JiraIcon size={20} />}
+            label="Send to Jira"
+            description="Create a Jira issue for this finding"
+            onSelect={() => setIsJiraModalOpen(true)}
+          />
+        </ActionDropdown>
       </div>
     </>
   );
