@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
 - `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)
+- `exchange_shared_mailbox_sign_in_disabled` check for M365 provider [(#9828)](https://github.com/prowler-cloud/prowler/pull/9828)
 
 ### Changed
 
@@ -43,7 +44,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
 - `Cloudflare` Bot protection, WAF, Privacy, Anti-Scraping and Zone configuration checks [(#9425)](https://github.com/prowler-cloud/prowler/pull/9425)
-- `exchange_shared_mailbox_sign_in_disabled` check for M365 provider [(#9828)](https://github.com/prowler-cloud/prowler/pull/9828)
 
 ### Changed
 

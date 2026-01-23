@@ -859,7 +859,7 @@ class M365PowerShell(PowerShellSession):
             dict: User account status settings in JSON format.
         """
         return self.execute(
-            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.ExternalDirectoryObjectId] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 

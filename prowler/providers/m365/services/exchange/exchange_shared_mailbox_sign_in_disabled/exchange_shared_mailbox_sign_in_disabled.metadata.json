@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "Get-EXOMailbox -RecipientTypeDetails SharedMailbox | ForEach-Object { Update-MgUser -UserId $_.ExternalDirectoryObjectId -AccountEnabled:$false }",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Microsoft 365 admin center\n2. Navigate to Users > Active users\n3. Search for the shared mailbox\n4. Select the shared mailbox and click Block sign-in\n5. Confirm the action",
+      "Other": "1. Navigate to Entra admin center (https://entra.microsoft.com/)\n2. Expand Identity > Users and select All users\n3. Search for and select the shared mailbox user account\n4. In the properties pane, go to Account status\n5. Uncheck 'Account enabled' and click Save\n6. Repeat for all shared mailbox accounts",
       "Terraform": ""
     },
     "Recommendation": {
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Based on CIS Microsoft 365 Foundations Benchmark v5.0.0 - Requirement 1.2.2"
+  "Notes": ""
 }
