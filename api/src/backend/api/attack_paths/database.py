@@ -20,7 +20,6 @@ SERVICE_UNAVAILABLE_MAX_RETRIES = 3
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
 _lock = threading.Lock()
-_atexit_registered = False
 
 # Base Neo4j functions
 
@@ -32,7 +31,7 @@ def get_uri() -> str:
 
 
 def init_driver() -> neo4j.Driver:
-    global _driver, _atexit_registered
+    global _driver
     if _driver is not None:
         return _driver
 
@@ -51,10 +50,8 @@ def init_driver() -> neo4j.Driver:
             )
             _driver.verify_connectivity()
 
-            # Register cleanup handler on first initialization
-            if not _atexit_registered:
-                atexit.register(close_driver)
-                _atexit_registered = True
+            # Register cleanup handler (only runs once since we're inside the _driver is None block)
+            atexit.register(close_driver)
 
     return _driver
 

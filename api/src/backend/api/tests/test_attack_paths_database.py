@@ -1,3 +1,10 @@
+"""
+Tests for Neo4j database lazy initialization.
+
+The Neo4j driver should only connect when actually needed (lazy initialization),
+not at Django app startup. This allows regular scans to run without Neo4j.
+"""
+
 import threading
 from unittest.mock import MagicMock, patch
 
@@ -13,15 +20,12 @@ class TestLazyInitialization:
         import api.attack_paths.database as db_module
 
         original_driver = db_module._driver
-        original_atexit_registered = db_module._atexit_registered
 
         db_module._driver = None
-        db_module._atexit_registered = False
 
         yield
 
         db_module._driver = original_driver
-        db_module._atexit_registered = original_atexit_registered
 
     def test_driver_not_initialized_at_import(self):
         """Driver should be None after module import (no eager connection)."""
@@ -121,15 +125,12 @@ class TestAtexitRegistration:
         import api.attack_paths.database as db_module
 
         original_driver = db_module._driver
-        original_atexit_registered = db_module._atexit_registered
 
         db_module._driver = None
-        db_module._atexit_registered = False
 
         yield
 
         db_module._driver = original_driver
-        db_module._atexit_registered = original_atexit_registered
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.atexit.register")
@@ -153,7 +154,6 @@ class TestAtexitRegistration:
         db_module.init_driver()
 
         mock_atexit_register.assert_called_once_with(db_module.close_driver)
-        assert db_module._atexit_registered is True
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.atexit.register")
@@ -161,7 +161,11 @@ class TestAtexitRegistration:
     def test_atexit_registered_only_once(
         self, mock_driver_factory, mock_atexit_register, mock_settings
     ):
-        """atexit.register should only be called once across multiple inits."""
+        """atexit.register should only be called once across multiple inits.
+
+        The double-checked locking on _driver ensures the atexit registration
+        block only executes once (when _driver is first created).
+        """
         import api.attack_paths.database as db_module
 
         mock_driver_factory.return_value = MagicMock()
@@ -178,36 +182,7 @@ class TestAtexitRegistration:
         db_module.init_driver()
         db_module.init_driver()
 
-        # Only registered once
-        assert mock_atexit_register.call_count == 1
-
-    @patch("api.attack_paths.database.settings")
-    @patch("api.attack_paths.database.atexit.register")
-    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
-    def test_atexit_not_registered_if_driver_already_exists(
-        self, mock_driver_factory, mock_atexit_register, mock_settings
-    ):
-        """If driver exists (fast path), atexit should not be re-registered."""
-        import api.attack_paths.database as db_module
-
-        mock_driver = MagicMock()
-        mock_driver_factory.return_value = mock_driver
-        mock_settings.DATABASES = {
-            "neo4j": {
-                "HOST": "localhost",
-                "PORT": 7687,
-                "USER": "neo4j",
-                "PASSWORD": "password",
-            }
-        }
-
-        # First call - registers atexit
-        db_module.init_driver()
-        assert mock_atexit_register.call_count == 1
-
-        # Simulate driver already exists (fast path in init_driver)
-        # Second call should hit the fast path and not touch atexit
-        db_module.init_driver()
+        # Only registered once because subsequent calls hit the fast path
         assert mock_atexit_register.call_count == 1
 
 
@@ -220,15 +195,12 @@ class TestCloseDriver:
         import api.attack_paths.database as db_module
 
         original_driver = db_module._driver
-        original_atexit_registered = db_module._atexit_registered
 
         db_module._driver = None
-        db_module._atexit_registered = False
 
         yield
 
         db_module._driver = original_driver
-        db_module._atexit_registered = original_atexit_registered
 
     def test_close_driver_closes_and_clears_driver(self):
         """close_driver() should close the driver and set it to None."""
@@ -277,15 +249,12 @@ class TestThreadSafety:
         import api.attack_paths.database as db_module
 
         original_driver = db_module._driver
-        original_atexit_registered = db_module._atexit_registered
 
         db_module._driver = None
-        db_module._atexit_registered = False
 
         yield
 
         db_module._driver = original_driver
-        db_module._atexit_registered = original_atexit_registered
 
     @patch("api.attack_paths.database.settings")
     @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
