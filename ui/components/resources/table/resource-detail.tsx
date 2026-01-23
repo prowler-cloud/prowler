@@ -4,7 +4,7 @@ import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import { Check, Copy, ExternalLink, Link, Loader2, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getFindingById, getLatestFindings } from "@/actions/findings";
 import { getResourceById } from "@/actions/resources";
@@ -220,7 +220,7 @@ interface ResourceDetailProps {
 export const ResourceDetail = ({
   resourceDetails,
   trigger,
-  open,
+  open: controlledOpen,
   defaultOpen = false,
   onOpenChange,
 }: ResourceDetailProps) => {
@@ -239,14 +239,40 @@ export const ResourceDetail = ({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [activeTab, setActiveTab] = useState("overview");
   const [metadataCopied, setMetadataCopied] = useState(false);
+  // Track internal open state for uncontrolled drawer (when using trigger)
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  // Drawer-local pagination and search state (not in URL to avoid page re-renders)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const findingFetchRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Read pagination and search from URL with prefix to avoid conflicts with main table
-  const currentPage = parseInt(searchParams.get("findingsPage") || "1", 10);
-  const pageSize = parseInt(searchParams.get("findingsPageSize") || "10", 10);
-  const searchQuery = searchParams.get("findingsSearch") || "";
+  // Determine if drawer is actually open:
+  // - If controlled (open prop provided), use that
+  // - If uncontrolled (using trigger), use internal state
+  // - If no trigger (inline mode), always consider it "open"
+  const isDrawerOpen = !trigger || (controlledOpen ?? internalOpen);
+
+  // Handle open state changes for uncontrolled mode
+  const handleOpenChange = (newOpen: boolean) => {
+    setInternalOpen(newOpen);
+    onOpenChange?.(newOpen);
+
+    // Reset all drawer state when closing
+    if (!newOpen) {
+      setActiveTab("overview");
+      setSelectedFindingId(null);
+      setFindingDetails(null);
+      setFindingDetailLoading(false);
+      setRowSelection({});
+      setCurrentPage(1);
+      setPageSize(10);
+      setSearchQuery("");
+    }
+  };
 
   const resource = resourceDetails;
   const resourceId = resource.id;
@@ -266,7 +292,7 @@ export const ResourceDetail = ({
     setTimeout(() => setMetadataCopied(false), 2000);
   };
 
-  // Load resource tags (separate from findings)
+  // Load resource tags (separate from findings) - only when drawer is open
   useEffect(() => {
     const loadResourceTags = async () => {
       try {
@@ -282,12 +308,12 @@ export const ResourceDetail = ({
       }
     };
 
-    if (resourceId) {
+    if (resourceId && isDrawerOpen) {
       loadResourceTags();
     }
-  }, [resourceId]);
+  }, [resourceId, isDrawerOpen]);
 
-  // Load findings with server-side pagination and search
+  // Load findings with server-side pagination and search - only when drawer is open
   useEffect(() => {
     const loadFindings = async () => {
       setFindingsLoading(true);
@@ -320,12 +346,18 @@ export const ResourceDetail = ({
       }
     };
 
-    if (attributes.uid) {
+    if (attributes.uid && isDrawerOpen) {
       loadFindings();
     }
-  }, [attributes.uid, currentPage, pageSize, searchQuery]);
+  }, [attributes.uid, currentPage, pageSize, searchQuery, isDrawerOpen]);
 
   const navigateToFinding = async (findingId: string) => {
+    // Cancel any in-flight request
+    if (findingFetchRef.current) {
+      findingFetchRef.current.abort();
+    }
+    findingFetchRef.current = new AbortController();
+
     setSelectedFindingId(findingId);
     setFindingDetailLoading(true);
 
@@ -334,6 +366,12 @@ export const ResourceDetail = ({
         findingId,
         "resources,scan.provider",
       );
+
+      // Check if request was aborted
+      if (findingFetchRef.current?.signal.aborted) {
+        return;
+      }
+
       if (findingData?.data) {
         const resourceDict = createDict("resources", findingData);
         const scanDict = createDict("scans", findingData);
@@ -353,9 +391,16 @@ export const ResourceDetail = ({
         setFindingDetails(expandedFinding);
       }
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
       console.error("Error fetching finding:", error);
     } finally {
-      setFindingDetailLoading(false);
+      // Only update loading state if this request wasn't aborted
+      if (!findingFetchRef.current?.signal.aborted) {
+        setFindingDetailLoading(false);
+      }
     }
   };
 
@@ -590,35 +635,33 @@ export const ResourceDetail = ({
 
         {/* Findings Tab */}
         <TabsContent value="findings" className="flex flex-col gap-4">
-          {findingsLoading ? (
-            <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-text-neutral-secondary text-sm">
-                Loading findings...
-              </p>
-            </div>
-          ) : (
-            <>
-              <DataTable
-                columns={columns}
-                data={failedFindings}
-                metadata={findingsMetadata ?? undefined}
-                showSearch
-                paramPrefix="findings"
-                disableScroll
-                enableRowSelection
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-                getRowCanSelect={getRowCanSelect}
-              />
-              {selectedFindingIds.length > 0 && (
-                <FloatingMuteButton
-                  selectedCount={selectedFindingIds.length}
-                  selectedFindingIds={selectedFindingIds}
-                  onComplete={handleMuteComplete}
-                />
-              )}
-            </>
+          <DataTable
+            columns={columns}
+            data={failedFindings}
+            metadata={findingsMetadata ?? undefined}
+            showSearch
+            disableScroll
+            enableRowSelection
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            getRowCanSelect={getRowCanSelect}
+            controlledSearch={searchQuery}
+            onSearchChange={(value) => {
+              setSearchQuery(value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
+            controlledPage={currentPage}
+            controlledPageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            isLoading={findingsLoading}
+          />
+          {selectedFindingIds.length > 0 && (
+            <FloatingMuteButton
+              selectedCount={selectedFindingIds.length}
+              selectedFindingIds={selectedFindingIds}
+              onComplete={handleMuteComplete}
+            />
           )}
         </TabsContent>
       </Tabs>
@@ -637,13 +680,12 @@ export const ResourceDetail = ({
   return (
     <Drawer
       direction="right"
-      open={open}
+      open={controlledOpen ?? internalOpen}
       defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      modal={false}
+      onOpenChange={handleOpenChange}
     >
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
+      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 outline-none md:w-1/2 md:max-w-none">
         <DrawerHeader className="sr-only">
           <DrawerTitle>Resource Details</DrawerTitle>
           <DrawerDescription>View the resource details</DrawerDescription>
