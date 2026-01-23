@@ -21,6 +21,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Lazy load Neo4j driver [(#9868)](https://github.com/prowler-cloud/prowler/pull/9868)
 - Use `Findings.all_objects` to avoid the `ActiveProviderPartitionedManager` [(#9869)](https://github.com/prowler-cloud/prowler/pull/9869)
 - Lazy load Neo4j driver for workers only [(#9872)](https://github.com/prowler-cloud/prowler/pull/9872)
+- Improve Cypher query for inserting Findings into Attack Paths scan graphs [(#9874)](https://github.com/prowler-cloud/prowler/pull/9874)
 
 ---
 
