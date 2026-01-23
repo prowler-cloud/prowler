@@ -6,7 +6,7 @@
   "ServiceName": "policy",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.authorization/policyassignments",
   "ResourceGroup": "governance",
   "Description": "**Defender for Cloud default policy assignment** (`SecurityCenterBuiltIn`) uses enforcement mode `Default` rather than `DoNotEnforce`",
