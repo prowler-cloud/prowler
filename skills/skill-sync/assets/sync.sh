@@ -137,6 +137,8 @@ extract_metadata() {
 
                 # On multi-line list, only accept "- item" lines. Anything else ends the list.
                 line = $0
+                # Stop at frontmatter delimiter (getline bypasses pattern matching)
+                if (line ~ /^---$/) break
                 if (line ~ /^[[:space:]]*-[[:space:]]*/) {
                     sub(/^[[:space:]]*-[[:space:]]*/, "", line)
                     line = trim(line)

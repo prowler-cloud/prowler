@@ -1,13 +1,12 @@
+import atexit
 import logging
 import threading
-
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
-
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -42,9 +41,17 @@ def init_driver() -> neo4j.Driver:
             config = settings.DATABASES["neo4j"]
 
             _driver = neo4j.GraphDatabase.driver(
-                uri, auth=(config["USER"], config["PASSWORD"])
+                uri,
+                auth=(config["USER"], config["PASSWORD"]),
+                keep_alive=True,
+                max_connection_lifetime=7200,
+                connection_acquisition_timeout=120,
+                max_connection_pool_size=50,
             )
             _driver.verify_connectivity()
+
+            # Register cleanup handler (only runs once since we're inside the _driver is None block)
+            atexit.register(close_driver)
 
     return _driver
 
@@ -71,7 +78,6 @@ def get_session(database: str | None = None) -> Iterator[RetryableSession]:
     try:
         session_wrapper = RetryableSession(
             session_factory=lambda: get_driver().session(database=database),
-            close_driver=close_driver,  # Just to avoid circular imports
             max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
         )
         yield session_wrapper

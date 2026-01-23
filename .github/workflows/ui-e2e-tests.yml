@@ -125,16 +125,20 @@ jobs:
       - name: Get pnpm store directory
         shell: bash
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Setup pnpm cache
+      - name: Setup pnpm and Next.js cache
         uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          path: |
+            ${{ env.STORE_PATH }}
+            ./ui/node_modules
+            ./ui/.next/cache
+          key: ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/**/*.ts', 'ui/**/*.tsx', 'ui/**/*.js', 'ui/**/*.jsx') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-pnpm-nextjs-
       - name: Install UI dependencies
         working-directory: ./ui
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build UI application
         working-directory: ./ui
         run: pnpm run build
