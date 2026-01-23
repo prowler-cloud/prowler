@@ -70,8 +70,8 @@ class ApiConfig(AppConfig):
         else:
             graph_database.init_driver()
 
-        # Neo4j driver is initialized lazily on first use (see api.attack_paths.database)
-        # This avoids connection attempts during regular scans that don't need graph database
+        # Neo4j driver is initialized at API startup (see api.attack_paths.database)
+        # It remains lazy for Celery workers and selected Django commands
 
     def _ensure_crypto_keys(self):
         """
