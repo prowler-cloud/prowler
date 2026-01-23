@@ -20,6 +20,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack paths findings loading query to use streaming generator for O(batch_size) memory instead of O(total_findings) [(#9862)](https://github.com/prowler-cloud/prowler/pull/9862)
 - Lazy load Neo4j driver [(#9868)](https://github.com/prowler-cloud/prowler/pull/9868)
 - Use `Findings.all_objects` to avoid the `ActiveProviderPartitionedManager` [(#9869)](https://github.com/prowler-cloud/prowler/pull/9869)
+- Lazy load Neo4j driver for workers only [(#9872)](https://github.com/prowler-cloud/prowler/pull/9872)
 
 ---
 
