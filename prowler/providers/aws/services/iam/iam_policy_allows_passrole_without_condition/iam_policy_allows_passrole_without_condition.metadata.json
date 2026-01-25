@@ -1,0 +1,23 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_allows_passrole_without_condition",
+  "CheckTitle": "Ensure IAM policies do not allow iam:PassRole on '*' without conditions",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:iam::{account}:policy/{resource_name}",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "IAM policies should not allow iam:PassRole on all resources ('*') without a condition key.",
+  "Risk": "Privilege Escalation.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": { "CLI": "", "NativeIaC": "", "Other": "", "Terraform": "" },
+    "Recommendation": { "Text": "Add iam:PassedToService condition.", "Url": "" }
+  },
+  "Categories": [],
+  "Tags": {},
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
