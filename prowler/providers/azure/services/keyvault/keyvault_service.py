@@ -17,10 +17,10 @@ from prowler.providers.azure.services.monitor.monitor_service import DiagnosticS
 class KeyVault(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(KeyVaultManagementClient, provider)
-        self._provider = provider
-        self.key_vaults = self._get_key_vaults()
+        # TODO: review this credentials assignment
+        self.key_vaults = self._get_key_vaults(provider)
 
-    def _get_key_vaults(self):
+    def _get_key_vaults(self, provider):
         """
         Get all KeyVaults with parallel processing.
 
@@ -42,7 +42,11 @@ class KeyVault(AzureService):
 
                 # Prepare items for parallel processing
                 items = [
-                    {"subscription": subscription, "keyvault": vault}
+                    {
+                        "subscription": subscription,
+                        "keyvault": vault,
+                        "provider": provider,
+                    }
                     for vault in vaults_list
                 ]
 
@@ -61,6 +65,7 @@ class KeyVault(AzureService):
         """Process a single KeyVault in parallel."""
         subscription = item["subscription"]
         keyvault = item["keyvault"]
+        provider = item["provider"]
 
         try:
             resource_group = keyvault.id.split("/")[4]
@@ -70,7 +75,11 @@ class KeyVault(AzureService):
             # Fetch keys, secrets, and monitor in parallel
             with ThreadPoolExecutor(max_workers=3) as executor:
                 keys_future = executor.submit(
-                    self._get_keys, subscription, resource_group, keyvault_name
+                    self._get_keys,
+                    subscription,
+                    resource_group,
+                    keyvault_name,
+                    provider,
                 )
                 secrets_future = executor.submit(
                     self._get_secrets, subscription, resource_group, keyvault_name
@@ -137,7 +146,7 @@ class KeyVault(AzureService):
             )
             return None
 
-    def _get_keys(self, subscription, resource_group, keyvault_name):
+    def _get_keys(self, subscription, resource_group, keyvault_name, provider):
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         keys_dict = {}
@@ -169,7 +178,8 @@ class KeyVault(AzureService):
         try:
             key_client = KeyClient(
                 vault_url=f"https://{keyvault_name}.vault.azure.net/",
-                credential=self._provider.session,
+                # TODO: review the following line
+                credential=provider.session,
             )
             properties = list(key_client.list_properties_of_keys())
 
