@@ -1,4 +1,7 @@
+import gc
+
 from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import Image, PageBreak, Paragraph, Spacer, Table, TableStyle
 
@@ -82,6 +85,23 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
         return elements
 
+    def _build_body_sections(self, data: ComplianceData) -> list:
+        """Override section order: Requirements Index before Critical Requirements."""
+        elements = []
+
+        # Page break to separate from executive summary
+        elements.append(PageBreak())
+
+        # Requirements index first
+        elements.extend(self.create_requirements_index(data))
+
+        # Critical requirements section (already starts with PageBreak internally)
+        elements.extend(self.create_charts_section(data))
+        elements.append(PageBreak())
+        gc.collect()
+
+        return elements
+
     def create_charts_section(self, data: ComplianceData) -> list:
         """
         Create the critical failed requirements section.
@@ -130,6 +150,10 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
 
             table = self._create_critical_requirements_table(critical_failed)
             elements.append(table)
+
+            # Immediate action required banner
+            elements.append(Spacer(1, 0.3 * inch))
+            elements.append(self._create_action_required_banner())
 
         return elements
 
@@ -436,3 +460,50 @@ class ThreatScoreReportGenerator(BaseComplianceReportGenerator):
             )
 
         return table
+
+    def _create_action_required_banner(self) -> Table:
+        """
+        Create the 'Immediate Action Required' banner for critical requirements.
+
+        Returns:
+            ReportLab Table element styled as a red-bordered alert banner.
+        """
+        banner_style = ParagraphStyle(
+            "ActionRequired",
+            fontName="PlusJakartaSans",
+            fontSize=11,
+            textColor=COLOR_HIGH_RISK,
+            leading=16,
+        )
+
+        banner_content = Paragraph(
+            "<b>IMMEDIATE ACTION REQUIRED:</b><br/>"
+            "These requirements have the highest risk levels and have failed "
+            "compliance checks. Please prioritize addressing these issues to "
+            "improve your security posture.",
+            banner_style,
+        )
+
+        banner_table = Table(
+            [[banner_content]],
+            colWidths=[6.5 * inch],
+        )
+        banner_table.setStyle(
+            TableStyle(
+                [
+                    (
+                        "BACKGROUND",
+                        (0, 0),
+                        (0, 0),
+                        colors.Color(0.98, 0.92, 0.92),
+                    ),
+                    ("BOX", (0, 0), (0, 0), 2, COLOR_HIGH_RISK),
+                    ("LEFTPADDING", (0, 0), (0, 0), 20),
+                    ("RIGHTPADDING", (0, 0), (0, 0), 20),
+                    ("TOPPADDING", (0, 0), (0, 0), 15),
+                    ("BOTTOMPADDING", (0, 0), (0, 0), 15),
+                ]
+            )
+        )
+
+        return banner_table

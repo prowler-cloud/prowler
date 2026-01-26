@@ -383,14 +383,9 @@ class BaseComplianceReportGenerator(ABC):
             # Executive summary (framework-specific)
             elements.extend(self.create_executive_summary(data))
 
-            # Charts section (framework-specific) - heavy on memory due to matplotlib
-            elements.extend(self.create_charts_section(data))
-            elements.append(PageBreak())
-            gc.collect()  # Free matplotlib resources
-
-            # Requirements index (framework-specific)
-            elements.extend(self.create_requirements_index(data))
-            elements.append(PageBreak())
+            # Body sections (charts + requirements index)
+            # Override _build_body_sections() in subclasses to change section order
+            elements.extend(self._build_body_sections(data))
 
             # Detailed findings - heaviest section, loads findings on-demand
             logger.info("Building detailed findings section...")
@@ -414,6 +409,30 @@ class BaseComplianceReportGenerator(ABC):
             logger.error("Error generating report, line %s -- %s", tb_lineno, e)
             logger.error("Full traceback:\n%s", traceback.format_exc())
             raise
+
+    def _build_body_sections(self, data: ComplianceData) -> list:
+        """Build the body sections between executive summary and detailed findings.
+
+        Override in subclasses to change section order.
+
+        Args:
+            data: Aggregated compliance data.
+
+        Returns:
+            List of ReportLab elements.
+        """
+        elements = []
+
+        # Charts section (framework-specific) - heavy on memory due to matplotlib
+        elements.extend(self.create_charts_section(data))
+        elements.append(PageBreak())
+        gc.collect()  # Free matplotlib resources
+
+        # Requirements index (framework-specific)
+        elements.extend(self.create_requirements_index(data))
+        elements.append(PageBreak())
+
+        return elements
 
     # =========================================================================
     # Abstract Methods (must be implemented by subclasses)
