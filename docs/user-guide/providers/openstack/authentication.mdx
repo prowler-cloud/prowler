@@ -19,11 +19,11 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
     1. Log into the [OVH Control Panel](https://www.ovh.com/manager/)
     2. Navigate to **Public Cloud** → Select your project
     3. Click on **Users & Roles** in the left sidebar
-    4. Click **Create User** or **Add User**
-    5. Enter a username (e.g., `prowler-audit`)
+    4. Click **Add User**
+    5. Enter a user description (e.g., `Prowler Audit User`)
     6. Assign the **Infrastructure Supervisor** role (This is the reader role) or specific read-only operator roles (If needed to audit only specific services)
     7. Click **Generate** to create the user
-    8. **Generate the password** if needed
+    8. **Copy the password** and store it securely
 
     <Warning>
     Avoid using administrator or member roles for security auditing. Reader or operator roles provide sufficient access for Prowler while maintaining security best practices.
