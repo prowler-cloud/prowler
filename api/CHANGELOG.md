@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.19.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Attack Paths: Bedrock Code Interpreter and AttachRolePolicy privilege escalation queries [(#9885)](https://github.com/prowler-cloud/prowler/pull/9885)
+
+---
+
 ## [1.18.1] (Prowler v5.17.1)
 
 ### Fixed
