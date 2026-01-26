@@ -199,23 +199,14 @@ class PowerShellSession:
 
     def _process_error(self, error_result: str) -> None:
         """
-        Process PowerShell error output.
+        Process error output from the PowerShell command.
 
-        This method handles error output from PowerShell commands.
-        Subclasses can override this to provide integration-specific error handling.
+        Subclasses can override this to provide custom error handling.
 
         Args:
-            error_result (str): The error output from PowerShell.
+            error_result (str): The error output from the PowerShell command.
         """
-        if "is not recognized as a name of a cmdlet" in error_result:
-            cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
-            cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
-            logger.warning(
-                f"PowerShell cmdlet '{cmdlet_name}' is not available. "
-                f"This may indicate missing modules or insufficient permissions."
-            )
-        else:
-            logger.error(f"PowerShell error output: {error_result}")
+        logger.error(f"PowerShell error output: {error_result}")
 
     def json_parse_output(self, output: str) -> dict:
         """

@@ -52,13 +52,13 @@ class M365PowerShell(PowerShellSession):
     @override
     def _process_error(self, error_result: str) -> None:
         """
-        Process PowerShell error output with M365-specific context.
+        Process PowerShell errors with M365-specific handling.
 
-        Provides Microsoft 365 specific error messaging, particularly for
-        cmdlets that require Microsoft Defender for Office 365 licensing.
+        Detects cmdlet not found errors which typically indicate missing licensing
+        (e.g., Microsoft Defender for Office 365) or insufficient permissions.
 
         Args:
-            error_result (str): The error output from PowerShell.
+            error_result (str): The error output from the PowerShell command.
         """
         if "is not recognized as a name of a cmdlet" in error_result:
             cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
@@ -69,7 +69,7 @@ class M365PowerShell(PowerShellSession):
                 f"or insufficient permissions. Related checks will be skipped."
             )
         else:
-            logger.error(f"PowerShell error output: {error_result}")
+            super()._process_error(error_result)
 
     def clean_certificate_content(self, cert_content: str) -> str:
         """
