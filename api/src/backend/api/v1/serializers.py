@@ -4008,7 +4008,7 @@ class ResourceEventSerializer(drf_serializers.Serializer):
     class Meta:
         resource_name = "resource-events"
 
-    def get_root_meta(self, resource, many):
+    def get_root_meta(self, _resource, _many):
         """Add metadata to the top-level meta object."""
         return {
             "version": "v1",
