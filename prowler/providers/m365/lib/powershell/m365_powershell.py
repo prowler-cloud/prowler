@@ -823,6 +823,26 @@ class M365PowerShell(PowerShellSession):
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_teams_protection_policy(self) -> dict:
+        """
+        Get Teams Protection Policy.
+
+        Retrieves the Teams protection policy settings including Zero-hour auto purge (ZAP) configuration.
+
+        Returns:
+            dict: Teams protection policy settings in JSON format.
+
+        Example:
+            >>> get_teams_protection_policy()
+            {
+                "Identity": "Teams Protection Policy",
+                "ZapEnabled": True
+            }
+        """
+        return self.execute(
+            "Get-TeamsProtectionPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_shared_mailboxes(self) -> dict:
         """
         Get Exchange Online Shared Mailboxes.
