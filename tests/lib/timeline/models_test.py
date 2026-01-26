@@ -29,8 +29,8 @@ class TestTimelineEvent:
         assert event.actor_uid is None
         assert event.source_ip_address is None
         assert event.user_agent is None
-        assert event.request_parameters is None
-        assert event.response_elements is None
+        assert event.request_data is None
+        assert event.response_data is None
         assert event.error_code is None
         assert event.error_message is None
 
@@ -46,8 +46,8 @@ class TestTimelineEvent:
             actor_type="AssumedRole",
             source_ip_address="192.168.1.100",
             user_agent="aws-cli/2.0.0",
-            request_parameters={"bucket": "my-bucket", "acl": "private"},
-            response_elements={"status": "success"},
+            request_data={"bucket": "my-bucket", "acl": "private"},
+            response_data={"status": "success"},
             error_code=None,
             error_message=None,
         )
@@ -59,8 +59,8 @@ class TestTimelineEvent:
         )
         assert event.source_ip_address == "192.168.1.100"
         assert event.user_agent == "aws-cli/2.0.0"
-        assert event.request_parameters == {"bucket": "my-bucket", "acl": "private"}
-        assert event.response_elements == {"status": "success"}
+        assert event.request_data == {"bucket": "my-bucket", "acl": "private"}
+        assert event.response_data == {"status": "success"}
 
     def test_error_event(self):
         """Test creating an event that represents a failed operation."""
