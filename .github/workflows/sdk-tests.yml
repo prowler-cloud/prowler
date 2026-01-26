@@ -414,6 +414,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-oraclecloud
           files: ./oraclecloud_coverage.xml
 
+      # OpenStack Provider
+      - name: Check if OpenStack files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-openstack
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        with:
+          files: |
+            ./prowler/**/openstack/**
+            ./tests/**/openstack/**
+            ./poetry.lock
+
+      - name: Run OpenStack tests
+        if: steps.changed-openstack.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/openstack --cov-report=xml:openstack_coverage.xml tests/providers/openstack
+
+      - name: Upload OpenStack coverage to Codecov
+        if: steps.changed-openstack.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-openstack
+          files: ./openstack_coverage.xml
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'

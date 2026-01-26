@@ -86,6 +86,13 @@ def display_summary_table(
         elif provider.type == "alibabacloud":
             entity_type = "Account"
             audited_entities = provider.identity.account_id
+        elif provider.type == "openstack":
+            entity_type = "Project"
+            audited_entities = (
+                provider.identity.project_name
+                if provider.identity.project_name
+                else provider.identity.project_id
+            )
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
