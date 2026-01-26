@@ -20,6 +20,7 @@ Use these skills for detailed patterns on-demand:
 | `playwright` | Page Object Model, MCP workflow, selectors | [SKILL.md](skills/playwright/SKILL.md) |
 | `pytest` | Fixtures, mocking, markers, parametrize | [SKILL.md](skills/pytest/SKILL.md) |
 | `django-drf` | ViewSets, Serializers, Filters | [SKILL.md](skills/django-drf/SKILL.md) |
+| `jsonapi` | Strict JSON:API v1.1 spec compliance | [SKILL.md](skills/jsonapi/SKILL.md) |
 | `zod-4` | New API (z.email(), z.uuid()) | [SKILL.md](skills/zod-4/SKILL.md) |
 | `zustand-5` | Persist, selectors, slices | [SKILL.md](skills/zustand-5/SKILL.md) |
 | `ai-sdk-5` | UIMessage, streaming, LangChain | [SKILL.md](skills/ai-sdk-5/SKILL.md) |
@@ -40,6 +41,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
 | `prowler-changelog` | Changelog entries (keepachangelog.com) | [SKILL.md](skills/prowler-changelog/SKILL.md) |
 | `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
+| `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
@@ -51,14 +53,19 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding DRF pagination or permissions | `django-drf` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
+| Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
+| Creating API endpoints | `jsonapi` |
+| Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
+| Creating a git commit | `prowler-commit` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
@@ -67,14 +74,16 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | General Prowler development questions | `prowler` |
-| Generic DRF patterns | `django-drf` |
+| Implementing JSON:API endpoints | `django-drf` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
+| Modifying API responses | `jsonapi` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
+| Reviewing JSON:API compliance | `jsonapi` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
