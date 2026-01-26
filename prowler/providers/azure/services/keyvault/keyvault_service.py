@@ -191,6 +191,7 @@ class KeyVault(AzureService):
                             ],
                         )
 
+        # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
             logger.warning(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
