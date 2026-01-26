@@ -5,6 +5,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [1.17.1] (Prowler v5.17.1)
 
 ### 🐞 Fixed
+
 - Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
 
 ---
@@ -33,6 +34,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 
 ### 🐞 Fixed
+
 - OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
 
 ### 🔐 Security
