@@ -64,13 +64,14 @@ export const getAllProviders = async ({
 } = {}): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const pageSize = 100; // Use larger page size to minimize API calls
+  const maxPages = 50; // Safety limit: 50 pages × 100 = 5000 providers max
   let currentPage = 1;
-  let allProviders: ProvidersApiResponse["data"] = [];
+  const allProviders: ProvidersApiResponse["data"] = [];
   let lastResponse: ProvidersApiResponse | undefined;
   let hasMorePages = true;
 
   try {
-    while (hasMorePages) {
+    while (hasMorePages && currentPage <= maxPages) {
       const url = new URL(`${apiBaseUrl}/providers?include=provider_groups`);
       url.searchParams.append("page[number]", currentPage.toString());
       url.searchParams.append("page[size]", pageSize.toString());
@@ -94,7 +95,7 @@ export const getAllProviders = async ({
         continue;
       }
 
-      allProviders = [...allProviders, ...data.data];
+      allProviders.push(...data.data);
       lastResponse = data;
 
       // Check if we've fetched all pages
