@@ -41,9 +41,12 @@ class zone_waf_owasp_ruleset_enabled(Check):
 
             if owasp_rulesets:
                 report.status = "PASS"
+                ruleset_descriptions = ", ".join(
+                    ruleset.name for ruleset in owasp_rulesets
+                )
                 report.status_extended = (
-                    f"Zone {zone.name} has OWASP managed WAF ruleset enabled "
-                    f"({len(owasp_rulesets)} ruleset(s))."
+                    f"Zone {zone.name} has OWASP managed WAF ruleset enabled: "
+                    f"{ruleset_descriptions}."
                 )
             else:
                 report.status = "FAIL"

@@ -41,9 +41,6 @@ class CloudflareWAFRuleset(BaseModel):
     phase: Optional[str] = None
     enabled: bool = True
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 class Zone(CloudflareService):
     """Retrieve Cloudflare zones with security-relevant settings."""

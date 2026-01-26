@@ -77,6 +77,7 @@ class Test_zone_waf_owasp_ruleset_enabled:
             assert result[0].resource_name == ZONE_NAME
             assert result[0].status == "PASS"
             assert "has OWASP managed WAF ruleset enabled" in result[0].status_extended
+            assert "Cloudflare OWASP Core Ruleset" in result[0].status_extended
 
     def test_zone_with_managed_ruleset_without_owasp_name(self):
         """Test that a managed ruleset without 'owasp' in name does NOT pass."""
@@ -249,4 +250,5 @@ class Test_zone_waf_owasp_ruleset_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "2 ruleset(s)" in result[0].status_extended
+            assert "Cloudflare OWASP Core Ruleset" in result[0].status_extended
+            assert "Custom OWASP Rules" in result[0].status_extended
