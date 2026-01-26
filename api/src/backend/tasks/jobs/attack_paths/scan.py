@@ -117,16 +117,30 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             )
 
             # Post-processing: Just keeping it to be more Cartography compliant
+            logger.info(
+                f"Syncing Cartography ontology for AWS account {prowler_api_provider.uid}"
+            )
             cartography_ontology.run(neo4j_session, cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
+            logger.info(
+                f"Syncing Cartography analysis for AWS account {prowler_api_provider.uid}"
+            )
             cartography_analysis.run(neo4j_session, cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler nodes and relationships
+            logger.info(
+                f"Syncing Prowler analysis for AWS account {prowler_api_provider.uid}"
+            )
             prowler.analysis(
                 neo4j_session, prowler_api_provider, scan_id, cartography_config
             )
+
+        logger.info(
+            f"Clearing Neo4j cache for database {cartography_config.neo4j_database}"
+        )
+        graph_database.clear_cache(cartography_config.neo4j_database)
 
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "

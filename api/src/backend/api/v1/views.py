@@ -91,6 +91,7 @@ from tasks.tasks import (
     refresh_lighthouse_provider_models_task,
 )
 
+from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -388,7 +389,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.18.0"
+        spectacular_settings.VERSION = "1.19.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2442,6 +2443,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         graph = attack_paths_views_helpers.execute_attack_paths_query(
             attack_paths_scan, query_definition, parameters
         )
+        graph_database.clear_cache(attack_paths_scan.graph_database)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
@@ -4424,7 +4426,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # If we couldn't determine from database, try each provider type
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
-                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
+                if compliance_id in get_compliance_frameworks(pt):
                     provider_type = pt
                     break
 

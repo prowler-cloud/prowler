@@ -3,6 +3,7 @@
 import type { D3ZoomEvent, ZoomBehavior } from "d3";
 import { select, zoom, zoomIdentity } from "d3";
 import dagre from "dagre";
+import { useTheme } from "next-themes";
 import {
   forwardRef,
   type Ref,
@@ -20,7 +21,8 @@ import {
   getNodeColor,
   getPathEdges,
   GRAPH_ALERT_BORDER_COLOR,
-  GRAPH_EDGE_COLOR,
+  GRAPH_EDGE_COLOR_DARK,
+  GRAPH_EDGE_COLOR_LIGHT,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
 } from "../../_lib";
 
@@ -62,6 +64,7 @@ const AttackPathGraphComponent = forwardRef<
 >(({ data, onNodeClick, selectedNodeId, isFilteredView = false }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const { resolvedTheme } = useTheme();
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
     null,
   );
@@ -87,6 +90,10 @@ const AttackPathGraphComponent = forwardRef<
       targetId: string;
     }>
   >([]);
+
+  // Get edge color based on current theme
+  const edgeColor =
+    resolvedTheme === "dark" ? GRAPH_EDGE_COLOR_DARK : GRAPH_EDGE_COLOR_LIGHT;
 
   // Keep selectedNodeIdRef in sync with selectedNodeId
   useEffect(() => {
@@ -160,17 +167,14 @@ const AttackPathGraphComponent = forwardRef<
         const edgeId = `${edgeData.sourceId}-${edgeData.targetId}`;
         const isInPath = pathEdges.has(edgeId);
         select(this)
-          .attr(
-            "stroke",
-            isInPath ? GRAPH_EDGE_HIGHLIGHT_COLOR : GRAPH_EDGE_COLOR,
-          )
+          .attr("stroke", isInPath ? GRAPH_EDGE_HIGHLIGHT_COLOR : edgeColor)
           .attr(
             "marker-end",
             isInPath ? "url(#arrowhead-highlight)" : "url(#arrowhead)",
           );
       });
     }
-  }, [selectedNodeId]);
+  }, [selectedNodeId, edgeColor]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
@@ -406,7 +410,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("flood-color", GRAPH_EDGE_HIGHLIGHT_COLOR)
       .attr("flood-opacity", "0.8");
 
-    // Arrow marker (default white) - refX=10 places the arrow tip exactly at the line endpoint
+    // Arrow marker (theme-aware) - refX=10 places the arrow tip exactly at the line endpoint
     defs
       .append("marker")
       .attr("id", "arrowhead")
@@ -418,7 +422,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("orient", "auto")
       .append("path")
       .attr("d", "M 0 0 L 10 5 L 0 10 z")
-      .attr("fill", GRAPH_EDGE_COLOR);
+      .attr("fill", edgeColor);
 
     // Arrow marker (highlighted orange) for hover state
     defs
@@ -541,7 +545,7 @@ const AttackPathGraphComponent = forwardRef<
         "y2",
         (d) => getEdgePoints(d.sourceId, d.targetId, d.source, d.target).y2,
       )
-      .attr("stroke", GRAPH_EDGE_COLOR)
+      .attr("stroke", edgeColor)
       .attr("stroke-width", 3)
       .attr("stroke-linecap", "round")
       .attr("stroke-dasharray", (d) => {
@@ -640,7 +644,7 @@ const AttackPathGraphComponent = forwardRef<
               .attr("marker-end", "url(#arrowhead-highlight)");
           } else {
             select(this)
-              .attr("stroke", GRAPH_EDGE_COLOR)
+              .attr("stroke", edgeColor)
               .attr("marker-end", "url(#arrowhead)");
           }
         });
@@ -1152,8 +1156,9 @@ const AttackPathGraphComponent = forwardRef<
     // D3's imperative rendering model requires controlled re-renders.
     // We intentionally only re-render on data/view changes, not on callback refs
     // (onNodeClick, selectedNodeId) which would cause unnecessary D3 re-renders.
+    // edgeColor is included to re-render when theme changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, isFilteredView]);
+  }, [data, isFilteredView, edgeColor]);
 
   return (
     <svg
