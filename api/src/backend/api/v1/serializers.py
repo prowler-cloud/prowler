@@ -998,7 +998,7 @@ class ProviderBatchCreateSerializer(BaseSerializerV1):
     """Serializer for batch creation of providers with all-or-nothing semantics (JSON:API compliant)."""
 
     class Meta:
-        resource_name = "providers-batch"
+        resource_name = "providers"
 
     def validate(self, attrs):
         data = self.initial_data.get("data", [])
@@ -1139,7 +1139,7 @@ class ProviderBatchUpdateSerializer(BaseSerializerV1):
     """Serializer for batch update of providers with all-or-nothing semantics (JSON:API compliant)."""
 
     class Meta:
-        resource_name = "providers-batch"
+        resource_name = "providers"
 
     def validate(self, attrs):
         data = self.initial_data.get("data", [])
@@ -1991,6 +1991,13 @@ class ProviderSecretSerializer(RLSSerializer):
             "url",
         ]
 
+    def get_root_meta(self, _resource, _many):
+        meta = super().get_root_meta(_resource, _many)
+        skipped = self.context.get("_skipped_providers")
+        if skipped:
+            meta["skipped"] = skipped
+        return meta
+
 
 class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
     secret = ProviderSecretField(write_only=True)
@@ -2086,7 +2093,7 @@ class ProviderSecretBatchCreateSerializer(BaseSerializerV1):
     """
 
     class Meta:
-        resource_name = "provider-secrets-batch"
+        resource_name = "provider-secrets"
 
     def _extract_providers_data(self, relationships, idx):
         """
@@ -2369,7 +2376,7 @@ class ProviderSecretBatchUpdateSerializer(BaseSerializerV1):
     """
 
     class Meta:
-        resource_name = "provider-secrets-batch"
+        resource_name = "provider-secrets"
 
     def validate(self, attrs):
         data = self.initial_data.get("data", [])

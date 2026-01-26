@@ -44,7 +44,7 @@ from django.db.models import (
     Window,
 )
 from django.db.models.functions import Coalesce, RowNumber
-from django.http import HttpResponse, JsonResponse, QueryDict
+from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -280,6 +280,18 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+
+
+class JSONAPIRawParser(JSONParser):
+    """Parser that accepts application/vnd.api+json but passes through raw JSON.
+
+    Unlike rest_framework_json_api's JSONParser which transforms
+    JSON:API payloads, this parser just parses JSON and leaves the
+    data structure intact for batch serializers to handle.
+    """
+
+    media_type = "application/vnd.api+json"
+
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -1560,7 +1572,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             "batch_create" in action_map.values()
             or "batch_update" in action_map.values()
         ):
-            return [JSONParser()]
+            return [JSONAPIRawParser(), JSONParser()]
         return super().get_parsers()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1632,7 +1644,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         summary="Batch create providers",
         description="Create multiple providers in a single atomic operation. JSON:API compliant with all-or-nothing semantics. Secrets must be added separately via the provider secrets endpoint.",
         request={
-            "application/json": {
+            "application/vnd.api+json": {
                 "type": "object",
                 "required": ["data"],
                 "properties": {
@@ -1695,7 +1707,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         methods=["post"],
         url_path="batch",
         url_name="batch",
-        parser_classes=[JSONParser],
+        parser_classes=[JSONAPIRawParser, JSONParser],
     )
     def batch_create(self, request):
         serializer = ProviderBatchCreateSerializer(
@@ -1706,12 +1718,15 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
 
         validated_items = serializer.validated_data.get("_validated_items", [])
 
-        # Create all providers
+        # Create all providers atomically
         created_provider_ids = []
-        for item in validated_items:
-            item_data = item["data"]
-            provider = Provider.objects.create(tenant_id=request.tenant_id, **item_data)
-            created_provider_ids.append(provider.id)
+        with transaction.atomic():
+            for item in validated_items:
+                item_data = item["data"]
+                provider = Provider.objects.create(
+                    tenant_id=request.tenant_id, **item_data
+                )
+                created_provider_ids.append(provider.id)
 
         created_providers = (
             Provider.objects.filter(id__in=created_provider_ids)
@@ -1730,7 +1745,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         summary="Batch update providers",
         description="Update multiple providers in a single atomic operation. JSON:API compliant with all-or-nothing semantics. Only alias can be updated.",
         request={
-            "application/json": {
+            "application/vnd.api+json": {
                 "type": "object",
                 "required": ["data"],
                 "properties": {
@@ -1781,7 +1796,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         methods=["patch"],
         url_path="batch",
         url_name="batch-update",
-        parser_classes=[JSONParser],
+        parser_classes=[JSONAPIRawParser, JSONParser],
     )
     def batch_update(self, request):
         serializer = ProviderBatchUpdateSerializer(
@@ -1792,15 +1807,16 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
 
         validated_items = serializer.validated_data.get("_validated_items", [])
 
-        # Update all providers
+        # Update all providers atomically
         updated_provider_ids = []
-        for item_data in validated_items:
-            item_data.pop("index")
-            provider = item_data.pop("provider")
-            for key, value in item_data.items():
-                setattr(provider, key, value)
-            provider.save()
-            updated_provider_ids.append(provider.id)
+        with transaction.atomic():
+            for item_data in validated_items:
+                item_data.pop("index")
+                provider = item_data.pop("provider")
+                for key, value in item_data.items():
+                    setattr(provider, key, value)
+                provider.save()
+                updated_provider_ids.append(provider.id)
 
         updated_providers = (
             Provider.objects.filter(id__in=updated_provider_ids)
@@ -3538,7 +3554,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
             "batch_create" in action_map.values()
             or "batch_update" in action_map.values()
         ):
-            return [JSONParser()]
+            return [JSONAPIRawParser(), JSONParser()]
         return super().get_parsers()
 
     @extend_schema(
@@ -3552,7 +3568,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
             "and reported in meta.skipped."
         ),
         request={
-            "application/json": {
+            "application/vnd.api+json": {
                 "type": "object",
                 "required": ["data"],
                 "properties": {
@@ -3638,7 +3654,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
         methods=["post"],
         url_path="batch",
         url_name="batch",
-        parser_classes=[JSONParser],
+        parser_classes=[JSONAPIRawParser, JSONParser],
     )
     def batch_create(self, request):
         serializer = ProviderSecretBatchCreateSerializer(
@@ -3650,36 +3666,31 @@ class ProviderSecretViewSet(BaseRLSViewSet):
         validated_items = serializer.validated_data.get("_validated_items", [])
         skipped_providers = serializer.validated_data.get("_skipped_providers", [])
 
-        # Create all validated secrets
+        # Create all validated secrets atomically
         created_secret_ids = []
-        for item_data in validated_items:
-            item_data.pop("source_index", None)
-            provider = item_data.pop("provider")
-            secret = ProviderSecret.objects.create(
-                tenant_id=request.tenant_id, provider=provider, **item_data
-            )
-            created_secret_ids.append(secret.id)
+        with transaction.atomic():
+            for item_data in validated_items:
+                item_data.pop("source_index", None)
+                provider = item_data.pop("provider")
+                secret = ProviderSecret.objects.create(
+                    tenant_id=request.tenant_id, provider=provider, **item_data
+                )
+                created_secret_ids.append(secret.id)
 
         created_secrets = ProviderSecret.objects.filter(
             id__in=created_secret_ids
         ).select_related("provider")
 
+        # Pass skipped providers through context so the serializer's
+        # get_root_meta() can include them in the response meta.
+        context = self.get_serializer_context()
+        if skipped_providers:
+            context["_skipped_providers"] = skipped_providers
+
         response_serializer = ProviderSecretSerializer(
-            created_secrets, many=True, context=self.get_serializer_context()
+            created_secrets, many=True, context=context
         )
 
-        # Include skipped providers in meta if any
-        if skipped_providers:
-            # Use JsonResponse for custom meta - builds JSON:API structure manually
-            return JsonResponse(
-                {
-                    "data": response_serializer.data,
-                    "meta": {"skipped": skipped_providers},
-                },
-                status=201,
-            )
-
-        # Standard response without meta
         return Response(data=response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -3690,7 +3701,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
             "JSON:API compliant with all-or-nothing semantics."
         ),
         request={
-            "application/json": {
+            "application/vnd.api+json": {
                 "type": "object",
                 "required": ["data"],
                 "properties": {
@@ -3749,7 +3760,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
         methods=["patch"],
         url_path="batch",
         url_name="batch-update",
-        parser_classes=[JSONParser],
+        parser_classes=[JSONAPIRawParser, JSONParser],
     )
     def batch_update(self, request):
         serializer = ProviderSecretBatchUpdateSerializer(
@@ -3760,15 +3771,16 @@ class ProviderSecretViewSet(BaseRLSViewSet):
 
         validated_items = serializer.validated_data.get("_validated_items", [])
 
-        # Update all validated secrets
+        # Update all validated secrets atomically
         updated_secret_ids = []
-        for item_data in validated_items:
-            item_data.pop("source_index", None)
-            provider_secret = item_data.pop("provider_secret")
-            for key, value in item_data.items():
-                setattr(provider_secret, key, value)
-            provider_secret.save()
-            updated_secret_ids.append(provider_secret.id)
+        with transaction.atomic():
+            for item_data in validated_items:
+                item_data.pop("source_index", None)
+                provider_secret = item_data.pop("provider_secret")
+                for key, value in item_data.items():
+                    setattr(provider_secret, key, value)
+                provider_secret.save()
+                updated_secret_ids.append(provider_secret.id)
 
         updated_secrets = ProviderSecret.objects.filter(
             id__in=updated_secret_ids

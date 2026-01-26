@@ -7715,7 +7715,7 @@ paths:
       - Provider
       requestBody:
         content:
-          application/json:
+          application/vnd.api+json:
             schema:
               type: object
               properties:
@@ -7767,7 +7767,7 @@ paths:
       responses:
         '201':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -7775,6 +7775,12 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Provider'
+                  meta:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        example: "v1"
               examples:
                 success:
                   summary: All providers created successfully
@@ -7786,20 +7792,26 @@ paths:
                           provider: aws
                           uid: "123456789012"
                           alias: "AWS Production"
+                          connection:
+                            connected: null
+                            last_checked_at: null
                           inserted_at: "2025-01-20T10:30:00Z"
                           updated_at: "2025-01-20T10:30:00Z"
-                      - type: providers
-                        id: "550e8400-e29b-41d4-a716-446655440002"
-                        attributes:
-                          provider: gcp
-                          uid: "my-gcp-project"
-                          alias: "GCP Staging"
-                          inserted_at: "2025-01-20T10:30:00Z"
-                          updated_at: "2025-01-20T10:30:00Z"
+                        relationships:
+                          secret:
+                            data: null
+                          provider_groups:
+                            meta:
+                              count: 0
+                            data: []
+                        links:
+                          self: "https://api.prowler.com/api/v1/providers/550e8400-e29b-41d4-a716-446655440001"
+                    meta:
+                      version: "v1"
           description: All providers created successfully
         '400':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -7838,7 +7850,7 @@ paths:
       - Provider
       requestBody:
         content:
-          application/json:
+          application/vnd.api+json:
             schema:
               type: object
               properties:
@@ -7876,7 +7888,7 @@ paths:
       responses:
         '200':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -7884,6 +7896,12 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Provider'
+                  meta:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        example: "v1"
               examples:
                 success:
                   summary: All providers updated successfully
@@ -7895,12 +7913,26 @@ paths:
                           provider: aws
                           uid: "123456789012"
                           alias: "AWS Production (Updated)"
+                          connection:
+                            connected: null
+                            last_checked_at: null
                           inserted_at: "2025-01-20T10:30:00Z"
                           updated_at: "2025-01-20T11:00:00Z"
+                        relationships:
+                          secret:
+                            data: null
+                          provider_groups:
+                            meta:
+                              count: 0
+                            data: []
+                        links:
+                          self: "https://api.prowler.com/api/v1/providers/550e8400-e29b-41d4-a716-446655440001"
+                    meta:
+                      version: "v1"
           description: All providers updated successfully
         '400':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -8232,7 +8264,7 @@ paths:
       - Provider
       requestBody:
         content:
-          application/json:
+          application/vnd.api+json:
             schema:
               type: object
               properties:
@@ -8305,7 +8337,7 @@ paths:
       responses:
         '201':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -8315,8 +8347,11 @@ paths:
                       $ref: '#/components/schemas/ProviderSecret'
                   meta:
                     type: object
-                    description: Contains skipped providers info if any were skipped
+                    description: Contains version and optionally skipped providers info
                     properties:
+                      version:
+                        type: string
+                        example: "v1"
                       skipped:
                         type: array
                         items:
@@ -8347,6 +8382,10 @@ paths:
                             data:
                               type: providers
                               id: "550e8400-e29b-41d4-a716-446655440001"
+                        links:
+                          self: "https://api.prowler.com/api/v1/providers/secrets/660e8400-e29b-41d4-a716-446655440001"
+                    meta:
+                      version: "v1"
                 some_skipped:
                   summary: Some providers skipped (already have secrets)
                   value:
@@ -8363,7 +8402,10 @@ paths:
                             data:
                               type: providers
                               id: "550e8400-e29b-41d4-a716-446655440002"
+                        links:
+                          self: "https://api.prowler.com/api/v1/providers/secrets/660e8400-e29b-41d4-a716-446655440001"
                     meta:
+                      version: "v1"
                       skipped:
                         - provider_id: "550e8400-e29b-41d4-a716-446655440001"
                           source_index: 0
@@ -8371,7 +8413,7 @@ paths:
           description: Provider secrets created successfully. May include meta.skipped if some providers were skipped.
         '400':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -8411,7 +8453,7 @@ paths:
       - Provider
       requestBody:
         content:
-          application/json:
+          application/vnd.api+json:
             schema:
               type: object
               properties:
@@ -8459,7 +8501,7 @@ paths:
       responses:
         '200':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
@@ -8467,6 +8509,12 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ProviderSecret'
+                  meta:
+                    type: object
+                    properties:
+                      version:
+                        type: string
+                        example: "v1"
               examples:
                 all_updated:
                   summary: All secrets updated successfully
@@ -8484,10 +8532,14 @@ paths:
                             data:
                               type: providers
                               id: "550e8400-e29b-41d4-a716-446655440001"
+                        links:
+                          self: "https://api.prowler.com/api/v1/providers/secrets/660e8400-e29b-41d4-a716-446655440001"
+                    meta:
+                      version: "v1"
           description: All provider secrets updated successfully
         '400':
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 type: object
                 properties:
