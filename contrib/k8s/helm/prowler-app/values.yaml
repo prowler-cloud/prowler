@@ -533,3 +533,34 @@ valkey:
   # - VALKEY_PORT
   # - VALKEY_DB
   enabled: true
+
+neo4j:
+  enabled: true
+
+  neo4j:
+    name: prowler-neo4j
+    edition: community
+
+    # The name of the secret containing the Neo4j password with the key NEO4J_PASSWORD
+    passwordFromSecret: prowler-secret
+
+  # Disable lookups during helm template rendering (required for ArgoCD)
+  disableLookups: true
+
+  volumes:
+    data:
+      mode: defaultStorageClass
+
+  services:
+    neo4j:
+      enabled: false
+
+  # Neo4j Configuration (yaml format)
+  config:
+    dbms_security_procedures_allowlist: "apoc.*"
+    dbms_security_procedures_unrestricted: "apoc.*"
+
+  apoc_config:
+    apoc.export.file.enabled: "true"
+    apoc.import.file.enabled: "true"
+    apoc.import.file.use_neo4j_config: "true"

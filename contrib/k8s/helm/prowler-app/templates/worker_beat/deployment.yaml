@@ -64,6 +64,7 @@ spec:
           env:
             {{- include "prowler.django.env" . | nindent 12 }}
             {{- include "prowler.postgresql.env" . | nindent 12 }}
+            {{- include "prowler.neo4j.env" . | nindent 12 }}
           {{- with .Values.worker_beat.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

@@ -93,7 +93,7 @@ Outputs nothing when postgresql.enabled is false.
 - name: POSTGRES_HOST
   value: {{ .Release.Name }}-postgresql
 - name: POSTGRES_PORT
-  value: {{ .Values.postgresql.port | quote }}
+  value: "5432"
 - name: POSTGRES_ADMIN_USER
   value: postgres
 - name: POSTGRES_ADMIN_PASSWORD
@@ -110,5 +110,25 @@ Outputs nothing when postgresql.enabled is false.
       name: {{ .Release.Name }}-postgresql
       key: postgres-password
 {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Neo4j environment variables for api, worker, and worker_beat.
+Outputs nothing when neo4j.enabled is false.
+*/}}
+{{- define "prowler.neo4j.env" -}}
+{{- if .Values.neo4j.enabled }}
+- name: NEO4J_HOST
+  value: {{ .Release.Name }}
+- name: NEO4J_PORT
+  value: "7687"
+- name: NEO4J_USER
+  value: "neo4j"
+- name: NEO4J_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ required "neo4j.neo4j.passwordFromSecret is required" .Values.neo4j.neo4j.passwordFromSecret }}
+      key: NEO4J_PASSWORD
 {{- end }}
 {{- end }}

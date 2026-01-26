@@ -9,7 +9,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "prowler.fullname" . }}
+    name: {{ include "prowler.fullname" . }}-ui
   minReplicas: {{ .Values.ui.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.ui.autoscaling.maxReplicas }}
   metrics:
