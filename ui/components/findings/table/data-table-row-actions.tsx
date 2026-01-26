@@ -13,19 +13,28 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import type { FindingProps } from "@/types/components";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
 
-interface DataTableRowActionsProps {
-  row: Row<FindingProps>;
+export interface FindingRowData {
+  id: string;
+  attributes: {
+    muted?: boolean;
+    check_metadata?: {
+      checktitle?: string;
+    };
+  };
+}
+
+interface DataTableRowActionsProps<T extends FindingRowData> {
+  row: Row<T>;
   onMuteComplete?: (findingIds: string[]) => void;
 }
 
-export function DataTableRowActions({
+export function DataTableRowActions<T extends FindingRowData>({
   row,
   onMuteComplete,
-}: DataTableRowActionsProps) {
+}: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);

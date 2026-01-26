@@ -34,11 +34,6 @@ import {
   InfoField,
 } from "@/components/ui/entities";
 import { DataTable } from "@/components/ui/table";
-
-import {
-  getResourceFindingsColumns,
-  ResourceFinding,
-} from "./resource-findings-columns";
 import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import {
@@ -47,6 +42,11 @@ import {
   ProviderType,
   ResourceProps,
 } from "@/types";
+
+import {
+  getResourceFindingsColumns,
+  ResourceFinding,
+} from "./resource-findings-columns";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";

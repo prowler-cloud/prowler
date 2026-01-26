@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
+import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 
 import { DataTableRowActions } from "@/components/findings/table";
 import {
@@ -15,7 +15,6 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
-import { FindingProps } from "@/types";
 
 export interface ResourceFinding {
   type: "findings";
@@ -139,10 +138,7 @@ export const getResourceFindingsColumns = (
       id: "actions",
       header: () => <div className="w-10" />,
       cell: ({ row }) => (
-        <DataTableRowActions
-          row={row as unknown as Row<FindingProps>}
-          onMuteComplete={onMuteComplete}
-        />
+        <DataTableRowActions row={row} onMuteComplete={onMuteComplete} />
       ),
       enableSorting: false,
     },
