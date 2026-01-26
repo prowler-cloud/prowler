@@ -8,10 +8,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
 
-### 🐞 Fixed
-
-- Deduplicated scheduled scans for long-running providers [(#9829)](https://github.com/prowler-cloud/prowler/pull/9829)
-
 ---
 
 ## [1.18.1] (Prowler v5.17.1)
@@ -27,6 +23,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Lazy load Neo4j driver for workers only [(#9872)](https://github.com/prowler-cloud/prowler/pull/9872)
 - Improve Cypher query for inserting Findings into Attack Paths scan graphs [(#9874)](https://github.com/prowler-cloud/prowler/pull/9874)
 - Clear Neo4j database cache after Attack Paths scan and each API query [(#9877)](https://github.com/prowler-cloud/prowler/pull/9877)
+- Deduplicated scheduled scans for long-running providers [(#9829)](https://github.com/prowler-cloud/prowler/pull/9829)
 
 ---
 
