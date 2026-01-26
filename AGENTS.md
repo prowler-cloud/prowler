@@ -128,12 +128,12 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 ```bash
 # Setup
 poetry install --with dev
-poetry run pre-commit install
+prek install  # install git hooks (requires prek: pipx install prek)
 
 # Code quality
 poetry run make lint
 poetry run make format
-poetry run pre-commit run --all-files
+prek run --all-files
 ```
 
 ---

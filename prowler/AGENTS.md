@@ -109,7 +109,7 @@ prowler/
 ```bash
 # Setup
 poetry install --with dev
-poetry run pre-commit install
+prek install  # install git hooks (requires prek: pipx install prek)
 
 # Run Prowler
 poetry run python prowler-cli.py {provider}
@@ -121,7 +121,7 @@ poetry run pytest -n auto -vvv tests/
 poetry run pytest tests/providers/{provider}/services/{service}/ -v
 
 # Code Quality
-poetry run pre-commit run --all-files
+prek run --all-files
 ```
 
 ---
@@ -142,7 +142,7 @@ poetry run pre-commit run --all-files
 ## QA CHECKLIST
 
 - [ ] `poetry run pytest` passes
-- [ ] `poetry run pre-commit run --all-files` passes
+- [ ] `prek run --all-files` passes
 - [ ] Check metadata JSON is valid
 - [ ] Tests cover PASS, FAIL, and empty resource scenarios
 - [ ] Docstrings follow Google style

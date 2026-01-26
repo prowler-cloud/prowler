@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setup Git Hooks for Prowler
-# This script installs pre-commit hooks using the project's Poetry environment
+# This script installs git hooks using prek (fast pre-commit alternative)
 
 set -e
 
@@ -23,13 +23,6 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   exit 1
 fi
 
-# Check if Poetry is installed
-if ! command -v poetry &>/dev/null; then
-  echo -e "${RED}❌ Poetry is not installed${NC}"
-  echo -e "${YELLOW}   Install Poetry: https://python-poetry.org/docs/#installation${NC}"
-  exit 1
-fi
-
 # Check if pyproject.toml exists
 if [ ! -f "pyproject.toml" ]; then
   echo -e "${RED}❌ pyproject.toml not found${NC}"
@@ -37,31 +30,49 @@ if [ ! -f "pyproject.toml" ]; then
   exit 1
 fi
 
-# Check if dependencies are already installed
-if ! poetry run python -c "import pre_commit" 2>/dev/null; then
-  echo -e "${YELLOW}📦 Installing project dependencies (including pre-commit)...${NC}"
-  poetry install --with dev
-else
-  echo -e "${GREEN}✓${NC} Dependencies already installed"
+# Check if prek is installed, if not try to install it
+if ! command -v prek &>/dev/null; then
+  echo -e "${YELLOW}📦 prek not found, attempting to install...${NC}"
+  if command -v pipx &>/dev/null; then
+    pipx install prek
+  elif command -v uv &>/dev/null; then
+    uv tool install prek
+  elif command -v brew &>/dev/null; then
+    brew install prek
+  else
+    echo -e "${RED}❌ Could not install prek automatically${NC}"
+    echo -e "${YELLOW}   Install prek manually: https://github.com/j178/prek${NC}"
+    echo -e "${YELLOW}   Options: pipx install prek | brew install prek | uv tool install prek${NC}"
+    exit 1
+  fi
 fi
 
+echo -e "${GREEN}✓${NC} prek is installed: $(prek --version)"
+
 echo ""
-# Clear any existing core.hooksPath to avoid pre-commit conflicts
+# Clear any existing core.hooksPath to avoid conflicts
 if git config --get core.hooksPath >/dev/null 2>&1; then
   echo -e "${YELLOW}🧹 Clearing existing core.hooksPath configuration...${NC}"
   git config --unset-all core.hooksPath
 fi
 
-echo -e "${YELLOW}🔗 Installing pre-commit hooks...${NC}"
-poetry run pre-commit install
+# Uninstall old pre-commit hooks if they exist
+if [ -f ".git/hooks/pre-commit" ] && grep -q "pre-commit" ".git/hooks/pre-commit" 2>/dev/null; then
+  echo -e "${YELLOW}🧹 Removing old pre-commit hooks...${NC}"
+  pre-commit uninstall 2>/dev/null || true
+fi
+
+echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
+prek install
 
 echo ""
 echo -e "${GREEN}✅ Git hooks successfully configured!${NC}"
 echo ""
-echo -e "${YELLOW}📋 Pre-commit system:${NC}"
-echo -e "   • Python pre-commit manages all git hooks"
+echo -e "${YELLOW}📋 prek system (fast pre-commit alternative):${NC}"
+echo -e "   • prek manages all git hooks (~7x faster than pre-commit)"
 echo -e "   • API files: Python checks (black, flake8, bandit, etc.)"
 echo -e "   • UI files: UI checks (TypeScript, ESLint, Claude Code validation)"
+echo -e "   • Run manually: prek run --all-files"
 echo ""
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""

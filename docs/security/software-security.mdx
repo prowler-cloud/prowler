@@ -4,7 +4,7 @@ title: 'Software Security'
 
 Prowler follows a **security-by-design approach** throughout the software development lifecycle. All changes go through automated checks at every stage, from local development to production deployment.
 
-[Pre-commit](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml) validations catch issues early, and [CI/CD pipelines](https://github.com/prowler-cloud/prowler/tree/master/.github) include multiple security gates ensuring code quality, secure configurations, and compliance with internal standards.
+[Git hooks](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml) (managed by [prek](https://github.com/j178/prek), a fast pre-commit alternative) catch issues early, and [CI/CD pipelines](https://github.com/prowler-cloud/prowler/tree/master/.github) include multiple security gates ensuring code quality, secure configurations, and compliance with internal standards.
 
 Container registries are continuously scanned for vulnerabilities, with findings automatically reported to the security team for assessment and remediation. This process evolves alongside the stack as new languages, frameworks, and technologies are adopted, ensuring security practices remain comprehensive, proactive, and adaptable.
 
@@ -25,7 +25,7 @@ Multiple SAST tools are employed across the codebase to identify security vulner
   - Configured to ignore test files and report only high-severity issues
   - Runs on both SDK and API codebases
 - **Pylint:** Static code analysis with security-focused checks
-  - Integrated into pre-commit hooks and CI/CD pipelines
+  - Integrated into git hooks (prek) and CI/CD pipelines
 
 ### Code Quality & Dead Code Detection
 
@@ -40,7 +40,7 @@ Dependencies are continuously monitored for known vulnerabilities with timely up
 ### Dependency Vulnerability Scanning
 
 - **Safety:** Scans Python dependencies against known vulnerability databases
-  - Runs on every commit via pre-commit hooks
+  - Runs on every commit via git hooks (prek)
   - Integrated into CI/CD for SDK and API
   - Configured with selective ignores for tracked exceptions
 - **Trivy:** Multi-purpose scanner for containers and dependencies
@@ -82,7 +82,7 @@ Prowler protects against accidental exposure of sensitive credentials.
 
 - Scans entire codebase and Git history for secrets
 - Runs on every push and pull request
-- Pre-commit hook prevents committing secrets
+- Git hook (prek) prevents committing secrets
 - Detects high-entropy strings, API keys, tokens, and credentials
 - Configured to report verified and unknown findings
 

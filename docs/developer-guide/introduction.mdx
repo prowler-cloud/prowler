@@ -116,18 +116,34 @@ In case you have any doubts, consult the [Poetry environment activation guide](h
 </Warning>
 
 
-### Pre-Commit Hooks
+### Git Hooks with prek
 
-This repository uses Git pre-commit hooks managed by the [pre-commit](https://pre-commit.com/) tool, it is installed with `poetry install --with dev`. Next, run the following command in the root of this repository:
+This repository uses Git hooks managed by [prek](https://github.com/j178/prek), a fast pre-commit alternative written in Rust. It is ~7x faster than traditional pre-commit while being fully compatible with `.pre-commit-config.yaml`.
+
+Install prek (choose one method):
 
 ```shell
-pre-commit install
+pipx install prek    # recommended
+# or: brew install prek
+# or: uv tool install prek
+```
+
+Then run the following command in the root of this repository:
+
+```shell
+prek install
 ```
 
 Successful installation should produce the following output:
 
 ```shell
-pre-commit installed at .git/hooks/pre-commit
+prek hook installed at .git/hooks/pre-commit
+```
+
+To run hooks manually on all files:
+
+```shell
+prek run --all-files
 ```
 
 ### Code Quality and Security Checks
