@@ -33,6 +33,8 @@ export const DataTableSearch = ({
   const router = useRouter();
   const { updateFilter } = useUrlFilters();
   const [internalValue, setInternalValue] = useState("");
+  // In controlled mode, track display value separately for immediate feedback
+  const [displayValue, setDisplayValue] = useState(controlledValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -42,12 +44,15 @@ export const DataTableSearch = ({
 
   // Use controlled value if provided, otherwise internal state
   const isControlled = controlledValue !== undefined && onSearchChange;
-  const value = isControlled ? controlledValue : internalValue;
-  const setValue = isControlled
-    ? (_v: string) => {
-        /* no-op for controlled, handled in handleChange */
-      }
-    : setInternalValue;
+  // For display: use displayValue in controlled mode (for responsive typing), internalValue otherwise
+  const value = isControlled ? displayValue : internalValue;
+
+  // Sync displayValue when controlledValue changes externally (e.g., clear filters)
+  useEffect(() => {
+    if (isControlled) {
+      setDisplayValue(controlledValue);
+    }
+  }, [controlledValue, isControlled]);
 
   // Determine param names based on prefix
   const searchParam = paramPrefix ? `${paramPrefix}Search` : "filter[search]";
@@ -69,23 +74,24 @@ export const DataTableSearch = ({
 
   // Handle input change with debounce
   const handleChange = (newValue: string) => {
-    // For controlled mode, update internal display immediately and debounce callback
+    // For controlled mode, update display immediately, debounce the callback
     if (isControlled) {
+      // Update display value immediately for responsive typing
+      setDisplayValue(newValue);
+
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
+
       setIsLoading(true);
       debounceTimeoutRef.current = setTimeout(() => {
         onSearchChange(newValue);
         setIsLoading(false);
       }, SEARCH_DEBOUNCE_MS);
-      // Update display immediately for responsive feel
-      onSearchChange(newValue);
-      setIsLoading(false);
       return;
     }
 
-    setValue(newValue);
+    setInternalValue(newValue);
 
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
