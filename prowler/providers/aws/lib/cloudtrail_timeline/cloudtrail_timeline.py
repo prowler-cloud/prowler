@@ -102,9 +102,6 @@ class CloudTrailTimeline(TimelineService):
                 if parsed:
                     events.append(parsed)
 
-            logger.debug(
-                f"CloudTrail timeline: found {len(events)} events for {resource_identifier}"
-            )
             return events
 
         except ClientError as e:
