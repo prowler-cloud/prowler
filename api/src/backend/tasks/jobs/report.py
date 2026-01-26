@@ -360,10 +360,7 @@ def generate_compliance_reports(
                         else ""
                     )
                     logger.info(
-                        "ThreatScore snapshot created with ID %s (score: %s%%%s)",
-                        snapshot.id,
-                        snapshot.overall_score,
-                        delta_msg,
+                        f"ThreatScore snapshot created with ID {snapshot.id} (score: {snapshot.overall_score}%{delta_msg})",
                     )
             except Exception as e:
                 logger.error("Error creating ThreatScore snapshot: %s", e)
