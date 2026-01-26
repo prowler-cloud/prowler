@@ -9,8 +9,8 @@ import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
   return (
-    <div className="flex items-center gap-2 whitespace-nowrap md:flex-col md:items-start md:justify-start">
-      <SnippetChip value={id} />
+    <div className="flex max-w-full min-w-0 items-center gap-2 md:flex-col md:items-start md:justify-start">
+      <SnippetChip value={id} className="max-w-full" />
     </div>
   );
 };
@@ -48,7 +48,7 @@ export const UserBasicInfoCard = ({
               </InfoField>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden">
             <InfoField label="Organization ID" variant="transparent">
               {tenantId ? (
                 <TenantIdCopy id={tenantId} />

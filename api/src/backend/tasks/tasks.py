@@ -8,12 +8,17 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
+from tasks.jobs.attack_paths import (
+    attack_paths_scan,
+    can_provider_run_attack_paths_scan,
+)
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -47,7 +52,11 @@ from tasks.jobs.scan import (
     perform_prowler_scan,
     update_provider_compliance_scores,
 )
-from tasks.utils import batched, get_next_execution_datetime
+from tasks.utils import (
+    _get_or_create_scheduled_scan,
+    batched,
+    get_next_execution_datetime,
+)
 
 from api.compliance import get_compliance_frameworks
 from api.db_router import READ_REPLICA_ALIAS
@@ -151,6 +160,11 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
+
+    if can_provider_run_attack_paths_scan(tenant_id, provider_id):
+        perform_attack_paths_scan_task.apply_async(
+            kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+        )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -264,44 +278,38 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-
-        executed_scan = Scan.objects.filter(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            task__task_runner_task__task_id=task_id,
-        ).order_by("completed_at")
-
-        if (
+        executing_scan = (
             Scan.objects.filter(
                 tenant_id=tenant_id,
                 provider_id=provider_id,
                 trigger=Scan.TriggerChoices.SCHEDULED,
                 state=StateChoices.EXECUTING,
-                scheduler_task_id=periodic_task_instance.id,
-                scheduled_at__date=datetime.now(timezone.utc).date(),
-            ).exists()
-            or executed_scan.exists()
-        ):
-            # Duplicated task execution due to visibility timeout or scan is already running
-            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
-            try:
-                affected_scan = executed_scan.first()
-                if not affected_scan:
-                    raise ValueError(
-                        "Error retrieving affected scan details after detecting duplicated scheduled "
-                        "scan."
-                    )
-                # Return the affected scan details to avoid losing data
-                serializer = ScanTaskSerializer(instance=affected_scan)
-            except Exception as duplicated_scan_exception:
-                logger.error(
-                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
-                    f"{str(duplicated_scan_exception)}"
-                )
-                raise duplicated_scan_exception
-            return serializer.data
+            )
+            .order_by("-started_at")
+            .first()
+        )
+        if executing_scan:
+            logger.warning(
+                f"Scheduled scan already executing for provider {provider_id}. Skipping."
+            )
+            return ScanTaskSerializer(instance=executing_scan).data
 
+        executed_scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            task__task_runner_task__task_id=task_id,
+        ).first()
+
+        if executed_scan:
+            # Duplicated task execution due to visibility timeout
+            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+            return ScanTaskSerializer(instance=executed_scan).data
+
+        interval = periodic_task_instance.interval
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+        current_scan_datetime = next_scan_datetime - timedelta(
+            **{interval.period: interval.every}
+        )
 
         # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
         _cleanup_orphan_scheduled_scans(
@@ -310,19 +318,12 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scheduler_task_id=periodic_task_instance.id,
         )
 
-        scan_instance, _ = Scan.objects.get_or_create(
+        scan_instance = _get_or_create_scheduled_scan(
             tenant_id=tenant_id,
             provider_id=provider_id,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=periodic_task_instance.id,
-            defaults={
-                "state": StateChoices.SCHEDULED,
-                "name": "Daily scheduled scan",
-                "scheduled_at": next_scan_datetime - timedelta(days=1),
-            },
+            scheduled_at=current_scan_datetime,
         )
-
         scan_instance.task_id = task_id
         scan_instance.save()
 
@@ -332,18 +333,19 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scan_id=str(scan_instance.id),
             provider_id=provider_id,
         )
-    except Exception as e:
-        raise e
     finally:
         with rls_transaction(tenant_id):
-            Scan.objects.get_or_create(
+            now = datetime.now(timezone.utc)
+            if next_scan_datetime <= now:
+                interval_delta = timedelta(**{interval.period: interval.every})
+                while next_scan_datetime <= now:
+                    next_scan_datetime += interval_delta
+            _get_or_create_scheduled_scan(
                 tenant_id=tenant_id,
-                name="Daily scheduled scan",
                 provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.SCHEDULED,
-                scheduled_at=next_scan_datetime,
                 scheduler_task_id=periodic_task_instance.id,
+                scheduled_at=next_scan_datetime,
+                update_state=True,
             )
 
     _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
@@ -355,6 +357,29 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 @handle_provider_deletion
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="attack-paths-scan-perform",
+    queue="attack-paths-scans",
+)
+def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
+    """
+    Execute an Attack Paths scan for the given provider within the current tenant RLS context.
+
+    Args:
+        self: The task instance (automatically passed when bind=True).
+        tenant_id (str): The tenant identifier for RLS context.
+        scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
+
+    Returns:
+        Any: The result from `attack_paths_scan`, including any per-scan failure details.
+    """
+    return attack_paths_scan(
+        tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
+    )
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
@@ -611,6 +636,21 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         scan_id (str): The scan identifier.
     """
     return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@handle_provider_deletion
+def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanGroupSummary for a completed scan.
+
+    Aggregates unique resource groups from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")

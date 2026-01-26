@@ -626,6 +626,101 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
+class AttackPathsScan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    progress = models.IntegerField(default=0)
+
+    # Timing
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(
+        null=True, blank=True, help_text="Duration in seconds"
+    )
+
+    # Relationship to the provider and optional prowler Scan and celery Task
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    scan = models.ForeignKey(
+        "Scan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    task = models.ForeignKey(
+        "Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+
+    # Cartography specific metadata
+    update_tag = models.BigIntegerField(
+        null=True, blank=True, help_text="Cartography update tag (epoch)"
+    )
+    graph_database = models.CharField(max_length=63, null=True, blank=True)
+    is_graph_database_deleted = models.BooleanField(default=False)
+    ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_paths_scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                name="aps_prov_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "state", "-inserted_at"],
+                name="aps_state_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="aps_scan_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="aps_active_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(is_graph_database_deleted=False),
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "-completed_at"],
+                name="aps_completed_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(
+                    state=StateChoices.COMPLETED,
+                    is_graph_database_deleted=False,
+                ),
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-scans"
+
+
 class ResourceTag(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -704,6 +799,12 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
+    groups = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Groups for categorization (e.g., compute, storage, IAM)",
+    )
 
     failed_findings_count = models.IntegerField(default=0)
 
@@ -889,6 +990,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         blank=True,
         null=True,
         help_text="Categories from check metadata for efficient filtering",
+    )
+    resource_groups = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Resource group from check metadata for efficient filtering",
     )
 
     # Relationships
@@ -2030,6 +2136,67 @@ class ScanCategorySummary(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scan-category-summaries"
+
+
+class ScanGroupSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated resource group metrics per scan by severity.
+
+    Stores one row per (resource_group, severity) combination per scan for efficient
+    overview queries. Resource groups come from check_metadata.Group.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="resource_group_summaries",
+        related_query_name="resource_group_summary",
+    )
+
+    resource_group = models.CharField(max_length=50)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+    resources_count = models.IntegerField(
+        default=0, help_text="Count of distinct resource_uid values"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_resource_group_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="srgs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
+                name="unique_resource_group_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-resource-group-summaries"
 
 
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):

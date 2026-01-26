@@ -21,6 +21,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
+    AttackPathsScan,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -1132,6 +1133,109 @@ class ScanComplianceReportSerializer(BaseSerializerV1):
         fields = ["id", "name"]
 
 
+class AttackPathsScanSerializer(RLSSerializer):
+    state = StateEnumSerializerField(read_only=True)
+    provider_alias = serializers.SerializerMethodField(read_only=True)
+    provider_type = serializers.SerializerMethodField(read_only=True)
+    provider_uid = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = AttackPathsScan
+        fields = [
+            "id",
+            "state",
+            "progress",
+            "provider",
+            "provider_alias",
+            "provider_type",
+            "provider_uid",
+            "scan",
+            "task",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "duration",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "task": "api.v1.serializers.TaskSerializer",
+    }
+
+    def get_provider_alias(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.alias if provider else None
+
+    def get_provider_type(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.provider if provider else None
+
+    def get_provider_uid(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.uid if provider else None
+
+
+class AttackPathsQueryParameterSerializer(BaseSerializerV1):
+    name = serializers.CharField()
+    label = serializers.CharField()
+    data_type = serializers.CharField(default="string")
+    description = serializers.CharField(allow_null=True, required=False)
+    placeholder = serializers.CharField(allow_null=True, required=False)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-parameters"
+
+
+class AttackPathsQuerySerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    provider = serializers.CharField()
+    parameters = AttackPathsQueryParameterSerializer(many=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-queries"
+
+
+class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    parameters = serializers.DictField(
+        child=serializers.JSONField(), allow_empty=True, required=False
+    )
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-run-requests"
+
+
+class AttackPathsNodeSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    labels = serializers.ListField(child=serializers.CharField())
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-nodes"
+
+
+class AttackPathsRelationshipSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    label = serializers.CharField()
+    source = serializers.CharField()
+    target = serializers.CharField()
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-relationships"
+
+
+class AttackPathsQueryResultSerializer(BaseSerializerV1):
+    nodes = AttackPathsNodeSerializer(many=True)
+    relationships = AttackPathsRelationshipSerializer(many=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-results"
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
@@ -1175,6 +1279,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
+            "groups",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1183,6 +1288,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
+            "groups": {"read_only": True},
         }
 
     included_serializers = {
@@ -1276,6 +1382,7 @@ class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1302,6 +1409,7 @@ class FindingSerializer(RLSSerializer):
             "check_id",
             "check_metadata",
             "categories",
+            "resource_groups",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1358,6 +1466,9 @@ class FindingMetadataSerializer(BaseSerializerV1):
         child=serializers.CharField(), allow_empty=True
     )
     categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True, required=False, default=list
+    )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -2301,6 +2412,22 @@ class CategoryOverviewSerializer(BaseSerializerV1):
 
     class JSONAPIMeta:
         resource_name = "category-overviews"
+
+
+class ResourceGroupOverviewSerializer(BaseSerializerV1):
+    """Serializer for resource group overview aggregations."""
+
+    id = serializers.CharField(source="resource_group")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    resources_count = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "resource-group-overviews"
 
 
 class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):

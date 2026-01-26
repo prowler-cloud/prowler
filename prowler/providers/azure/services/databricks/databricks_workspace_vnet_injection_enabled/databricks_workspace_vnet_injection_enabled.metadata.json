@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "databricks_workspace_vnet_injection_enabled",
-  "CheckTitle": "Ensure Azure Databricks workspaces are deployed in a customer-managed VNet (VNet Injection)",
+  "CheckTitle": "Databricks workspace is deployed in a customer-managed VNet (VNet Injection enabled)",
   "CheckType": [],
   "ServiceName": "databricks",
   "SubServiceName": "",
-  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Databricks/workspaces/{workspaceName}",
-  "Severity": "medium",
-  "ResourceType": "AzureDatabricksWorkspace",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.databricks/workspaces",
   "ResourceGroup": "ai_ml",
-  "Description": "Checks whether Azure Databricks workspaces are deployed in a customer-managed Virtual Network (VNet Injection) instead of a Databricks-managed VNet.",
-  "Risk": "Using a Databricks-managed VNet limits control over network security policies, firewall configurations, and routing, increasing the risk of unauthorized access or data exfiltration.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/vnet-inject",
+  "Description": "**Azure Databricks workspaces** using **VNet injection** are placed in a customer-managed VNet rather than a Databricks-managed network. This evaluates whether a workspace is linked to a customer VNet.",
+  "Risk": "Using a Databricks-managed VNet limits control over routing, egress, and access boundaries, degrading **confidentiality** and **integrity**.\n- Unrestricted outbound paths enable **data exfiltration**\n- Harder to enforce **private endpoints** and NSG policies\n- Increased chance of **lateral movement** into compute nodes",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/vnet-inject",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Databricks/check-for-vnet-injection.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az databricks workspace create --name <databricks-workspace-name> --resource-group <resource-group-name> --location <region> --managed-resource-group <managed-rg-name> --enable-no-public-ip true --network-security-group-rule \"NoAzureServices\" --public-network-access Disabled --custom-virtual-network-id /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/<vnet-name>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az databricks workspace create --name <workspace_name> --resource-group <resource_group_name> --location <region> --sku premium --vnet /subscriptions/<subscription_id>/resourceGroups/<resource_group_name>/providers/Microsoft.Network/virtualNetworks/<vnet_name> --public-subnet <public_subnet_name> --private-subnet <private_subnet_name>",
+      "NativeIaC": "```bicep\n// Azure Databricks workspace with VNet injection enabled\nresource databricks 'Microsoft.Databricks/workspaces@2023-02-01-preview' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  sku: { name: 'premium' }\n  properties: {\n    managedResourceGroupId: '/subscriptions/<example_resource_id>/resourceGroups/<example_resource_name>'\n    parameters: {\n      customVirtualNetworkId: { // CRITICAL: Enables VNet injection by attaching your VNet\n        value: '/subscriptions/<example_resource_id>/resourceGroups/<example_resource_name>/providers/Microsoft.Network/virtualNetworks/<example_resource_name>'\n      }\n      customPublicSubnetName: { value: '<example_resource_name>-public' } // Required: host (public) subnet name\n      customPrivateSubnetName: { value: '<example_resource_name>-private' } // Required: container (private) subnet name\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure Portal, go to Create a resource > Azure Databricks\n2. On Basics, enter workspace name, region, and resource group\n3. Open the Networking tab and select Your VNet (VNet injection)\n4. Choose your Virtual network and select the Host (public) and Container (private) subnets\n5. Click Review + create, then Create\n6. Migrate workloads to this workspace and delete the non-VNet workspace if no longer needed",
+      "Terraform": "```hcl\n# Azure Databricks workspace with VNet injection\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<region>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    virtual_network_id  = \"/subscriptions/<example_resource_id>/resourceGroups/<example_resource_name>/providers/Microsoft.Network/virtualNetworks/<example_resource_name>\" # CRITICAL: Enables VNet injection by using your VNet\n    public_subnet_name  = \"<example_resource_name>-public\"   # Required: host (public) subnet\n    private_subnet_name = \"<example_resource_name>-private\"  # Required: container (private) subnet\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Deploy Databricks workspaces into a customer-managed VNet to ensure better control over network security and compliance.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Databricks/check-for-vnet-injection.html"
+      "Text": "Deploy workspaces in a customer-managed VNet and apply **defense in depth**:\n- Enforce egress control with firewalls/NAT and UDRs\n- Prefer **private endpoints** to public access\n- Apply **least privilege** NSG rules and segregate subnets\n- Use DNS controls and monitoring to detect anomalies",
+      "Url": "https://hub.prowler.com/check/databricks_workspace_vnet_injection_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

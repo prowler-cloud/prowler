@@ -7,6 +7,8 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root]
+  auto_invoke: "Creating new skills"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

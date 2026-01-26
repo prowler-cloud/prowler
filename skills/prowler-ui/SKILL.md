@@ -2,11 +2,15 @@
 name: prowler-ui
 description: >
   Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-15, tailwind-4.
-  Trigger: When working on ui/ directory - components, pages, actions, hooks.
+  Trigger: When working inside ui/ on Prowler-specific conventions (shadcn vs HeroUI legacy, folder placement, actions/adapters, shared types/hooks/lib).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, ui]
+  auto_invoke:
+    - "Creating/modifying Prowler UI components"
+    - "Working on Prowler UI structure (actions/adapters/types/hooks)"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

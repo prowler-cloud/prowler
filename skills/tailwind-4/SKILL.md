@@ -2,11 +2,13 @@
 name: tailwind-4
 description: >
   Tailwind CSS 4 patterns and best practices.
-  Trigger: When styling with Tailwind - cn(), theme variables, no var() in className.
+  Trigger: When styling with Tailwind (className, variants, cn()), especially when dynamic styling or CSS variables are involved (no var() in className).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, ui]
+  auto_invoke: "Working with Tailwind classes"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

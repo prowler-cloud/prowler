@@ -2,11 +2,15 @@
 name: prowler-test-sdk
 description: >
   Testing patterns for Prowler SDK (Python).
-  Trigger: When writing tests for checks, services, or providers.
+  Trigger: When writing tests for the Prowler SDK (checks/services/providers), including provider-specific mocking rules (moto for AWS only).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root, sdk]
+  auto_invoke:
+    - "Writing Prowler SDK tests"
+    - "Mocking AWS with moto in tests"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
@@ -267,6 +271,8 @@ tests/providers/{provider}/services/{service}/
 └── {check_name}/
     └── {check_name}_test.py       # Check tests
 ```
+
+NOTE: Do not create a `__init__.py` file in the test folder.
 
 ---
 

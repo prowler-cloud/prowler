@@ -86,6 +86,7 @@ jobs:
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/AGENTS.md
 
       - name: Setup Python with Poetry
         if: steps.check-changes.outputs.any_changed == 'true'

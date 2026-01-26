@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic.v1 import BaseModel
@@ -22,6 +23,7 @@ class Compute(GCPService):
         self.load_balancers = []
         self.instance_groups = []
         self.images = []
+        self.snapshots = []
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -36,6 +38,7 @@ class Compute(GCPService):
         self.__threading_call__(self._get_zonal_instance_groups, self.zones)
         self._associate_migs_with_load_balancers()
         self._get_images()
+        self._get_snapshots()
 
     def _get_regions(self):
         for project_id in self.project_ids:
@@ -77,6 +80,7 @@ class Compute(GCPService):
         for project_id in self.project_ids:
             try:
                 enable_oslogin = False
+                enable_oslogin_2fa = False
                 response = (
                     self.client.projects()
                     .get(project=project_id)
@@ -85,8 +89,14 @@ class Compute(GCPService):
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
+                    if item["key"] == "enable-oslogin-2fa" and item["value"] == "TRUE":
+                        enable_oslogin_2fa = True
                 self.compute_projects.append(
-                    Project(id=project_id, enable_oslogin=enable_oslogin)
+                    Project(
+                        id=project_id,
+                        enable_oslogin=enable_oslogin,
+                        enable_oslogin_2fa=enable_oslogin_2fa,
+                    )
                 )
             except Exception as error:
                 logger.error(
@@ -188,6 +198,10 @@ class Compute(GCPService):
                                     "deletionProtection", False
                                 ),
                                 network_interfaces=network_interfaces,
+                                status=instance.get("status", "RUNNING"),
+                                on_host_maintenance=instance.get("scheduling", {}).get(
+                                    "onHostMaintenance", "MIGRATE"
+                                ),
                             )
                         )
 
@@ -602,6 +616,57 @@ class Compute(GCPService):
                     f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_snapshots(self) -> None:
+        for project_id in self.project_ids:
+            try:
+                request = self.client.snapshots().list(project=project_id)
+                while request is not None:
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    for snapshot in response.get("items", []):
+                        # Parse creation timestamp to datetime
+                        creation_timestamp_str = snapshot.get("creationTimestamp", "")
+                        creation_timestamp = None
+                        if creation_timestamp_str:
+                            try:
+                                # GCP timestamps are in RFC 3339 format
+                                creation_timestamp = datetime.fromisoformat(
+                                    creation_timestamp_str.replace("Z", "+00:00")
+                                )
+                            except ValueError:
+                                logger.error(
+                                    f"Could not parse timestamp {creation_timestamp_str} for snapshot {snapshot['name']}"
+                                )
+
+                        # Extract source disk name from the full URL
+                        source_disk_url = snapshot.get("sourceDisk", "")
+                        source_disk = (
+                            source_disk_url.split("/")[-1] if source_disk_url else ""
+                        )
+
+                        self.snapshots.append(
+                            Snapshot(
+                                name=snapshot["name"],
+                                id=snapshot["id"],
+                                project_id=project_id,
+                                creation_timestamp=creation_timestamp,
+                                source_disk=source_disk,
+                                source_disk_id=snapshot.get("sourceDiskId"),
+                                disk_size_gb=int(snapshot.get("diskSizeGb", 0)),
+                                storage_bytes=int(snapshot.get("storageBytes", 0)),
+                                storage_locations=snapshot.get("storageLocations", []),
+                                status=snapshot.get("status", ""),
+                                auto_created=snapshot.get("autoCreated", False),
+                            )
+                        )
+
+                    request = self.client.snapshots().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class NetworkInterface(BaseModel):
     name: str
@@ -636,6 +701,8 @@ class Instance(BaseModel):
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
     network_interfaces: list[NetworkInterface] = []
+    status: str = "RUNNING"
+    on_host_maintenance: str = "MIGRATE"
 
 
 class Network(BaseModel):
@@ -675,6 +742,7 @@ class Firewall(BaseModel):
 class Project(BaseModel):
     id: str
     enable_oslogin: bool
+    enable_oslogin_2fa: bool = False
 
 
 class LoadBalancer(BaseModel):
@@ -708,3 +776,17 @@ class Image(BaseModel):
     id: str
     project_id: str
     publicly_shared: bool = False
+
+
+class Snapshot(BaseModel):
+    name: str
+    id: str
+    project_id: str
+    creation_timestamp: Optional[datetime] = None
+    source_disk: str = ""
+    source_disk_id: Optional[str] = None
+    disk_size_gb: int = 0
+    storage_bytes: int = 0
+    storage_locations: list[str] = []
+    status: str = ""
+    auto_created: bool = False
