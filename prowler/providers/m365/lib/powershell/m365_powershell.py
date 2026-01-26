@@ -1,4 +1,6 @@
 import os
+import re
+from typing import override
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
@@ -45,6 +47,28 @@ class M365PowerShell(PowerShellSession):
         super().__init__()
         self.tenant_identity = identity
         self.init_credential(credentials)
+
+    @override
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process PowerShell errors with M365-specific handling.
+
+        Detects cmdlet not found errors which typically indicate missing licensing
+        (e.g., Microsoft Defender for Office 365) or insufficient permissions.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        if "is not recognized as a name of a cmdlet" in error_result:
+            cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
+            cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
+            logger.warning(
+                f"PowerShell cmdlet '{cmdlet_name}' is not available. "
+                f"This may indicate missing module, licensing (e.g., Microsoft Defender for Office 365) "
+                f"or insufficient permissions. Related checks will be skipped."
+            )
+        else:
+            super()._process_error(error_result)
 
     def clean_certificate_content(self, cert_content: str) -> str:
         """

@@ -193,20 +193,20 @@ class PowerShellSession:
             result = default
 
         if error_result:
-            # Check if this is a cmdlet not found error (typically licensing-related)
-            if "is not recognized as a name of a cmdlet" in error_result:
-                # Extract the cmdlet name from the error message
-                cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
-                cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
-                logger.warning(
-                    f"PowerShell cmdlet '{cmdlet_name}' is not available. "
-                    f"This may indicate missing licensing (e.g., Microsoft Defender for Office 365) "
-                    f"or insufficient permissions. Related checks will be skipped."
-                )
-            else:
-                logger.error(f"PowerShell error output: {error_result}")
+            self._process_error(error_result)
 
         return result
+
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process error output from the PowerShell command.
+
+        Subclasses can override this to provide custom error handling.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        logger.error(f"PowerShell error output: {error_result}")
 
     def json_parse_output(self, output: str) -> dict:
         """
