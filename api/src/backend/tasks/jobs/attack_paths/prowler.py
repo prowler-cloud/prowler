@@ -25,12 +25,18 @@ INDEX_STATEMENTS = [
 ]
 
 INSERT_STATEMENT_TEMPLATE = """
+    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
     UNWIND $findings_data AS finding_data
 
-    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
-    MATCH (account)-->(resource)
-        WHERE resource.__NODE_UID_FIELD__ = finding_data.resource_uid
-            OR resource.id = finding_data.resource_uid
+    OPTIONAL MATCH (account)-->(resource_by_uid)
+        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
+    WITH account, finding_data, resource_by_uid
+
+    OPTIONAL MATCH (account)-->(resource_by_id)
+        WHERE resource_by_uid IS NULL
+            AND resource_by_id.id = finding_data.resource_uid
+    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
+        WHERE resource IS NOT NULL
 
     MERGE (finding:ProwlerFinding {id: finding_data.id})
         ON CREATE SET

@@ -125,6 +125,17 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
             return 0  # As there are no nodes to delete, the result is empty
 
 
+def clear_cache(database: str) -> None:
+    query = "CALL db.clearQueryCaches()"
+
+    try:
+        with get_session(database) as session:
+            session.run(query)
+
+    except GraphDatabaseQueryException as exc:
+        logging.warning(f"Failed to clear query cache for database `{database}`: {exc}")
+
+
 # Neo4j functions related to Prowler + Cartography
 DATABASE_NAME_TEMPLATE = "db-{attack_paths_scan_id}"
 
