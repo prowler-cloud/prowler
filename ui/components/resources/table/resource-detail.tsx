@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
+import { Row, RowSelectionState } from "@tanstack/react-table";
 import { Check, Copy, ExternalLink, Link, Loader2, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
@@ -9,14 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import { getFindingById, getLatestFindings } from "@/actions/findings";
 import { getResourceById } from "@/actions/resources";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
-import { DataTableRowActions } from "@/components/findings/table";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
 import {
-  DeltaType,
-  NotificationIndicator,
-} from "@/components/findings/table/notification-indicator";
-import {
-  Checkbox,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -39,13 +33,12 @@ import {
   getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
+import { DataTable } from "@/components/ui/table";
+
 import {
-  DataTable,
-  DataTableColumnHeader,
-  Severity,
-  SeverityBadge,
-  StatusFindingBadge,
-} from "@/components/ui/table";
+  getResourceFindingsColumns,
+  ResourceFinding,
+} from "./resource-findings-columns";
 import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import {
@@ -54,22 +47,6 @@ import {
   ProviderType,
   ResourceProps,
 } from "@/types";
-
-interface ResourceFinding {
-  type: "findings";
-  id: string;
-  attributes: {
-    status: "PASS" | "FAIL" | "MANUAL";
-    severity: Severity;
-    muted?: boolean;
-    muted_reason?: string;
-    delta?: DeltaType;
-    updated_at?: string;
-    check_metadata?: {
-      checktitle?: string;
-    };
-  };
-}
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -121,123 +98,6 @@ const buildCustomBreadcrumbs = (
   return breadcrumbs;
 };
 
-// Column definitions for findings table
-const getResourceFindingsColumns = (
-  rowSelection: RowSelectionState,
-  selectableRowCount: number,
-  onNavigate: (id: string) => void,
-  onMuteComplete?: (findingIds: string[]) => void,
-): ColumnDef<ResourceFinding>[] => {
-  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
-  const isAllSelected =
-    selectedCount > 0 && selectedCount === selectableRowCount;
-  const isSomeSelected =
-    selectedCount > 0 && selectedCount < selectableRowCount;
-
-  return [
-    {
-      id: "notification",
-      header: () => null,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center pr-4">
-          <NotificationIndicator
-            delta={row.original.attributes.delta}
-            isMuted={row.original.attributes.muted}
-            mutedReason={row.original.attributes.muted_reason}
-          />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      id: "select",
-      header: ({ table }) => (
-        <div className="ml-1 flex w-6 items-center justify-center pr-4">
-          <Checkbox
-            checked={
-              isAllSelected ? true : isSomeSelected ? "indeterminate" : false
-            }
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(checked === true)
-            }
-            aria-label="Select all"
-            disabled={selectableRowCount === 0}
-          />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="ml-1 flex w-6 items-center justify-center pr-4">
-          <Checkbox
-            checked={!!rowSelection[row.id]}
-            disabled={row.original.attributes.muted}
-            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-            aria-label="Select row"
-          />
-        </div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => (
-        <StatusFindingBadge status={row.original.attributes.status || "-"} />
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "finding",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Finding" />
-      ),
-      cell: ({ row }) => (
-        <button
-          onClick={() => onNavigate(row.original.id)}
-          className="text-text-neutral-primary hover:text-button-tertiary max-w-[300px] cursor-pointer truncate text-left text-sm hover:underline"
-        >
-          {row.original.attributes.check_metadata?.checktitle ||
-            "Unknown check"}
-        </button>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "severity",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Severity" />
-      ),
-      cell: ({ row }) => (
-        <SeverityBadge severity={row.original.attributes.severity || "-"} />
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "updated_at",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Time" />
-      ),
-      cell: ({ row }) => (
-        <DateWithTime dateTime={row.original.attributes.updated_at || "-"} />
-      ),
-      enableSorting: false,
-    },
-    {
-      id: "actions",
-      header: () => <div className="w-10" />,
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row as unknown as Row<FindingProps>}
-          onMuteComplete={onMuteComplete}
-        />
-      ),
-      enableSorting: false,
-    },
-  ];
-};
-
 interface ResourceDetailProps {
   resourceDetails: ResourceProps;
   trigger?: ReactNode;
@@ -281,6 +141,13 @@ export const ResourceDetail = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      findingFetchRef.current?.abort();
+    };
+  }, []);
+
   // Determine if drawer is actually open:
   // - If controlled (open prop provided), use that
   // - If uncontrolled (using trigger), use internal state
@@ -294,6 +161,7 @@ export const ResourceDetail = ({
 
     // Reset all drawer state when closing
     if (!newOpen) {
+      findingFetchRef.current?.abort();
       setActiveTab("overview");
       setSelectedFindingId(null);
       setFindingDetails(null);
