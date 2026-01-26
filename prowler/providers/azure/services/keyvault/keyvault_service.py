@@ -138,6 +138,7 @@ class KeyVault(AzureService):
             return None
 
     def _get_keys(self, subscription, resource_group, keyvault_name):
+        logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         keys_dict = {}
 
@@ -214,6 +215,7 @@ class KeyVault(AzureService):
             return (prop.name, None)
 
     def _get_secrets(self, subscription, resource_group, keyvault_name):
+        logger.info(f"KeyVault - Getting secrets for {keyvault_name}...")
         secrets = []
         try:
             client = self.clients[subscription]
@@ -249,6 +251,9 @@ class KeyVault(AzureService):
         return secrets
 
     def _get_vault_monitor_settings(self, keyvault_name, resource_group, subscription):
+        logger.info(
+            f"KeyVault - Getting monitor diagnostics settings for {keyvault_name}..."
+        )
         monitor_diagnostics_settings = []
         try:
             monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
