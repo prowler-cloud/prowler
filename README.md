@@ -111,7 +111,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | GitHub | 20 | 2 | 1 | 2 | Official | UI, API, CLI |
 | M365 | 71 | 7 | 4 | 3 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 1 | 12 | Official | UI, API, CLI |
-| Alibaba Cloud | 64 | 9 | 2 | 9 | Official | CLI |
+| Alibaba Cloud | 64 | 9 | 2 | 9 | Official | UI, API, CLI |
 | Cloudflare | 23 | 2 | 0 | 5 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
 | MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
