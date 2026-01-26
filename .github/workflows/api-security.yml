@@ -61,7 +61,8 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check
+        run: poetry run safety check --ignore 79023,79027
+        # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

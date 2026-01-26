@@ -48,6 +48,89 @@ export const getProviders = async ({
   }
 };
 
+/**
+ * Fetches all providers by iterating through all pages.
+ * This is useful when you need the complete list of providers without pagination limits,
+ * such as for dropdown menus or selection lists.
+ */
+export const getAllProviders = async ({
+  query = "",
+  sort = "",
+  filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, unknown>;
+} = {}): Promise<ProvidersApiResponse | undefined> => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const pageSize = 100; // Use larger page size to minimize API calls
+  const maxPages = 50; // Safety limit: 50 pages × 100 = 5000 providers max
+  let currentPage = 1;
+  const allProviders: ProvidersApiResponse["data"] = [];
+  let lastResponse: ProvidersApiResponse | undefined;
+  let hasMorePages = true;
+
+  try {
+    while (hasMorePages && currentPage <= maxPages) {
+      const url = new URL(`${apiBaseUrl}/providers?include=provider_groups`);
+      url.searchParams.append("page[number]", currentPage.toString());
+      url.searchParams.append("page[size]", pageSize.toString());
+
+      if (query) url.searchParams.append("filter[search]", query);
+      if (sort) url.searchParams.append("sort", sort);
+
+      Object.entries(filters).forEach(([key, value]) => {
+        if (key !== "filter[search]") {
+          url.searchParams.append(key, String(value));
+        }
+      });
+
+      const response = await fetch(url.toString(), { headers });
+      const data = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      if (!data?.data || data.data.length === 0) {
+        hasMorePages = false;
+        continue;
+      }
+
+      allProviders.push(...data.data);
+      lastResponse = data;
+
+      // Check if we've fetched all pages
+      const totalPages = data.meta?.pagination?.pages || 1;
+      if (currentPage >= totalPages) {
+        hasMorePages = false;
+      } else {
+        currentPage++;
+      }
+    }
+
+    // Return combined response with all providers
+    if (lastResponse) {
+      return {
+        ...lastResponse,
+        data: allProviders,
+        meta: {
+          ...lastResponse.meta,
+          pagination: {
+            ...lastResponse.meta?.pagination,
+            page: 1,
+            pages: 1,
+            count: allProviders.length,
+          },
+        },
+      };
+    }
+
+    return undefined;
+  } catch (error) {
+    console.error("Error fetching all providers:", error);
+    return undefined;
+  }
+};
+
 export const getProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get("id");

@@ -9,7 +9,20 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 
 class Exchange(M365Service):
+    """
+    Exchange Online service for Microsoft 365.
+
+    This service provides access to Exchange Online resources and configurations
+    including organization settings, mailboxes, transport rules, and policies.
+    """
+
     def __init__(self, provider: M365Provider):
+        """
+        Initialize the Exchange service.
+
+        Args:
+            provider: The M365Provider instance for authentication and configuration.
+        """
         super().__init__(provider)
         self.organization_config = None
         self.mailboxes_config = []
@@ -19,6 +32,7 @@ class Exchange(M365Service):
         self.mailbox_policies = []
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
+        self.shared_mailboxes = []
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -30,6 +44,7 @@ class Exchange(M365Service):
                 self.mailbox_policies = self._get_mailbox_policy()
                 self.role_assignment_policies = self._get_role_assignment_policies()
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
+                self.shared_mailboxes = self._get_shared_mailboxes()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -211,6 +226,12 @@ class Exchange(M365Service):
         return role_assignment_policies
 
     def _get_mailbox_audit_properties(self):
+        """
+        Get mailbox audit properties for all mailboxes.
+
+        Returns:
+            list[MailboxAuditProperties]: List of mailbox audit property configurations.
+        """
         logger.info("Microsoft365 - Getting mailbox audit properties...")
         mailbox_audit_properties = []
         try:
@@ -247,6 +268,44 @@ class Exchange(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return mailbox_audit_properties
+
+    def _get_shared_mailboxes(self):
+        """
+        Get all shared mailboxes from Exchange Online.
+
+        Retrieves shared mailboxes with their external directory object IDs
+        for cross-referencing with Entra ID user accounts.
+
+        Returns:
+            list[SharedMailbox]: List of shared mailbox configurations.
+        """
+        logger.info("Microsoft365 - Getting shared mailboxes...")
+        shared_mailboxes = []
+        try:
+            shared_mailboxes_data = self.powershell.get_shared_mailboxes()
+            if not shared_mailboxes_data:
+                return shared_mailboxes
+            if isinstance(shared_mailboxes_data, dict):
+                shared_mailboxes_data = [shared_mailboxes_data]
+            for shared_mailbox in shared_mailboxes_data:
+                if shared_mailbox:
+                    shared_mailboxes.append(
+                        SharedMailbox(
+                            name=shared_mailbox.get("DisplayName", ""),
+                            user_principal_name=shared_mailbox.get(
+                                "UserPrincipalName", ""
+                            ),
+                            external_directory_object_id=shared_mailbox.get(
+                                "ExternalDirectoryObjectId", ""
+                            ),
+                            identity=shared_mailbox.get("Identity", ""),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return shared_mailboxes
 
 
 class Organization(BaseModel):
@@ -342,6 +401,8 @@ class AuditDelegate(Enum):
 
 
 class AuditOwner(Enum):
+    """Audit actions for mailbox owner operations."""
+
     APPLY_RECORD = "ApplyRecord"
     CREATE = "Create"
     HARD_DELETE = "HardDelete"
@@ -353,3 +414,20 @@ class AuditOwner(Enum):
     UPDATE_CALENDAR_DELEGATION = "UpdateCalendarDelegation"
     UPDATE_FOLDER_PERMISSIONS = "UpdateFolderPermissions"
     UPDATE_INBOX_RULES = "UpdateInboxRules"
+
+
+class SharedMailbox(BaseModel):
+    """
+    Model for Exchange Online shared mailbox.
+
+    Attributes:
+        name: Display name of the shared mailbox.
+        user_principal_name: User principal name (email) of the shared mailbox.
+        external_directory_object_id: The Entra ID object ID for cross-referencing.
+        identity: Identity of the shared mailbox in Exchange.
+    """
+
+    name: str
+    user_principal_name: str
+    external_directory_object_id: str
+    identity: str

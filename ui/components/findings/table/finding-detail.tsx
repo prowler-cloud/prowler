@@ -1,6 +1,5 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
 import { ExternalLink, Link, X } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
@@ -33,6 +32,7 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
+import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
@@ -196,16 +196,16 @@ export const FindingDetail = ({
 
           {attributes.status === "FAIL" && (
             <InfoField label="Risk" variant="simple">
-              <Snippet
-                className="max-w-full py-2"
-                color="danger"
-                hideCopyButton
-                hideSymbol
+              <div
+                className={cn(
+                  "max-w-full rounded-md border p-2",
+                  "border-border-error-primary bg-bg-fail-secondary",
+                )}
               >
                 <MarkdownContainer>
                   {attributes.check_metadata.risk}
                 </MarkdownContainer>
-              </Snippet>
+              </div>
             </InfoField>
           )}
 
@@ -255,11 +255,13 @@ export const FindingDetail = ({
               {/* CLI Command section */}
               {attributes.check_metadata.remediation.code.cli && (
                 <InfoField label="CLI Command" variant="simple">
-                  <Snippet>
+                  <div
+                    className={cn("rounded-md p-2", "bg-bg-neutral-tertiary")}
+                  >
                     <span className="text-xs whitespace-pre-line">
                       {attributes.check_metadata.remediation.code.cli}
                     </span>
-                  </Snippet>
+                  </div>
                 </InfoField>
               )}
 

@@ -3,6 +3,7 @@ import glob
 import json
 import logging
 import os
+
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -10,6 +11,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -41,8 +43,9 @@ from django.db.models import (
     Sum,
     Value,
     When,
+    Window,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -72,23 +75,13 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    refresh_lighthouse_provider_models_task,
-)
 
+from api.attack_paths import (
+    database as graph_database,
+    get_queries_for_provider,
+    get_query_by_id,
+    views_helpers as attack_paths_views_helpers,
+)
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -98,6 +91,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
@@ -131,6 +125,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackPathsScan,
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
@@ -183,6 +178,10 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsQueryResultSerializer,
+    AttackPathsQueryRunRequestSerializer,
+    AttackPathsQuerySerializer,
+    AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
@@ -264,6 +263,23 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -366,7 +382,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.18.0"
+        spectacular_settings.VERSION = "1.19.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -407,6 +423,10 @@ class SchemaView(SpectacularAPIView):
             {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Attack Paths",
+                "description": "Endpoints for Attack Paths scan status and executing Attack Paths queries.",
             },
             {
                 "name": "Schedule",
@@ -2158,6 +2178,12 @@ class ScanViewSet(BaseRLSViewSet):
                 },
             )
 
+        attack_paths_db_utils.create_attack_paths_scan(
+            tenant_id=self.request.tenant_id,
+            scan_id=str(scan.id),
+            provider_id=str(scan.provider_id),
+        )
+
         prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id
         scan.save(update_fields=["task_id"])
@@ -2236,6 +2262,188 @@ class TaskViewSet(BaseRLSViewSet):
                 "Content-Location": reverse("task-detail", kwargs={"pk": task.id})
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Attack Paths"],
+        summary="List Attack Paths scans",
+        description="Retrieve Attack Paths scans for the tenant with support for filtering, ordering, and pagination.",
+    ),
+    retrieve=extend_schema(
+        tags=["Attack Paths"],
+        summary="Retrieve Attack Paths scan details",
+        description="Fetch full details for a specific Attack Paths scan.",
+    ),
+    attack_paths_queries=extend_schema(
+        tags=["Attack Paths"],
+        summary="List attack paths queries",
+        description="Retrieve the catalog of Attack Paths queries available for this Attack Paths scan.",
+        responses={
+            200: OpenApiResponse(AttackPathsQuerySerializer(many=True)),
+            404: OpenApiResponse(
+                description="No queries found for the selected provider"
+            ),
+        },
+    ),
+    run_attack_paths_query=extend_schema(
+        tags=["Attack Paths"],
+        summary="Execute an Attack Paths query",
+        description="Execute the selected Attack Paths query against the Attack Paths graph and return the resulting subgraph.",
+        request=AttackPathsQueryRunRequestSerializer,
+        responses={
+            200: OpenApiResponse(AttackPathsQueryResultSerializer),
+            400: OpenApiResponse(
+                description="Bad request (e.g., Unknown Attack Paths query for the selected provider)"
+            ),
+            404: OpenApiResponse(
+                description="No attack paths found for the given query and parameters"
+            ),
+            500: OpenApiResponse(
+                description="Attack Paths query execution failed due to a database error"
+            ),
+        },
+    ),
+)
+class AttackPathsScanViewSet(BaseRLSViewSet):
+    queryset = AttackPathsScan.objects.all()
+    serializer_class = AttackPathsScanSerializer
+    http_method_names = ["get", "post"]
+    filterset_class = AttackPathsScanFilter
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "inserted_at",
+        "started_at",
+    ]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_SCANS]
+
+    def set_required_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            self.required_permissions = []
+
+        else:
+            self.required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_serializer_class(self):
+        if self.action == "run_attack_paths_query":
+            return AttackPathsQueryRunRequestSerializer
+
+        return super().get_serializer_class()
+
+    def get_queryset(self):
+        user_roles = get_role(self.request.user)
+        base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
+
+        if user_roles.unlimited_visibility:
+            queryset = base_queryset
+
+        else:
+            queryset = base_queryset.filter(provider__in=get_providers(user_roles))
+
+        return queryset.select_related("provider", "scan", "task")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        latest_per_provider = queryset.annotate(
+            latest_scan_rank=Window(
+                expression=RowNumber(),
+                partition_by=[F("provider_id")],
+                order_by=[F("inserted_at").desc()],
+            )
+        ).filter(latest_scan_rank=1)
+
+        page = self.paginate_queryset(latest_per_provider)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(latest_per_provider, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DELETE")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="queries",
+        url_name="queries",
+    )
+    def attack_paths_queries(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+
+        if not queries:
+            return Response(
+                {"detail": "No queries found for the selected provider"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = AttackPathsQuerySerializer(queries, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="queries/run",
+        url_name="queries-run",
+    )
+    def run_attack_paths_query(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if attack_paths_scan.state != StateChoices.COMPLETED:
+            raise ValidationError(
+                {
+                    "detail": "The Attack Paths scan must be completed before running Attack Paths queries"
+                }
+            )
+
+        if not attack_paths_scan.graph_database:
+            logger.error(
+                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
+            )
+            return Response(
+                {"detail": "The Attack Paths scan does not reference a graph database"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        payload = attack_paths_views_helpers.normalize_run_payload(request.data)
+        serializer = AttackPathsQueryRunRequestSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        query_definition = get_query_by_id(serializer.validated_data["id"])
+        if (
+            query_definition is None
+            or query_definition.provider != attack_paths_scan.provider.provider
+        ):
+            raise ValidationError(
+                {"id": "Unknown Attack Paths query for the selected provider"}
+            )
+
+        parameters = attack_paths_views_helpers.prepare_query_parameters(
+            query_definition,
+            serializer.validated_data.get("parameters", {}),
+            attack_paths_scan.provider.uid,
+        )
+
+        graph = attack_paths_views_helpers.execute_attack_paths_query(
+            attack_paths_scan, query_definition, parameters
+        )
+        graph_database.clear_cache(attack_paths_scan.graph_database)
+
+        status_code = status.HTTP_200_OK
+        if not graph.get("nodes"):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        response_serializer = AttackPathsQueryResultSerializer(graph)
+        return Response(response_serializer.data, status=status_code)
 
 
 @extend_schema_view(
@@ -3993,7 +4201,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # If we couldn't determine from database, try each provider type
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
-                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
+                if compliance_id in get_compliance_frameworks(pt):
                     provider_type = pt
                     break
 
@@ -5912,7 +6120,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 
     @extend_schema(exclude=True)
     def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="DESTROY")
+        raise MethodNotAllowed(method="DELETE")
 
     @action(detail=True, methods=["delete"])
     def revoke(self, request, *args, **kwargs):

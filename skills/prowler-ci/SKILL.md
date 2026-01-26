@@ -44,7 +44,31 @@ Use this skill whenever you are:
 3. If it's a title check: verify PR title matches Conventional Commits.
 4. If it's changelog: verify the right `CHANGELOG.md` is updated OR apply `no-changelog` label.
 5. If it's conflict checker: remove `<<<<<<<`, `=======`, `>>>>>>>` markers.
-6. If it's secrets: remove credentials and rotate anything leaked.
+6. If it's secrets (TruffleHog): see section below.
+
+## TruffleHog Secret Scanning
+
+TruffleHog scans for leaked secrets. Common false positives in test files:
+
+**Patterns that trigger TruffleHog:**
+- `sk-*T3BlbkFJ*` - OpenAI API keys
+- `AKIA[A-Z0-9]{16}` - AWS Access Keys
+- `ghp_*` / `gho_*` - GitHub tokens
+- Base64-encoded strings that look like credentials
+
+**Fix for test files:**
+```python
+# BAD - looks like real OpenAI key
+api_key = "sk-test1234567890T3BlbkFJtest1234567890"
+
+# GOOD - obviously fake
+api_key = "sk-fake-test-key-for-unit-testing-only"
+```
+
+**If TruffleHog flags a real secret:**
+1. Remove the secret from the code immediately
+2. Rotate the credential (it's now in git history)
+3. Consider using `.trufflehog-ignore` for known false positives (rarely needed)
 
 ## Notes
 

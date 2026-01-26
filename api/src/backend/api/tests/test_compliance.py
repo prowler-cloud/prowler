@@ -6,7 +6,6 @@ from api.compliance import (
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
     load_prowler_checks,
-    load_prowler_compliance,
 )
 from api.models import Provider
 
@@ -34,55 +33,6 @@ class TestCompliance:
         compliance_data = get_prowler_provider_compliance(provider_type)
         assert compliance_data == mock_compliance.get_bulk.return_value
         mock_compliance.get_bulk.assert_called_once_with(provider_type)
-
-    @patch("api.models.Provider.ProviderChoices")
-    @patch("api.compliance.get_prowler_provider_compliance")
-    @patch("api.compliance.generate_compliance_overview_template")
-    @patch("api.compliance.load_prowler_checks")
-    def test_load_prowler_compliance(
-        self,
-        mock_load_prowler_checks,
-        mock_generate_compliance_overview_template,
-        mock_get_prowler_provider_compliance,
-        mock_provider_choices,
-    ):
-        mock_provider_choices.values = ["aws", "azure"]
-
-        compliance_data_aws = {"compliance_aws": MagicMock()}
-        compliance_data_azure = {"compliance_azure": MagicMock()}
-
-        compliance_data_dict = {
-            "aws": compliance_data_aws,
-            "azure": compliance_data_azure,
-        }
-
-        def mock_get_compliance(provider_type):
-            return compliance_data_dict[provider_type]
-
-        mock_get_prowler_provider_compliance.side_effect = mock_get_compliance
-
-        mock_generate_compliance_overview_template.return_value = {
-            "template_key": "template_value"
-        }
-
-        mock_load_prowler_checks.return_value = {"checks_key": "checks_value"}
-
-        load_prowler_compliance()
-
-        from api.compliance import PROWLER_CHECKS, PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
-
-        assert PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE == {
-            "template_key": "template_value"
-        }
-        assert PROWLER_CHECKS == {"checks_key": "checks_value"}
-
-        expected_prowler_compliance = compliance_data_dict
-        mock_get_prowler_provider_compliance.assert_any_call("aws")
-        mock_get_prowler_provider_compliance.assert_any_call("azure")
-        mock_generate_compliance_overview_template.assert_called_once_with(
-            expected_prowler_compliance
-        )
-        mock_load_prowler_checks.assert_called_once_with(expected_prowler_compliance)
 
     @patch("api.compliance.get_prowler_provider_checks")
     @patch("api.models.Provider.ProviderChoices")

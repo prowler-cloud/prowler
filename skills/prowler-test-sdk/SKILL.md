@@ -272,6 +272,8 @@ tests/providers/{provider}/services/{service}/
     └── {check_name}_test.py       # Check tests
 ```
 
+NOTE: Do not create a `__init__.py` file in the test folder.
+
 ---
 
 ## Required Test Scenarios

@@ -4,10 +4,8 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-import {
-  DataTableRowActions,
-  FindingDetail,
-} from "@/components/findings/table";
+import { FindingDetail } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
 import { DateWithTime, SnippetChip } from "@/components/ui/entities";
 import {
@@ -57,23 +55,10 @@ const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   const isOpen = findingId === row.original.id;
   const { checktitle } = row.original.attributes.check_metadata;
 
-  const handleOpenChange = (open: boolean) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (open) {
-      params.set("id", row.original.id);
-    } else {
-      params.delete("id");
-    }
-
-    window.history.pushState({}, "", `?${params.toString()}`);
-  };
-
   return (
     <FindingDetail
       findingDetails={row.original}
       defaultOpen={isOpen}
-      onOpenChange={handleOpenChange}
       trigger={
         <div className="max-w-[500px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
