@@ -6,7 +6,7 @@ Images should use absolute URLs.
 # Prowler App Helm Chart
 
 ![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square)
-![AppVersion: 5.16.1](https://img.shields.io/badge/AppVersion-5.16.1-informational?style=flat-square)
+![AppVersion: 5.17.0](https://img.shields.io/badge/AppVersion-5.17.0-informational?style=flat-square)
 
 Prowler is an Open Cloud Security tool for AWS, Azure, GCP and Kubernetes. It helps for continuous monitoring, security assessments and audits, incident response, compliance, hardening and forensics readiness. Includes CIS, NIST 800, NIST CSF, CISA, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, Well-Architected Security, ENS and more.
 
@@ -23,6 +23,7 @@ The app leverages the following supporting infrastructure:
 - **PostgreSQL**: Used for persistent storage of scan results.
 - **Celery Workers**: Facilitate asynchronous execution of Prowler scans.
 - **Valkey**: An in-memory database serving as a message broker for the Celery workers.
+- **Neo4j**: Graph Database
 - **Keda**: Kubernetes Event-driven Autoscaling (Keda) automatically scales the number of Celery worker pods based on the workload, ensuring efficient resource utilization and responsiveness.
 
 ## Setup
@@ -126,9 +127,9 @@ helm install prowler prowler/prowler-app -f values.yaml
 
 ### Using Existing PostgreSQL and Valkey Instances
 
-By default, this Chart uses Bitnami's Charts to deploy [PostgreSQL](https://artifacthub.io/packages/helm/bitnami/postgresql) and [Valkey official helm chart](https://valkey.io/valkey-helm/). **Note:** This default setup is not production-ready.
+By default, this Chart uses Bitnami's Charts to deploy [PostgreSQL](https://artifacthub.io/packages/helm/bitnami/postgresql), [Neo4j](https://helm.neo4j.com/neo4j) and [Valkey official helm chart](https://valkey.io/valkey-helm/). **Note:** This default setup is not production-ready.
 
-To connect to existing PostgreSQL and Valkey instances:
+To connect to existing PostgreSQL, Neo4j and Valkey instances:
 
 1. Create a `Secret` containing the correct database and message broker credentials
 2. Reference the secret in the [values.yaml](values.yaml) file api->secrets list
