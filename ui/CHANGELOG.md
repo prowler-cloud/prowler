@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.17.1] (Prowler v5.17.1)
+
+### 🐞 Fixed
+
+- Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
+
+---
+
 ## [1.17.0] (Prowler v5.17.0)
 
 ### 🚀 Added
