@@ -4,6 +4,7 @@
 > - [`prowler-api`](../skills/prowler-api/SKILL.md) - Models, Serializers, Views, RLS patterns
 > - [`prowler-test-api`](../skills/prowler-test-api/SKILL.md) - Testing patterns (pytest-django)
 > - [`django-drf`](../skills/django-drf/SKILL.md) - Generic DRF patterns
+> - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
 
 ### Auto-invoke Skills
@@ -13,10 +14,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding DRF pagination or permissions | `django-drf` |
+| Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
+| Creating API endpoints | `jsonapi` |
+| Creating ViewSets, serializers, or filters in api/ | `django-drf` |
+| Creating a git commit | `prowler-commit` |
 | Creating/modifying models, views, serializers | `prowler-api` |
-| Generic DRF patterns | `django-drf` |
+| Implementing JSON:API endpoints | `django-drf` |
+| Modifying API responses | `jsonapi` |
 | Review changelog format and conventions | `prowler-changelog` |
+| Reviewing JSON:API compliance | `jsonapi` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Writing Prowler API tests | `prowler-test-api` |

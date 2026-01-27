@@ -1,0 +1,41 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_project_os_login_2fa_enabled",
+  "CheckTitle": "GCP project has OS Login with 2FA enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "compute.googleapis.com/Project",
+  "ResourceGroup": "governance",
+  "Description": "OS Login **Two-Factor Authentication (2FA)** requires users to verify their identity with a second factor when connecting via SSH to VM instances.\n\nThis provides an additional security layer beyond passwords or SSH keys, significantly reducing the risk of unauthorized access even if credentials are compromised.",
+  "Risk": "Without 2FA enforcement, compromised credentials (stolen SSH keys or passwords) grant immediate access to VM instances. Attackers could:\n\n- Gain unauthorized shell access to production systems\n- Exfiltrate sensitive data or deploy malware\n- Move laterally within the infrastructure\n\nThis single point of failure significantly increases the attack surface.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/oslogin/set-up-oslogin",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login-with-2fa-authentication.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute project-info add-metadata --metadata enable-oslogin=TRUE,enable-oslogin-2fa=TRUE",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute Engine** > **Metadata** in Google Cloud Console\n2. Click **Edit**\n3. Add or update metadata entry with key `enable-oslogin-2fa` and value `TRUE`\n4. Ensure `enable-oslogin` is also set to `TRUE`\n5. Click **Save**",
+      "Terraform": "```hcl\nresource \"google_compute_project_metadata\" \"example_resource\" {\n  metadata = {\n    enable-oslogin     = \"TRUE\"\n    enable-oslogin-2fa = \"TRUE\"  # Enables 2FA for OS Login\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable OS Login with 2FA at the project level to enforce multi-factor authentication for all SSH connections. This adds a critical security layer by requiring users to complete a second verification step, protecting against credential theft and unauthorized access.",
+      "Url": "https://hub.prowler.com/check/compute_project_os_login_2fa_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [
+    "compute_project_os_login_enabled"
+  ],
+  "RelatedTo": [
+    "compute_project_os_login_enabled"
+  ],
+  "Notes": "OS Login 2FA requires OS Login to be enabled first. Users must have 2-Step Verification configured in their Google account. For organizations, 2FA can be enforced via Google Workspace or Cloud Identity policies."
+}

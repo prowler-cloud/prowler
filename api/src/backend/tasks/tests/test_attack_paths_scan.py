@@ -3,6 +3,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
+from tasks.jobs.attack_paths import prowler as prowler_module
+from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
     AttackPathsScan,
@@ -15,8 +17,6 @@ from api.models import (
     StatusChoices,
 )
 from prowler.lib.check.models import Severity
-from tasks.jobs.attack_paths import prowler as prowler_module
-from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 
 @pytest.mark.django_db
@@ -68,6 +68,7 @@ class TestAttackPathsRun:
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ) as mock_get_session,
+            patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache"),
             patch(
                 "tasks.jobs.attack_paths.scan.cartography_create_indexes.run"
             ) as mock_cartography_indexes,
@@ -276,15 +277,15 @@ class TestAttackPathsProwlerHelpers:
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
-        findings = [
-            {"id": "1", "resource_uid": "r-1"},
-            {"id": "2", "resource_uid": "r-2"},
-        ]
+        # Create a generator that yields two batches
+        def findings_generator():
+            yield [{"id": "1", "resource_uid": "r-1"}]
+            yield [{"id": "2", "resource_uid": "r-2"}]
+
         config = SimpleNamespace(update_tag=12345)
         mock_session = MagicMock()
 
         with (
-            patch.object(prowler_module, "BATCH_SIZE", 1),
             patch(
                 "tasks.jobs.attack_paths.prowler.get_root_node_label",
                 return_value="AWSAccount",
@@ -294,7 +295,9 @@ class TestAttackPathsProwlerHelpers:
                 return_value="arn",
             ),
         ):
-            prowler_module.load_findings(mock_session, findings, provider, config)
+            prowler_module.load_findings(
+                mock_session, findings_generator(), provider, config
+            )
 
         assert mock_session.run.call_count == 2
         for call_args in mock_session.run.call_args_list:
@@ -402,11 +405,18 @@ class TestAttackPathsProwlerHelpers:
         with patch(
             "tasks.jobs.attack_paths.prowler.rls_transaction",
             new=lambda *args, **kwargs: nullcontext(),
+        ), patch(
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
+            "default",
         ):
-            findings_data = prowler_module.get_provider_last_scan_findings(
+            # Generator yields batches, collect all findings from all batches
+            findings_batches = prowler_module.get_provider_last_scan_findings(
                 provider,
                 str(latest_scan.id),
             )
+            findings_data = []
+            for batch in findings_batches:
+                findings_data.extend(batch)
 
         assert len(findings_data) == 1
         finding_dict = findings_data[0]
@@ -414,3 +424,285 @@ class TestAttackPathsProwlerHelpers:
         assert finding_dict["resource_uid"] == resource.uid
         assert finding_dict["check_title"] == "Check title"
         assert finding_dict["scan_id"] == str(latest_scan.id)
+
+    def test_enrich_and_flatten_batch_single_resource(
+        self,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        """One finding + one resource = one output dict"""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid="resource-uid-1",
+            name="Resource 1",
+            region="us-east-1",
+            service="ec2",
+            type="instance",
+        )
+
+        scan = Scan.objects.create(
+            name="Test Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="finding-uid",
+            scan=scan,
+            delta=Finding.DeltaChoices.NEW,
+            status=StatusChoices.FAIL,
+            status_extended="failed",
+            severity=Severity.high,
+            impact=Severity.high,
+            impact_extended="",
+            raw_result={},
+            check_id="check-1",
+            check_metadata={"checktitle": "Check title"},
+            first_seen_at=scan.inserted_at,
+        )
+        ResourceFindingMapping.objects.create(
+            tenant_id=tenant.id,
+            resource=resource,
+            finding=finding,
+        )
+
+        # Simulate the dict returned by .values()
+        finding_dict = {
+            "id": finding.id,
+            "uid": finding.uid,
+            "inserted_at": finding.inserted_at,
+            "updated_at": finding.updated_at,
+            "first_seen_at": finding.first_seen_at,
+            "scan_id": scan.id,
+            "delta": finding.delta,
+            "status": finding.status,
+            "status_extended": finding.status_extended,
+            "severity": finding.severity,
+            "check_id": finding.check_id,
+            "check_metadata__checktitle": finding.check_metadata["checktitle"],
+            "muted": finding.muted,
+            "muted_reason": finding.muted_reason,
+        }
+
+        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # No RLS mock needed - test DB doesn't enforce RLS policies
+        with patch(
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
+            "default",
+        ):
+            result = prowler_module._enrich_and_flatten_batch([finding_dict])
+
+        assert len(result) == 1
+        assert result[0]["resource_uid"] == resource.uid
+        assert result[0]["id"] == str(finding.id)
+        assert result[0]["status"] == "FAIL"
+
+    def test_enrich_and_flatten_batch_multiple_resources(
+        self,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        """One finding + three resources = three output dicts"""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        resources = []
+        for i in range(3):
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=provider,
+                uid=f"resource-uid-{i}",
+                name=f"Resource {i}",
+                region="us-east-1",
+                service="ec2",
+                type="instance",
+            )
+            resources.append(resource)
+
+        scan = Scan.objects.create(
+            name="Test Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="finding-uid",
+            scan=scan,
+            delta=Finding.DeltaChoices.NEW,
+            status=StatusChoices.FAIL,
+            status_extended="failed",
+            severity=Severity.high,
+            impact=Severity.high,
+            impact_extended="",
+            raw_result={},
+            check_id="check-1",
+            check_metadata={"checktitle": "Check title"},
+            first_seen_at=scan.inserted_at,
+        )
+
+        # Map finding to all 3 resources
+        for resource in resources:
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id,
+                resource=resource,
+                finding=finding,
+            )
+
+        finding_dict = {
+            "id": finding.id,
+            "uid": finding.uid,
+            "inserted_at": finding.inserted_at,
+            "updated_at": finding.updated_at,
+            "first_seen_at": finding.first_seen_at,
+            "scan_id": scan.id,
+            "delta": finding.delta,
+            "status": finding.status,
+            "status_extended": finding.status_extended,
+            "severity": finding.severity,
+            "check_id": finding.check_id,
+            "check_metadata__checktitle": finding.check_metadata["checktitle"],
+            "muted": finding.muted,
+            "muted_reason": finding.muted_reason,
+        }
+
+        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # No RLS mock needed - test DB doesn't enforce RLS policies
+        with patch(
+            "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
+            "default",
+        ):
+            result = prowler_module._enrich_and_flatten_batch([finding_dict])
+
+        assert len(result) == 3
+        result_resource_uids = {r["resource_uid"] for r in result}
+        assert result_resource_uids == {r.uid for r in resources}
+
+        # All should have same finding data
+        for r in result:
+            assert r["id"] == str(finding.id)
+            assert r["status"] == "FAIL"
+
+    def test_enrich_and_flatten_batch_no_resources_skips(
+        self,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        """Finding without resources should be skipped"""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        scan = Scan.objects.create(
+            name="Test Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="orphan-finding",
+            scan=scan,
+            delta=Finding.DeltaChoices.NEW,
+            status=StatusChoices.FAIL,
+            status_extended="failed",
+            severity=Severity.high,
+            impact=Severity.high,
+            impact_extended="",
+            raw_result={},
+            check_id="check-1",
+            check_metadata={"checktitle": "Check title"},
+            first_seen_at=scan.inserted_at,
+        )
+        # Note: No ResourceFindingMapping created
+
+        finding_dict = {
+            "id": finding.id,
+            "uid": finding.uid,
+            "inserted_at": finding.inserted_at,
+            "updated_at": finding.updated_at,
+            "first_seen_at": finding.first_seen_at,
+            "scan_id": scan.id,
+            "delta": finding.delta,
+            "status": finding.status,
+            "status_extended": finding.status_extended,
+            "severity": finding.severity,
+            "check_id": finding.check_id,
+            "check_metadata__checktitle": finding.check_metadata["checktitle"],
+            "muted": finding.muted,
+            "muted_reason": finding.muted_reason,
+        }
+
+        # Mock logger to verify no warning is emitted
+        with (
+            patch(
+                "tasks.jobs.attack_paths.prowler.READ_REPLICA_ALIAS",
+                "default",
+            ),
+            patch("tasks.jobs.attack_paths.prowler.logger") as mock_logger,
+        ):
+            result = prowler_module._enrich_and_flatten_batch([finding_dict])
+
+        assert len(result) == 0
+        mock_logger.warning.assert_not_called()
+
+    def test_generator_is_lazy(self, providers_fixture):
+        """Generator should not execute queries until iterated"""
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan_id = "some-scan-id"
+
+        with (
+            patch("tasks.jobs.attack_paths.prowler.rls_transaction") as mock_rls,
+            patch("tasks.jobs.attack_paths.prowler.Finding") as mock_finding,
+        ):
+            # Create generator but don't iterate
+            prowler_module.get_provider_last_scan_findings(provider, scan_id)
+
+            # Nothing should be called yet
+            mock_rls.assert_not_called()
+            mock_finding.objects.filter.assert_not_called()
+
+    def test_load_findings_empty_generator(self, providers_fixture):
+        """Empty generator should not call neo4j"""
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        mock_session = MagicMock()
+        config = SimpleNamespace(update_tag=12345)
+
+        def empty_gen():
+            return
+            yield  # Make it a generator
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.prowler.get_root_node_label",
+                return_value="AWSAccount",
+            ),
+            patch(
+                "tasks.jobs.attack_paths.prowler.get_node_uid_field",
+                return_value="arn",
+            ),
+        ):
+            prowler_module.load_findings(mock_session, empty_gen(), provider, config)
+
+        mock_session.run.assert_not_called()

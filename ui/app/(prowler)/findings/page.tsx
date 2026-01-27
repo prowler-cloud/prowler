@@ -117,12 +117,13 @@ export default async function Findings({
       })()
     : null;
 
-  // Extract unique regions, services, categories from the new endpoint
+  // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
+  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
   // Extract provider IDs and details using helper functions
   const providerIds = providersData ? extractProviderIds(providersData) : [];
@@ -159,6 +160,7 @@ export default async function Findings({
           uniqueServices={uniqueServices}
           uniqueResourceTypes={uniqueResourceTypes}
           uniqueCategories={uniqueCategories}
+          uniqueGroups={uniqueGroups}
         />
       </div>
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
