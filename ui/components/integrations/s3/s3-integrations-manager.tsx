@@ -92,7 +92,7 @@ export const S3IntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -123,7 +123,7 @@ export const S3IntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -158,7 +158,7 @@ export const S3IntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
