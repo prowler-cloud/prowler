@@ -68,6 +68,7 @@ class TestAttackPathsRun:
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ) as mock_get_session,
+            patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache"),
             patch(
                 "tasks.jobs.attack_paths.scan.cartography_create_indexes.run"
             ) as mock_cartography_indexes,

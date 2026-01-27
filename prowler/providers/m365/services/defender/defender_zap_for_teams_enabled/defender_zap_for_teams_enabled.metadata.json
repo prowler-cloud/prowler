@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_zap_for_teams_enabled",
+  "CheckTitle": "Zero-hour auto purge (ZAP) protects Microsoft Teams from malware and phishing",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Teams Protection Policy",
+  "ResourceGroup": "collaboration",
+  "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes **malware** and **high confidence phishing** in Teams messages.\n\nWhen ZAP blocks a message, it is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP can occur up to 48 hours after delivery.",
+  "Risk": "Without ZAP enabled, malicious content delivered to Teams chats remains accessible to users for up to 48 hours after delivery, even after being identified as harmful.\n\nThis extended exposure window could lead to:\n- **Malware infections** from weaponized attachments or links\n- **Phishing attacks** compromising user credentials and MFA tokens\n- **Lateral movement** as attackers exploit compromised accounts within the organization",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/zero-hour-auto-purge?view=o365-worldwide#zero-hour-auto-purge-zap-in-microsoft-teams",
+    "https://learn.microsoft.com/en-us/defender-office-365/mdo-support-teams-about?view=o365-worldwide"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-TeamsProtectionPolicy -Identity 'Teams Protection Policy' -ZapEnabled $true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender https://security.microsoft.com/\n2. Click to expand System and select Settings > Email & collaboration > Microsoft Teams protection\n3. Set Zero-hour auto purge (ZAP) to On (Default)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Zero-hour auto purge (ZAP) for Microsoft Teams to ensure malicious content is automatically removed from chats after detection, even if it was delivered before being identified as harmful.",
+      "Url": "https://hub.prowler.com/check/defender_zap_for_teams_enabled"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

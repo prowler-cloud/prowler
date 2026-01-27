@@ -3867,6 +3867,7 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
                 return_value=graph_payload,
             ) as mock_execute,
+            patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
         ):
             response = authenticated_client.post(
                 reverse(
@@ -3889,6 +3890,7 @@ class TestAttackPathsScanViewSet:
             query_definition,
             prepared_parameters,
         )
+        mock_clear_cache.assert_called_once_with(attack_paths_scan.graph_database)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
@@ -4000,6 +4002,7 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
                 return_value={"nodes": [], "relationships": []},
             ),
+            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
