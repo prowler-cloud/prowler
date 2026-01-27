@@ -331,28 +331,14 @@
       },
       {
         "tab": "Security",
-        "groups": [
-          {
-            "group": "Security & Compliance",
-            "pages": [
-              "security/index",
-              "security/software-security"
-            ]
-          },
-          {
-            "group": "Prowler Cloud",
-            "pages": [
-              "security/encryption",
-              "security/data-regions",
-              "security/networking"
-            ]
-          }
+        "pages": [
+          "security"
         ]
       },
       {
-        "tab": "Support",
+        "tab": "Contact Us",
         "pages": [
-          "support"
+          "contact"
         ]
       },
       {
@@ -473,10 +459,6 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
-    },
-    {
-      "source": "/contact",
-      "destination": "/support"
     }
   ]
 }

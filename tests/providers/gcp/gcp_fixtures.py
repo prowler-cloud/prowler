@@ -771,7 +771,6 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         "automaticRestart": False,
                         "preemptible": False,
                         "provisioningModel": "STANDARD",
-                        "onHostMaintenance": "MIGRATE",
                     },
                 },
                 {
@@ -803,7 +802,6 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         "automaticRestart": False,
                         "preemptible": False,
                         "provisioningModel": "STANDARD",
-                        "onHostMaintenance": "TERMINATE",
                     },
                 },
             ]

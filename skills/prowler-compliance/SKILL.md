@@ -34,7 +34,6 @@ Frameworks are JSON files located in: `prowler/compliance/{provider}/{framework_
 - `github` - GitHub
 - `m365` - Microsoft 365
 - `alibabacloud` - Alibaba Cloud
-- `cloudflare` - Cloudflare
 - `oraclecloud` - Oracle Cloud
 - `oci` - Oracle Cloud Infrastructure
 - `nhn` - NHN Cloud

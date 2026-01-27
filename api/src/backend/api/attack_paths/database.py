@@ -1,12 +1,13 @@
-import atexit
 import logging
 import threading
+
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
+
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -41,17 +42,9 @@ def init_driver() -> neo4j.Driver:
             config = settings.DATABASES["neo4j"]
 
             _driver = neo4j.GraphDatabase.driver(
-                uri,
-                auth=(config["USER"], config["PASSWORD"]),
-                keep_alive=True,
-                max_connection_lifetime=7200,
-                connection_acquisition_timeout=120,
-                max_connection_pool_size=50,
+                uri, auth=(config["USER"], config["PASSWORD"])
             )
             _driver.verify_connectivity()
-
-            # Register cleanup handler (only runs once since we're inside the _driver is None block)
-            atexit.register(close_driver)
 
     return _driver
 
@@ -78,6 +71,7 @@ def get_session(database: str | None = None) -> Iterator[RetryableSession]:
     try:
         session_wrapper = RetryableSession(
             session_factory=lambda: get_driver().session(database=database),
+            close_driver=close_driver,  # Just to avoid circular imports
             max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
         )
         yield session_wrapper
@@ -123,17 +117,6 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
 
         except neo4j.exceptions.ResultConsumedError:
             return 0  # As there are no nodes to delete, the result is empty
-
-
-def clear_cache(database: str) -> None:
-    query = "CALL db.clearQueryCaches()"
-
-    try:
-        with get_session(database) as session:
-            session.run(query)
-
-    except GraphDatabaseQueryException as exc:
-        logging.warning(f"Failed to clear query cache for database `{database}`: {exc}")
 
 
 # Neo4j functions related to Prowler + Cartography

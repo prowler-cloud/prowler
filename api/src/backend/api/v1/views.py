@@ -77,7 +77,6 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from api.attack_paths import (
-    database as graph_database,
     get_queries_for_provider,
     get_query_by_id,
     views_helpers as attack_paths_views_helpers,
@@ -91,7 +90,6 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
-    AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
     CategoryOverviewFilter,
     ComplianceOverviewFilter,
@@ -104,6 +102,7 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
+    AttackPathsScanFilter,
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
     MembershipFilter,
@@ -125,7 +124,6 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
-    AttackPathsScan,
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
@@ -133,6 +131,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    AttackPathsScan,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -178,9 +177,9 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
-    AttackPathsQueryResultSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
+    AttackPathsQueryResultSerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
     CategoryOverviewSerializer,
@@ -382,7 +381,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.19.0"
+        spectacular_settings.VERSION = "1.18.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2436,7 +2435,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         graph = attack_paths_views_helpers.execute_attack_paths_query(
             attack_paths_scan, query_definition, parameters
         )
-        graph_database.clear_cache(attack_paths_scan.graph_database)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
@@ -4201,7 +4199,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         # If we couldn't determine from database, try each provider type
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
-                if compliance_id in get_compliance_frameworks(pt):
+                if compliance_id in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(pt, {}):
                     provider_type = pt
                     break
 

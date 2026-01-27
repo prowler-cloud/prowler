@@ -92,12 +92,7 @@ export const getMetadataInfo = async ({
 
   Object.entries(filters).forEach(([key, value]) => {
     // Define filters to exclude
-    const excludedFilters = [
-      "region__in",
-      "service__in",
-      "resource_type__in",
-      "resource_groups__in",
-    ];
+    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
     if (
       key !== "filter[search]" &&
       !excludedFilters.some((filter) => key.includes(filter))
@@ -132,12 +127,7 @@ export const getLatestMetadataInfo = async ({
 
   Object.entries(filters).forEach(([key, value]) => {
     // Define filters to exclude
-    const excludedFilters = [
-      "region__in",
-      "service__in",
-      "resource_type__in",
-      "resource_groups__in",
-    ];
+    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
     if (
       key !== "filter[search]" &&
       !excludedFilters.some((filter) => key.includes(filter))

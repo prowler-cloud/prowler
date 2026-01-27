@@ -80,7 +80,6 @@ class Compute(GCPService):
         for project_id in self.project_ids:
             try:
                 enable_oslogin = False
-                enable_oslogin_2fa = False
                 response = (
                     self.client.projects()
                     .get(project=project_id)
@@ -89,14 +88,8 @@ class Compute(GCPService):
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
-                    if item["key"] == "enable-oslogin-2fa" and item["value"] == "TRUE":
-                        enable_oslogin_2fa = True
                 self.compute_projects.append(
-                    Project(
-                        id=project_id,
-                        enable_oslogin=enable_oslogin,
-                        enable_oslogin_2fa=enable_oslogin_2fa,
-                    )
+                    Project(id=project_id, enable_oslogin=enable_oslogin)
                 )
             except Exception as error:
                 logger.error(
@@ -198,10 +191,6 @@ class Compute(GCPService):
                                     "deletionProtection", False
                                 ),
                                 network_interfaces=network_interfaces,
-                                status=instance.get("status", "RUNNING"),
-                                on_host_maintenance=instance.get("scheduling", {}).get(
-                                    "onHostMaintenance", "MIGRATE"
-                                ),
                             )
                         )
 
@@ -701,8 +690,6 @@ class Instance(BaseModel):
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
     network_interfaces: list[NetworkInterface] = []
-    status: str = "RUNNING"
-    on_host_maintenance: str = "MIGRATE"
 
 
 class Network(BaseModel):
@@ -742,7 +729,6 @@ class Firewall(BaseModel):
 class Project(BaseModel):
     id: str
     enable_oslogin: bool
-    enable_oslogin_2fa: bool = False
 
 
 class LoadBalancer(BaseModel):

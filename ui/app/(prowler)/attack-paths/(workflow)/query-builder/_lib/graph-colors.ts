@@ -51,9 +51,7 @@ export const GRAPH_NODE_BORDER_COLORS = {
   default: "#22d3ee",
 } as const;
 
-// Edge colors per theme
-export const GRAPH_EDGE_COLOR_DARK = "#ffffff"; // White for dark theme
-export const GRAPH_EDGE_COLOR_LIGHT = "#1e293b"; // Slate 800 for light theme
+export const GRAPH_EDGE_COLOR = "#ffffff"; // White (default)
 export const GRAPH_EDGE_HIGHLIGHT_COLOR = "#f97316"; // Orange 500 (on hover)
 export const GRAPH_EDGE_GLOW_COLOR = "#fb923c";
 export const GRAPH_SELECTION_COLOR = "#ffffff";

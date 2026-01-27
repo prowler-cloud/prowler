@@ -1,13 +1,25 @@
 import os
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
+from django_celery_beat.models import PeriodicTask
+
+from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.decorators import handle_provider_deletion, set_tenant
+from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
-from django_celery_beat.models import PeriodicTask
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
@@ -52,22 +64,7 @@ from tasks.jobs.scan import (
     perform_prowler_scan,
     update_provider_compliance_scores,
 )
-from tasks.utils import (
-    _get_or_create_scheduled_scan,
-    batched,
-    get_next_execution_datetime,
-)
-
-from api.compliance import get_compliance_frameworks
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.decorators import handle_provider_deletion, set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.utils import batched, get_next_execution_datetime
 
 logger = get_task_logger(__name__)
 
@@ -278,38 +275,44 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        executing_scan = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.EXECUTING,
-            )
-            .order_by("-started_at")
-            .first()
-        )
-        if executing_scan:
-            logger.warning(
-                f"Scheduled scan already executing for provider {provider_id}. Skipping."
-            )
-            return ScanTaskSerializer(instance=executing_scan).data
 
         executed_scan = Scan.objects.filter(
             tenant_id=tenant_id,
             provider_id=provider_id,
             task__task_runner_task__task_id=task_id,
-        ).first()
+        ).order_by("completed_at")
 
-        if executed_scan:
-            # Duplicated task execution due to visibility timeout
+        if (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.EXECUTING,
+                scheduler_task_id=periodic_task_instance.id,
+                scheduled_at__date=datetime.now(timezone.utc).date(),
+            ).exists()
+            or executed_scan.exists()
+        ):
+            # Duplicated task execution due to visibility timeout or scan is already running
             logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
-            return ScanTaskSerializer(instance=executed_scan).data
+            try:
+                affected_scan = executed_scan.first()
+                if not affected_scan:
+                    raise ValueError(
+                        "Error retrieving affected scan details after detecting duplicated scheduled "
+                        "scan."
+                    )
+                # Return the affected scan details to avoid losing data
+                serializer = ScanTaskSerializer(instance=affected_scan)
+            except Exception as duplicated_scan_exception:
+                logger.error(
+                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
+                    f"{str(duplicated_scan_exception)}"
+                )
+                raise duplicated_scan_exception
+            return serializer.data
 
-        interval = periodic_task_instance.interval
         next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
-        current_scan_datetime = next_scan_datetime - timedelta(
-            **{interval.period: interval.every}
-        )
 
         # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
         _cleanup_orphan_scheduled_scans(
@@ -318,12 +321,19 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scheduler_task_id=periodic_task_instance.id,
         )
 
-        scan_instance = _get_or_create_scheduled_scan(
+        scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
             provider_id=provider_id,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=periodic_task_instance.id,
-            scheduled_at=current_scan_datetime,
+            defaults={
+                "state": StateChoices.SCHEDULED,
+                "name": "Daily scheduled scan",
+                "scheduled_at": next_scan_datetime - timedelta(days=1),
+            },
         )
+
         scan_instance.task_id = task_id
         scan_instance.save()
 
@@ -333,19 +343,18 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scan_id=str(scan_instance.id),
             provider_id=provider_id,
         )
+    except Exception as e:
+        raise e
     finally:
         with rls_transaction(tenant_id):
-            now = datetime.now(timezone.utc)
-            if next_scan_datetime <= now:
-                interval_delta = timedelta(**{interval.period: interval.every})
-                while next_scan_datetime <= now:
-                    next_scan_datetime += interval_delta
-            _get_or_create_scheduled_scan(
+            Scan.objects.get_or_create(
                 tenant_id=tenant_id,
+                name="Daily scheduled scan",
                 provider_id=provider_id,
-                scheduler_task_id=periodic_task_instance.id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
                 scheduled_at=next_scan_datetime,
-                update_state=True,
+                scheduler_task_id=periodic_task_instance.id,
             )
 
     _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
@@ -359,12 +368,8 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(
-    base=RLSTask,
-    bind=True,
-    name="attack-paths-scan-perform",
-    queue="attack-paths-scans",
-)
+# TODO: This task must be queued at the `attack-paths` queue, don't forget to add it to the `docker-entrypoint.sh` file
+@shared_task(base=RLSTask, bind=True, name="attack-paths-scan-perform", queue="scans")
 def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     """
     Execute an Attack Paths scan for the given provider within the current tenant RLS context.
