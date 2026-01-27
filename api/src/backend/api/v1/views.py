@@ -3049,14 +3049,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             raise UpstreamAuthenticationError()
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
+            # AccessDenied is expected when credentials lack permissions - don't log as error
+            if error_code in ("AccessDenied", "AccessDeniedException"):
+                raise UpstreamAccessDeniedError()
+
+            # Unexpected ClientErrors should be logged for debugging
             logger.error(
                 f"Provider API error retrieving events: {str(e)}",
                 exc_info=True,
             )
-            # AccessDenied means the credentials don't have the required permissions
-            if error_code in ("AccessDenied", "AccessDeniedException"):
-                raise UpstreamAccessDeniedError()
-
             raise UpstreamServiceUnavailableError()
         except Exception as e:
             sentry_sdk.capture_exception(e)
