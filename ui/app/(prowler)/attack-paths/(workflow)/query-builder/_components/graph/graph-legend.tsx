@@ -1,5 +1,7 @@
 "use client";
 
+import { useTheme } from "next-themes";
+
 import { Card, CardContent } from "@/components/shadcn";
 import {
   Tooltip,
@@ -12,7 +14,8 @@ import type { AttackPathGraphData } from "@/types/attack-paths";
 import {
   getNodeBorderColor,
   getNodeColor,
-  GRAPH_EDGE_COLOR,
+  GRAPH_EDGE_COLOR_DARK,
+  GRAPH_EDGE_COLOR_LIGHT,
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
 } from "../../_lib/graph-colors";
@@ -361,7 +364,13 @@ const GlobeShape = ({
 /**
  * Edge line component for legend
  */
-const EdgeLine = ({ dashed }: { dashed: boolean }) => (
+const EdgeLine = ({
+  dashed,
+  edgeColor,
+}: {
+  dashed: boolean;
+  edgeColor: string;
+}) => (
   <svg
     width="60"
     height="20"
@@ -375,13 +384,13 @@ const EdgeLine = ({ dashed }: { dashed: boolean }) => (
       y1="10"
       x2="44"
       y2="10"
-      stroke={GRAPH_EDGE_COLOR}
+      stroke={edgeColor}
       strokeWidth={3}
       strokeLinecap="round"
       strokeDasharray={dashed ? "8,6" : undefined}
     />
     {/* Arrow head */}
-    <polygon points="44,5 56,10 44,15" fill={GRAPH_EDGE_COLOR} />
+    <polygon points="44,5 56,10 44,15" fill={edgeColor} />
   </svg>
 );
 
@@ -393,7 +402,12 @@ interface GraphLegendProps {
  * Legend for attack path graph node types and edge styles
  */
 export const GraphLegend = ({ data }: GraphLegendProps) => {
+  const { resolvedTheme } = useTheme();
   const nodeTypes = extractNodeTypes(data?.nodes);
+
+  // Get edge color based on current theme
+  const edgeColor =
+    resolvedTheme === "dark" ? GRAPH_EDGE_COLOR_DARK : GRAPH_EDGE_COLOR_LIGHT;
 
   // Check if there are any findings in the data
   const hasFindings = nodeTypes.some((type) =>
@@ -458,7 +472,7 @@ export const GraphLegend = ({ data }: GraphLegendProps) => {
                     role="img"
                     aria-label="Solid line: Resource connection"
                   >
-                    <EdgeLine dashed={false} />
+                    <EdgeLine dashed={false} edgeColor={edgeColor} />
                     <span className="text-text-neutral-secondary text-xs">
                       Resource Connection
                     </span>
@@ -477,7 +491,7 @@ export const GraphLegend = ({ data }: GraphLegendProps) => {
                       role="img"
                       aria-label="Dashed line: Finding connection"
                     >
-                      <EdgeLine dashed={true} />
+                      <EdgeLine dashed={true} edgeColor={edgeColor} />
                       <span className="text-text-neutral-secondary text-xs">
                         Finding Connection
                       </span>
