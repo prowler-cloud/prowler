@@ -2520,6 +2520,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     EVENTS_DEFAULT_PAGE_SIZE = 50
     EVENTS_MIN_PAGE_SIZE = 1
     EVENTS_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
+    # Allowed query parameters for the events endpoint
+    EVENTS_ALLOWED_PARAMS = frozenset(
+        {"lookback_days", "page[size]", "include_read_events"}
+    )
 
     ordering_fields = [
         "provider_uid",
@@ -2881,6 +2885,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 ),
                 required=False,
             ),
+            # NOTE: drf-spectacular auto-generates page[number] and fields[resource-events]
+            # parameters. This endpoint does not support pagination (results are limited by
+            # page[size] only) nor sparse fieldsets.
         ],
         responses={
             200: ResourceEventSerializer(many=True),
@@ -2902,8 +2909,22 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         """Get events for a resource."""
         resource = self.get_object()
 
-        # Validate provider
-        if resource.provider.provider != "aws":
+        # Validate query parameters - reject unknown parameters
+        for param in request.query_params.keys():
+            if param not in self.EVENTS_ALLOWED_PARAMS:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid parameter '{param}'",
+                            "status": "400",
+                            "source": {"parameter": param},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+
+        # Validate provider - currently only AWS CloudTrail is supported
+        if resource.provider.provider != Provider.ProviderChoices.AWS:
             raise ValidationError(
                 [
                     {
@@ -3015,19 +3036,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 resource_uid=resource.uid,
             )
 
-            # Serialize events with context for root meta
-            serializer = ResourceEventSerializer(
-                events,
-                many=True,
-                context={
-                    "count": len(events),
-                    "lookback_days": lookback_days,
-                    "include_read_events": include_read_events,
-                    "resource_uid": resource.uid,
-                },
-            )
-
-            # Return serializer.data - JSON:API renderer wraps it and calls get_root_meta
+            serializer = ResourceEventSerializer(events, many=True)
             return Response(serializer.data)
 
         except NoCredentialsError:

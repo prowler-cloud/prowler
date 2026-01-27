@@ -4480,6 +4480,100 @@ class TestResourceViewSet:
         assert error["source"]["parameter"] == "page[size]"
         assert expected_detail_contains in error["detail"]
 
+    @pytest.mark.parametrize(
+        "invalid_params,expected_invalid_param",
+        [
+            ({"filter[service]": "ec2"}, "filter[service]"),
+            ({"filter[region]": "us-east-1"}, "filter[region]"),
+            ({"sort": "-name"}, "sort"),
+            ({"unknown_param": "value"}, "unknown_param"),
+            ({"filter[servic]": "ec2"}, "filter[servic]"),  # Typo in filter name
+        ],
+    )
+    def test_events_invalid_query_parameter(
+        self,
+        authenticated_client,
+        providers_fixture,
+        invalid_params,
+        expected_invalid_param,
+    ):
+        """Test events endpoint rejects unknown query parameters with JSON:API compliant errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            invalid_params,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Verify JSON:API error structure
+        errors = response.json()["errors"]
+        assert len(errors) >= 1
+
+        # Find the error for our expected invalid param
+        error = next(
+            (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
+            None,
+        )
+        assert (
+            error is not None
+        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error["code"] == "invalid"
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert expected_invalid_param in error["detail"]
+
+    def test_events_multiple_invalid_query_parameters(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events endpoint returns error for first unknown parameter."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Send multiple invalid parameters - only first one triggers error
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"filter[service]": "ec2", "sort": "-name", "unknown": "value"},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Should have one error for the first invalid parameter encountered
+        errors = response.json()["errors"]
+        assert len(errors) == 1
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["status"] == "400"
+        assert errors[0]["source"]["parameter"] in {
+            "filter[service]",
+            "sort",
+            "unknown",
+        }
+
     @patch("api.v1.views.initialize_prowler_provider")
     @patch("api.v1.views.CloudTrailTimeline")
     def test_events_success(
@@ -4542,7 +4636,7 @@ class TestResourceViewSet:
             {"lookback_days": "30"},
         )
 
-        # Assertions - response is a list of events
+        # Assertions - response is wrapped by JSON:API renderer
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()
         events = response_data["data"]
@@ -4559,11 +4653,6 @@ class TestResourceViewSet:
         assert events[0]["attributes"]["event_name"] == "RunInstances"
         assert events[0]["attributes"]["actor"] == "admin@example.com"
         assert events[1]["attributes"]["event_name"] == "StopInstances"
-
-        # Verify root meta contains context
-        assert response_data["meta"]["count"] == 2
-        assert response_data["meta"]["lookback_days"] == 30
-        assert response_data["meta"]["resource_uid"] == resource.uid
 
         # Verify CloudTrail was called with correct parameters
         mock_cloudtrail_timeline.assert_called_once_with(
