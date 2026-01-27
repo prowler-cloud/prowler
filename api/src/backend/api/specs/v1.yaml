@@ -20068,15 +20068,16 @@ components:
               nullable: true
             actor_type:
               type: string
+              nullable: true
             source_ip_address:
               type: string
               nullable: true
             user_agent:
               type: string
               nullable: true
-            request_parameters:
+            request_data:
               nullable: true
-            response_elements:
+            response_data:
               nullable: true
             error_code:
               type: string
@@ -20090,7 +20091,6 @@ components:
           - event_name
           - event_source
           - actor
-          - actor_type
     ResourceGroupOverview:
       type: object
       required:
