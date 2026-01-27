@@ -4,9 +4,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.19.0] (Prowler UNRELEASED)
 
-### Added
-
 - `provider_id` and `provider_id__in` filters for resources endpoints (`GET /resources` and `GET /resources/metadata/latest`) [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
+- Attack Paths: Bedrock Code Interpreter and AttachRolePolicy privilege escalation queries [(#9885)](https://github.com/prowler-cloud/prowler/pull/9885)
 
 ### 🔄 Changed
 
