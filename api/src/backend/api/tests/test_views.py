@@ -4356,6 +4356,661 @@ class TestResourceViewSet:
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
 
+    # Events endpoint tests
+    def test_events_non_aws_provider(self, authenticated_client, providers_fixture):
+        """Test events endpoint rejects non-AWS providers."""
+        from api.models import Resource
+
+        azure_provider = providers_fixture[4]  # Azure provider from fixture
+
+        resource = Resource.objects.create(
+            uid="test-resource-id",
+            name="Test Resource",
+            type="test-type",
+            region="us-east-1",
+            service="test-service",
+            provider=azure_provider,
+            tenant_id=azure_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "invalid_provider"
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["pointer"] == "/data/attributes/provider"
+        assert "AWS" in error["detail"]
+
+    @pytest.mark.parametrize(
+        "lookback_days,expected_status,expected_code,expected_detail_contains",
+        [
+            ("abc", status.HTTP_400_BAD_REQUEST, "invalid", "valid integer"),
+            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
+            ("91", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
+            ("-5", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 90"),
+        ],
+    )
+    def test_events_invalid_lookback_days(
+        self,
+        authenticated_client,
+        providers_fixture,
+        lookback_days,
+        expected_status,
+        expected_code,
+        expected_detail_contains,
+    ):
+        """Test events endpoint validates lookback_days with JSON:API compliant errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"lookback_days": lookback_days},
+        )
+
+        assert response.status_code == expected_status
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == expected_code
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["parameter"] == "lookback_days"
+        assert expected_detail_contains in error["detail"]
+
+    @pytest.mark.parametrize(
+        "page_size,expected_status,expected_code,expected_detail_contains",
+        [
+            ("abc", status.HTTP_400_BAD_REQUEST, "invalid", "valid integer"),
+            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+            ("51", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+            ("-1", status.HTTP_400_BAD_REQUEST, "out_of_range", "between 1 and 50"),
+        ],
+    )
+    def test_events_invalid_page_size(
+        self,
+        authenticated_client,
+        providers_fixture,
+        page_size,
+        expected_status,
+        expected_code,
+        expected_detail_contains,
+    ):
+        """Test events endpoint validates page[size] with JSON:API compliant errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-pagesize-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"page[size]": page_size},
+        )
+
+        assert response.status_code == expected_status
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == expected_code
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert error["source"]["parameter"] == "page[size]"
+        assert expected_detail_contains in error["detail"]
+
+    @pytest.mark.parametrize(
+        "invalid_params,expected_invalid_param",
+        [
+            ({"filter[service]": "ec2"}, "filter[service]"),
+            ({"filter[region]": "us-east-1"}, "filter[region]"),
+            ({"sort": "-name"}, "sort"),
+            ({"unknown_param": "value"}, "unknown_param"),
+            ({"filter[servic]": "ec2"}, "filter[servic]"),  # Typo in filter name
+        ],
+    )
+    def test_events_invalid_query_parameter(
+        self,
+        authenticated_client,
+        providers_fixture,
+        invalid_params,
+        expected_invalid_param,
+    ):
+        """Test events endpoint rejects unknown query parameters with JSON:API compliant errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            invalid_params,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Verify JSON:API error structure
+        errors = response.json()["errors"]
+        assert len(errors) >= 1
+
+        # Find the error for our expected invalid param
+        error = next(
+            (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
+            None,
+        )
+        assert (
+            error is not None
+        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error["code"] == "invalid"
+        assert error["status"] == "400"  # Must be string per JSON:API spec
+        assert expected_invalid_param in error["detail"]
+
+    def test_events_multiple_invalid_query_parameters(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events endpoint returns error for first unknown parameter."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Send multiple invalid parameters - only first one triggers error
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"filter[service]": "ec2", "sort": "-name", "unknown": "value"},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Should have one error for the first invalid parameter encountered
+        errors = response.json()["errors"]
+        assert len(errors) == 1
+        assert errors[0]["code"] == "invalid"
+        assert errors[0]["status"] == "400"
+        assert errors[0]["source"]["parameter"] in {
+            "filter[service]",
+            "sort",
+            "unknown",
+        }
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_success(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test successful events retrieval."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        # Create test resource
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test123",
+            name="Test EC2 Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock provider session
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock CloudTrail timeline response - events need event_id for serializer
+        mock_timeline_instance = Mock()
+        mock_events = [
+            {
+                "event_id": "event-1-id",
+                "event_time": "2024-01-15T10:30:00Z",
+                "event_name": "RunInstances",
+                "event_source": "ec2.amazonaws.com",
+                "actor": "admin@example.com",
+                "actor_type": "IAMUser",
+                "source_ip_address": "203.0.113.1",
+                "user_agent": "aws-cli/2.0.0",
+            },
+            {
+                "event_id": "event-2-id",
+                "event_time": "2024-01-16T14:20:00Z",
+                "event_name": "StopInstances",
+                "event_source": "ec2.amazonaws.com",
+                "actor": "operator@example.com",
+                "actor_type": "IAMUser",
+            },
+        ]
+        mock_timeline_instance.get_resource_timeline.return_value = mock_events
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        # Make request with lookback_days parameter
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            {"lookback_days": "30"},
+        )
+
+        # Assertions - response is wrapped by JSON:API renderer
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        events = response_data["data"]
+
+        assert len(events) == 2
+
+        # Verify JSON:API structure: type and id are present
+        assert events[0]["type"] == "resource-events"
+        assert events[0]["id"] == "event-1-id"
+        assert events[1]["type"] == "resource-events"
+        assert events[1]["id"] == "event-2-id"
+
+        # Verify attributes
+        assert events[0]["attributes"]["event_name"] == "RunInstances"
+        assert events[0]["attributes"]["actor"] == "admin@example.com"
+        assert events[1]["attributes"]["event_name"] == "StopInstances"
+
+        # Verify CloudTrail was called with correct parameters
+        mock_cloudtrail_timeline.assert_called_once_with(
+            session=mock_session,
+            lookback_days=30,
+            max_results=50,  # Default page size
+            write_events_only=True,  # Default: exclude read events
+        )
+        mock_timeline_instance.get_resource_timeline.assert_called_once_with(
+            region=resource.region,
+            resource_uid=resource.uid,
+        )
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_default_lookback_days(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events uses default lookback_days (90) when not provided."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:s3:::test-bucket",
+            name="Test Bucket",
+            type="bucket",
+            region="us-east-1",
+            service="s3",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock provider session
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock CloudTrail timeline response
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.return_value = []
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify default lookback_days (90) was used
+        mock_cloudtrail_timeline.assert_called_once_with(
+            session=mock_session,
+            lookback_days=90,  # Default
+            max_results=50,
+            write_events_only=True,
+        )
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    def test_events_no_credentials_error(
+        self, mock_initialize_provider, authenticated_client, providers_fixture
+    ):
+        """Test events handles missing credentials errors."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:rds:us-west-2:123456789012:db:test-db",
+            name="Test Database",
+            type="db-instance",
+            region="us-west-2",
+            service="rds",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        mock_initialize_provider.side_effect = NoCredentialsError()
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # 502 because this is an upstream auth failure, not API auth failure
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_auth_failed"
+        assert error["status"] == "502"  # Must be string per JSON:API spec
+        assert "detail" in error
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_access_denied_error(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events handles AccessDenied errors from AWS."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:lambda:eu-west-1:123456789012:function:test-func",
+            name="Test Function",
+            type="function",
+            region="eu-west-1",
+            service="lambda",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock provider
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock ClientError with AccessDenied
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
+            "LookupEvents",
+        )
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # AccessDenied returns 502 (upstream error, not user's fault)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_access_denied"
+        assert error["status"] == "502"  # Must be string per JSON:API spec
+        assert "detail" in error
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_service_unavailable_error(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events handles generic AWS API errors as 503."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:lambda:eu-west-1:123456789012:function:test-func2",
+            name="Test Function 2",
+            type="function",
+            region="eu-west-1",
+            service="lambda",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock provider
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock ClientError with non-AccessDenied error
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.side_effect = ClientError(
+            {"Error": {"Code": "ServiceUnavailable", "Message": "Service unavailable"}},
+            "LookupEvents",
+        )
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # Non-AccessDenied errors return 503
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "service_unavailable"
+        assert error["status"] == "503"  # Must be string per JSON:API spec
+        assert "detail" in error
+
+    def test_events_unauthenticated_returns_401(self, providers_fixture):
+        """Test events endpoint returns 401 when no credentials are provided.
+
+        This ensures the endpoint follows API conventions where missing authentication
+        returns 401 Unauthorized, not 404 Not Found.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-unauth-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Use unauthenticated client (no JWT token)
+        unauthenticated_client = APIClient()
+
+        response = unauthenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # Must return 401 Unauthorized, not 404 Not Found
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 Unauthorized but got {response.status_code}. "
+            "Unauthenticated requests should return 401, not 404."
+        )
+
+    def test_events_cross_tenant_returns_404(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test events endpoint returns 404 for resources in other tenants (RLS).
+
+        Users cannot access resources belonging to other tenants due to
+        Row-Level Security. The resource should appear to not exist.
+        """
+        from api.models import Provider, Resource
+
+        # tenant3 (tenants_fixture[2]) has no membership for the test user
+        isolated_tenant = tenants_fixture[2]
+
+        # Create provider in the isolated tenant
+        other_tenant_provider = Provider.objects.create(
+            provider="aws",
+            uid="999999999999",
+            alias="other_tenant_aws",
+            tenant_id=isolated_tenant.id,
+        )
+
+        # Create resource in the OTHER tenant (not the authenticated user's tenant)
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:999999999999:instance/i-other-tenant",
+            name="Other Tenant Resource",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=other_tenant_provider,
+            tenant_id=isolated_tenant.id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # RLS hides resources from other tenants - should appear as not found
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_events_expired_token_returns_401(self, providers_fixture, tenants_fixture):
+        """Test events endpoint returns 401 when JWT token is expired.
+
+        Expired tokens should return 401 Unauthorized, not 404 Not Found.
+        This ensures authentication errors are properly distinguished from
+        resource not found errors.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-expired-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Create an expired JWT token
+        tenant = tenants_fixture[0]
+        expired_payload = {
+            "token_type": "access",
+            "exp": datetime.now(timezone.utc)
+            - timedelta(hours=1),  # Expired 1 hour ago
+            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "jti": str(uuid4()),
+            "user_id": str(uuid4()),
+            "tenant_id": str(tenant.id),
+        }
+        expired_token = jwt.encode(
+            expired_payload, settings.SECRET_KEY, algorithm="HS256"
+        )
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {expired_token}")
+
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+
+        # Must return 401 Unauthorized, not 404 Not Found
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 Unauthorized but got {response.status_code}. "
+            "Expired tokens should return 401, not 404."
+        )
+
+    def test_events_invalid_token_returns_401(self, providers_fixture):
+        """Test events endpoint returns 401 when JWT token is completely invalid.
+
+        Malformed or invalid tokens should return 401 Unauthorized, not 404 Not Found.
+        """
+        from rest_framework.test import APIClient
+
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-invalid-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        client = APIClient()
+
+        # Test with completely malformed token
+        client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), f"Expected 401 for malformed token but got {response.status_code}"
+
+        # Test with empty bearer token
+        client.credentials(HTTP_AUTHORIZATION="Bearer ")
+        response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+
 
 @pytest.mark.django_db
 class TestFindingViewSet:

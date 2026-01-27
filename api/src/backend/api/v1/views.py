@@ -102,7 +102,13 @@ from api.compliance import (
 )
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
-from api.exceptions import TaskFailedException
+from api.exceptions import (
+    TaskFailedException,
+    UpstreamAccessDeniedError,
+    UpstreamAuthenticationError,
+    UpstreamInternalError,
+    UpstreamServiceUnavailableError,
+)
 from api.filters import (
     AttackPathsScanFilter,
     AttackSurfaceOverviewFilter,
@@ -186,6 +192,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
+    initialize_prowler_provider,
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
@@ -251,6 +258,7 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceEventSerializer,
     ResourceGroupOverviewSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
@@ -281,6 +289,10 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.providers.aws.exceptions.exceptions import AWSCredentialsError
+from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
+    CloudTrailTimeline,
+)
 
 
 class JSONAPIRawParser(JSONParser):
@@ -292,7 +304,6 @@ class JSONAPIRawParser(JSONParser):
     """
 
     media_type = "application/vnd.api+json"
-
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -2721,6 +2732,20 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     http_method_names = ["get"]
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
+
+    # Events endpoint constants (currently AWS-only, limited to 90 days by CloudTrail Event History)
+    EVENTS_DEFAULT_LOOKBACK_DAYS = 90
+    EVENTS_MIN_LOOKBACK_DAYS = 1
+    EVENTS_MAX_LOOKBACK_DAYS = 90
+    # Page size controls how many events CloudTrail returns (prepares for API pagination)
+    EVENTS_DEFAULT_PAGE_SIZE = 50
+    EVENTS_MIN_PAGE_SIZE = 1
+    EVENTS_MAX_PAGE_SIZE = 50  # CloudTrail lookup_events max is 50
+    # Allowed query parameters for the events endpoint
+    EVENTS_ALLOWED_PARAMS = frozenset(
+        {"lookback_days", "page[size]", "include_read_events"}
+    )
+
     ordering_fields = [
         "provider_uid",
         "uid",
@@ -2796,6 +2821,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
+        if self.action == "events":
+            return ResourceEventSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -2804,8 +2831,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return ResourceFilter
 
     def filter_queryset(self, queryset):
-        # Do not apply filters when retrieving specific resource
-        if self.action == "retrieve":
+        # Do not apply filters when retrieving specific resource or events
+        if self.action in ["retrieve", "events"]:
             return queryset
         return super().filter_queryset(queryset)
 
@@ -3044,6 +3071,217 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
+
+    @extend_schema(
+        tags=["Resource"],
+        summary="Get events for a resource",
+        description=(
+            "Retrieve events showing modification history for a resource. "
+            "Returns who modified the resource and when. Currently only available for AWS resources.\n\n"
+            "**Note:** Some events may not appear due to CloudTrail indexing limitations. "
+            "Not all AWS API calls record the resource identifier in a searchable format."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="lookback_days",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Number of days to look back (default: 90, min: 1, max: 90).",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="page[size]",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Maximum number of events to return (default: 50, min: 1, max: 50).",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="include_read_events",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Include read-only events (Describe*, Get*, List*, etc.). "
+                    "Default: false. Set to true to include all events."
+                ),
+                required=False,
+            ),
+            # NOTE: drf-spectacular auto-generates page[number] and fields[resource-events]
+            # parameters. This endpoint does not support pagination (results are limited by
+            # page[size] only) nor sparse fieldsets.
+        ],
+        responses={
+            200: ResourceEventSerializer(many=True),
+            400: OpenApiResponse(description="Invalid provider or parameters"),
+            500: OpenApiResponse(description="Unexpected error retrieving events"),
+            502: OpenApiResponse(
+                description="Provider credentials invalid, expired, or lack required permissions"
+            ),
+            503: OpenApiResponse(description="Provider service unavailable"),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="events",
+        filter_backends=[],  # Disable filters - we're calling external API, not filtering queryset
+    )
+    def events(self, request, pk=None):
+        """Get events for a resource."""
+        resource = self.get_object()
+
+        # Validate query parameters - reject unknown parameters
+        for param in request.query_params.keys():
+            if param not in self.EVENTS_ALLOWED_PARAMS:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid parameter '{param}'",
+                            "status": "400",
+                            "source": {"parameter": param},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+
+        # Validate provider - currently only AWS CloudTrail is supported
+        if resource.provider.provider != Provider.ProviderChoices.AWS:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Events are only available for AWS resources",
+                        "status": "400",
+                        "source": {"pointer": "/data/attributes/provider"},
+                        "code": "invalid_provider",
+                    }
+                ]
+            )
+
+        # Validate and parse lookback_days from query params
+        lookback_days_str = request.query_params.get("lookback_days")
+        if lookback_days_str is None:
+            lookback_days = self.EVENTS_DEFAULT_LOOKBACK_DAYS
+        else:
+            try:
+                lookback_days = int(lookback_days_str)
+            except (ValueError, TypeError):
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "lookback_days must be a valid integer",
+                            "status": "400",
+                            "source": {"parameter": "lookback_days"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+
+            if not (
+                self.EVENTS_MIN_LOOKBACK_DAYS
+                <= lookback_days
+                <= self.EVENTS_MAX_LOOKBACK_DAYS
+            ):
+                raise ValidationError(
+                    [
+                        {
+                            "detail": (
+                                f"lookback_days must be between {self.EVENTS_MIN_LOOKBACK_DAYS} "
+                                f"and {self.EVENTS_MAX_LOOKBACK_DAYS}"
+                            ),
+                            "status": "400",
+                            "source": {"parameter": "lookback_days"},
+                            "code": "out_of_range",
+                        }
+                    ]
+                )
+
+        # Validate and parse page[size] from query params (JSON:API pagination)
+        page_size_str = request.query_params.get("page[size]")
+        if page_size_str is None:
+            page_size = self.EVENTS_DEFAULT_PAGE_SIZE
+        else:
+            try:
+                page_size = int(page_size_str)
+            except (ValueError, TypeError):
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "page[size] must be a valid integer",
+                            "status": "400",
+                            "source": {"parameter": "page[size]"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+
+            if not (
+                self.EVENTS_MIN_PAGE_SIZE <= page_size <= self.EVENTS_MAX_PAGE_SIZE
+            ):
+                raise ValidationError(
+                    [
+                        {
+                            "detail": (
+                                f"page[size] must be between {self.EVENTS_MIN_PAGE_SIZE} "
+                                f"and {self.EVENTS_MAX_PAGE_SIZE}"
+                            ),
+                            "status": "400",
+                            "source": {"parameter": "page[size]"},
+                            "code": "out_of_range",
+                        }
+                    ]
+                )
+
+        # Parse include_read_events (default: false)
+        include_read_events = (
+            request.query_params.get("include_read_events", "").lower() == "true"
+        )
+
+        try:
+            # Initialize Prowler provider using existing utility
+            prowler_provider = initialize_prowler_provider(resource.provider)
+
+            # Get the boto3 session from the Prowler provider
+            session = prowler_provider._session.current_session
+
+            # Create timeline service (currently only AWS/CloudTrail is supported)
+            timeline_service = CloudTrailTimeline(
+                session=session,
+                lookback_days=lookback_days,
+                max_results=page_size,
+                write_events_only=not include_read_events,
+            )
+
+            # Get timeline events
+            events = timeline_service.get_resource_timeline(
+                region=resource.region,
+                resource_uid=resource.uid,
+            )
+
+            serializer = ResourceEventSerializer(events, many=True)
+            return Response(serializer.data)
+
+        except NoCredentialsError:
+            # 502 because this is an upstream auth failure, not API auth failure
+            raise UpstreamAuthenticationError(
+                detail="Credentials not found for this provider. Please reconnect the provider."
+            )
+        except AWSCredentialsError:
+            # Handles expired tokens, invalid keys, profile not found, etc.
+            raise UpstreamAuthenticationError()
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            logger.error(
+                f"Provider API error retrieving events: {str(e)}",
+                exc_info=True,
+            )
+            # AccessDenied means the credentials don't have the required permissions
+            if error_code in ("AccessDenied", "AccessDeniedException"):
+                raise UpstreamAccessDeniedError()
+
+            raise UpstreamServiceUnavailableError()
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            raise UpstreamInternalError(detail="Failed to retrieve events")
 
 
 @extend_schema_view(
