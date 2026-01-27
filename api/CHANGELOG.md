@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.18.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: `aws-security-groups-open-internet-facing` query returning no results due to incorrect relationship matching [(#PROWLER-875)](https://github.com/prowler-cloud/prowler/pull/PROWLER-875)
+
+---
+
 ## [1.18.1] (Prowler v5.17.1)
 
 ### Fixed
