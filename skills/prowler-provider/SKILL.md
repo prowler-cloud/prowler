@@ -117,6 +117,7 @@ Current providers:
 - M365 (Microsoft 365)
 - OracleCloud (Oracle Cloud Infrastructure)
 - AlibabaCloud
+- Cloudflare
 - MongoDB Atlas
 - NHN (NHN Cloud)
 - LLM (Language Model providers)
