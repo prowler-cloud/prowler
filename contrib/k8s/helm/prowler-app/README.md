@@ -81,6 +81,9 @@ Before installing the Helm chart, you must create a Kubernetes Secret containing
      DJANGO_SECRETS_ENCRYPTION_KEY: "[paste your encryption key here]"
 
      AUTH_SECRET: "[paste your auth secret here]"
+
+     NEO4J_PASSWORD: "[prowler-password]"
+     NEO4J_AUTH: "neo4j/[prowler-password]"
    ```
 
    > **Note:** You can use the [example secrets file](./examples/minimal-installation/secrets.yaml) as a template, but **always replace the placeholder values with your own secure keys** before applying.
@@ -122,6 +125,7 @@ ui:
 Install Prowler App using Helm:
 
 ```bash
+helm dependency update
 helm install prowler prowler/prowler-app -f values.yaml
 ```
 
