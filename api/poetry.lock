@@ -1097,6 +1097,23 @@ msal-extensions = ">=1.2.0"
 typing-extensions = ">=4.0.0"
 
 [[package]]
+name = "azure-keyvault-certificates"
+version = "4.10.0"
+description = "Microsoft Corporation Key Vault Certificates Client Library for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "azure_keyvault_certificates-4.10.0-py3-none-any.whl", hash = "sha256:fa76cbc329274cb5f4ab61b0ed7d209d44377df4b4d6be2fd01e741c2fbb83a9"},
+    {file = "azure_keyvault_certificates-4.10.0.tar.gz", hash = "sha256:004ff47a73152f9f40f678e5a07719b753a3ca86f0460bfeaaf6a23304872e05"},
+]
+
+[package.dependencies]
+azure-core = ">=1.31.0"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
+
+[[package]]
 name = "azure-keyvault-keys"
 version = "4.10.0"
 description = "Microsoft Azure Key Vault Keys Client Library for Python"
@@ -1113,6 +1130,23 @@ azure-core = ">=1.31.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.0.1"
+
+[[package]]
+name = "azure-keyvault-secrets"
+version = "4.10.0"
+description = "Microsoft Corporation Key Vault Secrets Client Library for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "azure_keyvault_secrets-4.10.0-py3-none-any.whl", hash = "sha256:9dbde256077a4ee1a847646671580692e3f9bea36bcfc189c3cf2b9a94eb38b9"},
+    {file = "azure_keyvault_secrets-4.10.0.tar.gz", hash = "sha256:666fa42892f9cee749563e551a90f060435ab878977c95265173a8246d546a36"},
+]
+
+[package.dependencies]
+azure-core = ">=1.31.0"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-apimanagement"
@@ -1316,6 +1350,24 @@ groups = ["main"]
 files = [
     {file = "azure_mgmt_eventgrid-10.4.0-py3-none-any.whl", hash = "sha256:5e4637245bbff33298d5f427971b870dbb03d873a3ef68f328190a7b7a38c56f"},
     {file = "azure_mgmt_eventgrid-10.4.0.tar.gz", hash = "sha256:303e5e27cf4bb5ec833ba4e5a9ef70b5bc410e190412ec47cde59d82e413fb7e"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
+
+[[package]]
+name = "azure-mgmt-eventhub"
+version = "11.2.0"
+description = "Microsoft Azure Event Hub Management Client Library for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "azure_mgmt_eventhub-11.2.0-py3-none-any.whl", hash = "sha256:a7e2618eca58d8e52c7ff7d4a04a4fae12685351746e6d01b933b43e7ea3b906"},
+    {file = "azure_mgmt_eventhub-11.2.0.tar.gz", hash = "sha256:31c47f18f73d2d83345cde5909568e28858c2548a35b10e23194b4767a9ce7e3"},
 ]
 
 [package.dependencies]
@@ -1587,6 +1639,23 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 msrest = ">=0.7.1"
 
 [[package]]
+name = "azure-mgmt-synapse"
+version = "2.0.0"
+description = "Microsoft Azure Synapse Management Client Library for Python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "azure-mgmt-synapse-2.0.0.zip", hash = "sha256:bec6bdfaeb55b4fdd159f2055e8875bf50a720bb0fce80a816e92a2359b898c8"},
+    {file = "azure_mgmt_synapse-2.0.0-py2.py3-none-any.whl", hash = "sha256:e901274009be843a7bf2eedeab32c0941fabb2addea9a1ad1560395073965f0f"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.2.0,<2.0.0"
+msrest = ">=0.6.21"
+
+[[package]]
 name = "azure-mgmt-web"
 version = "8.0.0"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
@@ -1641,6 +1710,24 @@ typing-extensions = ">=4.6.0"
 
 [package.extras]
 aio = ["azure-core[aio] (>=1.30.0)"]
+
+[[package]]
+name = "azure-synapse-artifacts"
+version = "0.21.0"
+description = "Microsoft Azure Synapse Artifacts Client Library for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "azure_synapse_artifacts-0.21.0-py3-none-any.whl", hash = "sha256:3311919df13a2b42f1fb9debf5d512080c35d64d02b9f84ff944848835289a8d"},
+    {file = "azure_synapse_artifacts-0.21.0.tar.gz", hash = "sha256:d7e37516cf8569e03c604d921e3407d7140cf7523b67b67f757caf999e3c8ee7"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.6.0"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "backoff"
@@ -1757,7 +1844,7 @@ files = [
 
 [[package]]
 name = "cartography"
-version = "0.0.1.dev1268+gc134846c0"
+version = "0.126.1"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
@@ -1770,6 +1857,9 @@ adal = ">=1.2.4"
 aioboto3 = ">=13.0.0"
 azure-cli-core = ">=2.26.0"
 azure-identity = ">=1.5.0"
+azure-keyvault-certificates = ">=4.0.0"
+azure-keyvault-keys = ">=4.0.0"
+azure-keyvault-secrets = ">=4.0.0"
 azure-mgmt-authorization = ">=0.60.0"
 azure-mgmt-compute = ">=5.0.0"
 azure-mgmt-containerinstance = ">=10.0.0"
@@ -1777,6 +1867,8 @@ azure-mgmt-containerservice = ">=30.0.0"
 azure-mgmt-cosmosdb = ">=6.0.0"
 azure-mgmt-datafactory = ">=8.0.0"
 azure-mgmt-eventgrid = ">=10.0.0"
+azure-mgmt-eventhub = ">=10.1.0"
+azure-mgmt-keyvault = ">=10.0.0"
 azure-mgmt-logic = ">=10.0.0"
 azure-mgmt-monitor = ">=3.0.0"
 azure-mgmt-network = ">=25.0.0"
@@ -1784,7 +1876,9 @@ azure-mgmt-resource = ">=10.2.0"
 azure-mgmt-security = ">=5.0.0"
 azure-mgmt-sql = ">=3.0.1,<4"
 azure-mgmt-storage = ">=16.0.0"
+azure-mgmt-synapse = ">=2.0.0"
 azure-mgmt-web = ">=7.0.0"
+azure-synapse-artifacts = ">=0.17.0"
 backoff = ">=2.1.2"
 boto3 = ">=1.15.1"
 botocore = ">=1.18.1"
@@ -1821,8 +1915,8 @@ xmltodict = "*"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/cartography"
-reference = "master"
-resolved_reference = "c134846c0db64747340f880cf0b5085f5e473e03"
+reference = "0.126.1"
+resolved_reference = "9e3dd6459bec027461e1fe998c034a0f3fb83e3d"
 
 [[package]]
 name = "celery"
@@ -9029,4 +9123,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "15b849034c0969b944c45f341169a42160efe2525fe60a4cadd8a8909202e9e3"
+content-hash = "23cfd1ed8a794d3b31ca79218526ea7da8ef3d7e405a51a9fe4801916c124c30"
