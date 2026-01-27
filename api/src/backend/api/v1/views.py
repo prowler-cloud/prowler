@@ -284,7 +284,10 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
-from prowler.providers.aws.exceptions.exceptions import AWSCredentialsError
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSAssumeRoleError,
+    AWSCredentialsError,
+)
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
 )
@@ -3044,19 +3047,25 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             raise UpstreamAuthenticationError(
                 detail="Credentials not found for this provider. Please reconnect the provider."
             )
+        except AWSAssumeRoleError:
+            # AssumeRole failed - usually IAM permission issue (not authorized to sts:AssumeRole)
+            raise UpstreamAccessDeniedError(
+                detail="Cannot assume role for this provider. Check IAM Role permissions and trust relationship."
+            )
         except AWSCredentialsError:
             # Handles expired tokens, invalid keys, profile not found, etc.
             raise UpstreamAuthenticationError()
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
+            # AccessDenied is expected when credentials lack permissions - don't log as error
+            if error_code in ("AccessDenied", "AccessDeniedException"):
+                raise UpstreamAccessDeniedError()
+
+            # Unexpected ClientErrors should be logged for debugging
             logger.error(
                 f"Provider API error retrieving events: {str(e)}",
                 exc_info=True,
             )
-            # AccessDenied means the credentials don't have the required permissions
-            if error_code in ("AccessDenied", "AccessDeniedException"):
-                raise UpstreamAccessDeniedError()
-
             raise UpstreamServiceUnavailableError()
         except Exception as e:
             sentry_sdk.capture_exception(e)

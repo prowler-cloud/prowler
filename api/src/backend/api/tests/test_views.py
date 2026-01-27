@@ -4851,6 +4851,68 @@ class TestResourceViewSet:
         assert error["status"] == "503"  # Must be string per JSON:API spec
         assert "detail" in error
 
+    @patch("api.v1.views.initialize_prowler_provider")
+    def test_events_assume_role_access_denied(
+        self,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events handles AWSAssumeRoleError during provider init.
+
+        This tests the scenario from CLOUD-API-3HJ where the API task role
+        cannot assume the customer's ProwlerScan role due to IAM permissions.
+        The error happens during initialize_prowler_provider, which wraps
+        the ClientError in AWSAssumeRoleError.
+        """
+        from api.models import Resource
+        from prowler.providers.aws.exceptions.exceptions import AWSAssumeRoleError
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:lambda:eu-west-1:123456789012:function:assume-role-test",
+            name="AssumeRole Test Function",
+            type="function",
+            region="eu-west-1",
+            service="lambda",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock initialize_prowler_provider raising AWSAssumeRoleError
+        # (this is what aws_provider.py actually raises when AssumeRole fails)
+        original_error = ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDenied",
+                    "Message": (
+                        "User: arn:aws:sts::123456789012:assumed-role/api-task-role/xxx "
+                        "is not authorized to perform: sts:AssumeRole on resource: "
+                        "arn:aws:iam::123456789012:role/ProwlerScan"
+                    ),
+                }
+            },
+            "AssumeRole",
+        )
+        mock_initialize_provider.side_effect = AWSAssumeRoleError(
+            original_exception=original_error,
+            file="aws_provider.py",
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # AWSAssumeRoleError returns 502 (upstream auth failure)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_access_denied"
+        assert error["status"] == "502"
+        assert "detail" in error
+
     def test_events_unauthenticated_returns_401(self, providers_fixture):
         """Test events endpoint returns 401 when no credentials are provided.
 
