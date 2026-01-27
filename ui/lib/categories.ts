@@ -51,6 +51,19 @@ export function getCategoryLabel(id: string): string {
   return formatLabel(id, "-");
 }
 
+/**
+ * Converts a resource group ID to a human-readable label.
+ * Convenience wrapper for formatLabel with "_" delimiter.
+ *
+ * Examples:
+ * - "ai_ml" -> "AI ML"
+ * - "api_gateway" -> "API Gateway"
+ * - "iam" -> "IAM"
+ */
+export function getGroupLabel(id: string): string {
+  return formatLabel(id, "_");
+}
+
 export function formatWord(word: string): string {
   const lowerWord = word.toLowerCase();
 
