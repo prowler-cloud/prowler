@@ -276,7 +276,17 @@ class CloudflareProvider(Provider):
         # Audited accounts (only the ones that will actually be scanned)
         audited_accounts = self.identity.audited_accounts
         if audited_accounts:
-            accounts_str = ", ".join(audited_accounts)
+            account_names = {
+                account.id: account.name for account in self.identity.accounts
+            }
+            accounts_str = ", ".join(
+                (
+                    f"{account_id} ({account_names[account_id]})"
+                    if account_id in account_names and account_names[account_id]
+                    else account_id
+                )
+                for account_id in audited_accounts
+            )
             report_lines.append(
                 f"Audited Accounts: {Fore.YELLOW}{accounts_str}{Style.RESET_ALL}"
             )
