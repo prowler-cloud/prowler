@@ -434,6 +434,103 @@ class TestParseEvent:
         assert result["event_name"] == "RunInstances"
         assert result["actor"] == "admin"
 
+    def test_parse_event_missing_event_id(self, mock_session):
+        """Test parsing event without EventId returns None (event_id is required)."""
+        event = {
+            # Missing EventId
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "RunInstances",
+            "EventSource": "ec2.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {"userIdentity": {"type": "IAMUser", "userName": "admin"}}
+            ),
+        }
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline._parse_event(event)
+
+        # Should return None because event_id is required by TimelineEvent model
+        assert result is None
+
+    def test_parse_event_uses_request_data_and_response_data_fields(self, mock_session):
+        """Test that parsed event uses request_data and response_data field names."""
+        event = {
+            "EventId": "field-names-test-id",
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "CreateBucket",
+            "EventSource": "s3.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {
+                    "userIdentity": {"type": "IAMUser", "userName": "admin"},
+                    "requestParameters": {"bucketName": "my-bucket", "acl": "private"},
+                    "responseElements": {
+                        "location": "http://my-bucket.s3.amazonaws.com"
+                    },
+                }
+            ),
+        }
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline._parse_event(event)
+
+        assert result is not None
+        # Verify field names are request_data/response_data (not request_parameters/response_elements)
+        assert "request_data" in result
+        assert "response_data" in result
+        assert "request_parameters" not in result
+        assert "response_elements" not in result
+        # Verify the data is correctly mapped
+        assert result["request_data"] == {"bucketName": "my-bucket", "acl": "private"}
+        assert result["response_data"] == {
+            "location": "http://my-bucket.s3.amazonaws.com"
+        }
+
+    def test_parse_event_missing_actor_type(self, mock_session):
+        """Test parsing event where userIdentity has no type field."""
+        event = {
+            "EventId": "no-actor-type-id",
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "RunInstances",
+            "EventSource": "ec2.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {
+                    "userIdentity": {
+                        # No "type" field
+                        "arn": "arn:aws:iam::123456789012:user/admin",
+                        "userName": "admin",
+                    },
+                    "sourceIPAddress": "203.0.113.1",
+                }
+            ),
+        }
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline._parse_event(event)
+
+        assert result is not None
+        assert result["event_name"] == "RunInstances"
+        assert result["actor"] == "admin"
+        # actor_type should be None when not present in userIdentity
+        assert result["actor_type"] is None
+
+    def test_parse_event_empty_request_response(self, mock_session):
+        """Test parsing event with no requestParameters or responseElements."""
+        event = {
+            "EventId": "no-params-id",
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "DescribeInstances",
+            "EventSource": "ec2.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {
+                    "userIdentity": {"type": "IAMUser", "userName": "reader"},
+                    # No requestParameters or responseElements
+                }
+            ),
+        }
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline._parse_event(event)
+
+        assert result is not None
+        assert result["request_data"] is None
+        assert result["response_data"] is None
+
 
 class TestClientCaching:
     def test_client_cached_per_region(self):
