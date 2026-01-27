@@ -4858,14 +4858,15 @@ class TestResourceViewSet:
         authenticated_client,
         providers_fixture,
     ):
-        """Test events handles AccessDenied during AssumeRole (provider init).
+        """Test events handles AWSAssumeRoleError during provider init.
 
         This tests the scenario from CLOUD-API-3HJ where the API task role
         cannot assume the customer's ProwlerScan role due to IAM permissions.
-        The error happens during initialize_prowler_provider, not during
-        the CloudTrail timeline call.
+        The error happens during initialize_prowler_provider, which wraps
+        the ClientError in AWSAssumeRoleError.
         """
         from api.models import Resource
+        from prowler.providers.aws.exceptions.exceptions import AWSAssumeRoleError
 
         aws_provider = providers_fixture[0]  # AWS provider from fixture
 
@@ -4879,8 +4880,9 @@ class TestResourceViewSet:
             tenant_id=aws_provider.tenant_id,
         )
 
-        # Mock initialize_prowler_provider raising ClientError during AssumeRole
-        mock_initialize_provider.side_effect = ClientError(
+        # Mock initialize_prowler_provider raising AWSAssumeRoleError
+        # (this is what aws_provider.py actually raises when AssumeRole fails)
+        original_error = ClientError(
             {
                 "Error": {
                     "Code": "AccessDenied",
@@ -4893,12 +4895,16 @@ class TestResourceViewSet:
             },
             "AssumeRole",
         )
+        mock_initialize_provider.side_effect = AWSAssumeRoleError(
+            original_exception=original_error,
+            file="aws_provider.py",
+        )
 
         response = authenticated_client.get(
             reverse("resource-events", kwargs={"pk": resource.id})
         )
 
-        # AccessDenied during AssumeRole returns 502 (upstream auth failure)
+        # AWSAssumeRoleError returns 502 (upstream auth failure)
         assert response.status_code == status.HTTP_502_BAD_GATEWAY
 
         # Verify JSON:API error structure

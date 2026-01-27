@@ -284,7 +284,10 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
-from prowler.providers.aws.exceptions.exceptions import AWSCredentialsError
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSAssumeRoleError,
+    AWSCredentialsError,
+)
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
 )
@@ -3043,6 +3046,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             # 502 because this is an upstream auth failure, not API auth failure
             raise UpstreamAuthenticationError(
                 detail="Credentials not found for this provider. Please reconnect the provider."
+            )
+        except AWSAssumeRoleError:
+            # AssumeRole failed - usually IAM permission issue (not authorized to sts:AssumeRole)
+            raise UpstreamAccessDeniedError(
+                detail="Cannot assume role for this provider. Check IAM Role permissions and trust relationship."
             )
         except AWSCredentialsError:
             # Handles expired tokens, invalid keys, profile not found, etc.
