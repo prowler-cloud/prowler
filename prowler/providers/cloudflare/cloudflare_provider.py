@@ -273,10 +273,13 @@ class CloudflareProvider(Provider):
         if email:
             report_lines.append(f"Email: {Fore.YELLOW}{email}{Style.RESET_ALL}")
 
-        # Accounts
-        if self.accounts:
-            accounts = ", ".join([account.id for account in self.accounts])
-            report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
+        # Audited accounts (only the ones that will actually be scanned)
+        audited_accounts = self.identity.audited_accounts
+        if audited_accounts:
+            accounts_str = ", ".join(audited_accounts)
+            report_lines.append(
+                f"Audited Accounts: {Fore.YELLOW}{accounts_str}{Style.RESET_ALL}"
+            )
 
         print_boxes(report_lines, report_title)
 
