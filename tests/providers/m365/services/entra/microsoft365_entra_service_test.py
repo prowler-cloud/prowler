@@ -13,6 +13,7 @@ from prowler.providers.m365.services.entra.entra_service import (
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
+    DefaultAppManagementPolicy,
     DefaultUserRolePermissions,
     Entra,
     GrantControlOperator,
@@ -154,6 +155,15 @@ async def mock_entra_get_organization(_):
     ]
 
 
+async def mock_entra_get_default_app_management_policy(_):
+    return DefaultAppManagementPolicy(
+        id="00000000-0000-0000-0000-000000000000",
+        name="Default app management tenant policy",
+        description="Default tenant policy that enforces app management restrictions.",
+        is_enabled=True,
+    )
+
+
 class Test_Entra_Service:
     def test_get_client(self):
         with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
@@ -283,6 +293,27 @@ class Test_Entra_Service:
         assert entra_client.organizations[0].id == "org1"
         assert entra_client.organizations[0].name == "Organization 1"
         assert entra_client.organizations[0].on_premises_sync_enabled
+
+    @patch(
+        "prowler.providers.m365.services.entra.entra_service.Entra._get_default_app_management_policy",
+        new=mock_entra_get_default_app_management_policy,
+    )
+    def test_get_default_app_management_policy(self):
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
+        assert (
+            entra_client.default_app_management_policy.id
+            == "00000000-0000-0000-0000-000000000000"
+        )
+        assert (
+            entra_client.default_app_management_policy.name
+            == "Default app management tenant policy"
+        )
+        assert (
+            entra_client.default_app_management_policy.description
+            == "Default tenant policy that enforces app management restrictions."
+        )
+        assert entra_client.default_app_management_policy.is_enabled is True
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_users",

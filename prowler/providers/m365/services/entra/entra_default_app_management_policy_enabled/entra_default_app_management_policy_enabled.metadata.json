@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_default_app_management_policy_enabled",
+  "CheckTitle": "Default app management policy enforces credential restrictions on applications and service principals",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "",
+  "ResourceGroup": "IAM",
+  "Description": "The default app management policy in Microsoft Entra ID enforces credential configurations on applications and service principals. When enabled, administrators can restrict weak credential types and enforce expiration policies.",
+  "Risk": "Without an enabled app management policy, applications and service principals can be created with insecure credential configurations, including long-lived secrets or weak authentication methods, increasing the risk of credential compromise and unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/tenantappmanagementpolicy",
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/app-management-policies-overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Update-MgPolicyDefaultAppManagementPolicy -IsEnabled $true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com/).\n2. Go to Identity > Applications > App management policies.\n3. Select the 'Default app management policy'.\n4. Enable the policy and configure the desired restrictions for password credentials and key credentials.\n5. Save the changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the default app management policy to enforce credential restrictions on applications and service principals, preventing the use of insecure credentials.",
+      "Url": "https://hub.prowler.com/check/entra_default_app_management_policy_enabled"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check is equivalent to Maester test MT.1002. The default app management policy helps enforce secure credential practices across all applications in the tenant."
+}
