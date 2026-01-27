@@ -16,6 +16,7 @@ import { useState } from "react";
 import { CopyIcon, DoneIcon } from "@/components/icons";
 import { EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
+import { getGroupLabel } from "@/lib/categories";
 import { ProviderType, ResourceProps } from "@/types";
 
 import { ResourceDetail } from "./resource-detail";
@@ -150,11 +151,11 @@ const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
 
 // Column definitions for resources table
 export const ColumnResources: ColumnDef<ResourceProps>[] = [
-  // Resource Name column
+  // Name column
   {
     accessorKey: "resourceName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Resource Name" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
     cell: ({ row }) => <ResourceNameCell row={row} />,
     enableSorting: false,
@@ -195,15 +196,42 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
     },
     enableSorting: false,
   },
-  // Resource Type column
+  // Group column
+  {
+    accessorKey: "groups",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Group" param="groups" />
+    ),
+    cell: ({ row }) => {
+      const groups = getResourceData(row, "groups") as string[] | null;
+
+      if (!groups || groups.length === 0) {
+        return <p className="text-text-neutral-primary text-sm">-</p>;
+      }
+
+      const displayLabel = getGroupLabel(groups[0]);
+      const extraCount = groups.length - 1;
+
+      return (
+        <div className="flex items-center gap-1">
+          <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
+            {displayLabel}
+          </p>
+          {extraCount > 0 && (
+            <span className="text-text-neutral-secondary text-xs">
+              +{extraCount}
+            </span>
+          )}
+        </div>
+      );
+    },
+    enableSorting: false,
+  },
+  // Type column
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Resource Type"
-        param="type"
-      />
+      <DataTableColumnHeader column={column} title="Type" param="type" />
     ),
     cell: ({ row }) => {
       const type = getResourceData(row, "type");

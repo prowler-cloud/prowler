@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/entities";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { getGroupLabel } from "@/lib/categories";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import {
   FindingProps,
@@ -472,29 +473,30 @@ export const ResourceDetail = ({
           </InfoField>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Resource Name">
-              {renderValue(attributes.name)}
-            </InfoField>
-            <InfoField label="Resource Type">
-              {renderValue(attributes.type)}
-            </InfoField>
+            <InfoField label="Name">{renderValue(attributes.name)}</InfoField>
+            <InfoField label="Type">{renderValue(attributes.type)}</InfoField>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Group">
+              {attributes.groups && attributes.groups.length > 0
+                ? attributes.groups.map(getGroupLabel).join(", ")
+                : "-"}
+            </InfoField>
             <InfoField label="Service">
               {renderValue(attributes.service)}
             </InfoField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Region">
               {renderValue(attributes.region)}
             </InfoField>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Partition">
               {renderValue(attributes.partition)}
             </InfoField>
-            <InfoField label="Details">
-              {renderValue(attributes.details)}
-            </InfoField>
           </div>
+          <InfoField label="Details" variant="simple">
+            {renderValue(attributes.details)}
+          </InfoField>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoField label="Created At">
               <DateWithTime inline dateTime={attributes.inserted_at} />

@@ -133,6 +133,7 @@ const SSRDataTable = async ({
       "region",
       "service",
       "type",
+      "groups",
       "provider",
       "inserted_at",
       "updated_at",
