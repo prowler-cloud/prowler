@@ -49,8 +49,8 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       };
     case "github":
       return {
-        label: "Username",
-        placeholder: "e.g. your-github-username",
+        label: "Username/Organization",
+        placeholder: "e.g. username or organization-name",
       };
     case "iac":
       return {
