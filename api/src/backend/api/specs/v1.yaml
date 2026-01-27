@@ -8502,6 +8502,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceResponse'
           description: ''
+  /api/v1/resources/{id}/events:
+    get:
+      operationId: resources_events_list
+      description: |-
+        Retrieve events showing modification history for a resource. Returns who modified the resource and when. Currently only available for AWS resources.
+
+        **Note:** Some events may not appear due to CloudTrail indexing limitations. Not all AWS API calls record the resource identifier in a searchable format.
+      summary: Get events for a resource
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this resource.
+        required: true
+      - in: query
+        name: include_read_events
+        schema:
+          type: boolean
+        description: 'Include read-only events (Describe*, Get*, List*, etc.). Default:
+          false. Set to true to include all events.'
+      - in: query
+        name: lookback_days
+        schema:
+          type: integer
+        description: 'Number of days to look back (default: 90, min: 1, max: 90).'
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: page[size]
+        schema:
+          type: integer
+        description: 'Maximum number of events to return (default: 50, min: 1, max:
+          50).'
+      tags:
+      - Resource
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceEventList'
+          description: ''
+        '400':
+          description: Invalid provider or parameters
+        '500':
+          description: Unexpected error retrieving events
+        '502':
+          description: Provider credentials invalid, expired, or lack required permissions
+        '503':
+          description: Provider service unavailable
   /api/v1/resources/latest:
     get:
       operationId: resources_latest_retrieve
@@ -15885,6 +15943,15 @@ components:
             $ref: '#/components/schemas/ProviderSecret'
       required:
       - data
+    PaginatedResourceEventList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceEvent'
+      required:
+      - data
     PaginatedResourceGroupOverviewList:
       type: object
       properties:
@@ -19967,6 +20034,63 @@ components:
               readOnly: true
           required:
           - provider
+    ResourceEvent:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-events
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            event_time:
+              type: string
+              format: date-time
+            event_name:
+              type: string
+            event_source:
+              type: string
+            actor:
+              type: string
+            actor_uid:
+              type: string
+              nullable: true
+            actor_type:
+              type: string
+              nullable: true
+            source_ip_address:
+              type: string
+              nullable: true
+            user_agent:
+              type: string
+              nullable: true
+            request_data:
+              nullable: true
+            response_data:
+              nullable: true
+            error_code:
+              type: string
+              nullable: true
+            error_message:
+              type: string
+              nullable: true
+          required:
+          - id
+          - event_time
+          - event_name
+          - event_source
+          - actor
     ResourceGroupOverview:
       type: object
       required:
