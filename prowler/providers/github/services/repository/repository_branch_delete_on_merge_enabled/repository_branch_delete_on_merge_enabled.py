@@ -28,7 +28,7 @@ class repository_branch_delete_on_merge_enabled(Check):
 
             if repo.delete_branch_on_merge is None:
                 report.status = "MANUAL"
-                report.status_extended = f"Repository {repo.name} branch deletion setting could not be checked in default branch ({repo.default_branch.name}) due to insufficient permissions."
+                report.status_extended = f"Repository {repo.name} branch deletion setting could not be checked in default branch ({repo.default_branch.name}) due to insufficient permissions. Requires Administration: Read and Write permission."
             elif repo.delete_branch_on_merge:
                 report.status = "PASS"
                 report.status_extended = f"Repository {repo.name} does delete branches on merge in default branch ({repo.default_branch.name})."
