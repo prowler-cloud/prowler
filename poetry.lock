@@ -2445,14 +2445,14 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "freezegun"
-version = "1.5.1"
+version = "1.5.5"
 description = "Let your Python tests travel through time"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "freezegun-1.5.1-py3-none-any.whl", hash = "sha256:bf111d7138a8abe55ab48a71755673dbaa4ab87f4cff5634a4442dfec34c15f1"},
-    {file = "freezegun-1.5.1.tar.gz", hash = "sha256:b29dedfcda6d5e8e083ce71b2b542753ad48cfec44037b3fc79702e2980a89e9"},
+    {file = "freezegun-1.5.5-py3-none-any.whl", hash = "sha256:cd557f4a75cf074e84bc374249b9dd491eaeacd61376b9eb3c423282211619d2"},
+    {file = "freezegun-1.5.5.tar.gz", hash = "sha256:ac7742a6cc6c25a2c35e9292dfd554b897b517d2dec26891a2e8debf205cb94a"},
 ]
 
 [package.dependencies]
@@ -6613,4 +6613,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<3.13"
-content-hash = "adfc2da2c6e3e803f7a151b9697dbc3f461366a03e4504eb97498cbc72b2e48c"
+content-hash = "8b554c22b6f5bfd270d477c6f1d9439e8ec0a67638873df90f86d77739380439"
