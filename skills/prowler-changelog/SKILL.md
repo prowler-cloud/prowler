@@ -56,15 +56,18 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ```markdown
 ### Added
 
-- First entry [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- Second entry [(#YYYY)](https://github.com/prowler-cloud/prowler/pull/YYYY)
+- Existing entry one [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- Existing entry two [(#YYYY)](https://github.com/prowler-cloud/prowler/pull/YYYY)
+- NEW ENTRY GOES HERE at the BOTTOM [(#ZZZZ)](https://github.com/prowler-cloud/prowler/pull/ZZZZ)
 
 ### Changed
 
-- Another entry [(#ZZZZ)](https://github.com/prowler-cloud/prowler/pull/ZZZZ)
+- Existing change [(#AAAA)](https://github.com/prowler-cloud/prowler/pull/AAAA)
+- NEW CHANGE ENTRY at BOTTOM [(#BBBB)](https://github.com/prowler-cloud/prowler/pull/BBBB)
 ```
 
 **Rules:**
+- **ADD NEW ENTRIES AT THE BOTTOM of each section** (before next section header or `---`)
 - **Blank line after section header** before first entry
 - **Blank line between sections**
 - Be specific: what changed, not why (that's in the PR)
@@ -138,19 +141,23 @@ git diff main...HEAD --name-only
 | Feature removal | ❌ Removed |
 | Deprecation notice | ⚠️ Deprecated |
 
-### Step 3: Add Entry to UNRELEASED Section
+### Step 3: Add Entry at BOTTOM of Appropriate Section
 
-```bash
-# Example: Adding a fix to UI changelog
-```
+**CRITICAL:** Add new entries at the BOTTOM of each section, NOT at the top.
 
 ```markdown
 ## [1.17.0] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
-- Button alignment in dashboard header [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)
+- Existing fix one [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
+- Existing fix two [(#9998)](https://github.com/prowler-cloud/prowler/pull/9998)
+- Button alignment in dashboard header [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)  ← NEW ENTRY AT BOTTOM
+
+### 🔐 Security
 ```
+
+This maintains chronological order within each section (oldest at top, newest at bottom).
 
 ## Examples
 
