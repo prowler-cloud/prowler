@@ -87,6 +87,30 @@ You can also use zone IDs instead of domain names:
 prowler cloudflare -f 023e105f4ecef8ad9ca31a8372d0c353
 ```
 
+## Filtering Accounts
+
+By default, Prowler scans all accounts accessible with your credentials. If your API Token or API Key has access to multiple Cloudflare accounts, you can restrict the scan to specific accounts using the `--account-id` argument:
+
+```bash
+prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59
+```
+
+You can specify multiple account IDs:
+
+```bash
+prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59 9a7806061c88ada191ed06f989cc3dac
+```
+
+<Note>
+If any of the provided account IDs are not found among the accounts accessible with your credentials, Prowler will raise an error and stop execution.
+</Note>
+
+You can combine account and zone filtering to narrow the scan scope further:
+
+```bash
+prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59 -f example.com
+```
+
 ## Configuration
 
 Prowler uses a configuration file to customize provider behavior. The Cloudflare configuration includes:
