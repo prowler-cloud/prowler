@@ -230,9 +230,9 @@
         }
       ],
       "Checks": [
-        "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
+        "entra_default_app_management_policy_enabled",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_users_mfa_enabled",
