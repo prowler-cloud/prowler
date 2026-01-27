@@ -1,6 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
+OWASP_CORE_RULESET_ID = "4814384a9e5d4991b9815dcfc25d2f1f"
+
 
 class zone_waf_owasp_ruleset_enabled(Check):
     """Ensure that OWASP managed WAF rulesets are enabled for Cloudflare zones.
@@ -14,13 +16,12 @@ class zone_waf_owasp_ruleset_enabled(Check):
     def execute(self) -> list[CheckReportCloudflare]:
         """Execute the OWASP WAF ruleset enabled check.
 
-        Iterates through all Cloudflare zones and verifies that OWASP managed
-        WAF rulesets are enabled. The check identifies OWASP rulesets by name
-        containing "owasp" or by the http_request_firewall_managed phase.
+        Iterates through all Cloudflare zones and verifies that the OWASP Core
+        Ruleset (``4814384a9e5d4991b9815dcfc25d2f1f``) is deployed and enabled.
 
         Returns:
             A list of CheckReportCloudflare objects with PASS status if OWASP
-            rulesets are enabled, or FAIL status if no OWASP protection exists.
+            ruleset is enabled, or FAIL status if no OWASP protection exists.
         """
         findings = []
 
@@ -30,23 +31,24 @@ class zone_waf_owasp_ruleset_enabled(Check):
                 resource=zone,
             )
 
-            # Find OWASP managed rulesets for this zone
-            # Only match rulesets that explicitly contain "owasp" in the name
-            # The phase check was too broad as it matched any managed ruleset
-            owasp_rulesets = [
-                ruleset
-                for ruleset in zone.waf_rulesets
-                if "owasp" in (ruleset.name or "").lower()
-            ]
+            # Find enabled OWASP rules by matching the well-known
+            # managed ruleset ID across all WAF entrypoint rulesets.
+            owasp_enabled = False
+            for waf_ruleset in zone.waf_rulesets:
+                for rule in waf_ruleset.rules:
+                    if (
+                        rule.enabled
+                        and rule.managed_ruleset_id == OWASP_CORE_RULESET_ID
+                    ):
+                        owasp_enabled = True
+                        break
+                if owasp_enabled:
+                    break
 
-            if owasp_rulesets:
+            if owasp_enabled:
                 report.status = "PASS"
-                ruleset_descriptions = ", ".join(
-                    ruleset.name for ruleset in owasp_rulesets
-                )
                 report.status_extended = (
-                    f"Zone {zone.name} has OWASP managed WAF ruleset enabled: "
-                    f"{ruleset_descriptions}."
+                    f"Zone {zone.name} has OWASP managed WAF ruleset enabled."
                 )
             else:
                 report.status = "FAIL"
