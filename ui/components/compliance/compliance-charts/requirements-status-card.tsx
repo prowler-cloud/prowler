@@ -55,7 +55,7 @@ export function RequirementsStatusCard({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] flex-col justify-between"
+      className="flex h-full min-h-[372px] flex-col justify-between xl:max-w-[400px]"
     >
       <CardHeader>
         <CardTitle>Requirements Status</CardTitle>

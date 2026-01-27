@@ -4,7 +4,7 @@
  */
 
 import { Copy, RotateCcw } from "lucide-react";
-import { Streamdown } from "streamdown";
+import { defaultRehypePlugins, Streamdown } from "streamdown";
 
 import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
 import { ChainOfThoughtDisplay } from "@/components/lighthouse/chain-of-thought-display";
@@ -16,6 +16,76 @@ import {
   MESSAGE_STATUS,
 } from "@/components/lighthouse/chat-utils";
 import { Loader } from "@/components/lighthouse/loader";
+
+/**
+ * Escapes angle-bracket placeholders like <bucket_name> to HTML entities
+ * so they display correctly instead of being interpreted as HTML tags.
+ *
+ * This processes the text while preserving:
+ * - Content inside inline code (backticks)
+ * - Content inside code blocks (triple backticks)
+ */
+function escapeAngleBracketPlaceholders(text: string): string {
+  // HTML tags to preserve (not escape)
+  const htmlTags = new Set([
+    "div",
+    "span",
+    "p",
+    "a",
+    "img",
+    "br",
+    "hr",
+    "ul",
+    "ol",
+    "li",
+    "table",
+    "tr",
+    "td",
+    "th",
+    "thead",
+    "tbody",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "pre",
+    "blockquote",
+    "strong",
+    "em",
+    "b",
+    "i",
+    "u",
+    "s",
+    "sub",
+    "sup",
+    "details",
+    "summary",
+  ]);
+
+  // Split by code blocks and inline code to preserve them
+  // This regex captures: ```...``` blocks, `...` inline code, and everything else
+  const parts = text.split(/(```[\s\S]*?```|`[^`]+`)/g);
+
+  return parts
+    .map((part) => {
+      // If it's a code block or inline code, leave it untouched
+      // Shiki/syntax highlighter handles escaping inside code blocks
+      if (part.startsWith("```") || part.startsWith("`")) {
+        return part;
+      }
+
+      // For regular text outside code, wrap placeholders in backticks
+      return part.replace(/<([a-zA-Z][a-zA-Z0-9_-]*)>/g, (match, tagName) => {
+        if (htmlTags.has(tagName.toLowerCase())) {
+          return match;
+        }
+        return `\`<${tagName}>\``;
+      });
+    })
+    .join("");
+}
 
 interface MessageItemProps {
   message: Message;
@@ -78,18 +148,32 @@ export function MessageItem({
             <Loader size="default" text="Thinking..." />
           ) : messageText ? (
             <div>
-              <Streamdown
-                parseIncompleteMarkdown={true}
-                shikiTheme={["github-light", "github-dark"]}
-                controls={{
-                  code: true,
-                  table: true,
-                  mermaid: true,
-                }}
-                isAnimating={isStreamingAssistant}
-              >
-                {messageText}
-              </Streamdown>
+              {message.role === MESSAGE_ROLES.USER ? (
+                // User messages: render as plain text to preserve HTML-like tags
+                <p className="text-sm whitespace-pre-wrap">{messageText}</p>
+              ) : (
+                // Assistant messages: render with markdown support
+                <div className="lighthouse-markdown">
+                  <Streamdown
+                    parseIncompleteMarkdown={true}
+                    shikiTheme={["github-light", "github-dark"]}
+                    controls={{
+                      code: true,
+                      table: true,
+                      mermaid: true,
+                    }}
+                    rehypePlugins={[
+                      // Omit defaultRehypePlugins.raw to escape HTML tags like <code>, <bucket_name>, etc.
+                      // This prevents them from being interpreted as HTML elements
+                      defaultRehypePlugins.katex,
+                      defaultRehypePlugins.harden,
+                    ]}
+                    isAnimating={isStreamingAssistant}
+                  >
+                    {escapeAngleBracketPlaceholders(messageText)}
+                  </Streamdown>
+                </div>
+              )}
             </div>
           ) : null}
         </div>

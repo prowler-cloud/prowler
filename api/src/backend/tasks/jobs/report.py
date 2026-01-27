@@ -219,6 +219,7 @@ def generate_compliance_reports(
         "gcp",
         "m365",
         "kubernetes",
+        "alibabacloud",
     ]:
         logger.info("Provider %s not supported for ThreatScore report", provider_type)
         results["threatscore"] = {"upload": False, "path": ""}

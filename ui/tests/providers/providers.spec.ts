@@ -1139,3 +1139,87 @@ test.describe("Add Provider", () => {
     );
   });
 });
+
+test.describe("Update Provider Credentials", () => {
+  test.describe.serial("Update OCI Provider Credentials", () => {
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables (same as add OCI provider test)
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
+    const userId = process.env.E2E_OCI_USER_ID;
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
+    const region = process.env.E2E_OCI_REGION;
+
+    // Validate required environment variables
+    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
+      throw new Error(
+        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should update OCI provider credentials successfully",
+      {
+        tag: [
+          "@e2e",
+          "@providers",
+          "@oci",
+          "@serial",
+          "@PROVIDER-E2E-013",
+        ],
+      },
+      async () => {
+        // Prepare updated credentials
+        const ociCredentials: OCIProviderCredential = {
+          type: OCI_CREDENTIAL_OPTIONS.OCI_API_KEY,
+          tenancyId: tenancyId,
+          userId: userId,
+          fingerprint: fingerprint,
+          keyContent: keyContent,
+          region: region,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Verify OCI provider exists in the table
+        const providerExists =
+          await providersPage.verifySingleRowForProviderUID(tenancyId);
+        if (!providerExists) {
+          throw new Error(
+            `OCI provider with tenancy ID ${tenancyId} not found. Run the add OCI provider test first.`,
+          );
+        }
+
+        // Click update credentials for the OCI provider
+        await providersPage.clickUpdateCredentials(tenancyId);
+
+        // Verify update credentials page is loaded
+        await providersPage.verifyUpdateCredentialsPageLoaded();
+
+        // Verify OCI credentials form fields are visible (confirms providerUid is loaded)
+        // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+        await providersPage.verifyOCIUpdateCredentialsPageLoaded();
+
+        // Fill updated credentials
+        await providersPage.fillOCICredentials(ociCredentials);
+
+        // Click Next to submit
+        await providersPage.clickNext();
+
+        // Verify successful navigation to test connection page
+        await providersPage.verifyTestConnectionPageLoaded();
+      },
+    );
+  });
+});

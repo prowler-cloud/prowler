@@ -40,7 +40,59 @@ function truncateDescription(desc: string | undefined, maxLen: number): string {
 }
 
 /**
- * Generate dynamic tool listing from MCP tools
+ * Tools explicitly allowed for the LLM to list and execute.
+ * Follows the principle of least privilege - only these tools are accessible.
+ * All other tools are blocked by default.
+ */
+const ALLOWED_TOOLS = new Set([
+  // === Prowler Hub Tools - read-only ===
+  "prowler_hub_list_checks",
+  "prowler_hub_semantic_search_checks",
+  "prowler_hub_get_check_details",
+  "prowler_hub_get_check_code",
+  "prowler_hub_get_check_fixer",
+  "prowler_hub_list_compliances",
+  "prowler_hub_semantic_search_compliances",
+  "prowler_hub_get_compliance_details",
+  "prowler_hub_list_providers",
+  "prowler_hub_get_provider_services",
+  // === Prowler Docs Tools - read-only ===
+  "prowler_docs_search",
+  "prowler_docs_get_document",
+  // === Prowler App Tools - read-only ===
+  // Findings
+  "prowler_app_search_security_findings",
+  "prowler_app_get_finding_details",
+  "prowler_app_get_findings_overview",
+  // Providers
+  "prowler_app_search_providers",
+  // Scans
+  "prowler_app_list_scans",
+  "prowler_app_get_scan",
+  // Muting
+  "prowler_app_get_mutelist",
+  "prowler_app_list_mute_rules",
+  "prowler_app_get_mute_rule",
+  // Compliance
+  "prowler_app_get_compliance_overview",
+  "prowler_app_get_compliance_framework_state_details",
+  // Resources
+  "prowler_app_list_resources",
+  "prowler_app_get_resource",
+  "prowler_app_get_resources_overview",
+]);
+
+/**
+ * Check if a tool is allowed for LLM access.
+ * Returns true only if the tool is explicitly in the whitelist.
+ */
+export function isAllowedTool(toolName: string): boolean {
+  return ALLOWED_TOOLS.has(toolName);
+}
+
+/**
+ * Generate dynamic tool listing from MCP tools.
+ * Only includes tools that are explicitly whitelisted.
  */
 function generateToolListing(): string {
   if (!isMCPAvailable()) {
@@ -53,10 +105,13 @@ function generateToolListing(): string {
     return TOOLS_UNAVAILABLE_MESSAGE;
   }
 
-  let listing = "\n## Available Prowler Tools\n\n";
-  listing += `${mcpTools.length} tools loaded from Prowler MCP\n\n`;
+  // Only include whitelisted tools
+  const safeTools = mcpTools.filter((tool) => isAllowedTool(tool.name));
 
-  for (const tool of mcpTools) {
+  let listing = "\n## Available Prowler Tools\n\n";
+  listing += `${safeTools.length} tools loaded from Prowler MCP\n\n`;
+
+  for (const tool of safeTools) {
     const desc = truncateDescription(tool.description, 150);
     listing += `- **${tool.name}**: ${desc}\n`;
   }
@@ -92,7 +147,7 @@ export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
 
   const defaultProvider = tenantConfig?.default_provider || "openai";
   const defaultModels = tenantConfig?.default_models || {};
-  const defaultModel = defaultModels[defaultProvider] || "gpt-4o";
+  const defaultModel = defaultModels[defaultProvider] || "gpt-5.2";
 
   const providerType = (runtimeConfig?.provider ||
     defaultProvider) as ProviderType;

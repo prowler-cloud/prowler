@@ -708,3 +708,61 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid OCI account with API Key set up
 - API Key credential type is automatically used for OCI providers
+
+---
+
+## Test Case: `PROVIDER-E2E-013` - Update OCI Provider Credentials
+
+**Priority:** `normal`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @oci
+
+**Description/Objective:** Validates the complete flow of updating credentials for an existing OCI provider. This test verifies that the provider UID is correctly passed to the update credentials form, which is required for OCI credential validation.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
+- This test must be run serially and never in parallel with other tests
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Verify OCI provider exists in the table
+3. Click row actions menu for the OCI provider
+4. Click "Update Credentials" option
+5. Verify update credentials page is loaded
+6. Verify OCI credentials form fields are visible (confirms providerUid is loaded)
+7. Fill OCI credentials (user ID, fingerprint, key content, region)
+8. Click Next to submit
+9. Verify successful navigation to test connection page
+
+### Expected Result:
+
+- Update credentials page loads successfully
+- OCI credentials form is displayed with all required fields
+- Provider UID is correctly passed to the form (hidden field populated)
+- Credentials can be updated and submitted
+- User is redirected to test connection page after successful update
+
+### Key verification points:
+
+- Provider page loads correctly
+- OCI provider row is visible in providers table
+- Row actions dropdown opens and displays "Update Credentials" option
+- Update credentials page URL contains correct parameters
+- OCI credentials form displays all fields (tenancy ID, user ID, fingerprint, key content, region)
+- Form submission succeeds (no silent failures due to missing provider UID)
+- Successful redirect to test connection page
+
+### Notes:
+
+- Test uses same environment variables as PROVIDER-E2E-012 (add OCI provider)
+- Requires PROVIDER-E2E-012 to be run first to create the OCI provider
+- This test validates the fix for OCI update credentials form failing silently due to missing provider UID
+- The provider UID is required for OCI credential validation (tenancy field auto-populated from UID)

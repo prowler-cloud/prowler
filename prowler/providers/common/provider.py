@@ -248,6 +248,13 @@ class Provider(ABC):
                         repositories=arguments.repository,
                         organizations=arguments.organization,
                     )
+                elif "cloudflare" in provider_class_name.lower():
+                    provider_class(
+                        filter_zones=arguments.region,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "iac" in provider_class_name.lower():
                     provider_class(
                         scan_path=arguments.scan_path,
