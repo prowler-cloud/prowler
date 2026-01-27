@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "Authorization Policy",
   "ResourceGroup": "IAM",
   "Description": "The default app management policy in Microsoft Entra ID enforces credential configurations on applications and service principals. When enabled, administrators can restrict weak credential types and enforce expiration policies.",
   "Risk": "Without an enabled app management policy, applications and service principals can be created with insecure credential configurations, including long-lived secrets or weak authentication methods, increasing the risk of credential compromise and unauthorized access.",
