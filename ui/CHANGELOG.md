@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.18.0] (Prowler v5.18.0)
+## [1.18.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
@@ -25,6 +25,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
 - Refactor Lighthouse AI MCP tool filtering from blacklist to whitelist approach for improved security [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Rename resource_group filter to group in Resources page and Overview cards [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
