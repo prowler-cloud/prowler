@@ -226,22 +226,19 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
                 YIELD node AS internet
 
-                MATCH path_open = (aws:AWSAccount {id: $provider_uid})-[r0]-(open)
-                MATCH path_sg = (open)-[r1:MEMBER_OF_EC2_SECURITY_GROUP]-(sg:EC2SecurityGroup)
-                MATCH path_ip = (sg)-[r2:MEMBER_OF_EC2_SECURITY_GROUP]-(ipi:IpPermissionInbound)
-                MATCH path_ipi = (ipi)-[r3]-(ir:IpRange)
-                WHERE ir.range = "0.0.0.0/0"
-                OPTIONAL MATCH path_dns = (dns:AWSDNSRecord)-[:DNS_POINTS_TO]->(lb)
-                WHERE open.scheme = 'internet-facing'
+                // Match EC2 instances that are internet-exposed with open security groups (0.0.0.0/0)
+                MATCH path_ec2 = (aws:AWSAccount {id: $provider_uid})--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)--(ir:IpRange)
+                WHERE ec2.exposed_internet = true
+                    AND ir.range = "0.0.0.0/0"
 
-                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, open)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, ec2)
                 YIELD rel AS can_access
 
-                UNWIND nodes(path_open) + nodes(path_sg) + nodes(path_ip) + nodes(path_ipi) + nodes(path_dns) as n
+                UNWIND nodes(path_ec2) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_open, path_sg, path_ip, path_ipi, path_dns, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
+                RETURN path_ec2, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[],
         ),
