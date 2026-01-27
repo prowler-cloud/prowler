@@ -15,6 +15,7 @@ const isPublicRoute = (pathname: string): boolean => {
   return publicRoutes.some((route) => pathname.startsWith(route));
 };
 
+// NextAuth's auth() wrapper - renamed from middleware to proxy
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;

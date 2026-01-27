@@ -72,7 +72,7 @@ export interface AttackPathScansResponse {
 }
 
 // Data type constants
-const DATA_TYPES = {
+export const DATA_TYPES = {
   STRING: "string",
   NUMBER: "number",
   BOOLEAN: "boolean",
@@ -168,7 +168,7 @@ export interface AttackPathQueryResult {
 }
 
 // Finding severity and status constants
-const FINDING_SEVERITIES = {
+export const FINDING_SEVERITIES = {
   CRITICAL: "critical",
   HIGH: "high",
   MEDIUM: "medium",
@@ -179,7 +179,7 @@ const FINDING_SEVERITIES = {
 type FindingSeverity =
   (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
 
-const FINDING_STATUSES = {
+export const FINDING_STATUSES = {
   PASS: "PASS",
   FAIL: "FAIL",
   MANUAL: "MANUAL",
