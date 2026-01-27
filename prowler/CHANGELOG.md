@@ -22,6 +22,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure IAM service metadata to new format [(#9620)](https://github.com/prowler-cloud/prowler/pull/9620)
 - Update Azure Policy service metadata to new format [(#9625)](https://github.com/prowler-cloud/prowler/pull/9625)
 
+### Fixed
+- Cloudflare `zone_waf_enabled` false positives [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
+
 ---
 
 ## [5.17.0] (Prowler v5.17.0)
