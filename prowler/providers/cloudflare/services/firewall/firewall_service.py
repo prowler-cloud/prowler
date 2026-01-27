@@ -6,43 +6,55 @@ from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
 
 
-class DNS(CloudflareService):
-    """Retrieve Cloudflare DNS records for all zones."""
+class Firewall(CloudflareService):
+    """Retrieve Cloudflare firewall rules for all zones."""
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.records: list["CloudflareDNSRecord"] = []
-        self._list_dns_records()
+        self.rules: list["CloudflareFirewallRule"] = []
+        self._list_rulesets()
 
-    def _list_dns_records(self) -> None:
-        """List DNS records for all zones."""
-        logger.info("DNS - Listing DNS records...")
+    def _list_rulesets(self) -> None:
+        """List firewall rulesets for all zones."""
+        logger.info("Firewall - Listing firewall rulesets...")
         try:
             # Get zones directly from API to avoid circular dependency with zone_client
             zones = self._get_zones()
 
             for zone_id, zone_name in zones.items():
-                seen_record_ids: set[str] = set()
                 try:
-                    for record in self.client.dns.records.list(zone_id=zone_id):
-                        record_id = getattr(record, "id", None)
-                        # Prevent infinite loop
-                        if record_id in seen_record_ids:
-                            break
-                        seen_record_ids.add(record_id)
+                    # Get all rulesets for the zone
+                    rulesets = self.client.rulesets.list(zone_id=zone_id)
+                    for ruleset in rulesets:
+                        ruleset_id = getattr(ruleset, "id", None)
+                        phase = getattr(ruleset, "phase", None)
+                        if not ruleset_id:
+                            continue
 
-                        self.records.append(
-                            CloudflareDNSRecord(
-                                id=record_id,
-                                zone_id=zone_id,
-                                zone_name=zone_name,
-                                name=getattr(record, "name", None),
-                                type=getattr(record, "type", None),
-                                content=getattr(record, "content", ""),
-                                ttl=getattr(record, "ttl", None),
-                                proxied=getattr(record, "proxied", False),
+                        # Get rules within each ruleset
+                        try:
+                            ruleset_detail = self.client.rulesets.get(
+                                ruleset_id=ruleset_id, zone_id=zone_id
                             )
-                        )
+                            rules = getattr(ruleset_detail, "rules", []) or []
+                            for rule in rules:
+                                self.rules.append(
+                                    CloudflareFirewallRule(
+                                        id=getattr(rule, "id", None),
+                                        zone_id=zone_id,
+                                        zone_name=zone_name,
+                                        ruleset_id=ruleset_id,
+                                        phase=phase,
+                                        action=getattr(rule, "action", None),
+                                        expression=getattr(rule, "expression", None),
+                                        description=getattr(rule, "description", None),
+                                        enabled=getattr(rule, "enabled", True),
+                                    )
+                                )
+                        except Exception as error:
+                            logger.debug(
+                                f"{zone_id} ruleset {ruleset_id} -- {error.__class__.__name__}: {error}"
+                            )
                 except Exception as error:
                     logger.error(
                         f"{zone_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -97,14 +109,15 @@ class DNS(CloudflareService):
         return zones
 
 
-class CloudflareDNSRecord(BaseModel):
-    """Cloudflare DNS record representation."""
+class CloudflareFirewallRule(BaseModel):
+    """Cloudflare firewall rule representation."""
 
-    id: str
+    id: Optional[str] = None
     zone_id: str
     zone_name: str
-    name: Optional[str] = None
-    type: Optional[str] = None
-    content: str = ""
-    ttl: Optional[int] = None
-    proxied: bool = False
+    ruleset_id: Optional[str] = None
+    phase: Optional[str] = None
+    action: Optional[str] = None
+    expression: Optional[str] = None
+    description: Optional[str] = None
+    enabled: bool = True
