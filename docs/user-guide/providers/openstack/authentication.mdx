@@ -19,9 +19,15 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
     1. Log into the [OVH Control Panel](https://www.ovh.com/manager/)
     2. Navigate to **Public Cloud** → Select your project
     3. Click on **Users & Roles** in the left sidebar
+
+    ![OVH Users & Roles](images/users.png)
+
     4. Click **Add User**
     5. Enter a user description (e.g., `Prowler Audit User`)
     6. Assign the **Infrastructure Supervisor** role (This is the reader role) or specific read-only operator roles (If needed to audit only specific services)
+
+    ![OVH Select Roles](images/roles.png)
+
     7. Click **Generate** to create the user
     8. **Copy the password** and store it securely
 
@@ -29,15 +35,14 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
     Avoid using administrator or member roles for security auditing. Reader or operator roles provide sufficient access for Prowler while maintaining security best practices.
     </Warning>
 
-    {/* SCREENSHOT LOCATION 1: OVH Control Panel showing Users & Roles page with "Create User" button */}
-
     ### Step 2: Access the Horizon Dashboard
 
     1. From the OVH Control Panel, go to **Public Cloud** → Your project
     2. Click on **Horizon** in the left sidebar (or access the Horizon URL provided by OVH)
-    3. Log in with the user credentials created in Step 1 (ensure to enter with that user because if you enter with the root user you will download openstack credentials for the root user, if the user is not the correct one, log out and log in again)
 
-    {/* SCREENSHOT LOCATION 2: How to access Horizon from OVH Control Panel (showing the Horizon button/link) */}
+    ![OVH Horizon](images/horizon.png)
+
+    3. Log in with the user credentials created in Step 1 (ensure to enter with that user because if you enter with the root user you will download openstack credentials for the root user, if the user is not the correct one, log out and log in again)
 
     ### Step 3: Navigate to API Access
 
@@ -45,9 +50,10 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
 
     1. In the left sidebar, click on **Project**
     2. Navigate to **API Access**
-    3. You'll see the API Access page with information about your OpenStack endpoints
 
-    {/* SCREENSHOT LOCATION 3: Horizon dashboard showing navigation: Project → API Access */}
+    ![OVH API Access](images/api-access.png)
+
+    3. You'll see the API Access page with information about your OpenStack endpoints
 
     ### Step 4: Download the clouds.yaml File
 
@@ -55,9 +61,10 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
 
     1. On the API Access page, look for the **Download OpenStack RC File** dropdown button
     2. Click the dropdown and select **OpenStack clouds.yaml File**
-    3. The file will be downloaded to your computer
 
-    {/* SCREENSHOT LOCATION 4: API Access page with "Download OpenStack RC File" dropdown showing "OpenStack clouds.yaml File" option highlighted */}
+    ![OVH Download RC File](images/download-yaml.png)
+
+    3. The file will be downloaded to your computer
 
     <Note>
     The clouds.yaml file contains your password in plain text. Ensure you store it securely with appropriate file permissions (see [Security Best Practices](#security-best-practices) below).
@@ -164,11 +171,7 @@ This guide shows how to obtain OpenStack credentials and configure Prowler to sc
     </Warning>
 
     <Note>
-    Consult your provider's documentation for specific instructions on creating users and assigning roles. Common providers include:
-    - **Infomaniak**: Public Cloud management interface
-    - **Vexxhost**: Account dashboard
-    - **Fuga Cloud**: Account portal
-    - **Cloudandheat**: OpenStack dashboard
+    Consult your provider's documentation for specific instructions on creating users and assigning roles. Add an issue or pull request adding the instructions for your provider.
     </Note>
 
     ### Step 2: Access the Horizon Dashboard
@@ -395,16 +398,6 @@ Then run Prowler:
 prowler openstack
 ```
 
-You can also source the OpenStack RC file downloaded from Horizon:
-
-```bash
-# Download "OpenStack RC File v3" from Horizon API Access page
-source openrc.sh
-# Enter password when prompted
-
-prowler openstack
-```
-
 ### Command-Line Arguments (Flags)
 
 Pass credentials directly via CLI flags:
@@ -534,9 +527,7 @@ Using Public Cloud credentials can limited the KeyStone API access so maybe the 
 
 ### Provider-Specific Documentation
 
-- **OVH Public Cloud**: [OpenStack Documentation](https://docs.ovh.com/gb/en/public-cloud/)
-- **Infomaniak**: [Public Cloud Guide](https://www.infomaniak.com/en/hosting/public-cloud)
-- **Vexxhost**: [OpenStack Documentation](https://docs.vexxhost.com/)
+- **OVH Public Cloud**: [OpenStack Documentation](https://help.ovhcloud.com/csm/en-gb-documentation-public-cloud-cross-functional?id=kb_browse_cat&kb_id=574a8325551974502d4c6e78b7421938&kb_category=32a89dbc81ef5a581e11e4879ea7a52b&spa=1)
 
 ### OpenStack References
 
