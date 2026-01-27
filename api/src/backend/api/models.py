@@ -1037,6 +1037,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
             ),
             models.Index(
+                condition=models.Q(status=StatusChoices.FAIL, delta="new"),
+                fields=["tenant_id", "scan_id"],
+                name="find_tenant_scan_fail_new_idx",
+            ),
+            models.Index(
                 fields=["tenant_id", "uid", "-inserted_at"],
                 name="find_tenant_uid_inserted_idx",
             ),
