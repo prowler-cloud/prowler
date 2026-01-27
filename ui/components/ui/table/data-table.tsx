@@ -3,8 +3,10 @@
 import {
   ColumnDef,
   ColumnFiltersState,
+  ExpandedState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   OnChangeFn,
@@ -13,7 +15,8 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 import {
   Table,
@@ -23,17 +26,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTableAnimatedRow } from "@/components/ui/table/data-table-animated-row";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { useFilterTransitionOptional } from "@/contexts";
 import { cn } from "@/lib";
-import { FilterOption, MetaDataProps } from "@/types";
+import { MetaDataProps } from "@/types";
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   metadata?: MetaDataProps;
-  customFilters?: FilterOption[];
   disableScroll?: boolean;
   enableRowSelection?: boolean;
   rowSelection?: RowSelectionState;
@@ -75,6 +78,22 @@ interface DataTableProviderProps<TData, TValue> {
   onPageSizeChange?: (pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
+
+  /*
+   * Expandable/Hierarchical Data Props
+   * -----------------------------------
+   * For hierarchical data display with expandable rows.
+   */
+  /** Function to extract sub-rows from a row for hierarchical data */
+  getSubRows?: (row: TData) => TData[] | undefined;
+  /** Controlled expanded state */
+  expanded?: ExpandedState;
+  /** Callback when expanded state changes */
+  onExpandedChange?: OnChangeFn<ExpandedState>;
+  /** Auto-select children when parent selected (default: true) */
+  enableSubRowSelection?: boolean;
+  /** Expand all rows by default, or provide specific expanded state */
+  defaultExpanded?: boolean | ExpandedState;
 }
 
 export function DataTable<TData, TValue>({
@@ -95,9 +114,20 @@ export function DataTable<TData, TValue>({
   onPageChange,
   onPageSizeChange,
   isLoading = false,
+  getSubRows,
+  expanded: controlledExpanded,
+  onExpandedChange,
+  enableSubRowSelection = true,
+  defaultExpanded,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // ExpandedState should be a Record<string, boolean> for individual row control
+  // Note: We don't use `true` (boolean) as it makes rows permanently expanded
+  const [expanded, setExpanded] = useState<ExpandedState>(() => {
+    if (typeof defaultExpanded === "object") return defaultExpanded;
+    return {};
+  });
 
   // Get transition state from context for loading indicator
   const filterTransition = useFilterTransitionOptional();
@@ -116,17 +146,41 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange,
     manualPagination: true,
+    // Expansion support for hierarchical data
+    getSubRows,
+    getExpandedRowModel: getSubRows ? getExpandedRowModel() : undefined,
+    enableSubRowSelection,
+    onExpandedChange: onExpandedChange ?? setExpanded,
     state: {
       sorting,
       columnFilters,
       rowSelection: rowSelection ?? {},
+      expanded: controlledExpanded ?? expanded,
     },
   });
+
+  // Expand all rows on mount when defaultExpanded={true}
+  useEffect(() => {
+    if (defaultExpanded === true && getSubRows) {
+      table.toggleAllRowsExpanded(true);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate selection key to force header re-render when selection changes
   const selectionKey = rowSelection
     ? Object.keys(rowSelection).filter((k) => rowSelection[k]).length
     : 0;
+
+  // Calculate expansion key to force header re-render when expansion changes
+  const currentExpanded = controlledExpanded ?? expanded;
+  const expansionKey =
+    currentExpanded === true
+      ? "all"
+      : typeof currentExpanded === "object"
+        ? Object.keys(currentExpanded).filter((k) => currentExpanded[k]).length
+        : 0;
 
   // Format total entries count
   const totalEntries = metadata?.pagination?.count ?? 0;
@@ -161,13 +215,21 @@ export function DataTable<TData, TValue>({
           )}
         </div>
       )}
-      <Table>
+      <Table className={getSubRows ? "table-fixed" : undefined}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={`${headerGroup.id}-${selectionKey}`}>
+            <TableRow key={`${headerGroup.id}-${selectionKey}-${expansionKey}`}>
               {headerGroup.headers.map((header) => {
+                const size = header.getSize();
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    style={
+                      getSubRows && size !== 150
+                        ? { width: `${size}px` }
+                        : undefined
+                    }
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -181,26 +243,38 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-          {rows?.length ? (
-            rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+          <AnimatePresence initial={false}>
+            {rows?.length ? (
+              rows.map((row) =>
+                getSubRows && row.depth > 0 ? (
+                  <DataTableAnimatedRow key={row.id} row={row} />
+                ) : (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ),
+              )
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
+            )}
+          </AnimatePresence>
         </TableBody>
       </Table>
       {metadata && (
