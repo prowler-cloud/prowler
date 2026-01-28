@@ -1,7 +1,7 @@
 {
     "Provider": "aws",
     "CheckID": "rds_instance_extended_support",
-    "CheckTitle": "RDS instances are not enrolled in RDS Extended Support",
+    "CheckTitle": "RDS instance is not enrolled in RDS Extended Support",
     "CheckType": [
         "Software and Configuration Checks/Patch Management",
         "Software and Configuration Checks/AWS Security Best Practices"
