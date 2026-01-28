@@ -14,7 +14,7 @@
     "ResourceGroup": "database",
     "Description": "**RDS DB instances** are evaluated for enrollment in Amazon RDS Extended Support. The check fails if `EngineLifecycleSupportis` set to `open-source-rds-extended-support`, indicating the instance will incur additional charges after standard support ends.",
     "Risk": "DB instances enrolled in RDS Extended Support can incur additional charges after the end of standard support for the running database major version. Remaining on older major versions can also delay necessary upgrades, increasing operational and security risk.",
-    "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html",
+    "RelatedUrl": "",
     "AdditionalURLs": [
         "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-viewing.html",
         "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-charges.html",
