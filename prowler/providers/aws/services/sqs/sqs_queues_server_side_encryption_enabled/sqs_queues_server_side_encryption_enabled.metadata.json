@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsSqsQueue",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon SQS queues** are evaluated for **server-side encryption** configured with a **KMS key** (`SSE-KMS`) protecting message bodies at rest.\n\nQueues without an associated KMS key are identified.",
   "Risk": "Without **KMS-backed SSE**, message bodies lack tenant-controlled keys and detailed audit. Secrets, tokens, or PII in messages become easier to access through **privilege misuse**, misconfiguration, or unintended integrations, reducing **confidentiality** and limiting containment since you cannot revoke access via key disable/rotation.",
   "RelatedUrl": "",

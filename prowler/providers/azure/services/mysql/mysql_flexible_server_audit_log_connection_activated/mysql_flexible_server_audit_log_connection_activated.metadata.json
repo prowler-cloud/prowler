@@ -6,18 +6,15 @@
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.dbformysql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure Database for MySQL Flexible Server** audit configuration includes the `CONNECTION` event in `audit_log_events`.",
   "Risk": "Without **CONNECTION auditing**, login attempts are invisible, weakening detection of **brute-force**, **credential stuffing**, and anomalous access. This enables unnoticed account takeover and lateral movement, impacting **confidentiality** and **integrity**, and hinders **forensics** and timely response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
-    "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-audit-logs-portal",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/configure-audit-log-events-for-mysql-flexible-servers.html",
-    "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:06ec721d4c0ea9169db2b0c6876c5f38",
-    "https://orca.security/resources/cloud-risk-encyclopedia/audit_log_events-configuration-does-not-have-connection-set-for-mysql-database-server/",
-    "https://video2.skills-academy.com/en-us/azure/mysql/flexible-server/scripts/sample-cli-audit-logs"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/configure-audit-log-events-for-mysql-flexible-servers.html"
   ],
   "Remediation": {
     "Code": {

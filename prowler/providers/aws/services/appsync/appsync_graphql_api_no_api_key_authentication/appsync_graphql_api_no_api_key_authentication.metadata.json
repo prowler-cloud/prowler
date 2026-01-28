@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsAppSyncGraphQLApi",
+  "ResourceGroup": "api_gateway",
   "Description": "**AWS AppSync GraphQL APIs** are examined for the default authorization type. The finding indicates an API configured with `API_KEY` instead of IAM, Cognito, OIDC, or Lambda authorizers.",
   "Risk": "Static **API keys** can be leaked or reused, enabling unauthorized queries and mutations.\n- **Confidentiality**: unrestricted data reads\n- **Integrity**: unauthorized writes and schema misuse\n- **Accountability**: no user identity for auditing, difficult revocation and scoping",
   "RelatedUrl": "",

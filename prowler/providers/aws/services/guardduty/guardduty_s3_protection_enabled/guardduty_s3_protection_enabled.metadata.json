@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "Amazon GuardDuty detectors are evaluated for **S3 Protection**, which analyzes CloudTrail S3 data events to monitor **object-level API activity** (`GetObject`, `PutObject`, `DeleteObject`) across S3 buckets in the account and Region.",
   "Risk": "Without S3 Protection, **object-level S3 activity** isn't analyzed, enabling:\n- **Exfiltration** via mass reads/copies\n- **Destructive deletes**\n- **Policy/ACL tampering**\n\nUndetected actions degrade data confidentiality, integrity, and availability.",
   "RelatedUrl": "",

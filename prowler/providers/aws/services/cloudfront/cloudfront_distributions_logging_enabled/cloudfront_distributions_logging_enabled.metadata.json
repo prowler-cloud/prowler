@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** record viewer requests using either **standard access logs** or an attached **real-time log configuration**.\n\nThe finding evaluates whether logging is configured so request metadata is captured for each distribution.",
   "Risk": "Missing **CloudFront logs** blinds monitoring of edge requests, impeding detection of bot abuse, credential stuffing, origin probing, and cache-bypass attempts.\n\nThis delays incident response and weakens evidence for forensics, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

@@ -6,17 +6,15 @@
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "microsoft.dbformysql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure Database for MySQL Flexible Server** uses the `tls_version` setting to permit only **modern TLS** for client connections, requiring `TLSv1.2+` and excluding `TLSv1.0` and `TLSv1.1`.",
   "Risk": "Allowing legacy TLS (`TLSv1.0`/`TLSv1.1`) weakens **confidentiality** and **integrity** of data in transit. Attackers can force downgrades and perform **man-in-the-middle** interception, exposing credentials and queries or altering results, leading to unauthorized access and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/mysql-flexible-server-tls-version.html",
-    "https://docs.microsoft.com/en-us/azure/mysql/howto-configure-ssl",
-    "https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-mysql-is-using-the-latest-version-of-tls-encryption#terraform"
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/security-tls-how-to-connect"
   ],
   "Remediation": {
     "Code": {

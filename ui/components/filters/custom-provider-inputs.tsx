@@ -1,6 +1,5 @@
-import React from "react";
-
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
@@ -89,6 +88,15 @@ export const CustomProviderInputOracleCloud = () => {
     <div className="flex items-center gap-x-2">
       <OracleCloudProviderBadge width={25} height={25} />
       <p className="text-sm">Oracle Cloud Infrastructure</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputAlibabaCloud = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <AlibabaCloudProviderBadge width={25} height={25} />
+      <p className="text-sm">Alibaba Cloud</p>
     </div>
   );
 };

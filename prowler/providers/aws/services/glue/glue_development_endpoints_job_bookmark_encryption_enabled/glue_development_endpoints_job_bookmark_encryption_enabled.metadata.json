@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue development endpoints** are assessed for an attached **security configuration** where **job bookmark encryption** is enabled. Endpoints lacking a security configuration are also identified.",
   "Risk": "Unencrypted job bookmarks stored in S3 can be read or altered, exposing dataset paths, partitions, and processing state. This enables data discovery, state tampering, and replay/skip of workloads, impacting **confidentiality**, **integrity**, and **availability** of ETL pipelines.",
   "RelatedUrl": "",

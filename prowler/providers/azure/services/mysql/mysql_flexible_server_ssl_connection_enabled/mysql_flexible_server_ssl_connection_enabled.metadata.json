@@ -8,19 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.dbformysql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure Database for MySQL Flexible Server** uses the `require_secure_transport` parameter to enforce **encrypted connections**. This evaluation determines whether the server is configured to require **TLS/SSL** for all client sessions.",
   "Risk": "Without **TLS enforcement**, credentials and queries may traverse the network in cleartext, enabling **man-in-the-middle**, **credential theft**, tampering, and data exfiltration. This directly impacts **confidentiality** and **integrity** and can lead to compliance violations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://portal.azure.com",
-    "https://forum.ghost.org/t/database-connection-tls-issue-with-azure-database-for-mysql-flexible-server/45340",
-    "https://learn.microsoft.com/en-us/azure/mysql/single-server/concepts-ssl-connection-security",
     "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-networking",
-    "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-ssl",
-    "https://stackoverflow.com/questions/tagged/azure-mysql-database",
     "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-troubleshoot-common-connection-issues",
-    "https://www.tenable.com/policies/",
-    "https://stackoverflow.com/questions/44035588/why-does-connection-to-my-mysql-server-in-azure-fail-if-my-app-does-not-have-ssl",
     "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-connect-tls-ssl"
   ],
   "Remediation": {

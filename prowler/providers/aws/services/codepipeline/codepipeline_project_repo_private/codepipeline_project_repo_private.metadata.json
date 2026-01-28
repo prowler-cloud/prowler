@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "devops",
   "Description": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
   "Risk": "Using public Git repositories in CodePipeline projects could expose sensitive deployment configurations and increase the risk of supply chain attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html",

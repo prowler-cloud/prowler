@@ -1,24 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "mysql_flexible_server_audit_log_enabled",
-  "CheckTitle": "Azure Database for MySQL flexible server has 'audit_log_enabled' set to 'ON'",
+  "CheckTitle": "MySQL flexible server has audit_log_enabled set to ON",
   "CheckType": [],
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.dbformysql/flexibleservers",
-  "Description": "Azure Database for MySQL Flexible Server with `audit_log_enabled` set to `ON` generates **audit logs** for connections, authentication, DDL/DML, and administrative actions.",
+  "ResourceGroup": "database",
+  "Description": "**Azure Database for MySQL Flexible Server** with `audit_log_enabled` set to `ON` generates **audit logs** for connections, authentication, DDL/DML, and administrative actions.",
   "Risk": "Missing **audit logs** reduces **accountability** and obscures activity affecting **confidentiality** and **integrity**. Unauthorized logins, privilege abuse, or suspicious queries may go undetected, impeding **forensics**, slowing incident response, and enabling covert data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/tutorial-configure-audit",
-    "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v1.5.0_L2.audit:c073639a1ce546b535ba73afbf6542aa",
-    "https://portal.azure.com.",
     "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
-    "https://www.datasunrise.com/guides/db-audit-trailing-for-ms-azure-mysql/",
-    "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-audit-logs-portal",
-    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-configure-server-parameters-cli",
     "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/scripts/sample-cli-audit-logs"
   ],
   "Remediation": {
