@@ -17,6 +17,7 @@ import {
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
+  CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
   IacCredentials,
@@ -42,6 +43,7 @@ import {
   M365ClientSecretCredentialsForm,
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+import { CloudflareCredentialsForm } from "./via-credentials/cloudflare-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
@@ -206,6 +208,13 @@ export const BaseCredentialsForm = ({
               }
             />
           )}
+        {providerType === "cloudflare" && (
+          <CloudflareCredentialsForm
+            control={
+              form.control as unknown as Control<CloudflareTokenCredentials>
+            }
+          />
+        )}
 
         <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
