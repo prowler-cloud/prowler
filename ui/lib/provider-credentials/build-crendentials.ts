@@ -318,6 +318,16 @@ export const buildOracleCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+export const buildCloudflareSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.CLOUDFLARE_API_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
@@ -373,6 +383,10 @@ export const buildSecretConfig = (
         secret: buildAlibabaCloudSecret(formData, isRole),
       };
     },
+    cloudflare: () => ({
+      secretType: "static",
+      secret: buildCloudflareSecret(formData),
+    }),
   };
 
   const builder = secretBuilders[providerType];

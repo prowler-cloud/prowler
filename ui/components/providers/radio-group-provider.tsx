@@ -12,6 +12,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -72,6 +73,11 @@ const PROVIDERS = [
     value: "alibabacloud",
     label: "Alibaba Cloud",
     badge: AlibabaCloudProviderBadge,
+  },
+  {
+    value: "cloudflare",
+    label: "Cloudflare",
+    badge: CloudflareProviderBadge,
   },
 ] as const;
 
