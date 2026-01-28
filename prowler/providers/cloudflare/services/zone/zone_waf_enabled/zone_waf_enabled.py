@@ -1,26 +1,37 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
+# The Cloudflare Managed Ruleset (Pro+ plans) provides comprehensive WAF
+# protection.  The Free Managed Ruleset (always active on all plans) is
+# excluded because it cannot be disabled or configured.
+# OWASP Core Ruleset coverage is handled by zone_waf_owasp_ruleset_enabled.
+CLOUDFLARE_MANAGED_RULESET_ID = "efb7b8c949ac4650a09736fc376e9aee"
+
 
 class zone_waf_enabled(Check):
-    """Ensure that WAF is enabled for Cloudflare zones.
+    """Ensure that the Cloudflare Managed WAF Ruleset is enabled for zones.
 
-    The Web Application Firewall (WAF) protects against common web vulnerabilities
-    including SQL injection, cross-site scripting (XSS), and other OWASP Top 10
-    threats. When enabled, it inspects HTTP requests and blocks malicious traffic
-    before it reaches the origin server.
+    The Cloudflare Managed Ruleset protects against common web vulnerabilities
+    including SQL injection, cross-site scripting (XSS), and other threats.
+    It requires a Pro, Business, or Enterprise plan.
+
+    The Free Managed Ruleset (available on all plans, always active) is excluded
+    because it provides only basic protection and cannot be configured.
+
+    OWASP Core Ruleset coverage is handled separately by
+    ``zone_waf_owasp_ruleset_enabled``.
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
         """Execute the WAF enabled check.
 
-        Iterates through all Cloudflare zones and verifies that the Web Application
-        Firewall is enabled. The WAF provides essential protection against common
-        web application attacks.
+        Iterates through all Cloudflare zones and verifies that the Cloudflare
+        Managed Ruleset (``efb7b8c949ac4650a09736fc376e9aee``) is deployed and
+        has at least one enabled rule.
 
         Returns:
-            A list of CheckReportCloudflare objects with PASS status if WAF is
-            enabled, or FAIL status if it is disabled for the zone.
+            A list of CheckReportCloudflare objects with PASS status if the
+            Cloudflare Managed Ruleset is active, or FAIL otherwise.
         """
         findings = []
         for zone in zone_client.zones.values():
@@ -28,9 +39,20 @@ class zone_waf_enabled(Check):
                 metadata=self.metadata(),
                 resource=zone,
             )
-            waf_setting = (zone.settings.waf or "").lower()
 
-            if waf_setting == "on":
+            waf_enabled = False
+            for waf_ruleset in zone.waf_rulesets:
+                for rule in waf_ruleset.rules:
+                    if (
+                        rule.enabled
+                        and rule.managed_ruleset_id == CLOUDFLARE_MANAGED_RULESET_ID
+                    ):
+                        waf_enabled = True
+                        break
+                if waf_enabled:
+                    break
+
+            if waf_enabled:
                 report.status = "PASS"
                 report.status_extended = f"WAF is enabled for zone {zone.name}."
             else:
