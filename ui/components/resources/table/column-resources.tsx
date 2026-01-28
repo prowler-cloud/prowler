@@ -1,24 +1,19 @@
 "use client";
 
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import { Snippet } from "@heroui/snippet";
 import { ColumnDef } from "@tanstack/react-table";
 import { AlertTriangle, Eye, MoreVertical } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { CopyIcon, DoneIcon } from "@/components/icons";
+import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
 import { ProviderType, ResourceProps } from "@/types";
-
 import { ResourceDetail } from "./resource-detail";
 
 const getResourceData = (
@@ -63,22 +58,7 @@ const ResourceNameCell = ({ row }: { row: { original: ResourceProps } }) => {
           </div>
         }
       />
-      {resourceUid && (
-        <Snippet
-          className="h-6 min-w-0 bg-transparent p-0"
-          classNames={{
-            base: "bg-transparent p-0 min-w-0",
-            pre: "hidden",
-            copyButton:
-              "text-text-neutral-secondary hover:text-text-neutral-primary min-w-0",
-          }}
-          size="sm"
-          hideSymbol
-          copyIcon={<CopyIcon size={14} />}
-          checkIcon={<DoneIcon size={14} />}
-          codeString={resourceUid}
-        />
-      )}
+      {resourceUid && <CodeSnippet value={resourceUid} hideCode />}
     </div>
   );
 };
@@ -109,34 +89,25 @@ const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
   return (
     <>
       <div className="flex items-center justify-end">
-        <Dropdown
-          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
-          placement="bottom"
-        >
-          <DropdownTrigger aria-label="Resource actions">
-            <button className="text-text-neutral-secondary hover:text-text-neutral-primary focus:outline-none">
-              <MoreVertical className="h-5 w-5" />
+        <ActionDropdown
+          trigger={
+            <button
+              type="button"
+              aria-label="Resource actions"
+              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            >
+              <MoreVertical className="text-text-neutral-secondary size-5" />
             </button>
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Resource actions"
-            color="default"
-            variant="flat"
-          >
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="view"
-                description={`View details for ${resourceName}`}
-                textValue="View details"
-                startContent={<Eye className="h-4 w-4" />}
-                onPress={() => setIsDrawerOpen(true)}
-              >
-                View details
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+          }
+          ariaLabel="Resource actions"
+        >
+          <ActionDropdownItem
+            icon={<Eye className="size-5" />}
+            label="View details"
+            description={`View details for ${resourceName}`}
+            onSelect={() => setIsDrawerOpen(true)}
+          />
+        </ActionDropdown>
       </div>
 
       <ResourceDetail
