@@ -12,7 +12,7 @@
     "Severity": "medium",
     "ResourceType": "AwsRdsDbInstance",
     "ResourceGroup": "database",
-    "Description": "Checks whether Amazon RDS DB instances are enrolled in Amazon RDS Extended Support. If the instance reports `EngineLifecycleSupport` as `open-source-rds-extended-support`, it is enrolled and the check fails. Otherwise, the check passes.",
+    "Description": "**RDS DB instances** are evaluated for enrollment in Amazon RDS Extended Support. The check fails if `EngineLifecycleSupportis` set to `open-source-rds-extended-support`, indicating the instance will incur additional charges after standard support ends.",
     "Risk": "DB instances enrolled in RDS Extended Support can incur additional charges after the end of standard support for the running database major version. Remaining on older major versions can also delay necessary upgrades, increasing operational and security risk.",
     "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html",
     "AdditionalURLs": [
