@@ -9,10 +9,12 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Bedrock Code Interpreter and AttachRolePolicy privilege escalation queries [(#9885)](https://github.com/prowler-cloud/prowler/pull/9885)
 - Added memory optimizations for large compliance report generation [(#9444)](https://github.com/prowler-cloud/prowler/pull/9444)
 - `GET /api/v1/resources/{id}/events` endpoint to retrieve AWS resource modification history from CloudTrail [(#9101)](https://github.com/prowler-cloud/prowler/pull/9101)
+- Partial index on findings to speed up new failed findings queries [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
 
 ### 🔄 Changed
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
+- Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
 
 ---
 
