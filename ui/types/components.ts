@@ -334,6 +334,21 @@ export type AlibabaCloudCredentialsRole = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type CloudflareTokenCredentials = {
+  [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type CloudflareApiKeyCredentials = {
+  [ProviderCredentialFields.CLOUDFLARE_API_KEY]: string;
+  [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type CloudflareCredentials =
+  | CloudflareTokenCredentials
+  | CloudflareApiKeyCredentials;
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -346,7 +361,8 @@ export type CredentialsFormSchema =
   | OCICredentials
   | MongoDBAtlasCredentials
   | AlibabaCloudCredentials
-  | AlibabaCloudCredentialsRole;
+  | AlibabaCloudCredentialsRole
+  | CloudflareCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
