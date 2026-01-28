@@ -355,11 +355,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -378,17 +379,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -409,6 +412,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -1332,11 +1336,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -1355,17 +1360,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -1386,6 +1393,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -1918,11 +1926,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -1941,17 +1950,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -1972,6 +1983,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -2412,11 +2424,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -2435,17 +2448,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -2466,6 +2481,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -2904,11 +2920,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -2927,17 +2944,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -2958,6 +2977,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -3384,11 +3404,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -3407,17 +3428,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -3438,6 +3461,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -5205,11 +5229,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5228,17 +5253,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5259,6 +5286,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -5364,11 +5392,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5387,17 +5416,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5418,6 +5449,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -5517,6 +5549,7 @@ paths:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5535,6 +5568,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5545,6 +5579,7 @@ paths:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5565,6 +5600,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -5691,11 +5727,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5714,17 +5751,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5745,6 +5784,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -5884,11 +5924,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5907,17 +5948,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5938,6 +5981,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -6076,6 +6120,7 @@ paths:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6094,6 +6139,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6104,6 +6150,7 @@ paths:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6124,6 +6171,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -6299,11 +6347,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6322,17 +6371,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6353,6 +6404,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -6457,11 +6509,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6480,17 +6533,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6511,6 +6566,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -6639,11 +6695,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6662,17 +6719,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6693,6 +6752,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -7462,11 +7522,12 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -7485,17 +7546,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -7516,17 +7579,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -7545,17 +7610,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -7576,6 +7643,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -8205,11 +8273,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -8228,17 +8297,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -8259,6 +8330,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -8526,6 +8598,29 @@ paths:
         **Note:** Some events may not appear due to CloudTrail indexing limitations. Not all AWS API calls record the resource identifier in a searchable format.
       summary: Get events for a resource
       parameters:
+      - in: query
+        name: fields[resource-events]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - event_time
+            - event_name
+            - event_source
+            - actor
+            - actor_uid
+            - actor_type
+            - source_ip_address
+            - user_agent
+            - request_data
+            - response_data
+            - error_code
+            - error_message
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
       - in: path
         name: id
         schema:
@@ -8680,11 +8775,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -8703,17 +8799,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -8734,6 +8832,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -8991,11 +9090,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -9014,17 +9114,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -9045,6 +9147,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -9308,11 +9411,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -9331,17 +9435,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -9362,6 +9468,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -10159,11 +10266,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -10182,17 +10290,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -10213,6 +10323,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -17182,6 +17293,29 @@ components:
                     - role_arn
                     - access_key_id
                     - access_key_secret
+                  - type: object
+                    title: Cloudflare API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Cloudflare API Token for authentication (recommended).
+                    required:
+                    - api_token
+                  - type: object
+                    title: Cloudflare API Key + Email
+                    properties:
+                      api_key:
+                        type: string
+                        description: Cloudflare Global API Key for authentication
+                          (legacy).
+                      api_email:
+                        type: string
+                        format: email
+                        description: Email address associated with the Cloudflare
+                          account.
+                    required:
+                    - api_key
+                    - api_email
                   writeOnly: true
               required:
               - secret
@@ -18180,6 +18314,7 @@ components:
               - iac
               - oraclecloud
               - alibabacloud
+              - cloudflare
               type: string
               description: |-
                 * `aws` - AWS
@@ -18192,7 +18327,8 @@ components:
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
-              x-spec-enum-id: 684bf4173d2b754f
+                * `cloudflare` - Cloudflare
+              x-spec-enum-id: 2d8d323e9cc0044b
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18308,8 +18444,9 @@ components:
               - iac
               - oraclecloud
               - alibabacloud
+              - cloudflare
               type: string
-              x-spec-enum-id: 684bf4173d2b754f
+              x-spec-enum-id: 2d8d323e9cc0044b
               description: |-
                 Type of provider to create.
 
@@ -18323,6 +18460,7 @@ components:
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
+                * `cloudflare` - Cloudflare
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18370,8 +18508,9 @@ components:
                   - iac
                   - oraclecloud
                   - alibabacloud
+                  - cloudflare
                   type: string
-                  x-spec-enum-id: 684bf4173d2b754f
+                  x-spec-enum-id: 2d8d323e9cc0044b
                   description: |-
                     Type of provider to create.
 
@@ -18385,6 +18524,7 @@ components:
                     * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
                     * `alibabacloud` - Alibaba Cloud
+                    * `cloudflare` - Cloudflare
                 uid:
                   type: string
                   minLength: 3
@@ -19185,6 +19325,27 @@ components:
                 - role_arn
                 - access_key_id
                 - access_key_secret
+              - type: object
+                title: Cloudflare API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Cloudflare API Token for authentication (recommended).
+                required:
+                - api_token
+              - type: object
+                title: Cloudflare API Key + Email
+                properties:
+                  api_key:
+                    type: string
+                    description: Cloudflare Global API Key for authentication (legacy).
+                  api_email:
+                    type: string
+                    format: email
+                    description: Email address associated with the Cloudflare account.
+                required:
+                - api_key
+                - api_email
               writeOnly: true
           required:
           - secret_type
@@ -19548,6 +19709,29 @@ components:
                     - role_arn
                     - access_key_id
                     - access_key_secret
+                  - type: object
+                    title: Cloudflare API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Cloudflare API Token for authentication (recommended).
+                    required:
+                    - api_token
+                  - type: object
+                    title: Cloudflare API Key + Email
+                    properties:
+                      api_key:
+                        type: string
+                        description: Cloudflare Global API Key for authentication
+                          (legacy).
+                      api_email:
+                        type: string
+                        format: email
+                        description: Email address associated with the Cloudflare
+                          account.
+                    required:
+                    - api_key
+                    - api_email
                   writeOnly: true
               required:
               - secret_type
@@ -19925,6 +20109,27 @@ components:
                 - role_arn
                 - access_key_id
                 - access_key_secret
+              - type: object
+                title: Cloudflare API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Cloudflare API Token for authentication (recommended).
+                required:
+                - api_token
+              - type: object
+                title: Cloudflare API Key + Email
+                properties:
+                  api_key:
+                    type: string
+                    description: Cloudflare Global API Key for authentication (legacy).
+                  api_email:
+                    type: string
+                    format: email
+                    description: Email address associated with the Cloudflare account.
+                required:
+                - api_key
+                - api_email
               writeOnly: true
           required:
           - secret

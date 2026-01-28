@@ -1,11 +1,9 @@
 import logging
-from types import SimpleNamespace
-
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
@@ -14,6 +12,11 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
+from tasks.jobs.backfill import (
+    backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
+)
 
 from api.attack_paths import (
     AttackPathsQueryDefinition,
@@ -59,11 +62,6 @@ from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
-from tasks.jobs.backfill import (
-    backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
-)
 
 TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -533,6 +531,12 @@ def providers_fixture(tenants_fixture):
         alias="alibabacloud_testing",
         tenant_id=tenant.id,
     )
+    provider10 = Provider.objects.create(
+        provider="cloudflare",
+        uid="a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        alias="cloudflare_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -544,6 +548,7 @@ def providers_fixture(tenants_fixture):
         provider7,
         provider8,
         provider9,
+        provider10,
     )
 
 
