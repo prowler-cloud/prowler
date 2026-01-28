@@ -130,6 +130,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("cloudflare"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -259,7 +264,12 @@ export const addCredentialsFormSchema = (
                                   .string()
                                   .min(1, "Access Key Secret is required"),
                             }
-                          : {}),
+                          : providerType === "cloudflare"
+                            ? {
+                                [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                  z.string().min(1, "API Token is required"),
+                              }
+                            : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
