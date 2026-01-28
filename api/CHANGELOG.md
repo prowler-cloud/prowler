@@ -4,9 +4,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.19.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Partial index on findings to speed up new failed findings queries [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
+
 ### 🔄 Changed
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
+- Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
 
 ---
 
