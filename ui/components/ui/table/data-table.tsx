@@ -8,7 +8,6 @@ import {
   getCoreRowModel,
   getExpandedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   OnChangeFn,
   Row,
@@ -30,6 +29,8 @@ import {
 import { DataTableAnimatedRow } from "@/components/ui/table/data-table-animated-row";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { useFilterTransitionOptional } from "@/contexts";
+import { cn } from "@/lib";
 import { FilterOption, MetaDataProps } from "@/types";
 
 interface DataTableProviderProps<TData, TValue> {
@@ -55,6 +56,39 @@ interface DataTableProviderProps<TData, TValue> {
   enableSubRowSelection?: boolean;
   /** Expand all rows by default, or provide specific expanded state */
   defaultExpanded?: boolean | ExpandedState;
+  /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
+  paramPrefix?: string;
+
+  /*
+   * Controlled Mode Props
+   * ---------------------
+   * By default, DataTable uses URL params for pagination/search (via paramPrefix).
+   * This causes Next.js page re-renders on every interaction.
+   *
+   * For tables inside drawers/modals, use controlled mode instead:
+   * - Pass controlledPage, controlledPageSize, controlledSearch as state values
+   * - Pass onPageChange, onPageSizeChange, onSearchChange as state setters
+   * - This keeps state local, avoiding URL changes and unnecessary page re-renders
+   *
+   * Example:
+   *   const [page, setPage] = useState(1);
+   *   const [search, setSearch] = useState("");
+   *   <DataTable
+   *     controlledPage={page}
+   *     onPageChange={setPage}
+   *     controlledSearch={search}
+   *     onSearchChange={setSearch}
+   *     isLoading={isLoading}
+   *   />
+   */
+  controlledSearch?: string;
+  onSearchChange?: (value: string) => void;
+  controlledPage?: number;
+  controlledPageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  /** Show loading state with opacity overlay (for controlled mode) */
+  isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -72,6 +106,14 @@ export function DataTable<TData, TValue>({
   onExpandedChange,
   enableSubRowSelection = true,
   defaultExpanded,
+  paramPrefix = "",
+  controlledSearch,
+  onSearchChange,
+  controlledPage,
+  controlledPageSize,
+  onPageChange,
+  onPageSizeChange,
+  isLoading = false,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -82,14 +124,17 @@ export function DataTable<TData, TValue>({
     return {};
   });
 
+  // Get transition state from context for loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  // Use either context-based pending state or controlled isLoading prop
+  const isPending = (filterTransition?.isPending ?? false) || isLoading;
+
   const table = useReactTable({
     data,
     columns,
     enableSorting: true,
-    // Use getRowCanSelect function if provided, otherwise use boolean
     enableRowSelection: getRowCanSelect ?? enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -135,13 +180,29 @@ export function DataTable<TData, TValue>({
   // Format total entries count
   const totalEntries = metadata?.pagination?.count ?? 0;
   const formattedTotal = totalEntries.toLocaleString();
+  const showToolbar = showSearch || metadata;
+
+  const rows = table.getRowModel().rows;
 
   return (
-    <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
+    <div
+      className={cn(
+        "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4 transition-opacity duration-200",
+        isPending && "pointer-events-none opacity-60",
+      )}
+    >
       {/* Table Toolbar */}
-      {(showSearch || metadata) && (
+      {showToolbar && (
         <div className="flex items-center justify-between">
-          <div>{showSearch && <DataTableSearch />}</div>
+          <div>
+            {showSearch && (
+              <DataTableSearch
+                paramPrefix={paramPrefix}
+                controlledValue={controlledSearch}
+                onSearchChange={onSearchChange}
+              />
+            )}
+          </div>
           {metadata && (
             <span className="text-text-neutral-secondary text-sm">
               {formattedTotal} Total Entries
@@ -178,8 +239,8 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           <AnimatePresence initial={false}>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) =>
+            {rows?.length ? (
+              rows.map((row) =>
                 getSubRows && row.depth > 0 ? (
                   <DataTableAnimatedRow key={row.id} row={row} />
                 ) : (
@@ -215,6 +276,11 @@ export function DataTable<TData, TValue>({
         <DataTablePagination
           metadata={metadata}
           disableScroll={disableScroll}
+          paramPrefix={paramPrefix}
+          controlledPage={controlledPage}
+          controlledPageSize={controlledPageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       )}
     </div>
