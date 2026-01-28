@@ -48,9 +48,11 @@ class defender_safelinks_policy_enabled(Check):
                 )
 
                 if self._is_policy_properly_configured(policy):
+                    # Case 1: Built-in policy exists and is properly configured
                     report.status = "PASS"
                     report.status_extended = f"Safe Links policy {policy.name} is properly configured with all recommended settings."
                 else:
+                    # Case 5: Built-in policy exists but is not properly configured
                     report.status = "FAIL"
                     report.status_extended = (
                         f"Safe Links policy {policy.name} is not properly configured."
@@ -72,9 +74,11 @@ class defender_safelinks_policy_enabled(Check):
 
                     if policy.is_built_in_protection or policy.is_default:
                         if not self._is_policy_properly_configured(policy):
+                            # Case 4: Built-in policy is not properly configured and there are custom policies
                             report.status = "FAIL"
                             report.status_extended = f"Built-in Safe Links policy {policy_name} is not properly configured. Custom policies may override these settings for specific users."
                         else:
+                            # Case 2: Built-in policy is properly configured and there are custom policies
                             report.status = "PASS"
                             report.status_extended = f"Built-in Safe Links policy {policy_name} is properly configured. Custom policies may override these settings for specific users."
                             builtin_policy_configured = True
@@ -93,6 +97,7 @@ class defender_safelinks_policy_enabled(Check):
 
                         if not self._is_policy_properly_configured(policy):
                             if builtin_policy_configured:
+                                # Case 3: Built-in policy is properly configured but custom policy is not
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Safe Links policy {policy_name} is not properly configured. "
@@ -100,6 +105,7 @@ class defender_safelinks_policy_enabled(Check):
                                     f"The built-in policy is properly configured, so entities not covered by this custom policy may still be protected."
                                 )
                             else:
+                                # Case 5: Both built-in and custom policies are not properly configured
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Safe Links policy {policy_name} is not properly configured. "
@@ -108,6 +114,7 @@ class defender_safelinks_policy_enabled(Check):
                                 )
                         else:
                             if builtin_policy_configured:
+                                # Case 2: Both built-in and custom policies are properly configured
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Safe Links policy {policy_name} is properly configured. "
@@ -115,6 +122,7 @@ class defender_safelinks_policy_enabled(Check):
                                     f"The built-in policy is also properly configured."
                                 )
                             else:
+                                # Case 6: Built-in policy is not properly configured but custom policy is
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Safe Links policy {policy_name} is properly configured. "
