@@ -138,6 +138,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             )
 
         logger.info(
+            f"Clearing Neo4j cache for database {cartography_config.neo4j_database}"
+        )
+        graph_database.clear_cache(cartography_config.neo4j_database)
+
+        logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )

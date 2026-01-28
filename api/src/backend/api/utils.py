@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -11,19 +14,25 @@ from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
-from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
-from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
-from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
-from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.github.github_provider import GithubProvider
-from prowler.providers.iac.iac_provider import IacProvider
-from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from prowler.providers.m365.m365_provider import M365Provider
-from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
-from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+
+if TYPE_CHECKING:
+    from prowler.providers.alibabacloud.alibabacloud_provider import (
+        AlibabacloudProvider,
+    )
+    from prowler.providers.aws.aws_provider import AwsProvider
+    from prowler.providers.azure.azure_provider import AzureProvider
+    from prowler.providers.gcp.gcp_provider import GcpProvider
+    from prowler.providers.github.github_provider import GithubProvider
+    from prowler.providers.iac.iac_provider import IacProvider
+    from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+    from prowler.providers.m365.m365_provider import M365Provider
+    from prowler.providers.mongodbatlas.mongodbatlas_provider import (
+        MongodbatlasProvider,
+    )
+    from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -89,24 +98,52 @@ def return_prowler_provider(
     """
     match provider.provider:
         case Provider.ProviderChoices.AWS.value:
+            from prowler.providers.aws.aws_provider import AwsProvider
+
             prowler_provider = AwsProvider
         case Provider.ProviderChoices.GCP.value:
+            from prowler.providers.gcp.gcp_provider import GcpProvider
+
             prowler_provider = GcpProvider
         case Provider.ProviderChoices.AZURE.value:
+            from prowler.providers.azure.azure_provider import AzureProvider
+
             prowler_provider = AzureProvider
         case Provider.ProviderChoices.KUBERNETES.value:
+            from prowler.providers.kubernetes.kubernetes_provider import (
+                KubernetesProvider,
+            )
+
             prowler_provider = KubernetesProvider
         case Provider.ProviderChoices.M365.value:
+            from prowler.providers.m365.m365_provider import M365Provider
+
             prowler_provider = M365Provider
         case Provider.ProviderChoices.GITHUB.value:
+            from prowler.providers.github.github_provider import GithubProvider
+
             prowler_provider = GithubProvider
         case Provider.ProviderChoices.MONGODBATLAS.value:
+            from prowler.providers.mongodbatlas.mongodbatlas_provider import (
+                MongodbatlasProvider,
+            )
+
             prowler_provider = MongodbatlasProvider
         case Provider.ProviderChoices.IAC.value:
+            from prowler.providers.iac.iac_provider import IacProvider
+
             prowler_provider = IacProvider
         case Provider.ProviderChoices.ORACLECLOUD.value:
+            from prowler.providers.oraclecloud.oraclecloud_provider import (
+                OraclecloudProvider,
+            )
+
             prowler_provider = OraclecloudProvider
         case Provider.ProviderChoices.ALIBABACLOUD.value:
+            from prowler.providers.alibabacloud.alibabacloud_provider import (
+                AlibabacloudProvider,
+            )
+
             prowler_provider = AlibabacloudProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")

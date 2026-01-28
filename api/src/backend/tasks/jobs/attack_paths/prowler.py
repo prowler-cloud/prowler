@@ -2,7 +2,6 @@ from collections import defaultdict
 from typing import Generator
 
 import neo4j
-
 from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
@@ -26,12 +25,18 @@ INDEX_STATEMENTS = [
 ]
 
 INSERT_STATEMENT_TEMPLATE = """
+    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
     UNWIND $findings_data AS finding_data
 
-    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
-    MATCH (account)-->(resource)
-        WHERE resource.__NODE_UID_FIELD__ = finding_data.resource_uid
-            OR resource.id = finding_data.resource_uid
+    OPTIONAL MATCH (account)-->(resource_by_uid)
+        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
+    WITH account, finding_data, resource_by_uid
+
+    OPTIONAL MATCH (account)-->(resource_by_id)
+        WHERE resource_by_uid IS NULL
+            AND resource_by_id.id = finding_data.resource_uid
+    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
+        WHERE resource IS NOT NULL
 
     MERGE (finding:ProwlerFinding {id: finding_data.id})
         ON CREATE SET
@@ -129,7 +134,10 @@ def get_provider_last_scan_findings(
         iteration += 1
 
         with rls_transaction(prowler_api_provider.tenant_id, using=READ_REPLICA_ALIAS):
-            qs = Finding.objects.filter(scan_id=scan_id).order_by("id")
+            # Use all_objects to avoid the ActiveProviderManager's implicit JOIN
+            # through Scan -> Provider (to check is_deleted=False).
+            # The provider is already validated as active in this context.
+            qs = Finding.all_objects.filter(scan_id=scan_id).order_by("id")
             if last_id is not None:
                 qs = qs.filter(id__gt=last_id)
 
