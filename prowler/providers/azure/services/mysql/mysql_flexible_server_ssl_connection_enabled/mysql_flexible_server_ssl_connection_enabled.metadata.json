@@ -20,9 +20,9 @@
   "Remediation": {
     "Code": {
       "CLI": "az mysql flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name require_secure_transport --value ON",
-      "NativeIaC": "```bicep\n// Enforce SSL/TLS by enabling require_secure_transport on MySQL Flexible Server\nresource reqSecureTransport 'Microsoft.DBforMySQL/flexibleServers/configurations@2023-12-01' = {\n  name: '<example_resource_name>/require_secure_transport'\n  properties: {\n    value: 'ON' // Critical: turns on SSL enforcement (require_secure_transport)\n  }\n}\n```",
+      "NativeIaC": "```bicep\n// Enforce SSL/TLS by enabling require_secure_transport on MySQL Flexible Server\nresource reqSecureTransport 'Microsoft.DBforMySQL/flexibleServers/configurations@2023-12-30' = {\n  name: '<example_resource_name>/require_secure_transport'\n  properties: {\n    value: 'ON' // Critical: turns on SSL enforcement (require_secure_transport)\n  }\n}\n```",
       "Other": "1. Sign in to the Azure portal\n2. Go to: Azure Database for MySQL Flexible Server > <your server>\n3. Select Server parameters\n4. Find require_secure_transport and set it to ON\n5. Click Save\n6. Verify by refreshing Server parameters and confirming the value is ON",
-      "Terraform": "```hcl\n# Enforce SSL/TLS on MySQL Flexible Server\nresource \"azurerm_mysql_flexible_server_configuration\" \"secure\" {\n  name      = \"require_secure_transport\"\n  server_id = \"<example_resource_id>\"\n  value     = \"ON\" # Critical: enables SSL enforcement\n}\n```"
+      "Terraform": "```hcl\n# Enforce SSL/TLS on MySQL Flexible Server\nresource \"azurerm_mysql_flexible_server_configuration\" \"secure\" {\n  name                = \"require_secure_transport\"\n  resource_group_name = \"<example_resource_group>\"\n  server_name         = \"<example_server_name>\"\n  value               = \"ON\" # Critical: enables SSL enforcement\n}\n```"
     },
     "Recommendation": {
       "Text": "Set `require_secure_transport=ON` and permit only **TLS 1.2+**. Ensure clients validate certificates and use FQDNs. Combine with **private access** (Private Link or VNet), restrictive firewall rules, and **least privilege** to reduce exposure. *Avoid legacy TLS or plaintext connections.*",
