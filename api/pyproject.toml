@@ -37,7 +37,7 @@ dependencies = [
   "matplotlib (>=3.10.6,<4.0.0)",
   "reportlab (>=4.4.4,<5.0.0)",
   "neo4j (<6.0.0)",
-  "cartography @ git+https://github.com/prowler-cloud/cartography@master",
+  "cartography @ git+https://github.com/prowler-cloud/cartography@0.126.1",
   "gevent (>=25.9.1,<26.0.0)",
   "werkzeug (>=3.1.4)",
   "sqlparse (>=0.5.4)",
