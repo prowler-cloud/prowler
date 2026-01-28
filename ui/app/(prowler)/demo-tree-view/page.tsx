@@ -3,6 +3,11 @@
 import { CloudIcon, FolderIcon, ServerIcon } from "lucide-react";
 import { useState } from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { TreeView } from "@/components/shadcn/tree-view";
 import { TreeDataItem } from "@/types/tree";
 
@@ -82,11 +87,16 @@ export default function DemoTreeViewPage() {
               expandedIds={expandedIds}
               onExpandedChange={setExpandedIds}
               renderItem={({ item, isLeaf, hasChildren }) => (
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
-                  <span className="text-sm">{item.name}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="truncate text-base">{item.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{item.name}</TooltipContent>
+                  </Tooltip>
                   {hasChildren && !isLeaf && (
-                    <span className="bg-prowler-white/10 rounded px-1.5 py-0.5 text-xs">
+                    <span className="bg-prowler-white/10 shrink-0 rounded px-1.5 py-0.5 text-xs">
                       {item.children?.length}
                     </span>
                   )}

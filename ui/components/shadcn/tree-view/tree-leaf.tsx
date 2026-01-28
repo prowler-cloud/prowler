@@ -2,10 +2,15 @@
 
 import { KeyboardEvent } from "react";
 
+import { Checkbox } from "@/components/shadcn/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import { TreeLeafProps } from "@/types/tree";
 
-import { TreeCheckbox } from "./tree-checkbox";
 import { TreeSpinner } from "./tree-spinner";
 
 /**
@@ -62,10 +67,12 @@ export function TreeLeaf({
       {item.isLoading && <TreeSpinner className="size-4" />}
 
       {showCheckboxes && (
-        <TreeCheckbox
+        <Checkbox
+          size="sm"
           checked={isSelected}
           onCheckedChange={handleSelect}
           disabled={item.disabled}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
         />
       )}
 
@@ -78,9 +85,14 @@ export function TreeLeaf({
           hasChildren: false,
         })
       ) : (
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
-          <span className="truncate text-sm">{item.name}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="truncate text-base">{item.name}</span>
+            </TooltipTrigger>
+            <TooltipContent side="top">{item.name}</TooltipContent>
+          </Tooltip>
         </div>
       )}
     </div>
