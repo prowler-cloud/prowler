@@ -29,7 +29,7 @@
         },
         "Recommendation": {
             "Text": "Upgrade enrolled DB instances to an engine version covered under standard support to stop Extended Support charges. For new DB instances and restores created via automation, explicitly set the engine lifecycle support option to avoid unintended enrollment in RDS Extended Support when that is your policy.",
-            "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-charges.html"
+            "Url": "https://hub.prowler.com/check/rds_instance_extended_support"
         }
     },
     "Categories": [
