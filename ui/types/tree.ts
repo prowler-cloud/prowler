@@ -97,13 +97,3 @@ export interface TreeLeafProps {
   showCheckboxes: boolean;
   renderItem?: (params: TreeRenderItemParams) => React.ReactNode;
 }
-
-/**
- * Props for TreeCheckbox component with indeterminate support
- */
-export interface TreeCheckboxProps {
-  checked: boolean;
-  indeterminate?: boolean;
-  onCheckedChange: () => void;
-  disabled?: boolean;
-}
