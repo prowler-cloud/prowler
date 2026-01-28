@@ -469,7 +469,7 @@ export const ResourceDetail = ({
         {/* Overview Tab */}
         <TabsContent value="overview" className="flex flex-col gap-4">
           <InfoField label="Resource UID" variant="simple">
-            <CodeSnippet value={attributes.uid} />
+            <CodeSnippet value={attributes.uid} className="max-w-full" />
           </InfoField>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
