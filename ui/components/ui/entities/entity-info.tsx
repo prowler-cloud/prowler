@@ -37,15 +37,9 @@ export const EntityInfo = ({
         {showConnectionStatus && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span
-                className={`absolute top-[-0.1rem] right-[-0.2rem] h-2 w-2 cursor-pointer rounded-full ${
-                  showConnectionStatus ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
+              <span className="absolute top-[-0.1rem] right-[-0.2rem] h-2 w-2 cursor-pointer rounded-full bg-green-500" />
             </TooltipTrigger>
-            <TooltipContent>
-              {showConnectionStatus ? "Connected" : "Not Connected"}
-            </TooltipContent>
+            <TooltipContent>Connected</TooltipContent>
           </Tooltip>
         )}
       </div>
