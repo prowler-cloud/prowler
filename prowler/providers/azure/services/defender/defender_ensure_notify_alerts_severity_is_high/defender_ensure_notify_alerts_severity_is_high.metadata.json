@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.resources/subscriptions",
-  "Description": "**Defender for Cloud** email notifications use a minimum alert severity of `High` or more inclusive (`Medium`/`Low`). The evaluation inspects security contacts to confirm a threshold is defined and not `Critical`.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Microsoft Defender for Cloud** email notifications use a minimum alert severity of `High` or more inclusive (`Medium`/`Low`). The evaluation inspects security contacts to confirm a threshold is defined and not `Critical`.",
   "Risk": "Setting the threshold to `Critical` or leaving it unset limits alerting, causing **delayed detection** of `High`/`Medium` threats. Attackers can persist, escalate privileges, and exfiltrate data, impacting **confidentiality**, **integrity**, and **availability** via ransomware or service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_4#terraform",
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/email-notifications-alerts#manage-notifications-on-email",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/enable-high-severity-email-notifications.html",
     "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
   ],

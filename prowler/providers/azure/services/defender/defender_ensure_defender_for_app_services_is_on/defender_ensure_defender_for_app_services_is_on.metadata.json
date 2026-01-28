@@ -1,23 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_app_services_is_on",
-  "CheckTitle": "Microsoft Defender for App Services is set to On (Standard pricing tier) in the subscription",
+  "CheckTitle": "Defender for App Services is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Azure subscriptions** are evaluated for **Defender for App Service** coverage by inspecting the `AppServices` pricing configuration. The finding indicates whether the plan is set to `Standard`, which applies protection to App Service resources at the subscription scope.",
   "Risk": "Without this coverage, malicious traffic and runtime anomalies may go unseen, enabling:\n- Confidentiality loss via data exfiltration\n- Integrity compromise through web shells or code tampering\n- Availability impact from takeover and resource abuse",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/tutorial-enable-app-service-plan",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html",
-    "https://charbelnemnom.com/azure-defender-for-app-service-in-azure-security-center/",
-    "https://video2.skills-academy.com/en-us/azure/defender-for-cloud/defender-for-app-service-introduction",
-    "https://stackoverflow.com/questions/78538166/enable-microsoft-defender-for-cloud-at-resource-level-for-app-services",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-app-service#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html"
   ],
   "Remediation": {
     "Code": {

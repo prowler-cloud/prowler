@@ -1,14 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_wdatp_is_enabled",
-  "CheckTitle": "Subscription has Microsoft Defender for Endpoint integration enabled",
+  "CheckTitle": "Defender for Endpoint is enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/integrations",
-  "Description": "Azure subscription integrates **Microsoft Defender for Endpoint** with **Defender for Cloud** via `WDATP`. The setting's presence and enabled state at the subscription scope are evaluated.",
+  "ResourceGroup": "security",
+  "Description": "**Azure subscription** integrates **Microsoft Defender for Endpoint** with **Defender for Cloud** via `WDATP`. The setting's presence and enabled state at the subscription scope are evaluated.",
   "Risk": "Without this integration, servers lack **EDR telemetry**, automated onboarding, and unified alerts, shrinking visibility. Hands-on-keyboard intrusions, ransomware, and credential theft can persist unnoticed, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [

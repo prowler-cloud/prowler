@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.resources/subscriptions",
-  "Description": "**Defender for Cloud** attack path email notifications are configured per subscription with a defined **minimal risk level**, and the setting is present and meets the required threshold.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Microsoft Defender for Cloud** attack path email notifications are configured per subscription with a defined **minimal risk level**, and the setting is present and meets the required threshold.",
   "Risk": "Without alerts on **exploitable attack paths**, security teams lose visibility, enabling **lateral movement**, **privilege escalation**, and **data exfiltration** before containment, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://argonsys.com/microsoft-cloud/library/microsoft-defender-for-cloud-automate-notifications-when-new-attack-paths-are-created/",
-    "https://learn.microsoft.com/el-gr/Azure/defender-for-cloud/configure-email-notifications",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
-    "https://video2.skills-academy.com/en-us/answers/questions/1116749/defender-for-cloud-apps-access-policy-does-not-sen"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/enable-attack-path-notifications.html"
   ],
   "Remediation": {
     "Code": {

@@ -1,13 +1,14 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_server_is_on",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Servers set to On (Standard pricing tier)",
+  "CheckTitle": "Defender for Servers is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Servers** subscription plan (`VirtualMachines`) is configured to the `Standard` tier. The evaluation checks whether the Servers plan is enabled at this level for all server workloads in the subscription.",
   "Risk": "Without **Defender for Servers**, endpoints lack unified EDR, hardening, and threat analytics. This enables silent malware, credential theft, and lateral movement, driving data exfiltration (C), ransomware/tampering (I), and outages or cryptomining abuse (A).",
   "RelatedUrl": "",
@@ -15,11 +16,7 @@
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/plan-defender-for-servers-select-plan",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/faq-defender-for-servers",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/microsoft-defender-vm-server.html",
-    "https://learn.microsoft.com/en-us/answers/questions/1131575/defender-for-servers-policy-definitions.html",
-    "https://learn.microsoft.com/en-us/powershell/module/az.security/set-azsecuritypricing?view=azps-13.1.0",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-servers#terraform",
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/tutorial-enable-servers-plan",
-    "https://learn.microsoft.com/en-us/powershell/module/az.security/set-azsecuritypricing?view=azps-13.4.0&viewFallbackFrom=azps-6.5.0"
+    "https://learn.microsoft.com/en-us/answers/questions/1131575/defender-for-servers-policy-definitions.html"
   ],
   "Remediation": {
     "Code": {

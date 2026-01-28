@@ -1,19 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_containers_is_on",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Containers set to On (Standard pricing tier)",
+  "CheckTitle": "Defender for Containers is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
-  "Description": "Azure subscriptions are assessed to determine if the **Defender for Containers** plan is configured with pricing tier `Standard`.",
+  "ResourceGroup": "security",
+  "Description": "**Azure subscriptions** are assessed to determine if the **Defender for Containers** plan is configured with pricing tier `Standard`.",
   "Risk": "Without **Defender for Containers**, images and runtimes lack continuous **threat detection** and **vulnerability assessment**. Adversaries can ship malicious images, run **cryptomining**, exfiltrate secrets, and **move laterally**, degrading **confidentiality** and **availability** of container workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-container.html",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-container-registries#terraform"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-introduction"
   ],
   "Remediation": {
     "Code": {

@@ -168,7 +168,7 @@ export const convertToYaml = (config: string | object): string => {
       // If it's not JSON, assume it's already YAML
       return config;
     }
-  } catch (error) {
+  } catch (_error) {
     return config.toString();
   }
 };

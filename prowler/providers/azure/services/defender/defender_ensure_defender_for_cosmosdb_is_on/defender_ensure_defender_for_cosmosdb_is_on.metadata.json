@@ -1,20 +1,18 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_cosmosdb_is_on",
-  "CheckTitle": "Subscription has Microsoft Defender for Cosmos DB plan set to On (pricing tier Standard)",
+  "CheckTitle": "Defender for Cosmos DB is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Azure Cosmos DB** is enabled at the subscription using the `Standard` pricing tier for the `CosmosDbs` plan, covering all Cosmos DB accounts",
   "Risk": "Without this protection, Cosmos DB activity lacks advanced threat detection and telemetry. Attacks such as **SQL injection**, credential abuse, and **anomalous access patterns** may go unnoticed, enabling data exfiltration and unauthorized changes, degrading **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/Azure/PSRule.Rules.Azure/issues/2204",
-    "https://www.linkedin.com/pulse/dynamic-autoscale-azure-cosmos-db-how-can-help-you-save-julien-michel-8r3ne",
-    "https://video2.skills-academy.com/en-US/azure/defender-for-cloud/concept-defender-for-cosmos",
     "https://learn.microsoft.com/th-th/Azure/defender-for-cloud/defender-for-databases-enable-cosmos-protections?tabs=azure-portal",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/CosmosDB/enable-advanced-threat-protection.html"
   ],

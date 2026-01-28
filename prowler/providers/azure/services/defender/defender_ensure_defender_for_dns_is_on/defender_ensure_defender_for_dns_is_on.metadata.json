@@ -1,17 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_dns_is_on",
-  "CheckTitle": "Subscription has Microsoft Defender for DNS enabled",
+  "CheckTitle": "Defender for DNS is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Microsoft Defender for DNS** is configured at the `Standard` tier for the subscription's Defender pricing",
   "Risk": "Absent **Defender for DNS**, query telemetry isn't inspected, allowing **C2 callbacks**, **DNS tunneling**, and **malicious domains** to bypass detection. This increases risks to **confidentiality** (exfiltration), **integrity** (malware/DGA), and **availability** (poisoned or hijacked resolution).",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-dns-introduction",
+    "https://support.icompaas.com/support/solutions/articles/62000234089-ensure-that-microsoft-defender-for-dns-is-set-to-on-automated-"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az security pricing create --name Dns --tier Standard",

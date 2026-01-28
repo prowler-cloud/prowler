@@ -8,18 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "microsoft.security/assessmentssample",
+  "ResourceGroup": "security",
   "Description": "**Running container images** are evaluated for unresolved **vulnerability findings** (`CVEs`) reported by Microsoft Defender for Cloud. The check reviews images currently in use across Kubernetes workloads and identifies where vulnerabilities remain unremediated.",
   "Risk": "Unremediated `CVEs` in active images enable:\n- **RCE**, container escape, and node takeover affecting **integrity/availability**\n- **Data exfiltration** and secret theft compromising **confidentiality**\nAdversaries can use public exploits to pivot across clusters and pipelines, tamper images, and disrupt services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender",
-    "https://githubissues.com/Azure/azure-functions-docker/1062",
     "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
-    "https://learn.microsoft.com/en-MY/azure/defender-for-cloud/defender-for-containers-vulnerability-assessment-azure",
-    "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/defender-for-cloud/recommendations-reference-container.md",
-    "https://video2.skills-academy.com/en-us/answers/questions/2126414/azure-registry-container-images-should-have-vulner",
-    "https://stackoverflow.com/questions/75155810/running-container-images-should-have-vulnerability-findings-resolved",
-    "https://www.azadvertizer.net/azpolicyadvertizer/17f4b1cc-c55c-4d94-b1f9-2978f6ac2957.html"
+    "https://learn.microsoft.com/en-MY/azure/defender-for-cloud/defender-for-containers-vulnerability-assessment-azure"
   ],
   "Remediation": {
     "Code": {

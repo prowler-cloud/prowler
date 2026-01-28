@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/assessments/governanceassignments",
+  "ResourceGroup": "security",
   "Description": "**Azure virtual machines** are assessed for the presence of an **endpoint protection (antimalware)** solution and its reported health across the subscription",
   "Risk": "Absent or unhealthy **endpoint protection** lets malware execute on VMs, risking:\n- Data exfiltration (confidentiality)\n- Tampering and credential theft (integrity)\n- Ransomware, cryptomining, and outages (availability)\n\nIt also enables persistence and lateral movement to other cloud resources.",
   "RelatedUrl": "",

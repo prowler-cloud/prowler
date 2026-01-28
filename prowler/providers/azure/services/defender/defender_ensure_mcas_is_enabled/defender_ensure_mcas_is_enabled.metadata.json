@@ -1,18 +1,18 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_mcas_is_enabled",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Cloud Apps enabled",
+  "CheckTitle": "Defender for Cloud Apps is enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.security/pricings",
-  "Description": "Subscription settings contain the `MCAS` integration for **Microsoft Defender for Cloud Apps**, and the setting is `enabled`.",
+  "ResourceGroup": "security",
+  "Description": "**Subscription settings** contain the `MCAS` integration for **Microsoft Defender for Cloud Apps**, and the setting is `enabled`.",
   "Risk": "Missing integration leaves **Defender for Cloud** blind to SaaS context, weakening correlation of control-plane activity with app usage. Attackers can hide data exfiltration via cloud apps, abuse OAuth grants, or mask unauthorized ARM changes-impacting confidentiality and integrity and slowing incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/rest/api/securitycenter/settings/list",
     "https://learn.microsoft.com/en-in/azure/defender-for-cloud/defender-for-cloud-introduction#secure-cloud-applications",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-cloud-apps-integration.html#",
     "https://learn.microsoft.com/en-us/answers/questions/2045272/integrating-microsoft-defender-for-cloud-apps-with"

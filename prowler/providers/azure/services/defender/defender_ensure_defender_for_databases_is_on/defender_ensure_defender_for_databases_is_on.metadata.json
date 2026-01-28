@@ -1,17 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_databases_is_on",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Databases enabled (Standard pricing tier)",
+  "CheckTitle": "Defender for Databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Azure subscription** is evaluated for **Defender for Databases** coverage: `Standard` pricing must be enabled for `SqlServers`, `SqlServerVirtualMachines`, `OpenSourceRelationalDatabases`, and `CosmosDbs`.",
   "Risk": "Without this coverage, database workloads lack **advanced threat detection**, **vulnerability assessment**, and **behavior analytics**.\n\nAttacks like credential brute force, SQL injection, privilege abuse, and data exfiltration can go **undetected**, threatening **confidentiality, integrity**, and **availability**.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/tutorial-enable-databases-plan",
+    "https://support.icompaas.com/support/solutions/articles/62000229826-ensure-that-microsoft-defender-for-databases-is-set-to-on-"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

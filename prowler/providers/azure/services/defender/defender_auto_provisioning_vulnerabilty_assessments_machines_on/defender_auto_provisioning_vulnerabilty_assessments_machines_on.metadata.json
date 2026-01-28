@@ -6,18 +6,16 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.security/assessmentssample",
-  "Description": "Microsoft Defender for Cloud evaluates whether **Azure VMs** and **Arc-enabled machines** have a **vulnerability assessment solution** deployed and reporting healthy coverage across the subscription.",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Cloud** evaluates whether **Azure VMs** and **Arc-enabled machines** have a **vulnerability assessment solution** deployed and reporting healthy coverage across the subscription.",
   "Risk": "Without continuous **vulnerability assessment**, unpatched flaws persist, enabling:\n- **Remote code execution** and privilege escalation\n- **Ransomware** disrupting availability\n- **Data exfiltration** via lateral movement\n\nConfidentiality, integrity, and availability are reduced across affected machines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://video2.skills-academy.com/en-us/azure/defender-for-cloud/auto-deploy-vulnerability-assessment",
-    "https://cloudadministrator.net/2022/10/20/enable-defender-for-cloud-auto-provisioning-agents-via-bicep/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/automatic-provisioning-vulnerability-assessment-machines.html",
-    "https://techcommunity.microsoft.com/blog/microsoftdefendercloudblog/deploy-microsoft-defender-for-cloud-via-terraform/3563710",
-    "https://docs.microsoft.com/en-us/azure/defender-for-cloud/enable-data-collection?tabs=autoprovision-va",
-    "https://github.com/hashicorp/terraform-provider-azurerm/issues/16357"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/deploy-vulnerability-assessment-defender-vulnerability-management",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components?tabs=autoprovision-va"
   ],
   "Remediation": {
     "Code": {

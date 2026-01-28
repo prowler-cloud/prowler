@@ -6,15 +6,15 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "security",
   "Description": "**Azure VMs** are evaluated for:\n- Presence of a monitoring agent\n- Periodic checks for missing updates\n- Installation of the latest **security and critical OS updates** on Windows and Linux",
   "Risk": "Unpatched VMs are exposed to **known exploits** (RCE, privilege escalation), enabling **initial access** and **lateral movement**. This endangers **confidentiality** (data theft), **integrity** (tampering), and **availability** (ransomware, outages). Lapses in periodic assessment prolong exposure to critical vulnerabilities.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/apply-latest-os-patches.html",
     "https://learn.microsoft.com/en-us/azure/virtual-machines/updates-maintenance-overview",
-    "https://techcommunity.microsoft.com/discussions/azure/system-updates-should-be-installed-on-your-machines-withwithout-powered-by-azure/4148748",
     "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities"
   ],
   "Remediation": {

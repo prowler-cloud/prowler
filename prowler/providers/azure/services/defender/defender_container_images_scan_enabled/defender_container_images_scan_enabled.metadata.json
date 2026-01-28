@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Azure subscriptions** have **container image vulnerability assessment** enabled for **Azure Container Registry** via Microsoft Defender for Cloud (`ContainerRegistriesVulnerabilityAssessments`). Images in registries are evaluated for known package vulnerabilities in their packages and dependencies.",
   "Risk": "Without registry scanning, **known CVEs** in images can reach runtime, enabling **RCE**, privilege escalation, and lateral movement. This undermines data confidentiality and integrity and can reduce availability through cryptomining or service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender",
-    "https://library.tf/modules/mrexojo/acr/azure/latest",
-    "https://www.linkedin.com/pulse/azure-container-registry-acr-top-questions-answers-abhay-velankar-xwoff",
-    "https://video2.skills-academy.com/en-us/answers/questions/518840/what-is-the-solution-as-of-today-to-scan-windows-i",
     "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
     "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-container-registry/image-vulnerability-assessment",
-    "https://github.com/MicrosoftDocs/azure-docs/issues/89089",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AKS/enable-image-vulnerability-scanning.html"
   ],
   "Remediation": {

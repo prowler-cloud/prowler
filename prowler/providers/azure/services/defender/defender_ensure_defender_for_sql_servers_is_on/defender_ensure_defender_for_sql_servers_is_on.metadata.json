@@ -1,18 +1,19 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_sql_servers_is_on",
-  "CheckTitle": "Subscription has Microsoft Defender for SQL servers on machines enabled with pricing tier Standard",
+  "CheckTitle": "Defender for SQL servers on machines is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
-  "Description": "Subscription pricing for **Defender for SQL Server on Machines** is configured to the `Standard` plan, covering SQL Server instances running on virtual machines.",
+  "ResourceGroup": "security",
+  "Description": "**Subscription pricing** for **Defender for SQL Server on Machines** is configured to the `Standard` plan, covering SQL Server instances running on virtual machines.",
   "Risk": "Without **Defender for SQL Server on Machines**, attacks on SQL Server VMs can go **undetected**-including SQL injection, brute-force logons, and privilege abuse.\n\nThis risks data exfiltration (C), schema or record tampering (I), and outages or ransomware impact (A), while reducing visibility and delaying response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-sql-servers-on-machines#terraform",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-sql-introduction",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-sql-server-virtual-machines.html"
   ],
   "Remediation": {

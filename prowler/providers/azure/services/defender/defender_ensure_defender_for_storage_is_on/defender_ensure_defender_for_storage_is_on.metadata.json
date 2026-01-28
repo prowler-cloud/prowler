@@ -1,21 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_storage_is_on",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Storage Accounts pricing tier set to Standard",
+  "CheckTitle": "Defender for Storage is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "Azure subscription's **Defender for Storage** plan is set to `Standard` for Storage Accounts.",
   "Risk": "Without **Defender for Storage**, suspicious access to blobs, files, and queues may go undetected. Compromised keys or `SAS` tokens can enable data exfiltration (**confidentiality**), object tampering (**integrity**), and mass deletion or ransomware-like encryption (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-storage#terraform",
-    "https://www.cryptohowtoeasy.com/article/enable_azure_defender",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-storage.html",
-    "https://assets.ctfassets.net/lvkf21t5nlpz/3LVbJZW5rF3ZbDM4ygPLkk/21fc29e6c5c64d0909ba786d2011f5a5/CIS_Microsoft_Azure_Foundations_Benchmark_v1.3.0.pdf"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-storage.html"
   ],
   "Remediation": {
     "Code": {

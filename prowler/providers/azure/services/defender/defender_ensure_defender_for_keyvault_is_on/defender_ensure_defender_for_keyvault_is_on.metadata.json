@@ -1,19 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_keyvault_is_on",
-  "CheckTitle": "Subscription has Microsoft Defender for Key Vault enabled (Standard pricing tier)",
+  "CheckTitle": "Defender for Key Vaults is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "**Azure subscriptions** are evaluated for the **Defender for Key Vaults** plan configured at the `Standard` tier. It identifies where Key Vault protection uses this tier versus where the Defender pricing for `KeyVaults` is not set accordingly.",
   "Risk": "Without **Defender for Key Vaults**, anomalous access and mass secret retrievals can go undetected, enabling:\n- Secret exfiltration (confidentiality)\n- Key/secret tampering (integrity)\n- Destructive actions like purge/delete (availability)\n\nLack of signals delays response and facilitates lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-key-vault.html",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-key-vault#terraform"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-key-vault-introduction"
   ],
   "Remediation": {
     "Code": {

@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.resources/subscriptions",
-  "Description": "**Defender for Cloud** auto-provisioning of the **Log Analytics agent** to Azure VMs is configured to `On` at the subscription level",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Cloud** auto-provisioning of the **Log Analytics agent** to Azure VMs is configured to `On` at the subscription level",
   "Risk": "Without automatic agent deployment, some VMs lack security telemetry, creating **blind spots** for vulnerabilities, missing patches, and threats.\n\nAttackers can persist or move laterally unnoticed, undermining **confidentiality** and **integrity**, while delayed detection hampers effective response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/data-security",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
   ],

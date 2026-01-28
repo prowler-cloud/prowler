@@ -1,17 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_os_relational_databases_is_on",
-  "CheckTitle": "Microsoft Defender for open-source relational databases is On (pricing tier Standard)",
+  "CheckTitle": "Defender for Open-Source Relational Databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
-  "Description": "Microsoft Defender for Cloud plan for **Open-Source Relational Databases** is evaluated for the `Standard` pricing tier at the subscription level.",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Cloud** plan for **Open-Source Relational Databases** is evaluated for the `Standard` pricing tier at the subscription level.",
   "Risk": "Absent the `Standard` plan, open-source databases lack **threat detection** and **behavior analytics**, reducing **confidentiality** and **integrity**. SQL injection, brute-force logins, and data exfiltration may go unnoticed, delaying response and enabling **lateral movement**.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-databases-introduction",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-relational-database.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az security pricing create --name OpenSourceRelationalDatabases --tier Standard",

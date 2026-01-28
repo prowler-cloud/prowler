@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsGlueJob",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue ETL jobs** are evaluated for a **security configuration** with **CloudWatch Logs encryption** (`SSE-KMS`) enabled. Jobs without a security configuration, or with CloudWatch Logs encryption set to `DISABLED`, are highlighted.",
   "Risk": "Unencrypted Glue logs weaken **confidentiality**.\n\nLog entries can expose credentials, PII, connection strings, and schema details. Anyone with log storage access can harvest secrets for **lateral movement** and data exfiltration, widening the blast radius of compromises.",
   "RelatedUrl": "",

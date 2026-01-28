@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "microsoft.resources/subscriptions",
-  "Description": "Microsoft Defender for Cloud security contact settings include **additional email recipients** defined in the `emails` field to receive alert notifications.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Microsoft Defender for Cloud** security contact settings include **additional email recipients** defined in the `emails` field to receive alert notifications.",
   "Risk": "Relying only on subscription owners for alerts creates a **single point of failure**. Missed or delayed notifications extend attacker dwell time, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and service disruption (**availability**). Absence or turnover can silently suppress alerts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/security-contact-email.html",
-    "https://learn.microsoft.com/en-us/azure/azure-sql/database/threat-detection-configure?view=azuresql",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-security-contact-emails-is-set#terraform",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
-    "https://learn.microsoft.com/en-us/rest/api/defenderforcloud/security-contacts/list?view=rest-defenderforcloud-2020-01-01-preview&tabs=HTTP",
-    "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",
     "https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/threat-detection-configure?view=azuresql"
   ],
   "Remediation": {

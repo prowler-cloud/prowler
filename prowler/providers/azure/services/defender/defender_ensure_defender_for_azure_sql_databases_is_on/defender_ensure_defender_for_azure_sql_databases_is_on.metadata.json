@@ -1,19 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_azure_sql_databases_is_on",
-  "CheckTitle": "Azure subscription has Microsoft Defender for Azure SQL databases enabled (Standard)",
+  "CheckTitle": "Defender for Azure SQL databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.security/pricings",
+  "ResourceGroup": "security",
   "Description": "Microsoft Defender for Cloud plan for **Azure SQL Database Servers** is evaluated at subscription scope, expecting the `pricing_tier` set to `Standard` for `SqlServers`. Non-standard tiers indicate the plan isn't enabled.",
   "Risk": "Without **Defender for SQL**, attacks like **SQL injection**, brute-force logins, and anomalous queries may go **undetected**, enabling data exfiltration and tampering. Limited telemetry delays **incident response**, risking loss of confidentiality and integrity and aiding lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-azure-sql-database-servers#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-azure-sql.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql"
   ],
   "Remediation": {
     "Code": {
