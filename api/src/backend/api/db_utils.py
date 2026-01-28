@@ -450,7 +450,7 @@ def create_index_on_partitions(
             all_partitions=True
         )
     """
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
