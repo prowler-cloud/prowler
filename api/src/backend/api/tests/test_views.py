@@ -4394,14 +4394,14 @@ class TestResourceViewSet:
         tenant_id = str(provider1.tenant_id)
 
         # Create completed scans for both providers
-        scan1 = Scan.objects.create(
+        Scan.objects.create(
             name="scan for provider 1",
             provider=provider1,
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant_id=tenant_id,
         )
-        scan2 = Scan.objects.create(
+        Scan.objects.create(
             name="scan for provider 2",
             provider=provider2,
             trigger=Scan.TriggerChoices.MANUAL,
@@ -4419,7 +4419,7 @@ class TestResourceViewSet:
             service="ec2",
             type="instance",
         )
-        resource2 = Resource.objects.create(
+        Resource.objects.create(
             tenant_id=tenant_id,
             provider=provider2,
             uid="resource_provider_2",
@@ -4457,6 +4457,7 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+
     # Events endpoint tests
     def test_events_non_aws_provider(self, authenticated_client, providers_fixture):
         """Test events endpoint rejects non-AWS providers."""
