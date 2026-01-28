@@ -64,7 +64,7 @@ export const EntityInfo = ({
           </Tooltip>
         )}
         {entityId && (
-          <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex w-full min-w-0 items-center gap-1 rounded-xl border px-2 py-0">
+          <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex w-full min-w-0 items-center gap-1 rounded-xl border px-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="text-text-neutral-secondary min-w-0 flex-1 truncate text-left text-xs">
