@@ -18,16 +18,85 @@ from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
 # - https://bishopfox.com/blog/privilege-escalation-in-aws
 # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
 # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
+# - https://github.com/DataDog/pathfinding.cloud (AWS IAM Privilege Escalation Path Library)
 
 privilege_escalation_policies_combination = {
+    # IAM self-escalation and policy manipulation
     "OverPermissiveIAM": {"iam:*"},
     "IAMPut": {"iam:Put*"},
     "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
     "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
+    "iam:CreateAccessKey": {"iam:CreateAccessKey"},
+    "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
+    "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
+    "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
+    "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
+    "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
+    "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
+    "iam:PutRolePolicy": {"iam:PutRolePolicy"},
+    "iam:PutUserPolicy": {"iam:PutUserPolicy"},
+    "iam:AddUserToGroup": {"iam:AddUserToGroup"},
+    "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
+    # IAM chained privilege escalation patterns
+    "CreateAccessKey+DeleteAccessKey": {
+        "iam:CreateAccessKey",
+        "iam:DeleteAccessKey",
+    },
+    "AttachUserPolicy+CreateAccessKey": {
+        "iam:AttachUserPolicy",
+        "iam:CreateAccessKey",
+    },
+    "PutUserPolicy+CreateAccessKey": {
+        "iam:PutUserPolicy",
+        "iam:CreateAccessKey",
+    },
+    "AttachRolePolicy+UpdateAssumeRolePolicy": {
+        "iam:AttachRolePolicy",
+        "iam:UpdateAssumeRolePolicy",
+    },
+    "CreatePolicyVersion+UpdateAssumeRolePolicy": {
+        "iam:CreatePolicyVersion",
+        "iam:UpdateAssumeRolePolicy",
+    },
+    "PutRolePolicy+UpdateAssumeRolePolicy": {
+        "iam:PutRolePolicy",
+        "iam:UpdateAssumeRolePolicy",
+    },
+    # STS-based privilege escalation patterns
+    "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
+    "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
+    "AssumeRole+UpdateAssumeRolePolicy": {
+        "sts:AssumeRole",
+        "iam:UpdateAssumeRolePolicy",
+    },
+    "AssumeRole+CreatePolicyVersion": {
+        "sts:AssumeRole",
+        "iam:CreatePolicyVersion",
+    },
+    # EC2-based privilege escalation patterns
     "PassRole+EC2": {
         "iam:PassRole",
         "ec2:RunInstances",
     },
+    "PassRole+EC2SpotInstances": {
+        "iam:PassRole",
+        "ec2:RequestSpotInstances",
+    },
+    "EC2ModifyInstanceAttribute": {
+        "ec2:ModifyInstanceAttribute",
+        "ec2:StopInstances",
+        "ec2:StartInstances",
+    },
+    "EC2ModifyLaunchTemplate": {
+        "ec2:CreateLaunchTemplateVersion",
+        "ec2:ModifyLaunchTemplate",
+    },
+    # EC2 Instance Connect privilege escalation
+    "EC2InstanceConnect+SendSSHPublicKey": {
+        "ec2-instance-connect:SendSSHPublicKey",
+        "ec2:DescribeInstances",
+    },
+    # Lambda-based privilege escalation patterns
     "PassRole+CreateLambda+Invoke": {
         "iam:PassRole",
         "lambda:CreateFunction",
@@ -45,34 +114,92 @@ privilege_escalation_policies_combination = {
         "dynamodb:CreateTable",
         "dynamodb:PutItem",
     },
-    "PassRole+GlueEndpoint": {
+    "PassRole+CreateLambda+AddPermission": {
+        "iam:PassRole",
+        "lambda:CreateFunction",
+        "lambda:AddPermission",
+    },
+    "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
+    "lambda:UpdateFunctionConfiguration": {"lambda:UpdateFunctionConfiguration"},
+    "UpdateFunctionCode+InvokeFunction": {
+        "lambda:UpdateFunctionCode",
+        "lambda:InvokeFunction",
+    },
+    "UpdateFunctionCode+AddPermission": {
+        "lambda:UpdateFunctionCode",
+        "lambda:AddPermission",
+    },
+    # Glue-based privilege escalation patterns
+    "PassRole+GlueCreateDevEndpoint": {
         "iam:PassRole",
         "glue:CreateDevEndpoint",
-        "glue:GetDevEndpoint",
     },
-    "PassRole+GlueEndpoints": {
+    "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
+    "PassRole+GlueCreateJob+StartJobRun": {
         "iam:PassRole",
-        "glue:CreateDevEndpoint",
-        "glue:GetDevEndpoints",
+        "glue:CreateJob",
+        "glue:StartJobRun",
     },
-    "PassRole+CloudFormation": {
+    "PassRole+GlueCreateJob+CreateTrigger": {
+        "iam:PassRole",
+        "glue:CreateJob",
+        "glue:CreateTrigger",
+    },
+    "PassRole+GlueUpdateJob+StartJobRun": {
+        "iam:PassRole",
+        "glue:UpdateJob",
+        "glue:StartJobRun",
+    },
+    "PassRole+GlueUpdateJob+CreateTrigger": {
+        "iam:PassRole",
+        "glue:UpdateJob",
+        "glue:CreateTrigger",
+    },
+    # CloudFormation-based privilege escalation patterns
+    "PassRole+CloudFormationCreateStack": {
         "iam:PassRole",
         "cloudformation:CreateStack",
-        "cloudformation:DescribeStacks",
     },
+    "CloudFormationUpdateStack": {"cloudformation:UpdateStack"},
+    "PassRole+CloudFormationCreateStackSet": {
+        "iam:PassRole",
+        "cloudformation:CreateStackSet",
+        "cloudformation:CreateStackInstances",
+    },
+    "PassRole+CloudFormationUpdateStackSet": {
+        "iam:PassRole",
+        "cloudformation:UpdateStackSet",
+    },
+    "CloudFormationChangeSet": {
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+    },
+    # DataPipeline-based privilege escalation patterns
     "PassRole+DataPipeline": {
         "iam:PassRole",
         "datapipeline:CreatePipeline",
         "datapipeline:PutPipelineDefinition",
         "datapipeline:ActivatePipeline",
     },
-    "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
-    "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
-    "lambda:UpdateFunctionConfiguration": {"lambda:UpdateFunctionConfiguration"},
+    # CodeStar-based privilege escalation patterns
     "PassRole+CodeStar": {
         "iam:PassRole",
         "codestar:CreateProject",
     },
+    # CodeBuild-based privilege escalation patterns
+    "PassRole+CodeBuildCreateProject+StartBuild": {
+        "iam:PassRole",
+        "codebuild:CreateProject",
+        "codebuild:StartBuild",
+    },
+    "PassRole+CodeBuildCreateProject+StartBuildBatch": {
+        "iam:PassRole",
+        "codebuild:CreateProject",
+        "codebuild:StartBuildBatch",
+    },
+    "CodeBuildStartBuild": {"codebuild:StartBuild"},
+    "CodeBuildStartBuildBatch": {"codebuild:StartBuildBatch"},
+    # AutoScaling-based privilege escalation patterns
     "PassRole+CreateAutoScaling": {
         "iam:PassRole",
         "autoscaling:CreateAutoScalingGroup",
@@ -83,31 +210,22 @@ privilege_escalation_policies_combination = {
         "autoscaling:UpdateAutoScalingGroup",
         "autoscaling:CreateLaunchConfiguration",
     },
-    "iam:CreateAccessKey": {"iam:CreateAccessKey"},
-    "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
-    "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
-    "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
-    "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
-    "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
-    "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
-    "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
-    "iam:PutRolePolicy": {"iam:PutRolePolicy"},
-    "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
-    "iam:PutUserPolicy": {"iam:PutUserPolicy"},
-    "iam:AddUserToGroup": {"iam:AddUserToGroup"},
-    "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
-    "AssumeRole+UpdateAssumeRolePolicy": {
-        "sts:AssumeRole",
-        "iam:UpdateAssumeRolePolicy",
-    },
-    # AgentCore privilege escalation patterns
-    "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
-        "iam:PassRole",
-        "bedrock-agentcore:CreateCodeInterpreter",
-        "bedrock-agentcore:InvokeCodeInterpreter",
-    },
     # ECS-based privilege escalation patterns
-    # Reference: https://labs.reversec.com/posts/2025/08/another-ecs-privilege-escalation-path
+    "PassRole+ECS+RegisterTaskDef+CreateService": {
+        "iam:PassRole",
+        "ecs:RegisterTaskDefinition",
+        "ecs:CreateService",
+    },
+    "PassRole+ECS+RegisterTaskDef+RunTask": {
+        "iam:PassRole",
+        "ecs:RegisterTaskDefinition",
+        "ecs:RunTask",
+    },
+    "PassRole+ECS+RegisterTaskDef+StartTask": {
+        "iam:PassRole",
+        "ecs:RegisterTaskDefinition",
+        "ecs:StartTask",
+    },
     "PassRole+ECS+StartTask": {
         "iam:PassRole",
         "ecs:StartTask",
@@ -118,8 +236,47 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "ecs:RunTask",
     },
-    # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
-    # "sts:AssumeRole": {"sts:AssumeRole"},
+    # SageMaker-based privilege escalation patterns
+    "PassRole+SageMakerCreateNotebookInstance": {
+        "iam:PassRole",
+        "sagemaker:CreateNotebookInstance",
+    },
+    "PassRole+SageMakerCreateTrainingJob": {
+        "iam:PassRole",
+        "sagemaker:CreateTrainingJob",
+    },
+    "PassRole+SageMakerCreateProcessingJob": {
+        "iam:PassRole",
+        "sagemaker:CreateProcessingJob",
+    },
+    "SageMakerCreatePresignedNotebookInstanceUrl": {
+        "sagemaker:CreatePresignedNotebookInstanceUrl",
+    },
+    "SageMakerNotebookLifecycleConfig": {
+        "sagemaker:CreateNotebookInstanceLifecycleConfig",
+        "sagemaker:StopNotebookInstance",
+        "sagemaker:UpdateNotebookInstance",
+        "sagemaker:StartNotebookInstance",
+    },
+    # SSM-based privilege escalation patterns
+    "SSMStartSession": {"ssm:StartSession"},
+    "SSMSendCommand": {"ssm:SendCommand"},
+    # AppRunner-based privilege escalation patterns
+    "PassRole+AppRunnerCreateService": {
+        "iam:PassRole",
+        "apprunner:CreateService",
+    },
+    "AppRunnerUpdateService": {"apprunner:UpdateService"},
+    # Bedrock AgentCore privilege escalation patterns
+    "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateCodeInterpreter",
+        "bedrock-agentcore:InvokeCodeInterpreter",
+    },
+    "AgentCoreSessionInvoke": {
+        "bedrock-agentcore:StartCodeInterpreterSession",
+        "bedrock-agentcore:InvokeCodeInterpreter",
+    },
 }
 
 
