@@ -2,6 +2,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -23,6 +24,7 @@ const PROVIDER_ICONS = {
   oraclecloud: OracleCloudProviderBadge,
   mongodbatlas: MongoDBAtlasProviderBadge,
   alibabacloud: AlibabaCloudProviderBadge,
+  cloudflare: CloudflareProviderBadge,
 } as const;
 
 interface ProviderIconCellProps {

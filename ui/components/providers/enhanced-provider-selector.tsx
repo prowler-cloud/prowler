@@ -22,6 +22,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   oraclecloud: "Oracle Cloud Infrastructure",
   mongodbatlas: "MongoDB Atlas",
   alibabacloud: "Alibaba Cloud",
+  cloudflare: "Cloudflare",
 };
 
 interface EnhancedProviderSelectorProps<T extends FieldValues> {

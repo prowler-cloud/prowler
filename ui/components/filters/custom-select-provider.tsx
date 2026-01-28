@@ -10,6 +10,7 @@ import {
   CustomProviderInputAlibabaCloud,
   CustomProviderInputAWS,
   CustomProviderInputAzure,
+  CustomProviderInputCloudflare,
   CustomProviderInputGCP,
   CustomProviderInputGitHub,
   CustomProviderInputIac,
@@ -62,6 +63,10 @@ const providerDisplayData: Record<
   alibabacloud: {
     label: "Alibaba Cloud",
     component: <CustomProviderInputAlibabaCloud />,
+  },
+  cloudflare: {
+    label: "Cloudflare",
+    component: <CustomProviderInputCloudflare />,
   },
 };
 
