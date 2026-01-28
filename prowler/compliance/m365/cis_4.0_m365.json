@@ -693,7 +693,9 @@
     {
       "Id": "2.4.4",
       "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes malware and high confidence phishing. When ZAP for Teams protection blocks a message, the message is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP occurs up to 48 hours after delivery.",
-      "Checks": [],
+      "Checks": [
+        "defender_zap_for_teams_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

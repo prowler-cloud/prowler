@@ -18,7 +18,7 @@ export type VerticalStepProps = {
   title?: ReactNode;
 };
 
-const STEP_COLORS = {
+export const STEP_COLORS = {
   primary: "primary",
   secondary: "secondary",
   success: "success",
