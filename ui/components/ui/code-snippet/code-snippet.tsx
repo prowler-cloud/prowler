@@ -48,7 +48,11 @@ export const CodeSnippet = ({
       className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 cursor-pointer transition-colors"
       aria-label="Copy to clipboard"
     >
-      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
     </button>
   );
 
@@ -64,7 +68,11 @@ export const CodeSnippet = ({
         )}
         aria-label="Copy to clipboard"
       >
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        {copied ? (
+          <Check className="h-3.5 w-3.5" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
       </button>
     );
   }
@@ -76,7 +84,9 @@ export const CodeSnippet = ({
         className,
       )}
     >
-      {icon && <span className="text-text-neutral-secondary shrink-0">{icon}</span>}
+      {icon && (
+        <span className="text-text-neutral-secondary shrink-0">{icon}</span>
+      )}
       <Tooltip>
         <TooltipTrigger asChild>
           <code className="min-w-0 flex-1 truncate">{displayValue}</code>

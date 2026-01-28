@@ -73,7 +73,9 @@ export const EntityInfo = ({
               </TooltipTrigger>
               <TooltipContent side="top">{entityId}</TooltipContent>
             </Tooltip>
-            {canCopy && <CodeSnippet value={entityId} hideCode className="shrink-0" />}
+            {canCopy && (
+              <CodeSnippet value={entityId} hideCode className="shrink-0" />
+            )}
           </div>
         )}
       </div>

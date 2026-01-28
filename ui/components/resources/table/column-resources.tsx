@@ -14,6 +14,7 @@ import { EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
 import { ProviderType, ResourceProps } from "@/types";
+
 import { ResourceDetail } from "./resource-detail";
 
 const getResourceData = (
