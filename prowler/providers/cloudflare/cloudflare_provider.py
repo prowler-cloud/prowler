@@ -14,6 +14,7 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.cloudflare.exceptions.exceptions import (
     CloudflareCredentialsError,
     CloudflareIdentityError,
+    CloudflareInvalidAccountError,
     CloudflareSessionError,
 )
 from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
@@ -36,11 +37,13 @@ class CloudflareProvider(Provider):
     _fixer_config: dict
     _mutelist: CloudflareMutelist
     _filter_zones: set[str] | None
+    _filter_accounts: set[str] | None
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
         filter_zones: Iterable[str] | None = None,
+        filter_accounts: Iterable[str] | None = None,
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -74,6 +77,23 @@ class CloudflareProvider(Provider):
         # Store zone filter for filtering resources across services
         self._filter_zones = set(filter_zones) if filter_zones else None
 
+        # Store account filter and restrict audited_accounts accordingly
+        self._filter_accounts = set(filter_accounts) if filter_accounts else None
+        if self._filter_accounts:
+            discovered_account_ids = {account.id for account in self._identity.accounts}
+            invalid_accounts = self._filter_accounts - discovered_account_ids
+            if invalid_accounts:
+                invalid_str = ", ".join(sorted(invalid_accounts))
+                raise CloudflareInvalidAccountError(
+                    file=os.path.basename(__file__),
+                    message=f"Account IDs not found: {invalid_str}.",
+                )
+            self._identity.audited_accounts = [
+                account_id
+                for account_id in self._identity.audited_accounts
+                if account_id in self._filter_accounts
+            ]
+
         Provider.set_global_provider(self)
 
     @property
@@ -104,6 +124,11 @@ class CloudflareProvider(Provider):
     def filter_zones(self) -> set[str] | None:
         """Zone filter from --region argument to filter resources."""
         return self._filter_zones
+
+    @property
+    def filter_accounts(self) -> set[str] | None:
+        """Account filter from --account-id argument to restrict scanned accounts."""
+        return self._filter_accounts
 
     @property
     def accounts(self) -> list[CloudflareAccount]:
@@ -248,10 +273,23 @@ class CloudflareProvider(Provider):
         if email:
             report_lines.append(f"Email: {Fore.YELLOW}{email}{Style.RESET_ALL}")
 
-        # Accounts
-        if self.accounts:
-            accounts = ", ".join([account.id for account in self.accounts])
-            report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
+        # Audited accounts (only the ones that will actually be scanned)
+        audited_accounts = self.identity.audited_accounts
+        if audited_accounts:
+            account_names = {
+                account.id: account.name for account in self.identity.accounts
+            }
+            accounts_str = ", ".join(
+                (
+                    f"{account_id} ({account_names[account_id]})"
+                    if account_id in account_names and account_names[account_id]
+                    else account_id
+                )
+                for account_id in audited_accounts
+            )
+            report_lines.append(
+                f"Audited Accounts: {Fore.YELLOW}{accounts_str}{Style.RESET_ALL}"
+            )
 
         print_boxes(report_lines, report_title)
 

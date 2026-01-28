@@ -6,6 +6,13 @@ def init_parser(self):
 
     scope_group = cloudflare_parser.add_argument_group("Scope")
     scope_group.add_argument(
+        "--account-id",
+        nargs="+",
+        default=None,
+        metavar="ACCOUNT_ID",
+        help="Filter scan to specific Cloudflare account IDs. Only zones belonging to these accounts will be scanned.",
+    )
+    scope_group.add_argument(
         "--region",
         "--filter-region",
         "-f",

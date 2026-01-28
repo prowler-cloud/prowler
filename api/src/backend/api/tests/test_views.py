@@ -4356,6 +4356,108 @@ class TestResourceViewSet:
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
 
+    def test_resources_latest_filter_by_provider_id(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id__in filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in_multiple(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that provider_id__in filter works with multiple provider IDs."""
+        provider1, provider2 = providers_fixture[0], providers_fixture[1]
+        tenant_id = str(provider1.tenant_id)
+
+        # Create completed scans for both providers
+        Scan.objects.create(
+            name="scan for provider 1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+        Scan.objects.create(
+            name="scan for provider 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+
+        # Create resources for each provider
+        resource1 = Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider1,
+            uid="resource_provider_1",
+            name="Resource Provider 1",
+            region="us-east-1",
+            service="ec2",
+            type="instance",
+        )
+        Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider2,
+            uid="resource_provider_2",
+            name="Resource Provider 2",
+            region="us-west-2",
+            service="s3",
+            type="bucket",
+        )
+
+        # Test filtering by both providers
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+        # Test filtering by single provider returns only that provider's resource
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["uid"] == resource1.uid
+
+    def test_resources_latest_filter_by_provider_id_no_match(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter returns empty when no match."""
+        non_existent_id = str(uuid4())
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": non_existent_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
     # Events endpoint tests
     def test_events_non_aws_provider(self, authenticated_client, providers_fixture):
         """Test events endpoint rejects non-AWS providers."""
@@ -4849,6 +4951,68 @@ class TestResourceViewSet:
         error = response.json()["errors"][0]
         assert error["code"] == "service_unavailable"
         assert error["status"] == "503"  # Must be string per JSON:API spec
+        assert "detail" in error
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    def test_events_assume_role_access_denied(
+        self,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Test events handles AWSAssumeRoleError during provider init.
+
+        This tests the scenario from CLOUD-API-3HJ where the API task role
+        cannot assume the customer's ProwlerScan role due to IAM permissions.
+        The error happens during initialize_prowler_provider, which wraps
+        the ClientError in AWSAssumeRoleError.
+        """
+        from api.models import Resource
+        from prowler.providers.aws.exceptions.exceptions import AWSAssumeRoleError
+
+        aws_provider = providers_fixture[0]  # AWS provider from fixture
+
+        resource = Resource.objects.create(
+            uid="arn:aws:lambda:eu-west-1:123456789012:function:assume-role-test",
+            name="AssumeRole Test Function",
+            type="function",
+            region="eu-west-1",
+            service="lambda",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        # Mock initialize_prowler_provider raising AWSAssumeRoleError
+        # (this is what aws_provider.py actually raises when AssumeRole fails)
+        original_error = ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDenied",
+                    "Message": (
+                        "User: arn:aws:sts::123456789012:assumed-role/api-task-role/xxx "
+                        "is not authorized to perform: sts:AssumeRole on resource: "
+                        "arn:aws:iam::123456789012:role/ProwlerScan"
+                    ),
+                }
+            },
+            "AssumeRole",
+        )
+        mock_initialize_provider.side_effect = AWSAssumeRoleError(
+            original_exception=original_error,
+            file="aws_provider.py",
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        # AWSAssumeRoleError returns 502 (upstream auth failure)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+        # Verify JSON:API error structure
+        error = response.json()["errors"][0]
+        assert error["code"] == "upstream_access_denied"
+        assert error["status"] == "502"
         assert "detail" in error
 
     def test_events_unauthenticated_returns_401(self, providers_fixture):
