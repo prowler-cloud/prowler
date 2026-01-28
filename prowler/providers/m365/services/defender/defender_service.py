@@ -12,7 +12,7 @@ class Defender(M365Service):
     Microsoft Defender for Office 365 service client.
 
     Provides access to Defender security policies including malware filtering,
-    anti-spam, anti-phishing, Safe Links, and DKIM configurations.
+    anti-spam, anti-phishing, Safe Links, Teams protection, and DKIM configurations.
     """
 
     def __init__(self, provider: M365Provider):
@@ -35,6 +35,7 @@ class Defender(M365Service):
         self.report_submission_policy = None
         self.safe_links_policies = {}
         self.safe_links_rules = {}
+        self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -50,6 +51,7 @@ class Defender(M365Service):
                 self.report_submission_policy = self._get_report_submission_policy()
                 self.safe_links_policies = self._get_safe_links_policy()
                 self.safe_links_rules = self._get_safe_links_rule()
+                self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -488,6 +490,28 @@ class Defender(M365Service):
             )
         return safe_links_rules
 
+    def _get_teams_protection_policy(self):
+        """
+        Retrieve the Teams protection policy including ZAP settings.
+
+        Returns:
+            TeamsProtectionPolicy: The Teams protection policy configuration.
+        """
+        logger.info("Microsoft365 - Getting Teams protection policy...")
+        teams_protection_policy = None
+        try:
+            policy = self.powershell.get_teams_protection_policy()
+            if policy:
+                teams_protection_policy = TeamsProtectionPolicy(
+                    identity=policy.get("Identity", ""),
+                    zap_enabled=policy.get("ZapEnabled", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return teams_protection_policy
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -609,3 +633,10 @@ class SafeLinksRule(BaseModel):
     users: Optional[list[str]]
     groups: Optional[list[str]]
     domains: Optional[list[str]]
+
+
+class TeamsProtectionPolicy(BaseModel):
+    """Model for Teams protection policy settings including ZAP configuration."""
+
+    identity: str
+    zap_enabled: bool

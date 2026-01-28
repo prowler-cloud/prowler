@@ -153,7 +153,7 @@ export const TestConnectionForm = ({
               setIsRedirecting(true);
               router.push("/scans");
             }
-          } catch (error) {
+          } catch (_error) {
             form.setError("providerId", {
               type: "server",
               message: "An unexpected error occurred. Please try again.",
@@ -198,7 +198,6 @@ export const TestConnectionForm = ({
         `/providers/add-credentials?type=${providerType}&id=${providerId}`,
       );
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Failed to delete credentials:", error);
     } finally {
       setIsResettingCredentials(false);
