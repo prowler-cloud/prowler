@@ -47,14 +47,14 @@ class defender_safelinks_policy_enabled(Check):
                     resource_id=policy.identity,
                 )
 
-                misconfigured_settings = self._get_misconfigured_settings(policy)
-
-                if not misconfigured_settings:
+                if self._is_policy_properly_configured(policy):
                     report.status = "PASS"
                     report.status_extended = f"Safe Links policy {policy.name} is properly configured with all recommended settings."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Safe Links policy {policy.name} has the following misconfigured settings: {', '.join(misconfigured_settings)}."
+                    report.status_extended = (
+                        f"Safe Links policy {policy.name} is not properly configured."
+                    )
 
                 findings.append(report)
 
@@ -70,12 +70,10 @@ class defender_safelinks_policy_enabled(Check):
                         resource_id=policy.identity,
                     )
 
-                    misconfigured_settings = self._get_misconfigured_settings(policy)
-
                     if policy.is_built_in_protection or policy.is_default:
-                        if misconfigured_settings:
+                        if not self._is_policy_properly_configured(policy):
                             report.status = "FAIL"
-                            report.status_extended = f"Built-in Safe Links policy {policy_name} has the following misconfigured settings: {', '.join(misconfigured_settings)}. Custom policies may override these settings for specific users."
+                            report.status_extended = f"Built-in Safe Links policy {policy_name} is not properly configured. Custom policies may override these settings for specific users."
                         else:
                             report.status = "PASS"
                             report.status_extended = f"Built-in Safe Links policy {policy_name} is properly configured. Custom policies may override these settings for specific users."
@@ -93,18 +91,18 @@ class defender_safelinks_policy_enabled(Check):
                         rule = defender_client.safe_links_rules.get(policy_name)
                         priority = rule.priority if rule else "unknown"
 
-                        if misconfigured_settings:
+                        if not self._is_policy_properly_configured(policy):
                             if builtin_policy_configured:
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} has the following misconfigured settings: {', '.join(misconfigured_settings)}. "
+                                    f"Custom Safe Links policy {policy_name} is not properly configured. "
                                     f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
                                     f"The built-in policy is properly configured, so entities not covered by this custom policy may still be protected."
                                 )
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} has the following misconfigured settings: {', '.join(misconfigured_settings)}. "
+                                    f"Custom Safe Links policy {policy_name} is not properly configured. "
                                     f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
                                     f"The built-in policy is also not properly configured."
                                 )
@@ -127,38 +125,31 @@ class defender_safelinks_policy_enabled(Check):
 
         return findings
 
-    def _get_misconfigured_settings(self, policy) -> list[str]:
+    def _is_policy_properly_configured(self, policy) -> bool:
         """
-        Check which settings are not properly configured according to CIS recommendations.
+        Check if a policy is properly configured according to CIS recommendations.
 
         Args:
             policy: The Safe Links policy to check.
 
         Returns:
-            list: A list of setting names that are not properly configured.
+            bool: True if the policy is properly configured, False otherwise.
         """
-        misconfigured = []
+        rule = defender_client.safe_links_rules.get(policy.name)
+        rule_enabled = rule.state.lower() == "enabled" if rule else False
 
-        if not policy.enable_safe_links_for_email:
-            misconfigured.append("EnableSafeLinksForEmail should be True")
-        if not policy.enable_safe_links_for_teams:
-            misconfigured.append("EnableSafeLinksForTeams should be True")
-        if not policy.enable_safe_links_for_office:
-            misconfigured.append("EnableSafeLinksForOffice should be True")
-        if not policy.track_clicks:
-            misconfigured.append("TrackClicks should be True")
-        if policy.allow_click_through:
-            misconfigured.append("AllowClickThrough should be False")
-        if not policy.scan_urls:
-            misconfigured.append("ScanUrls should be True")
-        if not policy.enable_for_internal_senders:
-            misconfigured.append("EnableForInternalSenders should be True")
-        if not policy.deliver_message_after_scan:
-            misconfigured.append("DeliverMessageAfterScan should be True")
-        if policy.disable_url_rewrite:
-            misconfigured.append("DisableUrlRewrite should be False")
-
-        return misconfigured
+        return (
+            (policy.is_built_in_protection or policy.is_default or rule_enabled)
+            and policy.enable_safe_links_for_email
+            and policy.enable_safe_links_for_teams
+            and policy.enable_safe_links_for_office
+            and policy.track_clicks
+            and not policy.allow_click_through
+            and policy.scan_urls
+            and policy.enable_for_internal_senders
+            and policy.deliver_message_after_scan
+            and not policy.disable_url_rewrite
+        )
 
     def _get_included_resources(self, policy_name: str) -> list[str]:
         """

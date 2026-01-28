@@ -143,23 +143,7 @@ class Test_defender_safelinks_policy_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "Safe Links policy Built-In Protection Policy has the following misconfigured settings:"
-                in result[0].status_extended
-            )
-            assert "EnableSafeLinksForEmail should be True" in result[0].status_extended
-            assert "EnableSafeLinksForTeams should be True" in result[0].status_extended
-            assert (
-                "EnableSafeLinksForOffice should be True" in result[0].status_extended
-            )
-            assert "TrackClicks should be True" in result[0].status_extended
-            assert "AllowClickThrough should be False" in result[0].status_extended
-            assert "ScanUrls should be True" in result[0].status_extended
-            assert (
-                "EnableForInternalSenders should be True" in result[0].status_extended
-            )
-            assert "DeliverMessageAfterScan should be True" in result[0].status_extended
-            assert "DisableUrlRewrite should be False" in result[0].status_extended
+            assert "is not properly configured" in result[0].status_extended
             assert result[0].resource_name == "Built-In Protection Policy"
             assert result[0].resource_id == "Built-In-Protection-Policy-ID"
 
@@ -346,19 +330,7 @@ class Test_defender_safelinks_policy_enabled:
                 r for r in result if r.resource_name == "Custom Policy"
             )
             assert custom_result.status == "FAIL"
-            assert (
-                "Custom Safe Links policy Custom Policy has the following misconfigured settings:"
-                in custom_result.status_extended
-            )
-            assert (
-                "EnableSafeLinksForEmail should be True"
-                in custom_result.status_extended
-            )
-            assert (
-                "EnableSafeLinksForTeams should be True"
-                in custom_result.status_extended
-            )
-            assert "AllowClickThrough should be False" in custom_result.status_extended
+            assert "is not properly configured" in custom_result.status_extended
             assert (
                 "the built-in policy is properly configured"
                 in custom_result.status_extended.lower()
@@ -443,10 +415,7 @@ class Test_defender_safelinks_policy_enabled:
                 r for r in result if r.resource_name == "Built-In Protection Policy"
             )
             assert builtin_result.status == "FAIL"
-            assert (
-                "Built-in Safe Links policy Built-In Protection Policy has the following misconfigured settings:"
-                in builtin_result.status_extended
-            )
+            assert "is not properly configured" in builtin_result.status_extended
 
             # Find the custom policy result
             custom_result = next(
@@ -541,20 +510,14 @@ class Test_defender_safelinks_policy_enabled:
                 r for r in result if r.resource_name == "Built-In Protection Policy"
             )
             assert builtin_result.status == "FAIL"
-            assert (
-                "Built-in Safe Links policy Built-In Protection Policy has the following misconfigured settings:"
-                in builtin_result.status_extended
-            )
+            assert "is not properly configured" in builtin_result.status_extended
 
             # Find the custom policy result
             custom_result = next(
                 r for r in result if r.resource_name == "Custom Policy"
             )
             assert custom_result.status == "FAIL"
-            assert (
-                "Custom Safe Links policy Custom Policy has the following misconfigured settings:"
-                in custom_result.status_extended
-            )
+            assert "is not properly configured" in custom_result.status_extended
             assert (
                 "the built-in policy is also not properly configured"
                 in custom_result.status_extended.lower()
@@ -645,7 +608,7 @@ class Test_defender_safelinks_policy_enabled:
             )
 
     def test_custom_policy_without_rule(self):
-        """Test when a custom policy has no associated rule."""
+        """Test when a custom policy has no associated rule (FAIL - rule missing means policy not applied)."""
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
@@ -719,11 +682,12 @@ class Test_defender_safelinks_policy_enabled:
 
             assert len(result) == 2
 
-            # Find the custom policy result
+            # Find the custom policy result - should FAIL because no matching rule exists
             custom_result = next(
                 r for r in result if r.resource_name == "Custom Policy"
             )
-            assert custom_result.status == "PASS"
+            assert custom_result.status == "FAIL"
+            assert "is not properly configured" in custom_result.status_extended
             assert "unknown scope" in custom_result.status_extended
             assert "priority unknown" in custom_result.status_extended
 
@@ -777,13 +741,91 @@ class Test_defender_safelinks_policy_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "AllowClickThrough should be False" in result[0].status_extended
-            # Make sure other settings are NOT in the misconfigured list
-            assert (
-                "EnableSafeLinksForEmail should be True"
-                not in result[0].status_extended
+            assert "is not properly configured" in result[0].status_extended
+
+    def test_custom_policy_with_disabled_rule(self):
+        """Test when custom policy has proper settings but disabled rule (FAIL)."""
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_safelinks_policy_enabled.defender_safelinks_policy_enabled.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_safelinks_policy_enabled.defender_safelinks_policy_enabled import (
+                defender_safelinks_policy_enabled,
             )
-            assert (
-                "EnableSafeLinksForTeams should be True"
-                not in result[0].status_extended
+            from prowler.providers.m365.services.defender.defender_service import (
+                SafeLinksPolicy,
+                SafeLinksRule,
             )
+
+            defender_client.safe_links_policies = {
+                "Built-In Protection Policy": SafeLinksPolicy(
+                    name="Built-In Protection Policy",
+                    identity="Built-In-Protection-Policy-ID",
+                    enable_safe_links_for_email=True,
+                    enable_safe_links_for_teams=True,
+                    enable_safe_links_for_office=True,
+                    track_clicks=True,
+                    allow_click_through=False,
+                    scan_urls=True,
+                    enable_for_internal_senders=True,
+                    deliver_message_after_scan=True,
+                    disable_url_rewrite=False,
+                    is_built_in_protection=True,
+                    is_default=False,
+                ),
+                "Custom Policy": SafeLinksPolicy(
+                    name="Custom Policy",
+                    identity="Custom-Policy-ID",
+                    enable_safe_links_for_email=True,
+                    enable_safe_links_for_teams=True,
+                    enable_safe_links_for_office=True,
+                    track_clicks=True,
+                    allow_click_through=False,
+                    scan_urls=True,
+                    enable_for_internal_senders=True,
+                    deliver_message_after_scan=True,
+                    disable_url_rewrite=False,
+                    is_built_in_protection=False,
+                    is_default=False,
+                ),
+            }
+            defender_client.safe_links_rules = {
+                "Custom Policy": SafeLinksRule(
+                    state="Disabled",  # Disabled rule
+                    priority=0,
+                    users=["user@example.com"],
+                    groups=None,
+                    domains=None,
+                )
+            }
+
+            check = defender_safelinks_policy_enabled()
+            result = check.execute()
+
+            assert len(result) == 2
+
+            # Find the built-in policy result - should PASS
+            builtin_result = next(
+                r for r in result if r.resource_name == "Built-In Protection Policy"
+            )
+            assert builtin_result.status == "PASS"
+
+            # Find the custom policy result - should FAIL because rule is disabled
+            custom_result = next(
+                r for r in result if r.resource_name == "Custom Policy"
+            )
+            assert custom_result.status == "FAIL"
+            assert "is not properly configured" in custom_result.status_extended
