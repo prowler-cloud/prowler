@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_attack_path_notifications_properly_configured",
-  "CheckTitle": "Ensure that email notifications for attack paths are enabled with minimal risk level",
+  "CheckTitle": "Security contact has attack path email notifications enabled at or above the configured minimum risk level",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AzureEmailNotifications",
+  "Severity": "high",
+  "ResourceType": "microsoft.resources/subscriptions",
   "ResourceGroup": "monitoring",
-  "Description": "Ensure that Microsoft Defender for Cloud is configured to send email notifications for attack paths identified in the Azure subscription with an appropriate minimal risk level.",
-  "Risk": "If attack path notifications are not enabled, security teams may not be promptly informed about exploitable attack sequences, increasing the risk of delayed mitigation and potential breaches.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
+  "Description": "**Microsoft Defender for Cloud** attack path email notifications are configured per subscription with a defined **minimal risk level**, and the setting is present and meets the required threshold.",
+  "Risk": "Without alerts on **exploitable attack paths**, security teams lose visibility, enabling **lateral movement**, **privilege escalation**, and **data exfiltration** before containment, degrading confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/enable-attack-path-notifications.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
-      "Terraform": ""
+      "CLI": "az rest --method put --uri https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/securityContacts/default?api-version=2020-01-01-preview --body '{\"properties\":{\"emails\":\"admin@example.com\",\"attackPathNotifications\":{\"state\":\"On\",\"minimalRiskLevel\":\"Low\"}}}'",
+      "NativeIaC": "```bicep\n// Enable attack path email notifications at minimal risk level\nresource securityContact 'Microsoft.Security/securityContacts@2020-01-01-preview' = {\n  name: 'default'\n  properties: {\n    emails: 'admin@example.com'\n    attackPathNotifications: {\n      state: 'On'              // CRITICAL: enables attack path email notifications\n      minimalRiskLevel: 'Low'  // CRITICAL: sets minimal risk level to pass the check\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud > Environment settings\n2. Select the target subscription\n3. Open Email notifications\n4. Enable \"Notify about attack paths with the following risk level (or higher)\"\n5. Set Risk level to Low (or your configured minimum)\n6. Click Save",
+      "Terraform": "```hcl\n# Enable attack path email notifications at minimal risk level\nresource \"azapi_resource\" \"<example_resource_name>\" {\n  type = \"Microsoft.Security/securityContacts@2020-01-01-preview\"\n  name = \"default\"\n  body = jsonencode({\n    properties = {\n      emails = \"admin@example.com\"\n      attackPathNotifications = {\n        state = \"On\"              # CRITICAL: enables attack path email notifications\n        minimalRiskLevel = \"Low\"  # CRITICAL: sets minimal risk level to pass the check\n      }\n    }\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable attack path email notifications in Microsoft Defender for Cloud to ensure that security teams are notified when potential attack paths are identified. Configure the minimal risk level as appropriate for your organization.",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications"
+      "Text": "Enable and maintain **attack path notifications** with a minimal risk level at or above your tolerance (e.g., `High`). Send to monitored, role-based recipients. Apply **defense in depth** by integrating alerts with central monitoring and automation for prompt triage.",
+      "Url": "https://hub.prowler.com/check/defender_attack_path_notifications_properly_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

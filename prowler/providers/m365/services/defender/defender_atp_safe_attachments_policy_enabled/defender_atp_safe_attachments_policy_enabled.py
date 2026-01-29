@@ -42,9 +42,11 @@ class defender_atp_safe_attachments_policy_enabled(Check):
             is_safe_docs_open_blocked = not policy.allow_safe_docs_open
 
             if is_atp_enabled and is_safe_docs_enabled and is_safe_docs_open_blocked:
+                # Case 1: ATP policy exists and is properly configured
                 report.status = "PASS"
                 report.status_extended = f"ATP policy {policy.identity} has Safe Attachments for SharePoint, OneDrive, and Teams properly configured with Safe Documents enabled and click-through blocked."
             else:
+                # Case 2: ATP policy exists but is not properly configured
                 report.status = "FAIL"
                 issues = []
                 if not is_atp_enabled:

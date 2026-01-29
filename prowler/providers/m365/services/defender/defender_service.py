@@ -13,7 +13,7 @@ class Defender(M365Service):
 
     This class provides methods to retrieve and manage Microsoft Defender for Office 365
     security policies and configurations, including malware filters, spam policies,
-    anti-phishing settings, and ATP (Advanced Threat Protection) policies.
+    anti-phishing settings, ATP (Advanced Threat Protection), and Teams protection policies.
 
     Attributes:
         malware_policies (list): List of malware filter policies.
@@ -27,6 +27,7 @@ class Defender(M365Service):
         inbound_spam_rules (dict): Dictionary of inbound spam filter rules.
         report_submission_policy: Report submission policy configuration.
         atp_policy_for_o365: ATP policy for Office 365 configuration.
+        teams_protection_policy: Teams protection policy configuration.
     """
 
     def __init__(self, provider: M365Provider):
@@ -48,6 +49,7 @@ class Defender(M365Service):
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
         self.atp_policy_for_o365 = None
+        self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -62,6 +64,7 @@ class Defender(M365Service):
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
                 self.atp_policy_for_o365 = self._get_atp_policy_for_o365()
+                self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -451,6 +454,28 @@ class Defender(M365Service):
             )
         return atp_policy
 
+    def _get_teams_protection_policy(self):
+        """
+        Retrieve the Teams protection policy including ZAP settings.
+
+        Returns:
+            TeamsProtectionPolicy: The Teams protection policy configuration.
+        """
+        logger.info("Microsoft365 - Getting Teams protection policy...")
+        teams_protection_policy = None
+        try:
+            policy = self.powershell.get_teams_protection_policy()
+            if policy:
+                teams_protection_policy = TeamsProtectionPolicy(
+                    identity=policy.get("Identity", ""),
+                    zap_enabled=policy.get("ZapEnabled", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return teams_protection_policy
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -563,3 +588,10 @@ class AtpPolicyForO365(BaseModel):
     enable_atp_for_spo_teams_odb: bool
     enable_safe_docs: bool
     allow_safe_docs_open: bool
+
+
+class TeamsProtectionPolicy(BaseModel):
+    """Model for Teams protection policy settings including ZAP configuration."""
+
+    identity: str
+    zap_enabled: bool

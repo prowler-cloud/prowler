@@ -453,6 +453,8 @@ class ResourceTagFilter(FilterSet):
 
 
 class ResourceFilter(ProviderRelationshipFilterSet):
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
     tag_key = CharFilter(method="filter_tag_key")
     tag_value = CharFilter(method="filter_tag_value")
     tag = CharFilter(method="filter_tag")
@@ -540,6 +542,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
 
 
 class LatestResourceFilter(ProviderRelationshipFilterSet):
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
     tag_key = CharFilter(method="filter_tag_key")
     tag_value = CharFilter(method="filter_tag_value")
     tag = CharFilter(method="filter_tag")

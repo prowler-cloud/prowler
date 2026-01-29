@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "mysql_flexible_server_audit_log_enabled",
-  "CheckTitle": "Ensure server parameter 'audit_log_enabled' is set to 'ON' for MySQL Database Server",
+  "CheckTitle": "MySQL flexible server has audit_log_enabled set to ON",
   "CheckType": [],
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable audit_log_enabled on MySQL Servers.",
-  "Risk": "Enabling audit_log_enabled helps MySQL Database to log items such as connection attempts to the server, DDL/DML access, and more. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-audit-logs-portal",
+  "Description": "**Azure Database for MySQL Flexible Server** with `audit_log_enabled` set to `ON` generates **audit logs** for connections, authentication, DDL/DML, and administrative actions.",
+  "Risk": "Missing **audit logs** reduces **accountability** and obscures activity affecting **confidentiality** and **integrity**. Unauthorized logins, privilege abuse, or suspicious queries may go undetected, impeding **forensics**, slowing incident response, and enabling covert data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/tutorial-configure-audit",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/scripts/sample-cli-audit-logs"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v1.5.0_L2.audit:c073639a1ce546b535ba73afbf6542aa",
-      "Terraform": ""
+      "CLI": "az mysql flexible-server parameter set --name audit_log_enabled --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --value ON",
+      "NativeIaC": "```bicep\n// Enable audit logs on an existing MySQL Flexible Server\nresource server 'Microsoft.DBforMySQL/flexibleServers@2021-12-01-preview' existing = {\n  name: '<example_resource_name>'\n}\n\nresource audit 'Microsoft.DBforMySQL/flexibleServers/configurations@2021-12-01-preview' = {\n  name: 'audit_log_enabled'\n  parent: server\n  properties: {\n    value: 'ON' // CRITICAL: turns audit_log_enabled ON to pass the check\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal\n2. Go to: Azure Database for MySQL flexible server > Your server\n3. Under Settings, select Server parameters\n4. Find audit_log_enabled and set it to ON\n5. Click Save",
+      "Terraform": "```hcl\n# Enable audit logs on MySQL Flexible Server\nresource \"azurerm_mysql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name                = \"audit_log_enabled\"\n  resource_group_name = \"<example_resource_name>\"\n  server_name         = \"<example_resource_name>\"\n  value               = \"ON\" # CRITICAL: enables audit logging to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com. 2. Select Azure Database for MySQL Servers. 3. Select a database. 4. Under Settings, select Server parameters. 5. Update audit_log_enabled parameter to ON 6. Under Monitoring, select Diagnostic settings. 7. Select + Add diagnostic setting. 8. Provide a diagnostic setting name. 9. Under Categories, select MySQL Audit Logs. 10. Specify destination details. 11. Click Save.",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation"
+      "Text": "Enable **audit logging** (`audit_log_enabled=ON`) and select events that matter. Export `MySqlAuditLogs` to a centralized store, enforce **least privilege** on log access, set retention, and create alerts for anomalies. Regularly review logs as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/mysql_flexible_server_audit_log_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
