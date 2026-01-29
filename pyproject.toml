@@ -111,7 +111,7 @@ packages = [
 requires-poetry = ">=2.0"
 
 [tool.poetry.group.dev.dependencies]
-bandit = "1.8.3"
+bandit = "1.8.6"
 black = "25.1.0"
 coverage = "7.6.12"
 docker = "7.1.0"
