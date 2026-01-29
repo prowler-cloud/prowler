@@ -59,7 +59,9 @@ const parseMetadata = (
     }
   }
 
-  if (typeof metadata === "object" && metadata !== null) {
+  // After the !metadata check above, metadata can only be object at this point
+  // (null was already filtered, string was handled)
+  if (typeof metadata === "object") {
     return metadata as Record<string, unknown>;
   }
 
