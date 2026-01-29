@@ -251,6 +251,7 @@ class Provider(ABC):
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
                         filter_zones=arguments.region,
+                        filter_accounts=arguments.account_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

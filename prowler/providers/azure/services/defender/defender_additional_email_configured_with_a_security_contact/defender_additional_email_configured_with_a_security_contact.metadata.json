@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "defender_additional_email_configured_with_a_security_contact",
-  "CheckTitle": "Ensure 'Additional email addresses' is Configured with a Security Contact Email",
+  "CheckTitle": "Security contact has additional email addresses configured",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AzureEmailNotifications",
+  "Severity": "low",
+  "ResourceType": "microsoft.resources/subscriptions",
   "ResourceGroup": "monitoring",
-  "Description": "Microsoft Defender for Cloud emails the subscription owners whenever a high-severity alert is triggered for their subscription. You should provide a security contact email address as an additional email address.",
-  "Risk": "Microsoft Defender for Cloud emails the Subscription Owner to notify them about security alerts. Adding your Security Contact's email address to the 'Additional email addresses' field ensures that your organization's Security Team is included in these alerts. This ensures that the proper people are aware of any potential compromise in order to mitigate the risk in a timely fashion.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",
+  "Description": "**Microsoft Defender for Cloud** security contact settings include **additional email recipients** defined in the `emails` field to receive alert notifications.",
+  "Risk": "Relying only on subscription owners for alerts creates a **single point of failure**. Missed or delayed notifications extend attacker dwell time, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and service disruption (**availability**). Absence or turnover can silently suppress alerts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/security-contact-email.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/threat-detection-configure?view=azuresql"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/security-contact-email.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-security-contact-emails-is-set#terraform"
+      "CLI": "az rest --method put --url https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/securityContacts/default?api-version=2020-01-01-preview --body '{ \"properties\": { \"emails\": \"<EMAIL>\" } }'",
+      "NativeIaC": "```bicep\n// Configure a security contact at subscription scope\ntargetScope = 'subscription'\n\nresource <example_resource_name> 'Microsoft.Security/securityContacts@2020-01-01-preview' = {\n  name: 'default'\n  properties: {\n    emails: '<EMAIL>' // Critical: set at least one email to pass the check\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal\n2. Go to Microsoft Defender for Cloud > Environment settings\n3. Select the target subscription\n4. Click Email notifications\n5. In Email addresses, enter at least one email (comma-separated for multiple)\n6. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_contact\" \"<example_resource_name>\" {\n  email = \"<EMAIL>\" # Critical: ensures at least one security contact email is configured\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Click on Environment Settings 4. Click on the appropriate Management Group, Subscription, or Workspace 5. Click on Email notifications 6. Enter a valid security contact email address (or multiple addresses separated by commas) in the Additional email addresses field 7. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/rest/api/defenderforcloud/security-contacts/list?view=rest-defenderforcloud-2020-01-01-preview&tabs=HTTP"
+      "Text": "Use a monitored, team-managed distribution list as the **security contact** in `emails`. Include SOC/on-call for 24/7 coverage and enable role-based notifications for redundancy. Tune severities to reduce noise while capturing high-risk events, and integrate alerts with ticketing/SIEM for **defense in depth** and rapid response.",
+      "Url": "https://hub.prowler.com/check/defender_additional_email_configured_with_a_security_contact"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

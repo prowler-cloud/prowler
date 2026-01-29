@@ -7,7 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { FindingDetail } from "@/components/findings/table";
 import { DataTableRowActions } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime, SnippetChip } from "@/components/ui/entities";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/ui/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -186,7 +187,7 @@ export function getColumnFindings(
         const resourceName = getResourceData(row, "name");
 
         return (
-          <SnippetChip
+          <CodeSnippet
             value={resourceName as string}
             formatter={(value: string) => `...${value.slice(-10)}`}
             icon={<Database size={16} />}

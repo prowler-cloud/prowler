@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_dns_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for DNS Is Set To 'On' ",
+  "CheckTitle": "Defender for DNS is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for DNS Is Set To 'On' ",
-  "Risk": "DNS lookups within a subscription are scanned and compared to a dynamic list of websites that might be potential security threats. These threats could be a result of a security breach within your services, thus scanning for them could prevent a potential security threat from being introduced.",
+  "Description": "**Microsoft Defender for DNS** is configured at the `Standard` tier for the subscription's Defender pricing",
+  "Risk": "Absent **Defender for DNS**, query telemetry isn't inspected, allowing **C2 callbacks**, **DNS tunneling**, and **malicious domains** to bypass detection. This increases risks to **confidentiality** (exfiltration), **integrity** (malware/DGA), and **availability** (poisoned or hijacked resolution).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-dns-introduction",
+    "https://support.icompaas.com/support/solutions/articles/62000234089-ensure-that-microsoft-defender-for-dns-is-set-to-on-automated-"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az security pricing create --name Dns --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for DNS at subscription scope\ntargetScope = 'subscription'\n\nresource example_resource_name 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'Dns'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for DNS to ON (Standard tier)\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Environment settings and choose your subscription\n3. Open Defender plans\n4. Find DNS and set the plan to Standard (On)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"example_resource_name\" {\n  resource_type = \"Dns\"\n  tier          = \"Standard\" # Critical: enables Defender for DNS\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is not enabled for your App Service instances. Enabling the Defender security service for App Service instances allows for advanced security defense using threat detection capabilities provided by Microsoft Security Response Center.",
-      "Url": ""
+      "Text": "Enable **Defender for DNS** at the `Standard` tier across applicable subscriptions. Apply **defense in depth**: restrict outbound DNS, use private DNS where feasible, and log/monitor query activity. Route alerts to centralized monitoring. Enforce **least privilege** on security settings and review exclusions regularly.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_dns_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -779,7 +779,10 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone_name(self) -> str:
-        """Zone name."""
+        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
         return getattr(self._zone, "name", "")
 
     @property
@@ -792,7 +795,10 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def region(self) -> str:
-        """Cloudflare is a global service."""
+        """Return zone_name as region for zone-scoped resources, otherwise global."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
         return "global"
 
 
