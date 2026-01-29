@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Cloudflare `--account-id` filter argument [(#9894)](https://github.com/prowler-cloud/prowler/pull/9894)
 - `rds_instance_extended_support` check for AWS provider [(#9865)](https://github.com/prowler-cloud/prowler/pull/9865)
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+- `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 
 ### Changed
 
