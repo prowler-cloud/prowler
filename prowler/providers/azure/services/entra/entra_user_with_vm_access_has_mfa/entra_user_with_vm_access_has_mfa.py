@@ -15,7 +15,7 @@ from prowler.providers.azure.services.iam.iam_client import iam_client
 class entra_user_with_vm_access_has_mfa(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
-        reported_combinations = set()
+        already_reported = set()
 
         for users in entra_client.users.values():
             for user in users.values():
@@ -23,7 +23,7 @@ class entra_user_with_vm_access_has_mfa(Check):
                     subscription_name,
                     role_assigns,
                 ) in iam_client.role_assignments.items():
-                    if (user.id, subscription_name) in reported_combinations:
+                    if (user.id, subscription_name) in already_reported:
                         continue
 
                     for assignment in role_assigns.values():
@@ -52,7 +52,7 @@ class entra_user_with_vm_access_has_mfa(Check):
                                 report.status_extended = f"User {user.name} can access VMs in subscription {subscription_name} but it has MFA."
 
                             findings.append(report)
-                            reported_combinations.add((user.id, subscription_name))
+                            already_reported.add((user.id, subscription_name))
                             break
 
         return findings
