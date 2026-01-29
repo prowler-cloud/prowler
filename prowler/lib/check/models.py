@@ -163,6 +163,7 @@ class CheckMetadata(BaseModel):
             check_id
             and values.get("Provider") != "iac"
             and values.get("Provider") != "llm"
+            and values.get("Provider") != "image"
         ):
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
@@ -183,6 +184,7 @@ class CheckMetadata(BaseModel):
             check_id
             and values.get("Provider") != "iac"
             and values.get("Provider") != "llm"
+            and values.get("Provider") != "image"
         ):
             if "-" in check_id:
                 raise ValueError(
@@ -789,6 +791,37 @@ class CheckReportIAC(Check_Report):
             if finding.get("CauseMetadata", {}).get("StartLine", "")
             else ""
         )
+
+
+@dataclass
+class CheckReportImage(Check_Report):
+    """Contains the Container Image Check's finding information using Trivy."""
+
+    resource_name: str
+    image_digest: str
+    package_name: str
+    installed_version: str
+    fixed_version: str
+
+    def __init__(
+        self, metadata: dict = {}, finding: dict = {}, image_name: str = ""
+    ) -> None:
+        """
+        Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
+
+        Args:
+            metadata (Dict): Check metadata.
+            finding (dict): A single vulnerability/secret result from Trivy's JSON output.
+            image_name (str): The container image name being scanned.
+        """
+        super().__init__(metadata, finding)
+
+        self.resource = finding
+        self.resource_name = image_name
+        self.image_digest = finding.get("PkgID", "")
+        self.package_name = finding.get("PkgName", "")
+        self.installed_version = finding.get("InstalledVersion", "")
+        self.fixed_version = finding.get("FixedVersion", "")
 
 
 @dataclass
