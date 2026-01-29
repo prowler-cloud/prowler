@@ -34,7 +34,7 @@ export const ResourceDetailsSheet = ({
 
   return (
     <Sheet open={true} onOpenChange={handleOpenChange}>
-      <SheetContent className="my-4 max-h-[calc(100vh-2rem)] max-w-[95vw] overflow-y-auto pt-10 md:my-8 md:max-h-[calc(100vh-4rem)] md:max-w-[55vw]">
+      <SheetContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 pt-10 outline-none md:w-1/2 md:max-w-none">
         <SheetHeader>
           <SheetTitle className="sr-only">Resource Details</SheetTitle>
           <SheetDescription className="sr-only">

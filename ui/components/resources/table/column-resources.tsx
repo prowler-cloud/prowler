@@ -2,7 +2,6 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { AlertTriangle, Eye, MoreVertical } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -36,9 +35,6 @@ const getProviderData = (
 
 // Component for resource name that opens the detail drawer
 const ResourceNameCell = ({ row }: { row: { original: ResourceProps } }) => {
-  const searchParams = useSearchParams();
-  const resourceId = searchParams.get("resourceId");
-  const isOpen = resourceId === row.original.id;
   const resourceName = row.original.attributes?.name;
   const resourceUid = row.original.attributes?.uid;
   const displayName =
@@ -46,11 +42,13 @@ const ResourceNameCell = ({ row }: { row: { original: ResourceProps } }) => {
       ? resourceName
       : "Unnamed resource";
 
+  // Note: We don't use defaultOpen here because ResourceDetailsSheet (rendered at page level)
+  // already handles opening the drawer when resourceId is in the URL. Using defaultOpen={true}
+  // here would cause duplicate drawers to render.
   return (
     <div className="flex items-center gap-2">
       <ResourceDetail
         resourceDetails={row.original}
-        defaultOpen={isOpen}
         trigger={
           <div className="max-w-[200px]">
             <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
