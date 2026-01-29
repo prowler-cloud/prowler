@@ -1,100 +1,44 @@
+"""
+Prowler findings ingestion into Neo4j graph.
+
+This module handles:
+- Adding resource labels to Cartography nodes for efficient lookups
+- Loading Prowler findings into the graph
+- Linking findings to resources
+- Cleaning up stale findings
+"""
+
 from collections import defaultdict
 from typing import Generator
 
 import neo4j
-from cartography.client.core.tx import run_write_query
+
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-from config.env import env
-from tasks.jobs.attack_paths.providers import get_node_uid_field, get_root_node_label
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Finding, Provider, ResourceFindingMapping
 from prowler.config import config as ProwlerConfig
+from tasks.jobs.attack_paths.config import (
+    BATCH_SIZE,
+    get_node_uid_field,
+    get_provider_resource_label,
+    get_root_node_label,
+)
+from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
+from tasks.jobs.attack_paths.queries import (
+    ADD_RESOURCE_LABEL_TEMPLATE,
+    CLEANUP_FINDINGS_TEMPLATE,
+    INSERT_FINDING_TEMPLATE,
+)
 
 logger = get_task_logger(__name__)
 
-BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 1000)
 
-INDEX_STATEMENTS = [
-    "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
-    "CREATE INDEX prowler_finding_provider_uid IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.provider_uid);",
-    "CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.lastupdated);",
-    "CREATE INDEX prowler_finding_check_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.status);",
-]
-
-INSERT_STATEMENT_TEMPLATE = """
-    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
-    UNWIND $findings_data AS finding_data
-
-    OPTIONAL MATCH (account)-->(resource_by_uid)
-        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
-    WITH account, finding_data, resource_by_uid
-
-    OPTIONAL MATCH (account)-->(resource_by_id)
-        WHERE resource_by_uid IS NULL
-            AND resource_by_id.id = finding_data.resource_uid
-    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
-        WHERE resource IS NOT NULL
-
-    MERGE (finding:ProwlerFinding {id: finding_data.id})
-        ON CREATE SET
-            finding.id = finding_data.id,
-            finding.uid = finding_data.uid,
-            finding.inserted_at = finding_data.inserted_at,
-            finding.updated_at = finding_data.updated_at,
-            finding.first_seen_at = finding_data.first_seen_at,
-            finding.scan_id = finding_data.scan_id,
-            finding.delta = finding_data.delta,
-            finding.status = finding_data.status,
-            finding.status_extended = finding_data.status_extended,
-            finding.severity = finding_data.severity,
-            finding.check_id = finding_data.check_id,
-            finding.check_title = finding_data.check_title,
-            finding.muted = finding_data.muted,
-            finding.muted_reason = finding_data.muted_reason,
-            finding.provider_uid = $provider_uid,
-            finding.firstseen = timestamp(),
-            finding.lastupdated = $last_updated,
-            finding._module_name = 'cartography:prowler',
-            finding._module_version = $prowler_version
-        ON MATCH SET
-            finding.status = finding_data.status,
-            finding.status_extended = finding_data.status_extended,
-            finding.lastupdated = $last_updated
-
-    MERGE (resource)-[rel:HAS_FINDING]->(finding)
-        ON CREATE SET
-            rel.provider_uid = $provider_uid,
-            rel.firstseen = timestamp(),
-            rel.lastupdated = $last_updated,
-            rel._module_name = 'cartography:prowler',
-            rel._module_version = $prowler_version
-        ON MATCH SET
-            rel.lastupdated = $last_updated
-"""
-
-CLEANUP_STATEMENT = """
-    MATCH (finding:ProwlerFinding {provider_uid: $provider_uid})
-        WHERE finding.lastupdated < $last_updated
-
-    WITH finding LIMIT $batch_size
-
-    DETACH DELETE finding
-
-    RETURN COUNT(finding) AS deleted_findings_count
-"""
-
-
-def create_indexes(neo4j_session: neo4j.Session) -> None:
-    """
-    Code based on Cartography version 0.122.0, specifically on `cartography.intel.create_indexes.run`.
-    """
-
-    logger.info("Creating indexes for Prowler Findings node types")
-    for statement in INDEX_STATEMENTS:
-        run_write_query(neo4j_session, statement)
+def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
+    """Create indexes for Prowler findings and resource lookups."""
+    create_indexes(neo4j_session, IndexType.FINDINGS)
 
 
 def analysis(
@@ -103,9 +47,58 @@ def analysis(
     scan_id: str,
     config: CartographyConfig,
 ) -> None:
+    """
+    Main entry point for Prowler findings analysis.
+
+    Adds resource labels, loads findings, and cleans up stale data.
+    """
+    add_resource_label(
+        neo4j_session, prowler_api_provider.provider, str(prowler_api_provider.uid)
+    )
     findings_data = get_provider_last_scan_findings(prowler_api_provider, scan_id)
     load_findings(neo4j_session, findings_data, prowler_api_provider, config)
     cleanup_findings(neo4j_session, prowler_api_provider, config)
+
+
+def add_resource_label(
+    neo4j_session: neo4j.Session, provider_type: str, provider_uid: str
+) -> int:
+    """
+    Add a common resource label to all nodes connected to the provider account.
+
+    This enables index usage for resource lookups in the findings query,
+    since Cartography nodes don't have a common parent label.
+
+    Returns the total number of nodes labeled.
+    """
+    root_label = get_root_node_label(provider_type)
+    resource_label = get_provider_resource_label(provider_type)
+
+    replacements = {
+        "__ROOT_LABEL__": root_label,
+        "__RESOURCE_LABEL__": resource_label,
+    }
+    query = ADD_RESOURCE_LABEL_TEMPLATE
+    for replace_key, replace_value in replacements.items():
+        query = query.replace(replace_key, replace_value)
+
+    logger.info(f"Adding {resource_label} label to all resources for {provider_uid}")
+
+    total_labeled = 0
+    labeled_count = 1
+
+    while labeled_count > 0:
+        result = neo4j_session.run(
+            query,
+            {"provider_uid": provider_uid, "batch_size": BATCH_SIZE},
+        )
+        labeled_count = result.single().get("labeled_count", 0)
+        total_labeled += labeled_count
+
+        if labeled_count > 0:
+            logger.info(f"Labeled {total_labeled} nodes with {resource_label}")
+
+    return total_labeled
 
 
 def get_provider_last_scan_findings(
@@ -120,7 +113,7 @@ def get_provider_last_scan_findings(
     2. Batch-fetch resource UIDs via mapping table (single join)
     3. Merge and yield flat structure for Neo4j
 
-    Memory efficient: never holds more than BATCH_SIZE findings in memory.
+    Memory efficient: never holds more than `BATCH_SIZE` findings in memory.
     """
 
     logger.info(
@@ -239,11 +232,15 @@ def load_findings(
     prowler_api_provider: Provider,
     config: CartographyConfig,
 ) -> None:
+    """Load Prowler findings into the graph, linking them to resources."""
     replacements = {
         "__ROOT_NODE_LABEL__": get_root_node_label(prowler_api_provider.provider),
         "__NODE_UID_FIELD__": get_node_uid_field(prowler_api_provider.provider),
+        "__RESOURCE_LABEL__": get_provider_resource_label(
+            prowler_api_provider.provider
+        ),
     }
-    query = INSERT_STATEMENT_TEMPLATE
+    query = INSERT_FINDING_TEMPLATE
     for replace_key, replace_value in replacements.items():
         query = query.replace(replace_key, replace_value)
 
@@ -273,6 +270,7 @@ def cleanup_findings(
     prowler_api_provider: Provider,
     config: CartographyConfig,
 ) -> None:
+    """Remove stale findings (classic Cartography behaviour)."""
     parameters = {
         "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
@@ -284,7 +282,7 @@ def cleanup_findings(
     while deleted_count > 0:
         logger.info(f"Cleaning findings batch {batch}")
 
-        result = neo4j_session.run(CLEANUP_STATEMENT, parameters)
+        result = neo4j_session.run(CLEANUP_FINDINGS_TEMPLATE, parameters)
 
         deleted_count = result.single().get("deleted_findings_count", 0)
         batch += 1
