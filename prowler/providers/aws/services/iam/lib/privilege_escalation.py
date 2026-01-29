@@ -82,16 +82,19 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "ec2:RequestSpotInstances",
     },
+    # Prerequisite: Existing EC2 instance with admin role attached
     "EC2ModifyInstanceAttribute": {
         "ec2:ModifyInstanceAttribute",
         "ec2:StopInstances",
         "ec2:StartInstances",
     },
+    # Prerequisite: Existing launch template used by instances with admin role
     "EC2ModifyLaunchTemplate": {
         "ec2:CreateLaunchTemplateVersion",
         "ec2:ModifyLaunchTemplate",
     },
     # EC2 Instance Connect privilege escalation
+    # Prerequisite: Running EC2 with Instance Connect enabled and admin role
     "EC2InstanceConnect+SendSSHPublicKey": {
         "ec2-instance-connect:SendSSHPublicKey",
         "ec2:DescribeInstances",
@@ -119,12 +122,16 @@ privilege_escalation_policies_combination = {
         "lambda:CreateFunction",
         "lambda:AddPermission",
     },
+    # Prerequisite: Existing Lambda function with admin execution role
     "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
+    # Prerequisite: Existing Lambda function with admin execution role
     "lambda:UpdateFunctionConfiguration": {"lambda:UpdateFunctionConfiguration"},
+    # Prerequisite: Existing Lambda function with admin execution role
     "UpdateFunctionCode+InvokeFunction": {
         "lambda:UpdateFunctionCode",
         "lambda:InvokeFunction",
     },
+    # Prerequisite: Existing Lambda function with admin execution role
     "UpdateFunctionCode+AddPermission": {
         "lambda:UpdateFunctionCode",
         "lambda:AddPermission",
@@ -134,6 +141,7 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "glue:CreateDevEndpoint",
     },
+    # Prerequisite: Existing Glue dev endpoint with admin role
     "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
     "PassRole+GlueCreateJob+StartJobRun": {
         "iam:PassRole",
@@ -145,11 +153,13 @@ privilege_escalation_policies_combination = {
         "glue:CreateJob",
         "glue:CreateTrigger",
     },
+    # Prerequisite: Existing Glue job
     "PassRole+GlueUpdateJob+StartJobRun": {
         "iam:PassRole",
         "glue:UpdateJob",
         "glue:StartJobRun",
     },
+    # Prerequisite: Existing Glue job
     "PassRole+GlueUpdateJob+CreateTrigger": {
         "iam:PassRole",
         "glue:UpdateJob",
@@ -160,16 +170,19 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "cloudformation:CreateStack",
     },
+    # Prerequisite: Existing CloudFormation stack with admin service role
     "CloudFormationUpdateStack": {"cloudformation:UpdateStack"},
     "PassRole+CloudFormationCreateStackSet": {
         "iam:PassRole",
         "cloudformation:CreateStackSet",
         "cloudformation:CreateStackInstances",
     },
+    # Prerequisite: Existing CloudFormation StackSet
     "PassRole+CloudFormationUpdateStackSet": {
         "iam:PassRole",
         "cloudformation:UpdateStackSet",
     },
+    # Prerequisite: Existing CloudFormation stack with admin service role
     "CloudFormationChangeSet": {
         "cloudformation:CreateChangeSet",
         "cloudformation:ExecuteChangeSet",
@@ -197,7 +210,9 @@ privilege_escalation_policies_combination = {
         "codebuild:CreateProject",
         "codebuild:StartBuildBatch",
     },
+    # Prerequisite: Existing CodeBuild project with admin service role
     "CodeBuildStartBuild": {"codebuild:StartBuild"},
+    # Prerequisite: Existing CodeBuild project with admin service role
     "CodeBuildStartBuildBatch": {"codebuild:StartBuildBatch"},
     # AutoScaling-based privilege escalation patterns
     "PassRole+CreateAutoScaling": {
@@ -205,6 +220,7 @@ privilege_escalation_policies_combination = {
         "autoscaling:CreateAutoScalingGroup",
         "autoscaling:CreateLaunchConfiguration",
     },
+    # Prerequisite: Existing Auto Scaling group
     "PassRole+UpdateAutoScaling": {
         "iam:PassRole",
         "autoscaling:UpdateAutoScalingGroup",
@@ -232,6 +248,7 @@ privilege_escalation_policies_combination = {
         "ecs:RegisterContainerInstance",
         "ecs:DeregisterContainerInstance",
     },
+    # Prerequisite: Existing ECS cluster and task definition with admin role
     "PassRole+ECS+RunTask": {
         "iam:PassRole",
         "ecs:RunTask",
@@ -249,9 +266,11 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "sagemaker:CreateProcessingJob",
     },
+    # Prerequisite: Existing SageMaker notebook instance with admin role
     "SageMakerCreatePresignedNotebookInstanceUrl": {
         "sagemaker:CreatePresignedNotebookInstanceUrl",
     },
+    # Prerequisite: Existing SageMaker notebook instance with admin role
     "SageMakerNotebookLifecycleConfig": {
         "sagemaker:CreateNotebookInstanceLifecycleConfig",
         "sagemaker:StopNotebookInstance",
@@ -259,13 +278,16 @@ privilege_escalation_policies_combination = {
         "sagemaker:StartNotebookInstance",
     },
     # SSM-based privilege escalation patterns
+    # Prerequisite: Running EC2 with SSM agent and admin instance profile
     "SSMStartSession": {"ssm:StartSession"},
+    # Prerequisite: Running EC2 with SSM agent and admin instance profile
     "SSMSendCommand": {"ssm:SendCommand"},
     # AppRunner-based privilege escalation patterns
     "PassRole+AppRunnerCreateService": {
         "iam:PassRole",
         "apprunner:CreateService",
     },
+    # Prerequisite: Existing App Runner service with admin role
     "AppRunnerUpdateService": {"apprunner:UpdateService"},
     # Bedrock AgentCore privilege escalation patterns
     "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
@@ -273,6 +295,7 @@ privilege_escalation_policies_combination = {
         "bedrock-agentcore:CreateCodeInterpreter",
         "bedrock-agentcore:InvokeCodeInterpreter",
     },
+    # Prerequisite: Existing Bedrock code interpreter with admin role
     "AgentCoreSessionInvoke": {
         "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
