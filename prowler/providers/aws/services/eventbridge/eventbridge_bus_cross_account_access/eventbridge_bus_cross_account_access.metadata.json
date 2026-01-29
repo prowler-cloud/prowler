@@ -40,5 +40,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "This check supports the `trusted_account_ids` configuration in config.yaml to allow specific cross-account access without triggering a finding."
 }

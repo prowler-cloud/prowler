@@ -27,6 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Policy service metadata to new format [(#9625)](https://github.com/prowler-cloud/prowler/pull/9625)
 - Update Azure MySQL service metadata to new format [(#9623)](https://github.com/prowler-cloud/prowler/pull/9623)
 - Update Azure Defender service metadata to new format [(#9618)](https://github.com/prowler-cloud/prowler/pull/9618)
+- Make AWS cross-account checks configurable through `trusted_account_ids` config parameter [(#9692)](https://github.com/prowler-cloud/prowler/pull/9692)
 
 ---
 
