@@ -1,0 +1,399 @@
+# Test Impact Analysis Configuration
+# Defines which tests to run based on changed files
+#
+# Usage: Changes to paths in 'critical' always run all tests.
+#        Changes to paths in 'modules' run only the mapped tests.
+#        Changes to paths in 'ignored' don't trigger any tests.
+
+# Ignored paths - changes here don't trigger any tests
+# Documentation, configs, and other non-code files
+ignored:
+  paths:
+    # Documentation
+    - docs/**
+    - "*.md"
+    - "**/*.md"
+    - mkdocs.yml
+    
+    # Config files that don't affect runtime
+    - .gitignore
+    - .gitattributes
+    - .editorconfig
+    - .pre-commit-config.yaml
+    - .backportrc.json
+    - CODEOWNERS
+    - LICENSE
+    
+    # IDE/Editor configs
+    - .vscode/**
+    - .idea/**
+    
+    # Examples and contrib (not production code)
+    - examples/**
+    - contrib/**
+    
+    # Skills (AI agent configs, not runtime)
+    - skills/**
+    
+    # Permissions docs
+    - permissions/**
+
+# Critical paths - changes here run ALL tests
+# These are foundational/shared code that can affect anything
+critical:
+  paths:
+    # SDK Core
+    - prowler/lib/**
+    - prowler/config/**
+    - prowler/exceptions/**
+    - prowler/providers/common/**
+    
+    # API Core
+    - api/src/backend/api/models.py
+    - api/src/backend/config/**
+    - api/src/backend/conftest.py
+    
+    # UI Core
+    - ui/lib/**
+    - ui/types/**
+    - ui/config/**
+    - ui/middleware.ts
+    
+    # CI/CD changes
+    - .github/workflows/**
+    - .github/test-impact.yml
+
+# Module mappings - path patterns to test patterns
+modules:
+  # ============================================
+  # SDK - Providers (each provider is isolated)
+  # ============================================
+  - name: sdk-aws
+    match:
+      - prowler/providers/aws/**
+      - prowler/compliance/aws/**
+    tests:
+      - tests/providers/aws/**
+    e2e: []
+
+  - name: sdk-azure
+    match:
+      - prowler/providers/azure/**
+      - prowler/compliance/azure/**
+    tests:
+      - tests/providers/azure/**
+    e2e: []
+
+  - name: sdk-gcp
+    match:
+      - prowler/providers/gcp/**
+      - prowler/compliance/gcp/**
+    tests:
+      - tests/providers/gcp/**
+    e2e: []
+
+  - name: sdk-kubernetes
+    match:
+      - prowler/providers/kubernetes/**
+      - prowler/compliance/kubernetes/**
+    tests:
+      - tests/providers/kubernetes/**
+    e2e: []
+
+  - name: sdk-github
+    match:
+      - prowler/providers/github/**
+      - prowler/compliance/github/**
+    tests:
+      - tests/providers/github/**
+    e2e: []
+
+  - name: sdk-m365
+    match:
+      - prowler/providers/m365/**
+      - prowler/compliance/m365/**
+    tests:
+      - tests/providers/m365/**
+    e2e: []
+
+  - name: sdk-alibabacloud
+    match:
+      - prowler/providers/alibabacloud/**
+      - prowler/compliance/alibabacloud/**
+    tests:
+      - tests/providers/alibabacloud/**
+    e2e: []
+
+  - name: sdk-cloudflare
+    match:
+      - prowler/providers/cloudflare/**
+      - prowler/compliance/cloudflare/**
+    tests:
+      - tests/providers/cloudflare/**
+    e2e: []
+
+  - name: sdk-oraclecloud
+    match:
+      - prowler/providers/oraclecloud/**
+      - prowler/compliance/oraclecloud/**
+    tests:
+      - tests/providers/oraclecloud/**
+    e2e: []
+
+  - name: sdk-mongodbatlas
+    match:
+      - prowler/providers/mongodbatlas/**
+      - prowler/compliance/mongodbatlas/**
+    tests:
+      - tests/providers/mongodbatlas/**
+    e2e: []
+
+  - name: sdk-nhn
+    match:
+      - prowler/providers/nhn/**
+      - prowler/compliance/nhn/**
+    tests:
+      - tests/providers/nhn/**
+    e2e: []
+
+  - name: sdk-iac
+    match:
+      - prowler/providers/iac/**
+      - prowler/compliance/iac/**
+    tests:
+      - tests/providers/iac/**
+    e2e: []
+
+  - name: sdk-llm
+    match:
+      - prowler/providers/llm/**
+      - prowler/compliance/llm/**
+    tests:
+      - tests/providers/llm/**
+    e2e: []
+
+  # ============================================
+  # SDK - Lib modules
+  # ============================================
+  - name: sdk-lib-check
+    match:
+      - prowler/lib/check/**
+    tests:
+      - tests/lib/check/**
+    e2e: []
+
+  - name: sdk-lib-outputs
+    match:
+      - prowler/lib/outputs/**
+    tests:
+      - tests/lib/outputs/**
+    e2e: []
+
+  - name: sdk-lib-scan
+    match:
+      - prowler/lib/scan/**
+    tests:
+      - tests/lib/scan/**
+    e2e: []
+
+  - name: sdk-lib-cli
+    match:
+      - prowler/lib/cli/**
+    tests:
+      - tests/lib/cli/**
+    e2e: []
+
+  - name: sdk-lib-mutelist
+    match:
+      - prowler/lib/mutelist/**
+    tests:
+      - tests/lib/mutelist/**
+    e2e: []
+
+  # ============================================
+  # API - Views, Serializers, Tasks
+  # ============================================
+  - name: api-views
+    match:
+      - api/src/backend/api/v1/views.py
+    tests:
+      - api/src/backend/api/tests/test_views.py
+    e2e:
+      # API view changes can break UI
+      - ui/tests/**
+
+  - name: api-serializers
+    match:
+      - api/src/backend/api/v1/serializers.py
+      - api/src/backend/api/v1/serializer_utils/**
+    tests:
+      - api/src/backend/api/tests/**
+    e2e:
+      # Serializer changes affect API responses → UI
+      - ui/tests/**
+
+  - name: api-filters
+    match:
+      - api/src/backend/api/filters.py
+    tests:
+      - api/src/backend/api/tests/**
+    e2e: []
+
+  - name: api-rbac
+    match:
+      - api/src/backend/api/rbac/**
+    tests:
+      - api/src/backend/api/tests/**
+    e2e:
+      - ui/tests/roles/**
+
+  - name: api-tasks
+    match:
+      - api/src/backend/tasks/**
+    tests:
+      - api/src/backend/tasks/tests/**
+    e2e: []
+
+  - name: api-attack-paths
+    match:
+      - api/src/backend/api/attack_paths/**
+    tests:
+      - api/src/backend/api/tests/test_attack_paths.py
+    e2e: []
+
+  # ============================================
+  # UI - Components and Features
+  # ============================================
+  - name: ui-providers
+    match:
+      - ui/components/providers/**
+      - ui/actions/providers/**
+      - ui/app/**/providers/**
+    tests: []
+    e2e:
+      - ui/tests/providers/**
+
+  - name: ui-findings
+    match:
+      - ui/components/findings/**
+      - ui/actions/findings/**
+      - ui/app/**/findings/**
+    tests: []
+    e2e:
+      - ui/tests/findings/**
+
+  - name: ui-scans
+    match:
+      - ui/components/scans/**
+      - ui/actions/scans/**
+      - ui/app/**/scans/**
+    tests: []
+    e2e:
+      - ui/tests/scans/**
+
+  - name: ui-compliance
+    match:
+      - ui/components/compliance/**
+      - ui/actions/compliances/**
+      - ui/app/**/compliance/**
+    tests: []
+    e2e:
+      - ui/tests/compliance/**
+
+  - name: ui-auth
+    match:
+      - ui/components/auth/**
+      - ui/actions/auth/**
+      - ui/app/(auth)/**
+    tests: []
+    e2e:
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+
+  - name: ui-invitations
+    match:
+      - ui/components/invitations/**
+      - ui/actions/invitations/**
+      - ui/app/**/invitations/**
+    tests: []
+    e2e:
+      - ui/tests/invitations/**
+
+  - name: ui-roles
+    match:
+      - ui/components/roles/**
+      - ui/actions/roles/**
+      - ui/app/**/roles/**
+    tests: []
+    e2e:
+      - ui/tests/roles/**
+
+  - name: ui-users
+    match:
+      - ui/components/users/**
+      - ui/actions/users/**
+      - ui/app/**/users/**
+    tests: []
+    e2e:
+      - ui/tests/users/**
+
+  - name: ui-integrations
+    match:
+      - ui/components/integrations/**
+      - ui/actions/integrations/**
+      - ui/app/**/integrations/**
+    tests: []
+    e2e:
+      - ui/tests/integrations/**
+
+  - name: ui-resources
+    match:
+      - ui/components/resources/**
+      - ui/actions/resources/**
+      - ui/app/**/resources/**
+    tests: []
+    e2e:
+      - ui/tests/resources/**
+
+  - name: ui-profile
+    match:
+      - ui/app/**/profile/**
+    tests: []
+    e2e:
+      - ui/tests/profile/**
+
+  - name: ui-lighthouse
+    match:
+      - ui/components/lighthouse/**
+      - ui/actions/lighthouse/**
+      - ui/app/**/lighthouse/**
+      - ui/lib/lighthouse/**
+    tests: []
+    e2e:
+      - ui/tests/lighthouse/**
+
+  - name: ui-overview
+    match:
+      - ui/components/overview/**
+      - ui/actions/overview/**
+    tests: []
+    e2e:
+      - ui/tests/home/**
+
+  - name: ui-shadcn
+    match:
+      - ui/components/shadcn/**
+      - ui/components/ui/**
+    tests: []
+    e2e:
+      # Shared components can affect any E2E
+      - ui/tests/**
+
+  - name: ui-attack-paths
+    match:
+      - ui/components/attack-paths/**
+      - ui/actions/attack-paths/**
+      - ui/app/**/attack-paths/**
+    tests: []
+    e2e:
+      - ui/tests/attack-paths/**
