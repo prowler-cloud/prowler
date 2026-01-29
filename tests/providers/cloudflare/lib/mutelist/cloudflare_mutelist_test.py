@@ -45,7 +45,7 @@ class TestCloudflareMutelist:
             "Accounts": {
                 "test-account-id": {
                     "Checks": {
-                        "zones_dnssec_enabled": {
+                        "zone_dnssec_enabled": {
                             "Regions": ["*"],
                             "Resources": ["test-zone-id"],
                         }
@@ -58,7 +58,7 @@ class TestCloudflareMutelist:
 
         finding = MagicMock()
         finding.check_metadata = MagicMock()
-        finding.check_metadata.CheckID = "zones_dnssec_enabled"
+        finding.check_metadata.CheckID = "zone_dnssec_enabled"
         finding.status = "FAIL"
         finding.resource_id = "test-zone-id"
         finding.resource_name = "example.com"
@@ -71,7 +71,7 @@ class TestCloudflareMutelist:
             "Accounts": {
                 "test-account-id": {
                     "Checks": {
-                        "zones_dnssec_enabled": {
+                        "zone_dnssec_enabled": {
                             "Regions": ["*"],
                             "Resources": ["other-zone-id"],
                         }
@@ -84,7 +84,7 @@ class TestCloudflareMutelist:
 
         finding = MagicMock()
         finding.check_metadata = MagicMock()
-        finding.check_metadata.CheckID = "zones_dnssec_enabled"
+        finding.check_metadata.CheckID = "zone_dnssec_enabled"
         finding.status = "FAIL"
         finding.resource_id = "test-zone-id"
         finding.resource_name = "example.com"

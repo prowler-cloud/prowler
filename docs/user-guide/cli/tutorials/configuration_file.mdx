@@ -66,6 +66,11 @@ The following list includes all the AWS checks with configurable variables that 
 | `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
+| `dynamodb_table_cross_account_access`                         | `trusted_account_ids`                            | List of Strings |
+| `eventbridge_bus_cross_account_access`                        | `trusted_account_ids`                            | List of Strings |
+| `eventbridge_schema_registry_cross_account_access`            | `trusted_account_ids`                            | List of Strings |
+| `s3_bucket_cross_account_access`                              | `trusted_account_ids`                            | List of Strings |
+| `ssm_documents_set_as_public`                                 | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 
@@ -202,7 +207,10 @@ aws:
     ]
 
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
-  # AWS SSM Configuration (aws.ssm_documents_set_as_public)
+  # AWS SSM Configuration (ssm_documents_set_as_public)
+  # AWS S3 Configuration (s3_bucket_cross_account_access)
+  # AWS EventBridge Configuration (eventbridge_schema_registry_cross_account_access, eventbridge_bus_cross_account_access)
+  # AWS DynamoDB Configuration (dynamodb_table_cross_account_access)
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
   # Multi account environment: Any additional trusted account number should be added as a space separated list, e.g.
   # trusted_account_ids : ["123456789012", "098765432109", "678901234567"]
