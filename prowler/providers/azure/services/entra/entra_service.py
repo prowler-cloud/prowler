@@ -365,6 +365,43 @@ class Entra(AzureService):
                         else:
                             block_access_controls.append(str(access_control))
 
+                    # Extract session controls (sign-in frequency)
+                    sign_in_frequency = None
+                    session_controls = getattr(policy, "session_controls", None)
+                    if session_controls:
+                        sif = getattr(session_controls, "sign_in_frequency", None)
+                        if sif:
+                            sign_in_frequency = SignInFrequencySessionControl(
+                                is_enabled=getattr(sif, "is_enabled", False),
+                                frequency_interval=(
+                                    str(getattr(sif, "frequency_interval", None))
+                                    if getattr(sif, "frequency_interval", None)
+                                    else None
+                                ),
+                                type=(
+                                    str(getattr(sif, "type", None))
+                                    if getattr(sif, "type", None)
+                                    else None
+                                ),
+                                value=getattr(sif, "value", None),
+                            )
+
+                    # Extract device filter
+                    device_filter = None
+                    if conditions:
+                        devices = getattr(conditions, "devices", None)
+                        if devices:
+                            df = getattr(devices, "device_filter", None)
+                            if df:
+                                device_filter = DeviceFilter(
+                                    mode=(
+                                        str(getattr(df, "mode", None))
+                                        if getattr(df, "mode", None)
+                                        else None
+                                    ),
+                                    rule=getattr(df, "rule", None),
+                                )
+
                     conditional_access_policy[tenant].update(
                         {
                             policy.id: ConditionalAccessPolicy(
@@ -391,6 +428,8 @@ class Entra(AzureService):
                                     "grant": grant_access_controls,
                                     "block": block_access_controls,
                                 },
+                                sign_in_frequency=sign_in_frequency,
+                                device_filter=device_filter,
                             )
                         }
                     )
@@ -457,10 +496,30 @@ class DirectoryRole(BaseModel):
     members: List[User]
 
 
+class SignInFrequencySessionControl(BaseModel):
+    """Sign-in frequency session control settings."""
+
+    is_enabled: bool = False
+    frequency_interval: Optional[str] = None
+    type: Optional[str] = None
+    value: Optional[int] = None
+
+
+class DeviceFilter(BaseModel):
+    """Device filter for conditional access policies."""
+
+    mode: Optional[str] = None
+    rule: Optional[str] = None
+
+
 class ConditionalAccessPolicy(BaseModel):
+    """Conditional Access Policy model."""
+
     id: str
     name: str
     state: str
     users: dict[str, List[str]]
     target_resources: dict[str, List[str]]
     access_controls: dict[str, List[str]]
+    sign_in_frequency: Optional[SignInFrequencySessionControl] = None
+    device_filter: Optional[DeviceFilter] = None

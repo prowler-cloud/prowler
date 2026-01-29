@@ -212,6 +212,7 @@
       "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_conditional_access_policy_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
@@ -804,6 +805,7 @@
       "Description": "Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using Valid Accounts.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1556/",
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_conditional_access_policy_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
@@ -995,6 +997,7 @@
       "Description": "Adversaries may use alternate authentication material, such as password hashes, Kerberos tickets, and application access tokens, in order to move laterally within an environment and bypass normal system access controls.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1550/",
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_policy_default_users_cannot_create_security_groups",
@@ -1187,6 +1190,7 @@
       "Description": "Adversaries may forge credential materials that can be used to gain access to web applications or Internet services. Web applications and services (hosted in cloud SaaS environments or on-premise servers) often use session cookies, tokens, or other materials to authenticate and authorize user access.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1606/",
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_policy_default_users_cannot_create_security_groups",
         "entra_policy_ensure_default_user_cannot_create_apps",
         "entra_policy_ensure_default_user_cannot_create_tenants",

@@ -235,6 +235,28 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        device_filter=(
+                            DeviceFilter(
+                                mode=(
+                                    DeviceFilterMode(
+                                        policy.conditions.devices.device_filter.mode.value.lower()
+                                    )
+                                    if policy.conditions.devices
+                                    and policy.conditions.devices.device_filter
+                                    and policy.conditions.devices.device_filter.mode
+                                    else None
+                                ),
+                                rule=(
+                                    policy.conditions.devices.device_filter.rule
+                                    if policy.conditions.devices
+                                    and policy.conditions.devices.device_filter
+                                    else None
+                                ),
+                            )
+                            if policy.conditions.devices
+                            and policy.conditions.devices.device_filter
+                            else None
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -503,12 +525,23 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class DeviceFilterMode(Enum):
+    INCLUDE = "include"
+    EXCLUDE = "exclude"
+
+
+class DeviceFilter(BaseModel):
+    mode: Optional[DeviceFilterMode]
+    rule: Optional[str]
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    device_filter: Optional[DeviceFilter] = None
 
 
 class PersistentBrowser(BaseModel):
