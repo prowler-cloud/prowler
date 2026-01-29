@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -204,8 +205,8 @@ def get_prowler_provider_kwargs(
             "atlas_organization_id": provider.uid,
         }
     elif provider.provider == Provider.ProviderChoices.CLOUDFLARE.value:
+        # Cloudflare credentials are handled via environment variables, not kwargs
         prowler_provider_kwargs = {
-            **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
 
@@ -246,6 +247,17 @@ def initialize_prowler_provider(
     """
     prowler_provider = return_prowler_provider(provider)
     prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+    # Cloudflare credentials must be set via environment variables
+    if provider.provider == Provider.ProviderChoices.CLOUDFLARE.value:
+        secret = provider.secret.secret
+        if "api_token" in secret:
+            os.environ["CLOUDFLARE_API_TOKEN"] = secret["api_token"]
+        if "api_key" in secret:
+            os.environ["CLOUDFLARE_API_KEY"] = secret["api_key"]
+        if "api_email" in secret:
+            os.environ["CLOUDFLARE_API_EMAIL"] = secret["api_email"]
+
     return prowler_provider(**prowler_provider_kwargs)
 
 
@@ -264,6 +276,16 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+
+    # Cloudflare credentials must be set via environment variables
+    if provider.provider == Provider.ProviderChoices.CLOUDFLARE.value:
+        if "api_token" in prowler_provider_kwargs:
+            os.environ["CLOUDFLARE_API_TOKEN"] = prowler_provider_kwargs["api_token"]
+        if "api_key" in prowler_provider_kwargs:
+            os.environ["CLOUDFLARE_API_KEY"] = prowler_provider_kwargs["api_key"]
+        if "api_email" in prowler_provider_kwargs:
+            os.environ["CLOUDFLARE_API_EMAIL"] = prowler_provider_kwargs["api_email"]
+        return prowler_provider.test_connection(raise_on_exception=False)
 
     # For IaC provider, construct the kwargs properly for test_connection
     if provider.provider == Provider.ProviderChoices.IAC.value:
