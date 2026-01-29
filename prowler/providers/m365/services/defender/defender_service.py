@@ -12,7 +12,7 @@ class Defender(M365Service):
     Microsoft Defender for Office 365 service class.
 
     This class provides methods to retrieve various Defender policies and configurations
-    including malware, antiphishing, spam, DKIM, and Safe Attachments settings.
+    including malware, antiphishing, spam, DKIM, Safe Attachments, and Teams protection settings.
     """
 
     def __init__(self, provider: M365Provider):
@@ -34,6 +34,7 @@ class Defender(M365Service):
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
         self.safe_attachments_policies = []
+        self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -48,6 +49,7 @@ class Defender(M365Service):
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
                 self.safe_attachments_policies = self._get_safe_attachments_policies()
+                self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -365,6 +367,12 @@ class Defender(M365Service):
         return inbound_spam_rules
 
     def _get_report_submission_policy(self):
+        """
+        Retrieve the Defender report submission policy.
+
+        Returns:
+            ReportSubmissionPolicy: The report submission policy configuration.
+        """
         logger.info("Microsoft365 - Getting Defender report submission policy...")
         report_submission_policy = None
         try:
@@ -435,6 +443,28 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return safe_attachments_policies
+
+    def _get_teams_protection_policy(self):
+        """
+        Retrieve the Teams protection policy including ZAP settings.
+
+        Returns:
+            TeamsProtectionPolicy: The Teams protection policy configuration.
+        """
+        logger.info("Microsoft365 - Getting Teams protection policy...")
+        teams_protection_policy = None
+        try:
+            policy = self.powershell.get_teams_protection_policy()
+            if policy:
+                teams_protection_policy = TeamsProtectionPolicy(
+                    identity=policy.get("Identity", ""),
+                    zap_enabled=policy.get("ZapEnabled", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return teams_protection_policy
 
 
 class MalwarePolicy(BaseModel):
@@ -519,6 +549,8 @@ class InboundSpamRule(BaseModel):
 
 
 class ReportSubmissionPolicy(BaseModel):
+    """Model for Defender report submission policy settings."""
+
     report_junk_to_customized_address: bool
     report_not_junk_to_customized_address: bool
     report_phish_to_customized_address: bool
@@ -550,3 +582,10 @@ class SafeAttachmentsPolicy(BaseModel):
     quarantine_tag: str
     redirect: bool
     redirect_address: str
+
+
+class TeamsProtectionPolicy(BaseModel):
+    """Model for Teams protection policy settings including ZAP configuration."""
+
+    identity: str
+    zap_enabled: bool

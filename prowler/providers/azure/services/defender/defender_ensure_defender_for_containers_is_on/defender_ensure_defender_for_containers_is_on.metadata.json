@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_containers_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Containers Is Set To 'On' ",
+  "CheckTitle": "Defender for Containers is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Containers Is Set To 'On' ",
-  "Risk": "Ensure that Microsoft Defender for Cloud is enabled for all your Azure containers. Turning on the Defender for Cloud service enables threat detection for containers, providing threat intelligence, anomaly detection, and behavior analytics.",
+  "Description": "**Azure subscriptions** are assessed to determine if the **Defender for Containers** plan is configured with pricing tier `Standard`.",
+  "Risk": "Without **Defender for Containers**, images and runtimes lack continuous **threat detection** and **vulnerability assessment**. Adversaries can ship malicious images, run **cryptomining**, exfiltrate secrets, and **move laterally**, degrading **confidentiality** and **availability** of container workloads.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-container.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-introduction"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-container.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-container-registries#terraform"
+      "CLI": "az security pricing create --name Containers --tier Standard",
+      "NativeIaC": "```bicep\n// Subscription-level deployment to enable Defender for Containers\ntargetScope = 'subscription'\n\nresource <example_resource_name> 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'Containers'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for Containers plan to ON (Standard)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > choose <subscription>\n3. Open Pricing & settings\n4. Find the Containers plan and set it to On (Standard)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  resource_type = \"Containers\"   # Critical: targets Defender for Containers plan\n  tier          = \"Standard\"     # Critical: enables Standard (ON)\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is not enabled for your Azure cloud containers. Enabling the Defender security service for Azure containers allows for advanced security defense against threats, using threat detection capabilities provided by the Microsoft Security Response Center (MSRC).",
-      "Url": ""
+      "Text": "Enable the **Defender for Containers** plan at `Standard` for all relevant subscriptions. Apply **least privilege**, integrate alerts with response workflows, and use **defense in depth**: signed images, private registries, RBAC, network policies, and periodic reviews to maintain consistent coverage.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_containers_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

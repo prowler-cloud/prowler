@@ -4,9 +4,26 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.19.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Attack Paths: Bedrock Code Interpreter and AttachRolePolicy privilege escalation queries [(#9885)](https://github.com/prowler-cloud/prowler/pull/9885)
+- `provider_id` and `provider_id__in` filters for resources endpoints (`GET /resources` and `GET /resources/metadata/latest`) [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
+- Added memory optimizations for large compliance report generation [(#9444)](https://github.com/prowler-cloud/prowler/pull/9444)
+- `GET /api/v1/resources/{id}/events` endpoint to retrieve AWS resource modification history from CloudTrail [(#9101)](https://github.com/prowler-cloud/prowler/pull/9101)
+- Partial index on findings to speed up new failed findings queries [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
+
 ### 🔄 Changed
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
+- Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
+
+---
+
+## [1.18.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: `aws-security-groups-open-internet-facing` query returning no results due to incorrect relationship matching [(#9892)](https://github.com/prowler-cloud/prowler/pull/9892)
 
 ---
 
@@ -22,6 +39,8 @@ All notable changes to the **Prowler API** are documented in this file.
 - Use `Findings.all_objects` to avoid the `ActiveProviderPartitionedManager` [(#9869)](https://github.com/prowler-cloud/prowler/pull/9869)
 - Lazy load Neo4j driver for workers only [(#9872)](https://github.com/prowler-cloud/prowler/pull/9872)
 - Improve Cypher query for inserting Findings into Attack Paths scan graphs [(#9874)](https://github.com/prowler-cloud/prowler/pull/9874)
+- Clear Neo4j database cache after Attack Paths scan and each API query [(#9877)](https://github.com/prowler-cloud/prowler/pull/9877)
+- Deduplicated scheduled scans for long-running providers [(#9829)](https://github.com/prowler-cloud/prowler/pull/9829)
 
 ---
 

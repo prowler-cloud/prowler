@@ -5,6 +5,7 @@ import pytest
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.cloudflare.exceptions.exceptions import (
     CloudflareCredentialsError,
+    CloudflareInvalidAccountError,
 )
 from prowler.providers.cloudflare.models import (
     CloudflareAccount,
@@ -200,6 +201,74 @@ class TestCloudflareProvider:
             provider = CloudflareProvider(filter_zones=filter_zones)
 
             assert provider.filter_zones == set(filter_zones)
+
+    def test_cloudflare_provider_with_filter_accounts(self):
+        with (
+            patch(
+                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+                return_value=CloudflareSession(
+                    client=MagicMock(),
+                    api_token=API_TOKEN,
+                    api_key=None,
+                    api_email=None,
+                ),
+            ),
+            patch(
+                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_identity",
+                return_value=CloudflareIdentityInfo(
+                    user_id=USER_ID,
+                    email=USER_EMAIL,
+                    accounts=[
+                        CloudflareAccount(
+                            id=ACCOUNT_ID,
+                            name=ACCOUNT_NAME,
+                            type="standard",
+                        ),
+                        CloudflareAccount(
+                            id="other-account-id",
+                            name="Other Account",
+                            type="standard",
+                        ),
+                    ],
+                    audited_accounts=[ACCOUNT_ID, "other-account-id"],
+                ),
+            ),
+        ):
+            provider = CloudflareProvider(filter_accounts=[ACCOUNT_ID])
+
+            assert provider.filter_accounts == {ACCOUNT_ID}
+            # Only the filtered account should remain in audited_accounts
+            assert provider.identity.audited_accounts == [ACCOUNT_ID]
+
+    def test_cloudflare_provider_with_invalid_filter_accounts(self):
+        with (
+            patch(
+                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+                return_value=CloudflareSession(
+                    client=MagicMock(),
+                    api_token=API_TOKEN,
+                    api_key=None,
+                    api_email=None,
+                ),
+            ),
+            patch(
+                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_identity",
+                return_value=CloudflareIdentityInfo(
+                    user_id=USER_ID,
+                    email=USER_EMAIL,
+                    accounts=[
+                        CloudflareAccount(
+                            id=ACCOUNT_ID,
+                            name=ACCOUNT_NAME,
+                            type="standard",
+                        ),
+                    ],
+                    audited_accounts=[ACCOUNT_ID],
+                ),
+            ),
+        ):
+            with pytest.raises(CloudflareInvalidAccountError):
+                CloudflareProvider(filter_accounts=["non-existent-account-id"])
 
     def test_cloudflare_provider_properties(self):
         with (
