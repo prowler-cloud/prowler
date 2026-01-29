@@ -1670,7 +1670,7 @@ class Test_Policy:
             policy,
             TRUSTED_AWS_ACCOUNT_NUMBER,
             is_cross_account_allowed=False,
-            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
         )
 
     def test_cross_account_access_with_principal_list_trusted_account_list(self):
@@ -1681,7 +1681,7 @@ class Test_Policy:
                     "Principal": {
                         "AWS": [
                             f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:root",
-                            f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root"
+                            f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root",
                         ]
                     },
                     "Action": "*",
@@ -1693,7 +1693,7 @@ class Test_Policy:
             policy,
             TRUSTED_AWS_ACCOUNT_NUMBER,
             is_cross_account_allowed=False,
-            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
         )
 
     def test_policy_allows_public_access_with_wildcard_principal(self):

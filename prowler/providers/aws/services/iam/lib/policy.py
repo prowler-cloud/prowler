@@ -387,7 +387,7 @@ def is_policy_public(
     is_cross_account_allowed=True,
     not_allowed_actions: list = [],
     check_cross_service_confused_deputy=False,
-    trusted_account_ids: list = None
+    trusted_account_ids: list = None,
 ) -> bool:
     """
     Check if the policy allows public access to the resource.
@@ -403,7 +403,7 @@ def is_policy_public(
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
-    
+
     if trusted_account_ids is None:
         trusted_account_ids = []
 

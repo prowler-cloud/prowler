@@ -20,10 +20,10 @@ class s3_bucket_cross_account_access(Check):
                     f"S3 Bucket {bucket.name} does not have a bucket policy."
                 )
             elif is_policy_public(
-                bucket.policy, 
-                s3_client.audited_account, 
-                is_cross_account_allowed=False, 
-                trusted_account_ids=trusted_account_ids
+                bucket.policy,
+                s3_client.audited_account,
+                is_cross_account_allowed=False,
+                trusted_account_ids=trusted_account_ids,
             ):
                 report.status = "FAIL"
                 report.status_extended = f"S3 Bucket {bucket.name} has a bucket policy allowing cross account access."

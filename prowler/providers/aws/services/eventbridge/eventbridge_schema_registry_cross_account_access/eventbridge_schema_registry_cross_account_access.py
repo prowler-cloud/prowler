@@ -17,7 +17,7 @@ class eventbridge_schema_registry_cross_account_access(Check):
                 registry.policy,
                 schema_client.audited_account,
                 is_cross_account_allowed=False,
-                trusted_account_ids=trusted_account_ids
+                trusted_account_ids=trusted_account_ids,
             ):
                 report.status = "FAIL"
                 report.status_extended = f"EventBridge schema registry {registry.name} allows cross-account access."
