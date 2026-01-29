@@ -18,7 +18,7 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteRoleForm } from "../workflow/forms";
 interface DataTableRowActionsProps<RoleProps> {
@@ -34,14 +34,14 @@ export function DataTableRowActions<RoleProps>({
   const roleId = (row.original as { id: string }).id;
   return (
     <>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your role and remove your data from the server."
       >
         <DeleteRoleForm roleId={roleId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
           className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"

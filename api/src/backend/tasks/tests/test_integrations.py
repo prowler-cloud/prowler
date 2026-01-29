@@ -417,9 +417,8 @@ class TestProwlerIntegrationConnectionTest:
             raise_on_exception=False,
         )
 
-    @patch("api.utils.AwsProvider")
     @patch("api.utils.S3")
-    def test_s3_integration_connection_failure(self, mock_s3_class, mock_aws_provider):
+    def test_s3_integration_connection_failure(self, mock_s3_class):
         """Test S3 integration connection failure."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
@@ -428,9 +427,6 @@ class TestProwlerIntegrationConnectionTest:
             "aws_secret_access_key": "test_secret_key",
         }
         integration.configuration = {"bucket_name": "test-bucket"}
-
-        mock_session = MagicMock()
-        mock_aws_provider.return_value.session.current_session = mock_session
 
         mock_connection = Connection(
             is_connected=False, error=Exception("Bucket not found")

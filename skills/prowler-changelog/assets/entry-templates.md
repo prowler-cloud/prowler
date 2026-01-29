@@ -1,5 +1,11 @@
 # Changelog Entry Templates
 
+## Entry Placement Rule
+
+**CRITICAL:** Always add new entries at the **BOTTOM** of each section (before the next section header or `---`).
+
+This maintains chronological order: oldest entries at top, newest at bottom.
+
 ## Section Headers
 
 ```markdown
@@ -68,18 +74,24 @@
 
 - Search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
 - New findings table UI with new design system components [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
+- YOUR NEW ENTRY GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ### 🔄 Changed
 
 - Lighthouse AI MCP tool filtering from blacklist to whitelist approach [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
+- YOUR NEW CHANGE GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ### 🐞 Fixed
 
 - OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
+- YOUR NEW FIX GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ### 🔐 Security
 
 - Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+- YOUR NEW SECURITY FIX GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ---
 ```
+
+> **Remember:** Each new entry is added at the BOTTOM of its section to maintain chronological order.

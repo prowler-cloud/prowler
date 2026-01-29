@@ -73,7 +73,7 @@ class TestOpenstackProvider:
         )
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -134,7 +134,7 @@ class TestOpenstackProvider:
         mock_connection.identity.get_project.return_value = mock_project
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -227,7 +227,7 @@ class TestOpenstackProvider:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -252,7 +252,7 @@ class TestOpenstackProvider:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -270,7 +270,7 @@ class TestOpenstackProvider:
         monkeypatch.setenv("OS_REGION_NAME", "RegionOne")
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.side_effect = openstack_exceptions.SDKException(
                 "Connection failed"
@@ -285,7 +285,7 @@ class TestOpenstackProvider:
         mock_connection.authorize.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -329,7 +329,7 @@ class TestOpenstackProvider:
         )
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -354,7 +354,7 @@ class TestOpenstackProvider:
         )
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -374,7 +374,7 @@ class TestOpenstackProvider:
         mock_connection.authorize.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -414,7 +414,7 @@ class TestOpenstackProvider:
         )
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -446,7 +446,7 @@ class TestOpenstackProvider:
         mock_connection.identity.get_project.return_value = mock_project
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -477,7 +477,7 @@ class TestOpenstackProvider:
         config_content = {"custom_key": "custom_value"}
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -502,7 +502,7 @@ class TestOpenstackProvider:
         mutelist_content = {"Accounts": {"*": []}}
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -658,7 +658,7 @@ clouds:
         mock_connection.identity.get_project.return_value = mock_project
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -699,7 +699,7 @@ clouds:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -838,7 +838,7 @@ clouds:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -881,7 +881,7 @@ clouds:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -917,7 +917,7 @@ clouds:
         mock_connection.authorize.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -985,7 +985,7 @@ clouds:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 
@@ -1006,7 +1006,7 @@ clouds:
         mock_connection.identity.get_project.return_value = None
 
         with patch(
-            "prowler.providers.openstack.openstack_provider.openstack.connect"
+            "prowler.providers.openstack.openstack_provider.connect"
         ) as mock_connect:
             mock_connect.return_value = mock_connection
 

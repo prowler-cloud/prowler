@@ -2,11 +2,7 @@
   "Provider": "openstack",
   "CheckID": "compute_instance_security_groups_attached",
   "CheckTitle": "Compute instances have security groups attached",
-  "CheckType": [
-    "Software and Configuration Checks/OpenStack Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards",
-    "TTPs/Initial Access"
-  ],
+  "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",

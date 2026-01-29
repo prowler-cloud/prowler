@@ -3975,3 +3975,31 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         if getattr(obj, "_aggregated", False):
             return "n/a"
         return str(obj.id)
+
+
+# Resource Events Serializers
+
+
+class ResourceEventSerializer(BaseSerializerV1):
+    """Serializer for resource events (CloudTrail modification history).
+
+    NOTE: drf-spectacular auto-generates fields[resource-events] sparse fieldsets
+    parameter in the OpenAPI schema. This endpoint does not support sparse fieldsets.
+    """
+
+    id = serializers.CharField(source="event_id")
+    event_time = serializers.DateTimeField()
+    event_name = serializers.CharField()
+    event_source = serializers.CharField()
+    actor = serializers.CharField()
+    actor_uid = serializers.CharField(allow_null=True, required=False)
+    actor_type = serializers.CharField(allow_null=True, required=False)
+    source_ip_address = serializers.CharField(allow_null=True, required=False)
+    user_agent = serializers.CharField(allow_null=True, required=False)
+    request_data = serializers.JSONField(allow_null=True, required=False)
+    response_data = serializers.JSONField(allow_null=True, required=False)
+    error_code = serializers.CharField(allow_null=True, required=False)
+    error_message = serializers.CharField(allow_null=True, required=False)
+
+    class Meta:
+        resource_name = "resource-events"

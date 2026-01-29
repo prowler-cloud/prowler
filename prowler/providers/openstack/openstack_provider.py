@@ -2,9 +2,8 @@ from os import environ
 from pathlib import Path
 from typing import Optional
 
-import openstack
-import openstack.config
 from colorama import Fore, Style
+from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
 
@@ -242,9 +241,7 @@ class OpenstackProvider(Provider):
                     )
                 logger.info(f"Loading clouds.yaml from {config_path}")
                 # Load OpenStack configuration with explicit file
-                os_config = openstack.config.OpenStackConfig(
-                    config_files=[str(config_path)]
-                )
+                os_config = config.OpenStackConfig(config_files=[str(config_path)])
             else:
                 # Search standard locations if cloud name is provided
                 logger.info(
@@ -252,7 +249,7 @@ class OpenstackProvider(Provider):
                     "~/.config/openstack/clouds.yaml, /etc/openstack/clouds.yaml, ./clouds.yaml"
                 )
                 # Load OpenStack configuration from standard locations (don't pass config_files)
-                os_config = openstack.config.OpenStackConfig()
+                os_config = config.OpenStackConfig()
 
             # Get cloud configuration
             logger.info(f"Loading cloud configuration for '{clouds_yaml_cloud}'")
@@ -331,7 +328,7 @@ class OpenstackProvider(Provider):
         """
         try:
             # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
-            conn = openstack.connect(
+            conn = connect(
                 load_yaml_config=False,
                 load_envvars=False,
                 **session.as_sdk_config(),

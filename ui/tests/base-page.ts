@@ -26,6 +26,14 @@ export abstract class BasePage {
     await this.page.goto(url);
   }
 
+  /**
+   * Navigate to URL waiting only for server response (commit).
+   * Use this after clearing cookies to ensure middleware runs fresh.
+   */
+  async gotoFresh(url: string): Promise<void> {
+    await this.page.goto(url, { waitUntil: "commit" });
+  }
+
   async refresh(): Promise<void> {
     await this.page.reload();
   }
@@ -130,28 +138,28 @@ export abstract class BasePage {
 
   // Common wait methods
   async waitForElement(element: Locator, timeout: number = 5000): Promise<void> {
-    
+
     await element.waitFor({ timeout });
   }
 
   async waitForElementToDisappear(element: Locator, timeout: number = 5000): Promise<void> {
-    
+
     await element.waitFor({ state: "hidden", timeout });
   }
 
   async waitForUrl(expectedUrl: string | RegExp, timeout: number = 5000): Promise<void> {
-    
+
     await this.page.waitForURL(expectedUrl, { timeout });
   }
 
   // Common screenshot methods
   async takeScreenshot(name: string): Promise<void> {
-    
+
     await this.page.screenshot({ path: `screenshots/${name}.png` });
   }
 
   async takeElementScreenshot(element: Locator, name: string): Promise<void> {
-    
+
     await element.screenshot({ path: `screenshots/${name}.png` });
   }
 }
