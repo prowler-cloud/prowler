@@ -159,20 +159,57 @@ else
   exit 1
 fi
 
-# Run unit tests
+# Run unit tests (targeted based on staged files)
 echo -e "${BLUE}🧪 Running unit tests...${NC}"
 echo ""
 
-if pnpm run test:run; then
+# Get staged source files (exclude test files)
+STAGED_SOURCE_FILES=$(git diff --cached --name-only --diff-filter=ACM -- 'ui/**/*.ts' 'ui/**/*.tsx' | grep -v '\.test\.\|\.spec\.\|vitest\.config\|vitest\.setup' | sed 's|^ui/||' || true)
+
+# Check if critical paths changed (lib/, types/, config/)
+CRITICAL_PATHS_CHANGED=$(git diff --cached --name-only -- 'ui/lib/**' 'ui/types/**' 'ui/config/**' 'ui/middleware.ts' 'ui/vitest.config.ts' 'ui/vitest.setup.ts' || true)
+
+if [ -n "$CRITICAL_PATHS_CHANGED" ]; then
+  echo -e "${YELLOW}Critical paths changed - running ALL unit tests${NC}"
+  if pnpm run test:run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
+elif [ -n "$STAGED_SOURCE_FILES" ]; then
+  echo -e "${YELLOW}Running tests related to changed files:${NC}"
+  echo "$STAGED_SOURCE_FILES" | while IFS= read -r file; do [ -n "$file" ] && echo "  - $file"; done
   echo ""
-  echo -e "${GREEN}✅ Unit tests passed${NC}"
-  echo ""
+  if pnpm exec vitest related $STAGED_SOURCE_FILES --run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
 else
-  echo ""
-  echo -e "${RED}❌ Unit tests failed${NC}"
-  echo -e "${RED}Fix failing tests before committing${NC}"
-  echo ""
-  exit 1
+  echo -e "${YELLOW}No source files changed - running ALL unit tests${NC}"
+  if pnpm run test:run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
 fi
 
 # Run build

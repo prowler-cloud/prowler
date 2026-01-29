@@ -44,6 +44,35 @@ jobs:
             ui/README.md
             ui/AGENTS.md
 
+      - name: Get changed source files for targeted tests
+        id: changed-source
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        with:
+          files: |
+            ui/**/*.ts
+            ui/**/*.tsx
+          files_ignore: |
+            ui/**/*.test.ts
+            ui/**/*.test.tsx
+            ui/**/*.spec.ts
+            ui/**/*.spec.tsx
+            ui/vitest.config.ts
+            ui/vitest.setup.ts
+
+      - name: Check for critical path changes (run all tests)
+        id: critical-changes
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        with:
+          files: |
+            ui/lib/**
+            ui/types/**
+            ui/config/**
+            ui/middleware.ts
+            ui/vitest.config.ts
+            ui/vitest.setup.ts
+
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -83,9 +112,26 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
 
-      - name: Run unit tests
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: pnpm run test:run
+      - name: Run unit tests (all - critical paths changed)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed == 'true'
+        run: |
+          echo "Critical paths changed - running ALL unit tests"
+          pnpm run test:run
+
+      - name: Run unit tests (related to changes only)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
+        run: |
+          echo "Running tests related to changed files:"
+          echo "${{ steps.changed-source.outputs.all_changed_files }}"
+          # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
+          CHANGED_FILES=$(echo "${{ steps.changed-source.outputs.all_changed_files }}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
+          pnpm exec vitest related $CHANGED_FILES --run
+
+      - name: Run unit tests (test files only changed)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''
+        run: |
+          echo "Only test files changed - running ALL unit tests"
+          pnpm run test:run
 
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'
