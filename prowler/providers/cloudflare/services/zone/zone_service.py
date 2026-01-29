@@ -32,14 +32,34 @@ class CloudflareFirewallRule(BaseModel):
         arbitrary_types_allowed = True
 
 
+class CloudflareWAFRulesetRule(BaseModel):
+    """A rule inside a WAF managed entrypoint ruleset.
+
+    Each rule with ``action == "execute"`` deploys a specific managed
+    ruleset identified by ``managed_ruleset_id`` (from
+    ``action_parameters.id``), e.g. the Cloudflare Managed Ruleset or
+    OWASP Core Ruleset.
+    """
+
+    id: str
+    name: str = ""
+    action: Optional[str] = None
+    enabled: bool = False
+    managed_ruleset_id: Optional[str] = None
+
+
 class CloudflareWAFRuleset(BaseModel):
-    """Represents a WAF ruleset (managed rules) for a zone."""
+    """Represents the WAF entrypoint ruleset for a zone (phase
+    ``http_request_firewall_managed``).
+
+    Contains the individual rules that deploy managed rulesets.
+    """
 
     id: str
     name: str
     kind: Optional[str] = None
     phase: Optional[str] = None
-    enabled: bool = True
+    rules: list[CloudflareWAFRulesetRule] = Field(default_factory=list)
 
 
 class Zone(CloudflareService):
@@ -55,7 +75,6 @@ class Zone(CloudflareService):
         self._get_zones_rate_limit_rules()
         self._get_zones_bot_management()
         self._get_zones_firewall_rules()
-        self._get_zones_waf_rulesets()
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -230,7 +249,18 @@ class Zone(CloudflareService):
                 )
 
     def _get_zone_firewall_rules(self, zone: "CloudflareZone") -> None:
-        """List firewall rules from custom rulesets for a zone."""
+        """List firewall rules from rulesets for a zone.
+
+        Iterates all rulesets and, for phases relevant to security
+        (custom firewall, rate-limit, WAF managed), fetches the ruleset
+        detail to extract individual rules into ``zone.firewall_rules``.
+
+        For WAF managed rulesets (phase ``http_request_firewall_managed``)
+        it also populates ``zone.waf_rulesets`` with a
+        ``CloudflareWAFRuleset`` containing a ``CloudflareWAFRulesetRule``
+        per rule.  Each ``execute`` rule references a managed ruleset via
+        ``action_parameters.id`` (e.g. Cloudflare Managed, OWASP Core).
+        """
         seen_ruleset_ids: set[str] = set()
         try:
             for ruleset in self.client.rulesets.list(zone_id=zone.id):
@@ -251,11 +281,17 @@ class Zone(CloudflareService):
                         )
                         rules = getattr(ruleset_detail, "rules", []) or []
                         seen_rule_ids: set[str] = set()
+                        waf_ruleset_rules: list[CloudflareWAFRulesetRule] = []
+
                         for rule in rules:
                             rule_id = getattr(rule, "id", "")
                             if rule_id in seen_rule_ids:
                                 break
                             seen_rule_ids.add(rule_id)
+
+                            rule_action = getattr(rule, "action", None)
+                            rule_enabled = getattr(rule, "enabled", True)
+
                             try:
                                 zone.firewall_rules.append(
                                     CloudflareFirewallRule(
@@ -263,10 +299,51 @@ class Zone(CloudflareService):
                                         name=getattr(rule, "description", "")
                                         or rule_id,
                                         description=getattr(rule, "description", None),
-                                        action=getattr(rule, "action", None),
-                                        enabled=getattr(rule, "enabled", True),
+                                        action=rule_action,
+                                        enabled=rule_enabled,
                                         expression=getattr(rule, "expression", None),
                                         phase=ruleset_phase,
+                                    )
+                                )
+                            except Exception as error:
+                                logger.error(
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+
+                            # Collect WAF rules for the managed phase
+                            if ruleset_phase == "http_request_firewall_managed":
+                                action_params = getattr(rule, "action_parameters", None)
+                                managed_id = (
+                                    getattr(action_params, "id", None)
+                                    if action_params
+                                    else None
+                                )
+                                try:
+                                    waf_ruleset_rules.append(
+                                        CloudflareWAFRulesetRule(
+                                            id=rule_id,
+                                            name=getattr(rule, "description", "")
+                                            or rule_id,
+                                            action=rule_action,
+                                            enabled=rule_enabled,
+                                            managed_ruleset_id=managed_id,
+                                        )
+                                    )
+                                except Exception as error:
+                                    logger.error(
+                                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                    )
+
+                        # Build the WAF ruleset with its collected rules
+                        if ruleset_phase == "http_request_firewall_managed":
+                            try:
+                                zone.waf_rulesets.append(
+                                    CloudflareWAFRuleset(
+                                        id=ruleset_id,
+                                        name=getattr(ruleset, "name", ""),
+                                        kind=getattr(ruleset, "kind", None),
+                                        phase=ruleset_phase,
+                                        rules=waf_ruleset_rules,
                                     )
                                 )
                             except Exception as error:
@@ -277,45 +354,6 @@ class Zone(CloudflareService):
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _get_zones_waf_rulesets(self) -> None:
-        """Get WAF rulesets for all zones."""
-        logger.info("Zones - Getting WAF rulesets...")
-        for zone in self.zones.values():
-            try:
-                self._get_zone_waf_rulesets(zone)
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
-    def _get_zone_waf_rulesets(self, zone: "CloudflareZone") -> None:
-        """List WAF rulesets for a zone using the rulesets API."""
-        seen_ids: set[str] = set()
-        try:
-            for ruleset in self.client.rulesets.list(zone_id=zone.id):
-                ruleset_id = getattr(ruleset, "id", "")
-                if ruleset_id in seen_ids:
-                    break
-                seen_ids.add(ruleset_id)
-                try:
-                    zone.waf_rulesets.append(
-                        CloudflareWAFRuleset(
-                            id=ruleset_id,
-                            name=getattr(ruleset, "name", ""),
-                            kind=getattr(ruleset, "kind", None),
-                            phase=getattr(ruleset, "phase", None),
-                            enabled=True,
-                        )
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -342,7 +380,6 @@ class Zone(CloudflareService):
                 "tls_1_3",
                 "automatic_https_rewrites",
                 "security_header",
-                "waf",
                 "security_level",
                 "browser_check",
                 "challenge_ttl",
@@ -364,7 +401,6 @@ class Zone(CloudflareService):
             strict_transport_security=self._get_strict_transport_security(
                 settings.get("security_header")
             ),
-            waf=settings.get("waf"),
             security_level=settings.get("security_level"),
             browser_check=settings.get("browser_check"),
             challenge_ttl=settings.get("challenge_ttl") or 0,
@@ -428,7 +464,6 @@ class CloudflareZoneSettings(BaseModel):
         default_factory=StrictTransportSecurity
     )
     # Security settings
-    waf: Optional[str] = None
     security_level: Optional[str] = None
     browser_check: Optional[str] = None
     challenge_ttl: Optional[int] = None

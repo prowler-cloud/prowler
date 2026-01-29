@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Zone",
   "ResourceGroup": "network",
-  "Description": "**Cloudflare zones** are assessed for **Web Application Firewall (WAF)** configuration by checking if it is enabled to protect against common web vulnerabilities including **SQL injection**, **XSS**, and **OWASP Top 10** threats.",
+  "Description": "**Cloudflare zones** are assessed for **Cloudflare Managed Ruleset** deployment. This managed ruleset (available on Pro, Business and Enterprise plans) provides fast and effective protection against common web vulnerabilities including **SQL injection**, **XSS**, and other threats. The Free Managed Ruleset (always active) is excluded. OWASP Core Ruleset coverage is handled by a separate check (`zone_waf_owasp_ruleset_enabled`).",
   "Risk": "Without **WAF**, web applications are exposed to common attack vectors.\n- **Confidentiality**: SQL injection attacks can exfiltrate sensitive database contents\n- **Integrity**: XSS attacks can modify page content and steal session tokens\n- **Availability**: application-layer attacks can cause service disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "WAF is available on Pro, Business, and Enterprise plans. Configure managed rulesets and create custom rules to match your application's specific security requirements."
+  "Notes": "WAF Managed Ruleset is available on Pro, Business, and Enterprise plans. This check verifies deployment of the Cloudflare Managed Ruleset (efb7b8c949ac4650a09736fc376e9aee) via the managed rulesets API (phase http_request_firewall_managed). The Free Managed Ruleset (always active on all plans, cannot be disabled) is excluded. OWASP Core Ruleset coverage is handled by zone_waf_owasp_ruleset_enabled."
 }
