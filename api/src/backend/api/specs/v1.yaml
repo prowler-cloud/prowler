@@ -8255,6 +8255,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
@@ -8742,6 +8757,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
@@ -9038,6 +9068,21 @@ paths:
           type: array
           items:
             type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
         description: Multiple values may be separated by commas.
         explode: false
         style: form
@@ -9344,6 +9389,21 @@ paths:
           type: array
           items:
             type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
         description: Multiple values may be separated by commas.
         explode: false
         style: form

@@ -27,10 +27,9 @@ These permissions allow Prowler to retrieve metadata from the assumed identity a
 
 Assign the following Microsoft Graph permissions:
 
+- `AuditLog.Read.All`
 - `Directory.Read.All`
 - `Policy.Read.All`
-- `UserAuthenticationMethod.Read.All` (optional, for multifactor authentication (MFA) checks)
-- `AuditLog.Read.All` (optional, for multifactor authentication (MFA) checks)
 
 <Note>
 Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permissions. Note that Entra checks related to DirectoryRoles and GetUsers will not run with this permission.
@@ -49,22 +48,22 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
 
     3. Search and select:
 
+        - `AuditLog.Read.All`
         - `Directory.Read.All`
         - `Policy.Read.All`
-        - `UserAuthenticationMethod.Read.All`
-        - `AuditLog.Read.All`
 
         ![Permission Screenshots](/images/providers/domain-permission.png)
 
     4. Click "Add permissions", then grant admin consent
 
         ![Grant Admin Consent](/images/providers/grant-admin-consent.png)
+        ![Granted Admin Consent](/images/providers/granted-admin-consent.png)
   </Tab>
   <Tab title="Azure CLI">
     1. To grant permissions to a Service Principal, execute the following command in a terminal:
 
         ```console
-        az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role b0afded3-3588-46d8-8b3d-9842eff778da=Role
+        az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role b0afded3-3588-46d8-8b3d-9842eff778da=Role
         ```
   </Tab>
 </Tabs>
@@ -84,17 +83,17 @@ By default, Prowler scans all accessible subscriptions. If you need to audit spe
     1. To grant Prowler access to scan a specific Azure subscription, follow these steps in Azure Portal:
     Navigate to the subscription you want to audit with Prowler.
 
-    1. In the left menu, select "Access control (IAM)".
+    2. In the left menu, select "Access control (IAM)".
 
-    2. Click "+ Add" and select "Add role assignment".
+    3. Click "+ Add" and select "Add role assignment".
 
-    3. In the search bar, enter `Reader`, select it and click "Next".
+    4. In the search bar, enter `Reader`, select it and click "Next".
 
-    4. In the "Members" tab, click "+ Select members", then add the accounts to assign this role.
+    5. In the "Members" tab, click "+ Select members", then add the accounts to assign this role.
 
-    5. Click "Review + assign" to finalize and apply the role assignment.
+    6. Click "Review + assign" to finalize and apply the role assignment.
 
-    ![Adding the Reader Role to a Subscription](/images/providers/add-reader-role.gif)
+    ![Adding the Reader Role to a Subscription](/images/providers/add-reader-role.png)
   </Tab>
   <Tab title="Azure CLI">
     1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
@@ -377,7 +376,7 @@ The ProwlerRole is a custom role required for specific security checks. First, c
 
 #### Step 4: (Optional) Assign Microsoft Graph Permissions
 
-For Entra ID (Azure AD) checks, the Managed Identity needs Microsoft Graph API permissions: `Directory.Read.All`, `Policy.Read.All`, and optionally `UserAuthenticationMethod.Read.All` and `AuditLog.Read.All`.
+For Entra ID (Azure AD) checks, the Managed Identity needs Microsoft Graph API permissions: `Directory.Read.All`, `Policy.Read.All`, and `AuditLog.Read.All`.
 
 <Note>
 Assigning Microsoft Graph API permissions to a Managed Identity requires Azure CLI or PowerShell - it cannot be done through the Azure Portal's standard role assignment interface.
