@@ -83,6 +83,10 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
 
+      - name: Run unit tests
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run test:run
+
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run build
