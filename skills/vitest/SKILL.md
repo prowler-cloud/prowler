@@ -7,7 +7,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [ui]
+  scope: [root, ui]
   auto_invoke:
     - "Writing Vitest tests"
     - "Writing React component tests"
