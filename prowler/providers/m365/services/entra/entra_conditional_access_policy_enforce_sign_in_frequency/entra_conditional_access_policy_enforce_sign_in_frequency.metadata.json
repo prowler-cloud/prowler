@@ -1,5 +1,5 @@
 {
-  "Provider": "azure",
+  "Provider": "m365",
   "CheckID": "entra_conditional_access_policy_enforce_sign_in_frequency",
   "CheckTitle": "Conditional Access policy enforces sign-in frequency for non-corporate devices",
   "CheckType": [],
