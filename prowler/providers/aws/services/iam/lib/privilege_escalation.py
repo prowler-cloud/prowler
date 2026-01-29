@@ -242,6 +242,7 @@ privilege_escalation_policies_combination = {
         "ecs:RegisterTaskDefinition",
         "ecs:StartTask",
     },
+    # Reference: https://labs.reversec.com/posts/2025/08/another-ecs-privilege-escalation-path
     "PassRole+ECS+StartTask": {
         "iam:PassRole",
         "ecs:StartTask",
@@ -300,6 +301,8 @@ privilege_escalation_policies_combination = {
         "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
     },
+    # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
+    # "sts:AssumeRole": {"sts:AssumeRole"},
 }
 
 
