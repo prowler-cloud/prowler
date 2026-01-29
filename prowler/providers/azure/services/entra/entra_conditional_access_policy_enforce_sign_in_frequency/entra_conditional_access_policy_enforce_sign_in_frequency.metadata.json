@@ -1,0 +1,39 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_conditional_access_policy_enforce_sign_in_frequency",
+  "CheckTitle": "Conditional Access policy enforces sign-in frequency for non-corporate devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "#microsoft.graph.conditionalAccess",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that at least one **Conditional Access policy** enforces sign-in frequency controls for non-corporate devices.\n\nSign-in frequency controls require users to reauthenticate at regular intervals when accessing resources from unmanaged devices, limiting the risk of persistent sessions on untrusted endpoints.",
+  "Risk": "Without sign-in frequency controls for non-corporate devices:\n\n- **Session hijacking** - Long-lived sessions on unmanaged devices increase exposure to credential theft\n- **Unauthorized access** - Shared or compromised devices may retain access indefinitely\n- **Data leakage** - Sensitive resources remain accessible without periodic verification",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-session-lifetime"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Microsoft Entra admin center** > **Protection** > **Conditional Access**\n2. Click **+ New policy**\n3. Under **Users**, select **All users**\n4. Under **Target resources**, select **All cloud apps**\n5. Under **Conditions** > **Filter for devices**, configure to target non-corporate devices:\n   - Mode: **Include filtered devices in policy**\n   - Rule: `device.trustType -ne \"ServerAD\" -or device.isCompliant -ne True`\n6. Under **Session** > **Sign-in frequency**, enable and set to desired interval (e.g., 1 hour)\n7. Enable the policy",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure Conditional Access policies to enforce **sign-in frequency** for sessions originating from non-corporate devices. This limits persistent access from unmanaged endpoints and requires users to periodically reauthenticate, reducing the risk of unauthorized access through shared or compromised devices.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_enforce_sign_in_frequency"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_require_mfa_for_management_api"
+  ],
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. The device filter targets devices that are not Hybrid Azure AD joined or not compliant with Intune policies."
+}

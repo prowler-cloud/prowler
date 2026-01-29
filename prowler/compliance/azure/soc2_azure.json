@@ -18,6 +18,7 @@
         }
       ],
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_conditional_access_policy_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
@@ -240,6 +241,7 @@
         "aks_clusters_public_access_disabled",
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "network_public_ip_shodan",
         "storage_blob_public_access_level_is_disabled"
       ]
@@ -280,6 +282,7 @@
         }
       ],
       "Checks": [
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
@@ -298,14 +301,15 @@
         }
       ],
       "Checks": [
+        "app_minimum_tls_version_12",
+        "entra_conditional_access_policy_enforce_sign_in_frequency",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "mysql_flexible_server_ssl_connection_enabled",
         "network_http_internet_access_restricted",
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
-        "mysql_flexible_server_ssl_connection_enabled",
         "postgresql_flexible_server_enforce_ssl_enabled",
-        "app_minimum_tls_version_12",
-        "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12"
       ]
