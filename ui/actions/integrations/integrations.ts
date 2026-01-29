@@ -404,7 +404,7 @@ export const pollConnectionTestStatus = async (
         error: pollResult.message || "Connection test failed.",
       };
     }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to check connection test status." };
   }
 };

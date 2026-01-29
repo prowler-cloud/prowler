@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_ip_geolocation_enabled",
+  "CheckTitle": "IP Geolocation is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **IP Geolocation** configuration by checking if it is enabled to add the **CF-IPCountry header** to requests, enabling geographic-based access controls, firewall rules, and analytics.",
+  "Risk": "Without **IP Geolocation**, geographic-based security controls cannot be implemented.\n- **Confidentiality**: unable to restrict access from high-risk regions\n- **Integrity**: cannot enforce geographic data residency requirements\n- **Availability**: limited visibility into traffic origins for threat analysis",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/network/ip-geolocation/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Network\n3. Scroll to IP Geolocation\n4. Toggle the setting to On\n5. Use the CF-IPCountry header in your firewall rules or application logic",
+      "Terraform": "```hcl\n# Enable IP Geolocation for geographic-based security controls\nresource \"cloudflare_zone_settings_override\" \"ip_geolocation\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    ip_geolocation = \"on\" # Adds CF-IPCountry header for geo-based controls\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **IP Geolocation** to support geographic-based security policies.\n- Adds CF-IPCountry header to all requests\n- Enables geo-blocking rules in firewall configuration\n- Provides visibility into traffic origins for threat analysis\n- Essential for geographic data residency compliance",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_ip_geolocation_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "IP Geolocation is essential for implementing geo-blocking or country-specific security rules. The CF-IPCountry header contains ISO 3166-1 Alpha 2 country codes."
+}

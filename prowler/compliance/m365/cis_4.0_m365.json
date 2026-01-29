@@ -121,7 +121,9 @@
     {
       "Id": "1.2.2",
       "Description": "Shared mailboxes are used when multiple people need access to the same mailbox, such as a company information or support email address, reception desk, or other function that might be shared by multiple people.Users with permissions to the group mailbox can send as or send on behalf of the mailbox email address if the administrator has given that user permissions to do that. This is particularly useful for help and support mailboxes because users can send emails from \"Contoso Support\" or \"Building A Reception Desk.\"Shared mailboxes are created with a corresponding user account using a system generated password that is unknown at the time of creation.The recommended state is `Sign in blocked` for `Shared mailboxes`.",
-      "Checks": [],
+      "Checks": [
+        "exchange_shared_mailbox_sign_in_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -691,7 +693,9 @@
     {
       "Id": "2.4.4",
       "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes malware and high confidence phishing. When ZAP for Teams protection blocks a message, the message is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP occurs up to 48 hours after delivery.",
-      "Checks": [],
+      "Checks": [
+        "defender_zap_for_teams_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

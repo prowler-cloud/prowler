@@ -33,6 +33,7 @@ export type MenuProps = {
   defaultOpen?: boolean;
   target?: string;
   tooltip?: string;
+  highlight?: boolean;
 };
 
 export type GroupProps = {

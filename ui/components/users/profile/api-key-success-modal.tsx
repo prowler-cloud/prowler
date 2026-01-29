@@ -3,8 +3,8 @@
 import { Snippet } from "@heroui/snippet";
 
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -18,8 +18,8 @@ export const ApiKeySuccessModal = ({
   apiKey,
 }: ApiKeySuccessModalProps) => {
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="API Key Created Successfully"
     >
@@ -56,6 +56,6 @@ export const ApiKeySuccessModal = ({
           Acknowledged
         </Button>
       </div>
-    </CustomAlertModal>
+    </Modal>
   );
 };
