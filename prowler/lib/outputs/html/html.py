@@ -1161,6 +1161,78 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_openstack_assessment_summary(provider: Provider) -> str:
+        """
+        get_openstack_assessment_summary gets the HTML assessment summary for the OpenStack provider
+
+        Args:
+            provider (Provider): the OpenStack provider object
+
+        Returns:
+            str: HTML assessment summary for the OpenStack provider
+        """
+        try:
+            project_id = getattr(provider.identity, "project_id", "unknown")
+            project_name = getattr(provider.identity, "project_name", "")
+            region_name = getattr(provider.identity, "region_name", "unknown")
+            username = getattr(provider.identity, "username", "unknown")
+            user_id = getattr(provider.identity, "user_id", "")
+
+            project_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Project Name:</b> {project_name}
+                            </li>"""
+                if project_name
+                else ""
+            )
+
+            user_id_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>User ID:</b> {user_id}
+                            </li>"""
+                if user_id
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            {project_name_item}
+                            <li class="list-group-item">
+                                <b>Region:</b> {region_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>
+                            {user_id_item}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider
