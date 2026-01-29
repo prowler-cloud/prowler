@@ -113,7 +113,7 @@ requires-poetry = ">=2.0"
 [tool.poetry.group.dev.dependencies]
 bandit = "1.8.3"
 black = "25.1.0"
-coverage = "7.6.12"
+coverage = "7.10.7"
 docker = "7.1.0"
 filelock = [
   {version = "3.20.3", python = ">=3.10"},
