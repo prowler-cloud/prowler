@@ -12,7 +12,6 @@ from django.contrib.auth.models import BaseUserManager
 from django.db import (
     DEFAULT_DB_ALIAS,
     OperationalError,
-    connection,
     connections,
     models,
     transaction,
@@ -450,7 +449,7 @@ def create_index_on_partitions(
             all_partitions=True
         )
     """
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -462,6 +461,7 @@ def create_index_on_partitions(
         partitions = [row[0] for row in cursor.fetchall()]
 
     where_sql = f" WHERE {where}" if where else ""
+    conn = schema_editor.connection
     for partition in partitions:
         if _should_create_index_on_partition(partition, all_partitions):
             idx_name = f"{partition.replace('.', '_')}_{index_name}"
@@ -470,7 +470,12 @@ def create_index_on_partitions(
                 f"ON {partition} USING {method} ({columns})"
                 f"{where_sql};"
             )
-            schema_editor.execute(sql)
+            old_autocommit = conn.connection.autocommit
+            conn.connection.autocommit = True
+            try:
+                schema_editor.execute(sql)
+            finally:
+                conn.connection.autocommit = old_autocommit
 
 
 def drop_index_on_partitions(
@@ -486,7 +491,8 @@ def drop_index_on_partitions(
         parent_table: The name of the root table (e.g. "findings").
         index_name: The same short name used when creating them.
     """
-    with connection.cursor() as cursor:
+    conn = schema_editor.connection
+    with conn.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -500,7 +506,12 @@ def drop_index_on_partitions(
     for partition in partitions:
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
-        schema_editor.execute(sql)
+        old_autocommit = conn.connection.autocommit
+        conn.connection.autocommit = True
+        try:
+            schema_editor.execute(sql)
+        finally:
+            conn.connection.autocommit = old_autocommit
 
 
 def generate_api_key_prefix():

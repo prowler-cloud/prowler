@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "mysql_flexible_server_minimum_tls_version_12",
-  "CheckTitle": "Ensure 'TLS Version' is set to 'TLSV1.2' for MySQL flexible Database Server",
+  "CheckTitle": "MySQL flexible server enforces TLS 1.2 or higher",
   "CheckType": [],
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Ensure TLS version on MySQL flexible servers is set to the default value.",
-  "Risk": "TLS connectivity helps to provide a new layer of security by connecting database server to client applications using Transport Layer Security (TLS). Enforcing TLS connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security",
+  "Description": "**Azure Database for MySQL Flexible Server** uses the `tls_version` setting to permit only **modern TLS** for client connections, requiring `TLSv1.2+` and excluding `TLSv1.0` and `TLSv1.1`.",
+  "Risk": "Allowing legacy TLS (`TLSv1.0`/`TLSv1.1`) weakens **confidentiality** and **integrity** of data in transit. Attackers can force downgrades and perform **man-in-the-middle** interception, exposing credentials and queries or altering results, leading to unauthorized access and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/mysql-flexible-server-tls-version.html",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/security-tls-how-to-connect"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az mysql flexible-server parameter set --name tls_version --resource-group <resourceGroupName> --server-name <serverName> --value TLSV1.2",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/mysql-flexible-server-tls-version.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-mysql-is-using-the-latest-version-of-tls-encryption#terraform"
+      "CLI": "az mysql flexible-server parameter set --resource-group <resourceGroupName> --server-name <serverName> --name tls_version --value TLSv1.2",
+      "NativeIaC": "```bicep\n// Set MySQL Flexible Server to enforce TLS 1.2\nresource tlsVersion 'Microsoft.DBforMySQL/flexibleServers/configurations@2022-01-01' = {\n  name: '<example_resource_name>/tls_version'\n  properties: {\n    value: 'TLSv1.2' // Critical: enforces minimum TLS 1.2 and rejects TLS 1.0/1.1\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Azure Database for MySQL flexible server <example_resource_name>\n2. Select Server parameters\n3. Search for tls_version\n4. Set the value to TLSv1.2\n5. Click Save",
+      "Terraform": "```hcl\n# Enforce TLS 1.2 on MySQL Flexible Server\nresource \"azurerm_mysql_flexible_server_configuration\" \"tls\" {\n  name                = \"tls_version\"\n  resource_group_name = \"<example_resource_group>\"\n  server_name         = \"<example_server_name>\"\n  value               = \"TLSv1.2\" # Critical: sets minimum TLS to 1.2 (no 1.0/1.1)\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for MySQL flexible servers 3. For each database, click on Server parameters under Settings 4. In the search box, type in tls_version 5. Click on the VALUE dropdown, and ensure only TLSV1.2 is selected for tls_version",
-      "Url": "https://docs.microsoft.com/en-us/azure/mysql/howto-configure-ssl"
+      "Text": "Enforce a **minimum TLS** of `TLSv1.2` (prefer `TLSv1.3`) and disable `TLSv1.0`/`TLSv1.1`. Ensure clients and drivers support modern TLS, deprecate weak cipher suites, and validate in staging. Apply **defense in depth** with private connectivity and restricted network access.",
+      "Url": "https://hub.prowler.com/check/mysql_flexible_server_minimum_tls_version_12"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

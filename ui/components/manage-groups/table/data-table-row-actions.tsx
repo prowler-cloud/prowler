@@ -18,7 +18,7 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteGroupForm } from "../forms";
 
@@ -37,14 +37,14 @@ export function DataTableRowActions<ProviderProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
       >
         <DeleteGroupForm groupId={groupId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown

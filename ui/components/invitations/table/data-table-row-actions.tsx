@@ -19,7 +19,7 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteForm, EditForm } from "../forms";
 
@@ -44,8 +44,8 @@ export function DataTableRowActions<InvitationProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
+      <Modal
+        open={isEditOpen}
         onOpenChange={setIsEditOpen}
         title="Edit invitation details"
       >
@@ -56,15 +56,15 @@ export function DataTableRowActions<InvitationProps>({
           roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      </Modal>
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently revoke your invitation."
       >
         <DeleteForm invitationId={invitationId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
