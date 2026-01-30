@@ -18,10 +18,10 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name log_retention_days --value 7",
-      "NativeIaC": "```bicep\n// Set log retention to a compliant value (4-7 days) for an existing Flexible Server\nresource cfg 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-03-01-preview' = {\n  name: '<example_resource_name>/log_retention_days'\n  properties: {\n    value: '7' // Critical: sets log_retention_days within 4-7 to pass the check\n  }\n}\n```",
-      "Other": "1. In Azure Portal, go to Azure Database for PostgreSQL > Flexible servers and open your server\n2. Select Server parameters\n3. Search for log_retention_days\n4. Set the value to a number between 4 and 7 (e.g., 7)\n5. Click Save",
-      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"\n  name      = \"log_retention_days\"\n  value     = \"7\" # Critical: sets retention within 4-7 to pass the check\n}\n```"
+      "CLI": "az postgres flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name logfiles.retention_days --value 7",
+      "NativeIaC": "```bicep\n// Set log retention to a compliant value (4-7 days) for an existing Flexible Server\nresource cfg 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-03-01-preview' = {\n  name: '<example_resource_name>/logfiles.retention_days'\n  properties: {\n    value: '7' // Critical: sets logfiles.retention_days within 4-7 to pass the check\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Azure Database for PostgreSQL > Flexible servers and open your server\n2. Select Server parameters\n3. Search for logfiles.retention_days\n4. Set the value to a number between 4 and 7 (e.g., 7)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"\n  name      = \"logfiles.retention_days\"\n  value     = \"7\" # Critical: sets retention within 4-7 to pass the check\n}\n```"
     },
     "Recommendation": {
       "Text": "Set `log_retention_days` to `4-7` to balance visibility and exposure. Export logs to centralized SIEM or secure storage for longer retention and analysis. Enforce **least privilege**, encryption, and immutability on log data, and monitor for gaps. Apply **defense in depth** with alerts on anomalous queries and failed logins.",

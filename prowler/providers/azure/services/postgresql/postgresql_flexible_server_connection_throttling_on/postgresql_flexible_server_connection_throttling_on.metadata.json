@@ -18,10 +18,10 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres flexible-server parameter set --resource-group <resourceGroupName> --server-name <serverName> --name connection_throttling --value on",
-      "NativeIaC": "```bicep\n// Configure an existing Flexible Server parameter\nresource exampleServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource connectionThrottling 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2022-12-01' = {\n  name: 'connection_throttling'\n  parent: exampleServer\n  properties: {\n    value: 'on' // CRITICAL: Enables connection_throttling to pass the check\n  }\n}\n```",
-      "Other": "1. Sign in to Azure Portal and go to Azure Database for PostgreSQL flexible servers\n2. Select the target server\n3. In Settings, click Server parameters\n4. Search for connection_throttling\n5. Set the value to ON and click Save",
-      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name      = \"connection_throttling\"\n  server_id = \"<example_resource_id>\"\n  value     = \"on\" # CRITICAL: Enables connection_throttling to pass the check\n}\n```"
+      "CLI": "az postgres flexible-server parameter set --resource-group <resourceGroupName> --server-name <serverName> --name connection_throttle.enable --value on",
+      "NativeIaC": "```bicep\n// Configure an existing Flexible Server parameter\nresource exampleServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource connectionThrottling 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2022-12-01' = {\n  name: 'connection_throttle.enable'\n  parent: exampleServer\n  properties: {\n    value: 'on' // CRITICAL: Enables connection_throttle.enable to pass the check\n  }\n}\n```",
+      "Other": "1. Sign in to Azure Portal and go to Azure Database for PostgreSQL flexible servers\n2. Select the target server\n3. In Settings, click Server parameters\n4. Search for connection_throttle.enable\n5. Set the value to ON and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name      = \"connection_throttle.enable\"\n  server_id = \"<example_resource_id>\"\n  value     = \"on\" # CRITICAL: Enables connection_throttle.enable to pass the check\n}\n```"
     },
     "Recommendation": {
       "Text": "Enable `connection_throttling` and align connection limits with expected load.\n\nApply **defense in depth**: use connection pooling, exponential backoff, and alerts on connection spikes; prefer private access and restrictive networking to reduce exposure.",
