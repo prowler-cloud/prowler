@@ -1,20 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_log_disconnections_on",
-  "CheckTitle": "Azure PostgreSQL flexible server parameter 'log_disconnections' is set to ON",
+  "CheckTitle": "PostgreSQL Flexible Server has disconnection logging enabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure Database for PostgreSQL Flexible Server** uses the `log_disconnections` setting to record when client sessions end and how long they lasted.",
   "Risk": "Without **disconnection logs**, session timelines and user activity are opaque, weakening **auditability** and **forensics**.\n\nAbuse such as stolen credentials, short-lived access, or hijacked sessions can go unnoticed, enabling data exfiltration and privilege misuse, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server",
-    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/log-disconnections.html"
+    "https://learn.microsoft.com/en-us/azure/postgresql/security/security-audit?tabs=portal",
+    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal"
   ],
   "Remediation": {
     "Code": {

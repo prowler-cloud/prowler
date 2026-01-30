@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Engine's cluster check** feature helps you verify the system nodes and components healthy status.\n\nWhen you trigger the checking, the process validates the health state of each node in your cluster and also the cluster configuration (`kubelet`, `docker daemon`, `kernel`, and network `iptables` configuration). If there are consecutive health check failures, the diagnose reports to admin for further repair.",
   "Risk": "Kubernetes Engine uses the node's health status to determine if a node needs to be repaired. A cluster health check includes: cloud resource healthy status including **VPC/VSwitch**, **SLB**, and every **ECS node** status in the cluster; the `kubelet`, `docker daemon`, `kernel`, `iptables` configurations on every node.\n\nWithout regular cluster checks, potential issues may go undetected and could lead to **cluster instability** or **security vulnerabilities**.",
   "RelatedUrl": "",

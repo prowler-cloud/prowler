@@ -8,13 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "Log retention on **Azure Database for PostgreSQL Flexible Server** is governed by `log_retention_days`. Configuration is assessed as set and within `4-7` days versus unset or outside this range.",
   "Risk": "**Insufficient or disabled log retention** limits the audit trail needed to detect brute-force, SQL injection, or insider misuse, impeding investigation. **Excessive retention** enlarges exposure if logs are accessed, risking sensitive query data leakage and policy violations. This reduces visibility and weakens confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/postgresql/howto-configure-server-parameters-using-portal",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-retention-days.html",
-    "https://learn.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server?view=rest-postgresql-singleserver-2017-12-01&tabs=HTTP"
+    "https://learn.microsoft.com/en-us/azure/postgresql/monitor/concepts-logging",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-retention-days.html"
   ],
   "Remediation": {
     "Code": {

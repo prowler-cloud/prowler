@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsStepFunctionStateMachine",
+  "ResourceGroup": "serverless",
   "Description": "**AWS Step Functions state machines** are configured to emit **execution logs** to CloudWatch Logs via a defined `loggingConfiguration` with a `level` set above `OFF`.",
   "Risk": "Without **execution logs**, workflow failures and anomalies are **undetectable**, increasing MTTR and risking silent data loss. Missing audit trails weaken **integrity** oversight and complicate **forensics**, enabling misuse of invoked services to go unnoticed and creating **compliance** gaps.",
   "RelatedUrl": "",

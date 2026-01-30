@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "Amazon EMR account-level **Block Public Access** configuration is assessed per Region. When `BlockPublicSecurityGroupRules` is enabled, clusters cannot use security groups that allow inbound public sources (`0.0.0.0/0`, `::/0`) except on permitted ports.",
   "Risk": "Public EMR-facing rules enable Internet reachability to cluster nodes and UIs, inviting brute force and remote exploits.\n\nAttackers can exfiltrate job data, alter processing, or pivot into the VPC, degrading **confidentiality**, **integrity**, and **availability** through data theft, tampering, and service disruption.",
   "RelatedUrl": "",

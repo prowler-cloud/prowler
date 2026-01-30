@@ -8,20 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure Database for PostgreSQL Flexible Server** firewall should not include the rule that allows connections from **any Azure service**, represented by `start_ip=0.0.0.0` and `end_ip=0.0.0.0`.",
   "Risk": "Allowing **all Azure services** erodes network isolation, permitting unsolicited connections from other subscriptions and tenants. This enables credential brute force and unauthorized access paths, risking data **confidentiality** and **integrity**, and increasing the chance of service disruption (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/cli/azure/postgres/flexible-server/firewall-rule?view=azure-cli-latest",
-    "https://github.com/MaterializeIncLabs/materialize-azure-gitops",
-    "https://portal.azure.com.",
-    "https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules",
-    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/quickstart-create-server-database-azure-cli#configure-a-server-based-firewall-rule",
-    "https://gmusumeci.medium.com/how-to-deploy-a-public-access-azure-postgresql-flexible-server-using-terraform-92c16d13456e",
-    "https://library.tf/modules/data-platform-hq/postgresql-flexible-server/azurerm/latest",
-    "https://docs.geldata.com/reference/running/deployment/azure_flexibleserver",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/disable-all-services-access.html#",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-allow-access-to-azure-services-for-postgresql-database-server-is-disabled#terraform"
+    "https://learn.microsoft.com/en-us/azure/postgresql/network/how-to-networking-servers-deployed-public-access-disable-public-access?tabs=portal-disable-public-access",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/disable-all-services-access.html#"
   ],
   "Remediation": {
     "Code": {

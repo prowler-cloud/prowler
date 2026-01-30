@@ -1,20 +1,19 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_log_checkpoints_on",
-  "CheckTitle": "Flexible PostgreSQL server has the 'log_checkpoints' parameter set to 'ON'",
+  "CheckTitle": "PostgreSQL Flexible Server has checkpoint logging enabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure PostgreSQL Flexible Server** has **checkpoint logging** enabled when `log_checkpoints=on`, recording each checkpoint in the server logs",
   "Risk": "Without **checkpoint logging**, visibility into write and recovery activity is reduced, hindering incident investigation and tamper detection. Unseen checkpoint storms or WAL pressure can degrade I/O and recovery, threatening **availability** and data **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/postgresql/howto-configure-server-parameters-using-portal",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_11#terraform",
-    "https://docs.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server",
+    "https://support.icompaas.com/support/solutions/articles/62000234792-enable-log-checkpoints-parameter-on-azure-postgresql-servers-for-improved-monitoring-and-troubleshoot",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-checkpoints.html#"
   ],
   "Remediation": {

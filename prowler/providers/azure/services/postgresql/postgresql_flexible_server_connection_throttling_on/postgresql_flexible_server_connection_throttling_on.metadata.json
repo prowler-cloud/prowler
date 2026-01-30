@@ -8,15 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
+  "ResourceGroup": "database",
   "Description": "**Azure PostgreSQL flexible servers** where the `connection_throttling` parameter is set to `ON`",
   "Risk": "Without `connection_throttling`, bursts of new sessions can exhaust connection slots and CPU, degrading **availability** and causing timeouts.\n\nReduced telemetry delays detection of **DoS** or runaway clients, extending impact and recovery time.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/connection-throttling.html",
-    "https://portal.azure.com.",
-    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_13#terraform",
-    "https://docs.microsoft.com/en-us/rest/api/postgresql/configurations/listbyserver"
+    "https://support.icompaas.com/support/solutions/articles/62000229889-ensure-server-parameter-connection-throttling-is-set-to-on-for-postgresql-database-server"
   ],
   "Remediation": {
     "Code": {

@@ -1,4 +1,5 @@
 from unittest import mock
+from unittest.mock import MagicMock
 
 import botocore
 from boto3 import client
@@ -215,3 +216,128 @@ class Test_Bedrock_Agent_Service:
                 "Key": "test-tag-key",
             }
         ]
+
+
+class TestBedrockPagination:
+    """Test suite for Bedrock Guardrail pagination logic."""
+
+    def test_list_guardrails_pagination(self):
+        """Test that list_guardrails iterates through all pages."""
+        # Mock the audit_info
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        # Mock the regional client
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        # Mock paginator
+        paginator = MagicMock()
+        page1 = {
+            "guardrails": [
+                {
+                    "id": "g-1",
+                    "name": "guardrail-1",
+                    "arn": "arn:aws:bedrock:us-east-1:123456789012:guardrail/g-1",
+                }
+            ]
+        }
+        page2 = {
+            "guardrails": [
+                {
+                    "id": "g-2",
+                    "name": "guardrail-2",
+                    "arn": "arn:aws:bedrock:us-east-1:123456789012:guardrail/g-2",
+                }
+            ]
+        }
+        paginator.paginate.return_value = [page1, page2]
+        regional_client.get_paginator.return_value = paginator
+
+        # Initialize service and inject mock client
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_service.guardrails = {}  # Clear any init side effects
+
+        # Run the method under test
+        bedrock_service._list_guardrails(regional_client)
+
+        # Assertions
+        assert len(bedrock_service.guardrails) == 2
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:guardrail/g-1"
+            in bedrock_service.guardrails
+        )
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:guardrail/g-2"
+            in bedrock_service.guardrails
+        )
+
+        # Verify paginator was used
+        regional_client.get_paginator.assert_called_once_with("list_guardrails")
+        paginator.paginate.assert_called_once()
+
+
+class TestBedrockAgentPagination:
+    """Test suite for Bedrock Agent pagination logic."""
+
+    def test_list_agents_pagination(self):
+        """Test that list_agents iterates through all pages."""
+        # Mock the audit_info
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        # Mock the regional client
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        # Mock paginator
+        paginator = MagicMock()
+        page1 = {
+            "agentSummaries": [
+                {
+                    "agentId": "agent-1",
+                    "agentName": "agent-name-1",
+                    "agentStatus": "PREPARED",
+                }
+            ]
+        }
+        page2 = {
+            "agentSummaries": [
+                {
+                    "agentId": "agent-2",
+                    "agentName": "agent-name-2",
+                    "agentStatus": "PREPARED",
+                }
+            ]
+        }
+        paginator.paginate.return_value = [page1, page2]
+        regional_client.get_paginator.return_value = paginator
+
+        # Initialize service and inject mock client
+        bedrock_agent_service = BedrockAgent(audit_info)
+        bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_agent_service.agents = {}  # Clear init side effects
+        bedrock_agent_service.audited_account = "123456789012"
+
+        # Run method
+        bedrock_agent_service._list_agents(regional_client)
+
+        # Assertions
+        assert len(bedrock_agent_service.agents) == 2
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-1"
+            in bedrock_agent_service.agents
+        )
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-2"
+            in bedrock_agent_service.agents
+        )
+
+        # Verify paginator was used
+        regional_client.get_paginator.assert_called_once_with("list_agents")
+        paginator.paginate.assert_called_once()

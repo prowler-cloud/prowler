@@ -1,27 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_enforce_ssl_enabled",
-  "CheckTitle": "Azure Database for PostgreSQL flexible server enforces SSL connections",
+  "CheckTitle": "PostgreSQL Flexible Server enforces SSL connections",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
-  "Description": "Azure Database for PostgreSQL flexible servers are evaluated for **encrypted in-transit connections**, specifically whether `require_secure_transport` is set to `ON` to force TLS for all client sessions.",
+  "ResourceGroup": "database",
+  "Description": "**Azure Database for PostgreSQL flexible servers** are evaluated for **encrypted in-transit connections**, specifically whether `require_secure_transport` is set to `ON` to force TLS for all client sessions.",
   "Risk": "Without enforced **TLS**, clients may connect in plaintext or with weak settings, exposing credentials and data to **man-in-the-middle**, query tampering, and session hijacking. This undermines **confidentiality** and **integrity**, and can enable lateral movement if stolen creds are reused.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security",
-    "https://portal.azure.com",
     "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-security?source=recommendations",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_10",
-    "https://stackoverflow.com/questions/79614549/connection-to-heroku-and-azure-data-studio-just-failed-postgresql",
-    "https://orca.security/resources/blog/azure-postgresql-flexible-server-ssl-enforcement-disabled/",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_10#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/require-secure-transport-for-postgres-flexible-servers.html",
-    "https://github.com/MicrosoftDocs/azure-databases-docs/blob/main/articles/postgresql/flexible-server/how-to-connect-tls-ssl.md",
-    "https://docs.azure.cn/en-us/postgresql/flexible-server/security-tls"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/require-secure-transport-for-postgres-flexible-servers.html"
   ],
   "Remediation": {
     "Code": {
