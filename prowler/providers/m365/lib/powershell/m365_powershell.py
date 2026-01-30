@@ -1,4 +1,7 @@
 import os
+import re
+
+from typing_extensions import override
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
@@ -45,6 +48,28 @@ class M365PowerShell(PowerShellSession):
         super().__init__()
         self.tenant_identity = identity
         self.init_credential(credentials)
+
+    @override
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process PowerShell errors with M365-specific handling.
+
+        Detects cmdlet not found errors which typically indicate missing licensing
+        (e.g., Microsoft Defender for Office 365) or insufficient permissions.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        if "is not recognized as a name of a cmdlet" in error_result:
+            cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
+            cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
+            logger.warning(
+                f"PowerShell cmdlet '{cmdlet_name}' is not available. "
+                f"This may indicate missing licensing (e.g., Microsoft Defender for Office 365) "
+                f"or insufficient permissions. Related checks will be skipped."
+            )
+        else:
+            super()._process_error(error_result)
 
     def clean_certificate_content(self, cert_content: str) -> str:
         """
@@ -881,6 +906,57 @@ class M365PowerShell(PowerShellSession):
         return self.execute(
             "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.ExternalDirectoryObjectId] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
             json_parse=True,
+        )
+
+    def get_safe_links_policy(self) -> dict:
+        """
+        Get Safe Links Policy.
+
+        Retrieves the current Safe Links policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links policy settings in JSON format.
+
+        Example:
+            >>> get_safe_links_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "EnableSafeLinksForEmail": true,
+                "EnableSafeLinksForTeams": true,
+                "EnableSafeLinksForOffice": true,
+                "TrackClicks": true,
+                "AllowClickThrough": false,
+                "ScanUrls": true,
+                "EnableForInternalSenders": true,
+                "DeliverMessageAfterScan": true,
+                "DisableUrlRewrite": false
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_links_rule(self) -> dict:
+        """
+        Get Safe Links Rule.
+
+        Retrieves the current Safe Links rule settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links rule settings in JSON format.
+
+        Example:
+            >>> get_safe_links_rule()
+            {
+                "Name": "Safe Links Rule",
+                "State": "Enabled",
+                "Priority": 0,
+                "SafeLinksPolicy": "Policy Name"
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksRule | ConvertTo-Json -Depth 10", json_parse=True
         )
 
 
