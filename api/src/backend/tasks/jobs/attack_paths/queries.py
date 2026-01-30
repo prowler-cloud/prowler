@@ -4,9 +4,21 @@ from tasks.jobs.attack_paths.config import (
     PROVIDER_RESOURCE_LABEL,
 )
 
-# =============================================================================
+
+def render_cypher_template(template: str, replacements: dict[str, str]) -> str:
+    """
+    Render a Cypher query template by replacing placeholders.
+
+    Placeholders use `__DOUBLE_UNDERSCORE__` format to avoid conflicts
+    with Cypher syntax.
+    """
+    query = template
+    for placeholder, value in replacements.items():
+        query = query.replace(placeholder, value)
+    return query
+
 # Findings queries (used by findings.py)
-# =============================================================================
+# ---------------------------------------
 
 ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
@@ -78,9 +90,8 @@ CLEANUP_FINDINGS_TEMPLATE = f"""
     RETURN COUNT(finding) AS deleted_findings_count
 """
 
-# =============================================================================
 # Sync queries (used by sync.py)
-# =============================================================================
+# -------------------------------
 
 NODE_FETCH_QUERY = """
     MATCH (n)

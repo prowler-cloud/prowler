@@ -5,9 +5,8 @@ from api.attack_paths.queries.types import (
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
 
-# =============================================================================
 # Basic Resource Queries
-# =============================================================================
+# ----------------------
 
 AWS_RDS_INSTANCES = AttackPathsQueryDefinition(
     id="aws-rds-instances",
@@ -120,9 +119,8 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
 )
 
 
-# =============================================================================
 # Network Exposure Queries
-# =============================================================================
+# ------------------------
 
 AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     id="aws-ec2-instances-internet-exposed",
@@ -271,10 +269,9 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 )
 
 
-# =============================================================================
 # Privilege Escalation Queries (based on pathfinding.cloud research)
 # https://github.com/DataDog/pathfinding.cloud
-# =============================================================================
+# -------------------------------------------------------------------
 
 AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
     id="aws-internet-exposed-ec2-sensitive-s3-access",
@@ -674,9 +671,8 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
 )
 
 
-# =============================================================================
 # AWS Queries List
-# =============================================================================
+# ----------------
 
 AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     # Basic Resource Queries

@@ -18,6 +18,7 @@ from tasks.jobs.attack_paths.queries import (
     NODE_SYNC_TEMPLATE,
     RELATIONSHIP_SYNC_TEMPLATE,
     RELATIONSHIPS_FETCH_QUERY,
+    render_cypher_template,
 )
 
 logger = get_task_logger(__name__)
@@ -109,7 +110,9 @@ def sync_nodes(
                 label_set.add(PROVIDER_RESOURCE_LABEL)
                 node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
 
-                query = NODE_SYNC_TEMPLATE.replace("__NODE_LABELS__", node_labels)
+                query = render_cypher_template(
+                    NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
+                )
                 target_session.run(
                     query,
                     {
@@ -171,7 +174,9 @@ def sync_relationships(
                 )
 
             for rel_type, batch in grouped.items():
-                query = RELATIONSHIP_SYNC_TEMPLATE.replace("__REL_TYPE__", rel_type)
+                query = render_cypher_template(
+                    RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
+                )
                 target_session.run(
                     query,
                     {
