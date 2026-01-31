@@ -36,7 +36,7 @@ def get_cartography_ingestion_function(provider_type: str) -> Callable | None:
 
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     """
-    Code based on Cartography version 0.122.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
+    Code based on Cartography, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
     ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
