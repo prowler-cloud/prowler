@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "Set-AtpPolicyForO365 -EnableATPForSPOTeamsODB $true -EnableSafeDocs $true -AllowSafeDocsOpen $false",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft 365 Defender portal at https://security.microsoft.com.\n2. Go to Email & Collaboration > Policies & Rules > Threat policies.\n3. Under Policies, select Safe Attachments.\n4. Click on Global settings.\n5. Enable Turn on Defender for Office 365 for SharePoint, OneDrive, and Microsoft Teams.\n6. Enable Turn on Safe Documents for Office clients.\n7. Disable Allow people to click through Protected View even if Safe Documents identified the file as malicious.\n8. Click Save.",
+      "Other": "1. Navigate to Microsoft 365 Defender portal at https://security.microsoft.com. 2. Go to Email & Collaboration > Policies & Rules > Threat policies. 3. Under Policies, select Safe Attachments. 4. Click on Global settings. 5. Enable Turn on Defender for Office 365 for SharePoint, OneDrive, and Microsoft Teams. 6. Enable Turn on Safe Documents for Office clients. 7. Disable Allow people to click through Protected View even if Safe Documents identified the file as malicious. 8. Click Save.",
       "Terraform": ""
     },
     "Recommendation": {
