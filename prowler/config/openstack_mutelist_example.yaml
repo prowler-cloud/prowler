@@ -1,0 +1,60 @@
+### Project ID, Check and/or Region can be * to apply for all the cases.
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Project IDs, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "example-project-id":  # Your OpenStack project ID
+      Checks:
+        "compute_instance_security_groups_attached":
+          Regions:
+            - "EU-WEST-PAR"
+          Resources:
+            - "prowler-test-fail"  # Mute by instance name
+            - "example-instance-id"  # Mute by instance ID
+          Description: "Mute prowler-test-fail instance in compute_instance_security_groups_attached check"
+        "compute_*":
+          Regions:
+            - "*"
+          Resources:
+            - "test-*"  # Mute all resources starting with "test-"
+          Description: "Mute all test instances for all compute checks"
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "dev-instance"
+          Tags:
+            - "environment=dev"  # Mute resources with environment=dev tag
+            - "testing=true"
+          Description: "Mute all resources with specific tags"
+
+    "*":  # Apply to all projects
+      Checks:
+        "compute_instance_security_groups_attached":
+          Regions:
+            - "EU-WEST-PAR"
+          Resources:
+            - "legacy-.*"  # Regex: mute all instances starting with "legacy-"
+          Description: "Mute legacy instances in EU-WEST-PAR region"
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "prowler-ignore=true"  # Mute any resource with this tag across all checks
+          Description: "Global mute for resources tagged with prowler-ignore=true"
+        "identity_password_policy_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "production-project-id"
+            Regions:
+              - "US-EAST-1"
+          Description: "Mute identity_password_policy_enabled everywhere EXCEPT in production-project-id in US-EAST-1"

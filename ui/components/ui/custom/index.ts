@@ -1,4 +1,3 @@
-export * from "./custom-alert-modal";
 export * from "./custom-banner";
 export * from "./custom-dropdown-selection";
 export * from "./custom-input";

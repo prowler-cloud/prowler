@@ -15,8 +15,8 @@ import {
   sendFindingToJira,
 } from "@/actions/integrations/jira-dispatch";
 import { JiraIcon } from "@/components/icons/services/IconServices";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import {
   Form,
@@ -215,8 +215,8 @@ export const SendToJiraModal = ({
   // }, [issueTypes, searchIssueTypeValue]);
 
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={onOpenChange}
       title="Send Finding to Jira"
       description={
@@ -389,6 +389,6 @@ export const SendToJiraModal = ({
           )}
         </form>
       </Form>
-    </CustomAlertModal>
+    </Modal>
   );
 };

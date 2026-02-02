@@ -4356,6 +4356,108 @@ class TestResourceViewSet:
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
 
+    def test_resources_latest_filter_by_provider_id(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id__in filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in_multiple(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that provider_id__in filter works with multiple provider IDs."""
+        provider1, provider2 = providers_fixture[0], providers_fixture[1]
+        tenant_id = str(provider1.tenant_id)
+
+        # Create completed scans for both providers
+        Scan.objects.create(
+            name="scan for provider 1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+        Scan.objects.create(
+            name="scan for provider 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+
+        # Create resources for each provider
+        resource1 = Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider1,
+            uid="resource_provider_1",
+            name="Resource Provider 1",
+            region="us-east-1",
+            service="ec2",
+            type="instance",
+        )
+        Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider2,
+            uid="resource_provider_2",
+            name="Resource Provider 2",
+            region="us-west-2",
+            service="s3",
+            type="bucket",
+        )
+
+        # Test filtering by both providers
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+        # Test filtering by single provider returns only that provider's resource
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["uid"] == resource1.uid
+
+    def test_resources_latest_filter_by_provider_id_no_match(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter returns empty when no match."""
+        non_existent_id = str(uuid4())
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": non_existent_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
     # Events endpoint tests
     def test_events_non_aws_provider(self, authenticated_client, providers_fixture):
         """Test events endpoint rejects non-AWS providers."""

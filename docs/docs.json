@@ -267,6 +267,13 @@
                   "user-guide/providers/oci/getting-started-oci",
                   "user-guide/providers/oci/authentication"
                 ]
+              },
+              {
+                "group": "OpenStack",
+                "pages": [
+                  "user-guide/providers/openstack/getting-started-openstack",
+                  "user-guide/providers/openstack/authentication"
+                ]
               }
             ]
           },

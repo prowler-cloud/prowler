@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_allow_access_services_disabled",
-  "CheckTitle": "Ensure 'Allow access to Azure services' for PostgreSQL Database Server is disabled",
+  "CheckTitle": "PostgreSQL flexible server has 'Allow public access from any Azure service' disabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "Severity": "high",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Disable access from Azure services to PostgreSQL Database Server.",
-  "Risk": "If access from Azure services is enabled, the server's firewall will accept connections from all Azure resources, including resources not in your subscription. This is usually not a desired configuration. Instead, set up firewall rules to allow access from specific network ranges or VNET rules to allow access from specific virtual networks.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules",
+  "Description": "**Azure Database for PostgreSQL Flexible Server** firewall should not include the rule that allows connections from **any Azure service**, represented by `start_ip=0.0.0.0` and `end_ip=0.0.0.0`.",
+  "Risk": "Allowing **all Azure services** erodes network isolation, permitting unsolicited connections from other subscriptions and tenants. This enables credential brute force and unauthorized access paths, risking data **confidentiality** and **integrity**, and increasing the chance of service disruption (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/cli/azure/postgres/flexible-server/firewall-rule?view=azure-cli-latest",
+    "https://learn.microsoft.com/en-us/azure/postgresql/network/how-to-networking-servers-deployed-public-access-disable-public-access?tabs=portal-disable-public-access",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/disable-all-services-access.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server firewall-rule delete --name AllowAllWindowsAzureIps --resource-group <resourceGroupName> --server-name <serverName>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/disable-all-services-access.html#",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-allow-access-to-azure-services-for-postgresql-database-server-is-disabled#terraform"
+      "CLI": "az postgres flexible-server firewall-rule delete --resource-group <resourceGroupName> --name <serverName> --rule-name <rule_name>",
+      "NativeIaC": "```bicep\n// Update the existing firewall rule that allowed Azure services (0.0.0.0) to a specific IP/range\nresource fwRule 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-03-01-preview' = {\n  name: '<example_server_name>/<example_rule_name>'\n  properties: {\n    startIpAddress: '<START_IP>' // critical: not 0.0.0.0; disables \"Allow Azure services\"\n    endIpAddress: '<END_IP>'     // critical: not 0.0.0.0\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Azure Database for PostgreSQL flexible server and select your server\n2. Open Networking > Firewall rules\n3. Find the rule where Start IP and End IP are both 0.0.0.0\n4. Select it and click Delete\n5. Click Save",
+      "Terraform": "```hcl\n# Update the existing rule to not use 0.0.0.0 (disables \"Allow Azure services\")\nresource \"azurerm_postgresql_flexible_server_firewall_rule\" \"<example_resource_name>\" {\n  name             = \"<example_rule_name>\"\n  server_id        = \"<example_resource_id>\"\n  start_ip_address = \"<START_IP>\" # critical: not 0.0.0.0\n  end_ip_address   = \"<END_IP>\"   # critical: not 0.0.0.0\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Login to Azure Portal using https://portal.azure.com. 2. Go to Azure Database for PostgreSQL servers. 3. For each database, click on Connection security. 4. Under Firewall rules, set Allow access to Azure services to No. 5. Click Save. From Azure CLI Use the below command to delete the AllowAllWindowsAzureIps rule for PostgreSQL Database. az postgres server firewall-rule delete --name AllowAllWindowsAzureIps -- resource-group <resourceGroupName> --server-name <serverName>",
-      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/quickstart-create-server-database-azure-cli#configure-a-server-based-firewall-rule"
+      "Text": "Remove the `0.0.0.0` rule and apply **least privilege**:\n- Use **Private Endpoints** for access\n- Allow only required source IP ranges\n- Isolate with VNET rules and NSGs\n- Enforce TLS and strong authentication\n- Monitor connection logs for anomalies",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_allow_access_services_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

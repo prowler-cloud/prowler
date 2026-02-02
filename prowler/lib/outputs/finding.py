@@ -366,6 +366,20 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = check_output.region
 
+            elif provider.type == "openstack":
+                output_data["auth_method"] = (
+                    f"Username: {get_nested_attribute(provider, 'identity.username')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.project_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.project_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
