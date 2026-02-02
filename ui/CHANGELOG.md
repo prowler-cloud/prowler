@@ -10,6 +10,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
 - Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
 
+### 🔐 Security
+
+- React from 19.2.3 to 19.2.4 and Next.js from 16.1.3 to 16.1.6, patching DoS vulnerability in React Server Components (GHSA-83fc-fqcc-2hmg) [(#9917)](https://github.com/prowler-cloud/prowler/pull/9917)
+
 ---
 
 ## [1.17.0] (Prowler v5.17.0)

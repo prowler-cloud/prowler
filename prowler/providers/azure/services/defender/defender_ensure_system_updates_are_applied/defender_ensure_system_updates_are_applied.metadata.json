@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_system_updates_are_applied",
-  "CheckTitle": "Ensure that Microsoft Defender Recommendation for 'Apply system updates' status is 'Completed'",
+  "CheckTitle": "All virtual machines in the subscription have system updates applied",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderRecommendation",
+  "ResourceType": "microsoft.compute/virtualmachines",
   "ResourceGroup": "security",
-  "Description": "Ensure that the latest OS patches for all virtual machines are applied.",
-  "Risk": "The Azure Security Center retrieves a list of available security and critical updates from Windows Update or Windows Server Update Services (WSUS), depending on which service is configured on a Windows VM. The security center also checks for the latest updates in Linux systems. If a VM is missing a system update, the security center will recommend system updates be applied.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities",
+  "Description": "**Azure VMs** are evaluated for:\n- Presence of a monitoring agent\n- Periodic checks for missing updates\n- Installation of the latest **security and critical OS updates** on Windows and Linux",
+  "Risk": "Unpatched VMs are exposed to **known exploits** (RCE, privilege escalation), enabling **initial access** and **lateral movement**. This endangers **confidentiality** (data theft), **integrity** (tampering), and **availability** (ransomware, outages). Lapses in periodic assessment prolong exposure to critical vulnerabilities.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/apply-latest-os-patches.html",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/updates-maintenance-overview",
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/apply-latest-os-patches.html",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud > Recommendations\n2. Search for \"Log Analytics agent should be installed on virtual machines\"\n   - Select affected VMs > Fix > choose a Log Analytics workspace > Apply\n3. Search for \"Machines should be configured to periodically check for missing system updates\"\n   - Select affected VMs > Fix > Apply\n4. Search for \"System updates should be installed on your machines\" (may show as powered by Azure Update Manager)\n   - Select affected VMs > Fix > Install updates now (or One-time update) > Install\n5. Wait for installation to complete, then verify all three recommendations show Healthy for the subscription",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Follow Microsoft Azure documentation to apply security patches from the security center. Alternatively, you can employ your own patch assessment and management tool to periodically assess, report, and install the required security patches for your OS.",
-      "Url": "https://learn.microsoft.com/en-us/azure/virtual-machines/updates-maintenance-overview"
+      "Text": "Adopt **automated patching** for all VMs:\n- Schedule recurring assessments\n- Deploy security/critical updates promptly using maintenance windows and rings\n- Ensure a supported update/monitoring agent\n- Enforce risk-based SLAs, test in stages, keep backups, and use **least privilege** for patch tools",
+      "Url": "https://hub.prowler.com/check/defender_ensure_system_updates_are_applied"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities",
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Running Microsoft Defender for Cloud incurs additional charges for each resource monitored. Please see attached reference for exact charges per hour."

@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "defender_auto_provisioning_log_analytics_agent_vms_on",
-  "CheckTitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+  "CheckTitle": "Defender auto-provisioning of Log Analytics agent for Azure VMs is enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AzureDefenderPlan",
+  "Severity": "high",
+  "ResourceType": "microsoft.resources/subscriptions",
   "ResourceGroup": "security",
-  "Description": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, OS vulnerabilities, endpoint protection, and provides alerts.",
-  "Risk": "Missing critical security information about your Azure VMs, such as security alerts, security recommendations, and change tracking.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+  "Description": "**Microsoft Defender for Cloud** auto-provisioning of the **Log Analytics agent** to Azure VMs is configured to `On` at the subscription level",
+  "Risk": "Without automatic agent deployment, some VMs lack security telemetry, creating **blind spots** for vulnerabilities, missing patches, and threats.\n\nAttackers can persist or move laterally unnoticed, undermining **confidentiality** and **integrity**, while delayed detection hampers effective response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/data-security",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
-      "Terraform": ""
+      "CLI": "az security auto-provisioning-setting update --name default --auto-provision On",
+      "NativeIaC": "```bicep\n// Enable Defender auto-provisioning of Log Analytics agent at subscription scope\ntargetScope = 'subscription'\n\nresource autoProv 'Microsoft.Security/autoProvisioningSettings@2017-08-01-preview' = {\n  name: 'default'\n  properties: {\n    autoProvision: 'On' // Critical: turns auto-provisioning ON for the subscription\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open Microsoft Defender for Cloud\n2. Select Environment settings, then choose your subscription\n3. Open Auto provisioning\n4. Set Auto-provisioning of Log Analytics agent to On\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Defender auto-provisioning of Log Analytics agent\nresource \"azurerm_security_center_auto_provisioning\" \"<example_resource_name>\" {\n  auto_provision = \"On\" # Critical: turns auto-provisioning ON\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+      "Text": "Set **Defender for Cloud auto-provisioning** to `On` so all VMs receive the monitoring agent consistently.\n\nApply **defense in depth** by enforcing coverage for new and existing machines, standardizing workspaces, and auditing enrollment. Use **least privilege** for data access and integrate with endpoint protection and vulnerability assessment.",
+      "Url": "https://hub.prowler.com/check/defender_auto_provisioning_log_analytics_agent_vms_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
