@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { CloudIcon, FolderIcon, ServerIcon } from "lucide-react";
+import { notFound } from "next/navigation";
 
 import { DataTable } from "@/components/ui/table/data-table";
 import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
@@ -9,6 +10,7 @@ import { DataTableExpandableCell } from "@/components/ui/table/data-table-expand
 
 /**
  * Demo page for the Expandable DataTable component.
+ * Only accessible in development mode.
  *
  * Showcases:
  * 1. Hierarchical rows with expand/collapse
@@ -16,11 +18,29 @@ import { DataTableExpandableCell } from "@/components/ui/table/data-table-expand
  * 3. Row selection with child auto-selection
  */
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
+// Type constants following project conventions
+const PROVIDER_TYPES = {
+  ORGANIZATION: "organization",
+  OU: "ou",
+  ACCOUNT: "account",
+} as const;
+type ProviderType = (typeof PROVIDER_TYPES)[keyof typeof PROVIDER_TYPES];
+
+const PROVIDER_STATUSES = {
+  CONNECTED: "connected",
+  DISCONNECTED: "disconnected",
+  PENDING: "pending",
+} as const;
+type ProviderStatus =
+  (typeof PROVIDER_STATUSES)[keyof typeof PROVIDER_STATUSES];
+
 interface HierarchicalProvider {
   id: string;
   name: string;
-  type: "organization" | "ou" | "account";
-  status: "connected" | "disconnected" | "pending";
+  type: ProviderType;
+  status: ProviderStatus;
   resourceCount: number;
   children?: HierarchicalProvider[];
 }
@@ -29,29 +49,29 @@ const tableData: HierarchicalProvider[] = [
   {
     id: "org-1",
     name: "AWS Organization",
-    type: "organization",
-    status: "connected",
+    type: PROVIDER_TYPES.ORGANIZATION,
+    status: PROVIDER_STATUSES.CONNECTED,
     resourceCount: 1250,
     children: [
       {
         id: "ou-prod",
         name: "Production OU",
-        type: "ou",
-        status: "connected",
+        type: PROVIDER_TYPES.OU,
+        status: PROVIDER_STATUSES.CONNECTED,
         resourceCount: 800,
         children: [
           {
             id: "acc-prod-1",
             name: "prod-web-services",
-            type: "account",
-            status: "connected",
+            type: PROVIDER_TYPES.ACCOUNT,
+            status: PROVIDER_STATUSES.CONNECTED,
             resourceCount: 450,
           },
           {
             id: "acc-prod-2",
             name: "prod-databases",
-            type: "account",
-            status: "connected",
+            type: PROVIDER_TYPES.ACCOUNT,
+            status: PROVIDER_STATUSES.CONNECTED,
             resourceCount: 350,
           },
         ],
@@ -59,22 +79,22 @@ const tableData: HierarchicalProvider[] = [
       {
         id: "ou-dev",
         name: "Development OU",
-        type: "ou",
-        status: "connected",
+        type: PROVIDER_TYPES.OU,
+        status: PROVIDER_STATUSES.CONNECTED,
         resourceCount: 450,
         children: [
           {
             id: "acc-dev-1",
             name: "dev-sandbox",
-            type: "account",
-            status: "pending",
+            type: PROVIDER_TYPES.ACCOUNT,
+            status: PROVIDER_STATUSES.PENDING,
             resourceCount: 200,
           },
           {
             id: "acc-dev-2",
             name: "dev-testing",
-            type: "account",
-            status: "disconnected",
+            type: PROVIDER_TYPES.ACCOUNT,
+            status: PROVIDER_STATUSES.DISCONNECTED,
             resourceCount: 250,
           },
         ],
@@ -142,6 +162,10 @@ const columns: ColumnDef<HierarchicalProvider>[] = [
 ];
 
 export default function DemoExpandableTablePage() {
+  if (!IS_DEV) {
+    notFound();
+  }
+
   return (
     <div className="container mx-auto space-y-12 p-8">
       <h1 className="text-3xl font-bold">Expandable DataTable Demo</h1>
