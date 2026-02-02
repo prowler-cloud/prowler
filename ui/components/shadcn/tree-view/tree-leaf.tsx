@@ -3,14 +3,10 @@
 import { KeyboardEvent } from "react";
 
 import { Checkbox } from "@/components/shadcn/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import { TreeLeafProps } from "@/types/tree";
 
+import { TreeItemLabel } from "./tree-item-label";
 import { TreeSpinner } from "./tree-spinner";
 import { TreeStatusIcon } from "./tree-status-icon";
 
@@ -89,15 +85,7 @@ export function TreeLeaf({
           hasChildren: false,
         })
       ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="truncate text-base">{item.name}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top">{item.name}</TooltipContent>
-          </Tooltip>
-        </div>
+        <TreeItemLabel item={item} />
       )}
     </div>
   );

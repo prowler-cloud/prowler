@@ -1,3 +1,4 @@
+export { TreeItemLabel } from "./tree-item-label";
 export { TreeLeaf } from "./tree-leaf";
 export { TreeNode } from "./tree-node";
 export { TreeSpinner } from "./tree-spinner";
