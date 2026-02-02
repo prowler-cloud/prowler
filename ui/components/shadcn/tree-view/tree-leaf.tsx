@@ -9,6 +9,7 @@ import { TreeLeafProps } from "@/types/tree";
 import { TreeItemLabel } from "./tree-item-label";
 import { TreeSpinner } from "./tree-spinner";
 import { TreeStatusIcon } from "./tree-status-icon";
+import { getTreeLeafPadding } from "./utils";
 
 /**
  * TreeLeaf component for rendering leaf nodes (nodes without children).
@@ -53,7 +54,7 @@ export function TreeLeaf({
         item.disabled && "cursor-not-allowed opacity-50",
         item.className,
       )}
-      style={{ paddingLeft: `${level * 1.25 + 1.5}rem` }}
+      style={{ paddingLeft: getTreeLeafPadding(level) }}
       onClick={handleSelect}
       onKeyDown={handleKeyDown}
       role="treeitem"

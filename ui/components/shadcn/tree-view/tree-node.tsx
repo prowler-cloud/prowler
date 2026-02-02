@@ -12,7 +12,7 @@ import { TreeItemLabel } from "./tree-item-label";
 import { TreeLeaf } from "./tree-leaf";
 import { TreeSpinner } from "./tree-spinner";
 import { TreeStatusIcon } from "./tree-status-icon";
-import { getAllDescendantIds } from "./utils";
+import { getAllDescendantIds, getTreeNodePadding } from "./utils";
 
 /**
  * TreeNode component for rendering expandable nodes with children.
@@ -95,7 +95,7 @@ export function TreeNode({
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
         )}
-        style={{ paddingLeft: `${level * 1.25}rem` }}
+        style={{ paddingLeft: getTreeNodePadding(level) }}
         role="treeitem"
         tabIndex={item.disabled ? -1 : 0}
         aria-expanded={isExpanded}
@@ -166,7 +166,6 @@ export function TreeNode({
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="mt-1 space-y-1 overflow-hidden"
-            style={{ overflow: "hidden" }}
             role="group"
           >
             {item.children?.map((child) => (
