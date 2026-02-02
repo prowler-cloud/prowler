@@ -76,7 +76,7 @@ export default function DemoTreeViewPage() {
           </p>
         </div>
 
-        <div className="flex gap-8">
+        <div className="flex items-start gap-8">
           <div className="bg-bg-neutral-secondary w-96 rounded-lg border p-4">
             <TreeView
               data={accountsTreeData}
@@ -96,7 +96,7 @@ export default function DemoTreeViewPage() {
                     <TooltipContent side="top">{item.name}</TooltipContent>
                   </Tooltip>
                   {hasChildren && !isLeaf && (
-                    <span className="bg-prowler-white/10 shrink-0 rounded px-1.5 py-0.5 text-xs">
+                    <span className="bg-prowler-white/10 inline-flex min-w-5 shrink-0 items-center justify-center rounded px-1 py-0.5 text-xs tabular-nums">
                       {item.children?.length}
                     </span>
                   )}
