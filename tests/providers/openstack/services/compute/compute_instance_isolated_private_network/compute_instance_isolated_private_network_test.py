@@ -1,4 +1,4 @@
-"""Tests for compute_instance_security_groups_attached check."""
+"""Tests for compute_instance_isolated_private_network check."""
 
 from unittest import mock
 
@@ -10,8 +10,8 @@ from tests.providers.openstack.openstack_fixtures import (
 )
 
 
-class Test_compute_instance_security_groups_attached:
-    """Test suite for compute_instance_security_groups_attached check."""
+class Test_compute_instance_isolated_private_network:
+    """Test suite for compute_instance_isolated_private_network check."""
 
     def test_no_instances(self):
         """Test when no instances exist."""
@@ -24,29 +24,29 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_isolated_private_network()
             result = check.execute()
 
             assert len(result) == 0
 
-    def test_instance_with_security_groups(self):
-        """Test instance with security groups attached (PASS)."""
+    def test_instance_private_only(self):
+        """Test instance with private IP only (PASS)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-1",
-                name="Instance One",
+                name="Isolated Instance",
                 status="ACTIVE",
                 flavor_id="flavor-1",
-                security_groups=["default", "web"],
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -57,9 +57,9 @@ class Test_compute_instance_security_groups_attached:
                 access_ipv6="",
                 public_v4="",
                 public_v6="",
-                private_v4="",
+                private_v4="10.0.0.5",
                 private_v6="",
-                networks={},
+                networks={"private": ["10.0.0.5"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -73,38 +73,38 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_isolated_private_network()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance Instance One (instance-1) has security groups attached: default, web."
+                == "Instance Isolated Instance (instance-1) is properly isolated in private network with private IPs (IPv4: 10.0.0.5) and no public exposure."
             )
             assert result[0].resource_id == "instance-1"
-            assert result[0].resource_name == "Instance One"
+            assert result[0].resource_name == "Isolated Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
-    def test_instance_without_security_groups(self):
-        """Test instance without security groups attached (FAIL)."""
+    def test_instance_mixed_public_private(self):
+        """Test instance with both public and private IPs (FAIL)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-2",
-                name="Instance Two",
+                name="Mixed Instance",
                 status="ACTIVE",
-                flavor_id="flavor-2",
-                security_groups=[],
+                flavor_id="flavor-1",
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -113,11 +113,11 @@ class Test_compute_instance_security_groups_attached:
                 user_id="",
                 access_ipv4="",
                 access_ipv6="",
-                public_v4="",
+                public_v4="203.0.113.10",
                 public_v6="",
-                private_v4="",
+                private_v4="10.0.0.10",
                 private_v6="",
-                networks={},
+                networks={"public": ["203.0.113.10"], "private": ["10.0.0.10"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -131,35 +131,93 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_isolated_private_network()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Instance Instance Two (instance-2) does not have any security groups attached."
+                == "Instance Mixed Instance (instance-2) has mixed public and private network exposure (not properly isolated)."
             )
             assert result[0].resource_id == "instance-2"
-            assert result[0].resource_name == "Instance Two"
+            assert result[0].resource_name == "Mixed Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
-    def test_multiple_instances_mixed(self):
-        """Test multiple instances with mixed results."""
+    def test_instance_public_only(self):
+        """Test instance with only public IP (FAIL)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
-                id="instance-pass",
-                name="Instance Pass",
+                id="instance-3",
+                name="Public Only",
+                status="ACTIVE",
+                flavor_id="flavor-1",
+                security_groups=["default"],
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="203.0.113.20",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={"public": ["203.0.113.20"]},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
+            )
+
+            check = compute_instance_isolated_private_network()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Instance Public Only (instance-3) has only public IP addresses (no private network isolation)."
+            )
+            assert result[0].resource_id == "instance-3"
+            assert result[0].resource_name == "Public Only"
+            assert result[0].region == OPENSTACK_REGION
+            assert result[0].project_id == OPENSTACK_PROJECT_ID
+
+    def test_instance_no_ips(self):
+        """Test instance with no IPs (FAIL)."""
+        compute_client = mock.MagicMock()
+        compute_client.instances = [
+            ComputeInstance(
+                id="instance-4",
+                name="No IPs",
                 status="ACTIVE",
                 flavor_id="flavor-1",
                 security_groups=["default"],
@@ -180,31 +238,7 @@ class Test_compute_instance_security_groups_attached:
                 metadata={},
                 user_data="",
                 trusted_image_certificates=[],
-            ),
-            ComputeInstance(
-                id="instance-fail",
-                name="Instance Fail",
-                status="ACTIVE",
-                flavor_id="flavor-2",
-                security_groups=[],
-                region=OPENSTACK_REGION,
-                project_id=OPENSTACK_PROJECT_ID,
-                is_locked=False,
-                locked_reason="",
-                key_name="",
-                user_id="",
-                access_ipv4="",
-                access_ipv6="",
-                public_v4="",
-                public_v6="",
-                private_v4="",
-                private_v6="",
-                networks={},
-                has_config_drive=False,
-                metadata={},
-                user_data="",
-                trusted_image_certificates=[],
-            ),
+            )
         ]
 
         with (
@@ -213,30 +247,37 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_isolated_private_network()
             result = check.execute()
 
-            assert len(result) == 2
-            assert len([r for r in result if r.status == "PASS"]) == 1
-            assert len([r for r in result if r.status == "FAIL"]) == 1
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Instance No IPs (instance-4) has no network configuration (no IPs assigned)."
+            )
+            assert result[0].resource_id == "instance-4"
+            assert result[0].resource_name == "No IPs"
+            assert result[0].region == OPENSTACK_REGION
+            assert result[0].project_id == OPENSTACK_PROJECT_ID
 
-    def test_instance_without_name_uses_id(self):
-        """Test instance without name still reports using its ID."""
+    def test_instance_private_ipv6_only(self):
+        """Test instance with private IPv6 only (PASS)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
-                id="instance-3",
-                name="",
+                id="instance-5",
+                name="IPv6 Private",
                 status="ACTIVE",
-                flavor_id="flavor-3",
+                flavor_id="flavor-1",
                 security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
@@ -249,8 +290,8 @@ class Test_compute_instance_security_groups_attached:
                 public_v4="",
                 public_v6="",
                 private_v4="",
-                private_v6="",
-                networks={},
+                private_v6="fd00::1",
+                networks={"private": ["fd00::1"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -264,24 +305,24 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_isolated_private_network()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance  (instance-3) has security groups attached: default."
+                == "Instance IPv6 Private (instance-5) is properly isolated in private network with private IPs (IPv6: fd00::1) and no public exposure."
             )
-            assert result[0].resource_id == "instance-3"
-            assert result[0].resource_name == ""
+            assert result[0].resource_id == "instance-5"
+            assert result[0].resource_name == "IPv6 Private"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID

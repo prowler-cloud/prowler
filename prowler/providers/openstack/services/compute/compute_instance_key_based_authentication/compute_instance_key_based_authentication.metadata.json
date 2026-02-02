@@ -1,0 +1,40 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_key_based_authentication",
+  "CheckTitle": "Compute instances use SSH key-based authentication",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **SSH key-based authentication** is configured by checking for an assigned keypair. Password-based authentication is vulnerable to brute-force attacks, credential stuffing, and phishing. SSH keys provide cryptographic authentication resistant to these attacks.",
+  "Risk": "Compute instances without SSH key-based authentication are vulnerable to brute-force password attacks, credential stuffing, and password reuse exploitation. Attackers can systematically test common passwords, intercept credentials transmitted over insecure channels, or exploit leaked credentials from other breaches. Successful unauthorized SSH access enables malware injection, lateral movement, privilege escalation, and data exfiltration. Key-based authentication eliminates these password-based attack vectors through cryptographic authentication.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/latest/user/launch-instances.html",
+    "https://docs.openstack.org/security-guide/compute/hardening-the-virtualization-layers.html",
+    "https://docs.openstack.org/api-ref/compute/#keypairs-keypairs",
+    "https://www.ssh.com/academy/ssh/public-key-authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "# Create a keypair if not exists\nopenstack keypair create --public-key ~/.ssh/id_rsa.pub my-keypair\n\n# Rebuild instance with keypair (WARNING: destructive)\nopenstack server rebuild --key-name my-keypair <instance_id> <image_id>\n\n# Alternative: manually add key to authorized_keys via console or cloud-init",
+      "NativeIaC": "",
+      "Other": "**For existing instances (non-destructive):**\n1. Access instance via console or existing credentials\n2. Edit `/home/username/.ssh/authorized_keys`\n3. Add your SSH public key to the file\n4. Set correct permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`\n5. Disable password authentication: edit `/etc/ssh/sshd_config`, set `PasswordAuthentication no`\n6. Restart SSH service: `sudo systemctl restart sshd`\n\n**For new instances:**\n1. Navigate to **Compute > Instances > Launch Instance**\n2. In **Key Pair** tab, select existing keypair or create new one\n3. Launch instance with keypair attached\n4. Connect using `ssh -i ~/.ssh/private_key username@instance_ip`",
+      "Terraform": "```hcl\n# Terraform: ensure compute instance uses SSH key-based authentication\n\n# Create or import keypair\nresource \"openstack_compute_keypair_v2\" \"keypair\" {\n  name       = \"production-keypair\"\n  public_key = file(\"~/.ssh/id_rsa.pub\")\n}\n\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"secure-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  # Critical: attach keypair for SSH key-based authentication\n  key_pair        = openstack_compute_keypair_v2.keypair.name\n  security_groups = [\"default\"]\n\n  network {\n    name = var.network_name\n  }\n\n  # Optional: use cloud-init to enforce key-only authentication\n  user_data = <<-EOF\n    #cloud-config\n    ssh_pwauth: false\n    disable_root: true\n  EOF\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **strong authentication** for SSH access:\n- **Always use SSH keys** instead of passwords for instance authentication\n- Generate keys with **strong algorithms**: RSA 4096-bit, Ed25519, or ECDSA P-384\n- **Protect private keys** with passphrases and store securely (HSM, key management service)\n- Disable **password authentication** in `/etc/ssh/sshd_config` (`PasswordAuthentication no`)\n- Rotate keypairs **periodically** (e.g., every 90 days) and revoke old keys\n- Use **bastion hosts** or VPN for SSH access instead of direct internet exposure\n- Implement **certificate-based authentication** for large-scale deployments\n- Audit **authorized_keys** files regularly for unauthorized entries\n- Combine with **MFA** for high-security environments (e.g., Duo, Google Authenticator)\n- Monitor **SSH logs** for failed authentication attempts and anomalous access patterns",
+      "Url": "https://hub.prowler.com/check/compute_instance_key_based_authentication"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies keypair assignment via OpenStack metadata. It does not validate authorized_keys file contents or SSH daemon configuration inside the instance. Manual verification may be needed for instances launched without keypairs but later configured with keys."
+}

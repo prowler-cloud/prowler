@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_locked_status_enabled",
+  "CheckTitle": "Compute instances have locked status enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **locked status** is enabled. Locking an instance prevents unauthorized administrative operations (delete, resize, rebuild, etc.) without first unlocking it. This provides an additional layer of protection against accidental or malicious modifications.",
+  "Risk": "Compute instances without locked status can be subjected to unauthorized administrative operations such as deletion, resize, or rebuild by compromised accounts without additional barriers. Attackers with compromised credentials can manipulate unlocked instances to destroy forensic evidence or disrupt production workloads. Accidental termination or modification by operators also poses a risk due to lack of change control, potentially causing service disruption for critical instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/api-ref/compute/#lock-server-lock",
+    "https://docs.openstack.org/nova/latest/reference/api-microversion-history.html",
+    "https://docs.openstack.org/security-guide/compute.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server lock <instance_id> --reason \"Production instance - contact SRE before modification\"",
+      "NativeIaC": "",
+      "Other": "1. Access the Horizon dashboard or use OpenStack CLI\n2. Navigate to **Compute > Instances**\n3. Select the instance to protect\n4. Execute lock command with optional reason for auditability\n5. Verify locked status with `openstack server show <instance_id>`\n6. Document lock reason in metadata or change management system\n7. Implement process requiring approval before unlocking",
+      "Terraform": "```hcl\n# Note: Terraform openstack_compute_instance_v2 does not support locked status natively\n# Use null_resource with local-exec provisioner as workaround\n\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"production-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"default\"]\n\n  network {\n    name = var.network_name\n  }\n}\n\nresource \"null_resource\" \"lock_instance\" {\n  depends_on = [openstack_compute_instance_v2.instance]\n\n  provisioner \"local-exec\" {\n    command = \"openstack server lock ${openstack_compute_instance_v2.instance.id}\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **instance locking** as part of defense-in-depth:\n- Lock **production instances** to prevent accidental or unauthorized modifications\n- Use `--reason` parameter to document why instance is locked (e.g., \"Production database - change control required\")\n- Implement **approval workflows** requiring manager/security team consent before unlocking\n- Apply locks to **critical infrastructure** (databases, authentication services, logging)\n- Use **RBAC policies** to restrict who can lock/unlock instances\n- Audit lock/unlock operations via **OpenStack logs** and SIEM integration\n- Combine with **snapshots** and backups for additional recovery options\n- Consider **project-level policies** enforcing locks on tagged instances",
+      "Url": "https://hub.prowler.com/check/compute_instance_locked_status_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Locked status prevents administrative operations like delete, resize, rebuild, and shelve. It does not prevent start/stop/reboot operations or guest OS-level changes. Lock operations require specific Nova API permissions."
+}

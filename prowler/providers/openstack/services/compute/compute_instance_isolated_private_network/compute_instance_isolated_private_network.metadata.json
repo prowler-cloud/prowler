@@ -1,0 +1,39 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_isolated_private_network",
+  "CheckTitle": "Compute instances are isolated in private networks",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify **network isolation** by ensuring they have private IP addresses without mixed public/private exposure. Proper network segmentation requires instances to be deployed in private networks and accessed via controlled entry points (bastion hosts, VPN, load balancers) rather than direct public exposure.",
+  "Risk": "Compute instances with mixed public/private network exposure or only public IPs lack proper network isolation, allowing unauthorized access from the internet that bypasses network segmentation controls. Attackers can exploit this exposure to pivot from compromised public instances to internal infrastructure and conduct lateral movement across trust zones. Flat network topology exposes internal services to internet-based attacks including DDoS and exploit attempts, increasing the overall attack surface.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
+    "https://docs.openstack.org/security-guide/networking/architecture.html",
+    "https://docs.openstack.org/neutron/latest/admin/intro-network-namespaces.html",
+    "https://docs.openstack.org/operations-guide/ops-network-troubleshooting.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "# Remove floating IP to achieve private network isolation\nopenstack server remove floating ip <instance_id> <floating_ip>\n\n# Verify instance has only private IPs\nopenstack server show <instance_id> -f json | jq '.addresses'\n\n# Access via bastion host\nssh -J bastion-user@bastion-ip instance-user@<private_ip>",
+      "NativeIaC": "",
+      "Other": "**Option 1: Remove public IPs (Horizon Dashboard)**\n1. Navigate to **Compute > Instances**\n2. Identify instances with mixed public/private IPs (IP Address column)\n3. Select instance → **Actions > Disassociate Floating IP**\n4. Verify instance retains private IP and loses public IP\n5. Update access procedures to use bastion host or VPN\n\n**Option 2: Implement network segmentation**\n1. Create **separate Neutron networks** for tiers (web, app, database)\n2. Deploy **router** with appropriate routing rules between networks\n3. Configure **security groups** enforcing least-privilege network policies:\n   - Web tier: allow 80/443 from internet, allow app tier IPs on backend ports\n   - App tier: allow only web tier IPs, allow database tier IPs\n   - Database tier: allow only app tier IPs, no internet access\n4. Remove **floating IPs** from app and database tiers\n5. Deploy **bastion host** in DMZ network for operator access\n6. Document network topology and firewall rule justifications\n\n**Option 3: Use Neutron network isolation features**\n1. Enable **port security** to prevent MAC/IP spoofing\n2. Use **private VLANs** (PVLAN) for intra-tenant isolation\n3. Implement **network policies** via Neutron security group rules\n4. Enable **anti-spoofing rules** on Neutron ports",
+      "Terraform": "```hcl\n# Terraform: deploy instance in isolated private network\n\n# Private network (no external gateway)\nresource \"openstack_networking_network_v2\" \"private\" {\n  name           = \"private-network\"\n  admin_state_up = true\n}\n\nresource \"openstack_networking_subnet_v2\" \"private_subnet\" {\n  name       = \"private-subnet\"\n  network_id = openstack_networking_network_v2.private.id\n  cidr       = \"10.0.1.0/24\"\n  ip_version = 4\n  # No gateway_ip means no external routing\n}\n\n# Instance in private network (no public IP)\nresource \"openstack_compute_instance_v2\" \"app_server\" {\n  name            = \"app-server\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"app-tier-sg\"]\n\n  # Attach to private network ONLY\n  network {\n    uuid = openstack_networking_network_v2.private.id\n  }\n\n  # Do NOT associate floating IP\n}\n\n# Security group for app tier (least privilege)\nresource \"openstack_networking_secgroup_v2\" \"app_tier_sg\" {\n  name        = \"app-tier-sg\"\n  description = \"App tier security group - private network only\"\n}\n\n# Allow SSH from bastion host only (not internet)\nresource \"openstack_networking_secgroup_rule_v2\" \"app_ssh_from_bastion\" {\n  direction         = \"ingress\"\n  ethertype         = \"IPv4\"\n  protocol          = \"tcp\"\n  port_range_min    = 22\n  port_range_max    = 22\n  remote_ip_prefix  = var.bastion_private_ip  # e.g., 10.0.0.5/32\n  security_group_id = openstack_networking_secgroup_v2.app_tier_sg.id\n}\n\n# Allow app traffic from web tier only\nresource \"openstack_networking_secgroup_rule_v2\" \"app_backend\" {\n  direction         = \"ingress\"\n  ethertype         = \"IPv4\"\n  protocol          = \"tcp\"\n  port_range_min    = 8080\n  port_range_max    = 8080\n  remote_ip_prefix  = var.web_tier_cidr  # e.g., 10.0.2.0/24\n  security_group_id = openstack_networking_secgroup_v2.app_tier_sg.id\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **network segmentation** and isolation best practices:\n- Deploy instances in **private networks** (RFC1918 ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)\n- **Never mix public and private IPs** on the same instance (flat network anti-pattern)\n- Use **tiered architecture**: web tier (public IPs), app tier (private), database tier (private)\n- Implement **security groups** as stateful firewalls enforcing least-privilege network policies\n- Deploy **bastion hosts** in DMZ as sole public entry point for SSH access\n- Use **VPN gateways** (OpenVPN, IPsec) for operator access instead of bastion hosts when possible\n- Implement **cloud NAT gateways** for outbound internet access without inbound exposure\n- Enable **flow logs** to audit cross-tier traffic and detect lateral movement attempts\n- Use **network policies** to restrict east-west traffic between instances in same network\n- Implement **microsegmentation** with dedicated networks per workload or project\n- Monitor **routing tables** and firewall rules for misconfigurations enabling unintended connectivity\n- Document **network topology** with clear trust boundaries and data flow diagrams\n- Enforce **tagging policies** identifying network tier (public, DMZ, internal, restricted)\n- Audit **security group rules** quarterly and remove overly permissive or stale rules",
+      "Url": "https://hub.prowler.com/check/compute_instance_isolated_private_network"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags instances with mixed public/private IPs or only public IPs as not properly isolated. Some architectures legitimately require dual-homed instances (e.g., NAT gateways, VPN endpoints). Review findings in context. Instances without any IPs are also flagged as they lack network configuration."
+}

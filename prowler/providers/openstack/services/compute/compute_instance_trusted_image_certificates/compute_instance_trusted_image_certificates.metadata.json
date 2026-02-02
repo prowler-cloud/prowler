@@ -1,0 +1,40 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_trusted_image_certificates",
+  "CheckTitle": "Compute instances use trusted image certificates",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **trusted image certificates** are configured. Trusted image certificates enable cryptographic validation of image signatures using Glance image signing (OpenStack Image Signature Verification). This ensures instances are launched from verified, untampered images signed by trusted authorities.",
+  "Risk": "Compute instances without trusted image certificates can be launched from tampered or malicious images containing backdoors, rootkits, or malware. Attackers with access to image repositories can inject malicious code into unsigned images, and without signature verification, Nova will launch these compromised images. Malicious images can establish persistence, enable lateral movement, exfiltrate sensitive data or credentials from workloads, cause service disruption, corrupt data, or abuse compute resources for cryptomining.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/glance/latest/user/signature.html",
+    "https://docs.openstack.org/nova/latest/admin/secure-boot.html",
+    "https://docs.openstack.org/api-ref/image/v2/index.html#image-signature-verification",
+    "https://wiki.openstack.org/wiki/OpsGuide/Image_Signature_Verification"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "# Step 1: Create and sign an image (requires GPG key)\nglance image-create --name signed-image --file image.qcow2 \\\n  --property img_signature=<signature> \\\n  --property img_signature_hash_method=SHA-256 \\\n  --property img_signature_key_type=RSA-PSS \\\n  --property img_signature_certificate_uuid=<cert_id>\n\n# Step 2: Upload certificate to Barbican (OpenStack Key Manager)\nopenstack secret store --name image-signing-cert \\\n  --payload-content-type application/octet-stream \\\n  --payload \"$(cat cert.pem)\"\n\n# Step 3: Launch instance with trusted certificate IDs\nopenstack server create --image signed-image --flavor <flavor_id> \\\n  --trusted-image-certificate-id <cert_id> <instance_name>",
+      "NativeIaC": "",
+      "Other": "**Prerequisites:**\n1. Enable Glance image signature verification in `glance-api.conf`:\n   ```\n   [DEFAULT]\n   enable_image_signature_verification = True\n   ```\n2. Install Barbican (OpenStack Key Manager) for certificate storage\n3. Generate GPG/X.509 signing keys for image signing\n\n**Manual steps:**\n1. Sign images using `glance-manage` or GPG tooling\n2. Upload certificates to Barbican as secrets\n3. Tag images with signature metadata properties\n4. Launch instances with `--trusted-image-certificate-id` parameter\n5. Verify signature validation in Nova logs (`nova-compute.log`)\n6. Implement CI/CD pipeline for automated image signing and certificate rotation",
+      "Terraform": "```hcl\n# Terraform: launch instance with trusted image certificates\n\n# Note: Requires Glance image with signature metadata and Barbican certificate\n\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"secure-instance\"\n  image_id        = var.signed_image_id  # Must be signed image\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"default\"]\n\n  # Specify trusted certificate IDs for signature validation\n  # Note: This requires Nova microversion 2.63+ support\n  trusted_image_certificates = [\n    var.image_signing_cert_id,\n    var.backup_cert_id\n  ]\n\n  network {\n    name = var.network_name\n  }\n}\n\n# Ensure image has signature metadata\ndata \"openstack_images_image_v2\" \"signed_image\" {\n  name        = \"ubuntu-22.04-signed\"\n  most_recent = true\n\n  # Verify signature properties exist\n  properties = {\n    img_signature                   = \"required\"\n    img_signature_hash_method       = \"SHA-256\"\n    img_signature_key_type          = \"RSA-PSS\"\n    img_signature_certificate_uuid  = \"required\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **image signature verification** as part of supply chain security:\n- **Sign all images** using GPG or X.509 certificates before uploading to Glance\n- Use **Barbican** (OpenStack Key Manager) to store signing certificates securely\n- Enforce **trusted_image_certificates** for production instances via policy\n- Implement **certificate rotation** every 12 months with overlapping validity periods\n- Restrict **image upload permissions** to authorized CI/CD pipelines only\n- Enable **signature verification** in Nova (`/etc/nova/nova.conf` → `[glance] verify_glance_signatures = True`)\n- Use **CIS hardened base images** as foundation for signed images\n- Implement **SBOM** (Software Bill of Materials) tracking for image dependencies\n- Monitor **signature validation failures** in Nova logs and alert on anomalies\n- Combine with **Secure Boot** for hardware-level attestation (if supported by hypervisor)\n- Document **key management procedures** and disaster recovery for lost signing keys\n- Audit **image provenance** trails from build pipeline to production deployment",
+      "Url": "https://hub.prowler.com/check/compute_instance_trusted_image_certificates"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Trusted image certificates require OpenStack Glance image signature verification (microversion 2.63+), Barbican for certificate storage, and Nova configured to verify signatures. Many OpenStack deployments do not enable this feature by default. This check may produce false positives for clouds not using image signing."
+}

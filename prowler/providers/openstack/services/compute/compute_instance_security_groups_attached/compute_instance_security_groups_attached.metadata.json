@@ -10,7 +10,7 @@
   "ResourceType": "OpenStackInstance",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that at least one **security group** is attached. Security groups act as virtual firewalls, controlling ingress and egress traffic. Instances without security groups may have **unrestricted network access**, violating defense-in-depth principles.",
-  "Risk": "Compute instances without security groups are exposed to unrestricted network traffic, enabling:\n- **Confidentiality**: unauthorized access to services and data exfiltration\n- **Integrity**: injection attacks, tampering, and lateral movement across workloads\n- **Availability**: DDoS, port scanning, and resource exhaustion\nAttackers can probe open ports, exploit vulnerable services, and establish persistence without firewall barriers.",
+  "Risk": "Compute instances without security groups are exposed to unrestricted network traffic from any source. Attackers can probe open ports, exploit vulnerable services, conduct injection attacks, tamper with data, and establish persistence without any firewall barriers. The lack of network access controls enables unauthorized access to services, data exfiltration, lateral movement across workloads, DDoS attacks, and resource exhaustion.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/nova/latest/user/security-groups.html",
