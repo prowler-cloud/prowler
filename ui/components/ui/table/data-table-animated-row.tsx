@@ -43,38 +43,49 @@ export function DataTableAnimatedRow<TData>({
         "data-[state=selected]:bg-bg-neutral-tertiary",
       )}
     >
-      {row.getVisibleCells().map((cell: Cell<TData, unknown>) => (
-        <td key={cell.id} className="overflow-hidden p-0">
-          <motion.div
-            initial="collapsed"
-            animate="open"
-            exit="collapsed"
-            variants={{
-              open: {
-                height: "auto",
-                opacity: 1,
-                transition: {
-                  height: { duration: 0.2, ease: "easeOut" },
-                  opacity: { duration: 0.15, delay: 0.05 },
+      {row.getVisibleCells().map((cell: Cell<TData, unknown>, index, cells) => {
+        const isFirst = index === 0;
+        const isLast = index === cells.length - 1;
+
+        return (
+          <td key={cell.id} className="overflow-hidden p-0">
+            <motion.div
+              initial="collapsed"
+              animate="open"
+              exit="collapsed"
+              variants={{
+                open: {
+                  height: "auto",
+                  opacity: 1,
+                  transition: {
+                    height: { duration: 0.2, ease: "easeOut" },
+                    opacity: { duration: 0.15, delay: 0.05 },
+                  },
                 },
-              },
-              collapsed: {
-                height: 0,
-                opacity: 0,
-                transition: {
-                  height: { duration: 0.2, ease: "easeIn" },
-                  opacity: { duration: 0.1 },
+                collapsed: {
+                  height: 0,
+                  opacity: 0,
+                  transition: {
+                    height: { duration: 0.2, ease: "easeIn" },
+                    opacity: { duration: 0.1 },
+                  },
                 },
-              },
-            }}
-            className="overflow-hidden"
-          >
-            <div className="px-1.5 py-2 first:pl-3 last:pr-3">
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </div>
-          </motion.div>
-        </td>
-      ))}
+              }}
+              className="overflow-hidden"
+            >
+              <div
+                className={cn(
+                  "px-1.5 py-2",
+                  isFirst && "pl-3",
+                  isLast && "pr-3",
+                )}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </div>
+            </motion.div>
+          </td>
+        );
+      })}
     </motion.tr>
   );
 }
