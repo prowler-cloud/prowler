@@ -35,6 +35,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
 
+### Fixed
+- Cloudflare `zone_waf_enabled` false positives [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
+
 ---
 
 ## [5.17.0] (Prowler v5.17.0)
