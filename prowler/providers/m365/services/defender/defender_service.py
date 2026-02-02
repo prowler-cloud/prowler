@@ -26,7 +26,7 @@ class Defender(M365Service):
         inbound_spam_policies (list): List of inbound spam filter policies.
         inbound_spam_rules (dict): Dictionary of inbound spam filter rules.
         report_submission_policy: Report submission policy configuration.
-        atp_policy_for_o365: ATP policy for Office 365 configuration.
+        advanced_threat_protection_policy: Advanced Threat Protection policy configuration.
         teams_protection_policy: Teams protection policy configuration.
     """
 
@@ -48,7 +48,7 @@ class Defender(M365Service):
         self.inbound_spam_policies = []
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
-        self.atp_policy_for_o365 = None
+        self.advanced_threat_protection_policy = None
         self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -63,7 +63,9 @@ class Defender(M365Service):
                 self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
-                self.atp_policy_for_o365 = self._get_atp_policy_for_o365()
+                self.advanced_threat_protection_policy = (
+                    self._get_advanced_threat_protection_policy()
+                )
                 self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
@@ -425,22 +427,22 @@ class Defender(M365Service):
             )
         return report_submission_policy
 
-    def _get_atp_policy_for_o365(self):
+    def _get_advanced_threat_protection_policy(self):
         """
-        Get the ATP (Advanced Threat Protection) policy for Office 365.
+        Get the Advanced Threat Protection policy.
 
         Retrieves the ATP policy settings including Safe Attachments for SharePoint,
         OneDrive, and Teams, as well as Safe Documents configuration.
 
         Returns:
-            AtpPolicyForO365: The ATP policy configuration for Office 365.
+            AdvancedThreatProtectionPolicy: The Advanced Threat Protection policy configuration.
         """
-        logger.info("Microsoft365 - Getting ATP policy for Office 365...")
+        logger.info("Microsoft365 - Getting Advanced Threat Protection policy...")
         atp_policy = None
         try:
-            policy = self.powershell.get_atp_policy_for_o365()
+            policy = self.powershell.get_advanced_threat_protection_policy()
             if policy:
-                atp_policy = AtpPolicyForO365(
+                atp_policy = AdvancedThreatProtectionPolicy(
                     identity=policy.get("Identity", "Default"),
                     enable_atp_for_spo_teams_odb=policy.get(
                         "EnableATPForSPOTeamsODB", False
@@ -571,9 +573,9 @@ class ReportSubmissionPolicy(BaseModel):
     report_chat_message_to_customized_address_enabled: bool
 
 
-class AtpPolicyForO365(BaseModel):
+class AdvancedThreatProtectionPolicy(BaseModel):
     """
-    Model for ATP (Advanced Threat Protection) policy for Office 365.
+    Model for Advanced Threat Protection policy.
 
     Attributes:
         identity: The identity of the ATP policy.

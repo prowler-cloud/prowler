@@ -26,8 +26,8 @@ class defender_atp_safe_attachments_policy_enabled(Check):
         """
         findings = []
 
-        if defender_client.atp_policy_for_o365:
-            policy = defender_client.atp_policy_for_o365
+        if defender_client.advanced_threat_protection_policy:
+            policy = defender_client.advanced_threat_protection_policy
 
             report = CheckReportM365(
                 metadata=self.metadata(),

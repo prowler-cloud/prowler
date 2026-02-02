@@ -823,18 +823,18 @@ class M365PowerShell(PowerShellSession):
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
-    def get_atp_policy_for_o365(self) -> dict:
+    def get_advanced_threat_protection_policy(self) -> dict:
         """
-        Get ATP Policy for Office 365.
+        Get Advanced Threat Protection Policy.
 
-        Retrieves the current ATP (Advanced Threat Protection) policy settings for Office 365,
+        Retrieves the current Advanced Threat Protection policy settings,
         including Safe Attachments for SharePoint, OneDrive, and Teams, and Safe Documents settings.
 
         Returns:
-            dict: ATP policy settings in JSON format.
+            dict: Advanced Threat Protection policy settings in JSON format.
 
         Example:
-            >>> get_atp_policy_for_o365()
+            >>> get_advanced_threat_protection_policy()
             {
                 "Identity": "Default",
                 "EnableATPForSPOTeamsODB": true,
