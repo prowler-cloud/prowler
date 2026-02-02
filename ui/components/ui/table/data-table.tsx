@@ -16,7 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Table,
@@ -32,6 +32,13 @@ import { DataTableSearch } from "@/components/ui/table/data-table-search";
 import { useFilterTransitionOptional } from "@/contexts";
 import { cn } from "@/lib";
 import { FilterOption, MetaDataProps } from "@/types";
+
+/**
+ * Default column size used by TanStack Table when no explicit size is set.
+ * We skip applying inline width styles for columns with this default value
+ * to allow them to flex naturally within the table layout.
+ */
+const DEFAULT_COLUMN_SIZE = 150;
 
 interface DataTableProviderProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -154,14 +161,20 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  // Track whether initial expansion has been applied
+  const hasInitiallyExpanded = useRef(false);
+
   // Expand all rows on mount when defaultExpanded={true}
   useEffect(() => {
-    if (defaultExpanded === true && getSubRows) {
+    if (
+      !hasInitiallyExpanded.current &&
+      defaultExpanded === true &&
+      getSubRows
+    ) {
       table.toggleAllRowsExpanded(true);
+      hasInitiallyExpanded.current = true;
     }
-    // Only run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [defaultExpanded, getSubRows, table]);
 
   // Calculate selection key to force header re-render when selection changes
   const selectionKey = rowSelection
@@ -220,7 +233,7 @@ export function DataTable<TData, TValue>({
                   <TableHead
                     key={header.id}
                     style={
-                      getSubRows && size !== 150
+                      getSubRows && size !== DEFAULT_COLUMN_SIZE
                         ? { width: `${size}px` }
                         : undefined
                     }
