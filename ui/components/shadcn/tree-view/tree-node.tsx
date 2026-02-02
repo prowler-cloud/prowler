@@ -164,14 +164,16 @@ export function TreeNode({
         </div>
       </div>
 
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="sync">
         {isExpanded && (
           <motion.ul
+            key={`children-${item.id}`}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="space-y-0.5 overflow-hidden"
+            className="mt-1 space-y-1 overflow-hidden"
+            style={{ overflow: "hidden" }}
             role="group"
           >
             {item.children?.map((child) => (
