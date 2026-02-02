@@ -1,6 +1,7 @@
 "use client";
 
 import { CloudIcon, FolderIcon, ServerIcon } from "lucide-react";
+import { notFound } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -14,11 +15,17 @@ import { TreeDataItem } from "@/types/tree";
 /**
  * Demo page for the TreeView component.
  *
+ * ⚠️  DEVELOPMENT ONLY - This page is for component demonstration and testing.
+ * It returns 404 in production environments.
+ *
  * Showcases:
  * 1. TreeView with checkboxes and hierarchical selection
  * 2. TreeView without checkboxes (navigation mode)
  * 3. Custom rendering with renderItem prop
  */
+
+// Hide in production - evaluated at build time
+const IS_DEV = process.env.NODE_ENV === "development";
 
 const accountsTreeData: TreeDataItem[] = [
   {
@@ -84,6 +91,11 @@ const accountsTreeData: TreeDataItem[] = [
 ];
 
 export default function DemoTreeViewPage() {
+  // Return 404 in production - this page is for development only
+  if (!IS_DEV) {
+    notFound();
+  }
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedIds, setExpandedIds] = useState<string[]>(["org-1"]);
 
