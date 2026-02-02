@@ -5,6 +5,9 @@ import { CornerDownRightIcon } from "lucide-react";
 
 import { DataTableExpandToggle } from "./data-table-expand-toggle";
 
+/** Indentation per nesting level in rem units */
+const INDENT_PER_LEVEL_REM = 1.5;
+
 interface DataTableExpandableCellProps<TData> {
   row: Row<TData>;
   children: React.ReactNode;
@@ -47,7 +50,7 @@ export function DataTableExpandableCell<TData>({
   return (
     <div
       className="flex items-center gap-2"
-      style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+      style={{ paddingLeft: `${row.depth * INDENT_PER_LEVEL_REM}rem` }}
     >
       {showToggle && (
         <>
