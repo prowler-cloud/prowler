@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     )
     from prowler.providers.aws.aws_provider import AwsProvider
     from prowler.providers.azure.azure_provider import AzureProvider
+    from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
     from prowler.providers.gcp.gcp_provider import GcpProvider
     from prowler.providers.github.github_provider import GithubProvider
     from prowler.providers.iac.iac_provider import IacProvider
@@ -91,7 +92,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -145,6 +146,12 @@ def return_prowler_provider(
             )
 
             prowler_provider = AlibabacloudProvider
+        case Provider.ProviderChoices.CLOUDFLARE.value:
+            from prowler.providers.cloudflare.cloudflare_provider import (
+                CloudflareProvider,
+            )
+
+            prowler_provider = CloudflareProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -196,6 +203,11 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "atlas_organization_id": provider.uid,
         }
+    elif provider.provider == Provider.ProviderChoices.CLOUDFLARE.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "filter_accounts": [provider.uid],
+        }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -213,6 +225,7 @@ def initialize_prowler_provider(
     AlibabacloudProvider
     | AwsProvider
     | AzureProvider
+    | CloudflareProvider
     | GcpProvider
     | GithubProvider
     | IacProvider
@@ -228,7 +241,7 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
             initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)

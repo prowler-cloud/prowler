@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_azure_sql_databases_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Azure SQL Databases Is Set To 'On'  ",
+  "CheckTitle": "Defender for Azure SQL databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Azure SQL Databases Is Set To 'On'  ",
-  "Risk": "Turning on Microsoft Defender for Azure SQL Databases enables threat detection for Azure SQL database servers, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+  "Description": "Microsoft Defender for Cloud plan for **Azure SQL Database Servers** is evaluated at subscription scope, expecting the `pricing_tier` set to `Standard` for `SqlServers`. Non-standard tiers indicate the plan isn't enabled.",
+  "Risk": "Without **Defender for SQL**, attacks like **SQL injection**, brute-force logins, and anomalous queries may go **undetected**, enabling data exfiltration and tampering. Limited telemetry delays **incident response**, risking loss of confidentiality and integrity and aiding lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-azure-sql-database-servers#terraform"
+      "CLI": "az security pricing create --name SqlServers --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Azure SQL Databases at subscription scope\ntargetScope = 'subscription'\n\nresource sqlPricing 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'SqlServers'\n  properties: {\n    pricingTier: 'Standard' // CRITICAL: Sets Defender plan for Azure SQL DB to ON (Standard)\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > your subscription\n3. Open Defender plans\n4. Turn ON the plan for Azure SQL Databases (set to Standard)\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Azure SQL Databases\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  resource_type = \"SqlServers\"           # CRITICAL: Targets Azure SQL Databases plan\n  tier          = \"Standard\"             # CRITICAL: Enables Defender (Standard)\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is disabled for all your SQL database servers. Defender for Cloud monitors your SQL database servers for threats such as SQL injection, brute-force attacks, and privilege abuse. The security service provides action-oriented security alerts with details of the suspicious activity and guidance on how to mitigate the security threats.",
-      "Url": ""
+      "Text": "Enable the **Microsoft Defender** plan for Azure SQL databases with `pricing_tier: Standard` across applicable subscriptions. Integrate alerts with SIEM, enforce **least privilege** and **separation of duties**, and apply **defense in depth** (network controls, MFA) to prevent and promptly detect misuse.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_azure_sql_databases_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

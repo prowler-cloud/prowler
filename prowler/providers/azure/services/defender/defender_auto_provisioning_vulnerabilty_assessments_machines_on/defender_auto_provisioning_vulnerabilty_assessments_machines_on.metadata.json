@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
-  "CheckTitle": "Ensure that Auto provisioning of 'Vulnerability assessment for machines' is Set to 'On'",
+  "CheckTitle": "All virtual machines in the subscription have a vulnerability assessment solution installed",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/assessmentssample",
   "ResourceGroup": "security",
-  "Description": "Enable automatic provisioning of vulnerability assessment for machines on both Azure and hybrid (Arc enabled) machines.",
-  "Risk": "Vulnerability assessment for machines scans for various security-related configurations and events such as system updates, OS vulnerabilities, and endpoint protection, then produces alerts on threat and vulnerability findings.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/defender-for-cloud/enable-data-collection?tabs=autoprovision-va",
+  "Description": "**Microsoft Defender for Cloud** evaluates whether **Azure VMs** and **Arc-enabled machines** have a **vulnerability assessment solution** deployed and reporting healthy coverage across the subscription.",
+  "Risk": "Without continuous **vulnerability assessment**, unpatched flaws persist, enabling:\n- **Remote code execution** and privilege escalation\n- **Ransomware** disrupting availability\n- **Data exfiltration** via lateral movement\n\nConfidentiality, integrity, and availability are reduced across affected machines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/automatic-provisioning-vulnerability-assessment-machines.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/deploy-vulnerability-assessment-defender-vulnerability-management",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components?tabs=autoprovision-va"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/automatic-provisioning-vulnerability-assessment-machines.html",
-      "Terraform": ""
+      "CLI": "az rest --method put --url https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/serverVulnerabilityAssessmentsSettings/AzureServersSetting?api-version=2022-01-01-preview --body '{\"properties\":{\"selectedProvider\":\"MdeTvm\"},\"kind\":\"AzureServersSetting\"}'",
+      "NativeIaC": "```bicep\n// Enable vulnerability assessment for all machines using Microsoft Defender Vulnerability Management\n// Critical: sets the VA provider so the recommendation becomes Healthy\n@description('Deploy at subscription scope')\ntargetScope = 'subscription'\n\nresource <example_resource_name> 'Microsoft.Security/serverVulnerabilityAssessmentsSettings@2022-01-01-preview' = {\n  name: 'AzureServersSetting'\n  kind: 'AzureServersSetting'\n  properties: {\n    selectedProvider: 'MdeTvm' // Critical: enables Defender VA provider for machines\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Open Environment settings and select your <subscription>\n3. Go to Settings & monitoring (Auto-provisioning)\n4. Find Vulnerability assessment for machines, set to On, and select Microsoft Defender Vulnerability Management\n5. Click Save",
+      "Terraform": "```hcl\n# Enable vulnerability assessment for all machines using Microsoft Defender Vulnerability Management\nresource \"azapi_resource\" \"<example_resource_name>\" {\n  type      = \"Microsoft.Security/serverVulnerabilityAssessmentsSettings@2022-01-01-preview\"\n  name      = \"AzureServersSetting\"\n  parent_id = \"/subscriptions/<example_subscription_id>\"\n\n  body = jsonencode({\n    properties = {\n      selectedProvider = \"MdeTvm\" # Critical: sets VA provider so all VMs get vulnerability assessment\n    }\n    kind = \"AzureServersSetting\"\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu. 2. Select Microsoft Defender for Cloud. 3. Then Environment Settings. 4. Select a subscription. 5. Click on Settings & Monitoring. 6. Ensure that Vulnerability assessment for machines is set to On. Repeat this for any additional subscriptions.",
-      "Url": ""
+      "Text": "Enable subscription-wide **auto-provisioning** of a **vulnerability assessment** for all Azure and Arc machines and enforce it with **policy** for existing and new hosts.\n\nApply **least privilege** to deployment identities, integrate with **patch management**, and monitor findings for timely remediation.",
+      "Url": "https://hub.prowler.com/check/defender_auto_provisioning_vulnerabilty_assessments_machines_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Additional licensing is required and configuration of Azure Arc introduces complexity beyond this recommendation."
