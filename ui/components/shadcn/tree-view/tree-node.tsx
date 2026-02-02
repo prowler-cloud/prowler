@@ -129,7 +129,9 @@ export function TreeNode({
           )}
         </button>
 
-        {!item.isLoading && item.status && <TreeStatusIcon status={item.status} />}
+        {!item.isLoading && item.status && (
+          <TreeStatusIcon status={item.status} />
+        )}
 
         {showCheckboxes && (
           <Checkbox

@@ -22,7 +22,7 @@ export function TreeStatusIcon({ status, className }: TreeStatusIconProps) {
   if (status === TREE_ITEM_STATUS.SUCCESS) {
     return (
       <CircleCheckIcon
-        className={cn("size-5 shrink-0 text-text-success-primary", className)}
+        className={cn("text-text-success-primary size-5 shrink-0", className)}
         aria-label="Success"
       />
     );
@@ -31,7 +31,7 @@ export function TreeStatusIcon({ status, className }: TreeStatusIconProps) {
   if (status === TREE_ITEM_STATUS.ERROR) {
     return (
       <CircleXIcon
-        className={cn("size-5 shrink-0 text-text-error-primary", className)}
+        className={cn("text-text-error-primary size-5 shrink-0", className)}
         aria-label="Error"
       />
     );

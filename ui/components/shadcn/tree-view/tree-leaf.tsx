@@ -66,7 +66,9 @@ export function TreeLeaf({
       aria-disabled={item.disabled}
     >
       {item.isLoading && <TreeSpinner />}
-      {!item.isLoading && item.status && <TreeStatusIcon status={item.status} />}
+      {!item.isLoading && item.status && (
+        <TreeStatusIcon status={item.status} />
+      )}
 
       {showCheckboxes && (
         <Checkbox
