@@ -45,6 +45,8 @@ export interface TreeDataItem {
 export interface TreeViewProps {
   /** Tree data - can be a single root or array of roots */
   data: TreeDataItem[] | TreeDataItem;
+  /** Additional CSS classes for the root container */
+  className?: string;
   /** Controlled selected item IDs */
   selectedIds?: string[];
   /** Callback when selection changes */

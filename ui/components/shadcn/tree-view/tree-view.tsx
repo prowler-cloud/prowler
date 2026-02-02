@@ -45,6 +45,7 @@ import { getAllDescendantIds } from "./utils";
  */
 export function TreeView({
   data,
+  className,
   selectedIds: controlledSelectedIds,
   onSelectionChange,
   expandedIds: controlledExpandedIds,
@@ -100,7 +101,7 @@ export function TreeView({
 
   return (
     <div
-      className={cn("relative overflow-hidden p-2")}
+      className={cn("relative overflow-hidden p-2", className)}
       role="tree"
       aria-multiselectable={showCheckboxes}
     >
