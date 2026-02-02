@@ -428,6 +428,12 @@ export class ProvidersPage extends BasePage {
     await super.goto("/providers");
   }
 
+  async gotoFresh(): Promise<void> {
+    // Go to the providers page with fresh navigation
+
+    await super.gotoFresh("/providers");
+  }
+
   private async verifyPageHasProwlerTitle(): Promise<void> {
     await expect(this.page).toHaveTitle(/Prowler/);
   }

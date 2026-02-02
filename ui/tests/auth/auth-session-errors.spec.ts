@@ -74,11 +74,17 @@ test.describe("Session Error Messages", () => {
       await scansPage.goto();
       await expect(page.locator("main")).toBeVisible();
 
+      // Navigate to a safe public page before clearing cookies
+      // This prevents background requests from the protected page (scans)
+      // triggering a client-side redirect race condition when cookies are cleared
+      await signInPage.goto();
+
       // Clear cookies to simulate session expiry
       await context.clearCookies();
 
       // Try to navigate to a different protected route
-      await providersPage.goto();
+      // Use fresh navigation to force middleware evaluation
+      await providersPage.gotoFresh();
 
       // Should be redirected to login with callbackUrl
       await signInPage.verifyRedirectWithCallback("/providers");
