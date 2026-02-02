@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { TreeLeafProps } from "@/types/tree";
 
 import { TreeSpinner } from "./tree-spinner";
+import { TreeStatusIcon } from "./tree-status-icon";
 
 /**
  * TreeLeaf component for rendering leaf nodes (nodes without children).
@@ -64,7 +65,8 @@ export function TreeLeaf({
       aria-selected={isSelected}
       aria-disabled={item.disabled}
     >
-      {item.isLoading && <TreeSpinner className="size-4" />}
+      {item.isLoading && <TreeSpinner />}
+      {!item.isLoading && item.status && <TreeStatusIcon status={item.status} />}
 
       {showCheckboxes && (
         <Checkbox

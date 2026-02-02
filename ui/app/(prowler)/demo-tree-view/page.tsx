@@ -30,19 +30,21 @@ const accountsTreeData: TreeDataItem[] = [
         id: "ou-1",
         name: "ou-996789098 (Production)",
         icon: FolderIcon,
+        status: "success",
         children: [
-          { id: "acc-1", name: "123456789098", icon: CloudIcon },
-          { id: "acc-2", name: "123456789099", icon: CloudIcon },
-          { id: "acc-3", name: "123456789100", icon: CloudIcon },
+          { id: "acc-1", name: "123456789098", icon: CloudIcon, status: "success" },
+          { id: "acc-2", name: "123456789099", icon: CloudIcon, status: "success" },
+          { id: "acc-3", name: "123456789100", icon: CloudIcon, status: "success" },
         ],
       },
       {
         id: "ou-2",
         name: "ou-996789099 (Development)",
         icon: FolderIcon,
+        status: "error",
         children: [
-          { id: "acc-4", name: "223456789098", icon: CloudIcon },
-          { id: "acc-5", name: "223456789099", icon: CloudIcon },
+          { id: "acc-4", name: "223456789098", icon: CloudIcon, status: "success" },
+          { id: "acc-5", name: "223456789099", icon: CloudIcon, status: "error" },
         ],
       },
       {

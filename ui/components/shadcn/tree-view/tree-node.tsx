@@ -15,6 +15,7 @@ import { TreeNodeProps } from "@/types/tree";
 
 import { TreeLeaf } from "./tree-leaf";
 import { TreeSpinner } from "./tree-spinner";
+import { TreeStatusIcon } from "./tree-status-icon";
 import { getAllDescendantIds } from "./utils";
 
 /**
@@ -117,7 +118,7 @@ export function TreeNode({
           tabIndex={-1}
         >
           {item.isLoading ? (
-            <TreeSpinner className="size-4" />
+            <TreeSpinner />
           ) : (
             <ChevronRightIcon
               className={cn(
@@ -127,6 +128,8 @@ export function TreeNode({
             />
           )}
         </button>
+
+        {!item.isLoading && item.status && <TreeStatusIcon status={item.status} />}
 
         {showCheckboxes && (
           <Checkbox

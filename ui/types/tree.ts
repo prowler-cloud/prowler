@@ -6,6 +6,17 @@
  */
 
 /**
+ * Status indicator for tree items after loading completes
+ */
+export const TREE_ITEM_STATUS = {
+  SUCCESS: "success",
+  ERROR: "error",
+} as const;
+
+export type TreeItemStatus =
+  (typeof TREE_ITEM_STATUS)[keyof typeof TREE_ITEM_STATUS];
+
+/**
  * Represents a single item in the tree structure.
  * Items can have nested children to create a hierarchical tree.
  */
@@ -22,6 +33,8 @@ export interface TreeDataItem {
   disabled?: boolean;
   /** Whether the item is in a loading state (shows spinner) */
   isLoading?: boolean;
+  /** Status indicator shown after loading (success/error) */
+  status?: TreeItemStatus;
   /** Additional CSS classes for the item */
   className?: string;
 }

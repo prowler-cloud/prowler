@@ -10,39 +10,40 @@ interface TreeSpinnerProps {
  * TreeSpinner component - a circular loading indicator for tree nodes.
  *
  * Features:
- * - 24x24 size with 2px stroke
+ * - 20x20 (size-5) default size to match checkbox sm
+ * - 2.5px stroke for good visibility
  * - Uses button-primary color
  * - Smooth rotation animation
  */
 export function TreeSpinner({ className }: TreeSpinnerProps) {
   return (
     <svg
-      className={cn("size-6 shrink-0 animate-spin", className)}
-      viewBox="0 0 24 24"
+      className={cn("size-5 shrink-0 animate-spin", className)}
+      viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Loading"
     >
       {/* Background track */}
       <circle
-        cx="12"
-        cy="12"
-        r="10"
+        cx="10"
+        cy="10"
+        r="7.5"
         className="stroke-button-primary/20"
-        strokeWidth="2"
+        strokeWidth="2.5"
         fill="none"
       />
       {/* Animated arc */}
       <circle
-        cx="12"
-        cy="12"
-        r="10"
+        cx="10"
+        cy="10"
+        r="7.5"
         className="stroke-button-primary"
-        strokeWidth="2"
+        strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"
-        strokeDasharray="62.83"
-        strokeDashoffset="47.12"
+        strokeDasharray="47.12"
+        strokeDashoffset="35.34"
       />
     </svg>
   );
