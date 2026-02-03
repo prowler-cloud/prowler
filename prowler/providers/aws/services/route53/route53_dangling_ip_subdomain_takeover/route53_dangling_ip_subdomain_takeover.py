@@ -14,7 +14,10 @@ class route53_dangling_ip_subdomain_takeover(Check):
 
         # Gather Elastic IPs from ALL regions since Route53 is global
         public_ips = []
-        all_regions = ec2_client.provider._enabled_regions or ec2_client.provider._identity.audited_regions
+        all_regions = (
+            ec2_client.provider._enabled_regions
+            or ec2_client.provider._identity.audited_regions
+        )
         for region in all_regions:
             try:
                 regional_client = ec2_client.session.client("ec2", region_name=region)
@@ -22,6 +25,7 @@ class route53_dangling_ip_subdomain_takeover(Check):
                     if "PublicIp" in addr:
                         public_ips.append(addr["PublicIp"])
             except Exception:
+                # Gracefully skip regions with access errors (e.g., disabled regions, permission issues)
                 pass
 
         # Add Network Interface public IPs
