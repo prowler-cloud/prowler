@@ -267,7 +267,12 @@ export const addCredentialsFormSchema = (
                           : providerType === "cloudflare"
                             ? {
                                 [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
-                                  z.string().min(1, "API Token is required"),
+                                  z.string().optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_KEY]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
+                                  z.string().optional(),
                               }
                             : {}),
     })
@@ -327,6 +332,37 @@ export const addCredentialsFormSchema = (
               code: "custom",
               message: "GitHub App Private Key is required",
               path: [ProviderCredentialFields.GITHUB_APP_KEY],
+            });
+          }
+        }
+      }
+
+      if (providerType === "cloudflare") {
+        // For Cloudflare, validation depends on the 'via' parameter
+        if (via === "api_token") {
+          const apiToken = data[ProviderCredentialFields.CLOUDFLARE_API_TOKEN];
+          if (!apiToken || apiToken.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Token is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
+            });
+          }
+        } else if (via === "api_key") {
+          const apiKey = data[ProviderCredentialFields.CLOUDFLARE_API_KEY];
+          const apiEmail = data[ProviderCredentialFields.CLOUDFLARE_API_EMAIL];
+          if (!apiKey || apiKey.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Key is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
+            });
+          }
+          if (!apiEmail || apiEmail.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Email is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
             });
           }
         }
