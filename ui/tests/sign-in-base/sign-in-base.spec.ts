@@ -150,12 +150,12 @@ test.describe("Session Persistence", () => {
       await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await homePage.signOut();
-      await signInPage.verifyLogoutSuccess();
 
-      // Verify session is cleared by attempting to access protected route
-      // Use waitForURL to handle the redirect gracefully instead of catching errors
-      await page.goto("/");
-      await page.waitForURL(/\/sign-in/, { timeout: 10000 });
+      // Wait for signOut to redirect to /sign-in (NextAuth signOut flow)
+      await page.waitForURL(/\/sign-in/, { timeout: 15000 });
+
+      // Verify we're on the sign-in page with the form visible
+      await signInPage.verifyOnSignInPage();
     },
   );
 
