@@ -152,8 +152,10 @@ test.describe("Session Persistence", () => {
       await homePage.signOut();
       await signInPage.verifyLogoutSuccess();
 
-      await homePage.goto();
-      await signInPage.verifyOnSignInPage();
+      // Verify session is cleared by attempting to access protected route
+      // Use waitForURL to handle the redirect gracefully instead of catching errors
+      await page.goto("/");
+      await page.waitForURL(/\/sign-in/, { timeout: 10000 });
     },
   );
 
