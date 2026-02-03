@@ -36,6 +36,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
 - Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
+- CSV/XLSX download failure in dashboard [(#9946)](https://github.com/prowler-cloud/prowler/pull/9946)
 
 ---
 
