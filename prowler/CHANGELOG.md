@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 - `autoscaling_group_deletion_protection_enabled` check for AWS provider [(#9928)](https://github.com/prowler-cloud/prowler/pull/9928)
+- Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
 
 ### Changed
 
@@ -35,6 +36,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
+- Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
 
 ---
 
