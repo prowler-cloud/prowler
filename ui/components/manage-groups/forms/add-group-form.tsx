@@ -95,7 +95,7 @@ export const AddGroupForm = ({
           description: "The group was created successfully.",
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",

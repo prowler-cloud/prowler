@@ -113,6 +113,7 @@ from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
+from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
@@ -123,6 +124,7 @@ from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 
 
@@ -332,6 +334,10 @@ def prowler():
         output_options = GithubOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "cloudflare":
+        output_options = CloudflareOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "m365":
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
@@ -354,6 +360,10 @@ def prowler():
         )
     elif provider == "alibabacloud":
         output_options = AlibabaCloudOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "openstack":
+        output_options = OpenStackOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 

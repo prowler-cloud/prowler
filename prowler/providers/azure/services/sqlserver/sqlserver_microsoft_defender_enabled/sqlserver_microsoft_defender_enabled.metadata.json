@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server** instances are evaluated for the server-level **security alert policy** of **Microsoft Defender for SQL**, expecting the policy state to be `Enabled`.",
   "Risk": "Without **Defender for SQL**, anomalous logins, SQL injection patterns, and risky configurations may go undetected, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and disruptive queries or ransomware (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.azadvertizer.net/azpolicyadvertizer/7fe3b40f-802b-4cdd-8bd4-fd799c948cc2.html",
-    "https://docs.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-sql-usage",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/policy-reference"

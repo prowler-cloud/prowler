@@ -45,6 +45,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_CHINA_PARTITION,
     AWS_COMMERCIAL_PARTITION,
+    AWS_EUSC_PARTITION,
     AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
     AWS_ISO_PARTITION,
@@ -52,6 +53,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_CN_NORTHWEST_1,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_WEST_1,
+    AWS_REGION_EUSC_DE_EAST_1,
     AWS_REGION_GOV_CLOUD_US_EAST_1,
     AWS_REGION_ISO_GLOBAL,
     AWS_REGION_US_EAST_1,
@@ -842,7 +844,13 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 33
+        # Only commercial regions (not GovCloud/China) should have regional clients
+        commercial_regions = {
+            r
+            for r in aws_provider._enabled_regions
+            if not r.startswith("cn-") and not r.startswith("us-gov-")
+        }
+        assert set(response.keys()) == commercial_regions
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -955,6 +963,13 @@ aws:
         aws_provider._identity.partition = AWS_ISO_PARTITION
 
         assert aws_provider.get_global_region() == AWS_REGION_ISO_GLOBAL
+
+    @mock_aws
+    def test_aws_eusc_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_EUSC_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_EUSC_DE_EAST_1
 
     @mock_aws
     def test_get_available_aws_service_regions_with_us_east_1_audited(self):
@@ -1507,6 +1522,17 @@ aws:
         )
 
     @mock_aws
+    def test_create_sts_session_eusc(self):
+        current_session = session.Session()
+        aws_region = AWS_REGION_EUSC_DE_EAST_1
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.eu"
+
+    @mock_aws
     @patch(
         "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,
@@ -1754,7 +1780,7 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 38
+        assert len(AwsProvider.get_regions(partition=None)) == 39
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2

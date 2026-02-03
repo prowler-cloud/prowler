@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_dnssec_enabled",
+  "CheckTitle": "DNSSEC is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **DNSSEC** configuration by checking if it is enabled to **cryptographically sign DNS responses** and protect against DNS spoofing and cache poisoning attacks.",
+  "Risk": "Without **DNSSEC**, DNS responses can be spoofed or modified by attackers.\n- **Confidentiality**: users can be redirected to malicious sites that harvest credentials\n- **Integrity**: DNS hijacking enables man-in-the-middle attacks and content modification\n- **Availability**: cache poisoning can cause denial of service by directing traffic to non-existent servers",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/dnssec/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Settings\n3. Scroll to DNSSEC and click Enable DNSSEC\n4. Copy the DS record details provided by Cloudflare\n5. Add the DS record at your domain registrar\n6. Wait for propagation (can take up to 24 hours)",
+      "Terraform": "```hcl\n# Enable DNSSEC for the zone\nresource \"cloudflare_zone_dnssec\" \"<example_resource_name>\" {\n  zone_id = \"<ZONE_ID>\" # Critical: enables cryptographic signing of DNS responses\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **DNSSEC** and ensure **DS records** are properly configured at your domain registrar.\n- DNSSEC provides cryptographic authenticity for DNS responses\n- After enabling in Cloudflare, you must add the DS record at your registrar\n- Use online DNSSEC validators to verify correct configuration",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_dnssec_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

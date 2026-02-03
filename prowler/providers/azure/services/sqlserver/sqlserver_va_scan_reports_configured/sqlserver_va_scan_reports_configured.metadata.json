@@ -8,13 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server** vulnerability assessment uses **recurring scans** and emails results to designated recipients. This evaluates that VA is enabled and that `Send scan reports to` (or subscription admin notifications) is configured so scan reports are delivered.",
   "Risk": "If VA reports aren't sent to responsible owners, findings can be missed, delaying fixes. Attackers may exploit misconfigurations, excessive permissions, or outdated settings, leading to data exposure (C), unauthorized changes (I), and potential service disruption (A).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-send-scan-reports-to-is-configured-for-a-sql-server#terraform",
-    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview"
   ],
   "Remediation": {
     "Code": {

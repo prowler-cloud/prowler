@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL logical servers** are assessed for the configured **minimum TLS version** for client connections. The finding determines whether the minimal accepted version aligns with recommended modern values such as `1.2` or `1.3`.",
   "Risk": "Without a modern minimum, clients can negotiate **weak TLS** or be downgraded, enabling **MITM** and decryption. This jeopardizes **confidentiality** (credential/data exposure) and **integrity** (query tampering), and may disrupt **availability** via session resets during handshake interference.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://argonsys.com/microsoft-cloud/library/preparing-for-the-deprecation-of-tls-1-0-and-1-1-in-azure-databases/",
-    "https://githubissues.com/MicrosoftDocs/azure-docs/117817",
-    "https://stackoverflow.com/questions/66102487/jdbc-cant-connect-to-sql-server-azure-sql-database",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/db-minimum-tls-version-check.html",
     "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version",
-    "https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/minimal-tls-version-configure?view=azuresql",
-    "https://solutions.microsoft.xtivia.com/blog/azure-deprecating-tls-1-0-and-1-1/"
+    "https://learn.microsoft.com/en-us/azure/azure-sql/managed-instance/minimal-tls-version-configure?view=azuresql"
   ],
   "Remediation": {
     "Code": {

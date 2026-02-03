@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server** uses **Transparent Data Encryption** with a **customer-managed key** in Azure Key Vault, and each database has TDE `Enabled`",
   "Risk": "Without **TDE with CMK**, data at rest may be unencrypted or controlled by service keys, weakening **confidentiality** and **key custody**. Attackers or insiders could read backups, snapshots, or stolen disks, and you cannot enforce **rotation**, **revocation**, or **separation of duties**, raising compliance and incident response risks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/use-byok-for-transparent-data-encryption.html#",
     "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql",
-    "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-byok-azure-sql"
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql&tabs=azurekeyvault%2Cazurekeyvaultrequirements%2Cazurekeyvaultrecommendations"
   ],
   "Remediation": {
     "Code": {

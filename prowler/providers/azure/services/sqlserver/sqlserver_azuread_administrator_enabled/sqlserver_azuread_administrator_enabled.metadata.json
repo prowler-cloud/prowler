@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
-  "Description": "Azure SQL Server is configured with a **Microsoft Entra (Azure AD) administrator** at the server scope, indicated by `administrator_type` set to `ActiveDirectory`.",
+  "ResourceGroup": "database",
+  "Description": "**Azure SQL Server** is configured with a **Microsoft Entra (Azure AD) administrator** at the server scope, indicated by `administrator_type` set to `ActiveDirectory`.",
   "Risk": "Without a **Microsoft Entra admin**, the server can't use Entra identities, pushing reliance on **SQL authentication**. This weakens confidentiality and integrity: no MFA/conditional access, harder offboarding and auditing, and compromised passwords can enable unauthorized data access and privilege escalation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-active-directory-admin-is-configured#terraform",
     "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-aad-authentication",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/active-directory-admin.html"
   ],

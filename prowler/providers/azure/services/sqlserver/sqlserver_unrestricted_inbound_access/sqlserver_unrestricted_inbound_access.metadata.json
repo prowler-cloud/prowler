@@ -8,15 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server** server-level firewall rules are evaluated for an entry that allows the entire IPv4 space (`0.0.0.0` to `255.255.255.255`).\n\nThe finding identifies presence of this Internet-wide rule on the server firewall.",
   "Risk": "An Internet-wide rule permits unsolicited access from any host, enabling mass scanning, brute force, and exploitation of weak configurations.\n- Confidentiality: unauthorized data access/exfiltration\n- Integrity: malicious data/DDL changes\n- Availability: resource abuse or DoS via excessive connections",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_4#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/unrestricted-sql-database-access.html",
-    "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-vnet-service-endpoint-rule-overview",
-    "https://www.developerload.com/how-to-disable-firewall-in-azure-sql-database",
-    "https://eitanblumin.com/sql-vulnerability-assessment-tool-rules-reference-list/"
+    "https://learn.microsoft.com/en-us/azure/azure-sql/database/vnet-service-endpoint-rule-overview?view=azuresql"
   ],
   "Remediation": {
     "Code": {

@@ -8,19 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL servers** are evaluated for **Vulnerability Assessment** configuration and whether **periodic recurring scans** are scheduled (e.g., weekly) for the server and its databases.\n\nServers with Vulnerability Assessment missing or scans not scheduled are identified.",
   "Risk": "Without scheduled scans, new misconfigurations and vulnerable settings can persist unnoticed, weakening **confidentiality** and **integrity**. Attackers can exploit stale permissions, unsafe firewall rules, or unpatched features to read or alter data and pivot to other resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-periodic-recurring-scans-is-enabled-on-a-sql-server#terraform",
-    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
-    "https://www.pulumi.com/registry/packages/azure/api-docs/mssql/servervulnerabilityassessment/",
-    "https://docs.datadoghq.com/security/default_rules/def-000-s27/",
+    "hhttps://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/periodic-vulnerability-scans.html",
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
-    "https://faun.pub/enable-azure-sql-server-vulnerability-assessment-using-terraform-abdffc6307a6",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-periodic-recurring-scans-is-enabled-on-a-sql-server/",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/periodic-vulnerability-scans.html#"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
   ],
   "Remediation": {
     "Code": {

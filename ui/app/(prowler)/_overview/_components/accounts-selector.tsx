@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
@@ -33,6 +34,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   iac: <IacProviderBadge width={18} height={18} />,
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
   mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
+  alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {
@@ -43,7 +45,8 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const current = searchParams.get("filter[provider_id__in]") || "";
+  const filterKey = "filter[provider_id__in]";
+  const current = searchParams.get(filterKey) || "";
   const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypesList = selectedTypes
     ? selectedTypes.split(",").filter(Boolean)
@@ -59,10 +62,10 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
 
   const handleMultiValueChange = (ids: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete(filterKey);
+
     if (ids.length > 0) {
-      params.set("filter[provider_id__in]", ids.join(","));
-    } else {
-      params.delete("filter[provider_id__in]");
+      params.set(filterKey, ids.join(","));
     }
 
     // Auto-deselect provider types that no longer have any selected accounts

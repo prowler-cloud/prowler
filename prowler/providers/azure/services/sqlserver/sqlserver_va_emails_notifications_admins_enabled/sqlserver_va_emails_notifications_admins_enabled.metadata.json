@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server** Vulnerability Assessment configuration, specifically whether recurring scans are set to email results to subscription admins/owners via `Also send email notifications to admins and subscription owners`.",
   "Risk": "Without these notifications, findings may go unnoticed, delaying fixes. Prolonged exposure of misconfigurations and weak permissions threatens data **confidentiality** and **integrity**, can affect **availability**, and slows **incident response** and audit readiness.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/enable-email-alerts-for-administrators-and-subscription-owners.html",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server/",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable",
-    "https://guides.spectralops.io/docs/d9_azu_mon_25",
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server#terraform",
-    "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview"
   ],
   "Remediation": {
     "Code": {

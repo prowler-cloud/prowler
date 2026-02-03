@@ -6,14 +6,14 @@
   "ServiceName": "sqlserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.sql/servers",
+  "ResourceGroup": "database",
   "Description": "**Azure SQL Server auditing** settings are evaluated to ensure **auditing is enabled** and log retention is greater than `90` days. It considers the auditing policy state and the configured `retention_days` value.",
   "Risk": "Without adequate retention or with auditing disabled, **activity trails expire too soon**, limiting detection and investigation of **unauthorized access, data exfiltration, and privilege abuse**. This weakens **confidentiality** and **integrity** and slows incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/purview/audit-log-retention-policies",
-    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_3",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/auditing-retention.html#",
     "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing"
   ],

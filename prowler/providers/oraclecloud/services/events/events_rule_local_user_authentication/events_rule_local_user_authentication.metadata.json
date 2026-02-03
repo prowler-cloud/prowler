@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:events:rule",
   "Severity": "medium",
   "ResourceType": "OciEventRule",
+  "ResourceGroup": "messaging",
   "Description": "Ensure that an Event Rule and Notification are configured to detect when a user authenticates via OCI local authentication. Event Rules are compartment-scoped and will detect events in child compartments. This Event rule is required to be created at the root compartment level.",
   "Risk": "Without proper notification for local user authentication events, unauthorized access attempts or suspicious authentication activity may go undetected, increasing the risk of security breaches.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",

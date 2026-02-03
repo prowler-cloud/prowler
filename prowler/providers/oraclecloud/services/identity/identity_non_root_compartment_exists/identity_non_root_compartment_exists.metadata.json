@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "oci:identity:tenancy",
   "Severity": "high",
   "ResourceType": "OciTenancy",
+  "ResourceGroup": "governance",
   "Description": "Compartments are used to organize and isolate your cloud resources. Creating at least one compartment is a fundamental best practice for organizing resources in your tenancy. The root compartment should not be used directly for resource creation.",
   "Risk": "Without proper compartmentalization, resource management becomes difficult, access control is harder to implement, and it violates the principle of least privilege. Using only the root compartment makes it impossible to implement proper resource isolation and access controls.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",

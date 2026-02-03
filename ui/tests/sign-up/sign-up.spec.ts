@@ -1,6 +1,6 @@
 import { test } from "@playwright/test";
 import { SignUpPage } from "./sign-up-page";
-import { SignInPage } from "../sign-in/sign-in-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { makeSuffix } from "../helpers";
 
 test.describe("Sign Up Flow", () => {

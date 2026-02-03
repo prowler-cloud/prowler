@@ -304,6 +304,75 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["atlas_public_key", "atlas_private_key"],
             },
+            {
+                "type": "object",
+                "title": "Alibaba Cloud Static Credentials",
+                "properties": {
+                    "access_key_id": {
+                        "type": "string",
+                        "description": "The Alibaba Cloud access key ID for authentication.",
+                    },
+                    "access_key_secret": {
+                        "type": "string",
+                        "description": "The Alibaba Cloud access key secret for authentication.",
+                    },
+                    "security_token": {
+                        "type": "string",
+                        "description": "The STS security token for temporary credentials (optional).",
+                    },
+                },
+                "required": ["access_key_id", "access_key_secret"],
+            },
+            {
+                "type": "object",
+                "title": "Alibaba Cloud RAM Role Assumption",
+                "properties": {
+                    "role_arn": {
+                        "type": "string",
+                        "description": "The ARN of the RAM role to assume (e.g., acs:ram::1234567890123456:role/ProwlerRole).",
+                    },
+                    "access_key_id": {
+                        "type": "string",
+                        "description": "The Alibaba Cloud access key ID of the RAM user that will assume the role.",
+                    },
+                    "access_key_secret": {
+                        "type": "string",
+                        "description": "The Alibaba Cloud access key secret of the RAM user that will assume the role.",
+                    },
+                    "role_session_name": {
+                        "type": "string",
+                        "description": "An identifier for the role session (optional, defaults to 'ProwlerSession').",
+                    },
+                },
+                "required": ["role_arn", "access_key_id", "access_key_secret"],
+            },
+            {
+                "type": "object",
+                "title": "Cloudflare API Token",
+                "properties": {
+                    "api_token": {
+                        "type": "string",
+                        "description": "Cloudflare API Token for authentication (recommended).",
+                    },
+                },
+                "required": ["api_token"],
+            },
+            {
+                "type": "object",
+                "title": "Cloudflare API Key + Email",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "Cloudflare Global API Key for authentication (legacy).",
+                    },
+                    "api_email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Email address associated with the Cloudflare account.",
+                    },
+                },
+                "required": ["api_key", "api_email"],
+            },
         ]
     }
 )
