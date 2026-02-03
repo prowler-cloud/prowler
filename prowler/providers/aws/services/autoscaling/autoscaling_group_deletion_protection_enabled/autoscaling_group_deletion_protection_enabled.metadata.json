@@ -13,6 +13,7 @@
   "ResourceGroup": "compute",
   "Description": "**EC2 Auto Scaling groups** are evaluated for having **deletion protection** enabled. AWS ASGs support three levels of deletion protection: `none` (default), `prevent-force-deletion`, and `prevent-all-deletion`. Groups without deletion protection (`none`) can be accidentally deleted, potentially causing service disruptions.",
   "Risk": "Without deletion protection, Auto Scaling groups can be accidentally or maliciously deleted, leading to immediate loss of capacity, service outages, and potential data loss. This is especially critical for production workloads where unplanned capacity removal can cascade into wider failures.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_UpdateAutoScalingGroup.html",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/resource-deletion-protection.html"

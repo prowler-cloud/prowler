@@ -101,7 +101,7 @@ class AutoScaling(AWSService):
                                     "LaunchConfigurationName", ""
                                 ),
                                 deletion_protection=group.get(
-                                    "DeletionProtection"
+                                    "DeletionProtection", "none"
                                 ),
                             )
                         )
