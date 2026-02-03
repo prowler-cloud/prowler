@@ -37,6 +37,28 @@ SETUP_COPILOT=false
 # HELPER FUNCTIONS
 # =============================================================================
 
+add_to_gitignore() {
+    local pattern="$1"
+    local gitignore_file="$REPO_ROOT/.gitignore"
+    local header="# AI Coding assistants assets"
+
+    # Create .gitignore if it doesn't exist
+    if [ ! -f "$gitignore_file" ]; then
+        touch "$gitignore_file"
+    fi
+
+    # Check if pattern exists (exact match or at end of file)
+    if ! grep -qxF "$pattern" "$gitignore_file"; then
+        # Check if header exists
+        if ! grep -qxF "$header" "$gitignore_file"; then
+            echo -e "\n\n$header" >> "$gitignore_file"
+        fi
+        
+        echo "$pattern" >> "$gitignore_file"
+        echo -e "${GREEN}  ✓ Added $pattern to .gitignore${NC}"
+    fi
+}
+
 show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
@@ -109,6 +131,7 @@ setup_claude() {
     if [ ! -d "$REPO_ROOT/.claude" ]; then
         mkdir -p "$REPO_ROOT/.claude"
     fi
+    add_to_gitignore ".claude/"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -119,8 +142,9 @@ setup_claude() {
     ln -s "$SKILLS_SOURCE" "$target"
     echo -e "${GREEN}  ✓ .claude/skills -> skills/${NC}"
 
-    # Copy AGENTS.md to CLAUDE.md
-    copy_agents_md "CLAUDE.md"
+    # Link AGENTS.md to CLAUDE.md
+    link_agents_md "CLAUDE.md"
+    add_to_gitignore "CLAUDE.md"
 }
 
 setup_gemini() {
@@ -129,6 +153,7 @@ setup_gemini() {
     if [ ! -d "$REPO_ROOT/.gemini" ]; then
         mkdir -p "$REPO_ROOT/.gemini"
     fi
+    add_to_gitignore ".gemini/"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -139,8 +164,9 @@ setup_gemini() {
     ln -s "$SKILLS_SOURCE" "$target"
     echo -e "${GREEN}  ✓ .gemini/skills -> skills/${NC}"
 
-    # Copy AGENTS.md to GEMINI.md
-    copy_agents_md "GEMINI.md"
+    # Link AGENTS.md to GEMINI.md
+    link_agents_md "GEMINI.md"
+    add_to_gitignore "GEMINI.md"
 }
 
 setup_codex() {
@@ -149,6 +175,7 @@ setup_codex() {
     if [ ! -d "$REPO_ROOT/.codex" ]; then
         mkdir -p "$REPO_ROOT/.codex"
     fi
+    add_to_gitignore ".codex/"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -164,12 +191,19 @@ setup_codex() {
 setup_copilot() {
     if [ -f "$REPO_ROOT/AGENTS.md" ]; then
         mkdir -p "$REPO_ROOT/.github"
-        cp "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/.github/copilot-instructions.md"
+        
+        # Link AGENTS.md -> .github/copilot-instructions.md
+        local target="$REPO_ROOT/.github/copilot-instructions.md"
+        ln -sf "$REPO_ROOT/AGENTS.md" "$target"
+        
         echo -e "${GREEN}  ✓ AGENTS.md -> .github/copilot-instructions.md${NC}"
+        
+        # Add specifically the file, NOT the .github folder
+        add_to_gitignore ".github/copilot-instructions.md"
     fi
 }
 
-copy_agents_md() {
+link_agents_md() {
     local target_name="$1"
     local agents_files
     local count=0
@@ -179,11 +213,16 @@ copy_agents_md() {
     for agents_file in $agents_files; do
         local agents_dir
         agents_dir=$(dirname "$agents_file")
-        cp "$agents_file" "$agents_dir/$target_name"
+        local target_path="$agents_dir/$target_name"
+        
+        # Create relative symlink
+        # Since files are in same dir, we can just link to basename
+        cd "$agents_dir" && ln -sf "$(basename "$agents_file")" "$target_name" && cd "$SCRIPT_DIR"
+        
         count=$((count + 1))
     done
 
-    echo -e "${GREEN}  ✓ Copied $count AGENTS.md -> $target_name${NC}"
+    echo -e "${GREEN}  ✓ Linked $count AGENTS.md -> $target_name${NC}"
 }
 
 # =============================================================================
