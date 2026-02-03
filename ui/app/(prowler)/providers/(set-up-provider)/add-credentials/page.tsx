@@ -5,6 +5,7 @@ import {
 } from "@/components/providers/workflow/forms";
 import { SelectViaAlibabaCloud } from "@/components/providers/workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
+import { SelectViaCloudflare } from "@/components/providers/workflow/forms/select-credentials-type/cloudflare";
 import {
   AddViaServiceAccountForm,
   SelectViaGCP,
@@ -43,6 +44,8 @@ export default async function AddCredentialsPage({ searchParams }: Props) {
       if (providerType === "m365") return <SelectViaM365 initialVia={via} />;
       if (providerType === "alibabacloud")
         return <SelectViaAlibabaCloud initialVia={via} />;
+      if (providerType === "cloudflare")
+        return <SelectViaCloudflare initialVia={via} />;
       return null;
 
     case "credentials":

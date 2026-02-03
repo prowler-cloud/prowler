@@ -88,6 +88,7 @@ export const getProviderFormType = (
     "github",
     "m365",
     "alibabacloud",
+    "cloudflare",
   ].includes(providerType);
 
   // Show selector if no via parameter and provider needs it
@@ -129,6 +130,14 @@ export const getProviderFormType = (
     if (via === "credentials") return "credentials";
   }
 
+  // Cloudflare credential types
+  if (
+    providerType === "cloudflare" &&
+    ["api_token", "api_key"].includes(via || "")
+  ) {
+    return "credentials";
+  }
+
   // Other providers go directly to credentials form
   if (!needsSelector) {
     return "credentials";
@@ -150,8 +159,11 @@ export const requiresBackButton = (via?: string | null): boolean => {
     "github_app",
     "app_client_secret",
     "app_certificate",
+    "api_token",
+    "api_key",
   ];
   // Note: "role" is already included for AWS, now also used by AlibabaCloud
+  // "api_token" and "api_key" are used by Cloudflare
 
   return validViaTypes.includes(via);
 };

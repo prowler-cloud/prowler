@@ -17,6 +17,7 @@ import {
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
+  CloudflareApiKeyCredentials,
   CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
@@ -39,11 +40,14 @@ import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credential
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
+  CloudflareApiKeyCredentialsForm,
+  CloudflareApiTokenCredentialsForm,
+} from "./select-credentials-type/cloudflare";
+import {
   M365CertificateCredentialsForm,
   M365ClientSecretCredentialsForm,
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
-import { CloudflareCredentialsForm } from "./via-credentials/cloudflare-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
@@ -208,13 +212,22 @@ export const BaseCredentialsForm = ({
               }
             />
           )}
-        {providerType === "cloudflare" && (
-          <CloudflareCredentialsForm
-            control={
-              form.control as unknown as Control<CloudflareTokenCredentials>
-            }
-          />
-        )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_token" && (
+            <CloudflareApiTokenCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareTokenCredentials>
+              }
+            />
+          )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_key" && (
+            <CloudflareApiKeyCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareApiKeyCredentials>
+              }
+            />
+          )}
 
         <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
