@@ -13,7 +13,7 @@
   "Risk": "Without scheduled scans, new misconfigurations and vulnerable settings can persist unnoticed, weakening **confidentiality** and **integrity**. Attackers can exploit stale permissions, unsafe firewall rules, or unpatched features to read or alter data and pivot to other resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "hhttps://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-overview",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/periodic-vulnerability-scans.html",
     "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
   ],
