@@ -71,8 +71,6 @@ jobs:
           yq -i '.networks.kind.external = true' docker-compose.yml
           # Add network kind to worker service and default network too
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
-      - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
       - name: Add AWS credentials for testing AWS SDK Default Adding Provider
         run: |
           echo "Adding AWS credentials for testing AWS SDK Default Adding Provider..."

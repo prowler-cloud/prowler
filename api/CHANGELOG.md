@@ -15,6 +15,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
+- **BREAKING**: Changed API configuration storage from bind mount to Docker named volume to fix permission errors on fresh deployments. Existing JWT keys will be regenerated on upgrade, invalidating active sessions. Users will need to re-authenticate after updating. [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
 - Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
 
