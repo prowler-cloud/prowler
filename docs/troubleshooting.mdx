@@ -86,3 +86,84 @@ docker compose up -d
 <Note>
 We are evaluating adding these values to the default `docker-compose.yml` to avoid this issue in future releases.
 </Note>
+
+### API Container Fails to Start with JWT Key Permission Error
+
+See [GitHub Issue #8897](https://github.com/prowler-cloud/prowler/issues/8897) for more details.
+
+When deploying Prowler via Docker Compose on a fresh installation, the API container may fail to start with permission errors related to JWT RSA key file generation. This issue is commonly observed on Linux systems (Ubuntu, Debian, cloud VMs) and Windows with Docker Desktop, but not typically on macOS.
+
+**Error Message:**
+
+Checking the API container logs reveals:
+
+```bash
+PermissionError: [Errno 13] Permission denied: '/home/prowler/.config/prowler-api/jwt_private.pem'
+```
+
+Or:
+
+```bash
+Token generation failed due to invalid key configuration. Provide valid DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment.
+```
+
+**Root Cause:**
+
+This permission mismatch occurs due to the interaction between Docker volume ownership and container user privileges:
+
+* The API container runs as user `prowler` with UID/GID 1000
+* Docker creates the mounted volume directory `./_data/api` on the host with root ownership (UID 0)
+* When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails due to insufficient permissions
+
+**Solutions:**
+
+There are two approaches to resolve this issue:
+
+**Option 1: Adjust Volume Permissions (Recommended for Development)**
+
+Before starting the containers, ensure the mounted volume directory has the correct ownership:
+
+```bash
+sudo chown -R 1000:1000 ./_data/api
+```
+
+Then start Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+**Option 2: Use Environment Variables (Recommended for Production)**
+
+Skip file-based key storage by providing JWT keys directly via environment variables. Generate RSA key pair and configure the `.env` file:
+
+```bash
+# Generate RSA keys
+openssl genrsa -out jwt_private.pem 4096
+openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+
+# Extract key content (removes headers/footers and newlines)
+PRIVATE_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_private.pem)
+PUBLIC_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_public.pem)
+```
+
+Add the following to the `.env` file:
+
+```env
+DJANGO_TOKEN_SIGNING_KEY=<content of jwt_private.pem>
+DJANGO_TOKEN_VERIFYING_KEY=<content of jwt_public.pem>
+```
+
+When these environment variables are set, the API will use them directly instead of attempting to write key files to the mounted volume.
+
+**Prevention:**
+
+For persistent deployments, consider:
+
+* Pre-creating the volume directory with appropriate ownership before the first run
+* Using Docker named volumes instead of bind mounts (ownership is managed automatically by Docker)
+* Implementing proper secrets management for production environments
+
+<Note>
+A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
+</Note>
