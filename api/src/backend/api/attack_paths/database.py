@@ -13,13 +13,12 @@ from django.conf import settings
 
 from config.env import env
 from api.attack_paths.retryable_session import RetryableSession
-from tasks.jobs.attack_paths.config import PROVIDER_RESOURCE_LABEL
+from tasks.jobs.attack_paths.config import BATCH_SIZE, PROVIDER_RESOURCE_LABEL
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
 
-BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
 SERVICE_UNAVAILABLE_MAX_RETRIES = 3
 
 # Module-level process-wide driver singleton

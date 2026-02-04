@@ -21,7 +21,7 @@ from prowler.lib.check.models import Severity
 
 @pytest.mark.django_db
 class TestAttackPathsRun:
-    # Patchaing with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
+    # Patching with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
