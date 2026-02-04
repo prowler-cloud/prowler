@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.18.0] (Prowler UNRELEASED)
+## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
 
@@ -17,7 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 - Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
 
-### Changed
+### 🔄 Changed
 
 - Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
 - Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
@@ -35,7 +35,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
 - Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
 
-### Fixed
+### 🐛 Fixed
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
 - Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
