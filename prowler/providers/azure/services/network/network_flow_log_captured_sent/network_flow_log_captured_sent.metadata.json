@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/networkwatchers",
+  "ResourceGroup": "network",
   "Description": "**Azure Network Watcher** has **NSG flow logs** enabled and configured to forward traffic records to a centralized **Log Analytics workspace**",
   "Risk": "Missing or disabled flow logging blinds visibility into network behavior, hindering detection of:\n- **Lateral movement** and internal scanning\n- **C2 beacons** and exfiltration patterns\nThis degrades incident response and correlation, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-portal",
+    "https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-tutorial",
     "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-4-enable-network-logging-for-security-investigation"
   ],
   "Remediation": {

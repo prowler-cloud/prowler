@@ -8,20 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
+  "ResourceGroup": "network",
   "Description": "**Azure NSG inbound rules** are evaluated for **public RDP exposure**. The finding flags rules that `Allow` `TCP` traffic to `port 3389` from broad sources like `0.0.0.0/0`, `Internet`, or `*`, including ranges that cover `3389`.",
   "Risk": "Exposed **RDP** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized console access.\n\nCompromise can cause data theft (**confidentiality**), tampering or malware deployment (**integrity**), VM lockout or disruption (**availability**), and **lateral movement** within the VNet.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-rdp-access.html#",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/unrestricted-rdp-access.html",
     "https://learn.microsoft.com/en-za/answers/questions/1374791/policy-to-block-the-creation-of-nsgs-with-rules-th",
-    "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
-    "https://vaggeliskappas.com/2015/06/01/secure-azure-virtual-network-using-network-security-groups/",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_2#terraform",
-    "https://github.com/Azure/azure-policy/issues/305",
-    "https://praveenkumarsreeram.com/2020/09/10/azure-virtual-machines-restrict-remote-desktop-access-to-an-ip-address-using-network-security-groups/",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries",
-    "https://stackoverflow.com/questions/78860454/azure-policy-to-prevent-overly-permissive-nsg-rules-being-created"
+    "https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
   ],
   "Remediation": {
     "Code": {

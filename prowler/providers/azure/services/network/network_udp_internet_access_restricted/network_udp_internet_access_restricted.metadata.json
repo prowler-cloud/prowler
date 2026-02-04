@@ -8,13 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
-  "Description": "Network Security Group rules are assessed for **inbound UDP** exposure to the public Internet (e.g., `0.0.0.0/0`, `*`, `Internet`). The finding identifies allow rules that permit unsolicited **UDP** traffic from any external source to attached resources.",
+  "ResourceGroup": "network",
+  "Description": "**Azure NSG rules** are assessed for **inbound UDP** exposure to the public Internet (e.g., `0.0.0.0/0`, `*`, `Internet`). The finding identifies allow rules that permit unsolicited **UDP** traffic from any external source to attached resources.",
   "Risk": "Publicly reachable **UDP** services enable **DDoS reflection/amplification**, exhausting bandwidth and compute and degrading **availability** for workloads and networks. Open services (DNS, NTP, SSDP, SNMP, CLDAP) can be abused with spoofed traffic, turning endpoints into amplifiers and disrupting adjacent resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/security/fundamentals/ddos-best-practices",
-    "https://docs.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#secure-your-critical-azure-service-resources-to-only-your-virtual-networks",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-udp-services-are-restricted-from-the-internet#terraform",
+    "http://learn.microsoft.com/en-us/azure/ddos-protection/fundamental-best-practices",
+    "https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#secure-your-critical-azure-service-resources-to-only-your-virtual-networks",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-udp-access.html#"
   ],
   "Remediation": {

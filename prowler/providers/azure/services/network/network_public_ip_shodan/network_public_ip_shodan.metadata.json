@@ -8,12 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/publicipaddresses",
-  "Description": "Azure Public IP addresses detected as **indexed by Shodan**, indicating Internet-visible services with open `ports` and service banner metadata.",
+  "ResourceGroup": "network",
+  "Description": "**Azure Public IP addresses** are detected as **indexed by Shodan**, indicating Internet-visible services with open `ports` and service banner metadata.",
   "Risk": "Shodan-visible IPs are easy to discover and target, elevating risks to **confidentiality** and **integrity**. Adversaries can enumerate banners, probe open ports, brute-force access, and exploit known CVEs, enabling unauthorized entry, data exfiltration, and lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.shodan.io/",
-    "https://cqr.company/blog/external-attack-surface-audit-how-fofa-shodan-and-censys-help-you-find-forgotten-services-and-leaks/"
+    "https://support.icompaas.com/support/solutions/articles/62000235334-ensure-any-public-addresses-are-listed-in-shodan-using-shodan-api-",
+    "https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses"
   ],
   "Remediation": {
     "Code": {

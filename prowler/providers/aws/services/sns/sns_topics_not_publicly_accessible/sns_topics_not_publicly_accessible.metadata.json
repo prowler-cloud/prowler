@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSnsTopic",
+  "ResourceGroup": "messaging",
   "Description": "**SNS topic policies** are analyzed for **public principals** (e.g., `*`). Topics that grant access without restrictive conditions such as `aws:SourceArn`, `aws:SourceAccount`, `aws:PrincipalOrgID`, or `sns:Endpoint` scoping are treated as publicly accessible.",
   "Risk": "**Public SNS topics** allow anyone or unknown accounts to:\n- **Subscribe** and siphon messages (confidentiality)\n- **Publish** spoofed payloads that alter workflows (integrity)\n- **Flood** messages causing outages and costs (availability)\nThey also enable cross-account abuse and bypass expected trust boundaries.",
   "RelatedUrl": "",

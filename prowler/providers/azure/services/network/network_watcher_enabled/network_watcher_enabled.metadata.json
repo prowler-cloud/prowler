@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/networkwatchers",
+  "ResourceGroup": "network",
   "Description": "**Azure Network Watcher** presence across the subscription's regions. The assessment checks that a Network Watcher instance exists in every subscription location where resources may be deployed.",
   "Risk": "Absent **Network Watcher** in a region creates blind spots in **network telemetry and diagnostics**, hindering detection of anomalies. Attackers can exploit unnoticed NSG or routing issues for lateral movement or data exfiltration, degrading **confidentiality** and **availability** and slowing incident triage.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities",
-    "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview",
+    "https://learn.microsoft.com/en-us/azure/network-watcher/network-watcher-overview",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/enable-network-watcher.html"
   ],
   "Remediation": {

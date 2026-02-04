@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Database **SQL Audit Retention** should be configured to be greater than or equal to the configured period (default: **6 months / 180 days**).\n\nAudit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
   "Risk": "**Short retention periods** for audit logs can result in the loss of critical forensic data needed for **incident investigation** and **compliance auditing**.\n\nMany regulations require minimum retention periods for audit data.",
   "RelatedUrl": "",

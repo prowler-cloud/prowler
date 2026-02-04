@@ -52,7 +52,7 @@ export const ProviderInfo = ({
   return (
     <div className="flex items-center text-sm">
       <div className="flex items-center gap-4">
-        {getProviderLogo(provider)}
+        <div className="shrink-0">{getProviderLogo(provider)}</div>
         {getIcon()}
         <span className="font-medium">{providerAlias || providerUID}</span>
       </div>

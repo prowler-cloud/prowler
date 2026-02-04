@@ -6,6 +6,10 @@ Thanks for your interest in contributing to Prowler!
 
 Prowler can be extended in various ways. This guide provides the different ways to contribute and how to get started.
 
+<Warning>
+Maintainers will assess whether a change fits the project roadmap and scope before merging.
+</Warning>
+
 ## Contributing to Prowler
 
 ### Review Current Issues
@@ -31,6 +35,9 @@ Prowler is constantly evolving. Contributions to checks, services, or integratio
   </Card>
   <Card title="Adding New Providers" icon="cloud" href="/developer-guide/provider">
     If you would like to extend Prowler to work with a new cloud provider, this typically involves setting up new services and checks to ensure compatibility.
+  </Card>
+  <Card title="Adding New Compliance Frameworks" icon="scale-balanced" href="/developer-guide/security-compliance-framework">
+    Need to ensure Prowler supports a specific compliance framework? Add new security compliance frameworks to map checks against regulatory or industry standards.
   </Card>
   <Card title="Adding New Output Formats" icon="file" href="/developer-guide/outputs">
     Want to tailor how results are displayed or exported? You can add custom output formats.
@@ -147,6 +154,8 @@ If you are using AI assistants to help with your contributions, Prowler provides
 - **Prowler MCP Server**: The [Prowler MCP Server](/getting-started/products/prowler-mcp) provides AI assistants with access to the entire Prowler ecosystem, including security checks, compliance frameworks, documentation, and more. This enables AI tools to better understand Prowler's architecture and help you create contributions that align with project standards.
 
 - **AGENTS.md Files**: Each component of the Prowler monorepo includes an `AGENTS.md` file that contains specific guidelines for AI agents working on that component. These files provide context about project structure, coding standards, and best practices. When working on a specific component, refer to the relevant `AGENTS.md` file (e.g., `prowler/AGENTS.md`, `ui/AGENTS.md`, `api/AGENTS.md`) to ensure your AI assistant follows the appropriate guidelines.
+
+- **AI Skills System**: The [AI Skills system](/developer-guide/ai-skills) provides on-demand patterns, templates, and best practices for AI agents. Skills help AI assistants understand Prowler's conventions and generate code that aligns with project standards. The skills are located in the `skills/` directory and are registered in the `AGENTS.md` files.
 
 These resources help ensure that AI-assisted contributions maintain consistency with Prowler's codebase and development practices.
 

@@ -55,16 +55,18 @@ class Bedrock(AWSService):
     def _list_guardrails(self, regional_client):
         logger.info("Bedrock - Listing Guardrails...")
         try:
-            for guardrail in regional_client.list_guardrails().get("guardrails", []):
-                if not self.audit_resources or (
-                    is_resource_filtered(guardrail["arn"], self.audit_resources)
-                ):
-                    self.guardrails[guardrail["arn"]] = Guardrail(
-                        id=guardrail["id"],
-                        name=guardrail["name"],
-                        arn=guardrail["arn"],
-                        region=regional_client.region,
-                    )
+            paginator = regional_client.get_paginator("list_guardrails")
+            for page in paginator.paginate():
+                for guardrail in page.get("guardrails", []):
+                    if not self.audit_resources or (
+                        is_resource_filtered(guardrail["arn"], self.audit_resources)
+                    ):
+                        self.guardrails[guardrail["arn"]] = Guardrail(
+                            id=guardrail["id"],
+                            name=guardrail["name"],
+                            arn=guardrail["arn"],
+                            region=regional_client.region,
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -130,20 +132,22 @@ class BedrockAgent(AWSService):
     def _list_agents(self, regional_client):
         logger.info("Bedrock Agent - Listing Agents...")
         try:
-            for agent in regional_client.list_agents().get("agentSummaries", []):
-                agent_arn = f"arn:aws:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
-                if not self.audit_resources or (
-                    is_resource_filtered(agent_arn, self.audit_resources)
-                ):
-                    self.agents[agent_arn] = Agent(
-                        id=agent["agentId"],
-                        name=agent["agentName"],
-                        arn=agent_arn,
-                        guardrail_id=agent.get("guardrailConfiguration", {}).get(
-                            "guardrailIdentifier"
-                        ),
-                        region=regional_client.region,
-                    )
+            paginator = regional_client.get_paginator("list_agents")
+            for page in paginator.paginate():
+                for agent in page.get("agentSummaries", []):
+                    agent_arn = f"arn:aws:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(agent_arn, self.audit_resources)
+                    ):
+                        self.agents[agent_arn] = Agent(
+                            id=agent["agentId"],
+                            name=agent["agentName"],
+                            arn=agent_arn,
+                            guardrail_id=agent.get("guardrailConfiguration", {}).get(
+                                "guardrailIdentifier"
+                            ),
+                            region=regional_client.region,
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

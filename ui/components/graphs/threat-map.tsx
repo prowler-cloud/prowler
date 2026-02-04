@@ -12,7 +12,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Card } from "@/components/shadcn/card/card";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import {
@@ -382,7 +381,6 @@ export function ThreatMap({
     }
 
     svg.appendChild(pointsGroup);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dimensions,
     data.locations,
@@ -399,7 +397,6 @@ export function ThreatMap({
     providerType?: string,
   ) => {
     const params = new URLSearchParams(searchParams.toString());
-    mapProviderFiltersForFindings(params);
     if (providerType) params.set("filter[provider_type__in]", providerType);
     params.set("filter[region__in]", regionCode);
     params.set("filter[status__in]", status);

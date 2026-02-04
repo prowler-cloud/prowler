@@ -8,20 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
+  "ResourceGroup": "network",
   "Description": "**Azure NSG** inbound rules that allow **SSH** on `TCP 22` from `0.0.0.0/0`, `Internet`, or `*` are identified, including rules where port ranges include `22` and protocol is `TCP` or `*`.\n\nIndicates NSGs exposing SSH to the Internet.",
   "Risk": "Public **SSH** access weakens **confidentiality** and **integrity**. Open `22` invites brute force and key theft, enabling remote shell control, persistence, and **lateral movement**. Attackers can pivot into VNets, exfiltrate data, deploy crypto-miners, and impact **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.techbloat.com/terraform-azurerm-network-security-group.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/unrestricted-ssh-access.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-ssh-access.html",
-    "https://www.mantra-networking.com/azure-nsgs/",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_3#terraform",
-    "https://github.com/Gautam01Dev/Azure-Network",
-    "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
-    "https://dev.to/charlie_barajas_353e28103/azure-nsg-routes-3k7a",
-    "https://stackoverflow.com/questions/35780769/changing-ssh-port-22-to-a-custom-port-in-azure-resource-group-vm",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+    "https://learn.microsoft.com/en-us/azure/security/fundamentals/network-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
   ],
   "Remediation": {
     "Code": {

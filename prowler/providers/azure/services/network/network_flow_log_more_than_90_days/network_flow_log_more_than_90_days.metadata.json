@@ -8,18 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.network/networkwatchers",
-  "Description": "**NSG flow logs** in Azure Network Watcher are configured and retained for at least `90` days (or `0` for unlimited). The evaluation checks that flow logging is enabled and that the retention policy meets the required duration for each configured log.",
+  "ResourceGroup": "network",
+  "Description": "**Azure Network Watcher** has **NSG flow logs** enabled and configured to retain for at least `90` days (or `0` for unlimited). The evaluation checks that flow logging is enabled and that the retention policy meets the required duration for each configured log.",
   "Risk": "Absent or short-retained **NSG flow logs** reduce visibility into IP flows, delaying detection of port scans, brute force, data exfiltration, and lateral movement.\n\nForensics and accountability degrade, threatening **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
-    "https://cloud-kb.sentinelone.com/nsg-flow-logs-retention-period",
-    "https://docs.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest",
-    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1/",
-    "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1#terraform",
-    "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview",
+    "https://learn.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest",
+    "https://learn.microsoft.com/en-us/azure/network-watcher/nsg-flow-logs-overview?tabs=Americas",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
-    "https://github.com/MicrosoftDocs/azure-docs/issues/69518",
     "https://support.icompaas.com/support/solutions/articles/62000229906-ensure-that-network-security-group-flow-log-retention-period-is-greater-than-90-days-"
   ],
   "Remediation": {

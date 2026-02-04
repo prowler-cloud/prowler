@@ -1,0 +1,15 @@
+Mutelist:
+  Accounts:
+    "test-project-id":
+      Checks:
+        "compute_instance_security_groups_attached":
+          Regions:
+            - "*"
+          Resources:
+            - "test-instance-id"
+            - "test-instance-name"
+        "identity_password_policy_enabled":
+          Regions:
+            - "RegionOne"
+          Resources:
+            - "*"

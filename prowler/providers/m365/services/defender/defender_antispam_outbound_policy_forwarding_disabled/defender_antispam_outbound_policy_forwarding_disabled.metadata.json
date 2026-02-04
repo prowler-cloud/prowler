@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Defender Anti-Spam Outbound Policy",
+  "ResourceGroup": "security",
   "Description": "Ensure Defender Outbound Spam Policies are set to disable mail forwarding.",
   "Risk": "Enabling email auto-forwarding can be exploited by attackers or malicious insiders to exfiltrate sensitive data outside the organization, often without detection.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",

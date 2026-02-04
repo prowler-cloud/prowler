@@ -6,15 +6,14 @@
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
-  "Description": "**Azure Network Security Groups** are evaluated for inbound rules that allow public **HTTP** access on `TCP 80`, including cases where `80` is covered by a port range, from `0.0.0.0/0`, `Internet`, or `*`.",
+  "ResourceGroup": "network",
+  "Description": "**Azure NSG** are evaluated for inbound rules that allow public **HTTP** access on `TCP 80`, including cases where `80` is covered by a port range, from `0.0.0.0/0`, `Internet`, or `*`.",
   "Risk": "Exposing `TCP 80` to the Internet increases attack surface:\n- Web recon and exploits compromise **integrity** and **availability**\n- Cleartext HTTP can leak credentials, cookies, and data, harming **confidentiality**\n- Public endpoints enable bot abuse and footholds for lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://dev.to/buzzgk/azure-network-security-groups-nsgs-securing-your-azure-virtual-network-1kf8",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-http-access.html",
-    "https://notes.51sec.org/Collections/29157b51-1fff-4d97-9b63-22d4cc98efe1",
     "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
   ],
   "Remediation": {

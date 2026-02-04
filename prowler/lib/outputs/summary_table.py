@@ -54,6 +54,15 @@ def display_summary_table(
         elif provider.type == "mongodbatlas":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_name
+        elif provider.type == "cloudflare":
+            entity_type = "Account"
+            audited_accounts = getattr(provider.identity, "audited_accounts", []) or []
+            if audited_accounts:
+                audited_entities = ", ".join(audited_accounts)
+            else:
+                audited_entities = (
+                    getattr(provider.identity, "email", None) or "Cloudflare"
+                )
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
@@ -77,6 +86,13 @@ def display_summary_table(
         elif provider.type == "alibabacloud":
             entity_type = "Account"
             audited_entities = provider.identity.account_id
+        elif provider.type == "openstack":
+            entity_type = "Project"
+            audited_entities = (
+                provider.identity.project_name
+                if provider.identity.project_name
+                else provider.identity.project_id
+            )
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

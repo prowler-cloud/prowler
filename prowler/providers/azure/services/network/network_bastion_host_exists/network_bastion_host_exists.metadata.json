@@ -8,19 +8,16 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.network/bastionhosts",
-  "Description": "Azure subscription contains an **Azure Bastion host** for secure RDP/SSH brokering over TLS on `443/TCP` to virtual machines using private IPs. The assessment identifies whether such a bastion is available.",
+  "ResourceGroup": "network",
+  "Description": "**Azure subscription** contains an **Azure Bastion host** for secure RDP/SSH brokering over TLS on `443/TCP` to virtual machines using private IPs. The assessment identifies whether such a bastion is available.",
   "Risk": "Absent **Bastion**, admins often assign public IPs or open `22/3389`, expanding attack surface.\n\nThis enables Internet brute force, credential stuffing, and RDP/SSH exploits, leading to unauthorized access, data exfiltration, and lateral movement. CIA impact: confidentiality/integrity loss and potential downtime from ransomware.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/powershell/module/az.network/get-azbastion?view=azps-9.2.0",
-    "https://adamtheautomator.com/azure-bastion/",
     "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/bastionhosts",
-    "https://medium.com/@jose.ruy.borges/use-bastion-host-to-connect-to-a-vm-without-setting-up-a-vpn-connection-in-azure-9d6fcfbb487a",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/bastion-host-exists.html",
-    "https://platform.qa.com/lab/connecting-to-azure-vm-using-bastion-host/creating-an-azure-bastion-host-using-azure-portal/",
     "https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku",
-    "https://learn.microsoft.com/en-us/azure/firewall/deploy-ps",
-    "https://github.com/anuyen/terraform-azurerm-bastion"
+    "https://learn.microsoft.com/en-us/azure/firewall/deploy-ps"
   ],
   "Remediation": {
     "Code": {

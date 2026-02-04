@@ -6,14 +6,13 @@ across all providers.
 
 from typing import Any
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
     ResourcesListResponse,
     ResourcesMetadataResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class ResourcesTools(BaseTool):
@@ -188,7 +187,7 @@ class ResourcesTools(BaseTool):
 
         1. Configuration Details:
            - metadata: Provider-specific configuration (tags, policies, encryption settings, network rules)
-           - partition: Provider-specific partition/region grouping (e.g., aws, aws-cn, aws-us-gov for AWS)
+           - partition: Provider-specific partition/region grouping (e.g., aws, aws-cn, aws-eusc, aws-us-gov for AWS)
 
         2. Temporal Tracking:
            - inserted_at: When Prowler first discovered this resource
