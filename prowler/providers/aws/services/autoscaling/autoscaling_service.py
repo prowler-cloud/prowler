@@ -100,9 +100,6 @@ class AutoScaling(AWSService):
                                 launch_configuration_name=group.get(
                                     "LaunchConfigurationName", ""
                                 ),
-                                deletion_protection=group.get(
-                                    "DeletionProtection", "none"
-                                ),
                             )
                         )
 
@@ -181,7 +178,6 @@ class Group(BaseModel):
     load_balancers: list = []
     target_groups: list = []
     launch_configuration_name: str
-    deletion_protection: str
 
 
 class ScalableTarget(BaseModel):
