@@ -115,33 +115,9 @@ This permission mismatch occurs due to the interaction between Docker volume own
 * Docker creates the mounted volume directory `./_data/api` on the host with root ownership (UID 0)
 * When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails due to insufficient permissions
 
-**Solutions:**
+**Solution:**
 
-There are two approaches to resolve this issue:
-
-**Option 1: Adjust Volume Permissions (Recommended for Development)**
-
-Before starting the containers, ensure the mounted volume directory has the correct ownership.
-
-**On Linux with sudo access:**
-
-```bash
-sudo chown -R 1000:1000 ./_data/api
-docker compose up -d
-```
-
-**Cross-platform or without sudo (using Docker):**
-
-```bash
-docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
-docker compose up -d
-```
-
-The Docker-based approach is more portable and works across Linux, macOS, and Windows without requiring elevated privileges on the host.
-
-**Option 2: Use Environment Variables (Recommended for Production)**
-
-Skip file-based key storage by providing JWT keys directly via environment variables. Generate RSA key pair and configure the `.env` file:
+Generate JWT RSA keys manually and provide them via environment variables to skip file-based key storage. This approach is recommended for both development and production environments:
 
 ```bash
 # Generate RSA keys
@@ -162,13 +138,9 @@ DJANGO_TOKEN_VERIFYING_KEY=<content of jwt_public.pem>
 
 When these environment variables are set, the API will use them directly instead of attempting to write key files to the mounted volume.
 
-**Prevention:**
-
-For persistent deployments, consider:
-
-* Pre-creating the volume directory with appropriate ownership before the first run
-* Using Docker named volumes instead of bind mounts (ownership is managed automatically by Docker)
-* Implementing proper secrets management for production environments
+<Warning>
+For production environments, implement proper secrets management solutions (such as HashiCorp Vault, AWS Secrets Manager, or Kubernetes Secrets) instead of storing keys directly in `.env` files.
+</Warning>
 
 <Note>
 A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
