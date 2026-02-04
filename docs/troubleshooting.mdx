@@ -121,17 +121,23 @@ There are two approaches to resolve this issue:
 
 **Option 1: Adjust Volume Permissions (Recommended for Development)**
 
-Before starting the containers, ensure the mounted volume directory has the correct ownership:
+Before starting the containers, ensure the mounted volume directory has the correct ownership.
+
+**On Linux with sudo access:**
 
 ```bash
 sudo chown -R 1000:1000 ./_data/api
-```
-
-Then start Docker Compose:
-
-```bash
 docker compose up -d
 ```
+
+**Cross-platform or without sudo (using Docker):**
+
+```bash
+docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+docker compose up -d
+```
+
+The Docker-based approach is more portable and works across Linux, macOS, and Windows without requiring elevated privileges on the host.
 
 **Option 2: Use Environment Variables (Recommended for Production)**
 
