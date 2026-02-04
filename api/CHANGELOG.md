@@ -16,6 +16,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
+- Attack Paths: Pinned Cartography to version `0.126.1`, adding AWS scans for SageMaker, CloudFront and Bedrock [(#9893)](https://github.com/prowler-cloud/prowler/issues/9893)
 - Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
 
 ---
