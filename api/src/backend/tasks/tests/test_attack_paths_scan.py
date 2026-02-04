@@ -305,10 +305,16 @@ class TestAttackPathsFindingsHelpers:
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
-        # Create a generator that yields two batches
+        # Create mock Finding objects with to_dict() method
+        mock_finding_1 = MagicMock()
+        mock_finding_1.to_dict.return_value = {"id": "1", "resource_uid": "r-1"}
+        mock_finding_2 = MagicMock()
+        mock_finding_2.to_dict.return_value = {"id": "2", "resource_uid": "r-2"}
+
+        # Create a generator that yields two batches of Finding instances
         def findings_generator():
-            yield [{"id": "1", "resource_uid": "r-1"}]
-            yield [{"id": "2", "resource_uid": "r-2"}]
+            yield [mock_finding_1]
+            yield [mock_finding_2]
 
         config = SimpleNamespace(update_tag=12345)
         mock_session = MagicMock()
@@ -454,11 +460,11 @@ class TestAttackPathsFindingsHelpers:
                 findings_data.extend(batch)
 
         assert len(findings_data) == 1
-        finding_dict = findings_data[0]
-        assert finding_dict["id"] == str(finding.id)
-        assert finding_dict["resource_uid"] == resource.uid
-        assert finding_dict["check_title"] == "Check title"
-        assert finding_dict["scan_id"] == str(latest_scan.id)
+        finding_result = findings_data[0]
+        assert finding_result.id == str(finding.id)
+        assert finding_result.resource_uid == resource.uid
+        assert finding_result.check_title == "Check title"
+        assert finding_result.scan_id == str(latest_scan.id)
 
     def test_enrich_batch_with_resources_single_resource(
         self,
