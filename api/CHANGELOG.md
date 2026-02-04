@@ -17,6 +17,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
 - Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
+- Attack Paths: Modified the behaviour of the Cartography scans to use the same Neo4j database per tenant, instead of individual databases per scans [(#9955)](https://github.com/prowler-cloud/prowler/pull/9955)
 
 ---
 
@@ -25,7 +26,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Attack Paths: `aws-security-groups-open-internet-facing` query returning no results due to incorrect relationship matching [(#9892)](https://github.com/prowler-cloud/prowler/pull/9892)
-- Modified the behaviour of the Attack Paths scans to use the same Neo4j database per tenant, instead of individual databases per scans [(#9955)](https://github.com/prowler-cloud/prowler/pull/9955)
 
 ---
 
