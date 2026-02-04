@@ -34,6 +34,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure PostgreSQL service metadata to new format [(#9626)](https://github.com/prowler-cloud/prowler/pull/9626)
 - Update Azure SQL Server service metadata to new format [(#9627)](https://github.com/prowler-cloud/prowler/pull/9627)
 - Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
+- Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
 
 ### Fixed
 
