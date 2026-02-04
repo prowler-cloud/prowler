@@ -109,15 +109,38 @@ Token generation failed due to invalid key configuration. Provide valid DJANGO_T
 
 **Root Cause:**
 
-This permission mismatch occurs due to the interaction between Docker volume ownership and container user privileges:
+This permission mismatch occurs due to UID (User ID) mapping between the host system and Docker containers:
 
 * The API container runs as user `prowler` with UID/GID 1000
-* Docker creates the mounted volume directory `./_data/api` on the host with root ownership (UID 0)
-* When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails due to insufficient permissions
+* In environments like WSL2, the host user may have a different UID than the container user
+* Docker creates the mounted volume directory `./_data/api` on the host, often with the host user's UID or root ownership (UID 0)
+* When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails because the container's UID 1000 does not have write permissions to the host-owned directory
 
-**Solution:**
+**Solutions:**
 
-Generate JWT RSA keys manually and provide them via environment variables to skip file-based key storage. This approach is recommended for both development and production environments:
+There are two approaches to resolve this issue:
+
+**Option 1: Fix Volume Ownership (Resolve UID Mapping)**
+
+Change the ownership of the volume directory to match the container user's UID (1000):
+
+```bash
+# The container user 'prowler' has UID 1000
+# This command changes the directory ownership to UID 1000
+sudo chown -R 1000:1000 ./_data/api
+```
+
+Then start Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This solution directly addresses the UID mapping mismatch by ensuring the volume directory is owned by the same UID that the container process uses.
+
+**Option 2: Use Environment Variables (Skip File Storage)**
+
+Generate JWT RSA keys manually and provide them via environment variables to bypass file-based key storage entirely:
 
 ```bash
 # Generate RSA keys
