@@ -6,7 +6,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Restyle resources view with improved resource detail drawer [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
 - Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
+- Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
+
+### 🔐 Security
+
+- React from 19.2.3 to 19.2.4 and Next.js from 16.1.3 to 16.1.6, patching DoS vulnerability in React Server Components (GHSA-83fc-fqcc-2hmg) [(#9917)](https://github.com/prowler-cloud/prowler/pull/9917)
 
 ---
 
@@ -25,7 +31,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
 - Refactor Lighthouse AI MCP tool filtering from blacklist to whitelist approach for improved security [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Rename resource_group filter to group in Resources page and Overview cards [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)

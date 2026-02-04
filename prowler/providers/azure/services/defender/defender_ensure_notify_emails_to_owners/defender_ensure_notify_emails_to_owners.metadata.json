@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_notify_emails_to_owners",
-  "CheckTitle": "Ensure That 'All users with the following roles' is set to 'Owner'",
+  "CheckTitle": "Security contact notifications include the Owner role",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AzureEmailNotifications",
+  "ResourceType": "microsoft.resources/subscriptions",
   "ResourceGroup": "monitoring",
-  "Description": "Enable security alert emails to subscription owners.",
-  "Risk": "Enabling security alert emails to subscription owners ensures that they receive security alert emails from Microsoft. This ensures that they are aware of any potential security issues and can mitigate the risk in a timely fashion.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",
+  "Description": "**Microsoft Defender for Cloud** email notifications target subscription users in the `Owner` role through role-based recipients.",
+  "Risk": "Without notifying **Owners**, critical alerts can be missed, delaying incident response. Attackers gain longer dwell time for data exfiltration, privilege abuse, and service disruption, undermining **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/rest/api/defenderforcloud/security-contacts/list?view=rest-defenderforcloud-2023-12-01-preview&tabs=HTTP",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/email-to-subscription-owners.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/email-to-subscription-owners.html",
-      "Terraform": ""
+      "CLI": "az security contact create --name default --email <EMAIL> --alerts-admins On",
+      "NativeIaC": "```bicep\n// Enable Defender for Cloud notifications to the Owner role\nresource contact 'Microsoft.Security/securityContacts@2023-12-01-preview' = {\n  name: 'default'\n  properties: {\n    emails: '<email@example.com>'\n    notificationsByRole: {\n      state: 'On'   // CRITICAL: Turn on role-based notifications\n      roles: [ 'Owner' ] // CRITICAL: Ensure the Owner role is notified\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > choose the target subscription\n3. Open Email notifications\n4. Enable \"Send email notifications to users with the following roles\"\n5. Select the role: Owner\n6. Click Save",
+      "Terraform": "```hcl\n# Enable notifications to subscription owners (Owner role)\nresource \"azurerm_security_center_contact\" \"<example_resource_name>\" {\n  email               = \"<email@example.com>\"\n  alert_notifications = true\n  alerts_to_admins    = true  # CRITICAL: Notifies users with the Owner role\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Click on Environment Settings 4. Click on the appropriate Management Group, Subscription, or Workspace 5. Click on Email notifications 6. In the drop down of the All users with the following roles field select Owner 7. Click Save",
-      "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
+      "Text": "Enable role-based notifications to the `Owner` role and use monitored, up-to-date distribution lists. Add secondary recipients (SOC/security admins) for redundancy, tune thresholds to reduce noise, and integrate with SIEM/automation. Apply **defense in depth** and **least privilege** for alert dissemination.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_notify_emails_to_owners"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

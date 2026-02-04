@@ -1,16 +1,32 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
+
+import { useFilterTransitionOptional } from "@/contexts";
 
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
+ *
+ * Uses useTransition to prevent full page reloads when filters change,
+ * keeping the current UI visible while the new data loads.
+ *
+ * When used within a FilterTransitionProvider, the transition state is shared
+ * across all components using this hook, enabling coordinated loading indicators.
  */
 export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+
+  // Use shared context if available, otherwise fall back to local transition
+  const sharedTransition = useFilterTransitionOptional();
+  const [localIsPending, localStartTransition] = useTransition();
+
+  const isPending = sharedTransition?.isPending ?? localIsPending;
+  const startTransition =
+    sharedTransition?.startTransition ?? localStartTransition;
 
   const updateFilter = useCallback(
     (key: string, value: string | string[] | null) => {
@@ -41,9 +57,11 @@ export const useUrlFilters = () => {
         params.set(filterKey, nextValue);
       }
 
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     },
-    [router, searchParams, pathname],
+    [router, searchParams, pathname, startTransition],
   );
 
   const clearFilter = useCallback(
@@ -58,9 +76,11 @@ export const useUrlFilters = () => {
         params.set("page", "1");
       }
 
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     },
-    [router, searchParams, pathname],
+    [router, searchParams, pathname, startTransition],
   );
 
   const clearAllFilters = useCallback(() => {
@@ -73,8 +93,10 @@ export const useUrlFilters = () => {
 
     params.delete("page");
 
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [router, searchParams, pathname]);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  }, [router, searchParams, pathname, startTransition]);
 
   const hasFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -88,5 +110,6 @@ export const useUrlFilters = () => {
     clearFilter,
     clearAllFilters,
     hasFilters,
+    isPending,
   };
 };

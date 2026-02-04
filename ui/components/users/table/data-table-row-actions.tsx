@@ -17,7 +17,7 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteForm, EditForm } from "../forms";
 
@@ -41,8 +41,8 @@ export function DataTableRowActions<UserProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
+      <Modal
+        open={isEditOpen}
         onOpenChange={setIsEditOpen}
         title="Edit user details"
       >
@@ -55,15 +55,15 @@ export function DataTableRowActions<UserProps>({
           roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      </Modal>
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
       >
         <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown

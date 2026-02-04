@@ -1174,6 +1174,11 @@ class TestProviderViewSet:
                     "uid": "1234567890123456",
                     "alias": "Alibaba Cloud Account",
                 },
+                {
+                    "provider": "cloudflare",
+                    "uid": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+                    "alias": "Cloudflare Account",
+                },
             ]
         ),
     )
@@ -1553,6 +1558,46 @@ class TestProviderViewSet:
                     "alibabacloud-uid",
                     "uid",
                 ),
+                # Cloudflare UID validation - too short (not 32 hex chars)
+                (
+                    {
+                        "provider": "cloudflare",
+                        "uid": "abc123",
+                        "alias": "test",
+                    },
+                    "cloudflare-uid",
+                    "uid",
+                ),
+                # Cloudflare UID validation - uppercase hex (must be lowercase)
+                (
+                    {
+                        "provider": "cloudflare",
+                        "uid": "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4",
+                        "alias": "test",
+                    },
+                    "cloudflare-uid",
+                    "uid",
+                ),
+                # Cloudflare UID validation - non-hex characters
+                (
+                    {
+                        "provider": "cloudflare",
+                        "uid": "g1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+                        "alias": "test",
+                    },
+                    "cloudflare-uid",
+                    "uid",
+                ),
+                # Cloudflare UID validation - too long (33 chars)
+                (
+                    {
+                        "provider": "cloudflare",
+                        "uid": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e",
+                        "alias": "test",
+                    },
+                    "cloudflare-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1726,21 +1771,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    8,
+                    9,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 9),
+                ("inserted_at", TODAY, 10),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    9,
+                    10,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    9,
+                    10,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2328,6 +2373,23 @@ class TestProviderSecretViewSet:
                     "access_key_id": "LTAI5t1234567890abcdef",
                     "access_key_secret": "my-secret-access-key",
                     "role_session_name": "ProwlerAuditSession",
+                },
+            ),
+            # Cloudflare with API Token
+            (
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_token": "fake-cloudflare-api-token-for-testing",
+                },
+            ),
+            # Cloudflare with API Key + Email
+            (
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_key": "fake-cloudflare-api-key-for-testing",
+                    "api_email": "user@example.com",
                 },
             ),
         ],
@@ -4355,6 +4417,108 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
+
+    def test_resources_latest_filter_by_provider_id(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id__in filter works on latest resources endpoint."""
+        provider = latest_scan_resource.provider
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert (
+            response.json()["data"][0]["attributes"]["uid"] == latest_scan_resource.uid
+        )
+
+    def test_resources_latest_filter_by_provider_id_in_multiple(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test that provider_id__in filter works with multiple provider IDs."""
+        provider1, provider2 = providers_fixture[0], providers_fixture[1]
+        tenant_id = str(provider1.tenant_id)
+
+        # Create completed scans for both providers
+        Scan.objects.create(
+            name="scan for provider 1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+        Scan.objects.create(
+            name="scan for provider 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant_id,
+        )
+
+        # Create resources for each provider
+        resource1 = Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider1,
+            uid="resource_provider_1",
+            name="Resource Provider 1",
+            region="us-east-1",
+            service="ec2",
+            type="instance",
+        )
+        Resource.objects.create(
+            tenant_id=tenant_id,
+            provider=provider2,
+            uid="resource_provider_2",
+            name="Resource Provider 2",
+            region="us-west-2",
+            service="s3",
+            type="bucket",
+        )
+
+        # Test filtering by both providers
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+        # Test filtering by single provider returns only that provider's resource
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["uid"] == resource1.uid
+
+    def test_resources_latest_filter_by_provider_id_no_match(
+        self, authenticated_client, latest_scan_resource
+    ):
+        """Test that provider_id filter returns empty when no match."""
+        non_existent_id = str(uuid4())
+        response = authenticated_client.get(
+            reverse("resource-latest"),
+            {"filter[provider_id]": non_existent_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
 
     # Events endpoint tests
     def test_events_non_aws_provider(self, authenticated_client, providers_fixture):

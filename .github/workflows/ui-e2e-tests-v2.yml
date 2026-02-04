@@ -1,0 +1,238 @@
+name: UI - E2E Tests (Optimized)
+
+# This is an optimized version that runs only relevant E2E tests
+# based on changed files. Falls back to running all tests if
+# critical paths are changed or if impact analysis fails.
+
+on:
+  pull_request:
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/test-impact.yml'
+      - 'ui/**'
+      - 'api/**'  # API changes can affect UI E2E
+
+jobs:
+  # First, analyze which tests need to run
+  impact-analysis:
+    if: github.repository == 'prowler-cloud/prowler'
+    uses: ./.github/workflows/test-impact-analysis.yml
+
+  # Run E2E tests based on impact analysis
+  e2e-tests:
+    needs: impact-analysis
+    if: |
+      github.repository == 'prowler-cloud/prowler' && 
+      (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
+    runs-on: ubuntu-latest
+    env:
+      AUTH_SECRET: 'fallback-ci-secret-for-testing'
+      AUTH_TRUST_HOST: true
+      NEXTAUTH_URL: 'http://localhost:3000'
+      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
+      E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
+      E2E_AWS_PROVIDER_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
+      E2E_AWS_PROVIDER_SECRET_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
+      E2E_AWS_PROVIDER_ROLE_ARN: ${{ secrets.E2E_AWS_PROVIDER_ROLE_ARN }}
+      E2E_AZURE_SUBSCRIPTION_ID: ${{ secrets.E2E_AZURE_SUBSCRIPTION_ID }}
+      E2E_AZURE_CLIENT_ID: ${{ secrets.E2E_AZURE_CLIENT_ID }}
+      E2E_AZURE_SECRET_ID: ${{ secrets.E2E_AZURE_SECRET_ID }}
+      E2E_AZURE_TENANT_ID: ${{ secrets.E2E_AZURE_TENANT_ID }}
+      E2E_M365_DOMAIN_ID: ${{ secrets.E2E_M365_DOMAIN_ID }}
+      E2E_M365_CLIENT_ID: ${{ secrets.E2E_M365_CLIENT_ID }}
+      E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
+      E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
+      E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
+      E2E_KUBERNETES_CONTEXT: 'kind-kind'
+      E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
+      E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
+      E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
+      E2E_GITHUB_APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
+      E2E_GITHUB_BASE64_APP_PRIVATE_KEY: ${{ secrets.E2E_GITHUB_BASE64_APP_PRIVATE_KEY }}
+      E2E_GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
+      E2E_GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_PERSONAL_ACCESS_TOKEN }}
+      E2E_GITHUB_ORGANIZATION: ${{ secrets.E2E_GITHUB_ORGANIZATION }}
+      E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN }}
+      E2E_ORGANIZATION_ID: ${{ secrets.E2E_ORGANIZATION_ID }}
+      E2E_OCI_TENANCY_ID: ${{ secrets.E2E_OCI_TENANCY_ID }}
+      E2E_OCI_USER_ID: ${{ secrets.E2E_OCI_USER_ID }}
+      E2E_OCI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
+      E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
+      E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
+      E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
+      # Pass E2E paths from impact analysis
+      E2E_TEST_PATHS: ${{ needs.impact-analysis.outputs.ui-e2e }}
+      RUN_ALL_TESTS: ${{ needs.impact-analysis.outputs.run-all }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Show test scope
+        run: |
+          echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+            echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Running tests matching: \`${{ env.E2E_TEST_PATHS }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo ""
+          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: kind
+
+      - name: Modify kubeconfig
+        run: |
+          kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
+          kubectl config view
+
+      - name: Add network kind to docker compose
+        run: |
+          yq -i '.networks.kind.external = true' docker-compose.yml
+          yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
+
+      - name: Fix API data directory permissions
+        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+
+      - name: Add AWS credentials for testing
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
+
+      - name: Start API services
+        run: |
+          export PROWLER_API_VERSION=latest
+          docker compose up -d api worker worker-beat
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for prowler-api..."
+          timeout=150
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+              echo "Prowler API is ready!"
+              exit 0
+            fi
+            echo "Waiting... (${elapsed}s elapsed)"
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+          echo "Timeout waiting for prowler-api"
+          exit 1
+
+      - name: Load database fixtures
+        run: |
+          docker compose exec -T api sh -c '
+            for fixture in api/fixtures/dev/*.json; do
+              if [ -f "$fixture" ]; then
+                echo "Loading $fixture"
+                poetry run python manage.py loaddata "$fixture" --database admin
+              fi
+            done
+          '
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '24.13.0'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm and Next.js cache
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: |
+            ${{ env.STORE_PATH }}
+            ./ui/node_modules
+            ./ui/.next/cache
+          key: ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/**/*.ts', 'ui/**/*.tsx', 'ui/**/*.js', 'ui/**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-pnpm-nextjs-
+
+      - name: Install UI dependencies
+        working-directory: ./ui
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build UI application
+        working-directory: ./ui
+        run: pnpm run build
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers
+        working-directory: ./ui
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm run test:e2e:install
+
+      - name: Run E2E tests
+        working-directory: ./ui
+        run: |
+          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+            echo "Running ALL E2E tests..."
+            pnpm run test:e2e
+          else
+            echo "Running targeted E2E tests: ${{ env.E2E_TEST_PATHS }}"
+            # Convert glob patterns to playwright test paths
+            # e.g., "ui/tests/providers/**" -> "tests/providers"
+            TEST_PATHS="${{ env.E2E_TEST_PATHS }}"
+            # Remove ui/ prefix and convert ** to empty (playwright handles recursion)
+            TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u | tr '\n' ' ')
+            echo "Resolved test paths: $TEST_PATHS"
+            pnpm exec playwright test $TEST_PATHS
+          fi
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: failure()
+        with:
+          name: playwright-report
+          path: ui/playwright-report/
+          retention-days: 30
+
+      - name: Cleanup services
+        if: always()
+        run: |
+          docker compose down -v || true
+
+  # Skip job - provides clear feedback when no E2E tests needed
+  skip-e2e:
+    needs: impact-analysis
+    if: |
+      github.repository == 'prowler-cloud/prowler' && 
+      needs.impact-analysis.outputs.has-ui-e2e != 'true' && 
+      needs.impact-analysis.outputs.run-all != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: No E2E tests needed
+        run: |
+          echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY

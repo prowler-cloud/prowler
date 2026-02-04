@@ -17,8 +17,8 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { downloadScanZip } from "@/lib/helper";
 
 import { EditScanForm } from "../../forms";
@@ -39,8 +39,8 @@ export function DataTableRowActions<ScanProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
+      <Modal
+        open={isEditOpen}
         onOpenChange={setIsEditOpen}
         title="Edit Scan Name"
       >
@@ -49,7 +49,7 @@ export function DataTableRowActions<ScanProps>({
           scanName={scanName}
           setIsOpen={setIsEditOpen}
         />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown

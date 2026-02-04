@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_connection_throttling_on",
-  "CheckTitle": "Ensure server parameter 'connection_throttling' is set to 'ON' for PostgreSQL Database Server",
+  "CheckTitle": "Flexible PostgreSQL server has connection_throttling enabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable connection_throttling on PostgreSQL Servers.",
-  "Risk": "Enabling connection_throttling helps the PostgreSQL Database to Set the verbosity of logged messages. This in turn generates query and error logs with respect to concurrent connections that could lead to a successful Denial of Service (DoS) attack by exhausting connection resources. A system can also fail or be degraded by an overload of legitimate users. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
-  "RelatedUrl": " https://docs.microsoft.com/en-us/rest/api/postgresql/configurations/listbyserver",
+  "Description": "**Azure PostgreSQL flexible servers** where the `connection_throttling` parameter is set to `ON`",
+  "Risk": "Without `connection_throttling`, bursts of new sessions can exhaust connection slots and CPU, degrading **availability** and causing timeouts.\n\nReduced telemetry delays detection of **DoS** or runaway clients, extending impact and recovery time.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/connection-throttling.html",
+    "https://support.icompaas.com/support/solutions/articles/62000229889-ensure-server-parameter-connection-throttling-is-set-to-on-for-postgresql-database-server"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name connection_throttling --value on",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/connection-throttling.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_13#terraform"
+      "CLI": "az postgres flexible-server parameter set --resource-group <resourceGroupName> --server-name <serverName> --name connection_throttle.enable --value on",
+      "NativeIaC": "```bicep\n// Configure an existing Flexible Server parameter\nresource exampleServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource connectionThrottling 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2022-12-01' = {\n  name: 'connection_throttle.enable'\n  parent: exampleServer\n  properties: {\n    value: 'on' // CRITICAL: Enables connection_throttle.enable to pass the check\n  }\n}\n```",
+      "Other": "1. Sign in to Azure Portal and go to Azure Database for PostgreSQL flexible servers\n2. Select the target server\n3. In Settings, click Server parameters\n4. Search for connection_throttle.enable\n5. Set the value to ON and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name      = \"connection_throttle.enable\"\n  server_id = \"<example_resource_id>\"\n  value     = \"on\" # CRITICAL: Enables connection_throttle.enable to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Login to Azure Portal using https://portal.azure.com. 2. Go to Azure Database for PostgreSQL servers. 3. For each database, click on Server parameters. 4. Search for connection_throttling. 5. Click ON and save. From Azure CLI Use the below command to update connection_throttling configuration. az postgres server configuration set --resource-group <resourceGroupName> -- server-name <serverName> --name connection_throttling --value on From PowerShell Use the below command to update connection_throttling configuration. Update-AzPostgreSqlConfiguration -ResourceGroupName <ResourceGroupName> - ServerName <ServerName> -Name connection_throttling -Value on",
-      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal"
+      "Text": "Enable `connection_throttling` and align connection limits with expected load.\n\nApply **defense in depth**: use connection pooling, exponential backoff, and alerts on connection spikes; prefer private access and restrictive networking to reduce exposure.",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_connection_throttling_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

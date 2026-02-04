@@ -149,7 +149,7 @@ class Zone(CloudflareService):
 
     def _get_zones_universal_ssl(self) -> None:
         """Get Universal SSL settings for all zones."""
-        logger.info("Zones - Getting Universal SSL settings...")
+        logger.info("Zone - Getting Universal SSL settings...")
         for zone in self.zones.values():
             try:
                 universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
@@ -220,7 +220,7 @@ class Zone(CloudflareService):
 
     def _get_zones_firewall_rules(self) -> None:
         """Get firewall rules for all zones."""
-        logger.info("Zones - Getting firewall rules...")
+        logger.info("Zone - Getting firewall rules...")
         for zone in self.zones.values():
             try:
                 self._get_zone_firewall_rules(zone)
@@ -284,7 +284,7 @@ class Zone(CloudflareService):
 
     def _get_zones_waf_rulesets(self) -> None:
         """Get WAF rulesets for all zones."""
-        logger.info("Zones - Getting WAF rulesets...")
+        logger.info("Zone - Getting WAF rulesets...")
         for zone in self.zones.values():
             try:
                 self._get_zone_waf_rulesets(zone)
