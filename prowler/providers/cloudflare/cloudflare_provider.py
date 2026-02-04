@@ -321,6 +321,8 @@ class CloudflareProvider(Provider):
         """Test connection to Cloudflare.
 
         Test the connection to Cloudflare using the provided credentials.
+        First tries user.get(), then falls back to accounts.list() if the token
+        doesn't have User:Read permissions (consistent with setup_identity behavior).
 
         Args:
             api_token: Cloudflare API token (optional, falls back to env var).
@@ -338,7 +340,23 @@ class CloudflareProvider(Provider):
                 api_key=api_key,
                 api_email=api_email,
             )
-            _ = session.client.user.get()
+            # Try user.get() first, but fall back to accounts.list() if it fails
+            # This matches the behavior in setup_identity where user.get() failure
+            # is treated as a warning, not a fatal error
+            try:
+                _ = session.client.user.get()
+            except Exception as user_error:
+                logger.warning(
+                    f"Unable to retrieve Cloudflare user info: {user_error}. "
+                    "Trying accounts.list() as fallback."
+                )
+                # Fall back to accounts.list() - if this also fails, the token is invalid
+                accounts = list(session.client.accounts.list())
+                if not accounts:
+                    raise CloudflareCredentialsError(
+                        file=os.path.basename(__file__),
+                        message="No Cloudflare accounts found. Please verify your API token has the required permissions.",
+                    )
             return Connection(is_connected=True)
         except Exception as error:
             logger.error(
