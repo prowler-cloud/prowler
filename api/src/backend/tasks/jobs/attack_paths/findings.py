@@ -10,6 +10,7 @@ This module handles:
 
 from collections import defaultdict
 from typing import Generator, TypedDict
+from uuid import UUID
 
 import neo4j
 
@@ -250,8 +251,9 @@ def stream_findings_with_resources(
         f"(tenant {prowler_api_provider.tenant_id}) with batch size {BATCH_SIZE}"
     )
 
-    for batch in _paginate_findings(prowler_api_provider.tenant_id, scan_id):
-        enriched = _enrich_batch_with_resources(batch)
+    tenant_id = prowler_api_provider.tenant_id
+    for batch in _paginate_findings(tenant_id, scan_id):
+        enriched = _enrich_batch_with_resources(batch, tenant_id)
         if enriched:
             yield enriched
 
@@ -312,6 +314,7 @@ def _fetch_findings_batch(
 
 def _enrich_batch_with_resources(
     findings_batch: list[FindingRecord],
+    tenant_id: str,
 ) -> list[EnrichedFinding]:
     """
     Enrich findings with their resource UIDs.
@@ -320,7 +323,7 @@ def _enrich_batch_with_resources(
     Findings without resources are skipped.
     """
     finding_ids = [f["id"] for f in findings_batch]
-    resource_map = _build_finding_resource_map(finding_ids)
+    resource_map = _build_finding_resource_map(finding_ids, tenant_id)
 
     return [
         _to_enriched_finding(finding, resource_uid)
@@ -329,16 +332,19 @@ def _enrich_batch_with_resources(
     ]
 
 
-def _build_finding_resource_map(finding_ids: list[int]) -> dict[int, list[str]]:
+def _build_finding_resource_map(
+    finding_ids: list[UUID], tenant_id: str
+) -> dict[UUID, list[str]]:
     """Build mapping from finding_id to list of resource UIDs."""
-    resource_mappings = ResourceFindingMapping.objects.filter(
-        finding_id__in=finding_ids
-    ).values_list("finding_id", "resource__uid")
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        resource_mappings = ResourceFindingMapping.objects.filter(
+            finding_id__in=finding_ids
+        ).values_list("finding_id", "resource__uid")
 
-    result = defaultdict(list)
-    for finding_id, resource_uid in resource_mappings:
-        result[finding_id].append(resource_uid)
-    return result
+        result = defaultdict(list)
+        for finding_id, resource_uid in resource_mappings:
+            result[finding_id].append(resource_uid)
+        return result
 
 
 def _to_enriched_finding(finding: FindingRecord, resource_uid: str) -> EnrichedFinding:
@@ -360,11 +366,3 @@ def _to_enriched_finding(finding: FindingRecord, resource_uid: str) -> EnrichedF
         "muted": finding["muted"],
         "muted_reason": finding["muted_reason"],
     }
-
-
-# Backwards Compatibility
-# -----------------------
-
-# Alias for backwards compatibility with existing imports
-get_provider_last_scan_findings = stream_findings_with_resources
-_enrich_and_flatten_batch = _enrich_batch_with_resources

@@ -356,7 +356,7 @@ class TestAttackPathsFindingsHelpers:
         assert params["provider_uid"] == str(provider.uid)
         assert params["last_updated"] == config.update_tag
 
-    def test_get_provider_last_scan_findings_returns_latest_scan_data(
+    def test_stream_findings_with_resources_returns_latest_scan_data(
         self,
         tenants_fixture,
         providers_fixture,
@@ -445,7 +445,7 @@ class TestAttackPathsFindingsHelpers:
             ),
         ):
             # Generator yields batches, collect all findings from all batches
-            findings_batches = findings_module.get_provider_last_scan_findings(
+            findings_batches = findings_module.stream_findings_with_resources(
                 provider,
                 str(latest_scan.id),
             )
@@ -460,7 +460,7 @@ class TestAttackPathsFindingsHelpers:
         assert finding_dict["check_title"] == "Check title"
         assert finding_dict["scan_id"] == str(latest_scan.id)
 
-    def test_enrich_and_flatten_batch_single_resource(
+    def test_enrich_batch_with_resources_single_resource(
         self,
         tenants_fixture,
         providers_fixture,
@@ -528,20 +528,22 @@ class TestAttackPathsFindingsHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # _enrich_batch_with_resources queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
         with patch(
             "tasks.jobs.attack_paths.findings.READ_REPLICA_ALIAS",
             "default",
         ):
-            result = findings_module._enrich_and_flatten_batch([finding_dict])
+            result = findings_module._enrich_batch_with_resources(
+                [finding_dict], str(tenant.id)
+            )
 
         assert len(result) == 1
         assert result[0]["resource_uid"] == resource.uid
         assert result[0]["id"] == str(finding.id)
         assert result[0]["status"] == "FAIL"
 
-    def test_enrich_and_flatten_batch_multiple_resources(
+    def test_enrich_batch_with_resources_multiple_resources(
         self,
         tenants_fixture,
         providers_fixture,
@@ -614,13 +616,15 @@ class TestAttackPathsFindingsHelpers:
             "muted_reason": finding.muted_reason,
         }
 
-        # _enrich_and_flatten_batch queries ResourceFindingMapping directly
+        # _enrich_batch_with_resources queries ResourceFindingMapping directly
         # No RLS mock needed - test DB doesn't enforce RLS policies
         with patch(
             "tasks.jobs.attack_paths.findings.READ_REPLICA_ALIAS",
             "default",
         ):
-            result = findings_module._enrich_and_flatten_batch([finding_dict])
+            result = findings_module._enrich_batch_with_resources(
+                [finding_dict], str(tenant.id)
+            )
 
         assert len(result) == 3
         result_resource_uids = {r["resource_uid"] for r in result}
@@ -631,7 +635,7 @@ class TestAttackPathsFindingsHelpers:
             assert r["id"] == str(finding.id)
             assert r["status"] == "FAIL"
 
-    def test_enrich_and_flatten_batch_no_resources_skips(
+    def test_enrich_batch_with_resources_no_resources_skips(
         self,
         tenants_fixture,
         providers_fixture,
@@ -692,7 +696,9 @@ class TestAttackPathsFindingsHelpers:
             ),
             patch("tasks.jobs.attack_paths.findings.logger") as mock_logger,
         ):
-            result = findings_module._enrich_and_flatten_batch([finding_dict])
+            result = findings_module._enrich_batch_with_resources(
+                [finding_dict], str(tenant.id)
+            )
 
         assert len(result) == 0
         mock_logger.warning.assert_not_called()
@@ -709,7 +715,7 @@ class TestAttackPathsFindingsHelpers:
             patch("tasks.jobs.attack_paths.findings.Finding") as mock_finding,
         ):
             # Create generator but don't iterate
-            findings_module.get_provider_last_scan_findings(provider, scan_id)
+            findings_module.stream_findings_with_resources(provider, scan_id)
 
             # Nothing should be called yet
             mock_rls.assert_not_called()
