@@ -138,10 +138,6 @@ DJANGO_TOKEN_VERIFYING_KEY=<content of jwt_public.pem>
 
 When these environment variables are set, the API will use them directly instead of attempting to write key files to the mounted volume.
 
-<Warning>
-For production environments, implement proper secrets management solutions (such as HashiCorp Vault, AWS Secrets Manager, or Kubernetes Secrets) instead of storing keys directly in `.env` files.
-</Warning>
-
 <Note>
 A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
 </Note>
