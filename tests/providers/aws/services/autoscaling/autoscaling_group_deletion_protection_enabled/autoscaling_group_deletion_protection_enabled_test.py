@@ -100,9 +100,7 @@ class Test_autoscaling_group_deletion_protection_enabled:
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_no_protection,
         ):
-            autoscaling_client = client(
-                "autoscaling", region_name=AWS_REGION_US_EAST_1
-            )
+            autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
             autoscaling_client.create_launch_configuration(
                 LaunchConfigurationName="test",
                 ImageId="ami-12c6146b",
@@ -159,9 +157,7 @@ class Test_autoscaling_group_deletion_protection_enabled:
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_prevent_force_deletion,
         ):
-            autoscaling_client = client(
-                "autoscaling", region_name=AWS_REGION_US_EAST_1
-            )
+            autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
             autoscaling_client.create_launch_configuration(
                 LaunchConfigurationName="test",
                 ImageId="ami-12c6146b",
@@ -218,9 +214,7 @@ class Test_autoscaling_group_deletion_protection_enabled:
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_prevent_all_deletion,
         ):
-            autoscaling_client = client(
-                "autoscaling", region_name=AWS_REGION_US_EAST_1
-            )
+            autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
             autoscaling_client.create_launch_configuration(
                 LaunchConfigurationName="test",
                 ImageId="ami-12c6146b",
