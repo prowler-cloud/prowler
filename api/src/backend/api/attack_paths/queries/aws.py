@@ -5,6 +5,58 @@ from api.attack_paths.queries.types import (
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
 
+# Privilege Escalation Queries (based on pathfinding.cloud research)
+# https://github.com/DataDog/pathfinding.cloud
+# -------------------------------------------------------------------
+
+AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
+    id="aws-internet-exposed-ec2-sensitive-s3-access",
+    name="Identify internet-exposed EC2 instances with sensitive S3 access",
+    description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
+    provider="aws",
+    cypher=f"""
+        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
+        YIELD node AS internet
+
+        MATCH path_s3 = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)--(t:AWSTag)
+        WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
+
+        MATCH path_ec2 = (aws)--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)
+        WHERE ec2.exposed_internet = true
+            AND ipi.toport = 22
+
+        MATCH path_role = (r:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
+        WHERE ANY(x IN stmt.resource WHERE x CONTAINS s3.name)
+            AND ANY(x IN stmt.action WHERE toLower(x) =~ 's3:(listbucket|getobject).*')
+
+        MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
+
+        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, ec2)
+        YIELD rel AS can_access
+
+        UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL})
+        WHERE pf.status = 'FAIL'
+
+        RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
+    """,
+    parameters=[
+        AttackPathsQueryParameterDefinition(
+            name="tag_key",
+            label="Tag key",
+            description="Tag key to filter the S3 bucket, e.g. DataClassification.",
+            placeholder="DataClassification",
+        ),
+        AttackPathsQueryParameterDefinition(
+            name="tag_value",
+            label="Tag value",
+            description="Tag value to filter the S3 bucket, e.g. Sensitive.",
+            placeholder="Sensitive",
+        ),
+    ],
+)
+
+
 # Basic Resource Queries
 # ----------------------
 
@@ -268,57 +320,6 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
     ],
 )
 
-
-# Privilege Escalation Queries (based on pathfinding.cloud research)
-# https://github.com/DataDog/pathfinding.cloud
-# -------------------------------------------------------------------
-
-AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
-    id="aws-internet-exposed-ec2-sensitive-s3-access",
-    name="Identify internet-exposed EC2 instances with sensitive S3 access",
-    description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
-    provider="aws",
-    cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
-
-        MATCH path_s3 = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)--(t:AWSTag)
-        WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
-
-        MATCH path_ec2 = (aws)--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)
-        WHERE ec2.exposed_internet = true
-            AND ipi.toport = 22
-
-        MATCH path_role = (r:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE ANY(x IN stmt.resource WHERE x CONTAINS s3.name)
-            AND ANY(x IN stmt.action WHERE toLower(x) =~ 's3:(listbucket|getobject).*')
-
-        MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
-
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, ec2)
-        YIELD rel AS can_access
-
-        UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL})
-        WHERE pf.status = 'FAIL'
-
-        RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
-    """,
-    parameters=[
-        AttackPathsQueryParameterDefinition(
-            name="tag_key",
-            label="Tag key",
-            description="Tag key to filter the S3 bucket, e.g. DataClassification.",
-            placeholder="DataClassification",
-        ),
-        AttackPathsQueryParameterDefinition(
-            name="tag_value",
-            label="Tag value",
-            description="Tag value to filter the S3 bucket, e.g. Sensitive.",
-            placeholder="Sensitive",
-        ),
-    ],
-)
 
 AWS_IAM_PRIVESC_PASSROLE_EC2 = AttackPathsQueryDefinition(
     id="aws-iam-privesc-passrole-ec2",
@@ -675,21 +676,18 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
 # ----------------
 
 AWS_QUERIES: list[AttackPathsQueryDefinition] = [
-    # Basic Resource Queries
+    AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS,
     AWS_RDS_INSTANCES,
     AWS_RDS_UNENCRYPTED_STORAGE,
     AWS_S3_ANONYMOUS_ACCESS_BUCKETS,
     AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS,
     AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY,
     AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS,
-    # Network Exposure Queries
     AWS_EC2_INSTANCES_INTERNET_EXPOSED,
     AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING,
     AWS_CLASSIC_ELB_INTERNET_EXPOSED,
     AWS_ELBV2_INTERNET_EXPOSED,
     AWS_PUBLIC_IP_RESOURCE_LOOKUP,
-    # Privilege Escalation Queries
-    AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS,
     AWS_IAM_PRIVESC_PASSROLE_EC2,
     AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT,
     AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE,

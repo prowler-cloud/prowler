@@ -17,6 +17,7 @@ def render_cypher_template(template: str, replacements: dict[str, str]) -> str:
         query = query.replace(placeholder, value)
     return query
 
+
 # Findings queries (used by findings.py)
 # ---------------------------------------
 

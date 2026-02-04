@@ -21,7 +21,65 @@ from prowler.lib.check.models import Severity
 
 @pytest.mark.django_db
 class TestAttackPathsRun:
-    def test_run_success_flow(self, tenants_fixture, providers_fixture, scans_fixture):
+    # Patchaing with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
+        side_effect=lambda fn, *a, **kw: fn(*a, **kw),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.db_utils.get_old_attack_paths_scans",
+        return_value=[],
+    )
+    @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
+    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
+    @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
+    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch(
+        "tasks.jobs.attack_paths.scan.graph_database.get_uri",
+        return_value="bolt://neo4j",
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+        return_value=MagicMock(_enabled_regions=["us-east-1"]),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    def test_run_success_flow(
+        self,
+        mock_init_provider,
+        mock_get_uri,
+        mock_create_db,
+        mock_clear_cache,
+        mock_cartography_indexes,
+        mock_cartography_analysis,
+        mock_cartography_ontology,
+        mock_findings_indexes,
+        mock_findings_analysis,
+        mock_sync_indexes,
+        mock_drop_subgraph,
+        mock_sync,
+        mock_starting,
+        mock_update_progress,
+        mock_finish,
+        mock_get_old_scans,
+        mock_event_loop,
+        mock_drop_db,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -46,77 +104,21 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
-                return_value=MagicMock(_enabled_regions=["us-east-1"]),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_uri",
-                return_value="bolt://neo4j",
-            ),
-            patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
                 side_effect=["db-scan-id", "tenant-db"],
             ) as mock_get_db_name,
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.create_database"
-            ) as mock_create_db,
-            patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ) as mock_get_session,
-            patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache"),
-            patch(
-                "tasks.jobs.attack_paths.scan.cartography_create_indexes.run"
-            ) as mock_cartography_indexes,
-            patch(
-                "tasks.jobs.attack_paths.scan.cartography_analysis.run"
-            ) as mock_cartography_analysis,
-            patch(
-                "tasks.jobs.attack_paths.scan.cartography_ontology.run"
-            ) as mock_cartography_ontology,
-            patch(
-                "tasks.jobs.attack_paths.scan.findings.create_findings_indexes"
-            ) as mock_findings_indexes,
-            patch(
-                "tasks.jobs.attack_paths.scan.findings.analysis"
-            ) as mock_findings_analysis,
-            patch(
-                "tasks.jobs.attack_paths.scan.sync.create_sync_indexes"
-            ) as mock_sync_indexes,
-            patch(
-                "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph"
-            ) as mock_drop_subgraph,
-            patch("tasks.jobs.attack_paths.scan.sync.sync_graph") as mock_sync,
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ) as mock_retrieve_scan,
             patch(
-                "tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan"
-            ) as mock_starting,
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
-            ) as mock_update_progress,
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.get_old_attack_paths_scans",
-                return_value=[],
-            ),
-            patch(
                 "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
                 return_value=ingestion_fn,
             ) as mock_get_ingestion,
-            patch(
-                "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
-                side_effect=lambda fn, *a, **kw: fn(*a, **kw),
-            ) as mock_event_loop,
-            patch("tasks.jobs.attack_paths.scan.graph_database.drop_database"),
         ):
             result = attack_paths_run(str(tenant.id), str(scan.id), "task-123")
 
@@ -126,7 +128,7 @@ class TestAttackPathsRun:
         config = mock_starting.call_args[0][2]
         assert config.neo4j_database == "tenant-db"
         mock_get_db_name.assert_has_calls(
-            [call(attack_paths_scan.id), call(provider.tenant_id)]
+            [call(attack_paths_scan.id, temporary=True), call(provider.tenant_id)]
         )
 
         mock_create_db.assert_has_calls([call("db-scan-id"), call("tenant-db")])

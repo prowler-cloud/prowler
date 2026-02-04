@@ -17,6 +17,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Lazy-load providers and compliance data to reduce API/worker startup memory and time [(#9857)](https://github.com/prowler-cloud/prowler/pull/9857)
 - Remove unused indexes [(#9904)](https://github.com/prowler-cloud/prowler/pull/9904)
+- Modified the behaviour of the Attack Paths scans to use the same Neo4j database per tenant, instead of individual databases per scans [(#9955)](https://github.com/prowler-cloud/prowler/pull/9955)
 
 ---
 
