@@ -9,7 +9,8 @@ This module handles:
 """
 
 from collections import defaultdict
-from typing import Generator, TypedDict
+from dataclasses import asdict, dataclass, fields
+from typing import Any, Generator
 from uuid import UUID
 
 import neo4j
@@ -19,7 +20,8 @@ from celery.utils.log import get_task_logger
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Finding, Provider, ResourceFindingMapping
+from api.models import Finding as FindingModel
+from api.models import Provider, ResourceFindingMapping
 from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
@@ -41,30 +43,20 @@ logger = get_task_logger(__name__)
 # Type Definitions
 # -----------------
 
-
-class FindingRecord(TypedDict):
-    """Raw finding record from Django query."""
-
-    id: int
-    uid: str
-    inserted_at: str
-    updated_at: str
-    first_seen_at: str
-    scan_id: str
-    delta: str
-    status: str
-    status_extended: str
-    severity: str
-    check_id: str
-    check_metadata__checktitle: str
-    muted: bool
-    muted_reason: str | None
+# Maps dataclass field names to Django ORM query field names
+_DB_FIELD_MAP: dict[str, str] = {
+    "check_title": "check_metadata__checktitle",
+}
 
 
-class EnrichedFinding(TypedDict):
-    """Finding data enriched with resource UID for Neo4j ingestion."""
+@dataclass(slots=True)
+class Finding:
+    """
+    Finding data for Neo4j ingestion.
 
-    resource_uid: str
+    Can be created from a Django .values() query result using from_db_record().
+    """
+
     id: str
     uid: str
     inserted_at: str
@@ -79,25 +71,41 @@ class EnrichedFinding(TypedDict):
     check_title: str
     muted: bool
     muted_reason: str | None
+    resource_uid: str | None = None
 
+    @classmethod
+    def get_db_query_fields(cls) -> tuple[str, ...]:
+        """Get field names for Django .values() query."""
+        return tuple(
+            _DB_FIELD_MAP.get(f.name, f.name)
+            for f in fields(cls)
+            if f.name != "resource_uid"
+        )
 
-# Fields to query from Finding model
-FINDING_QUERY_FIELDS = (
-    "id",
-    "uid",
-    "inserted_at",
-    "updated_at",
-    "first_seen_at",
-    "scan_id",
-    "delta",
-    "status",
-    "status_extended",
-    "severity",
-    "check_id",
-    "check_metadata__checktitle",
-    "muted",
-    "muted_reason",
-)
+    @classmethod
+    def from_db_record(cls, record: dict[str, Any], resource_uid: str) -> "Finding":
+        """Create a Finding from a Django .values() query result."""
+        return cls(
+            id=str(record["id"]),
+            uid=record["uid"],
+            inserted_at=record["inserted_at"],
+            updated_at=record["updated_at"],
+            first_seen_at=record["first_seen_at"],
+            scan_id=str(record["scan_id"]),
+            delta=record["delta"],
+            status=record["status"],
+            status_extended=record["status_extended"],
+            severity=record["severity"],
+            check_id=str(record["check_id"]),
+            check_title=record["check_metadata__checktitle"],
+            muted=record["muted"],
+            muted_reason=record["muted_reason"],
+            resource_uid=resource_uid,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dict for Neo4j ingestion."""
+        return asdict(self)
 
 
 # Public API
@@ -172,7 +180,7 @@ def add_resource_label(
 
 def load_findings(
     neo4j_session: neo4j.Session,
-    findings_batches: Generator[list[EnrichedFinding], None, None],
+    findings_batches: Generator[list[Finding], None, None],
     prowler_api_provider: Provider,
     config: CartographyConfig,
 ) -> None:
@@ -201,7 +209,7 @@ def load_findings(
         batch_size = len(batch)
         total_records += batch_size
 
-        parameters["findings_data"] = batch
+        parameters["findings_data"] = [f.to_dict() for f in batch]
 
         logger.info(f"Loading findings batch {batch_num} ({batch_size} records)")
         neo4j_session.run(query, parameters)
@@ -239,7 +247,7 @@ def cleanup_findings(
 def stream_findings_with_resources(
     prowler_api_provider: Provider,
     scan_id: str,
-) -> Generator[list[EnrichedFinding], None, None]:
+) -> Generator[list[Finding], None, None]:
     """
     Stream findings with their associated resources in batches.
 
@@ -263,7 +271,7 @@ def stream_findings_with_resources(
 def _paginate_findings(
     tenant_id: str,
     scan_id: str,
-) -> Generator[list[FindingRecord], None, None]:
+) -> Generator[list[dict[str, Any]], None, None]:
     """
     Paginate through findings using keyset pagination.
 
@@ -289,8 +297,8 @@ def _paginate_findings(
 def _fetch_findings_batch(
     tenant_id: str,
     scan_id: str,
-    after_id: int | None,
-) -> list[FindingRecord]:
+    after_id: UUID | None,
+) -> list[dict[str, Any]]:
     """
     Fetch a single batch of findings from the database.
 
@@ -300,12 +308,12 @@ def _fetch_findings_batch(
         # Use all_objects to avoid the ActiveProviderManager's implicit JOIN
         # through Scan -> Provider (to check is_deleted=False).
         # The provider is already validated as active in this context.
-        qs = Finding.all_objects.filter(scan_id=scan_id).order_by("id")
+        qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
 
         if after_id is not None:
             qs = qs.filter(id__gt=after_id)
 
-        return list(qs.values(*FINDING_QUERY_FIELDS)[:BATCH_SIZE])
+        return list(qs.values(*Finding.get_db_query_fields())[:BATCH_SIZE])
 
 
 # Batch Enrichment
@@ -313,9 +321,9 @@ def _fetch_findings_batch(
 
 
 def _enrich_batch_with_resources(
-    findings_batch: list[FindingRecord],
+    findings_batch: list[dict[str, Any]],
     tenant_id: str,
-) -> list[EnrichedFinding]:
+) -> list[Finding]:
     """
     Enrich findings with their resource UIDs.
 
@@ -326,7 +334,7 @@ def _enrich_batch_with_resources(
     resource_map = _build_finding_resource_map(finding_ids, tenant_id)
 
     return [
-        _to_enriched_finding(finding, resource_uid)
+        Finding.from_db_record(finding, resource_uid)
         for finding in findings_batch
         for resource_uid in resource_map.get(finding["id"], [])
     ]
@@ -345,24 +353,3 @@ def _build_finding_resource_map(
         for finding_id, resource_uid in resource_mappings:
             result[finding_id].append(resource_uid)
         return result
-
-
-def _to_enriched_finding(finding: FindingRecord, resource_uid: str) -> EnrichedFinding:
-    """Convert a finding record to enriched format for Neo4j."""
-    return {
-        "resource_uid": str(resource_uid),
-        "id": str(finding["id"]),
-        "uid": finding["uid"],
-        "inserted_at": finding["inserted_at"],
-        "updated_at": finding["updated_at"],
-        "first_seen_at": finding["first_seen_at"],
-        "scan_id": str(finding["scan_id"]),
-        "delta": finding["delta"],
-        "status": finding["status"],
-        "status_extended": finding["status_extended"],
-        "severity": finding["severity"],
-        "check_id": str(finding["check_id"]),
-        "check_title": finding["check_metadata__checktitle"],
-        "muted": finding["muted"],
-        "muted_reason": finding["muted_reason"],
-    }

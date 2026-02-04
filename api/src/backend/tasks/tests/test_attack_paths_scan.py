@@ -465,7 +465,7 @@ class TestAttackPathsFindingsHelpers:
         tenants_fixture,
         providers_fixture,
     ):
-        """One finding + one resource = one output dict"""
+        """One finding + one resource = one output Finding instance"""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -539,16 +539,16 @@ class TestAttackPathsFindingsHelpers:
             )
 
         assert len(result) == 1
-        assert result[0]["resource_uid"] == resource.uid
-        assert result[0]["id"] == str(finding.id)
-        assert result[0]["status"] == "FAIL"
+        assert result[0].resource_uid == resource.uid
+        assert result[0].id == str(finding.id)
+        assert result[0].status == "FAIL"
 
     def test_enrich_batch_with_resources_multiple_resources(
         self,
         tenants_fixture,
         providers_fixture,
     ):
-        """One finding + three resources = three output dicts"""
+        """One finding + three resources = three output Finding instances"""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -627,13 +627,13 @@ class TestAttackPathsFindingsHelpers:
             )
 
         assert len(result) == 3
-        result_resource_uids = {r["resource_uid"] for r in result}
+        result_resource_uids = {r.resource_uid for r in result}
         assert result_resource_uids == {r.uid for r in resources}
 
         # All should have same finding data
         for r in result:
-            assert r["id"] == str(finding.id)
-            assert r["status"] == "FAIL"
+            assert r.id == str(finding.id)
+            assert r.status == "FAIL"
 
     def test_enrich_batch_with_resources_no_resources_skips(
         self,
