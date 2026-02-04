@@ -57,6 +57,11 @@ const MongoDBAtlasProviderBadge = lazy(() =>
     default: m.MongoDBAtlasProviderBadge,
   })),
 );
+const AlibabaCloudProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.AlibabaCloudProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -103,6 +108,10 @@ const PROVIDER_DATA: Record<
   mongodbatlas: {
     label: "MongoDB Atlas",
     icon: MongoDBAtlasProviderBadge,
+  },
+  alibabacloud: {
+    label: "Alibaba Cloud",
+    icon: AlibabaCloudProviderBadge,
   },
 };
 

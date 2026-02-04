@@ -40,33 +40,59 @@ function truncateDescription(desc: string | undefined, maxLen: number): string {
 }
 
 /**
- * Tools that are blocked from being listed and executed by the LLM.
- * These are destructive or sensitive operations that should only be
- * performed through the UI with explicit user action.
+ * Tools explicitly allowed for the LLM to list and execute.
+ * Follows the principle of least privilege - only these tools are accessible.
+ * All other tools are blocked by default.
  */
-const BLOCKED_TOOLS = new Set([
-  "prowler_app_connect_provider",
-  "prowler_app_delete_provider",
-  "prowler_app_trigger_scan",
-  "prowler_app_schedule_daily_scan",
-  "prowler_app_update_scan",
-  "prowler_app_delete_mutelist",
-  "prowler_app_set_mutelist",
-  "prowler_app_create_mute_rule",
-  "prowler_app_update_mute_rule",
-  "prowler_app_delete_mute_rule",
+const ALLOWED_TOOLS = new Set([
+  // === Prowler Hub Tools - read-only ===
+  "prowler_hub_list_checks",
+  "prowler_hub_semantic_search_checks",
+  "prowler_hub_get_check_details",
+  "prowler_hub_get_check_code",
+  "prowler_hub_get_check_fixer",
+  "prowler_hub_list_compliances",
+  "prowler_hub_semantic_search_compliances",
+  "prowler_hub_get_compliance_details",
+  "prowler_hub_list_providers",
+  "prowler_hub_get_provider_services",
+  // === Prowler Docs Tools - read-only ===
+  "prowler_docs_search",
+  "prowler_docs_get_document",
+  // === Prowler App Tools - read-only ===
+  // Findings
+  "prowler_app_search_security_findings",
+  "prowler_app_get_finding_details",
+  "prowler_app_get_findings_overview",
+  // Providers
+  "prowler_app_search_providers",
+  // Scans
+  "prowler_app_list_scans",
+  "prowler_app_get_scan",
+  // Muting
+  "prowler_app_get_mutelist",
+  "prowler_app_list_mute_rules",
+  "prowler_app_get_mute_rule",
+  // Compliance
+  "prowler_app_get_compliance_overview",
+  "prowler_app_get_compliance_framework_state_details",
+  // Resources
+  "prowler_app_list_resources",
+  "prowler_app_get_resource",
+  "prowler_app_get_resources_overview",
 ]);
 
 /**
- * Check if a tool is blocked
+ * Check if a tool is allowed for LLM access.
+ * Returns true only if the tool is explicitly in the whitelist.
  */
-export function isBlockedTool(toolName: string): boolean {
-  return BLOCKED_TOOLS.has(toolName);
+export function isAllowedTool(toolName: string): boolean {
+  return ALLOWED_TOOLS.has(toolName);
 }
 
 /**
- * Generate dynamic tool listing from MCP tools
- * Filters out blocked/destructive tools
+ * Generate dynamic tool listing from MCP tools.
+ * Only includes tools that are explicitly whitelisted.
  */
 function generateToolListing(): string {
   if (!isMCPAvailable()) {
@@ -79,8 +105,8 @@ function generateToolListing(): string {
     return TOOLS_UNAVAILABLE_MESSAGE;
   }
 
-  // Filter out blocked tools
-  const safeTools = mcpTools.filter((tool) => !isBlockedTool(tool.name));
+  // Only include whitelisted tools
+  const safeTools = mcpTools.filter((tool) => isAllowedTool(tool.name));
 
   let listing = "\n## Available Prowler Tools\n\n";
   listing += `${safeTools.length} tools loaded from Prowler MCP\n\n`;

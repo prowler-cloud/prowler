@@ -6,18 +6,16 @@
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "**Azure Files SMB shares** are evaluated for **SMB channel encryption** and whether the allowed ciphers include the recommended `AES-256-GCM`.\n\nThis identifies if encryption is configured and a secure algorithm is present in the SMB settings for file shares within the storage account.",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage file shares (SMB)** are evaluated for **SMB channel encryption** and whether the allowed ciphers include the recommended `AES-256-GCM`.\n\nThis identifies if encryption is configured and a secure algorithm is present in the SMB settings for file shares within the storage account.",
   "Risk": "Missing or weak SMB channel encryption undermines **confidentiality** and **integrity**. On-path attackers could read sensitive files, capture hashes, or modify data in transit. Allowing legacy ciphers increases downgrade risks and can facilitate **lateral movement**, eroding trust boundaries across networks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/check-for-smb-channel-encryption-type.html",
-    "https://stackoverflow.com/questions/78870070/azure-container-app-jobs-accessing-azure-files-fails-with-mount-error13-perm",
     "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol?tabs=azure-portal#smb-security-settings",
-    "https://video2.skills-academy.com/en-us/azure/storage/files/files-smb-protocol",
-    "https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-files#recommendations-for-smb-file-shares",
-    "https://stackit.news.blog/2021/09/04/general-availability-azure-files-now-supports-smb-3-1-1/"
+    "https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-files#recommendations-for-smb-file-shares"
   ],
   "Remediation": {
     "Code": {

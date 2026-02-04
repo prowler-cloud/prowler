@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** with **blob public access** disabled prevent containers or blobs from being set to a public access level. Setting `allow blob public access` to `false` enforces no anonymous reads across the account.",
   "Risk": "Allowing public access permits unauthenticated users to read blob data or enumerate container contents when any container is made public, compromising confidentiality.\n\nExposed objects can be scraped at scale, enabling data exfiltration and intelligence gathering without audit attribution.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-accounts-disallow-public-access#terraform",
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-configure?tabs=portal",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/disable-blob-anonymous-access-for-storage-accounts.html"
   ],
   "Remediation": {

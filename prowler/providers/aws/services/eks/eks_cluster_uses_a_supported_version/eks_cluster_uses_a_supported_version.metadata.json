@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
+  "ResourceGroup": "container",
   "Description": "Amazon EKS clusters use a **supported Kubernetes version** at or above the defined baseline (e.g., `1.28+`). The evaluation compares each cluster's Kubernetes minor version to the minimum supported level and highlights clusters running below that baseline.",
   "Risk": "Running an **unsupported Kubernetes version** removes upstream and EKS security fixes, exposing clusters to known CVEs and privilege escalation bugs (**confidentiality/integrity**). Deprecated or removed APIs can break controllers and add-ons, causing outages (**availability**).",
   "RelatedUrl": "",

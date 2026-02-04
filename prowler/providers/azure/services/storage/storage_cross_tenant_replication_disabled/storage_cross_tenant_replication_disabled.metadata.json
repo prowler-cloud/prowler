@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** are assessed for whether **cross-tenant object replication** is disallowed via `AllowCrossTenantReplication=false`, limiting replication policies to the same tenant.",
   "Risk": "Permitting cross-tenant replication can copy sensitive blobs into external tenants, undermining **confidentiality**. A compromised or mismanaged destination enables **data exfiltration**; mirrored updates/deletes can impact **integrity** and retention, complicating auditability and incident response.",
   "RelatedUrl": "",

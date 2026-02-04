@@ -8,17 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** enforce a `minimum TLS version` of `1.2` for client connections to data services",
   "Risk": "Allowing TLS `1.0`/`1.1` enables protocol downgrades and exploitation of known flaws (e.g., BEAST), weakening **confidentiality** and **integrity**. Attackers can intercept or modify data in transit and harvest credentials via weakened cipher suites.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/75672537/azure-storage-minimum-tls-version-1-2-not-enforced-in-protocol-layer",
-    "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2",
-    "https://www.bundle.app/en/technology/azure-blob-and-file-storage-for-it-testing-and-training-environment-7959B94F-B593-44AB-BFC5-DD1D2F59A525",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/minimum-tls-version.html",
-    "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#terraform",
-    "https://dev.to/ifeoma_onyegbumark/how-to-configure-simple-settings-in-the-storage-account-on-azure-14bm",
-    "https://blog.tyang.org/2025/02/10/updated-azure-policy-for-storage-minimum-tls-ver"
+    "https://learn.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version?tabs=portal"
   ],
   "Remediation": {
     "Code": {

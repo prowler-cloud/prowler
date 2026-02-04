@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage account** network rules include the `AzureServices` bypass so **trusted Microsoft services** can reach the account even when firewalls restrict public access",
   "Risk": "Without this exception, platform services relying on the account (backup, monitoring, replication) can be blocked, causing failed backups, missing logs, and stalled workflows-affecting **availability** and **integrity**. Teams may over-broaden network access to compensate, increasing **confidentiality** risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/72653133/status-403-code-authorizationfailure-message-this-request-is-not-authorized-t",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/enable-trusted-microsoft-services-for-storage-account-access#terraform",
-    "https://avd.aquasec.com/misconfig/azure/storage-accounts/trusted-ms-access-enabled/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-trusted-microsoft-services.html",
-    "https://medium.com/medialesson/azure-document-intelligence-fix-contentsourcenotaccessible-invalid-data-url-b1c4f36ede23",
     "https://support.icompaas.com/support/solutions/articles/62000219788-ensure-allow-azure-services-on-the-trusted-services-list-to-access-this-storage-account-is-enabled-",
-    "https://learn.microsoft.com/en-in/answers/questions/2123022/power-automate-to-azure-storage"
+    "https://learn.microsoft.com/en-us/azure/search/search-indexer-howto-access-trusted-service-exception"
   ],
   "Remediation": {
     "Code": {

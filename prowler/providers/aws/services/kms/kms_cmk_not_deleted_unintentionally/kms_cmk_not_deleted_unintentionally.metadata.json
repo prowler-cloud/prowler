@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**Customer-managed KMS keys** are evaluated for the `PendingDeletion` state, indicating a scheduled deletion during the mandatory waiting period.",
   "Risk": "A key scheduled for deletion can lead to **permanent loss of decryption capability**, degrading **availability** and **integrity** of data and workloads. Accidental or malicious scheduling enables **cryptographic erasure**, causing outages, failed restores, and broken integrations during and after the wait window.",
   "RelatedUrl": "",

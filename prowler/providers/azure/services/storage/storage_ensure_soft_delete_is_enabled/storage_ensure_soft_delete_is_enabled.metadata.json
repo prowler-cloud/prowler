@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "Azure Storage accounts have **container soft delete** enabled via a retention policy that keeps deleted containers for a set period.",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage accounts** have **container soft delete** enabled via a retention policy that keeps deleted containers for a set period.",
   "Risk": "Without this, container deletions are permanent, reducing **availability** and **integrity**. A compromised user or faulty automation could erase entire datasets, forcing slow restores from backups and extending RTO/RPO, with potential downstream app outages.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-soft-delete.html#",
-    "https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete",
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/soft-delete-blob-overview",
     "https://learn.microsoft.com/en-us/azure/storage/blobs/soft-delete-blob-enable?tabs=azure-portal"
   ],
   "Remediation": {

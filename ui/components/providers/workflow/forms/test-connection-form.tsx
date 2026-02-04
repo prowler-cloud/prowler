@@ -4,6 +4,7 @@ import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,6 @@ import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
 import { ProviderType } from "@/types";
@@ -144,11 +144,16 @@ export const TestConnectionForm = ({
                 type: "server",
                 message: data.error,
               });
+              toast({
+                variant: "destructive",
+                title: "Oops! Something went wrong",
+                description: data.error,
+              });
             } else {
               setIsRedirecting(true);
               router.push("/scans");
             }
-          } catch (error) {
+          } catch (_error) {
             form.setError("providerId", {
               type: "server",
               message: "An unexpected error occurred. Please try again.",
@@ -193,7 +198,6 @@ export const TestConnectionForm = ({
         `/providers/add-credentials?type=${providerType}&id=${providerId}`,
       );
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Failed to delete credentials:", error);
     } finally {
       setIsResettingCredentials(false);
@@ -239,8 +243,8 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="text-text-error-primary mt-4 rounded-md p-3">
-            <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
+          <div className="text-text-error-primary mt-4 rounded-md">
+            <p>{apiErrorMessage}</p>
           </div>
         )}
 
@@ -297,17 +301,9 @@ export const TestConnectionForm = ({
 
         <div className="flex w-full justify-end sm:gap-6">
           {apiErrorMessage ? (
-            <CustomLink
-              href="/providers"
-              target="_self"
-              className="mr-3 flex w-fit items-center justify-center gap-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <Icon
-                icon="icon-park-outline:close-small"
-                className="h-5 w-5 text-gray-600 dark:text-gray-400"
-              />
-              <span>Back to providers</span>
-            </CustomLink>
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/providers">Back to providers</Link>
+            </Button>
           ) : connectionStatus?.error ? (
             <Button
               onClick={isUpdated ? () => router.back() : onResetCredentials}

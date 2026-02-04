@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** configured for **geo-redundant replication** via `Standard_GRS`, `Standard_GZRS`, `Standard_RAGRS`, or `Standard_RAGZRS`.\n\nThe setting indicates data is copied to a paired secondary region, with `RA-*` allowing read access during primary-region unavailability.",
   "Risk": "Absent **geo-replication**, data resides in one region, undermining **availability** and **durability** during regional failures. Disasters can cause prolonged downtime or unrecoverable loss. With geo-replication but without `RA-*`, the secondary is unreadable, increasing RTO and interrupting business continuity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-geo-redundant-storage.html",
-    "https://docs.azure.cn/en-us/storage/common/storage-redundancy",
-    "https://www.linkedin.com/learning/manage-storage-in-azure/disaster-recovery-and-failover",
     "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy",
-    "https://stackoverflow.com/questions/73270760/azure-how-to-specify-the-secondary-region-for-geo-redundant-storage/73271195",
-    "https://www.ais.com/how-to-choose-the-right-kind-of-azure-storage-account/",
     "https://learn.microsoft.com/en-us/azure/storage/common/redundancy-migration"
   ],
   "Remediation": {

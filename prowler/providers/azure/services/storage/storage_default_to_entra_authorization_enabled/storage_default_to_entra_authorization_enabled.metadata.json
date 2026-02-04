@@ -8,17 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** with `Default to Microsoft Entra authorization in the Azure portal` use **token-based Microsoft Entra ID (Azure RBAC)** by default to access blobs, files, queues, and tables, rather than account keys",
   "Risk": "Defaulting to **access keys/Shared Key** enables broad, non-scoped access and weak **auditing**. A stolen key grants full data access, risking **confidentiality** (exfiltration), **integrity** (unauthorized writes/deletes), and **availability** (destructive actions). It can also bypass **least privilege** and enable lateral movement via key reuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-microsoft-entra-authorization-by-default.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-microsoft-entra-authorization-by-default.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-w60/",
-    "https://www.c-sharpcorner.com/article/understanding-and-creation-of-azure-storage-account/",
     "https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-access-azure-active-directory",
-    "https://simpleanalytics.co.nz/blogs/creating-an-azure-storage-account",
-    "https://stackoverflow.com/questions/77511961/azure-cli-default-to-microsoft-entra-authorization-in-the-azure-portal-how",
     "https://learn.microsoft.com/en-us/azure/storage/files/authorize-data-operations-portal"
   ],
   "Remediation": {

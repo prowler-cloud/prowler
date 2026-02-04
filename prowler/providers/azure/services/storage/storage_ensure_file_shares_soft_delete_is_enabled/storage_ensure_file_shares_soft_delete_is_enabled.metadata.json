@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "Azure Storage file shares have **soft delete** with a retention period (`days`). The evaluation determines if the storage account's file service has this setting enabled and records the retention duration applied to all shares.",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage file shares** have **soft delete** with a retention period (`days`). The evaluation determines if the storage account's file service has this setting enabled and records the retention duration applied to all shares.",
   "Risk": "Without **soft delete**, deletions are irreversible, reducing **availability** and **integrity**. Mistakes or insiders can wipe shares, causing outages, data loss, and lengthy restores. Destructive deletes can magnify ransomware impact and block timely recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-prevent-file-share-deletion?tabs=azure-portal",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-soft-delete-for-file-shares.html",
-    "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-prevent-file-share-deletion",
-    "https://video2.skills-academy.com/en-us/answers/questions/1808621/how-can-i-purge-soft-deleted-data-from-azure-files"
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/enable-soft-delete-for-file-shares.html"
   ],
   "Remediation": {
     "Code": {

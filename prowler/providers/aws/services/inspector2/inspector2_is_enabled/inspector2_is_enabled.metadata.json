@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**Amazon Inspector 2** activation and coverage across regions, verifying that scanning is active for **EC2**, **ECR**, **Lambda functions**, and **Lambda code** where applicable.\n\nIt flags missing account activation or gaps in any scan type.",
   "Risk": "Absent or partial coverage leaves **unpatched vulnerabilities**, risky **code dependencies**, and **unintended network exposure** undetected.\n\nAttackers can exploit known CVEs for **remote code execution**, **lateral movement**, and **data exfiltration**, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

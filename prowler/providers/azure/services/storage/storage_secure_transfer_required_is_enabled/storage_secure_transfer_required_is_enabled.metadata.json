@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** are evaluated for **secure transfer enforcement**, requiring all client requests to use `HTTPS` only (`enableHttpsTrafficOnly`) and blocking `HTTP`.",
   "Risk": "Allowing `HTTP` to storage endpoints enables **man-in-the-middle** and **TLS-stripping** attacks.\nIntercepted traffic can expose credentials, SAS tokens, or data (**confidentiality**) and allow request tampering (**integrity**), leading to unauthorized access and **data exfiltration**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-account-enables-secure-transfer"
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer"
   ],
   "Remediation": {
     "Code": {

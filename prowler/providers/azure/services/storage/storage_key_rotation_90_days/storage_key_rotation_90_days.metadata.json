@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "Azure Storage accounts must define a `key expiration period` for access-key rotation, with a maximum of `90` days. The evaluation looks for accounts lacking this setting or exceeding that limit.",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage accounts** must define a `key expiration period` for access-key rotation, with a maximum of `90` days. The evaluation looks for accounts lacking this setting or exceeding that limit.",
   "Risk": "Long-lived storage access keys undermine **confidentiality** and **integrity**: a leaked or reused key grants full data access and can sign SAS tokens. Extended validity enables persistent unauthorized access, data exfiltration, and tampering, and complicates revocation and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [

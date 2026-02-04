@@ -8,17 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** have **blob versioning** enabled (`IsVersioningEnabled`) to automatically retain previous versions of blobs created by updates or deletes",
   "Risk": "Without **blob versioning**:\n- **Integrity**: overwrites can't be reverted\n- **Availability**: deletes or ransomware remove usable copies\n- **Forensics**: no immutable history for investigation and scoped recovery\n\nMistakes or compromised identities can cause irreversible object loss and wider impact.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-overview",
-    "https://learn.microsoft.com/sv-se/azure/storage/blobs/versioning-enable",
     "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-versioning-for-blobs.html",
-    "https://stackoverflow.com/questions/65605484/azure-storage-enable-blob-versioning-on-storage-account-programmatically",
-    "https://learn.microsoft.com/en-us/azure/storage/blobs/versions-manage-dotnet",
-    "https://learn.microsoft.com/en-us/answers/questions/1285243/after-enabling-versioning-in-azure-storage-account"
+    "https://learn.microsoft.com/en-us/azure/storage/blobs/versions-manage-dotnet"
   ],
   "Remediation": {
     "Code": {

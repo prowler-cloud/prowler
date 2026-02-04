@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage file shares (SMB)** are configured to allow **only the latest SMB protocol version**, blocking legacy SMB versions at the storage account level",
   "Risk": "Allowing legacy SMB versions enables **protocol downgrade** and weak cipher negotiation, reducing **confidentiality** and **integrity**. Adversaries can intercept or alter traffic, bypass strong signing/encryption, and exploit known flaws for lateral movement or credential replay",
   "RelatedUrl": "",

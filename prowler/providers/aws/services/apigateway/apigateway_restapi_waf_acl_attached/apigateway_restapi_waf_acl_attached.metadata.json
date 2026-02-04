@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayStage",
+  "ResourceGroup": "api_gateway",
   "Description": "**Amazon API Gateway (REST API)** stages are assessed for an associated **AWS WAF web ACL**. The finding reflects whether a `web ACL` is linked at the stage level.",
   "Risk": "Absent a **WAF web ACL**, APIs are exposed to application-layer threats that impact CIA:\n- Confidentiality: data exfiltration via injection\n- Integrity: parameter tampering and path traversal\n- Availability: L7 floods, bot abuse, resource exhaustion\n*Public endpoints face heightened risk.*",
   "RelatedUrl": "",

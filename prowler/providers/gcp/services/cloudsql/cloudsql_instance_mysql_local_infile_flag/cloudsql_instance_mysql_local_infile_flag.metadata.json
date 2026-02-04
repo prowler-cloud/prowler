@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DatabaseInstance",
+  "ResourceGroup": "database",
   "Description": "Ensure That the Local_infile Database Flag for a Cloud SQL MySQL Instance Is Set to Off",
   "Risk": "The local_infile flag controls the server-side LOCAL capability for LOAD DATA statements. Depending on the local_infile setting, the server refuses or permits local data loading by clients that have LOCAL enabled on the client side.",
   "RelatedUrl": "",

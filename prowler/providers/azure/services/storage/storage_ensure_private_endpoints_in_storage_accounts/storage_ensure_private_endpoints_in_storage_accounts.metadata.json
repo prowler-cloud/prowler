@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** are evaluated for the presence of **Private Endpoint** connections. When configured, traffic flows over a VNet private IP via Private Link; when absent, access occurs through the storage account's public endpoint.",
   "Risk": "Relying on the **public endpoint** widens exposure:\n- Confidentiality: higher risk of key/SAS compromise and unauthorized reads\n- Integrity: abused creds enable writes/deletes\n- Availability: subject to DDoS and internet scanning\nIt can also bypass egress controls, easing covert data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints",
-    "https://learn.microsoft.com/en-in/answers/questions/5538202/create-azure-private-endpoint-for-all-blob-storage",
-    "https://learn.microsoft.com/en-us/azure/private-link/tutorial-private-endpoint-storage-portal",
-    "https://learn.microsoft.com/en-us/answers/questions/1348088/azure-private-endpoints-effect-on-unity-catalog",
     "https://learn.microsoft.com/en-us/azure/storage/common/storage-private-endpoints",
-    "https://blog.mashfords.com/2020/03/13/private-endpoints-for-azure-storage-are-now-generally-available/",
+    "https://learn.microsoft.com/en-us/azure/private-link/tutorial-private-endpoint-storage-portal",
     "https://learn.microsoft.com/en-us/answers/questions/659055/private-endpoint-to-azure-blob-storage-from-on-pre",
     "https://learn.microsoft.com/en-us/azure/storage/files/storage-files-networking-endpoints",
     "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/private-endpoints.html#"

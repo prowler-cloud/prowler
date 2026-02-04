@@ -6,17 +6,15 @@
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "Azure Storage accounts have **infrastructure encryption** enabled, providing **double encryption at rest** alongside service-level encryption (`requireInfrastructureEncryption=true`).",
+  "ResourceGroup": "IAM",
+  "Description": "**Azure Storage accounts** have **infrastructure encryption** enabled, providing **double encryption at rest** alongside service-level encryption (`requireInfrastructureEncryption=true`).",
   "Risk": "Without this second layer, compromise of the service-level key or algorithm can expose stored data, degrading **confidentiality** and weakening **defense in depth**. Insider misuse or key theft is more likely to yield readable blobs, files, or tables.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/infrastructure-encryption.html",
-    "https://stackoverflow.com/questions/65136408/how-to-get-azure-storage-account-infrastructure-encryption-status-in-powershell",
-    "https://learn.microsoft.com/en-us/azure/storage/common/infrastructure-encryption-enable",
-    "https://anishantony.medium.com/azure-storage-account-setup-and-configurations-82b970ede17f",
-    "https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/storage/common/infrastructure-encryption-enable.md"
+    "https://learn.microsoft.com/en-us/azure/storage/common/infrastructure-encryption-enable"
   ],
   "Remediation": {
     "Code": {

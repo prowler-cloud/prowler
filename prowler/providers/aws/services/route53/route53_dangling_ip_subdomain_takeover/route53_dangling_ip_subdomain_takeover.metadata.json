@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsRoute53HostedZone",
+  "ResourceGroup": "network",
   "Description": "**Route 53 `A` records** (non-alias) that use literal IPs are evaluated for **public AWS addresses** not currently assigned to resources in the account. Entries that match AWS ranges yet lack ownership are identified as potential **dangling IP targets**.",
   "Risk": "**Dangling DNS `A` records** pointing to released AWS IPs enable **subdomain takeover**. An attacker who later obtains that IP can:\n- Redirect or alter content (integrity)\n- Capture credentials/cookies (confidentiality)\n- Disrupt or impersonate services (availability)",
   "RelatedUrl": "",

@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "Azure Storage accounts are evaluated for whether **Shared Key (account key) authorization** is disabled, requiring identity-based access via **Microsoft Entra ID** and RBAC.",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage accounts** are evaluated for whether **Shared Key (account key) authorization** is disabled, requiring identity-based access via **Microsoft Entra ID** and RBAC.",
   "Risk": "Allowing **Shared Key** undermines **confidentiality, integrity, and availability**:\n- A leaked key grants broad read/write/delete across the account\n- Access bypasses **RBAC** and Conditional Access, reducing accountability\n- Activity is hard to attribute, easing data exfiltration and tampering",
   "RelatedUrl": "",
   "AdditionalURLs": [

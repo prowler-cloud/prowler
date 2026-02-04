@@ -2,6 +2,62 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.18.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Restyle resources view with improved resource detail drawer [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
+- Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
+- Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
+
+### 🔐 Security
+
+- React from 19.2.3 to 19.2.4 and Next.js from 16.1.3 to 16.1.6, patching DoS vulnerability in React Server Components (GHSA-83fc-fqcc-2hmg) [(#9917)](https://github.com/prowler-cloud/prowler/pull/9917)
+
+---
+
+## [1.17.0] (Prowler v5.17.0)
+
+### 🚀 Added
+
+- Search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
+- New findings table UI with new design system components, improved filtering UX, and enhanced table interactions [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
+- Gradient background to Risk Plot for visual risk context [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- ThreatScore pillar breakdown to Compliance Summary page and detail view [(#9773)](https://github.com/prowler-cloud/prowler/pull/9773)
+- Provider and Group filters to Resources page [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
+- Compliance Watchlist component in Overview page [(#9786)](https://github.com/prowler-cloud/prowler/pull/9786)
+- Add a new main section for list Attack Paths scans, execute queries on them and view their result as a graph [(#9805)](https://github.com/prowler-cloud/prowler/pull/9805)
+- Resource group label filter to Resources page [(#9820)](https://github.com/prowler-cloud/prowler/pull/9820)
+
+### 🔄 Changed
+
+- Refactor Lighthouse AI MCP tool filtering from blacklist to whitelist approach for improved security [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
+- Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Rename resource_group filter to group in Resources page and Overview cards [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
+- Update Resources filters to use `__in` format for multi-select support [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
+- Swap Risk Plot axes: X = Fail Findings, Y = Prowler ThreatScore [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Remove duplicate scan_id filter badge from Findings page [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+- Remove unused hasDots prop from RadialChart component [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
+
+### 🐞 Fixed
+
+- OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
+
+### 🔐 Security
+
+- Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs from January 2026 security advisory [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+- langchain from 1.1.5 to 1.2.10 and @langchain/core from 1.1.8 to 1.1.15 [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
+
+---
+
+## [1.16.1] (Prowler v5.16.1)
+
+### 🔄 Changed
+
+- Lighthouse AI meta tools descriptions updated for clarity with more representative examples [(#9632)](https://github.com/prowler-cloud/prowler/pull/9632)
+
+---
+
 ## [1.16.0] (Prowler v5.16.0)
 
 ### 🚀 Added
@@ -42,6 +98,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation progress bar for page transitions using Next.js `onRouterTransitionStart` [(#9465)](https://github.com/prowler-cloud/prowler/pull/9465)
 - Findings Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+- Resource Inventory component to Overview page [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
+- Add Alibaba Cloud provider [(#9501)](https://github.com/prowler-cloud/prowler/pull/9501)
 
 ### 🔄 Changed
 
@@ -86,6 +144,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
 - New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
+- Attack Paths feature with query execution and graph visualization [(#PROWLER-383)](https://github.com/prowler-cloud/prowler/pull/9270)
 - Use branch name as region for IaC findings [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
 ### 🔄 Changed

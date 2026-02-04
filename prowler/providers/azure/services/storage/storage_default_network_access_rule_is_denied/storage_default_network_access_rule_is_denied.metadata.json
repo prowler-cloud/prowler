@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
+  "ResourceGroup": "storage",
   "Description": "**Azure Storage accounts** configure the **default network access rule** to `Deny`, so the **public endpoint** only accepts traffic from explicitly allowed virtual networks, IP ranges, or private endpoints",
   "Risk": "With the default action set to `Allow`, the public endpoint is reachable from any network. This removes a network boundary, so **stolen access keys** or leaked **SAS tokens** can be abused from anywhere, enabling **data exfiltration**, tampering, and destructive writes-impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/set-default-network-access-rule-for-storage-accounts-to-deny#terraform",
-    "https://zimmergren.net/secure-your-azure-storage-accounts-using-allowed-ip-address-or-range/",
-    "https://docs.prowler.com/checks/azure/azure-networking-policies/set-default-network-access-rule-for-storage-accounts-to-deny/",
     "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security-set-default-access",
-    "https://blog.kriation.com/2021/restrict-network-access-to-storage-accounts.html",
-    "https://stackoverflow.com/questions/77996282/creating-multiple-network-rules-for-an-azure-storage-account-using-for-each-in-t",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/restrict-default-network-access.html"
   ],
   "Remediation": {

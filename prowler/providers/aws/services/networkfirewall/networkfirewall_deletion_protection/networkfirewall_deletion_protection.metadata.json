@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "**AWS Network Firewall firewalls** have **deletion protection** enabled (`DeleteProtection=true`).",
   "Risk": "Without deletion protection, a firewall can be removed accidentally or by a compromised identity, letting traffic bypass inspection and logging.\n\nThis threatens **confidentiality** and **integrity** via unfiltered access, and harms **availability** through routing disruption and loss of perimeter controls.",
   "RelatedUrl": "",
