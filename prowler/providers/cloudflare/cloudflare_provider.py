@@ -49,6 +49,9 @@ class CloudflareProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
     ):
         logger.info("Instantiating Cloudflare provider...")
 
@@ -61,7 +64,12 @@ class CloudflareProvider(Provider):
 
         max_retries = self._audit_config.get("max_retries", 2)
 
-        self._session = CloudflareProvider.setup_session(max_retries=max_retries)
+        self._session = CloudflareProvider.setup_session(
+            max_retries=max_retries,
+            api_token=api_token,
+            api_key=api_key,
+            api_email=api_email,
+        )
 
         self._identity = CloudflareProvider.setup_identity(self._session)
 
@@ -135,19 +143,28 @@ class CloudflareProvider(Provider):
         return self._identity.accounts
 
     @staticmethod
-    def setup_session(max_retries: int = 2) -> CloudflareSession:
+    def setup_session(
+        max_retries: int = 2,
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+    ) -> CloudflareSession:
         """Initialize Cloudflare SDK client.
 
-        Credentials are read from environment variables:
+        Credentials can be provided as arguments or read from environment variables:
         - CLOUDFLARE_API_TOKEN (recommended)
         - CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL (legacy)
 
         Args:
             max_retries: Maximum number of retries for API requests (default is 2).
+            api_token: Cloudflare API token (optional, falls back to env var).
+            api_key: Cloudflare API key (optional, falls back to env var).
+            api_email: Cloudflare API email (optional, falls back to env var).
         """
-        token = os.environ.get("CLOUDFLARE_API_TOKEN", "")
-        key = os.environ.get("CLOUDFLARE_API_KEY", "")
-        email = os.environ.get("CLOUDFLARE_API_EMAIL", "")
+        # Use provided credentials or fall back to environment variables
+        token = api_token or os.environ.get("CLOUDFLARE_API_TOKEN", "")
+        key = api_key or os.environ.get("CLOUDFLARE_API_KEY", "")
+        email = api_email or os.environ.get("CLOUDFLARE_API_EMAIL", "")
 
         # Warn if both auth methods are set, use API Token (recommended)
         if token and key and email:
@@ -293,14 +310,42 @@ class CloudflareProvider(Provider):
 
         print_boxes(report_lines, report_title)
 
-    def test_connection(self) -> Connection:
+    @staticmethod
+    def test_connection(
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> Connection:
+        """Test connection to Cloudflare.
+
+        Test the connection to Cloudflare using the provided credentials.
+
+        Args:
+            api_token: Cloudflare API token (optional, falls back to env var).
+            api_key: Cloudflare API key (optional, falls back to env var).
+            api_email: Cloudflare API email (optional, falls back to env var).
+            raise_on_exception: Flag indicating whether to raise an exception if the connection fails.
+            provider_id: The provider ID (Cloudflare account ID).
+
+        Returns:
+            Connection: Connection object with is_connected status.
+        """
         try:
-            _ = self._session.client.user.get()
+            session = CloudflareProvider.setup_session(
+                api_token=api_token,
+                api_key=api_key,
+                api_email=api_email,
+            )
+            _ = session.client.user.get()
             return Connection(is_connected=True)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            if raise_on_exception:
+                raise error
             return Connection(is_connected=False, error=error)
 
     def validate_arguments(self) -> None:

@@ -5,7 +5,7 @@ requires = ["poetry-core"]
 [project]
 authors = [{name = "Prowler Engineering", email = "engineering@prowler.com"}]
 dependencies = [
-  "celery[pytest] (>=5.4.0,<6.0.0)",
+  "celery (>=5.4.0,<6.0.0)",
   "dj-rest-auth[with_social,jwt] (==7.0.1)",
   "django (==5.1.15)",
   "django-allauth[saml] (>=65.13.0,<66.0.0)",
@@ -59,6 +59,7 @@ bandit = "1.7.9"
 coverage = "7.5.4"
 django-silk = "5.3.2"
 docker = "7.1.0"
+filelock = "3.20.3"
 freezegun = "1.5.1"
 marshmallow = ">=3.15.0,<4.0.0"
 mypy = "1.10.1"
@@ -71,6 +72,5 @@ pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
 ruff = "0.5.0"
 safety = "3.7.0"
-filelock = "3.20.3"
-vulture = "2.14"
 tqdm = "4.67.1"
+vulture = "2.14"
