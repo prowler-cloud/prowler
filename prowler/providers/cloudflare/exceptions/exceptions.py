@@ -1,4 +1,50 @@
+import re
+
 from prowler.exceptions.exceptions import ProwlerException
+
+
+def parse_cloudflare_api_error(error: Exception) -> str:
+    """Parse a Cloudflare API error and return a user-friendly message.
+
+    Cloudflare API errors typically look like:
+    Error code: 400 - {'success': False, 'errors': [{'code': 6003, 'message': 'Invalid request headers',
+    'error_chain': [{'code': 6111, 'message': 'Invalid format for Authorization header'}]}], ...}
+
+    Args:
+        error: The exception from the Cloudflare SDK.
+
+    Returns:
+        A formatted, user-friendly error message.
+    """
+    error_str = str(error)
+
+    # Try to extract messages from the Cloudflare API response format
+    messages = []
+
+    # Pattern to find 'message': 'some message' in the error string
+    message_pattern = r"'message':\s*'([^']+)'"
+    matches = re.findall(message_pattern, error_str)
+    if matches:
+        # Deduplicate while preserving order
+        seen = set()
+        for msg in matches:
+            if msg not in seen:
+                seen.add(msg)
+                messages.append(msg)
+
+    if messages:
+        return " - ".join(messages)
+
+    # If we couldn't parse specific messages, check for common HTTP status codes
+    if "401" in error_str or "Unauthorized" in error_str:
+        return "Invalid API token or credentials"
+    if "403" in error_str or "Forbidden" in error_str:
+        return "API token lacks required permissions"
+    if "400" in error_str:
+        return "Invalid request - please check your API token format"
+
+    # Fallback to a generic message if we can't parse the error
+    return "Authentication failed - please verify your credentials"
 
 
 # Exceptions codes from 9000 to 9999 are reserved for Cloudflare exceptions

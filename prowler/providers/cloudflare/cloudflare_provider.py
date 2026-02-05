@@ -12,10 +12,12 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.cloudflare.exceptions.exceptions import (
+    CloudflareAuthenticationError,
     CloudflareCredentialsError,
     CloudflareIdentityError,
     CloudflareInvalidAccountError,
     CloudflareSessionError,
+    parse_cloudflare_api_error,
 )
 from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
 from prowler.providers.cloudflare.models import (
@@ -358,13 +360,32 @@ class CloudflareProvider(Provider):
                         message="No Cloudflare accounts found. Please verify your API token has the required permissions.",
                     )
             return Connection(is_connected=True)
+        except (
+            CloudflareCredentialsError,
+            CloudflareAuthenticationError,
+            CloudflareSessionError,
+        ) as prowler_error:
+            # Prowler exceptions are already well-formatted
+            logger.error(
+                f"{prowler_error.__class__.__name__}[{prowler_error.__traceback__.tb_lineno}]: {prowler_error}"
+            )
+            if raise_on_exception:
+                raise prowler_error
+            return Connection(is_connected=False, error=prowler_error)
         except Exception as error:
+            # Parse raw Cloudflare SDK errors into user-friendly messages
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            friendly_message = parse_cloudflare_api_error(error)
+            formatted_error = CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=friendly_message,
+            )
             if raise_on_exception:
-                raise error
-            return Connection(is_connected=False, error=error)
+                raise formatted_error
+            return Connection(is_connected=False, error=formatted_error)
 
     def validate_arguments(self) -> None:
         return None
