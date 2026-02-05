@@ -18,7 +18,7 @@ services:
       - ./api/src/backend:/home/prowler/backend
       - ./api/pyproject.toml:/home/prowler/pyproject.toml
       - ./api/docker-entrypoint.sh:/home/prowler/docker-entrypoint.sh
-      - ./_data/api:/home/prowler/.config/prowler-api
+      - api-config:/home/prowler/.config/prowler-api
       - outputs:/tmp/prowler_api_output
     depends_on:
       postgres:
@@ -136,6 +136,7 @@ services:
       - ./api/src/backend:/home/prowler/backend
       - ./api/pyproject.toml:/home/prowler/pyproject.toml
       - ./api/docker-entrypoint.sh:/home/prowler/docker-entrypoint.sh
+      - api-config:/home/prowler/.config/prowler-api
       - outputs:/tmp/prowler_api_output
     depends_on:
       valkey:
@@ -197,5 +198,7 @@ services:
       retries: 3
 
 volumes:
+  api-config:
+    driver: local
   outputs:
     driver: local

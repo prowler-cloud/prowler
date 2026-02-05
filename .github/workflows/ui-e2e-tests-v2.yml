@@ -25,7 +25,7 @@ jobs:
   e2e-tests:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' && 
+      github.repository == 'prowler-cloud/prowler' &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
@@ -98,9 +98,6 @@ jobs:
         run: |
           yq -i '.networks.kind.external = true' docker-compose.yml
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
-
-      - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
 
       - name: Add AWS credentials for testing
         run: |
@@ -222,8 +219,8 @@ jobs:
   skip-e2e:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' && 
-      needs.impact-analysis.outputs.has-ui-e2e != 'true' && 
+      github.repository == 'prowler-cloud/prowler' &&
+      needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
     steps:
