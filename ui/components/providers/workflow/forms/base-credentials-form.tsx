@@ -37,12 +37,12 @@ import {
 } from "./select-credentials-type/alibabacloud/credentials-type";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
-import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
-import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
   CloudflareApiKeyCredentialsForm,
   CloudflareApiTokenCredentialsForm,
 } from "./select-credentials-type/cloudflare";
+import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
+import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
   M365CertificateCredentialsForm,
   M365ClientSecretCredentialsForm,

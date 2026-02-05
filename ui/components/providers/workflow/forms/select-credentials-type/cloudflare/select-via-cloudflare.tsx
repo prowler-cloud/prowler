@@ -11,7 +11,9 @@ interface SelectViaCloudflareProps {
   initialVia?: string;
 }
 
-export const SelectViaCloudflare = ({ initialVia }: SelectViaCloudflareProps) => {
+export const SelectViaCloudflare = ({
+  initialVia,
+}: SelectViaCloudflareProps) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
