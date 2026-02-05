@@ -373,6 +373,29 @@ class TestCloudflareValidateCredentials:
         with pytest.raises(CloudflareInvalidAPIKeyError):
             CloudflareProvider.validate_credentials(session)
 
+    def test_validate_credentials_invalid_api_key_bad_request(self):
+        """Test that invalid API key error is raised when using API Key + Email with 6003 error."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        # Same error code as token but using API Key + Email auth
+        mock_client.user.get.side_effect = BadRequestError(
+            "Error code: 400 - {'errors': [{'code': 6003, 'message': 'Invalid request headers'}]}",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=None,
+            api_key="invalid_key",
+            api_email="invalid@email.com",
+        )
+
+        # Should raise CloudflareInvalidAPIKeyError, NOT CloudflareInvalidAPITokenError
+        with pytest.raises(CloudflareInvalidAPIKeyError):
+            CloudflareProvider.validate_credentials(session)
+
     def test_validate_credentials_fallback_to_accounts_list(self):
         """Test fallback to accounts.list() when user.get() fails with non-auth error."""
         mock_client = MagicMock()

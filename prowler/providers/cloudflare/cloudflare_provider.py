@@ -347,13 +347,22 @@ class CloudflareProvider(Provider):
             )
         except BadRequestError as error:
             error_str = str(error)
-            # Invalid API token format (code 6003/6111)
+            # Invalid credentials format (code 6003/6111)
+            # Differentiate based on which auth method was used
             if "6003" in error_str or "6111" in error_str:
-                logger.error(f"CloudflareInvalidAPITokenError: {error}")
-                raise CloudflareInvalidAPITokenError(
-                    file=os.path.basename(__file__),
-                )
-            # Invalid API key or email
+                if session.api_key and session.api_email:
+                    # User is using API Key + Email
+                    logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                    raise CloudflareInvalidAPIKeyError(
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    # User is using API Token
+                    logger.error(f"CloudflareInvalidAPITokenError: {error}")
+                    raise CloudflareInvalidAPITokenError(
+                        file=os.path.basename(__file__),
+                    )
+            # Invalid API key or email (explicit message)
             if "Unknown X-Auth-Key" in error_str or "X-Auth-Email" in error_str:
                 logger.error(f"CloudflareInvalidAPIKeyError: {error}")
                 raise CloudflareInvalidAPIKeyError(
@@ -411,11 +420,18 @@ class CloudflareProvider(Provider):
             )
         except BadRequestError as error:
             error_str = str(error)
+            # Invalid credentials format (code 6003/6111)
             if "6003" in error_str or "6111" in error_str:
-                logger.error(f"CloudflareInvalidAPITokenError: {error}")
-                raise CloudflareInvalidAPITokenError(
-                    file=os.path.basename(__file__),
-                )
+                if session.api_key and session.api_email:
+                    logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                    raise CloudflareInvalidAPIKeyError(
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    logger.error(f"CloudflareInvalidAPITokenError: {error}")
+                    raise CloudflareInvalidAPITokenError(
+                        file=os.path.basename(__file__),
+                    )
             if "Unknown X-Auth-Key" in error_str or "X-Auth-Email" in error_str:
                 logger.error(f"CloudflareInvalidAPIKeyError: {error}")
                 raise CloudflareInvalidAPIKeyError(
