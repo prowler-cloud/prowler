@@ -10,6 +10,7 @@ from api.v1.views import (
     CustomTokenObtainView,
     CustomTokenRefreshView,
     CustomTokenSwitchTenantView,
+    FindingGroupViewSet,
     FindingViewSet,
     GithubSocialLoginView,
     GoogleSocialLoginView,
@@ -60,6 +61,7 @@ router.register(
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"resources", ResourceViewSet, basename="resource")
 router.register(r"findings", FindingViewSet, basename="finding")
+router.register(r"finding-groups", FindingGroupViewSet, basename="finding-group")
 router.register(r"roles", RoleViewSet, basename="role")
 router.register(
     r"compliance-overviews", ComplianceOverviewViewSet, basename="complianceoverview"
