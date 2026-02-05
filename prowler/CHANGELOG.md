@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 - Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
+- Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
 
 ### Changed
 
@@ -31,10 +32,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Defender service metadata to new format [(#9618)](https://github.com/prowler-cloud/prowler/pull/9618)
 - Make AWS cross-account checks configurable through `trusted_account_ids` config parameter [(#9692)](https://github.com/prowler-cloud/prowler/pull/9692)
 - Update Azure PostgreSQL service metadata to new format [(#9626)](https://github.com/prowler-cloud/prowler/pull/9626)
+- Update Azure SQL Server service metadata to new format [(#9627)](https://github.com/prowler-cloud/prowler/pull/9627)
+- Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
+- Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
 
 ### Fixed
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
+- Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
+- CSV/XLSX download failure in dashboard [(#9946)](https://github.com/prowler-cloud/prowler/pull/9946)
 
 ---
 

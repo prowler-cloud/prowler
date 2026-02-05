@@ -287,6 +287,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
+        CLOUDFLARE = "cloudflare", _("Cloudflare")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -397,6 +398,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Alibaba Cloud account ID must be exactly 16 digits.",
                 code="alibabacloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_cloudflare_uid(value):
+        if not re.match(r"^[a-f0-9]{32}$", value):
+            raise ModelValidationError(
+                detail="Cloudflare Account ID must be a 32-character hexadecimal string.",
+                code="cloudflare-uid",
                 pointer="/data/attributes/uid",
             )
 

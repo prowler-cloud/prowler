@@ -1119,6 +1119,10 @@ def filter_data(
             figure=fig,
             config={"displayModeBar": False},
         )
+        pie_3 = dcc.Graph(
+            figure=fig,
+            config={"displayModeBar": False},
+        )
         table = dcc.Graph(figure=fig, config={"displayModeBar": False})
 
     else:
@@ -1175,22 +1179,25 @@ def filter_data(
             style={"height": "300px", "overflow-y": "auto"},
         )
 
-        color_bars = [
-            color_mapping_severity[severity]
-            for severity in df1["SEVERITY"].value_counts().index
-        ]
-
-        figure_bars = go.Figure(
-            data=[
+        # Prepare bar chart data only if df1 has FAIL findings
+        if len(df1) > 0:
+            color_bars = [
+                color_mapping_severity[severity]
+                for severity in df1["SEVERITY"].value_counts().index
+            ]
+            bar_data = [
                 go.Bar(
-                    x=df1["SEVERITY"]
-                    .value_counts()
-                    .index,  # assign x as the dataframe column 'x'
+                    x=df1["SEVERITY"].value_counts().index,
                     y=df1["SEVERITY"].value_counts().values,
                     marker=dict(color=color_bars),
                     textposition="auto",
                 )
-            ],
+            ]
+        else:
+            bar_data = []
+
+        figure_bars = go.Figure(
+            data=bar_data,
             layout=go.Layout(
                 paper_bgcolor="#FFF",
                 font=dict(size=12, color="#292524"),
@@ -1560,6 +1567,8 @@ def filter_data(
             severity_values,
             severity_filter_options,
             service_values,
+            provider_values,
+            provider_filter_options,
             service_filter_options,
             table_row_values,
             table_row_options,
