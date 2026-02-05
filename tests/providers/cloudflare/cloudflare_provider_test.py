@@ -352,13 +352,14 @@ class TestCloudflareValidateCredentials:
             CloudflareProvider.validate_credentials(session)
 
     def test_validate_credentials_invalid_api_key(self):
-        """Test that invalid API key error is raised."""
+        """Test that invalid API key error is raised (403 with code 9103)."""
         mock_client = MagicMock()
-        from cloudflare._exceptions import BadRequestError
+        from cloudflare._exceptions import PermissionDeniedError
 
-        mock_client.user.get.side_effect = BadRequestError(
-            "Error code: 400 - {'errors': [{'message': 'Unknown X-Auth-Key or X-Auth-Email'}]}",
-            response=MagicMock(status_code=400),
+        # Real error: 403 with code 9103 "Unknown X-Auth-Key or X-Auth-Email"
+        mock_client.user.get.side_effect = PermissionDeniedError(
+            "Error code: 403 - {'success': False, 'errors': [{'code': 9103, 'message': 'Unknown X-Auth-Key or X-Auth-Email'}]}",
+            response=MagicMock(status_code=403),
             body=None,
         )
 

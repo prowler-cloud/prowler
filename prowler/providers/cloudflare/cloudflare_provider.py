@@ -334,6 +334,12 @@ class CloudflareProvider(Provider):
                 raise CloudflareUserTokenRequiredError(
                     file=os.path.basename(__file__),
                 )
+            # Check for invalid API key or email (code 9103) - comes as 403
+            if "9103" in error_str or "Unknown X-Auth-Key" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
+                    file=os.path.basename(__file__),
+                )
             # For other permission errors, try accounts.list() as fallback
             logger.warning(
                 f"Unable to retrieve Cloudflare user info: {error}. "
@@ -390,6 +396,12 @@ class CloudflareProvider(Provider):
             if "9109" in error_str:
                 logger.error(f"CloudflareUserTokenRequiredError: {error}")
                 raise CloudflareUserTokenRequiredError(
+                    file=os.path.basename(__file__),
+                )
+            # Check for invalid API key or email (code 9103) - comes as 403
+            if "9103" in error_str or "Unknown X-Auth-Key" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
                     file=os.path.basename(__file__),
                 )
             logger.error(f"CloudflareAuthenticationError: {error}")
