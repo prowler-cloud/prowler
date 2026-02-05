@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `rds_instance_extended_support` check for AWS provider [(#9865)](https://github.com/prowler-cloud/prowler/pull/9865)
 - `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
+- Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
 
 ### Changed
 
@@ -30,7 +31,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Defender service metadata to new format [(#9618)](https://github.com/prowler-cloud/prowler/pull/9618)
 - Make AWS cross-account checks configurable through `trusted_account_ids` config parameter [(#9692)](https://github.com/prowler-cloud/prowler/pull/9692)
 - Update Azure PostgreSQL service metadata to new format [(#9626)](https://github.com/prowler-cloud/prowler/pull/9626)
-- Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
 
 ### Fixed
 
