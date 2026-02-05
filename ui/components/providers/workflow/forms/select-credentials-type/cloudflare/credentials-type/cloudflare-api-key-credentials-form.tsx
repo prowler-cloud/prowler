@@ -25,7 +25,7 @@ export const CloudflareApiKeyCredentialsForm = ({
       <CustomInput
         control={control}
         name={ProviderCredentialFields.CLOUDFLARE_API_EMAIL}
-        type="email"
+        type="text"
         label="Email"
         labelPlacement="inside"
         placeholder="Enter your Cloudflare account email"
