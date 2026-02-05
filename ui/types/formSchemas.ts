@@ -364,6 +364,16 @@ export const addCredentialsFormSchema = (
               message: "Email is required",
               path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
             });
+          } else {
+            // Validate email format
+            const emailResult = z.email().safeParse(apiEmail);
+            if (!emailResult.success) {
+              ctx.addIssue({
+                code: "custom",
+                message: "Please enter a valid email address",
+                path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
+              });
+            }
           }
         }
       }
