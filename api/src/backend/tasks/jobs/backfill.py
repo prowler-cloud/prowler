@@ -8,7 +8,11 @@ from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_ALL_SQL,
 )
-from tasks.jobs.scan import aggregate_category_counts, aggregate_resource_group_counts
+from tasks.jobs.scan import (
+    aggregate_category_counts,
+    aggregate_finding_group_summaries,
+    aggregate_resource_group_counts,
+)
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
@@ -551,4 +555,83 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
         "providers_skipped": providers_skipped,
         "total_upserted": total_upserted,
         "tenant_summary_count": tenant_summary_count,
+    }
+
+
+def backfill_finding_group_summaries(tenant_id: str, days: int = None):
+    """
+    Backfill FindingGroupDailySummary from completed scans.
+
+    Iterates over completed scans and aggregates findings by check_id
+    to create daily summary records.
+
+    Args:
+        tenant_id: Tenant that owns the scans.
+        days: Optional limit on how many days back to backfill.
+
+    Returns:
+        dict: Statistics about the backfill operation.
+    """
+    scans_processed = 0
+    scans_skipped = 0
+    total_created = 0
+    total_updated = 0
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan_filter = {
+            "tenant_id": tenant_id,
+            "state": StateChoices.COMPLETED,
+            "completed_at__isnull": False,
+        }
+
+        if days is not None:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            scan_filter["completed_at__gte"] = cutoff_date
+
+        completed_scans = (
+            Scan.objects.filter(**scan_filter)
+            .order_by("-completed_at")
+            .values("id", "completed_at")
+        )
+
+        if not completed_scans:
+            return {"status": "no scans to backfill"}
+
+        # Keep only latest scan per day
+        latest_scans_by_day = {}
+        for scan in completed_scans:
+            key = scan["completed_at"].date()
+            if key not in latest_scans_by_day:
+                latest_scans_by_day[key] = scan
+
+    # Process each day's scan
+    for scan_date, scan in latest_scans_by_day.items():
+        scan_id = str(scan["id"])
+
+        try:
+            result = aggregate_finding_group_summaries(tenant_id, scan_id)
+            if result.get("status") == "completed":
+                scans_processed += 1
+                total_created += result.get("created", 0)
+                total_updated += result.get("updated", 0)
+            else:
+                scans_skipped += 1
+        except Exception as e:
+            logger.warning(
+                f"Failed to backfill finding group summaries for scan {scan_id}: {e}"
+            )
+            scans_skipped += 1
+
+    logger.info(
+        f"Backfilled finding group summaries for tenant {tenant_id}: "
+        f"{scans_processed} scans processed, {scans_skipped} skipped, "
+        f"{total_created} created, {total_updated} updated"
+    )
+
+    return {
+        "status": "backfilled",
+        "scans_processed": scans_processed,
+        "scans_skipped": scans_skipped,
+        "total_created": total_created,
+        "total_updated": total_updated,
     }
