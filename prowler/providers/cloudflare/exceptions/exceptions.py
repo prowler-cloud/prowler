@@ -33,7 +33,20 @@ def parse_cloudflare_api_error(error: Exception) -> str:
                 messages.append(msg)
 
     if messages:
-        return " - ".join(messages)
+        # Replace technical messages with user-friendly ones
+        friendly_messages = []
+        for msg in messages:
+            if "Unknown X-Auth-Key or X-Auth-Email" in msg:
+                friendly_messages.append(
+                    "Invalid API Key or Email - please verify your credentials"
+                )
+            elif "Invalid format for Authorization header" in msg:
+                friendly_messages.append(
+                    "Invalid API Token format - please check your token"
+                )
+            else:
+                friendly_messages.append(msg)
+        return " - ".join(friendly_messages)
 
     # If we couldn't parse specific messages, check for common error patterns
     if "max retries" in error_str.lower() or "retry" in error_str.lower():

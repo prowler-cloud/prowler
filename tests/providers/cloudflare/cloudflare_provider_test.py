@@ -323,7 +323,8 @@ class TestParseCloudflareApiError:
         )
         result = parse_cloudflare_api_error(error)
         assert "Invalid request headers" in result
-        assert "Invalid format for Authorization header" in result
+        # The technical message is replaced with a user-friendly one
+        assert "Invalid API Token format" in result
 
     def test_parse_cloudflare_api_error_with_401(self):
         """Test parsing error with 401 status code."""
@@ -397,10 +398,11 @@ class TestCloudflareTestConnectionErrorFormatting:
             assert connection.error is not None
             # The error should be a CloudflareAuthenticationError with formatted message
             assert isinstance(connection.error, CloudflareAuthenticationError)
-            # The formatted message should contain the parsed messages from the API
+            # The formatted message should contain user-friendly messages
             error_str = str(connection.error)
             assert "Invalid request headers" in error_str
-            assert "Invalid format for Authorization header" in error_str
+            # Technical messages are replaced with user-friendly ones
+            assert "Invalid API Token format" in error_str
             # The raw error should NOT be included in the user-facing message
             assert "Error code: 400" not in error_str
             assert "'success': False" not in error_str
