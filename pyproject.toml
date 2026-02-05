@@ -123,7 +123,7 @@ flake8 = "7.1.2"
 freezegun = "1.5.1"
 marshmallow = ">=3.15.0,<4.0.0"
 mock = "5.2.0"
-moto = {extras = ["all"], version = "5.1.11"}
+moto = {extras = ["all"], version = "5.1.20"}
 openapi-schema-validator = "0.6.3"
 openapi-spec-validator = "0.7.1"
 pre-commit = "4.2.0"
