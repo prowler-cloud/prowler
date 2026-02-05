@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/logstore/logstore-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSLogStore",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure **Activity Log Retention** is set for **365 days** or greater.",
   "Risk": "Logstore lifecycle controls how your activity log is exported and retained. It is recommended to retain your activity log for **365 days or more** to have time to respond to any incidents.\n\nShort retention periods may result in loss of **forensic evidence** needed for security investigations.",
   "RelatedUrl": "",

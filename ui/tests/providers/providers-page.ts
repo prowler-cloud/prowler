@@ -262,32 +262,32 @@ export class ProvidersPage extends BasePage {
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
 
-    // Radio buttons to select the type of cloud provider
-    this.awsProviderRadio = page.getByRole("radio", {
+    // Option buttons to select the type of cloud provider (listbox with options)
+    this.awsProviderRadio = page.getByRole("option", {
       name: /Amazon Web Services/i,
     });
     // Google Cloud Platform
-    this.gcpProviderRadio = page.getByRole("radio", {
+    this.gcpProviderRadio = page.getByRole("option", {
       name: /Google Cloud Platform/i,
     });
     // Microsoft Azure
-    this.azureProviderRadio = page.getByRole("radio", {
+    this.azureProviderRadio = page.getByRole("option", {
       name: /Microsoft Azure/i,
     });
     // Microsoft 365
-    this.m365ProviderRadio = page.getByRole("radio", {
+    this.m365ProviderRadio = page.getByRole("option", {
       name: /Microsoft 365/i,
     });
     // Kubernetes
-    this.kubernetesProviderRadio = page.getByRole("radio", {
+    this.kubernetesProviderRadio = page.getByRole("option", {
       name: /Kubernetes/i,
     });
     // GitHub
-    this.githubProviderRadio = page.getByRole("radio", {
+    this.githubProviderRadio = page.getByRole("option", {
       name: /GitHub/i,
     });
     // Oracle Cloud Infrastructure
-    this.ociProviderRadio = page.getByRole("radio", {
+    this.ociProviderRadio = page.getByRole("option", {
       name: /Oracle Cloud Infrastructure/i,
     });
 
@@ -426,6 +426,12 @@ export class ProvidersPage extends BasePage {
     // Go to the providers page
 
     await super.goto("/providers");
+  }
+
+  async gotoFresh(): Promise<void> {
+    // Go to the providers page with fresh navigation
+
+    await super.gotoFresh("/providers");
   }
 
   private async verifyPageHasProwlerTitle(): Promise<void> {
@@ -607,18 +613,22 @@ export class ProvidersPage extends BasePage {
     }
 
     // Fallback logic: try finding any common primary action buttons in expected order
-    const candidates: Array<{ name: string | RegExp }> = [
-      { name: "Next" }, // Try the "Next" button
-      { name: "Save" }, // Try the "Save" button
+    const candidates: Array<{ name: string | RegExp; exact?: boolean }> = [
+      { name: "Next", exact: true }, // Try the "Next" button (exact match to avoid Next.js dev tools)
+      { name: "Save", exact: true }, // Try the "Save" button
       { name: "Launch scan" }, // Try the "Launch scan" button
       { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
     ];
 
     // Try each candidate name and click it if found
     for (const candidate of candidates) {
-      const btn = this.page.getByRole("button", {
-        name: candidate.name,
-      });
+      // Exclude Next.js dev tools button by filtering out buttons with aria-haspopup attribute
+      const btn = this.page
+        .getByRole("button", {
+          name: candidate.name,
+          exact: candidate.exact,
+        })
+        .and(this.page.locator(":not([aria-haspopup])"));
 
       if (await btn.count()) {
         await btn.click();
@@ -847,10 +857,21 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
-    // Verify the OCI credentials page is loaded
+    // Verify the OCI credentials page is loaded (add flow - all fields visible)
 
     await this.verifyPageHasProwlerTitle();
     await expect(this.ociTenancyIdInput).toBeVisible();
+    await expect(this.ociUserIdInput).toBeVisible();
+    await expect(this.ociFingerprintInput).toBeVisible();
+    await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociRegionInput).toBeVisible();
+  }
+
+  async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
+    // Verify the OCI update credentials page is loaded
+    // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+
+    await this.verifyPageHasProwlerTitle();
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
@@ -994,5 +1015,43 @@ export class ProvidersPage extends BasePage {
     } else {
       throw new Error(`Invalid authentication method: ${method}`);
     }
+  }
+
+  async clickProviderRowActions(providerUid: string): Promise<void> {
+    // Click the actions dropdown for a specific provider row
+    const row = this.providersTable.locator("tbody tr", {
+      hasText: providerUid,
+    });
+    await expect(row).toBeVisible();
+
+    // Click the dropdown trigger - it's the last button in the row (after the copy button)
+    const actionsButton = row.locator("button").last();
+    await actionsButton.click();
+  }
+
+  async clickUpdateCredentials(providerUid: string): Promise<void> {
+    // Click update credentials for a specific provider
+    await this.clickProviderRowActions(providerUid);
+
+    // Wait for dropdown menu to stabilize and click Update Credentials
+    const updateCredentialsOption = this.page.getByRole("menuitem", {
+      name: /Update Credentials/i,
+    });
+    await expect(updateCredentialsOption).toBeVisible();
+    // Wait a bit for the menu to stabilize before clicking
+    await this.page.waitForTimeout(100);
+    await updateCredentialsOption.click({ force: true });
+  }
+
+  async verifyUpdateCredentialsPageLoaded(): Promise<void> {
+    // Verify the update credentials page is loaded
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.page).toHaveURL(/\/providers\/update-credentials/);
+  }
+
+  async verifyTestConnectionPageLoaded(): Promise<void> {
+    // Verify the test connection page is loaded
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.page).toHaveURL(/\/providers\/test-connection/);
   }
 }

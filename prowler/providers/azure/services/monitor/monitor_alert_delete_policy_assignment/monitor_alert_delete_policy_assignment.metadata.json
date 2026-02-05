@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "**Activity log alert** for policy assignment deletions using the `Microsoft.Authorization/policyAssignments/delete` operation at subscription scope",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity log alerts** for policy assignment deletions using the `Microsoft.Authorization/policyAssignments/delete` operation at subscription scope",
   "Risk": "Without this alert, **policy assignment deletions** can go unnoticed, eroding configuration **integrity** and enabling governance drift. Malicious or accidental changes may remove guardrails, increasing exposure and threatening **confidentiality** of protected resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://docs.microsoft.com/en-in/rest/api/monitor/activitylogalerts/createorupdate",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-policy-assignment-alert-in-use.html#trendmicro"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
+    "https://learn.microsoft.com/en-in/rest/api/monitor/activity-log-alerts/create-or-update?view=rest-monitor-2020-10-01&tabs=HTTP",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/delete-policy-assignment-alert-in-use.html#trendmicro"
   ],
   "Remediation": {
     "Code": {

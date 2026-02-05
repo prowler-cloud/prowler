@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
+  "ResourceGroup": "monitoring",
   "Description": "**Azure Monitor activity log alert** for **Public IP addresses** tracks `Microsoft.Network/publicIPAddresses/write` events at the subscription level, covering any creation or update of public IP resources.",
   "Risk": "Without this alert, unauthorized or mistaken public IP changes can go unnoticed, exposing workloads to the Internet.\n- Confidentiality: unexpected ingress paths\n- Integrity: shadow endpoints for control\n- Availability: larger DDoS surface and outages",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-or-update-public-ip-alert.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-public-ip-alert.html#trendmicro",
-    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://stackoverflow.com/questions/76027294/to-querying-when-a-public-ip-is-created-in-azure",
     "https://support.icompaas.com/support/solutions/articles/62000229918-ensure-that-activity-log-alert-exists-for-create-or-update-public-ip-address-rule",
-    "https://azure.github.io/azure-monitor-baseline-alerts/services/Network/publicIPAddresses/",
     "https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/monitor-public-ip"
   ],
   "Remediation": {

@@ -8,8 +8,8 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
@@ -82,8 +82,8 @@ export function MuteRulesTableClient({
 
       {/* Edit Modal */}
       {selectedMuteRule && (
-        <CustomAlertModal
-          isOpen={editModal.isOpen}
+        <Modal
+          open={editModal.isOpen}
           onOpenChange={editModal.onOpenChange}
           title="Edit Mute Rule"
           size="lg"
@@ -93,13 +93,13 @@ export function MuteRulesTableClient({
             onSuccess={handleEditSuccess}
             onCancel={editModal.onClose}
           />
-        </CustomAlertModal>
+        </Modal>
       )}
 
       {/* Delete Confirmation Modal */}
       {selectedMuteRule && (
-        <CustomAlertModal
-          isOpen={deleteModal.isOpen}
+        <Modal
+          open={deleteModal.isOpen}
           onOpenChange={deleteModal.onOpenChange}
           title="Delete Mute Rule"
           size="md"
@@ -138,7 +138,7 @@ export function MuteRulesTableClient({
               </form>
             </div>
           </div>
-        </CustomAlertModal>
+        </Modal>
       )}
     </>
   );

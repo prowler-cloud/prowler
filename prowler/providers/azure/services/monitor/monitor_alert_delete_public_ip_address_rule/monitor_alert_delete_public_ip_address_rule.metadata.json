@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "Azure Monitor activity log alert exists for the **Delete Public IP Address** operation (`Microsoft.Network/publicIPAddresses/delete`), capturing subscription-wide events when Public IP resources are removed.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor activity log alert** exists for the **Delete Public IP Address** operation (`Microsoft.Network/publicIPAddresses/delete`), capturing subscription-wide events when Public IP resources are removed.",
   "Risk": "Unmonitored deletion of Public IPs can abruptly sever ingress/egress, break DNS and allowlists, and take services offline (**availability**). Attackers or misconfigurations can delete IPs to cause **DoS** or evade controls, and delayed visibility hinders **incident response** and **forensics**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-public-ip-alert.html#trendmicro",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/delete-public-ip-alert.html#trendmicro",
     "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log"
   ],
   "Remediation": {
     "Code": {

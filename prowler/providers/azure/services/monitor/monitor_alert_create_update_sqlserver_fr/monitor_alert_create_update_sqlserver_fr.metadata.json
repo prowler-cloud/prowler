@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
+  "ResourceGroup": "monitoring",
   "Description": "**Azure Monitor activity log alerts** are configured for **Azure SQL Server firewall rule changes**, targeting the `Microsoft.Sql/servers/firewallRules/write` operation.\n\nThis evaluates whether notifications or automated actions are set when firewall rules are created or updated.",
   "Risk": "Without alerting on firewall rule changes, unauthorized or accidental openings can remain unnoticed, exposing databases to untrusted networks.\n\nThis harms **confidentiality** (data exfiltration via widened IP ranges) and **integrity** (unauthorized queries), while increasing attacker dwell time.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-or-delete-sql-server-firewall-rule-alert.html#trendmicro"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-or-update-or-delete-sql-server-firewall-rule-alert.html#trendmicro"
   ],
   "Remediation": {
     "Code": {

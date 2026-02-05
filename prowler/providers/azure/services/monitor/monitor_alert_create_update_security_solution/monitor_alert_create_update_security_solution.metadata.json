@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "An **Azure Monitor activity log alert** is configured to capture **Security Solutions** create/update operations (`Microsoft.Security/securitySolutions/write`) at subscription scope.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor activity log alert** is configured to capture **Security Solutions** create/update operations (`Microsoft.Security/securitySolutions/write`) at subscription scope.",
   "Risk": "Without this alert, **unauthorized or mistaken changes** to security tooling can go undetected. Attackers could disable defenses, alter integrations, or weaken policies, eroding the **integrity** of controls, creating blind spots that threaten **confidentiality**, and delaying incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-security-solution-alert.html#trendmicro"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-or-update-security-solution-alert.html#trendmicro"
   ],
   "Remediation": {
     "Code": {

@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.resources/subscriptions",
-  "Description": "**Azure Monitor Activity Log** diagnostic settings capture **control-plane events** at the subscription level. This evaluates whether at least one setting collects the categories: `Administrative`, `Security`, `Policy`, and `Alert`.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Diagnostic Settings** capture **control-plane events** at the subscription level. This evaluates whether at least one setting collects the categories: `Administrative`, `Security`, `Policy`, and `Alert`.",
   "Risk": "Without these categories, critical control-plane actions may go unrecorded. Attackers could change policies, roles, or alerts unnoticed, enabling privilege escalation and resource tampering. This erodes **integrity**, threatens **confidentiality**, and weakens **availability** and **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

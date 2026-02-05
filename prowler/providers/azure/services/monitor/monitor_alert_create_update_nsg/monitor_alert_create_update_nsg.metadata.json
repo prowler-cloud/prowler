@@ -8,16 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "**Azure Activity Log alert** monitors **Network Security Group** changes via the `Microsoft.Network/networkSecurityGroups/write` operation to capture create/update events across the subscription",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity Log alert** monitors **Network Security Group** changes via the `Microsoft.Network/networkSecurityGroups/write` operation to capture create/update events across the subscription",
   "Risk": "Lack of alerting on NSG changes allows **unauthorized network policy modifications** to go unnoticed. Adversaries or mistakes could open ports, reduce segmentation, and enable **lateral movement**, impacting data **confidentiality** and service **availability** through exposure or disruption of critical traffic",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://thomasthornton.cloud/2019/10/10/creating-azure-activity-log-alerts-with-powershell/",
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
     "https://learn.microsoft.com/en-us/azure/azure-monitor/platform/activity-log-schema",
-    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://www.secwiki.cloud/azure/services/monitor/",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-update-network-security-group-rule-alert-in-use.html#trendmicro"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-update-network-security-group-rule-alert-in-use.html"
   ],
   "Remediation": {
     "Code": {

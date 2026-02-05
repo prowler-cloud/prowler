@@ -8,14 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "Activity log alerts in **Azure Monitor** watch the admin operation `Microsoft.Sql/servers/firewallRules/delete`, indicating when an **Azure SQL firewall rule** is removed across a subscription.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity log alerts** watch the admin operation `Microsoft.Sql/servers/firewallRules/delete`, indicating when an **Azure SQL firewall rule** is removed across a subscription.",
   "Risk": "Without alerting on firewall rule deletions, unexpected changes to SQL network allowlists can go unnoticed, causing **availability** loss for apps and masking **unauthorized tampering**. A compromised admin could remove rules to disrupt service, erode control **integrity**, and delay response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-or-update-or-delete-sql-server-firewall-rule-alert.html#trendmicro",
-    "https://learn.microsoft.com/en-us/answers/questions/2180370/unable-to-make-the-policy-an-activity-log-alert-sh"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-or-update-or-delete-sql-server-firewall-rule-alert.html#trendmicro"
   ],
   "Remediation": {
     "Code": {

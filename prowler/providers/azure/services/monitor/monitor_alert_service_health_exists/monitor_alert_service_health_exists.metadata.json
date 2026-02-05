@@ -8,19 +8,16 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "Azure subscriptions have an **Activity Log alert** configured for **Service Health** notifications where `category` is `ServiceHealth` and `properties.incidentType` is `Incident`, with the rule enabled.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity Log alert** is configured for **Service Health** notifications where `category` is `ServiceHealth` and `properties.incidentType` is `Incident`, with the rule enabled.",
   "Risk": "Without alerts for **Service Health incidents**, teams may miss Azure outages or degradations, harming **availability** and delaying failover. Unseen incidents can cause cascading errors, timeouts, deployment failures, and SLA breaches across dependent workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/service-health/service-health-notifications-properties",
-    "https://stackoverflow.com/questions/65401019/create-azure-service-health-alert-in-terraform",
-    "https://thomasthornton.cloud/2019/07/18/creating-azure-service-health-alerts-in-powershell/",
     "https://learn.microsoft.com/en-us/azure/service-health/alerts-activity-log-service-notifications-portal",
     "https://learn.microsoft.com/en-us/azure/service-health/overview",
-    "https://github.com/MicrosoftDocs/azure-monitor-docs/blob/main/articles/service-health/service-health-alert-webhook-servicenow.md",
     "https://learn.microsoft.com/en-us/azure/azure-monitor/platform/activity-log-schema",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/service-health-alert.html",
-    "https://www.shawntabrizi.com/blog/code/set-azure-service-health-alerts-programmatically-using-powershell/"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/service-health-alert.html"
   ],
   "Remediation": {
     "Code": {

@@ -8,14 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "**Azure Storage accounts** configured as destinations for **Activity Log** export are evaluated to confirm encryption with **Customer-Managed Keys** (`CMK`) instead of Microsoft-managed keys.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity Logs** sent to a **Storage account** are evaluated to confirm encryption with **Customer-Managed Keys** (`CMK`) instead of **Microsoft-managed keys**.",
   "Risk": "Storing activity logs without **CMK** weakens confidentiality and control of audit data. You lose independent key ownership, limiting rapid rotation/revocation and separation of duties. If storage credentials are compromised, attackers can exfiltrate logs that map resources and changes, aiding targeted attacks and hindering effective incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log?tabs=cli#managing-legacy-log-profiles",
     "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-encrypt-sensitive-data-at-rest",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-storage-accounts-use-customer-managed-key-for-encryption#terraform",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/use-cmk-for-activity-log-storage-container-encryption.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Monitor/use-cmk-for-activity-log-storage-container-encryption.html"
   ],
   "Remediation": {
     "Code": {

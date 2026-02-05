@@ -8,16 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.insights/activitylogalerts",
+  "ResourceGroup": "monitoring",
   "Description": "**Azure Monitor activity log alerts** include the NSG deletion signal (`Microsoft.Network/networkSecurityGroups/delete` or `Microsoft.ClassicNetwork/networkSecurityGroups/delete`). The finding indicates whether a subscription has an alert rule configured to trigger when a Network Security Group is deleted.",
   "Risk": "Without alerting on **NSG deletions**, network segmentation can be removed unnoticed, exposing services to broad ingress/egress. Malicious actors or automation may delete NSGs to enable **lateral movement** and **data exfiltration**. Missing alerts delay response, impacting confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
     "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://learn.microsoft.com/en-sg/answers/questions/2180370/unable-to-make-the-policy-an-activity-log-alert-sh",
-    "https://docs.kertos.io/en/article/verify-that-activity-log-alert-exists-for-delete-network-security-group",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-network-security-group-rule-alert-in-use.html#trendmicro",
-    "https://azure.github.io/azure-monitor-baseline-alerts/services/Network/networkSecurityGroups/"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/delete-network-security-group-rule-alert-in-use.html#trendmicro"
   ],
   "Remediation": {
     "Code": {

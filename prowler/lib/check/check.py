@@ -687,7 +687,13 @@ def execute(
                 is_finding_muted_args["account_id"] = (
                     global_provider.identity.account_id
                 )
+            elif global_provider.type == "openstack":
+                is_finding_muted_args["project_id"] = (
+                    global_provider.identity.project_id
+                )
             for finding in check_findings:
+                if global_provider.type == "cloudflare":
+                    is_finding_muted_args["account_id"] = finding.account_id
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = (
                         global_provider.identity.subscriptions.get(finding.subscription)

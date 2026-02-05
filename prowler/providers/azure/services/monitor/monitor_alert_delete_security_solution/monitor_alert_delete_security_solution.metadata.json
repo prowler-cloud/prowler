@@ -8,17 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
+  "ResourceGroup": "monitoring",
   "Description": "**Azure activity log alerts** monitor deletions of **Security Solutions** by targeting the operation `Microsoft.Security/securitySolutions/delete` at subscription scope.\n\nIdentifies whether notifications are configured for security solution removal events.",
   "Risk": "Without this alert, **unauthorized or accidental deletions** of security tooling may go **unnoticed**, reducing the **availability** of protections and the **integrity** of monitoring. Adversaries can evade defenses, prolong dwell time, and enable **data exfiltration** under reduced visibility.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/delete-security-solution-alert.html",
-    "https://guides.spectralops.io/docs/d9_azu_mon_33",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
     "https://learn.microsoft.com/en-us/cli/azure/monitor/activity-log/alert?view=azure-cli-latest",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/delete-security-solution-alert.html#trendmicro",
-    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://docs.datadoghq.com/security/default_rules/i4l-os2-ir5/"
+    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement"
   ],
   "Remediation": {
     "Code": {

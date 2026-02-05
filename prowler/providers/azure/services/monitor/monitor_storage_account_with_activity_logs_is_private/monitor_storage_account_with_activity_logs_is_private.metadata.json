@@ -8,14 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.storage/storageaccounts",
-  "Description": "**Azure Monitor activity logs** sent to a **Storage account** are evaluated for **Blob public access**. The finding identifies whether the account that stores the logs has `AllowBlobPublicAccess` turned on.",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity Logs** sent to a **Storage account** are evaluated for **Blob public access**. The finding identifies whether the account that stores the logs has `AllowBlobPublicAccess` turned on.",
   "Risk": "Exposed log data undermines **confidentiality** by revealing operations, resource IDs, IPs, and identities.\n\nAdversaries gain **reconnaissance** to map controls, craft targeted attacks, and time actions to avoid detection, enabling **lateral movement** and broader compromise.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-2-secure-cloud-services-with-network-controls",
-    "https://docs.prowler.com/checks/azure/azure-logging-policies/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible#terraform",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html"
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-2-secure-cloud-services-with-network-controls",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html"
   ],
   "Remediation": {
     "Code": {

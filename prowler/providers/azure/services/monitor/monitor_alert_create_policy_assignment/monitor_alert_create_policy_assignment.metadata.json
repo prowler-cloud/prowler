@@ -8,18 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.insights/activitylogalerts",
-  "Description": "**Azure Monitor** configurations are assessed for an **activity log alert** on `Microsoft.Authorization/policyAssignments/write`, indicating monitoring of newly created **Azure Policy assignments**",
+  "ResourceGroup": "monitoring",
+  "Description": "**Azure Monitor Activity Log alert** configurations are assessed for an **activity log alert** on `Microsoft.Authorization/policyAssignments/write`, indicating monitoring of newly created **Azure Policy assignments**",
   "Risk": "Absent alerts on new policy assignments, unauthorized or accidental changes can silently weaken governance. Adversaries could assign permissive policies or replace deny rules, enabling misconfigurations, privilege expansion, and data exposure-degrading **integrity** and threatening **confidentiality** and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/dotnet/api/azure.resourcemanager.monitor.activitylogalertresource?view=azure-dotnet",
-    "https://docs.microsoft.com/en-in/azure/azure-monitor/platform/alerts-activity-log",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-alert-for-create-policy-assignment-events.html",
-    "https://www.typeerror.org/docs/chef~16/inspec/resources/azurerm_monitor_activity_log_alert/index",
-    "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/ActivityLog/create-alert-for-create-policy-assignment-events.html#trendmicro",
-    "https://docs.kertos.io/en/article/verify-that-activity-log-alert-exists-for-create-policy-assignment",
-    "https://stackoverflow.com/questions/78893536/troubles-with-azure-alerts-using-management-group-scope"
+    "https://learn.microsoft.com/en-in/azure/azure-monitor/alerts/alerts-create-activity-log-alert-rule?tabs=activity-log",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActivityLog/create-alert-for-create-policy-assignment-events.html"
   ],
   "Remediation": {
     "Code": {
