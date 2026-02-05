@@ -374,13 +374,13 @@ class CloudflareProvider(Provider):
             return Connection(is_connected=False, error=prowler_error)
         except Exception as error:
             # Parse raw Cloudflare SDK errors into user-friendly messages
+            # Log the full error for debugging, but only show friendly message to user
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             friendly_message = parse_cloudflare_api_error(error)
             formatted_error = CloudflareAuthenticationError(
                 file=os.path.basename(__file__),
-                original_exception=error,
                 message=friendly_message,
             )
             if raise_on_exception:

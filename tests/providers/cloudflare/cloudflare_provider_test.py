@@ -395,3 +395,6 @@ class TestCloudflareTestConnectionErrorFormatting:
             error_str = str(connection.error)
             assert "Invalid request headers" in error_str
             assert "Invalid format for Authorization header" in error_str
+            # The raw error should NOT be included in the user-facing message
+            assert "Error code: 400" not in error_str
+            assert "'success': False" not in error_str
