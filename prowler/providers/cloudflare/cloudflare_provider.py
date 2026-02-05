@@ -351,6 +351,17 @@ class CloudflareProvider(Provider):
             try:
                 _ = session.client.user.get()
             except Exception as user_error:
+                error_str = str(user_error)
+                # Check if this is a user-level authentication error (Account Token instead of User Token)
+                if (
+                    "9109" in error_str
+                    or "user-level authentication" in error_str.lower()
+                ):
+                    raise CloudflareAuthenticationError(
+                        file=os.path.basename(__file__),
+                        message="This token requires user-level authentication. Please use a User API Token (created under My Profile) instead of an Account API Token.",
+                    )
+                # For other errors, try accounts.list() as fallback
                 logger.warning(
                     f"Unable to retrieve Cloudflare user info: {user_error}. "
                     "Trying accounts.list() as fallback."
