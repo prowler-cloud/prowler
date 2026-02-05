@@ -1,0 +1,448 @@
+"""Tests for network_security_group_allows_ssh_from_internet check."""
+
+from unittest import mock
+
+from prowler.providers.openstack.services.network.network_service import (
+    SecurityGroup,
+    SecurityGroupRule,
+)
+from tests.providers.openstack.openstack_fixtures import (
+    OPENSTACK_PROJECT_ID,
+    OPENSTACK_REGION,
+    set_mocked_openstack_provider,
+)
+
+
+class Test_network_security_group_allows_ssh_from_internet:
+    """Test suite for network_security_group_allows_ssh_from_internet check."""
+
+    def test_no_security_groups(self):
+        """Test when no security groups exist."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_security_group_without_ssh_exposed(self):
+        """Test security group without SSH exposed to internet (PASS)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-1",
+                name="web-servers",
+                description="Web servers security group",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-1",
+                        security_group_id="sg-1",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=80,
+                        port_range_max=80,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_id == "sg-1"
+            assert result[0].resource_name == "web-servers"
+            assert result[0].region == OPENSTACK_REGION
+            assert "does not allow SSH" in result[0].status_extended
+
+    def test_security_group_with_ssh_from_ipv4_internet(self):
+        """Test security group with SSH exposed to IPv4 internet (FAIL)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-2",
+                name="admin-servers",
+                description="Admin servers",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-ssh",
+                        security_group_id="sg-2",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_id == "sg-2"
+            assert result[0].resource_name == "admin-servers"
+            assert (
+                "allows unrestricted SSH access (port 22) from the Internet"
+                in result[0].status_extended  # noqa: E501
+            )
+            assert "rule-ssh" in result[0].status_extended
+
+    def test_security_group_with_ssh_from_ipv6_internet(self):
+        """Test security group with SSH exposed to IPv6 internet (FAIL)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-3",
+                name="ipv6-servers",
+                description="IPv6 servers",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-ssh-ipv6",
+                        security_group_id="sg-3",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv6",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix="::/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "::/0" in result[0].status_extended
+
+    def test_security_group_with_ssh_from_restricted_cidr(self):
+        """Test security group with SSH from specific CIDR (PASS)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-4",
+                name="restricted-ssh",
+                description="SSH from specific IP",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-restricted",
+                        security_group_id="sg-4",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix="203.0.113.0/24",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_security_group_with_ssh_port_range(self):
+        """Test security group with port range including SSH (FAIL)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-5",
+                name="port-range",
+                description="Port range including SSH",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-range",
+                        security_group_id="sg-5",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=20,
+                        port_range_max=25,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_security_group_with_ssh_from_security_group(self):
+        """Test security group with SSH from another security group (PASS)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-6",
+                name="sg-referenced",
+                description="SSH from security group",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-sg-ref",
+                        security_group_id="sg-6",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix=None,
+                        remote_group_id="sg-bastion",
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_security_group_with_egress_ssh(self):
+        """Test security group with egress SSH rule (PASS)."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-7",
+                name="egress-only",
+                description="Egress SSH",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-egress",
+                        security_group_id="sg-7",
+                        direction="egress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_multiple_security_groups_mixed(self):
+        """Test multiple security groups with mixed results."""
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-pass",
+                name="secure-sg",
+                description="Secure SG",
+                security_group_rules=[],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            ),
+            SecurityGroup(
+                id="sg-fail",
+                name="insecure-sg",
+                description="Insecure SG",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-fail",
+                        security_group_id="sg-fail",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=22,
+                        port_range_max=22,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            ),
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet.network_client",  # noqa: E501
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_ssh_from_internet.network_security_group_allows_ssh_from_internet import (  # noqa: E501
+                network_security_group_allows_ssh_from_internet,
+            )
+
+            check = network_security_group_allows_ssh_from_internet()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert len([r for r in result if r.status == "PASS"]) == 1
+            assert len([r for r in result if r.status == "FAIL"]) == 1
