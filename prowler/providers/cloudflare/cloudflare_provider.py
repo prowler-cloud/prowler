@@ -337,10 +337,13 @@ class CloudflareProvider(Provider):
             Connection: Connection object with is_connected status.
         """
         try:
+            # Use max_retries=0 for connection test to get immediate feedback
+            # on invalid credentials without waiting for retry attempts
             session = CloudflareProvider.setup_session(
                 api_token=api_token,
                 api_key=api_key,
                 api_email=api_email,
+                max_retries=0,
             )
             # Try user.get() first, but fall back to accounts.list() if it fails
             # This matches the behavior in setup_identity where user.get() failure

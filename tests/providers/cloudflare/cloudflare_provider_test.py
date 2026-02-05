@@ -349,6 +349,12 @@ class TestParseCloudflareApiError:
         result = parse_cloudflare_api_error(error)
         assert result == "Authentication failed - please verify your credentials"
 
+    def test_parse_cloudflare_api_error_max_retries(self):
+        """Test parsing error when max retries exceeded."""
+        error = Exception("Max retries exceeded with url: /user")
+        result = parse_cloudflare_api_error(error)
+        assert "Connection failed after multiple attempts" in result
+
     def test_parse_cloudflare_api_error_deduplicates_messages(self):
         """Test that duplicate messages are deduplicated."""
         error = Exception(

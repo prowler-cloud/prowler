@@ -35,7 +35,9 @@ def parse_cloudflare_api_error(error: Exception) -> str:
     if messages:
         return " - ".join(messages)
 
-    # If we couldn't parse specific messages, check for common HTTP status codes
+    # If we couldn't parse specific messages, check for common error patterns
+    if "max retries" in error_str.lower() or "retry" in error_str.lower():
+        return "Connection failed after multiple attempts - please verify your API token is valid"
     if "401" in error_str or "Unauthorized" in error_str:
         return "Invalid API token or credentials"
     if "403" in error_str or "Forbidden" in error_str:
