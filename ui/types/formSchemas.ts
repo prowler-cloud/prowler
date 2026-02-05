@@ -273,19 +273,14 @@ export const addCredentialsFormSchema = (
                                   .optional(),
                                 [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
                                   z
-                                    .string()
-                                    .optional()
-                                    .refine(
-                                      (val) => {
-                                        if (!val || val.trim() === "")
-                                          return true;
-                                        return z.email().safeParse(val).success;
-                                      },
-                                      {
-                                        message:
+                                    .union([
+                                      z.literal(""),
+                                      z.email({
+                                        error:
                                           "Please enter a valid email address",
-                                      },
-                                    ),
+                                      }),
+                                    ])
+                                    .optional(),
                               }
                             : {}),
     })
