@@ -804,7 +804,10 @@ class CheckReportImage(Check_Report):
     fixed_version: str
 
     def __init__(
-        self, metadata: dict = {}, finding: dict = {}, image_name: str = ""
+        self,
+        metadata: Optional[dict] = None,
+        finding: Optional[dict] = None,
+        image_name: str = "",
     ) -> None:
         """
         Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
@@ -814,6 +817,10 @@ class CheckReportImage(Check_Report):
             finding (dict): A single vulnerability/secret result from Trivy's JSON output.
             image_name (str): The container image name being scanned.
         """
+        if metadata is None:
+            metadata = {}
+        if finding is None:
+            finding = {}
         super().__init__(metadata, finding)
 
         self.resource = finding

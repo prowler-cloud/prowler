@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
@@ -15,6 +17,13 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.image.exceptions.exceptions import (
+    ImageFindingProcessingError,
+    ImageListFileNotFoundError,
+    ImageListFileReadError,
+    ImageNoImagesProvidedError,
+    ImageTrivyBinaryNotFoundError,
+)
 
 
 class ImageProvider(Provider):
@@ -30,22 +39,22 @@ class ImageProvider(Provider):
 
     def __init__(
         self,
-        images: list[str] = [],
+        images: list[str] | None = None,
         image_list_file: str = None,
-        scanners: list[str] = ["vuln", "secret"],
-        trivy_severity: list[str] = [],
+        scanners: list[str] | None = None,
+        trivy_severity: list[str] | None = None,
         ignore_unfixed: bool = False,
         timeout: str = "5m",
         config_path: str = None,
         config_content: dict = None,
-        fixer_config: dict = {},
+        fixer_config: dict | None = None,
     ):
         logger.info("Instantiating Image Provider...")
 
-        self.images = images or []
+        self.images = images if images is not None else []
         self.image_list_file = image_list_file
-        self.scanners = scanners
-        self.trivy_severity = trivy_severity
+        self.scanners = scanners if scanners is not None else ["vuln", "secret"]
+        self.trivy_severity = trivy_severity if trivy_severity is not None else []
         self.ignore_unfixed = ignore_unfixed
         self.timeout = timeout
         self.region = "container"
@@ -59,8 +68,10 @@ class ImageProvider(Provider):
             self._load_images_from_file(image_list_file)
 
         if not self.images:
-            logger.error("No images provided for scanning")
-            sys.exit(1)
+            raise ImageNoImagesProvidedError(
+                file=__file__,
+                message="No images provided for scanning.",
+            )
 
         # Audit Config
         if config_content:
@@ -71,7 +82,7 @@ class ImageProvider(Provider):
             self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         # Fixer Config
-        self._fixer_config = fixer_config
+        self._fixer_config = fixer_config if fixer_config is not None else {}
 
         # Mutelist (not needed for Image provider since Trivy has its own logic)
         self._mutelist = None
@@ -99,37 +110,42 @@ class ImageProvider(Provider):
                         self.images.append(line)
             logger.info(f"Loaded {len(self.images)} images from {file_path}")
         except FileNotFoundError:
-            logger.error(f"Image list file not found: {file_path}")
-            sys.exit(1)
+            raise ImageListFileNotFoundError(
+                file=file_path,
+                message=f"Image list file not found: {file_path}",
+            )
         except Exception as error:
-            logger.error(f"Error reading image list file: {error}")
-            sys.exit(1)
+            raise ImageListFileReadError(
+                file=file_path,
+                original_exception=error,
+                message=f"Error reading image list file: {error}",
+            )
 
     @property
-    def auth_method(self):
+    def auth_method(self) -> str:
         return self._auth_method
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @property
-    def identity(self):
+    def identity(self) -> str:
         return self._identity
 
     @property
-    def session(self):
+    def session(self) -> None:
         return self._session
 
     @property
-    def audit_config(self):
+    def audit_config(self) -> dict:
         return self._audit_config
 
     @property
-    def fixer_config(self):
+    def fixer_config(self) -> dict:
         return self._fixer_config
 
-    def setup_session(self):
+    def setup_session(self) -> None:
         """Image provider doesn't need a session since it uses Trivy directly"""
         return None
 
@@ -187,6 +203,7 @@ class ImageProvider(Provider):
                 "ResourceIdTemplate": "",
                 "Severity": trivy_severity,
                 "ResourceType": "container-image",
+                "ResourceGroup": "container",
                 "Description": finding_description,
                 "Risk": finding.get(
                     "Description", "Vulnerability detected in container image"
@@ -222,10 +239,11 @@ class ImageProvider(Provider):
             return report
 
         except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            raise ImageFindingProcessingError(
+                file=__file__,
+                original_exception=error,
+                message=f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}",
             )
-            sys.exit(1)
 
     def _build_status_extended(self, finding: dict) -> str:
         """Build a detailed status message for the finding."""
@@ -369,11 +387,11 @@ class ImageProvider(Provider):
 
         except Exception as error:
             if "No such file or directory: 'trivy'" in str(error):
-                logger.critical(
-                    "Trivy binary not found. Please install Trivy from "
-                    "https://trivy.dev/latest/getting-started/installation/"
+                raise ImageTrivyBinaryNotFoundError(
+                    file=__file__,
+                    original_exception=error,
+                    message="Trivy binary not found. Please install Trivy from https://trivy.dev/latest/getting-started/installation/",
                 )
-                sys.exit(1)
             logger.error(f"Error scanning image {image}: {error}")
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
@@ -429,7 +447,7 @@ class ImageProvider(Provider):
                 else:
                     logger.info(line)
 
-    def print_credentials(self):
+    def print_credentials(self) -> None:
         """Print scan configuration."""
         report_title = f"{Style.BRIGHT}Scanning container images:{Style.RESET_ALL}"
 
