@@ -4,10 +4,12 @@ import pytest
 
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.cloudflare.exceptions.exceptions import (
-    CloudflareAuthenticationError,
     CloudflareCredentialsError,
     CloudflareInvalidAccountError,
-    parse_cloudflare_api_error,
+    CloudflareInvalidAPIKeyError,
+    CloudflareInvalidAPITokenError,
+    CloudflareNoAccountsError,
+    CloudflareUserTokenRequiredError,
 )
 from prowler.providers.cloudflare.models import (
     CloudflareAccount,
@@ -97,71 +99,47 @@ class TestCloudflareProvider:
             assert provider.session.api_email == API_EMAIL
 
     def test_cloudflare_provider_test_connection_success(self):
-        with (
-            patch(
-                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
-                return_value=CloudflareSession(
-                    client=MagicMock(),
-                    api_token=API_TOKEN,
-                    api_key=None,
-                    api_email=None,
-                ),
-            ),
-            patch(
-                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_identity",
-                return_value=CloudflareIdentityInfo(
-                    user_id=USER_ID,
-                    email=USER_EMAIL,
-                    accounts=[
-                        CloudflareAccount(
-                            id=ACCOUNT_ID,
-                            name=ACCOUNT_NAME,
-                            type="standard",
-                        )
-                    ],
-                    audited_accounts=[ACCOUNT_ID],
-                ),
+        mock_client = MagicMock()
+        # Simulate successful user.get() call
+        mock_client.user.get.return_value = MagicMock(id=USER_ID, email=USER_EMAIL)
+
+        with patch(
+            "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+            return_value=CloudflareSession(
+                client=mock_client,
+                api_token=API_TOKEN,
+                api_key=None,
+                api_email=None,
             ),
         ):
-            provider = CloudflareProvider()
-            connection = provider.test_connection()
+            connection = CloudflareProvider.test_connection(api_token=API_TOKEN)
 
             assert isinstance(connection, Connection)
             assert connection.is_connected is True
             assert connection.error is None
 
-    def test_cloudflare_provider_test_connection_failure(self):
+    def test_cloudflare_provider_test_connection_failure_no_accounts(self):
         mock_client = MagicMock()
         mock_client.user.get.side_effect = Exception("Connection failed")
         mock_client.accounts.list.return_value = iter([])  # Empty accounts list
 
-        with (
-            patch(
-                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
-                return_value=CloudflareSession(
-                    client=mock_client,
-                    api_token=API_TOKEN,
-                    api_key=None,
-                    api_email=None,
-                ),
-            ),
-            patch(
-                "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_identity",
-                return_value=CloudflareIdentityInfo(
-                    user_id=USER_ID,
-                    email=USER_EMAIL,
-                    accounts=[],
-                    audited_accounts=[],
-                ),
+        with patch(
+            "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+            return_value=CloudflareSession(
+                client=mock_client,
+                api_token=API_TOKEN,
+                api_key=None,
+                api_email=None,
             ),
         ):
-            provider = CloudflareProvider()
-            # Use raise_on_exception=False to get a Connection object instead of exception
-            connection = provider.test_connection(raise_on_exception=False)
+            connection = CloudflareProvider.test_connection(
+                api_token=API_TOKEN, raise_on_exception=False
+            )
 
             assert isinstance(connection, Connection)
             assert connection.is_connected is False
             assert connection.error is not None
+            assert isinstance(connection.error, CloudflareNoAccountsError)
 
     def test_cloudflare_provider_no_credentials_raises_error(self):
         with patch(
@@ -311,75 +289,140 @@ class TestCloudflareProvider:
             assert provider.mutelist is not None
 
 
-class TestParseCloudflareApiError:
-    """Tests for parse_cloudflare_api_error function."""
+class TestCloudflareValidateCredentials:
+    """Tests for validate_credentials method."""
 
-    def test_parse_cloudflare_api_error_with_message_fields(self):
-        """Test parsing error with 'message' fields in Cloudflare API format."""
-        error = Exception(
-            "Error code: 400 - {'success': False, 'errors': [{'code': 6003, "
-            "'message': 'Invalid request headers', 'error_chain': [{'code': 6111, "
-            "'message': 'Invalid format for Authorization header'}]}], 'messages': [], 'result': None}"
-        )
-        result = parse_cloudflare_api_error(error)
-        assert "Invalid request headers" in result
-        # The technical message is replaced with a user-friendly one
-        assert "Invalid API Token format" in result
-
-    def test_parse_cloudflare_api_error_with_401(self):
-        """Test parsing error with 401 status code."""
-        error = Exception("HTTP 401 Unauthorized")
-        result = parse_cloudflare_api_error(error)
-        assert result == "Invalid API token or credentials"
-
-    def test_parse_cloudflare_api_error_with_403(self):
-        """Test parsing error with 403 status code."""
-        error = Exception("HTTP 403 Forbidden - access denied")
-        result = parse_cloudflare_api_error(error)
-        assert result == "API token lacks required permissions"
-
-    def test_parse_cloudflare_api_error_with_400(self):
-        """Test parsing error with 400 status code but no parseable message."""
-        error = Exception("HTTP 400 Bad Request")
-        result = parse_cloudflare_api_error(error)
-        assert result == "Invalid request - please check your API token format"
-
-    def test_parse_cloudflare_api_error_fallback(self):
-        """Test fallback message for unparseable errors."""
-        error = Exception("Some unknown error")
-        result = parse_cloudflare_api_error(error)
-        assert result == "Authentication failed - please verify your credentials"
-
-    def test_parse_cloudflare_api_error_max_retries(self):
-        """Test parsing error when max retries exceeded."""
-        error = Exception("Max retries exceeded with url: /user")
-        result = parse_cloudflare_api_error(error)
-        assert "Connection failed after multiple attempts" in result
-
-    def test_parse_cloudflare_api_error_deduplicates_messages(self):
-        """Test that duplicate messages are deduplicated."""
-        error = Exception(
-            "{'message': 'Error A', 'nested': {'message': 'Error A', 'other': {'message': 'Error B'}}}"
-        )
-        result = parse_cloudflare_api_error(error)
-        # Should only have 'Error A' once and 'Error B' once
-        assert result == "Error A - Error B"
-
-
-class TestCloudflareTestConnectionErrorFormatting:
-    """Tests for test_connection error formatting."""
-
-    def test_test_connection_formats_raw_api_error(self):
-        """Test that raw Cloudflare API errors are formatted into user-friendly messages."""
+    def test_validate_credentials_success(self):
+        """Test successful credential validation."""
         mock_client = MagicMock()
-        # Simulate a raw Cloudflare API error on both user.get() and accounts.list()
-        cloudflare_api_error = Exception(
-            "Error code: 400 - {'success': False, 'errors': [{'code': 6003, "
-            "'message': 'Invalid request headers', 'error_chain': [{'code': 6111, "
-            "'message': 'Invalid format for Authorization header'}]}], 'messages': [], 'result': None}"
+        mock_client.user.get.return_value = MagicMock(id=USER_ID, email=USER_EMAIL)
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=API_TOKEN,
+            api_key=None,
+            api_email=None,
         )
-        mock_client.user.get.side_effect = cloudflare_api_error
-        mock_client.accounts.list.side_effect = cloudflare_api_error
+
+        # Should not raise any exception
+        CloudflareProvider.validate_credentials(session)
+        mock_client.user.get.assert_called_once()
+
+    def test_validate_credentials_user_token_required(self):
+        """Test that user token required error is raised for Account tokens."""
+        mock_client = MagicMock()
+        # Simulate error code 9109 - user-level authentication required
+        from cloudflare._exceptions import PermissionDeniedError
+
+        mock_client.user.get.side_effect = PermissionDeniedError(
+            "Error code: 403 - {'errors': [{'code': 9109, 'message': 'Valid user-level authentication not found'}]}",
+            response=MagicMock(status_code=403),
+            body=None,
+        )
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=API_TOKEN,
+            api_key=None,
+            api_email=None,
+        )
+
+        with pytest.raises(CloudflareUserTokenRequiredError):
+            CloudflareProvider.validate_credentials(session)
+
+    def test_validate_credentials_invalid_api_token(self):
+        """Test that invalid API token error is raised."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        mock_client.user.get.side_effect = BadRequestError(
+            "Error code: 400 - {'errors': [{'code': 6003, 'message': 'Invalid request headers', 'error_chain': [{'code': 6111}]}]}",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token="invalid_token",
+            api_key=None,
+            api_email=None,
+        )
+
+        with pytest.raises(CloudflareInvalidAPITokenError):
+            CloudflareProvider.validate_credentials(session)
+
+    def test_validate_credentials_invalid_api_key(self):
+        """Test that invalid API key error is raised."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        mock_client.user.get.side_effect = BadRequestError(
+            "Error code: 400 - {'errors': [{'message': 'Unknown X-Auth-Key or X-Auth-Email'}]}",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=None,
+            api_key="invalid_key",
+            api_email="invalid@email.com",
+        )
+
+        with pytest.raises(CloudflareInvalidAPIKeyError):
+            CloudflareProvider.validate_credentials(session)
+
+    def test_validate_credentials_fallback_to_accounts_list(self):
+        """Test fallback to accounts.list() when user.get() fails with non-auth error."""
+        mock_client = MagicMock()
+        # Simulate a non-auth error on user.get()
+        mock_client.user.get.side_effect = Exception("Some other error")
+        # accounts.list() returns valid accounts
+        mock_account = MagicMock()
+        mock_account.id = ACCOUNT_ID
+        mock_client.accounts.list.return_value = iter([mock_account])
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=API_TOKEN,
+            api_key=None,
+            api_email=None,
+        )
+
+        # Should not raise - fallback succeeded
+        CloudflareProvider.validate_credentials(session)
+        mock_client.accounts.list.assert_called_once()
+
+    def test_validate_credentials_no_accounts(self):
+        """Test that no accounts error is raised when accounts.list() is empty."""
+        mock_client = MagicMock()
+        mock_client.user.get.side_effect = Exception("Some error")
+        mock_client.accounts.list.return_value = iter([])  # Empty
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=API_TOKEN,
+            api_key=None,
+            api_email=None,
+        )
+
+        with pytest.raises(CloudflareNoAccountsError):
+            CloudflareProvider.validate_credentials(session)
+
+
+class TestCloudflareTestConnection:
+    """Tests for test_connection method."""
+
+    def test_test_connection_returns_prowler_exception(self):
+        """Test that test_connection returns Prowler exceptions, not raw SDK errors."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        mock_client.user.get.side_effect = BadRequestError(
+            "Error code: 400 - {'errors': [{'code': 6003}]}",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
 
         with patch(
             "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
@@ -395,14 +438,87 @@ class TestCloudflareTestConnectionErrorFormatting:
             )
 
             assert connection.is_connected is False
-            assert connection.error is not None
-            # The error should be a CloudflareAuthenticationError with formatted message
-            assert isinstance(connection.error, CloudflareAuthenticationError)
-            # The formatted message should contain user-friendly messages
-            error_str = str(connection.error)
-            assert "Invalid request headers" in error_str
-            # Technical messages are replaced with user-friendly ones
-            assert "Invalid API Token format" in error_str
-            # The raw error should NOT be included in the user-facing message
-            assert "Error code: 400" not in error_str
-            assert "'success': False" not in error_str
+            assert isinstance(connection.error, CloudflareInvalidAPITokenError)
+
+    def test_test_connection_user_token_required(self):
+        """Test that user token required error is properly returned."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import PermissionDeniedError
+
+        mock_client.user.get.side_effect = PermissionDeniedError(
+            "Error code: 403 - {'errors': [{'code': 9109}]}",
+            response=MagicMock(status_code=403),
+            body=None,
+        )
+
+        with patch(
+            "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+            return_value=CloudflareSession(
+                client=mock_client,
+                api_token=API_TOKEN,
+                api_key=None,
+                api_email=None,
+            ),
+        ):
+            connection = CloudflareProvider.test_connection(
+                api_token=API_TOKEN, raise_on_exception=False
+            )
+
+            assert connection.is_connected is False
+            assert isinstance(connection.error, CloudflareUserTokenRequiredError)
+            # Verify the error message is user-friendly
+            assert "User-level API token required" in str(connection.error)
+
+    def test_test_connection_invalid_api_key(self):
+        """Test that invalid API key error is properly returned."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        mock_client.user.get.side_effect = BadRequestError(
+            "Unknown X-Auth-Key or X-Auth-Email",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
+
+        with patch(
+            "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+            return_value=CloudflareSession(
+                client=mock_client,
+                api_token=None,
+                api_key=API_KEY,
+                api_email=API_EMAIL,
+            ),
+        ):
+            connection = CloudflareProvider.test_connection(
+                api_key=API_KEY, api_email=API_EMAIL, raise_on_exception=False
+            )
+
+            assert connection.is_connected is False
+            assert isinstance(connection.error, CloudflareInvalidAPIKeyError)
+            # Verify the error message is user-friendly
+            assert "Invalid API Key or Email" in str(connection.error)
+
+    def test_test_connection_raises_when_requested(self):
+        """Test that exceptions are raised when raise_on_exception=True."""
+        mock_client = MagicMock()
+        from cloudflare._exceptions import BadRequestError
+
+        mock_client.user.get.side_effect = BadRequestError(
+            "Error code: 400 - {'errors': [{'code': 6003}]}",
+            response=MagicMock(status_code=400),
+            body=None,
+        )
+
+        with patch(
+            "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
+            return_value=CloudflareSession(
+                client=mock_client,
+                api_token=API_TOKEN,
+                api_key=None,
+                api_email=None,
+            ),
+        ):
+            with pytest.raises(CloudflareInvalidAPITokenError):
+                CloudflareProvider.test_connection(
+                    api_token=API_TOKEN, raise_on_exception=True
+                )
