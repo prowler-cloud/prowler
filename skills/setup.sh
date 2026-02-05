@@ -1,8 +1,8 @@
 #!/bin/bash
 # Setup AI Skills for Prowler development
 # Configures AI coding assistants that follow agentskills.io standard:
-#   - Claude Code: .claude/skills/ symlink + CLAUDE.md copies
-#   - Gemini CLI: .gemini/skills/ symlink + GEMINI.md copies
+#   - Claude Code: .claude/skills/ symlink + CLAUDE.md symlink
+#   - Gemini CLI: .gemini/skills/ symlink + GEMINI.md symlink
 #   - Codex (OpenAI): .codex/skills/ symlink + AGENTS.md (native)
 #   - GitHub Copilot: .github/copilot-instructions.md copy
 #
@@ -131,7 +131,7 @@ setup_claude() {
     if [ ! -d "$REPO_ROOT/.claude" ]; then
         mkdir -p "$REPO_ROOT/.claude"
     fi
-    add_to_gitignore ".claude/"
+    add_to_gitignore ".claude/skills"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -153,7 +153,7 @@ setup_gemini() {
     if [ ! -d "$REPO_ROOT/.gemini" ]; then
         mkdir -p "$REPO_ROOT/.gemini"
     fi
-    add_to_gitignore ".gemini/"
+    add_to_gitignore ".gemini/skills"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -175,7 +175,7 @@ setup_codex() {
     if [ ! -d "$REPO_ROOT/.codex" ]; then
         mkdir -p "$REPO_ROOT/.codex"
     fi
-    add_to_gitignore ".codex/"
+    add_to_gitignore ".codex/skills"
 
     if [ -L "$target" ]; then
         rm "$target"
@@ -194,7 +194,7 @@ setup_copilot() {
         
         # Link AGENTS.md -> .github/copilot-instructions.md
         local target="$REPO_ROOT/.github/copilot-instructions.md"
-        ln -sf "$REPO_ROOT/AGENTS.md" "$target"
+        ln -sf "../AGENTS.md" "$target"
         
         echo -e "${GREEN}  ✓ AGENTS.md -> .github/copilot-instructions.md${NC}"
         
@@ -217,7 +217,7 @@ link_agents_md() {
         
         # Create relative symlink
         # Since files are in same dir, we can just link to basename
-        cd "$agents_dir" && ln -sf "$(basename "$agents_file")" "$target_name" && cd "$SCRIPT_DIR"
+        (cd "$agents_dir" && ln -sf "$(basename "$agents_file")" "$target_name")
         
         count=$((count + 1))
     done
