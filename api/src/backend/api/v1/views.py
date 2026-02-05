@@ -101,6 +101,7 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
 )
+from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
@@ -6485,14 +6486,6 @@ class MuteRuleViewSet(BaseRLSViewSet):
         )
 
 
-# Severity ordering for MAX calculation
-SEVERITY_ORDER = {
-    "critical": 5,
-    "high": 4,
-    "medium": 3,
-    "low": 2,
-    "informational": 1,
-}
 SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
 
 

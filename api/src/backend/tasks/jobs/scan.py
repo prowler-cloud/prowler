@@ -22,6 +22,7 @@ from tasks.jobs.queries import (
 from tasks.utils import CustomEncoder
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
+from api.constants import SEVERITY_ORDER
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
@@ -1748,10 +1749,6 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
             f"Error updating provider compliance scores for scan {scan_id}: {e}"
         )
         raise
-
-
-# Severity order mapping (same as in views.py)
-SEVERITY_ORDER = {"critical": 5, "high": 4, "medium": 3, "low": 2, "informational": 1}
 
 
 def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
