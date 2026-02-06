@@ -44,6 +44,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
+| `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
 ### Auto-invoke Skills
@@ -56,6 +57,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
+| Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
@@ -63,6 +65,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
 | Creating API endpoints | `jsonapi` |
+| Creating Attack Paths queries | `prowler-attack-paths-query` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
@@ -92,6 +95,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Understand changelog gate and no-changelog label behavior | `prowler-ci` |
 | Understand review ownership with CODEOWNERS | `prowler-pr` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
+| Updating existing Attack Paths queries | `prowler-attack-paths-query` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |
