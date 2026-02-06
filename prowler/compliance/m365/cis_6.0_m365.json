@@ -339,7 +339,9 @@
     {
       "Id": "2.1.1",
       "Description": "Safe Links for Office Applications is a feature in Microsoft 365 that provides URL scanning and rewriting of inbound email messages in mail flow, and time-of-click verification of URLs and links in email messages, other Microsoft 365 applications such as Teams, and other locations such as SharePoint Online. It can help protect organizations from malicious links used in phishing and other attacks.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
