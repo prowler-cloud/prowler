@@ -256,6 +256,12 @@
                 ]
               },
               {
+                "group": "Image",
+                "pages": [
+                  "user-guide/providers/image/getting-started-image"
+                ]
+              },
+              {
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"

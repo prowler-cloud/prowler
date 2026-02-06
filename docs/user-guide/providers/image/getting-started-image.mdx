@@ -1,0 +1,170 @@
+---
+title: "Getting Started with the Image Provider"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+Prowler's Image provider enables comprehensive container image security scanning by integrating with [Trivy](https://trivy.dev/). This provider detects vulnerabilities, exposed secrets, and misconfigurations in container images, converting Trivy findings into Prowler's standard reporting format for unified security assessment.
+
+## Prowler CLI
+
+<VersionBadge version="5.18.0" />
+
+<Note>
+The Image provider is currently available in Prowler CLI only.
+</Note>
+
+### Prerequisites
+
+Before using the Image provider, ensure the following requirements are met:
+
+- **Prowler CLI**: Version 5.18.0 or later
+- **Trivy installed**: Trivy must be installed and available in the system PATH
+- **Container images accessible**: Images must be pullable from container registries or available locally
+- **Registry authentication** (for private registries): Valid Docker credentials configured via `docker login`
+
+### Installation
+
+#### Install Trivy
+
+Install Trivy using one of the following methods:
+
+**Using Homebrew (macOS/Linux):**
+```bash
+brew install trivy
+```
+
+**Using apt (Debian/Ubuntu):**
+```bash
+sudo apt-get install trivy
+```
+
+**Using the install script:**
+```bash
+curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+```
+
+For additional installation methods, see the [Trivy installation guide](https://trivy.dev/latest/getting-started/installation/).
+
+#### Verify Installation
+
+```bash
+trivy --version
+```
+
+### Usage
+
+#### Basic Usage
+
+To scan a single container image:
+
+```bash
+prowler image -I alpine:3.18
+```
+
+#### Scanning Multiple Images
+
+Multiple images can be specified by repeating the `-I` flag:
+
+```bash
+prowler image -I nginx:latest -I redis:7 -I python:3.12-slim
+```
+
+#### Scanning From an Image List File
+
+For large-scale scanning, provide a file containing one image per line:
+
+```bash
+prowler image --image-list images.txt
+```
+
+The file supports comments (lines starting with `#`) and blank lines:
+
+```text
+# Production images
+nginx:1.25
+redis:7-alpine
+
+# Development images
+python:3.12-slim
+node:20-bookworm
+```
+
+### Scan Configuration
+
+#### Scanner Types
+
+Control which scanners Trivy runs using the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
+
+```bash
+# Vulnerability scanning only
+prowler image -I alpine:3.18 --scanners vuln
+
+# All available scanners
+prowler image -I alpine:3.18 --scanners vuln secret misconfig license
+```
+
+Available scanners:
+
+- **vuln**: Detects known vulnerabilities (CVEs) in OS packages and application dependencies
+- **secret**: Identifies exposed secrets such as API keys, passwords, and tokens
+- **misconfig**: Checks Dockerfile best practices and configuration issues
+- **license**: Scans for software license compliance
+
+#### Severity Filtering
+
+To filter findings by severity level, use the `--trivy-severity` option:
+
+```bash
+# Only critical and high severity findings
+prowler image -I alpine:3.18 --trivy-severity CRITICAL HIGH
+```
+
+Available severity levels: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `UNKNOWN`.
+
+#### Ignoring Unfixed Vulnerabilities
+
+To exclude vulnerabilities without available fixes:
+
+```bash
+prowler image -I alpine:3.18 --ignore-unfixed
+```
+
+#### Scan Timeout
+
+Adjust the scan timeout for large images or slow network conditions:
+
+```bash
+prowler image -I large-image:latest --timeout 10m
+```
+
+The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Default: `5m`.
+
+### Output Options
+
+The Image provider supports all standard Prowler output formats:
+
+```bash
+# JSON output
+prowler image -I alpine:3.18 --output-format json
+
+# CSV output
+prowler image -I alpine:3.18 --output-format csv
+
+# HTML report
+prowler image -I alpine:3.18 --output-format html
+```
+
+### Authentication for Private Registries
+
+The Image provider relies on Trivy for registry authentication. To scan images from private registries, configure Docker credentials before running the scan:
+
+```bash
+# Log in to a private registry
+docker login myregistry.io
+
+# Then scan the image
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+Trivy automatically uses credentials from Docker's credential store (`~/.docker/config.json`).
