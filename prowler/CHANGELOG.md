@@ -8,6 +8,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
 
+### 🔄 Changed
+
+- Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
+
 ---
 
 ## [5.18.0] (Prowler v5.18.0)
