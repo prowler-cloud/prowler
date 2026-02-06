@@ -14,6 +14,7 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.cloudflare.exceptions.exceptions import (
     CloudflareCredentialsError,
     CloudflareIdentityError,
+    CloudflareInvalidAccountError,
     CloudflareSessionError,
 )
 from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
@@ -36,16 +37,21 @@ class CloudflareProvider(Provider):
     _fixer_config: dict
     _mutelist: CloudflareMutelist
     _filter_zones: set[str] | None
+    _filter_accounts: set[str] | None
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
         filter_zones: Iterable[str] | None = None,
+        filter_accounts: Iterable[str] | None = None,
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
     ):
         logger.info("Instantiating Cloudflare provider...")
 
@@ -58,7 +64,12 @@ class CloudflareProvider(Provider):
 
         max_retries = self._audit_config.get("max_retries", 2)
 
-        self._session = CloudflareProvider.setup_session(max_retries=max_retries)
+        self._session = CloudflareProvider.setup_session(
+            max_retries=max_retries,
+            api_token=api_token,
+            api_key=api_key,
+            api_email=api_email,
+        )
 
         self._identity = CloudflareProvider.setup_identity(self._session)
 
@@ -73,6 +84,23 @@ class CloudflareProvider(Provider):
 
         # Store zone filter for filtering resources across services
         self._filter_zones = set(filter_zones) if filter_zones else None
+
+        # Store account filter and restrict audited_accounts accordingly
+        self._filter_accounts = set(filter_accounts) if filter_accounts else None
+        if self._filter_accounts:
+            discovered_account_ids = {account.id for account in self._identity.accounts}
+            invalid_accounts = self._filter_accounts - discovered_account_ids
+            if invalid_accounts:
+                invalid_str = ", ".join(sorted(invalid_accounts))
+                raise CloudflareInvalidAccountError(
+                    file=os.path.basename(__file__),
+                    message=f"Account IDs not found: {invalid_str}.",
+                )
+            self._identity.audited_accounts = [
+                account_id
+                for account_id in self._identity.audited_accounts
+                if account_id in self._filter_accounts
+            ]
 
         Provider.set_global_provider(self)
 
@@ -106,23 +134,37 @@ class CloudflareProvider(Provider):
         return self._filter_zones
 
     @property
+    def filter_accounts(self) -> set[str] | None:
+        """Account filter from --account-id argument to restrict scanned accounts."""
+        return self._filter_accounts
+
+    @property
     def accounts(self) -> list[CloudflareAccount]:
         return self._identity.accounts
 
     @staticmethod
-    def setup_session(max_retries: int = 2) -> CloudflareSession:
+    def setup_session(
+        max_retries: int = 2,
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+    ) -> CloudflareSession:
         """Initialize Cloudflare SDK client.
 
-        Credentials are read from environment variables:
+        Credentials can be provided as arguments or read from environment variables:
         - CLOUDFLARE_API_TOKEN (recommended)
         - CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL (legacy)
 
         Args:
             max_retries: Maximum number of retries for API requests (default is 2).
+            api_token: Cloudflare API token (optional, falls back to env var).
+            api_key: Cloudflare API key (optional, falls back to env var).
+            api_email: Cloudflare API email (optional, falls back to env var).
         """
-        token = os.environ.get("CLOUDFLARE_API_TOKEN", "")
-        key = os.environ.get("CLOUDFLARE_API_KEY", "")
-        email = os.environ.get("CLOUDFLARE_API_EMAIL", "")
+        # Use provided credentials or fall back to environment variables
+        token = api_token or os.environ.get("CLOUDFLARE_API_TOKEN", "")
+        key = api_key or os.environ.get("CLOUDFLARE_API_KEY", "")
+        email = api_email or os.environ.get("CLOUDFLARE_API_EMAIL", "")
 
         # Warn if both auth methods are set, use API Token (recommended)
         if token and key and email:
@@ -248,21 +290,62 @@ class CloudflareProvider(Provider):
         if email:
             report_lines.append(f"Email: {Fore.YELLOW}{email}{Style.RESET_ALL}")
 
-        # Accounts
-        if self.accounts:
-            accounts = ", ".join([account.id for account in self.accounts])
-            report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
+        # Audited accounts (only the ones that will actually be scanned)
+        audited_accounts = self.identity.audited_accounts
+        if audited_accounts:
+            account_names = {
+                account.id: account.name for account in self.identity.accounts
+            }
+            accounts_str = ", ".join(
+                (
+                    f"{account_id} ({account_names[account_id]})"
+                    if account_id in account_names and account_names[account_id]
+                    else account_id
+                )
+                for account_id in audited_accounts
+            )
+            report_lines.append(
+                f"Audited Accounts: {Fore.YELLOW}{accounts_str}{Style.RESET_ALL}"
+            )
 
         print_boxes(report_lines, report_title)
 
-    def test_connection(self) -> Connection:
+    @staticmethod
+    def test_connection(
+        api_token: str = None,
+        api_key: str = None,
+        api_email: str = None,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> Connection:
+        """Test connection to Cloudflare.
+
+        Test the connection to Cloudflare using the provided credentials.
+
+        Args:
+            api_token: Cloudflare API token (optional, falls back to env var).
+            api_key: Cloudflare API key (optional, falls back to env var).
+            api_email: Cloudflare API email (optional, falls back to env var).
+            raise_on_exception: Flag indicating whether to raise an exception if the connection fails.
+            provider_id: The provider ID (Cloudflare account ID).
+
+        Returns:
+            Connection: Connection object with is_connected status.
+        """
         try:
-            _ = self._session.client.user.get()
+            session = CloudflareProvider.setup_session(
+                api_token=api_token,
+                api_key=api_key,
+                api_email=api_email,
+            )
+            _ = session.client.user.get()
             return Connection(is_connected=True)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            if raise_on_exception:
+                raise error
             return Connection(is_connected=False, error=error)
 
     def validate_arguments(self) -> None:

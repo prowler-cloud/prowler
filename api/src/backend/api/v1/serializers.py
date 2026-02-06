@@ -1503,6 +1503,18 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = MongoDBAtlasProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
                 serializer = AlibabaCloudProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
+                if "api_token" in secret:
+                    serializer = CloudflareTokenProviderSecret(data=secret)
+                elif "api_key" in secret and "api_email" in secret:
+                    serializer = CloudflareApiKeyProviderSecret(data=secret)
+                else:
+                    raise serializers.ValidationError(
+                        {
+                            "secret": "Cloudflare credentials must include either 'api_token' "
+                            "or both 'api_key' and 'api_email'."
+                        }
+                    )
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1649,6 +1661,21 @@ class OracleCloudProviderSecret(serializers.Serializer):
     tenancy = serializers.CharField()
     region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class CloudflareTokenProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class CloudflareApiKeyProviderSecret(serializers.Serializer):
+    api_key = serializers.CharField()
+    api_email = serializers.EmailField()
 
     class Meta:
         resource_name = "provider-secrets"
@@ -3975,3 +4002,31 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         if getattr(obj, "_aggregated", False):
             return "n/a"
         return str(obj.id)
+
+
+# Resource Events Serializers
+
+
+class ResourceEventSerializer(BaseSerializerV1):
+    """Serializer for resource events (CloudTrail modification history).
+
+    NOTE: drf-spectacular auto-generates fields[resource-events] sparse fieldsets
+    parameter in the OpenAPI schema. This endpoint does not support sparse fieldsets.
+    """
+
+    id = serializers.CharField(source="event_id")
+    event_time = serializers.DateTimeField()
+    event_name = serializers.CharField()
+    event_source = serializers.CharField()
+    actor = serializers.CharField()
+    actor_uid = serializers.CharField(allow_null=True, required=False)
+    actor_type = serializers.CharField(allow_null=True, required=False)
+    source_ip_address = serializers.CharField(allow_null=True, required=False)
+    user_agent = serializers.CharField(allow_null=True, required=False)
+    request_data = serializers.JSONField(allow_null=True, required=False)
+    response_data = serializers.JSONField(allow_null=True, required=False)
+    error_code = serializers.CharField(allow_null=True, required=False)
+    error_message = serializers.CharField(allow_null=True, required=False)
+
+    class Meta:
+        resource_name = "resource-events"

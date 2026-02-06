@@ -89,17 +89,9 @@ class Entra(AzureService):
                         users_response = await client.users.with_url(next_link).get()
 
                 except Exception as error:
-                    if (
-                        error.__class__.__name__ == "ODataError"
-                        and error.__dict__.get("response_status_code", None) == 403
-                    ):
-                        logger.error(
-                            "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
-                        )
-                    else:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

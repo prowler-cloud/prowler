@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_wdatp_is_enabled",
-  "CheckTitle": "Ensure that Microsoft Defender for Endpoint integration with Microsoft Defender for Cloud is selected",
+  "CheckTitle": "Defender for Endpoint is enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "DefenderSettings",
+  "Severity": "high",
+  "ResourceType": "microsoft.security/integrations",
   "ResourceGroup": "security",
-  "Description": "This integration setting enables Microsoft Defender for Endpoint (formerly 'Advanced Threat Protection' or 'ATP' or 'WDATP' - see additional info) to communicate with Microsoft Defender for Cloud.",
-  "Risk": "Microsoft Defender for Endpoint integration brings comprehensive Endpoint Detection and Response (EDR) capabilities within Microsoft Defender for Cloud. This integration helps to spot abnormalities, as well as detect and respond to advanced attacks on endpoints monitored by Microsoft Defender for Cloud. MDE works only with Standard Tier subscriptions.",
-  "RelatedUrl": "https://learn.microsoft.com/en-in/azure/defender-for-cloud/integration-defender-for-endpoint?tabs=windows",
+  "Description": "**Azure subscription** integrates **Microsoft Defender for Endpoint** with **Defender for Cloud** via `WDATP`. The setting's presence and enabled state at the subscription scope are evaluated.",
+  "Risk": "Without this integration, servers lack **EDR telemetry**, automated onboarding, and unified alerts, shrinking visibility. Hands-on-keyboard intrusions, ransomware, and credential theft can persist unnoticed, enabling data exfiltration (**confidentiality**), unauthorized changes (**integrity**), and outages (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/azure-server-integration?view=o365-worldwide",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-endpoint-integration.html",
+    "https://learn.microsoft.com/en-in/azure/defender-for-cloud/integration-defender-for-endpoint?tabs=windows"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-endpoint-integration.html",
-      "Terraform": ""
+      "CLI": "az rest --method put --uri https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/settings/WDATP?api-version=2019-01-01 --body '{\"properties\":{\"isEnabled\":true}}'",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Endpoint (WDATP) integration at subscription scope\nresource <example_resource_name> 'Microsoft.Security/settings@2019-01-01' = {\n  name: 'WDATP'\n  properties: {\n    isEnabled: true // Critical: turns on the WDATP (Defender for Endpoint) integration\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > choose your subscription\n3. Open Settings (or Integrations)\n4. Find Microsoft Defender for Endpoint (WDATP) integration\n5. Toggle On and Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Endpoint (WDATP) integration\nresource \"azurerm_security_center_setting\" \"<example_resource_name>\" {\n  setting_name = \"WDATP\"\n  enabled      = true # Critical: turns on WDATP integration\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/azure-server-integration?view=o365-worldwide"
+      "Text": "Enable the **Defender for Endpoint** integration in **Defender for Cloud** at the subscription scope and ensure agents are deployed on supported machines.\n\n- Apply **least privilege** to onboarding roles\n- Centralize alerting and response\n- Use **defense in depth** with hardening and network controls to reduce attack surface",
+      "Url": "https://hub.prowler.com/check/defender_ensure_wdatp_is_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Microsoft Defender for Endpoint works with Standard pricing tier Subscription. Choosing the Standard pricing tier of Microsoft Defender for Cloud incurs an additional cost per resource."

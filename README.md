@@ -104,16 +104,17 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 584 | 85 | 40 | 17 | Official | UI, API, CLI |
-| GCP | 89 | 17 | 14 | 5 | Official | UI, API, CLI |
-| Azure | 169 | 22 | 15 | 8 | Official | UI, API, CLI |
-| Kubernetes | 84 | 7 | 6 | 9 | Official | UI, API, CLI |
+| AWS | 584 | 84 | 40 | 17 | Official | UI, API, CLI |
+| Azure | 169 | 22 | 16 | 12 | Official | UI, API, CLI |
+| GCP | 100 | 17 | 14 | 7 | Official | UI, API, CLI |
+| Kubernetes | 84 | 7 | 7 | 9 | Official | UI, API, CLI |
 | GitHub | 20 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
-| OCI | 52 | 15 | 1 | 12 | Official | UI, API, CLI |
-| Alibaba Cloud | 63 | 10 | 1 | 9 | Official | CLI |
+| M365 | 71 | 7 | 4 | 3 | Official | UI, API, CLI |
+| OCI | 52 | 14 | 1 | 12 | Official | UI, API, CLI |
+| Alibaba Cloud | 64 | 9 | 2 | 9 | Official | UI, API, CLI |
+| Cloudflare | 23 | 2 | 0 | 5 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 4 | 0 | 3 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 

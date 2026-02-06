@@ -34,7 +34,10 @@ export const MenuItem = ({
   highlight,
 }: MenuItemProps) => {
   const pathname = usePathname();
-  const isActive = active !== undefined ? active : pathname.startsWith(href);
+  // Extract only the pathname from href (without query parameters) for comparison
+  const hrefPathname = href.split("?")[0];
+  const isActive =
+    active !== undefined ? active : pathname.startsWith(hrefPathname);
 
   // Show tooltip always for Prowler Hub, or when sidebar is collapsed
   const showTooltip = label === "Prowler Hub" ? !!tooltip : !isOpen;
@@ -46,24 +49,17 @@ export const MenuItem = ({
           variant={isActive ? "menu-active" : "menu-inactive"}
           className={cn(
             isOpen ? "w-full justify-start" : "w-14 justify-center",
-            highlight &&
-              "relative overflow-hidden before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-emerald-500/20 before:via-teal-400/20 before:to-emerald-300/20 before:opacity-70",
           )}
           asChild
         >
           <Link href={href} target={target}>
-            <div className="relative z-10 flex items-center">
-              <span
-                className={cn(
-                  isOpen ? "mr-4" : "",
-                  highlight && "text-button-primary",
-                )}
-              >
+            <div className="flex items-center">
+              <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />
               </span>
               {isOpen && (
-                <p className="max-w-[200px] truncate">
-                  {label}
+                <p className="flex max-w-[200px] items-center truncate">
+                  <span>{label}</span>
                   {highlight && (
                     <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       NEW

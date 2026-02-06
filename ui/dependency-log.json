@@ -17,6 +17,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@extractus/feed-extractor",
+    "from": "7.1.7",
+    "to": "7.1.7",
+    "strategy": "installed",
+    "generatedAt": "2026-01-19T15:06:16.239Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@heroui/react",
     "from": "2.8.4",
     "to": "2.8.4",
@@ -74,10 +82,10 @@
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "15.3.5",
-    "to": "15.5.9",
+    "from": "16.1.3",
+    "to": "16.1.6",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "dependencies",
@@ -458,10 +466,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "15.5.7",
-    "to": "15.5.9",
+    "from": "16.1.3",
+    "to": "16.1.6",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "dependencies",
@@ -490,10 +498,10 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.1",
-    "to": "19.2.2",
+    "from": "19.2.3",
+    "to": "19.2.4",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "dependencies",
@@ -506,10 +514,10 @@
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.1",
-    "to": "19.2.2",
+    "from": "19.2.3",
+    "to": "19.2.4",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "dependencies",
@@ -542,14 +550,6 @@
     "to": "8.0.1",
     "strategy": "installed",
     "generatedAt": "2025-12-16T08:33:37.278Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "rss-parser",
-    "from": "3.13.0",
-    "to": "3.13.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
@@ -665,11 +665,27 @@
   },
   {
     "section": "devDependencies",
+    "name": "@eslint/eslintrc",
+    "from": "3.3.3",
+    "to": "3.3.3",
+    "strategy": "installed",
+    "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@iconify/react",
     "from": "5.2.1",
     "to": "5.2.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@next/eslint-plugin-next",
+    "from": "16.1.3",
+    "to": "16.1.6",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "devDependencies",
@@ -707,17 +723,17 @@
     "section": "devDependencies",
     "name": "@types/react",
     "from": "19.1.13",
-    "to": "19.1.13",
+    "to": "19.2.8",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
     "name": "@types/react-dom",
     "from": "19.1.9",
-    "to": "19.1.9",
+    "to": "19.2.3",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
@@ -747,17 +763,17 @@
     "section": "devDependencies",
     "name": "@typescript-eslint/eslint-plugin",
     "from": "7.18.0",
-    "to": "7.18.0",
+    "to": "8.53.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
     "name": "@typescript-eslint/parser",
     "from": "7.18.0",
-    "to": "7.18.0",
+    "to": "8.53.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
@@ -771,9 +787,9 @@
     "section": "devDependencies",
     "name": "babel-plugin-react-compiler",
     "from": "19.1.0-rc.3",
-    "to": "19.1.0-rc.3",
+    "to": "1.0.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
@@ -787,17 +803,17 @@
     "section": "devDependencies",
     "name": "eslint",
     "from": "8.57.1",
-    "to": "8.57.1",
+    "to": "9.39.2",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
     "name": "eslint-config-next",
-    "from": "15.5.7",
-    "to": "15.5.9",
+    "from": "16.1.3",
+    "to": "16.1.6",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-01-29T11:15:29.416Z"
   },
   {
     "section": "devDependencies",
@@ -875,9 +891,17 @@
     "section": "devDependencies",
     "name": "eslint-plugin-unused-imports",
     "from": "3.2.0",
-    "to": "3.2.0",
+    "to": "4.3.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "globals",
+    "from": "17.0.0",
+    "to": "17.0.0",
+    "strategy": "installed",
+    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",

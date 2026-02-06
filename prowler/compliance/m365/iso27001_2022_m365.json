@@ -112,12 +112,13 @@
         }
       ],
       "Checks": [
-        "entra_identity_protection_sign_in_risk_enabled",
-        "entra_identity_protection_user_risk_enabled",
+        "defender_antiphishing_policy_configured",
         "defender_antispam_outbound_policy_configured",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
-        "defender_antiphishing_policy_configured",
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "defender_zap_for_teams_enabled",
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_identity_protection_user_risk_enabled"
       ]
     },
     {
@@ -344,15 +345,15 @@
         }
       ],
       "Checks": [
-        "defender_antispam_outbound_policy_configured",
-        "defender_malware_policy_notifications_internal_users_malware_enabled",
-        "defender_malware_policy_common_attachments_filter_enabled",
-        "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_antispam_connection_filter_policy_empty_ip_allowlist",
         "defender_antispam_connection_filter_policy_safe_list_off",
         "defender_antispam_outbound_policy_configured",
         "defender_antispam_outbound_policy_forwarding_disabled",
-        "defender_antispam_policy_inbound_no_allowed_domains"
+        "defender_antispam_policy_inbound_no_allowed_domains",
+        "defender_malware_policy_common_attachments_filter_enabled",
+        "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_zap_for_teams_enabled"
       ]
     },
     {
@@ -368,11 +369,11 @@
         }
       ],
       "Checks": [
+        "defender_antispam_outbound_policy_configured",
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
-        "defender_antispam_outbound_policy_configured",
-        "defender_malware_policy_notifications_internal_users_malware_enabled"
+        "defender_zap_for_teams_enabled"
       ]
     },
     {
@@ -691,6 +692,7 @@
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defender_zap_for_teams_enabled",
         "teams_external_domains_restricted",
         "teams_external_users_cannot_start_conversations"
       ]
