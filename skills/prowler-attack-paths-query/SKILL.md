@@ -8,7 +8,7 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [api]
+  scope: [root, api]
   auto_invoke:
     - "Creating Attack Paths queries"
     - "Updating existing Attack Paths queries"
@@ -415,6 +415,7 @@ Queries must be written in **openCypher Version 9** to ensure compatibility with
 | Neptune extensions                                  | Not available in Neo4j                          |
 | `reduce()` function                                 | Use `UNWIND` + aggregation instead              |
 | `FOREACH` clause                                    | Use `WITH` + `UNWIND` + `SET` instead           |
+| Regex match operator (`=~`)                         | Not supported in Neptune                        |
 
 ### CALL Subqueries
 
