@@ -285,6 +285,9 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                        registry_username=arguments.registry_username,
+                        registry_password=arguments.registry_password,
+                        registry_token=arguments.registry_token,
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
