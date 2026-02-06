@@ -25,7 +25,7 @@ jobs:
   e2e-tests:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' && 
+      github.repository == 'prowler-cloud/prowler' &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
@@ -200,7 +200,14 @@ jobs:
             # e.g., "ui/tests/providers/**" -> "tests/providers"
             TEST_PATHS="${{ env.E2E_TEST_PATHS }}"
             # Remove ui/ prefix and convert ** to empty (playwright handles recursion)
-            TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u | tr '\n' ' ')
+            TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u)
+            # Drop auth setup helpers (not runnable test suites)
+            TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^tests/setups/')
+            if [[ -z "$TEST_PATHS" ]]; then
+              echo "No runnable E2E test paths after filtering setups"
+              exit 0
+            fi
+            TEST_PATHS=$(echo "$TEST_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
             pnpm exec playwright test $TEST_PATHS
           fi
@@ -222,8 +229,8 @@ jobs:
   skip-e2e:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' && 
-      needs.impact-analysis.outputs.has-ui-e2e != 'true' && 
+      github.repository == 'prowler-cloud/prowler' &&
+      needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
     steps:
