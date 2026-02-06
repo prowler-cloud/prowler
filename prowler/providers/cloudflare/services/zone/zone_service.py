@@ -49,13 +49,13 @@ class Zone(CloudflareService):
         super().__init__(__class__.__name__, provider)
         self.zones: dict[str, "CloudflareZone"] = {}
         self._list_zones()
-        self._get_zones_settings()
-        self._get_zones_dnssec()
-        self._get_zones_universal_ssl()
-        self._get_zones_rate_limit_rules()
-        self._get_zones_bot_management()
-        self._get_zones_firewall_rules()
-        self._get_zones_waf_rulesets()
+        self.__threading_call__(self._get_zone_settings_threaded, self.zones.values())
+        self.__threading_call__(self._get_zone_dnssec, self.zones.values())
+        self.__threading_call__(self._get_zone_universal_ssl, self.zones.values())
+        self.__threading_call__(self._get_zone_rate_limit_rules, self.zones.values())
+        self.__threading_call__(self._get_zone_bot_management, self.zones.values())
+        self.__threading_call__(self._get_zone_firewall_rules, self.zones.values())
+        self.__threading_call__(self._get_zone_waf_rulesets, self.zones.values())
 
     def _list_zones(self) -> None:
         """List all Cloudflare zones with their basic information."""
@@ -124,110 +124,89 @@ class Zone(CloudflareService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_zones_settings(self) -> None:
-        """Get settings for all zones."""
-        logger.info("Zone - Getting zone settings...")
-        for zone in self.zones.values():
-            try:
-                zone.settings = self._get_zone_settings(zone.id)
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    def _get_zone_settings_threaded(self, zone: "CloudflareZone") -> None:
+        """Get settings for a single zone (thread-safe)."""
+        try:
+            zone.settings = self._get_zone_settings(zone.id)
+        except Exception as error:
+            logger.error(
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def _get_zones_dnssec(self) -> None:
-        """Get DNSSEC status for all zones."""
-        logger.info("Zone - Getting DNSSEC status...")
-        for zone in self.zones.values():
-            try:
-                dnssec = self.client.dns.dnssec.get(zone_id=zone.id)
-                zone.dnssec_status = getattr(dnssec, "status", None)
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    def _get_zone_dnssec(self, zone: "CloudflareZone") -> None:
+        """Get DNSSEC status for a single zone."""
+        try:
+            dnssec = self.client.dns.dnssec.get(zone_id=zone.id)
+            zone.dnssec_status = getattr(dnssec, "status", None)
+        except Exception as error:
+            logger.error(
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def _get_zones_universal_ssl(self) -> None:
-        """Get Universal SSL settings for all zones."""
-        logger.info("Zone - Getting Universal SSL settings...")
-        for zone in self.zones.values():
-            try:
-                universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
-                zone.settings.universal_ssl_enabled = getattr(
-                    universal_ssl, "enabled", False
-                )
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    def _get_zone_universal_ssl(self, zone: "CloudflareZone") -> None:
+        """Get Universal SSL settings for a single zone."""
+        try:
+            universal_ssl = self.client.ssl.universal.settings.get(zone_id=zone.id)
+            zone.settings.universal_ssl_enabled = getattr(
+                universal_ssl, "enabled", False
+            )
+        except Exception as error:
+            logger.error(
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def _get_zones_rate_limit_rules(self) -> None:
-        """Get rate limiting rules for all zones."""
-        logger.info("Zone - Getting rate limit rules...")
-        for zone in self.zones.values():
-            try:
-                seen_ruleset_ids: set[str] = set()
-                for ruleset in self.client.rulesets.list(zone_id=zone.id):
-                    ruleset_id = getattr(ruleset, "id", "")
-                    if ruleset_id in seen_ruleset_ids:
-                        break
-                    seen_ruleset_ids.add(ruleset_id)
+    def _get_zone_rate_limit_rules(self, zone: "CloudflareZone") -> None:
+        """Get rate limiting rules for a single zone."""
+        try:
+            seen_ruleset_ids: set[str] = set()
+            for ruleset in self.client.rulesets.list(zone_id=zone.id):
+                ruleset_id = getattr(ruleset, "id", "")
+                if ruleset_id in seen_ruleset_ids:
+                    break
+                seen_ruleset_ids.add(ruleset_id)
 
-                    phase = getattr(ruleset, "phase", "")
-                    if phase == "http_ratelimit":
-                        try:
-                            ruleset_detail = self.client.rulesets.get(
-                                ruleset_id=ruleset_id, zone_id=zone.id
-                            )
-                            rules = getattr(ruleset_detail, "rules", []) or []
-                            seen_rule_ids: set[str] = set()
-                            for rule in rules:
-                                rule_id = getattr(rule, "id", "")
-                                if rule_id in seen_rule_ids:
-                                    break
-                                seen_rule_ids.add(rule_id)
-                                zone.rate_limit_rules.append(
-                                    CloudflareRateLimitRule(
-                                        id=rule_id,
-                                        description=getattr(rule, "description", None),
-                                        action=getattr(rule, "action", None),
-                                        enabled=getattr(rule, "enabled", True),
-                                        expression=getattr(rule, "expression", None),
-                                    )
+                phase = getattr(ruleset, "phase", "")
+                if phase == "http_ratelimit":
+                    try:
+                        ruleset_detail = self.client.rulesets.get(
+                            ruleset_id=ruleset_id, zone_id=zone.id
+                        )
+                        rules = getattr(ruleset_detail, "rules", []) or []
+                        seen_rule_ids: set[str] = set()
+                        for rule in rules:
+                            rule_id = getattr(rule, "id", "")
+                            if rule_id in seen_rule_ids:
+                                break
+                            seen_rule_ids.add(rule_id)
+                            zone.rate_limit_rules.append(
+                                CloudflareRateLimitRule(
+                                    id=rule_id,
+                                    description=getattr(rule, "description", None),
+                                    action=getattr(rule, "action", None),
+                                    enabled=getattr(rule, "enabled", True),
+                                    expression=getattr(rule, "expression", None),
                                 )
-                        except Exception as error:
-                            logger.debug(
-                                f"{zone.id} ruleset {ruleset_id} -- {error.__class__.__name__}: {error}"
                             )
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                    except Exception as error:
+                        logger.debug(
+                            f"{zone.id} ruleset {ruleset_id} -- {error.__class__.__name__}: {error}"
+                        )
+        except Exception as error:
+            logger.error(
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def _get_zones_bot_management(self) -> None:
-        """Get Bot Management settings for all zones."""
-        logger.info("Zone - Getting Bot Management settings...")
-        for zone in self.zones.values():
-            try:
-                bot_management = self.client.bot_management.get(zone_id=zone.id)
-                zone.settings.bot_fight_mode_enabled = getattr(
-                    bot_management, "fight_mode", False
-                )
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
-    def _get_zones_firewall_rules(self) -> None:
-        """Get firewall rules for all zones."""
-        logger.info("Zone - Getting firewall rules...")
-        for zone in self.zones.values():
-            try:
-                self._get_zone_firewall_rules(zone)
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    def _get_zone_bot_management(self, zone: "CloudflareZone") -> None:
+        """Get Bot Management settings for a single zone."""
+        try:
+            bot_management = self.client.bot_management.get(zone_id=zone.id)
+            zone.settings.bot_fight_mode_enabled = getattr(
+                bot_management, "fight_mode", False
+            )
+        except Exception as error:
+            logger.error(
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _get_zone_firewall_rules(self, zone: "CloudflareZone") -> None:
         """List firewall rules from custom rulesets for a zone."""
@@ -281,17 +260,6 @@ class Zone(CloudflareService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-    def _get_zones_waf_rulesets(self) -> None:
-        """Get WAF rulesets for all zones."""
-        logger.info("Zone - Getting WAF rulesets...")
-        for zone in self.zones.values():
-            try:
-                self._get_zone_waf_rulesets(zone)
-            except Exception as error:
-                logger.error(
-                    f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
 
     def _get_zone_waf_rulesets(self, zone: "CloudflareZone") -> None:
         """List WAF rulesets for a zone using the rulesets API."""
