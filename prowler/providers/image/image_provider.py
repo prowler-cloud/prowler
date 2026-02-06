@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from typing import Generator, List
@@ -18,6 +19,8 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
+    ImageDockerLoginError,
+    ImageDockerNotFoundError,
     ImageFindingProcessingError,
     ImageListFileNotFoundError,
     ImageListFileReadError,
@@ -49,6 +52,9 @@ class ImageProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict | None = None,
+        registry_username: str = None,
+        registry_password: str = None,
+        registry_token: str = None,
     ):
         logger.info("Instantiating Image Provider...")
 
@@ -62,7 +68,21 @@ class ImageProvider(Provider):
         self.audited_account = "image-scan"
         self._session = None
         self._identity = "prowler"
-        self._auth_method = "No auth"
+
+        # Registry authentication (follows IaC pattern: explicit params, env vars internal)
+        self.registry_username = registry_username or os.environ.get("TRIVY_USERNAME")
+        self.registry_password = registry_password or os.environ.get("TRIVY_PASSWORD")
+        self.registry_token = registry_token or os.environ.get("TRIVY_REGISTRY_TOKEN")
+        self._logged_in_registries: set = set()
+
+        if self.registry_username and self.registry_password:
+            self._auth_method = "Docker login"
+            logger.info("Using docker login for registry authentication")
+        elif self.registry_token:
+            self._auth_method = "Registry token"
+            logger.info("Using registry token for authentication")
+        else:
+            self._auth_method = "No auth"
 
         # Load images from file if provided
         if image_list_file:
@@ -149,6 +169,100 @@ class ImageProvider(Provider):
     def setup_session(self) -> None:
         """Image provider doesn't need a session since it uses Trivy directly"""
         return None
+
+    @staticmethod
+    def _extract_registry(image: str) -> str | None:
+        """Extract registry hostname from an image reference.
+
+        Returns None for Docker Hub images (no registry prefix).
+        """
+        parts = image.split("/")
+        if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
+            return parts[0]
+        return None
+
+    def _docker_login(self, registry: str | None) -> None:
+        """Run docker login --password-stdin for a registry."""
+        registry_label = registry or "Docker Hub"
+        cmd = [
+            "docker",
+            "login",
+            "--username",
+            self.registry_username,
+            "--password-stdin",
+        ]
+        if registry:
+            cmd.append(registry)
+
+        try:
+            process = subprocess.run(
+                cmd,
+                input=self.registry_password,
+                capture_output=True,
+                text=True,
+            )
+            if process.returncode != 0:
+                raise ImageDockerLoginError(
+                    file=__file__,
+                    message=f"docker login failed for {registry_label}: {process.stderr.strip()}",
+                )
+            logger.info(f"Docker login successful for {registry_label}")
+            self._logged_in_registries.add(registry)
+        except FileNotFoundError:
+            raise ImageDockerNotFoundError(
+                file=__file__,
+                message="Docker binary not found. Install Docker to use registry authentication.",
+            )
+
+    def _docker_pull(self, image: str) -> None:
+        """Pull an image using docker pull so Trivy can scan it from the local daemon.
+
+        Trivy's remote source cannot authenticate against Docker Hub (and some
+        other registries) even after docker login.  Pulling into the local
+        Docker daemon first lets Trivy find the image via its "docker" source.
+        """
+        try:
+            logger.info(f"Pulling image {image} via docker...")
+            process = subprocess.run(
+                ["docker", "pull", image],
+                capture_output=True,
+                text=True,
+            )
+            if process.returncode != 0:
+                raise ImageScanError(
+                    file=__file__,
+                    message=f"docker pull failed for {image}: {process.stderr.strip()}",
+                )
+            logger.info(f"Successfully pulled {image}")
+        except FileNotFoundError:
+            raise ImageDockerNotFoundError(
+                file=__file__,
+                message="Docker binary not found. Install Docker to use registry authentication.",
+            )
+
+    def _docker_logout(self, registry: str | None) -> None:
+        """Run docker logout for a registry. Logs warning on failure, never raises."""
+        registry_label = registry or "Docker Hub"
+        cmd = ["docker", "logout"]
+        if registry:
+            cmd.append(registry)
+
+        try:
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            if process.returncode != 0:
+                logger.warning(
+                    f"docker logout failed for {registry_label}: {process.stderr.strip()}"
+                )
+            else:
+                logger.info(f"Docker logout successful for {registry_label}")
+        except Exception as error:
+            logger.warning(f"docker logout failed for {registry_label}: {error}")
+
+    def cleanup(self) -> None:
+        """Logout from all registries that were logged in during the scan."""
+        for registry in self._logged_in_registries:
+            self._docker_logout(registry)
+        self._logged_in_registries.clear()
 
     def _process_finding(
         self, finding: dict, image_name: str, finding_type: str
@@ -273,10 +387,13 @@ class ImageProvider(Provider):
 
     def run(self) -> List[CheckReportImage]:
         """Execute the container image scan."""
-        reports = []
-        for batch in self.run_scan():
-            reports.extend(batch)
-        return reports
+        try:
+            reports = []
+            for batch in self.run_scan():
+                reports.extend(batch)
+            return reports
+        finally:
+            self.cleanup()
 
     def run_scan(self) -> Generator[List[CheckReportImage], None, None]:
         """
@@ -285,6 +402,13 @@ class ImageProvider(Provider):
         Yields:
             List[CheckReportImage]: Batches of findings
         """
+        if self.registry_username and self.registry_password:
+            registries = {self._extract_registry(img) for img in self.images}
+            for registry in registries:
+                self._docker_login(registry)
+            for image in self.images:
+                self._docker_pull(image)
+
         for image in self.images:
             try:
                 yield from self._scan_single_image(image)
@@ -407,8 +531,22 @@ class ImageProvider(Provider):
                 )
             logger.error(f"Error scanning image {image}: {error}")
 
+    def _build_trivy_env(self) -> dict:
+        """Build environment variables for Trivy, injecting registry credentials.
+
+        When username+password are provided, we rely on docker login (which stores
+        credentials in Docker's credential store). Setting TRIVY_USERNAME/TRIVY_PASSWORD
+        would cause Trivy to attempt its own token-exchange auth, which fails for
+        Docker Hub and other registries that require docker login.
+        """
+        env = dict(os.environ)
+        if self.registry_token:
+            env["TRIVY_REGISTRY_TOKEN"] = self.registry_token
+        return env
+
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
         """Execute Trivy command with optional progress bar."""
+        env = self._build_trivy_env()
         try:
             if sys.stdout.isatty():
                 with alive_bar(
@@ -423,6 +561,7 @@ class ImageProvider(Provider):
                         command,
                         capture_output=True,
                         text=True,
+                        env=env,
                     )
                     bar.title = f"-> Scan completed for {image}"
                     return process
@@ -432,12 +571,13 @@ class ImageProvider(Provider):
                     command,
                     capture_output=True,
                     text=True,
+                    env=env,
                 )
                 logger.info(f"Scan completed for {image}")
                 return process
         except (AttributeError, OSError):
             logger.info(f"Scanning {image}...")
-            return subprocess.run(command, capture_output=True, text=True)
+            return subprocess.run(command, capture_output=True, text=True, env=env)
 
     def _log_trivy_stderr(self, stderr: str) -> None:
         """Parse and log Trivy's stderr output."""
@@ -507,6 +647,10 @@ class ImageProvider(Provider):
 
         report_lines.append(f"Timeout: {Fore.YELLOW}{self.timeout}{Style.RESET_ALL}")
 
+        report_lines.append(
+            f"Authentication method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+        )
+
         print_boxes(report_lines, report_title)
 
     @staticmethod
@@ -514,6 +658,9 @@ class ImageProvider(Provider):
         image: str = None,
         raise_on_exception: bool = True,
         provider_id: str = None,
+        registry_username: str = None,
+        registry_password: str = None,
+        registry_token: str = None,
     ) -> "Connection":
         """
         Test connection to container registry by attempting to inspect an image.
@@ -522,16 +669,70 @@ class ImageProvider(Provider):
             image: Container image to test
             raise_on_exception: Whether to raise exceptions
             provider_id: Fallback for image name
+            registry_username: Registry username for basic auth
+            registry_password: Registry password for basic auth
+            registry_token: Registry token for token-based auth
 
         Returns:
             Connection: Connection object with success status
         """
+        docker_logged_in = False
+        registry = None
         try:
             if provider_id and not image:
                 image = provider_id
 
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
+
+            # Build env with registry credentials
+            env = dict(os.environ)
+            if registry_username and registry_password:
+                # Docker login for reliable private registry auth
+                registry = ImageProvider._extract_registry(image)
+                registry_label = registry or "Docker Hub"
+                login_cmd = [
+                    "docker",
+                    "login",
+                    "--username",
+                    registry_username,
+                    "--password-stdin",
+                ]
+                if registry:
+                    login_cmd.append(registry)
+                try:
+                    login_result = subprocess.run(
+                        login_cmd,
+                        input=registry_password,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if login_result.returncode == 0:
+                        docker_logged_in = True
+                        logger.info(
+                            f"Docker login successful for {registry_label} (test_connection)"
+                        )
+                        # Pull the image so Trivy can scan from the local daemon
+                        pull_result = subprocess.run(
+                            ["docker", "pull", image],
+                            capture_output=True,
+                            text=True,
+                        )
+                        if pull_result.returncode != 0:
+                            return Connection(
+                                is_connected=False,
+                                error=f"docker pull failed for {image}: {pull_result.stderr.strip()}",
+                            )
+                    else:
+                        logger.warning(
+                            f"Docker login failed for {registry_label}: {login_result.stderr.strip()}"
+                        )
+                except FileNotFoundError:
+                    logger.warning(
+                        "Docker binary not found, skipping docker login for test_connection"
+                    )
+            elif registry_token:
+                env["TRIVY_REGISTRY_TOKEN"] = registry_token
 
             # Test by running trivy with --skip-update to just test image access
             process = subprocess.run(
@@ -545,6 +746,7 @@ class ImageProvider(Provider):
                 capture_output=True,
                 text=True,
                 timeout=60,
+                env=env,
             )
 
             if process.returncode == 0:
@@ -584,3 +786,12 @@ class ImageProvider(Provider):
                 is_connected=False,
                 error=f"Unexpected error: {str(error)}",
             )
+        finally:
+            if docker_logged_in:
+                logout_cmd = ["docker", "logout"]
+                if registry:
+                    logout_cmd.append(registry)
+                try:
+                    subprocess.run(logout_cmd, capture_output=True, text=True)
+                except Exception:
+                    pass

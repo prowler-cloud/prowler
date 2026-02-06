@@ -30,6 +30,14 @@ class ImageBaseException(ProwlerException):
             "message": "Error scanning container image.",
             "remediation": "Check the image name and ensure it is accessible.",
         },
+        (9006, "ImageDockerLoginError"): {
+            "message": "Docker login failed for registry authentication.",
+            "remediation": "Check your registry credentials and ensure the registry is reachable.",
+        },
+        (9007, "ImageDockerNotFoundError"): {
+            "message": "Docker binary not found.",
+            "remediation": "Install Docker to enable private registry authentication via docker login.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -96,4 +104,22 @@ class ImageScanError(ImageBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9005, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageDockerLoginError(ImageBaseException):
+    """Exception raised when docker login fails."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageDockerNotFoundError(ImageBaseException):
+    """Exception raised when the docker binary is not found."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9007, file=file, original_exception=original_exception, message=message
         )
