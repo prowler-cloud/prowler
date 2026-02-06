@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.18.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Scans page polling now only refreshes scan table data instead of re-rendering the entire server component tree, eliminating redundant API calls to providers, findings, and compliance endpoints every 5 seconds
+
+---
+
 ## [1.18.0] (Prowler v5.18.0)
 
 ### 🔄 Changed
