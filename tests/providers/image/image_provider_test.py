@@ -1,3 +1,4 @@
+import os
 import tempfile
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -352,3 +353,160 @@ class TestImageProvider:
 
         assert isinstance(reports, list)
         assert len(reports) == 1
+
+
+class TestImageProviderRegistryAuth:
+    def test_no_auth_by_default(self):
+        """Test that no auth is set when no credentials are provided."""
+        provider = _make_provider()
+
+        assert provider.registry_username is None
+        assert provider.registry_password is None
+        assert provider.registry_token is None
+        assert provider.auth_method == "No auth"
+
+    def test_basic_auth_with_explicit_params(self):
+        """Test basic auth via explicit constructor params."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert provider.registry_username == "myuser"
+        assert provider.registry_password == "mypass"
+        assert provider.auth_method == "Basic auth"
+
+    def test_token_auth_with_explicit_param(self):
+        """Test token auth via explicit constructor param."""
+        provider = _make_provider(registry_token="my-token-123")
+
+        assert provider.registry_token == "my-token-123"
+        assert provider.auth_method == "Registry token"
+
+    def test_basic_auth_takes_precedence_over_token(self):
+        """Test that username/password takes precedence over token."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+            registry_token="my-token",
+        )
+
+        assert provider.auth_method == "Basic auth"
+
+    @patch.dict(os.environ, {"TRIVY_USERNAME": "envuser", "TRIVY_PASSWORD": "envpass"})
+    def test_basic_auth_from_env_vars(self):
+        """Test that env vars are used as fallback for basic auth."""
+        provider = _make_provider()
+
+        assert provider.registry_username == "envuser"
+        assert provider.registry_password == "envpass"
+        assert provider.auth_method == "Basic auth"
+
+    @patch.dict(os.environ, {"TRIVY_REGISTRY_TOKEN": "env-token"})
+    def test_token_auth_from_env_var(self):
+        """Test that env var is used as fallback for token auth."""
+        provider = _make_provider()
+
+        assert provider.registry_token == "env-token"
+        assert provider.auth_method == "Registry token"
+
+    @patch.dict(os.environ, {"TRIVY_USERNAME": "envuser", "TRIVY_PASSWORD": "envpass"})
+    def test_explicit_params_override_env_vars(self):
+        """Test that explicit params take precedence over env vars."""
+        provider = _make_provider(
+            registry_username="explicit",
+            registry_password="explicit-pass",
+        )
+
+        assert provider.registry_username == "explicit"
+        assert provider.registry_password == "explicit-pass"
+
+    def test_build_trivy_env_no_auth(self):
+        """Test that _build_trivy_env returns base env when no auth."""
+        provider = _make_provider()
+        env = provider._build_trivy_env()
+
+        assert "TRIVY_USERNAME" not in env
+        assert "TRIVY_PASSWORD" not in env
+        assert "TRIVY_REGISTRY_TOKEN" not in env
+
+    def test_build_trivy_env_basic_auth(self):
+        """Test that _build_trivy_env injects username/password."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    def test_build_trivy_env_token_auth(self):
+        """Test that _build_trivy_env injects registry token."""
+        provider = _make_provider(registry_token="my-token")
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    @patch("subprocess.run")
+    def test_execute_trivy_passes_env(self, mock_subprocess):
+        """Test that _execute_trivy passes credentials via env."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("subprocess.run")
+    def test_test_connection_with_basic_auth(self, mock_subprocess):
+        """Test test_connection passes credentials via env."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert result.is_connected is True
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("subprocess.run")
+    def test_test_connection_with_token(self, mock_subprocess):
+        """Test test_connection passes token via env."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_token="my-token",
+        )
+
+        assert result.is_connected is True
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    def test_print_credentials_shows_auth_method(self):
+        """Test that print_credentials outputs the auth method."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        with mock.patch("builtins.print") as mock_print:
+            provider.print_credentials()
+            output = " ".join(
+                str(call.args[0]) for call in mock_print.call_args_list if call.args
+            )
+            assert "Basic auth" in output

@@ -74,6 +74,30 @@ def init_parser(self):
         help="Trivy scan timeout. Default: 5m. Examples: 10m, 1h",
     )
 
+    # Registry Authentication
+    registry_auth_group = image_parser.add_argument_group("Registry Authentication")
+    registry_auth_group.add_argument(
+        "--registry-username",
+        dest="registry_username",
+        nargs="?",
+        default=None,
+        help="Username for private registry authentication (used with --registry-password). If not provided, will use TRIVY_USERNAME env var.",
+    )
+    registry_auth_group.add_argument(
+        "--registry-password",
+        dest="registry_password",
+        nargs="?",
+        default=None,
+        help="Password for private registry authentication (used with --registry-username). If not provided, will use TRIVY_PASSWORD env var.",
+    )
+    registry_auth_group.add_argument(
+        "--registry-token",
+        dest="registry_token",
+        nargs="?",
+        default=None,
+        help="Token for private registry authentication. If not provided, will use TRIVY_REGISTRY_TOKEN env var.",
+    )
+
 
 def validate_arguments(arguments):
     """Validate Image provider arguments."""

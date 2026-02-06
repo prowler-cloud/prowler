@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from typing import Generator, List
@@ -48,6 +49,9 @@ class ImageProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict | None = None,
+        registry_username: str = None,
+        registry_password: str = None,
+        registry_token: str = None,
     ):
         logger.info("Instantiating Image Provider...")
 
@@ -61,7 +65,20 @@ class ImageProvider(Provider):
         self.audited_account = "image-scan"
         self._session = None
         self._identity = "prowler"
-        self._auth_method = "No auth"
+
+        # Registry authentication (follows IaC pattern: explicit params, env vars internal)
+        self.registry_username = registry_username or os.environ.get("TRIVY_USERNAME")
+        self.registry_password = registry_password or os.environ.get("TRIVY_PASSWORD")
+        self.registry_token = registry_token or os.environ.get("TRIVY_REGISTRY_TOKEN")
+
+        if self.registry_username and self.registry_password:
+            self._auth_method = "Basic auth"
+            logger.info("Using registry username/password for authentication")
+        elif self.registry_token:
+            self._auth_method = "Registry token"
+            logger.info("Using registry token for authentication")
+        else:
+            self._auth_method = "No auth"
 
         # Load images from file if provided
         if image_list_file:
@@ -394,8 +411,19 @@ class ImageProvider(Provider):
                 )
             logger.error(f"Error scanning image {image}: {error}")
 
+    def _build_trivy_env(self) -> dict:
+        """Build environment variables for Trivy, injecting registry credentials."""
+        env = dict(os.environ)
+        if self.registry_username and self.registry_password:
+            env["TRIVY_USERNAME"] = self.registry_username
+            env["TRIVY_PASSWORD"] = self.registry_password
+        elif self.registry_token:
+            env["TRIVY_REGISTRY_TOKEN"] = self.registry_token
+        return env
+
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
         """Execute Trivy command with optional progress bar."""
+        env = self._build_trivy_env()
         try:
             if sys.stdout.isatty():
                 with alive_bar(
@@ -410,6 +438,7 @@ class ImageProvider(Provider):
                         command,
                         capture_output=True,
                         text=True,
+                        env=env,
                     )
                     bar.title = f"-> Scan completed for {image}"
                     return process
@@ -419,12 +448,13 @@ class ImageProvider(Provider):
                     command,
                     capture_output=True,
                     text=True,
+                    env=env,
                 )
                 logger.info(f"Scan completed for {image}")
                 return process
         except (AttributeError, OSError):
             logger.info(f"Scanning {image}...")
-            return subprocess.run(command, capture_output=True, text=True)
+            return subprocess.run(command, capture_output=True, text=True, env=env)
 
     def _log_trivy_stderr(self, stderr: str) -> None:
         """Parse and log Trivy's stderr output."""
@@ -474,6 +504,10 @@ class ImageProvider(Provider):
 
         report_lines.append(f"Timeout: {Fore.YELLOW}{self.timeout}{Style.RESET_ALL}")
 
+        report_lines.append(
+            f"Authentication method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+        )
+
         print_boxes(report_lines, report_title)
 
     @staticmethod
@@ -481,6 +515,9 @@ class ImageProvider(Provider):
         image: str = None,
         raise_on_exception: bool = True,
         provider_id: str = None,
+        registry_username: str = None,
+        registry_password: str = None,
+        registry_token: str = None,
     ) -> "Connection":
         """
         Test connection to container registry by attempting to inspect an image.
@@ -489,6 +526,9 @@ class ImageProvider(Provider):
             image: Container image to test
             raise_on_exception: Whether to raise exceptions
             provider_id: Fallback for image name
+            registry_username: Registry username for basic auth
+            registry_password: Registry password for basic auth
+            registry_token: Registry token for token-based auth
 
         Returns:
             Connection: Connection object with success status
@@ -499,6 +539,14 @@ class ImageProvider(Provider):
 
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
+
+            # Build env with registry credentials
+            env = dict(os.environ)
+            if registry_username and registry_password:
+                env["TRIVY_USERNAME"] = registry_username
+                env["TRIVY_PASSWORD"] = registry_password
+            elif registry_token:
+                env["TRIVY_REGISTRY_TOKEN"] = registry_token
 
             # Test by running trivy with --skip-update to just test image access
             process = subprocess.run(
@@ -512,6 +560,7 @@ class ImageProvider(Provider):
                 capture_output=True,
                 text=True,
                 timeout=60,
+                env=env,
             )
 
             if process.returncode == 0:
