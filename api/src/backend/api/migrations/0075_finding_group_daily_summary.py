@@ -82,13 +82,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="findinggroupdailysummary",
             index=models.Index(
-                fields=["tenant_id", "provider"],
-                name="fgds_tenant_provider_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="findinggroupdailysummary",
-            index=models.Index(
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
             ),
@@ -98,13 +91,6 @@ class Migration(migrations.Migration):
             index=models.Index(
                 fields=["tenant_id", "check_id", "inserted_at"],
                 name="fgds_tenant_chk_ins_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="findinggroupdailysummary",
-            index=models.Index(
-                fields=["tenant_id", "provider", "check_id"],
-                name="fgds_tenant_provider_check_idx",
             ),
         ),
         migrations.AddIndex(
