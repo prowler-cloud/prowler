@@ -1187,12 +1187,22 @@ class AttackPathsQueryParameterSerializer(BaseSerializerV1):
         resource_name = "attack-paths-query-parameters"
 
 
+class AttackPathsQueryAttributionSerializer(BaseSerializerV1):
+    text = serializers.CharField()
+    link = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-attributions"
+
+
 class AttackPathsQuerySerializer(BaseSerializerV1):
     id = serializers.CharField()
     name = serializers.CharField()
+    short_description = serializers.CharField()
     description = serializers.CharField()
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
+    attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
 
     class JSONAPIMeta:
         resource_name = "attack-paths-queries"

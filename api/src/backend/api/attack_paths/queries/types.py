@@ -16,6 +16,14 @@ class AttackPathsQueryParameterDefinition:
 
 
 @dataclass
+class AttackPathsQueryAttribution:
+    """Source attribution for an Attack Path query."""
+
+    text: str
+    link: str
+
+
+@dataclass
 class AttackPathsQueryDefinition:
     """
     Immutable representation of an Attack Path query.
@@ -23,7 +31,9 @@ class AttackPathsQueryDefinition:
 
     id: str
     name: str
+    short_description: str
     description: str
     provider: str
     cypher: str
     parameters: list[AttackPathsQueryParameterDefinition] = field(default_factory=list)
+    attribution: AttackPathsQueryAttribution | None = None

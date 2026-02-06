@@ -34,10 +34,11 @@ Queries can be created from:
    - The JSON index contains: `id`, `name`, `description`, `services`, `permissions`, `exploitationSteps`, `prerequisites`, etc.
    - Reference: https://github.com/DataDog/pathfinding.cloud
 
-   **Fetching a single path by ID** — The aggregated `paths.json` is too large for WebFetch
+   **Fetching a single path by ID** - The aggregated `paths.json` is too large for WebFetch
    (content gets truncated). Use Bash with `curl` and a JSON parser instead:
 
    Prefer `jq` (concise), fall back to `python3` (guaranteed in this Python project):
+
    ```bash
    # With jq
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
@@ -50,6 +51,7 @@ Queries can be created from:
 
 2. **Listing Available Attack Paths**
    - Use Bash to list available paths from the JSON index:
+
    ```bash
    # List all path IDs and names (jq)
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
@@ -84,6 +86,7 @@ Example: `api/src/backend/api/attack_paths/queries/aws.py`
 
 ```python
 from api.attack_paths.queries.types import (
+    AttackPathsQueryAttribution,
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
@@ -92,9 +95,14 @@ from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 # {REFERENCE_ID} (e.g., EC2-001, GLUE-001)
 AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     id="aws-{kebab-case-name}",
-    name="Privilege Escalation: {permission1} + {permission2}",
-    description="{Detailed description of the Attack Paths}.",
+    name="{Human-friendly label, no raw permissions}",
+    short_description="{Brief explanation of the attack, no technical permissions.}",
+    description="{Detailed description of the attack vector and impact.}",
     provider="aws",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - {REFERENCE_ID} - {permission1} + {permission2}",
+        link="https://pathfinding.cloud/paths/{reference_id_lowercase}",
+    ),
     cypher=f"""
         // Find principals with {permission1}
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
@@ -231,11 +239,13 @@ This informs query design by showing what data is actually available to query.
 Use the standard pattern (see above) with:
 
 - **id**: Auto-generated as `{provider}-{kebab-case-description}`
-- **name**: Human-readable, e.g., "Privilege Escalation: {perm1} + {perm2}"
-- **description**: Explain the attack vector and impact
+- **name**: Short, human-friendly label. No raw IAM permissions. E.g., "EC2 Instance Launch with Privileged Role"
+- **short_description**: Brief explanation of the attack, no technical permissions. E.g., "Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS."
+- **description**: Full technical explanation of the attack vector and impact. Plain text only, no HTML or technical permissions here.
 - **provider**: Provider identifier (aws, azure, gcp, kubernetes, github)
 - **cypher**: The openCypher query with proper escaping
 - **parameters**: Optional list of user-provided parameters (use `parameters=[]` if none needed)
+- **attribution**: Optional `AttackPathsQueryAttribution(text, link)` for sourced queries. The `text` includes the source, reference ID, and technical permissions (e.g., `"pathfinding.cloud - EC2-001 - iam:PassRole + ec2:RunInstances"`). The `link` is the URL with a lowercase ID (e.g., `"https://pathfinding.cloud/paths/ec2-001"`). Omit (defaults to `None`) for non-sourced queries.
 
 ### 5. Add Query to Provider List
 
