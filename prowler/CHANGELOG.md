@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.19.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
+
+---
+
 ## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
@@ -36,7 +44,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
 - Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
 
-### 🐛 Fixed
+### 🐞 Fixed
 
 - Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
 - Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
