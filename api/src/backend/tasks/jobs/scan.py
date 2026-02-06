@@ -13,7 +13,8 @@ from celery.utils.log import get_task_logger
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, When
+from django.db.models import Case, Count, IntegerField, Max, Min, Prefetch, Q, Sum, When
+from django.utils import timezone as django_timezone
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
@@ -21,6 +22,7 @@ from tasks.jobs.queries import (
 from tasks.utils import CustomEncoder
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
+from api.constants import SEVERITY_ORDER
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
@@ -36,6 +38,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     MuteRule,
     Processor,
     Provider,
@@ -1746,3 +1749,191 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
             f"Error updating provider compliance scores for scan {scan_id}: {e}"
         )
         raise
+
+
+def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
+    """
+    Aggregate finding group summaries for a completed scan.
+
+    Creates or updates FindingGroupDailySummary records for each unique check_id
+    found in the scan's findings. These pre-aggregated summaries enable efficient
+    queries over date ranges without scanning millions of findings.
+
+    Args:
+        tenant_id: Tenant that owns the scan.
+        scan_id: Scan UUID whose findings should be aggregated.
+
+    Returns:
+        dict: Statistics about the aggregation operation.
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state=StateChoices.COMPLETED,
+        ).first()
+
+        if not scan:
+            logger.warning(
+                f"Scan {scan_id} not found or not completed for finding group summary"
+            )
+            return {"status": "skipped", "reason": "scan not completed"}
+
+        if not scan.provider:
+            logger.warning(f"Scan {scan_id} has no provider for finding group summary")
+            return {"status": "skipped", "reason": "scan has no provider"}
+
+        summary_timestamp = scan.completed_at
+        if django_timezone.is_naive(summary_timestamp):
+            summary_timestamp = django_timezone.make_aware(
+                summary_timestamp, timezone.utc
+            )
+        summary_timestamp = summary_timestamp.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        provider_id = scan.provider_id
+
+        # Build severity Case/When expression
+        severity_case = Case(
+            *[
+                When(severity=severity, then=order)
+                for severity, order in SEVERITY_ORDER.items()
+            ],
+            output_field=IntegerField(),
+        )
+
+        # Aggregate findings by check_id for this scan
+        aggregated = (
+            Finding.objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+            )
+            .values("check_id")
+            .annotate(
+                severity_order=Max(severity_case),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                muted_count=Count("id", filter=Q(muted=True)),
+                new_count=Count("id", filter=Q(delta="new", muted=False)),
+                changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                resources_total=Count("resources__id", distinct=True),
+                resources_fail=Count(
+                    "resources__id",
+                    distinct=True,
+                    filter=Q(status="FAIL", muted=False),
+                ),
+                # Use prefixed names to avoid conflict with model field names
+                agg_first_seen_at=Min("first_seen_at"),
+                agg_last_seen_at=Max("inserted_at"),
+                agg_failing_since=Min(
+                    "first_seen_at", filter=Q(status="FAIL", muted=False)
+                ),
+            )
+        )
+
+        # Force evaluate queryset while inside RLS transaction (prevents lazy re-query issues)
+        aggregated_list = list(aggregated)
+
+        # Fetch check metadata for all check_ids in one query
+        check_ids = [row["check_id"] for row in aggregated_list]
+        check_metadata_map = {}
+        if check_ids:
+            findings_with_metadata = (
+                Finding.objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    check_id__in=check_ids,
+                )
+                .order_by("check_id")
+                .distinct("check_id")
+                .values("check_id", "check_metadata")
+            )
+
+            for f in findings_with_metadata:
+                if f["check_id"] not in check_metadata_map and f["check_metadata"]:
+                    check_metadata_map[f["check_id"]] = f["check_metadata"]
+
+    # Upsert summaries in bulk for performance
+    created_count = 0
+    updated_count = 0
+
+    with rls_transaction(tenant_id):
+        check_ids = [row["check_id"] for row in aggregated_list]
+        existing_check_ids = set()
+        if check_ids:
+            existing_check_ids = set(
+                FindingGroupDailySummary.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=provider_id,
+                    check_id__in=check_ids,
+                    inserted_at=summary_timestamp,
+                ).values_list("check_id", flat=True)
+            )
+
+        created_count = len(check_ids) - len(existing_check_ids)
+        updated_count = len(existing_check_ids)
+
+        summaries_to_upsert = []
+        updated_at = django_timezone.now()
+        for row in aggregated_list:
+            check_id = row["check_id"]
+            metadata = check_metadata_map.get(check_id, {})
+
+            summaries_to_upsert.append(
+                FindingGroupDailySummary(
+                    tenant_id=tenant_id,
+                    provider_id=provider_id,
+                    check_id=check_id,
+                    inserted_at=summary_timestamp,
+                    updated_at=updated_at,
+                    check_title=metadata.get("checktitle", ""),
+                    check_description=metadata.get("Description", ""),
+                    severity_order=row["severity_order"] or 1,
+                    pass_count=row["pass_count"],
+                    fail_count=row["fail_count"],
+                    muted_count=row["muted_count"],
+                    new_count=row["new_count"],
+                    changed_count=row["changed_count"],
+                    resources_total=row["resources_total"],
+                    resources_fail=row["resources_fail"],
+                    first_seen_at=row["agg_first_seen_at"],
+                    last_seen_at=row["agg_last_seen_at"],
+                    failing_since=row["agg_failing_since"],
+                )
+            )
+
+        if summaries_to_upsert:
+            FindingGroupDailySummary.objects.bulk_create(
+                summaries_to_upsert,
+                update_conflicts=True,
+                unique_fields=["tenant_id", "provider", "check_id", "inserted_at"],
+                update_fields=[
+                    "check_title",
+                    "check_description",
+                    "severity_order",
+                    "pass_count",
+                    "fail_count",
+                    "muted_count",
+                    "new_count",
+                    "changed_count",
+                    "resources_total",
+                    "resources_fail",
+                    "first_seen_at",
+                    "last_seen_at",
+                    "failing_since",
+                    "updated_at",
+                ],
+            )
+
+    logger.info(
+        f"Finding group summaries aggregated for scan {scan_id}: "
+        f"{created_count} created, {updated_count} updated"
+    )
+
+    return {
+        "status": "completed",
+        "scan_id": str(scan_id),
+        "date": str(summary_timestamp.date()),
+        "created": created_count,
+        "updated": updated_count,
+    }
