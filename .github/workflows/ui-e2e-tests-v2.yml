@@ -18,14 +18,14 @@ on:
 jobs:
   # First, analyze which tests need to run
   impact-analysis:
-    if: github.repository == 'prowler-cloud/prowler'
+    if: startsWith(github.repository, 'prowler-cloud/prowler')
     uses: ./.github/workflows/test-impact-analysis.yml
 
   # Run E2E tests based on impact analysis
   e2e-tests:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' &&
+      startsWith(github.repository, 'prowler-cloud/prowler') &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
@@ -229,7 +229,7 @@ jobs:
   skip-e2e:
     needs: impact-analysis
     if: |
-      github.repository == 'prowler-cloud/prowler' &&
+      startsWith(github.repository, 'prowler-cloud/prowler') &&
       needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
