@@ -327,7 +327,7 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 # BEDROCK-001
 AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     id="aws-bedrock-privesc-passrole-code-interpreter",
-    name="Bedrock Code Interpreter with Privileged Role",
+    name="Bedrock Code Interpreter with Privileged Role (BEDROCK-001)",
     short_description="Create a Bedrock AgentCore Code Interpreter with a privileged role attached.",
     description="Detect principals who can pass IAM roles and create Bedrock AgentCore Code Interpreters. This allows creating a code interpreter with a privileged role attached, gaining that role's permissions.",
     attribution=AttackPathsQueryAttribution(
@@ -374,7 +374,7 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
 # EC2-001
 AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
     id="aws-ec2-privesc-passrole-iam",
-    name="EC2 Instance Launch with Privileged Role",
+    name="EC2 Instance Launch with Privileged Role (EC2-001)",
     short_description="Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS.",
     description="Detect principals who can launch EC2 instances with privileged IAM roles attached. This allows gaining the permissions of the passed role by accessing the EC2 instance metadata service.",
     attribution=AttackPathsQueryAttribution(
@@ -421,7 +421,7 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
 # EC2-002
 AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
     id="aws-ec2-privesc-modify-instance-attribute",
-    name="EC2 Role Hijacking via UserData Injection",
+    name="EC2 Role Hijacking via UserData Injection (EC2-002)",
     short_description="Inject malicious scripts into EC2 instance userData to gain the attached role's permissions.",
     description="Detect principals who can modify EC2 instance userData, stop, and start instances. This allows injecting malicious scripts that execute on instance restart, gaining the permissions of the instance's attached IAM role.",
     attribution=AttackPathsQueryAttribution(
@@ -472,7 +472,7 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
 # EC2-003
 AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
     id="aws-ec2-privesc-passrole-spot-instances",
-    name="Spot Instance Launch with Privileged Role",
+    name="Spot Instance Launch with Privileged Role (EC2-003)",
     short_description="Launch EC2 Spot Instances with privileged IAM roles to gain their permissions via IMDS.",
     description="Detect principals who can pass IAM roles and request EC2 Spot Instances. This allows launching a spot instance with a privileged role attached, gaining that role's permissions via the instance metadata service.",
     attribution=AttackPathsQueryAttribution(
@@ -519,7 +519,7 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
 # EC2-004
 AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
     id="aws-ec2-privesc-launch-template",
-    name="Launch Template Poisoning for Role Access",
+    name="Launch Template Poisoning for Role Access (EC2-004)",
     short_description="Inject malicious userData into launch templates that reference privileged roles, no PassRole needed.",
     description="Detect principals who can create new launch template versions and modify launch templates. This allows injecting malicious user data into existing templates that already reference privileged IAM roles, without requiring iam:PassRole permissions.",
     attribution=AttackPathsQueryAttribution(
@@ -561,7 +561,7 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
 # ECS-001
 AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     id="aws-ecs-privesc-passrole-create-service",
-    name="ECS Service Creation with Privileged Role (New Cluster)",
+    name="ECS Service Creation with Privileged Role (ECS-001 - New Cluster)",
     short_description="Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code.",
     description="Detect principals who can pass IAM roles, create ECS clusters, register task definitions, and create services. This allows creating a Fargate task with a privileged role attached, gaining that role's permissions to execute arbitrary code via the container.",
     provider="aws",
@@ -626,7 +626,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
 # ECS-002
 AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
     id="aws-ecs-privesc-passrole-run-task",
-    name="ECS Task Execution with Privileged Role (New Cluster)",
+    name="ECS Task Execution with Privileged Role (ECS-002 - New Cluster)",
     short_description="Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code.",
     description="Detect principals who can pass IAM roles, create ECS clusters, register task definitions, and run tasks. This allows creating a Fargate task with a privileged role attached, gaining that role's permissions to execute arbitrary code via the container. Unlike ecs:CreateService, ecs:RunTask executes the task once without creating a persistent service.",
     attribution=AttackPathsQueryAttribution(
@@ -691,7 +691,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
 # ECS-003
 AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefinition(
     id="aws-ecs-privesc-passrole-create-service-existing-cluster",
-    name="ECS Service Creation with Privileged Role (Existing Cluster)",
+    name="ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)",
     short_description="Deploy a Fargate service with a privileged role on an existing ECS cluster.",
     description="Detect principals who can pass IAM roles, register ECS task definitions, and create services on existing clusters. Unlike ECS-001, this does not require ecs:CreateCluster since it targets clusters that already exist. The attacker registers a task definition with a privileged role and launches it as a Fargate service, gaining that role's permissions.",
     attribution=AttackPathsQueryAttribution(
@@ -747,7 +747,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
 # ECS-004
 AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
     id="aws-ecs-privesc-passrole-run-task-existing-cluster",
-    name="ECS Task Execution with Privileged Role (Existing Cluster)",
+    name="ECS Task Execution with Privileged Role (ECS-004 - Existing Cluster)",
     short_description="Run a one-off Fargate task with a privileged role on an existing ECS cluster.",
     description="Detect principals who can pass IAM roles, register ECS task definitions, and run tasks on existing clusters. Unlike ECS-002, this does not require ecs:CreateCluster since it targets clusters that already exist. The attacker registers a task definition with a privileged role and runs it as a one-off Fargate task, gaining that role's permissions.",
     attribution=AttackPathsQueryAttribution(
@@ -803,7 +803,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
 # GLUE-001
 AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     id="aws-glue-privesc-passrole-dev-endpoint",
-    name="Glue Dev Endpoint with Privileged Role",
+    name="Glue Dev Endpoint with Privileged Role (GLUE-001)",
     short_description="Create a Glue development endpoint with a privileged role attached to gain its permissions.",
     description="Detect principals who can pass IAM roles and create Glue development endpoints. This allows creating a dev endpoint with a privileged role attached, gaining that role's permissions.",
     attribution=AttackPathsQueryAttribution(
@@ -850,7 +850,7 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
 # IAM-014
 AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     id="aws-iam-privesc-attach-role-policy-assume-role",
-    name="Role Policy Attachment and Assumption",
+    name="Role Policy Attachment and Assumption (IAM-014)",
     short_description="Attach policies to IAM roles and then assume them to gain elevated access.",
     description="Detect principals who can both attach policies to roles AND assume those roles. This allows modifying a role's permissions then assuming it to gain elevated access.",
     attribution=AttackPathsQueryAttribution(

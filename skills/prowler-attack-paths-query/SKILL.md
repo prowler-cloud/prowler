@@ -95,7 +95,7 @@ from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 # {REFERENCE_ID} (e.g., EC2-001, GLUE-001)
 AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     id="aws-{kebab-case-name}",
-    name="{Human-friendly label, no raw permissions}",
+    name="{Human-friendly label} ({REFERENCE_ID})",
     short_description="{Brief explanation of the attack, no technical permissions.}",
     description="{Detailed description of the attack vector and impact.}",
     attribution=AttackPathsQueryAttribution(
@@ -239,7 +239,7 @@ This informs query design by showing what data is actually available to query.
 Use the standard pattern (see above) with:
 
 - **id**: Auto-generated as `{provider}-{kebab-case-description}`
-- **name**: Short, human-friendly label. No raw IAM permissions. E.g., "EC2 Instance Launch with Privileged Role"
+- **name**: Short, human-friendly label. No raw IAM permissions. For sourced queries (e.g., pathfinding.cloud), append the reference ID in parentheses: `"EC2 Instance Launch with Privileged Role (EC2-001)"`. If the name already has parentheses, prepend the ID inside them: `"ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)"`.
 - **short_description**: Brief explanation of the attack, no technical permissions. E.g., "Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS."
 - **description**: Full technical explanation of the attack vector and impact. Plain text only, no HTML or technical permissions here.
 - **provider**: Provider identifier (aws, azure, gcp, kubernetes, github)
