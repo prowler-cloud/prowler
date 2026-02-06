@@ -23,7 +23,7 @@ class network_admin_state_down(Check):
         for network in network_client.networks:
             report = CheckReportOpenStack(
                 metadata=self.metadata(), resource=network
-            )  # noqa: E501
+            )
             report.resource_id = network.id
             report.resource_name = network.name
             report.region = network.region

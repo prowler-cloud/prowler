@@ -37,8 +37,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "network_security_group_allows_ssh_from_internet",
-    "network_security_group_allows_all_ports_from_internet"
+    "network_security_group_allows_ssh_from_internet"
   ],
   "Notes": "This check flags security groups with RDP (port 3389) ingress rules allowing 0.0.0.0/0 or ::/0. Some architectures legitimately require public RDP access (bastion hosts, RD Gateway, jump servers). Review findings in context of your Windows infrastructure. Rules allowing RDP from specific IPs (e.g., 198.51.100.0/24) or from other security groups (remote_group_id) are not flagged. IPv6 rules (::/0) are also checked. Port ranges that include port 3389 (e.g., 3000-4000) will trigger this check."
 }

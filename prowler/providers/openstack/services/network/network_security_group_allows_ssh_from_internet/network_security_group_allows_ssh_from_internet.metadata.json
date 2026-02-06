@@ -37,8 +37,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "network_security_group_allows_rdp_from_internet",
-    "network_security_group_allows_all_ports_from_internet"
+    "network_security_group_allows_rdp_from_internet"
   ],
   "Notes": "This check flags security groups with SSH (port 22) ingress rules allowing 0.0.0.0/0 or ::/0. Some architectures legitimately require public SSH access (bastion hosts, CI/CD runners with dynamic IPs). Review findings in context of your security architecture. Rules allowing SSH from specific IPs (e.g., 203.0.113.0/24) or from other security groups (remote_group_id) are not flagged. IPv6 rules (::/0) are also checked. Port ranges that include port 22 (e.g., 20-25) will trigger this check."
 }

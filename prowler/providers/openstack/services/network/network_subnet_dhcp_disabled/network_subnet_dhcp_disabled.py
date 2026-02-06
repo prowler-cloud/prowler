@@ -23,17 +23,17 @@ class network_subnet_dhcp_disabled(Check):
         for subnet in network_client.subnets:
             report = CheckReportOpenStack(
                 metadata=self.metadata(), resource=subnet
-            )  # noqa: E501
+            )
             report.resource_id = subnet.id
             report.resource_name = subnet.name
             report.region = subnet.region
 
             if not subnet.enable_dhcp:
                 report.status = "FAIL"
-                report.status_extended = f"Subnet {subnet.name} ({subnet.id}) on network {subnet.network_id} has DHCP disabled, which may prevent instances from obtaining IP addresses automatically."  # noqa: E501
+                report.status_extended = f"Subnet {subnet.name} ({subnet.id}) on network {subnet.network_id} has DHCP disabled, which may prevent instances from obtaining IP addresses automatically."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Subnet {subnet.name} ({subnet.id}) has DHCP enabled."  # noqa: E501
+                report.status_extended = f"Subnet {subnet.name} ({subnet.id}) has DHCP enabled."
 
             findings.append(report)
 

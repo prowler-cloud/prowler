@@ -158,10 +158,10 @@ class TestNetworkService:
         mock_net.id = "net-1"
         mock_net.name = "private-network"
         mock_net.status = "ACTIVE"
-        mock_net.admin_state_up = True
-        mock_net.shared = False
-        setattr(mock_net, "router:external", False)
-        mock_net.port_security_enabled = True
+        mock_net.is_admin_state_up = True
+        mock_net.is_shared = False
+        mock_net.is_router_external = False
+        mock_net.is_port_security_enabled = True
         mock_net.subnet_ids = ["subnet-1", "subnet-2"]
         mock_net.project_id = OPENSTACK_PROJECT_ID
         mock_net.tags = []
@@ -192,7 +192,7 @@ class TestNetworkService:
         mock_subnet.ip_version = 4
         mock_subnet.cidr = "192.168.1.0/24"
         mock_subnet.gateway_ip = "192.168.1.1"
-        mock_subnet.enable_dhcp = True
+        mock_subnet.is_dhcp_enabled = True
         mock_subnet.dns_nameservers = ["8.8.8.8", "8.8.4.4"]
         mock_subnet.project_id = OPENSTACK_PROJECT_ID
 
@@ -222,7 +222,7 @@ class TestNetworkService:
         mock_port.fixed_ips = [
             {"ip_address": "192.168.1.10", "subnet_id": "subnet-1"}
         ]  # noqa: E501
-        mock_port.port_security_enabled = True
+        mock_port.is_port_security_enabled = True
         mock_port.security_groups = ["sg-1"]
         mock_port.device_owner = "compute:nova"
         mock_port.device_id = "instance-1"

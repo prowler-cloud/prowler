@@ -1,13 +1,13 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
-from prowler.providers.openstack.services.network.network_client import (  # noqa: E501
+from prowler.providers.openstack.services.network.network_client import (
     network_client,
 )
 
 
 class network_security_group_default_restricts_traffic(Check):
-    """Ensure default security groups have not been modified with custom rules."""  # noqa: E501
+    """Ensure default security groups have not been modified with custom rules."""
 
     def execute(self) -> List[CheckReportOpenStack]:
         findings: List[CheckReportOpenStack] = []
@@ -19,7 +19,7 @@ class network_security_group_default_restricts_traffic(Check):
 
             report = CheckReportOpenStack(
                 metadata=self.metadata(), resource=sg
-            )  # noqa: E501
+            )
             report.resource_id = sg.id
             report.resource_name = sg.name
             report.region = sg.region
@@ -34,14 +34,14 @@ class network_security_group_default_restricts_traffic(Check):
             if len(sg.security_group_rules) > default_rule_count:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Default security group {sg.name} ({sg.id}) has been modified with "  # noqa: E501
-                    f"{len(sg.security_group_rules)} custom rules. Default security groups should "  # noqa: E501
-                    f"remain unmodified; create custom security groups instead."  # noqa: E501
+                    f"Default security group {sg.name} ({sg.id}) has been modified with "
+                    f"{len(sg.security_group_rules)} custom rules. Default security groups should "
+                    f"remain unmodified; create custom security groups instead."
                 )
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Default security group {sg.name} ({sg.id}) has not been modified "  # noqa: E501
+                    f"Default security group {sg.name} ({sg.id}) has not been modified "
                     f"({len(sg.security_group_rules)} rules present)."
                 )
 

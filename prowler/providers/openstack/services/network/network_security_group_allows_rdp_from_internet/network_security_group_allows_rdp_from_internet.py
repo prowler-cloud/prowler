@@ -1,10 +1,10 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
-from prowler.providers.openstack.lib.security_groups import (  # noqa: E501
+from prowler.providers.openstack.lib.security_groups import (
     check_security_group_rule,
 )
-from prowler.providers.openstack.services.network.network_client import (  # noqa: E501
+from prowler.providers.openstack.services.network.network_client import (
     network_client,
 )
 
@@ -18,7 +18,7 @@ class network_security_group_allows_rdp_from_internet(Check):
         for sg in network_client.security_groups:
             report = CheckReportOpenStack(
                 metadata=self.metadata(), resource=sg
-            )  # noqa: E501
+            )
             report.resource_id = sg.id
             report.resource_name = sg.name
             report.region = sg.region
@@ -38,16 +38,16 @@ class network_security_group_allows_rdp_from_internet(Check):
                     rdp_exposed = True
                     cidr = rule.remote_ip_prefix or "0.0.0.0/0"
                     exposed_rules.append(
-                        f"rule {rule.id} ({rule.protocol}/{cidr}:{rule.port_range_min}-{rule.port_range_max})"  # noqa: E501
+                        f"rule {rule.id} ({rule.protocol}/{cidr}:{rule.port_range_min}-{rule.port_range_max})"
                     )
 
             if rdp_exposed:
                 report.status = "FAIL"
                 rules_str = ", ".join(exposed_rules)
-                report.status_extended = f"Security group {sg.name} ({sg.id}) allows unrestricted RDP access (port 3389) from the Internet via {rules_str}."  # noqa: E501
+                report.status_extended = f"Security group {sg.name} ({sg.id}) allows unrestricted RDP access (port 3389) from the Internet via {rules_str}."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Security group {sg.name} ({sg.id}) does not allow RDP (port 3389) from the Internet."  # noqa: E501
+                report.status_extended = f"Security group {sg.name} ({sg.id}) does not allow RDP (port 3389) from the Internet."
 
             findings.append(report)
 

@@ -32,29 +32,38 @@ class Network(OpenStackService):
                 # Parse security group rules
                 rules = []
                 for rule in getattr(sg, "security_group_rules", []):
-                    rules.append(
-                        SecurityGroupRule(
-                            id=getattr(rule, "id", ""),
-                            security_group_id=getattr(
-                                rule, "security_group_id", ""
-                            ),  # noqa: E501
-                            direction=getattr(rule, "direction", "ingress"),
-                            protocol=getattr(rule, "protocol", None),
-                            ethertype=getattr(rule, "ethertype", "IPv4"),
-                            port_range_min=getattr(
-                                rule, "port_range_min", None
-                            ),  # noqa: E501
-                            port_range_max=getattr(
-                                rule, "port_range_max", None
-                            ),  # noqa: E501
-                            remote_ip_prefix=getattr(
-                                rule, "remote_ip_prefix", None
-                            ),  # noqa: E501
-                            remote_group_id=getattr(
-                                rule, "remote_group_id", None
-                            ),  # noqa: E501
+                    # Rules are returned as dictionaries, use .get() instead of getattr()
+                    if isinstance(rule, dict):
+                        rules.append(
+                            SecurityGroupRule(
+                                id=rule.get("id", ""),
+                                security_group_id=rule.get("security_group_id", ""),
+                                direction=rule.get("direction", "ingress"),
+                                protocol=rule.get("protocol", None),
+                                ethertype=rule.get("ethertype", "IPv4"),
+                                port_range_min=rule.get("port_range_min", None),
+                                port_range_max=rule.get("port_range_max", None),
+                                remote_ip_prefix=rule.get("remote_ip_prefix", None),
+                                remote_group_id=rule.get("remote_group_id", None),
+                            )
                         )
-                    )
+                    else:
+                        # Fallback for object-style rules
+                        rules.append(
+                            SecurityGroupRule(
+                                id=getattr(rule, "id", ""),
+                                security_group_id=getattr(
+                                    rule, "security_group_id", ""
+                                ),
+                                direction=getattr(rule, "direction", "ingress"),
+                                protocol=getattr(rule, "protocol", None),
+                                ethertype=getattr(rule, "ethertype", "IPv4"),
+                                port_range_min=getattr(rule, "port_range_min", None),
+                                port_range_max=getattr(rule, "port_range_max", None),
+                                remote_ip_prefix=getattr(rule, "remote_ip_prefix", None),
+                                remote_group_id=getattr(rule, "remote_group_id", None),
+                            )
+                        )
 
                 # Check if this is a default security group
                 is_default = getattr(sg, "name", "") == "default"
@@ -73,12 +82,12 @@ class Network(OpenStackService):
                 )
         except openstack_exceptions.SDKException as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Failed to list security groups: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing security groups: {error}"
             )
 
@@ -92,11 +101,11 @@ class Network(OpenStackService):
                         id=getattr(net, "id", ""),
                         name=getattr(net, "name", ""),
                         status=getattr(net, "status", ""),
-                        admin_state_up=getattr(net, "admin_state_up", True),
-                        shared=getattr(net, "shared", False),
-                        external=getattr(net, "router:external", False),
+                        admin_state_up=getattr(net, "is_admin_state_up", True),
+                        shared=getattr(net, "is_shared", False),
+                        external=getattr(net, "is_router_external", False),
                         port_security_enabled=getattr(
-                            net, "port_security_enabled", True
+                            net, "is_port_security_enabled", True
                         ),
                         subnets=getattr(net, "subnet_ids", []),
                         project_id=getattr(net, "project_id", ""),
@@ -106,12 +115,12 @@ class Network(OpenStackService):
                 )
         except openstack_exceptions.SDKException as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Failed to list networks: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing networks: {error}"
             )
 
@@ -128,7 +137,7 @@ class Network(OpenStackService):
                         ip_version=getattr(subnet, "ip_version", 4),
                         cidr=getattr(subnet, "cidr", ""),
                         gateway_ip=getattr(subnet, "gateway_ip", None),
-                        enable_dhcp=getattr(subnet, "enable_dhcp", True),
+                        enable_dhcp=getattr(subnet, "is_dhcp_enabled", True),
                         dns_nameservers=getattr(subnet, "dns_nameservers", []),
                         project_id=getattr(subnet, "project_id", ""),
                         region=self.region,
@@ -136,12 +145,12 @@ class Network(OpenStackService):
                 )
         except openstack_exceptions.SDKException as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Failed to list subnets: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing subnets: {error}"
             )
 
@@ -158,7 +167,7 @@ class Network(OpenStackService):
                         mac_address=getattr(port, "mac_address", ""),
                         fixed_ips=getattr(port, "fixed_ips", []),
                         port_security_enabled=getattr(
-                            port, "port_security_enabled", True
+                            port, "is_port_security_enabled", True
                         ),
                         security_groups=getattr(port, "security_groups", []),
                         device_owner=getattr(port, "device_owner", ""),
@@ -169,12 +178,12 @@ class Network(OpenStackService):
                 )
         except openstack_exceptions.SDKException as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Failed to list ports: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "  # noqa: E501
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing ports: {error}"
             )
 
