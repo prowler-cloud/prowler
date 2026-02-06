@@ -119,13 +119,6 @@ def _serialize_graph(graph):
             },
         )
 
-    logger.info(
-        {
-            "nodes": nodes,
-            "relationships": relationships,
-        }
-    )
-
     return {
         "nodes": nodes,
         "relationships": relationships,
