@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "network_admin_state_down",
+  "CheckTitle": "Networks are administratively enabled",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackNetwork",
+  "ResourceGroup": "network",
+  "Description": "**OpenStack networks** are evaluated to verify that **admin_state_up is True**, meaning they are administratively enabled and operational. Networks with admin_state_up=False are intentionally disabled by administrators and cannot carry traffic. This administrative control is used during maintenance windows, network migrations, or troubleshooting. However, networks left in administratively disabled state can cause service outages if forgotten after maintenance completes.",
+  "Risk": "Networks with admin_state_up=False cannot carry any traffic, causing complete connectivity loss for all instances attached to those networks. Instances lose access to critical services like databases, APIs, and shared storage when their networks are administratively disabled. Forgotten disabled networks after maintenance windows cause prolonged outages that violate SLAs and impact production workloads. Multi-tier applications fail when networks between tiers (web-app-db) are disabled, breaking application functionality even if individual instances are healthy. Network isolation for security or compliance purposes may be bypassed if administrators disable networks instead of properly decommissioning them.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "# List networks with admin state down\nopenstack network list --long | grep -i \"admin_state_up.*false\"\n\n# Enable admin state on a specific network\nopenstack network set --enable <network_id>\n\n# Verify network is enabled\nopenstack network show <network_id> -f json | jq -r '.admin_state_up'",
+      "NativeIaC": "",
+      "Other": "**Enable network via Horizon:**\n1. Navigate to **Project > Network > Networks**\n2. For each network with Admin State = DOWN\n3. Click **Edit Network**\n4. Check the **Admin State** checkbox\n5. Click **Save**",
+      "Terraform": "```hcl\nresource \"openstack_networking_network_v2\" \"network\" {\n  name           = \"app-network\"\n  admin_state_up = true  # GOOD: Administratively enabled\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable admin state on all production networks unless there is a documented maintenance window. Implement change management procedures to track network administrative state changes and ensure re-enablement after maintenance. Use monitoring alerts to detect when networks remain disabled longer than expected.",
+      "Url": "https://hub.prowler.com/check/network_admin_state_down"
+    }
+  },
+  "Categories": [
+    "infrastructure-availability"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags networks where `admin_state_up == False`. Networks are typically disabled temporarily during maintenance or troubleshooting. If networks remain disabled after maintenance windows, they should be re-enabled. Some networks may be intentionally kept disabled as part of decommissioning procedures - verify the operational status before re-enabling."
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "network_subnet_dhcp_disabled",
+  "CheckTitle": "DHCP is enabled on subnets",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackSubnet",
+  "ResourceGroup": "network",
+  "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP (Dynamic Host Configuration Protocol) automatically assigns IP addresses, DNS servers, and gateway information to instances when they boot. Subnets with DHCP disabled require manual IP configuration on each instance, increasing operational complexity and the risk of IP conflicts. While some environments intentionally disable DHCP for security or to use static IP assignments, most general-purpose subnets should have DHCP enabled to simplify instance deployment and network management.",
+  "Risk": "Subnets with DHCP disabled prevent instances from automatically obtaining network configuration, causing connectivity failures during instance boot. New instances fail to acquire IP addresses and cannot communicate on the network without manual intervention, breaking automated deployment pipelines and orchestration tools like Heat, Terraform, and Ansible. Disabled DHCP increases operational burden as operators must manually configure each instance's network settings via cloud-init user-data or post-boot scripts, increasing deployment time and error rates. IP address conflicts become more likely when instances are manually configured with static IPs without centralized DHCP lease tracking. Instances may be misconfigured with incorrect gateway addresses or DNS servers, causing intermittent connectivity issues that are difficult to troubleshoot. Cloud-init depends on DHCP for metadata service discovery; instances without DHCP cannot retrieve SSH keys, user-data scripts, or vendor-data from the metadata API. High availability and auto-scaling become impossible when instances cannot self-configure their network settings, as manual configuration doesn't scale.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
+    "https://docs.openstack.org/neutron/latest/admin/config-dhcp-ha.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "# List subnets with DHCP disabled\nopenstack subnet list --long | grep -i \"enable_dhcp.*false\"\n\n# Enable DHCP on a specific subnet\nopenstack subnet set --dhcp <subnet_id>\n\n# Verify DHCP is enabled\nopenstack subnet show <subnet_id> -f json | jq -r '.enable_dhcp'",
+      "NativeIaC": "",
+      "Other": "**Enable DHCP via Horizon Dashboard:**\n1. Navigate to **Project > Network > Networks**\n2. Click on the network containing the subnet\n3. Click the **Subnets** tab\n4. For each subnet, click **Edit Subnet**\n5. In the **Subnet Details** tab:\n   - Ensure **Enable DHCP** checkbox is **checked**\n6. Click **Save**",
+      "Terraform": "```hcl\nresource \"openstack_networking_subnet_v2\" \"subnet\" {\n  name            = \"app-subnet\"\n  network_id      = openstack_networking_network_v2.network.id\n  cidr            = \"192.168.1.0/24\"\n  ip_version      = 4\n  enable_dhcp     = true  # GOOD: DHCP enabled\n  dns_nameservers = [\"8.8.8.8\", \"8.8.4.4\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable DHCP on all subnets unless there is a documented reason for static IP assignment. Use DHCP for automated IP management, simplified instance deployment, and proper cloud-init functionality. For environments requiring static IPs, use DHCP reservations or allowed-address-pairs instead of disabling DHCP entirely.",
+      "Url": "https://hub.prowler.com/check/network_subnet_dhcp_disabled"
+    }
+  },
+  "Categories": [
+    "network-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags subnets where `enable_dhcp == False`. Some environments intentionally disable DHCP for security (to prevent rogue DHCP servers) or to enforce static IP assignment. However, most cloud environments benefit from DHCP for automated instance configuration. Subnets connected to external provider networks or used for specific purposes (like load balancer VIPs) may legitimately have DHCP disabled."
+}
