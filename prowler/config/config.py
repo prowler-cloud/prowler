@@ -75,7 +75,10 @@ def get_available_compliance_frameworks(provider=None):
     if provider:
         providers = [provider]
     for provider in providers:
-        with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+        if not os.path.isdir(compliance_dir):
+            continue
+        with os.scandir(compliance_dir) as files:
             for file in files:
                 if file.is_file() and file.name.endswith(".json"):
                     available_compliance_frameworks.append(

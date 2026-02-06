@@ -274,6 +274,17 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )
+                elif "image" in provider_class_name.lower():
+                    provider_class(
+                        images=arguments.images,
+                        image_list_file=arguments.image_list_file,
+                        scanners=arguments.scanners,
+                        trivy_severity=arguments.trivy_severity,
+                        ignore_unfixed=arguments.ignore_unfixed,
+                        timeout=arguments.timeout,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
                         atlas_public_key=arguments.atlas_public_key,
