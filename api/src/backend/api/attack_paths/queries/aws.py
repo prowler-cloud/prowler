@@ -330,11 +330,11 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     name="Bedrock Code Interpreter with Privileged Role",
     short_description="Create a Bedrock AgentCore Code Interpreter with a privileged role attached.",
     description="Detect principals who can pass IAM roles and create Bedrock AgentCore Code Interpreters. This allows creating a code interpreter with a privileged role attached, gaining that role's permissions.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - BEDROCK-001 - iam:PassRole + bedrock-agentcore:CreateCodeInterpreter",
         link="https://pathfinding.cloud/paths/bedrock-001",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -377,11 +377,11 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
     name="EC2 Instance Launch with Privileged Role",
     short_description="Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS.",
     description="Detect principals who can launch EC2 instances with privileged IAM roles attached. This allows gaining the permissions of the passed role by accessing the EC2 instance metadata service.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - EC2-001 - iam:PassRole + ec2:RunInstances",
         link="https://pathfinding.cloud/paths/ec2-001",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -424,11 +424,11 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
     name="EC2 Role Hijacking via UserData Injection",
     short_description="Inject malicious scripts into EC2 instance userData to gain the attached role's permissions.",
     description="Detect principals who can modify EC2 instance userData, stop, and start instances. This allows injecting malicious scripts that execute on instance restart, gaining the permissions of the instance's attached IAM role.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - EC2-002 - ec2:ModifyInstanceAttribute + ec2:StopInstances + ec2:StartInstances",
         link="https://pathfinding.cloud/paths/ec2-002",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with ec2:ModifyInstanceAttribute permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement)
@@ -475,11 +475,11 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
     name="Spot Instance Launch with Privileged Role",
     short_description="Launch EC2 Spot Instances with privileged IAM roles to gain their permissions via IMDS.",
     description="Detect principals who can pass IAM roles and request EC2 Spot Instances. This allows launching a spot instance with a privileged role attached, gaining that role's permissions via the instance metadata service.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - EC2-003 - iam:PassRole + ec2:RequestSpotInstances",
         link="https://pathfinding.cloud/paths/ec2-003",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -522,11 +522,11 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
     name="Launch Template Poisoning for Role Access",
     short_description="Inject malicious userData into launch templates that reference privileged roles, no PassRole needed.",
     description="Detect principals who can create new launch template versions and modify launch templates. This allows injecting malicious user data into existing templates that already reference privileged IAM roles, without requiring iam:PassRole permissions.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - EC2-004 - ec2:CreateLaunchTemplateVersion + ec2:ModifyLaunchTemplate",
         link="https://pathfinding.cloud/paths/ec2-004",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with ec2:CreateLaunchTemplateVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
@@ -629,11 +629,11 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
     name="ECS Task Execution with Privileged Role (New Cluster)",
     short_description="Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code.",
     description="Detect principals who can pass IAM roles, create ECS clusters, register task definitions, and run tasks. This allows creating a Fargate task with a privileged role attached, gaining that role's permissions to execute arbitrary code via the container. Unlike ecs:CreateService, ecs:RunTask executes the task once without creating a persistent service.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - ECS-002 - iam:PassRole + ecs:CreateCluster + ecs:RegisterTaskDefinition + ecs:RunTask",
         link="https://pathfinding.cloud/paths/ecs-002",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -694,11 +694,11 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
     name="ECS Service Creation with Privileged Role (Existing Cluster)",
     short_description="Deploy a Fargate service with a privileged role on an existing ECS cluster.",
     description="Detect principals who can pass IAM roles, register ECS task definitions, and create services on existing clusters. Unlike ECS-001, this does not require ecs:CreateCluster since it targets clusters that already exist. The attacker registers a task definition with a privileged role and launches it as a Fargate service, gaining that role's permissions.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - ECS-003 - iam:PassRole + ecs:RegisterTaskDefinition + ecs:CreateService",
         link="https://pathfinding.cloud/paths/ecs-003",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -750,11 +750,11 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
     name="ECS Task Execution with Privileged Role (Existing Cluster)",
     short_description="Run a one-off Fargate task with a privileged role on an existing ECS cluster.",
     description="Detect principals who can pass IAM roles, register ECS task definitions, and run tasks on existing clusters. Unlike ECS-002, this does not require ecs:CreateCluster since it targets clusters that already exist. The attacker registers a task definition with a privileged role and runs it as a one-off Fargate task, gaining that role's permissions.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - ECS-004 - iam:PassRole + ecs:RegisterTaskDefinition + ecs:RunTask",
         link="https://pathfinding.cloud/paths/ecs-004",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -806,11 +806,11 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     name="Glue Dev Endpoint with Privileged Role",
     short_description="Create a Glue development endpoint with a privileged role attached to gain its permissions.",
     description="Detect principals who can pass IAM roles and create Glue development endpoints. This allows creating a dev endpoint with a privileged role attached, gaining that role's permissions.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - GLUE-001 - iam:PassRole + glue:CreateDevEndpoint",
         link="https://pathfinding.cloud/paths/glue-001",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
@@ -853,11 +853,11 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     name="Role Policy Attachment and Assumption",
     short_description="Attach policies to IAM roles and then assume them to gain elevated access.",
     description="Detect principals who can both attach policies to roles AND assume those roles. This allows modifying a role's permissions then assuming it to gain elevated access.",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - IAM-014 - iam:AttachRolePolicy + sts:AssumeRole",
         link="https://pathfinding.cloud/paths/iam-014",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(attach_policy:AWSPolicy)--(stmt_attach:AWSPolicyStatement)

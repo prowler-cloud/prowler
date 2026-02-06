@@ -98,11 +98,11 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     name="{Human-friendly label, no raw permissions}",
     short_description="{Brief explanation of the attack, no technical permissions.}",
     description="{Detailed description of the attack vector and impact.}",
-    provider="aws",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - {REFERENCE_ID} - {permission1} + {permission2}",
         link="https://pathfinding.cloud/paths/{reference_id_lowercase}",
     ),
+    provider="aws",
     cypher=f"""
         // Find principals with {permission1}
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
