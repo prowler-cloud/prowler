@@ -21,19 +21,17 @@ class network_admin_state_down(Check):
         findings: List[CheckReportOpenStack] = []
 
         for network in network_client.networks:
-            report = CheckReportOpenStack(
-                metadata=self.metadata(), resource=network
-            )
+            report = CheckReportOpenStack(metadata=self.metadata(), resource=network)
             report.resource_id = network.id
             report.resource_name = network.name
             report.region = network.region
 
             if not network.admin_state_up:
                 report.status = "FAIL"
-                report.status_extended = f"Network {network.name} ({network.id}) is administratively disabled (admin_state_up=False) and cannot carry traffic."  # noqa: E501
+                report.status_extended = f"Network {network.name} ({network.id}) is administratively disabled (admin_state_up=False) and cannot carry traffic."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Network {network.name} ({network.id}) is administratively enabled."  # noqa: E501
+                report.status_extended = f"Network {network.name} ({network.id}) is administratively enabled."
 
             findings.append(report)
 

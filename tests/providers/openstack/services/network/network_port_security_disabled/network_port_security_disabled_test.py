@@ -24,15 +24,15 @@ class Test_network_port_security_disabled:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_port_security_disabled.network_port_security_disabled.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_port_security_disabled.network_port_security_disabled.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_port_security_disabled.network_port_security_disabled import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_port_security_disabled.network_port_security_disabled import (
                 network_port_security_disabled,
             )
 
@@ -81,7 +81,12 @@ class Test_network_port_security_disabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "net-1"
-            assert "has port security enabled" in result[0].status_extended
+            assert result[0].resource_name == "secure-network"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Network secure-network (net-1) has port security enabled."
+            )
 
     def test_network_port_security_disabled(self):
         """Test network with port security disabled (FAIL)."""
@@ -122,8 +127,13 @@ class Test_network_port_security_disabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "has port security disabled" in result[0].status_extended
-            assert "spoofing" in result[0].status_extended
+            assert result[0].resource_id == "net-2"
+            assert result[0].resource_name == "insecure-network"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Network insecure-network (net-2) has port security disabled, which allows MAC and IP address spoofing attacks."
+            )
 
     def test_port_security_disabled(self):
         """Test port with security disabled (FAIL)."""
@@ -165,3 +175,9 @@ class Test_network_port_security_disabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "port-1"
+            assert result[0].resource_name == "nfv-port"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Port nfv-port (port-1) on network net-1 has port security disabled, which allows MAC and IP address spoofing."
+            )

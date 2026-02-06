@@ -219,9 +219,7 @@ class TestNetworkService:
         mock_port.name = "instance-port"
         mock_port.network_id = "net-1"
         mock_port.mac_address = "fa:16:3e:00:00:01"
-        mock_port.fixed_ips = [
-            {"ip_address": "192.168.1.10", "subnet_id": "subnet-1"}
-        ]  # noqa: E501
+        mock_port.fixed_ips = [{"ip_address": "192.168.1.10", "subnet_id": "subnet-1"}]
         mock_port.is_port_security_enabled = True
         mock_port.security_groups = ["sg-1"]
         mock_port.device_owner = "compute:nova"

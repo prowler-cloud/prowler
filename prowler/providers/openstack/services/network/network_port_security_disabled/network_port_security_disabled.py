@@ -22,9 +22,7 @@ class network_port_security_disabled(Check):
 
         # Check networks
         for network in network_client.networks:
-            report = CheckReportOpenStack(
-                metadata=self.metadata(), resource=network
-            )
+            report = CheckReportOpenStack(metadata=self.metadata(), resource=network)
             report.resource_id = network.id
             report.resource_name = network.name
             report.region = network.region
@@ -34,15 +32,15 @@ class network_port_security_disabled(Check):
                 report.status_extended = f"Network {network.name} ({network.id}) has port security disabled, which allows MAC and IP address spoofing attacks."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Network {network.name} ({network.id}) has port security enabled."
+                report.status_extended = (
+                    f"Network {network.name} ({network.id}) has port security enabled."
+                )
 
             findings.append(report)
 
         # Check ports
         for port in network_client.ports:
-            report = CheckReportOpenStack(
-                metadata=self.metadata(), resource=port
-            )
+            report = CheckReportOpenStack(metadata=self.metadata(), resource=port)
             report.resource_id = port.id
             report.resource_name = port.name or f"port-{port.id[:8]}"
             report.region = port.region

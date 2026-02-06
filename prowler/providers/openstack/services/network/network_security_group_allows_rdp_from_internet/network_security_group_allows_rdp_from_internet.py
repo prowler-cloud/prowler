@@ -1,12 +1,8 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
-from prowler.providers.openstack.lib.security_groups import (
-    check_security_group_rule,
-)
-from prowler.providers.openstack.services.network.network_client import (
-    network_client,
-)
+from prowler.providers.openstack.lib.security_groups import check_security_group_rule
+from prowler.providers.openstack.services.network.network_client import network_client
 
 
 class network_security_group_allows_rdp_from_internet(Check):
@@ -16,9 +12,7 @@ class network_security_group_allows_rdp_from_internet(Check):
         findings: List[CheckReportOpenStack] = []
 
         for sg in network_client.security_groups:
-            report = CheckReportOpenStack(
-                metadata=self.metadata(), resource=sg
-            )
+            report = CheckReportOpenStack(metadata=self.metadata(), resource=sg)
             report.resource_id = sg.id
             report.resource_name = sg.name
             report.region = sg.region

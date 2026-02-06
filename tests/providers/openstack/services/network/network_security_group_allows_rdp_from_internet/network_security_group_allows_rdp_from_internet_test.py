@@ -23,15 +23,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -70,15 +70,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -88,7 +88,12 @@ class Test_network_security_group_allows_rdp_from_internet:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == "sg-1"
-            assert "does not allow RDP" in result[0].status_extended
+            assert result[0].resource_name == "web-servers"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Security group web-servers (sg-1) does not allow RDP (port 3389) from the Internet."
+            )
 
     def test_security_group_with_rdp_from_ipv4_internet(self):
         """Test security group with RDP exposed to IPv4 internet (FAIL)."""
@@ -120,15 +125,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -138,11 +143,12 @@ class Test_network_security_group_allows_rdp_from_internet:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "sg-2"
+            assert result[0].resource_name == "windows-servers"
+            assert result[0].region == OPENSTACK_REGION
             assert (
-                "allows unrestricted RDP access (port 3389) from the Internet"
-                in result[0].status_extended  # noqa: E501
+                result[0].status_extended
+                == "Security group windows-servers (sg-2) allows unrestricted RDP access (port 3389) from the Internet via rule rule-rdp (tcp/0.0.0.0/0:3389-3389)."
             )
-            assert "rule-rdp" in result[0].status_extended
 
     def test_security_group_with_rdp_from_ipv6_internet(self):
         """Test security group with RDP exposed to IPv6 internet (FAIL)."""
@@ -174,15 +180,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -191,7 +197,13 @@ class Test_network_security_group_allows_rdp_from_internet:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "::/0" in result[0].status_extended
+            assert result[0].resource_id == "sg-3"
+            assert result[0].resource_name == "ipv6-windows"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Security group ipv6-windows (sg-3) allows unrestricted RDP access (port 3389) from the Internet via rule rule-rdp-ipv6 (tcp/::/0:3389-3389)."
+            )
 
     def test_security_group_with_rdp_from_restricted_cidr(self):
         """Test security group with RDP from specific CIDR (PASS)."""
@@ -223,15 +235,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -240,6 +252,13 @@ class Test_network_security_group_allows_rdp_from_internet:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].resource_id == "sg-4"
+            assert result[0].resource_name == "restricted-rdp"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Security group restricted-rdp (sg-4) does not allow RDP (port 3389) from the Internet."
+            )
 
     def test_security_group_with_rdp_port_range(self):
         """Test security group with port range including RDP (FAIL)."""
@@ -271,15 +290,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 
@@ -288,6 +307,13 @@ class Test_network_security_group_allows_rdp_from_internet:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].resource_id == "sg-5"
+            assert result[0].resource_name == "port-range"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Security group port-range (sg-5) allows unrestricted RDP access (port 3389) from the Internet via rule rule-range (tcp/0.0.0.0/0:3000-4000)."
+            )
 
     def test_multiple_security_groups_mixed(self):
         """Test multiple security groups with mixed results."""
@@ -329,15 +355,15 @@ class Test_network_security_group_allows_rdp_from_internet:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
                 network_security_group_allows_rdp_from_internet,
             )
 

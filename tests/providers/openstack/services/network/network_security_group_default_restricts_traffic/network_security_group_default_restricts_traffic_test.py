@@ -14,7 +14,7 @@ from tests.providers.openstack.openstack_fixtures import (
 
 
 class Test_network_security_group_default_restricts_traffic:
-    """Test suite for network_security_group_default_restricts_traffic check."""  # noqa: E501
+    """Test suite for network_security_group_default_restricts_traffic check."""
 
     def test_no_security_groups(self):
         """Test when no security groups exist."""
@@ -23,15 +23,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 
@@ -58,15 +58,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 
@@ -142,15 +142,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 
@@ -161,8 +161,11 @@ class Test_network_security_group_default_restricts_traffic:
             assert result[0].status == "PASS"
             assert result[0].resource_id == "sg-default"
             assert result[0].resource_name == "default"
-            assert "has not been modified" in result[0].status_extended
-            assert "4 rules" in result[0].status_extended
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Default security group default (sg-default) has not been modified (4 rules present)."
+            )
 
     def test_default_security_group_modified(self):
         """Test default security group with custom rules added (FAIL)."""
@@ -243,15 +246,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 
@@ -261,8 +264,12 @@ class Test_network_security_group_default_restricts_traffic:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "sg-default"
-            assert "has been modified" in result[0].status_extended
-            assert "5 custom rules" in result[0].status_extended
+            assert result[0].resource_name == "default"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Default security group default (sg-default) has been modified with 5 custom rules. Default security groups should remain unmodified; create custom security groups instead."
+            )
 
     def test_default_security_group_empty(self):
         """Test default security group with no rules (PASS)."""
@@ -282,15 +289,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 
@@ -299,6 +306,13 @@ class Test_network_security_group_default_restricts_traffic:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].resource_id == "sg-default"
+            assert result[0].resource_name == "default"
+            assert result[0].region == OPENSTACK_REGION
+            assert (
+                result[0].status_extended
+                == "Default security group default (sg-default) has not been modified (0 rules present)."
+            )
 
     def test_multiple_default_security_groups_mixed(self):
         """Test multiple default security groups with mixed results."""
@@ -356,15 +370,15 @@ class Test_network_security_group_default_restricts_traffic:
 
         with (
             mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",  # noqa: E501
+                "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",  # noqa: E501
+                "prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (  # noqa: E501
+            from prowler.providers.openstack.services.network.network_security_group_default_restricts_traffic.network_security_group_default_restricts_traffic import (
                 network_security_group_default_restricts_traffic,
             )
 

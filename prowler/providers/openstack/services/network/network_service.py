@@ -60,7 +60,9 @@ class Network(OpenStackService):
                                 ethertype=getattr(rule, "ethertype", "IPv4"),
                                 port_range_min=getattr(rule, "port_range_min", None),
                                 port_range_max=getattr(rule, "port_range_max", None),
-                                remote_ip_prefix=getattr(rule, "remote_ip_prefix", None),
+                                remote_ip_prefix=getattr(
+                                    rule, "remote_ip_prefix", None
+                                ),
                                 remote_group_id=getattr(rule, "remote_group_id", None),
                             )
                         )

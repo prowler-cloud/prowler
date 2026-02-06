@@ -1,9 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
-from prowler.providers.openstack.services.network.network_client import (
-    network_client,
-)
+from prowler.providers.openstack.services.network.network_client import network_client
 
 
 class network_security_group_default_restricts_traffic(Check):
@@ -17,9 +15,7 @@ class network_security_group_default_restricts_traffic(Check):
             if not sg.is_default:
                 continue
 
-            report = CheckReportOpenStack(
-                metadata=self.metadata(), resource=sg
-            )
+            report = CheckReportOpenStack(metadata=self.metadata(), resource=sg)
             report.resource_id = sg.id
             report.resource_name = sg.name
             report.region = sg.region
