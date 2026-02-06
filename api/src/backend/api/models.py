@@ -1760,16 +1760,8 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
                 name="fgds_tenant_chk_ins_idx",
             ),
             models.Index(
-                fields=["tenant_id", "provider"],
-                name="fgds_tenant_provider_idx",
-            ),
-            models.Index(
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "provider", "check_id"],
-                name="fgds_tenant_provider_check_idx",
             ),
         ]
 
