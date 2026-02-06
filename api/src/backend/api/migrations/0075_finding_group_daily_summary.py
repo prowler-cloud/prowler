@@ -13,7 +13,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0070_attack_paths_scan"),
+        ("api", "0074_findings_fail_new_index_parent"),
     ]
 
     operations = [
