@@ -90,11 +90,18 @@ export interface AttackPathQueryParameter {
   required?: boolean;
 }
 
+export interface AttackPathQueryAttribution {
+  text: string;
+  link: string;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
+  short_description: string;
   description: string;
   provider: string;
   parameters: AttackPathQueryParameter[];
+  attribution: AttackPathQueryAttribution | null;
 }
 
 export interface AttackPathQuery {

@@ -3830,6 +3830,7 @@ class TestAttackPathsScanViewSet:
             AttackPathsQueryDefinition(
                 id="aws-rds",
                 name="RDS inventory",
+                short_description="List account RDS assets.",
                 description="List account RDS assets",
                 provider=provider.provider,
                 cypher="MATCH (n) RETURN n",
@@ -3892,6 +3893,7 @@ class TestAttackPathsScanViewSet:
         query_definition = AttackPathsQueryDefinition(
             id="aws-rds",
             name="RDS inventory",
+            short_description="List account RDS assets.",
             description="List account RDS assets",
             provider=provider.provider,
             cypher="MATCH (n) RETURN n",
@@ -4049,6 +4051,7 @@ class TestAttackPathsScanViewSet:
         query_definition = AttackPathsQueryDefinition(
             id="aws-empty",
             name="empty",
+            short_description="",
             description="",
             provider=provider.provider,
             cypher="MATCH (n) RETURN n",

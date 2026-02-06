@@ -1663,6 +1663,7 @@ def attack_paths_query_definition_factory():
         definition_payload = {
             "id": "aws-test",
             "name": "Attack Paths Test Query",
+            "short_description": "Synthetic short description for tests.",
             "description": "Synthetic Attack Paths definition for tests.",
             "provider": "aws",
             "cypher": "RETURN 1",

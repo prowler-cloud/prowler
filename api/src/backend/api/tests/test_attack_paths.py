@@ -83,6 +83,7 @@ def test_execute_attack_paths_query_serializes_graph(
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
         name="RDS",
+        short_description="Short desc",
         description="",
         cypher="MATCH (n) RETURN n",
         parameters=[],
@@ -143,6 +144,7 @@ def test_execute_attack_paths_query_wraps_graph_errors(
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
         name="RDS",
+        short_description="Short desc",
         description="",
         cypher="MATCH (n) RETURN n",
         parameters=[],
