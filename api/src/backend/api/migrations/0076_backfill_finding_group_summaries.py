@@ -22,7 +22,7 @@ def trigger_backfill_task(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0071_finding_group_daily_summary"),
+        ("api", "0075_finding_group_daily_summary"),
     ]
 
     operations = [
