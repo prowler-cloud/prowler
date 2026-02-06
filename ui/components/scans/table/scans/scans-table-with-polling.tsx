@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getScans } from "@/actions/scans";
 import { AutoRefresh } from "@/components/scans";
@@ -8,6 +8,8 @@ import { DataTable } from "@/components/ui/table";
 import { MetaDataProps, ScanProps, SearchParamsProps } from "@/types";
 
 import { ColumnGetScans } from "./column-get-scans";
+
+export const SCAN_LAUNCHED_EVENT = "scan-launched";
 
 interface ScansTableWithPollingProps {
   initialData: ScanProps[];
@@ -97,6 +99,15 @@ export function ScansTableWithPolling({
       }
     }
   }, [searchParams]);
+
+  // Listen for scan launch events to trigger an immediate refresh
+  useEffect(() => {
+    const handler = () => {
+      handleRefresh();
+    };
+    window.addEventListener(SCAN_LAUNCHED_EVENT, handler);
+    return () => window.removeEventListener(SCAN_LAUNCHED_EVENT, handler);
+  }, [handleRefresh]);
 
   return (
     <>
