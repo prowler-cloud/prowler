@@ -2,6 +2,21 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.19.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Query list now shows their name and short description, when one is selected it also shows a longer description and an attribution if it has it [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
+
+### 🐞 Fixed
+
+- ProviderTypeSelector crash when an unknown provider type is not present in PROVIDER_DATA [(#9991)](https://github.com/prowler-cloud/prowler/pull/9991)
+
+---
+
+>>>>>>> afe2e0a09 (fix(ui): guard against unknown provider types in ProviderTypeSelector (#9991))
 ## [1.18.1] (Prowler v5.18.1)
 
 ### 🐞 Fixed
