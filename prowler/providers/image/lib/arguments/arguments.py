@@ -5,6 +5,11 @@ SCANNERS_CHOICES = [
     "license",
 ]
 
+IMAGE_CONFIG_SCANNERS_CHOICES = [
+    "misconfig",
+    "secret",
+]
+
 SEVERITY_CHOICES = [
     "CRITICAL",
     "HIGH",
@@ -48,6 +53,15 @@ def init_parser(self):
         default=["vuln", "secret"],
         choices=SCANNERS_CHOICES,
         help="Trivy scanners to use. Default: vuln, secret. Available: vuln, secret, misconfig, license",
+    )
+
+    scan_config_group.add_argument(
+        "--image-config-scanners",
+        dest="image_config_scanners",
+        nargs="+",
+        default=[],
+        choices=IMAGE_CONFIG_SCANNERS_CHOICES,
+        help="Trivy image config scanners (scans Dockerfile-level metadata). Available: misconfig, secret",
     )
 
     scan_config_group.add_argument(

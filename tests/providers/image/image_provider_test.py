@@ -6,6 +6,7 @@ import pytest
 
 from prowler.lib.check.models import CheckReportImage
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidConfigScannerError,
     ImageInvalidNameError,
     ImageInvalidScannerError,
     ImageInvalidSeverityError,
@@ -48,6 +49,7 @@ class TestImageProvider:
         assert provider.type == "image"
         assert provider.images == ["alpine:3.18"]
         assert provider.scanners == ["vuln", "secret"]
+        assert provider.image_config_scanners == []
         assert provider.trivy_severity == []
         assert provider.ignore_unfixed is False
         assert provider.timeout == "5m"
@@ -455,6 +457,53 @@ class TestImageProviderInputValidation:
             "LOW",
             "UNKNOWN",
         ]
+
+    def test_image_config_scanners_defaults_to_empty(self):
+        """Test that image_config_scanners defaults to an empty list."""
+        provider = _make_provider()
+        assert provider.image_config_scanners == []
+
+    def test_valid_image_config_scanners(self):
+        """Test that valid image config scanners are accepted."""
+        provider = _make_provider(image_config_scanners=["misconfig", "secret"])
+        assert provider.image_config_scanners == ["misconfig", "secret"]
+
+    def test_invalid_image_config_scanner_raises_error(self):
+        """Test that an invalid image config scanner raises ImageInvalidConfigScannerError."""
+        with pytest.raises(ImageInvalidConfigScannerError):
+            _make_provider(image_config_scanners=["misconfig", "vuln"])
+
+    @patch("subprocess.run")
+    def test_trivy_command_includes_image_config_scanners(self, mock_subprocess):
+        """Test that Trivy command includes --image-config-scanners when set."""
+        provider = _make_provider(image_config_scanners=["misconfig", "secret"])
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_empty_trivy_output(), stderr=""
+        )
+
+        for _ in provider._scan_single_image("alpine:3.18"):
+            pass
+
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--image-config-scanners" in call_args
+        idx = call_args.index("--image-config-scanners")
+        assert call_args[idx + 1] == "misconfig,secret"
+
+    @patch("subprocess.run")
+    def test_trivy_command_omits_image_config_scanners_when_empty(
+        self, mock_subprocess
+    ):
+        """Test that Trivy command omits --image-config-scanners when empty."""
+        provider = _make_provider(image_config_scanners=[])
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_empty_trivy_output(), stderr=""
+        )
+
+        for _ in provider._scan_single_image("alpine:3.18"):
+            pass
+
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--image-config-scanners" not in call_args
 
 
 class TestImageProviderErrorCategorization:
