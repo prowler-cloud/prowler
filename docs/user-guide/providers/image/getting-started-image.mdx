@@ -8,10 +8,10 @@ Prowler's Image provider enables comprehensive container image security scanning
 
 ## How It Works
 
-* Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
-* Trivy must be installed and available in the system PATH before running any scan.
-* No registry authentication is required for public images. For private registries, configure Docker credentials via `docker login` before scanning.
-* Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
+* **Trivy integration:** Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
+* **Trivy required:** Trivy must be installed and available in the system PATH before running any scan.
+* **Authentication:** No registry authentication is required for public images. For private registries, configure Docker credentials via `docker login` before scanning.
+* **Output formats:** Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
 ## Prowler CLI
 
@@ -112,7 +112,7 @@ Valid examples:
 
 #### Specify Scanners
 
-Control which scanners Trivy runs using the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
+To select which scanners Trivy runs, use the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
 
 ```bash
 # Vulnerability scanning only
