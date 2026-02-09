@@ -46,6 +46,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
 - Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
 - Update AWS Bedrock service metadata to new format [(#8827)](https://github.com/prowler-cloud/prowler/pull/8827)
+- Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
 
 ---
 
