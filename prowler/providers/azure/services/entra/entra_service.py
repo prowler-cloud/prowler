@@ -16,6 +16,8 @@ class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
 
+        self.tenant_ids = provider.identity.tenant_ids
+
         created_loop = False
         try:
             loop = asyncio.get_running_loop()
