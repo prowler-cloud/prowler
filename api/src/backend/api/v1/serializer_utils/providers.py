@@ -373,6 +373,56 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["api_key", "api_email"],
             },
+            {
+                "type": "object",
+                "title": "OpenStack clouds.yaml Credentials",
+                "properties": {
+                    "clouds_yaml_content": {
+                        "type": "string",
+                        "description": "The full content of a clouds.yaml configuration file.",
+                    },
+                    "clouds_yaml_cloud": {
+                        "type": "string",
+                        "description": "The name of the cloud to use from the clouds.yaml file.",
+                    },
+                },
+                "required": ["clouds_yaml_content", "clouds_yaml_cloud"],
+            },
+            {
+                "type": "object",
+                "title": "OpenStack Explicit Credentials",
+                "properties": {
+                    "auth_url": {
+                        "type": "string",
+                        "description": "OpenStack Keystone authentication URL (e.g., https://openstack.example.com:5000/v3).",
+                    },
+                    "username": {
+                        "type": "string",
+                        "description": "OpenStack username for authentication.",
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "OpenStack password for authentication.",
+                    },
+                    "region_name": {
+                        "type": "string",
+                        "description": "OpenStack region name (e.g., RegionOne).",
+                    },
+                    "identity_api_version": {
+                        "type": "string",
+                        "description": "Keystone API version (default: 3).",
+                    },
+                    "user_domain_name": {
+                        "type": "string",
+                        "description": "User domain name (default: Default).",
+                    },
+                    "project_domain_name": {
+                        "type": "string",
+                        "description": "Project domain name (default: Default).",
+                    },
+                },
+                "required": ["auth_url", "username", "password", "region_name"],
+            },
         ]
     }
 )

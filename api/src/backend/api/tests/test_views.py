@@ -1179,6 +1179,11 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
                     "alias": "Cloudflare Account",
                 },
+                {
+                    "provider": "openstack",
+                    "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "alias": "OpenStack Project",
+                },
             ]
         ),
     )
@@ -1598,6 +1603,26 @@ class TestProviderViewSet:
                     "cloudflare-uid",
                     "uid",
                 ),
+                # OpenStack UID validation - starts with special character
+                (
+                    {
+                        "provider": "openstack",
+                        "uid": "-invalid-project",
+                        "alias": "test",
+                    },
+                    "openstack-uid",
+                    "uid",
+                ),
+                # OpenStack UID validation - empty string (too short)
+                (
+                    {
+                        "provider": "openstack",
+                        "uid": "",
+                        "alias": "test",
+                    },
+                    "min_length",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1771,21 +1796,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    9,
+                    10,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 10),
+                ("inserted_at", TODAY, 11),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    10,
+                    11,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    10,
+                    11,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2390,6 +2415,26 @@ class TestProviderSecretViewSet:
                 {
                     "api_key": "fake-cloudflare-api-key-for-testing",
                     "api_email": "user@example.com",
+                },
+            ),
+            # OpenStack with clouds.yaml content
+            (
+                Provider.ProviderChoices.OPENSTACK.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
+                    "clouds_yaml_cloud": "mycloud",
+                },
+            ),
+            # OpenStack with explicit credentials
+            (
+                Provider.ProviderChoices.OPENSTACK.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "auth_url": "https://openstack.example.com:5000/v3",
+                    "username": "admin",
+                    "password": "secret",
+                    "region_name": "RegionOne",
                 },
             ),
         ],

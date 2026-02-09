@@ -1,3 +1,4 @@
+import tempfile
 from os import environ
 from pathlib import Path
 from typing import Optional
@@ -49,6 +50,7 @@ class OpenstackProvider(Provider):
     def __init__(
         self,
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -68,6 +70,7 @@ class OpenstackProvider(Provider):
 
         self._session = self.setup_session(
             clouds_yaml_file=clouds_yaml_file,
+            clouds_yaml_content=clouds_yaml_content,
             clouds_yaml_cloud=clouds_yaml_cloud,
             auth_url=auth_url,
             identity_api_version=identity_api_version,
@@ -132,6 +135,7 @@ class OpenstackProvider(Provider):
     @staticmethod
     def setup_session(
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -145,10 +149,16 @@ class OpenstackProvider(Provider):
         """Collect authentication information from clouds.yaml, explicit parameters, or environment variables.
 
         Authentication priority:
-        1. clouds.yaml file (if clouds_yaml_file or clouds_yaml_cloud provided)
+        1. clouds.yaml content/file (if clouds_yaml_content, clouds_yaml_file, or clouds_yaml_cloud provided)
         2. Explicit parameters + environment variable fallback
         """
         # Priority 1: clouds.yaml authentication
+        if clouds_yaml_content:
+            logger.info("Using clouds.yaml content string for authentication")
+            return OpenstackProvider._setup_session_from_clouds_yaml_content(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud=clouds_yaml_cloud,
+            )
         if clouds_yaml_file or clouds_yaml_cloud:
             logger.info("Using clouds.yaml configuration for authentication")
             return OpenstackProvider._setup_session_from_clouds_yaml(
@@ -202,6 +212,39 @@ class OpenstackProvider(Provider):
             user_domain_name=resolved_user_domain,
             project_domain_name=resolved_project_domain,
         )
+
+    @staticmethod
+    def _setup_session_from_clouds_yaml_content(
+        clouds_yaml_content: str,
+        clouds_yaml_cloud: Optional[str] = None,
+    ) -> OpenStackSession:
+        """Setup session from clouds.yaml content provided as a string.
+
+        Args:
+            clouds_yaml_content: The full YAML content of a clouds.yaml file.
+            clouds_yaml_cloud: Cloud name to use from the clouds.yaml content.
+
+        Returns:
+            OpenStackSession configured from the provided clouds.yaml content.
+        """
+        tmp_file = None
+        try:
+            tmp_file = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False
+            )
+            tmp_file.write(clouds_yaml_content)
+            tmp_file.flush()
+            tmp_file.close()
+            return OpenstackProvider._setup_session_from_clouds_yaml(
+                clouds_yaml_file=tmp_file.name,
+                clouds_yaml_cloud=clouds_yaml_cloud,
+            )
+        finally:
+            if tmp_file:
+                try:
+                    Path(tmp_file.name).unlink(missing_ok=True)
+                except OSError:
+                    pass
 
     @staticmethod
     def _setup_session_from_clouds_yaml(
@@ -394,6 +437,7 @@ class OpenstackProvider(Provider):
     @staticmethod
     def test_connection(
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -412,6 +456,7 @@ class OpenstackProvider(Provider):
 
         Args:
             clouds_yaml_file: Path to clouds.yaml configuration file
+            clouds_yaml_content: The full content of a clouds.yaml file as a string
             clouds_yaml_cloud: Cloud name from clouds.yaml to use
             auth_url: OpenStack Keystone authentication URL
             identity_api_version: Keystone API version (default: "3")
@@ -456,6 +501,7 @@ class OpenstackProvider(Provider):
             # Setup session with provided credentials
             session = OpenstackProvider.setup_session(
                 clouds_yaml_file=clouds_yaml_file,
+                clouds_yaml_content=clouds_yaml_content,
                 clouds_yaml_cloud=clouds_yaml_cloud,
                 auth_url=auth_url,
                 identity_api_version=identity_api_version,

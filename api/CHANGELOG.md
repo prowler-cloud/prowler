@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.20.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- OpenStack provider support
+
 ### 🔄 Changed
 
 - Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
