@@ -1144,6 +1144,57 @@ def prowler():
                         f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
                     )
 
+    # Elasticsearch Integration (all providers)
+    if args.elasticsearch:
+        from prowler.lib.integrations.elasticsearch.elasticsearch import (
+            Elasticsearch as ElasticsearchIntegration,
+        )
+
+        print(
+            f"{Style.BRIGHT}\nSending findings to Elasticsearch, please wait...{Style.RESET_ALL}"
+        )
+
+        # Get OCSF data - reuse if already generated, otherwise create
+        ocsf_data = None
+        for output in generated_outputs.get("regular", []):
+            if isinstance(output, OCSF):
+                ocsf_data = output.data
+                break
+
+        if ocsf_data is None:
+            # Generate OCSF output without writing to file
+            ocsf_output = OCSF(findings=finding_outputs, file_path=None)
+            ocsf_output.transform(finding_outputs)
+            ocsf_data = ocsf_output.data
+
+        elasticsearch = ElasticsearchIntegration(
+            url=output_options.elasticsearch_url,
+            index=output_options.elasticsearch_index,
+            api_key=output_options.elasticsearch_api_key,
+            username=output_options.elasticsearch_username,
+            password=output_options.elasticsearch_password,
+            skip_tls_verify=output_options.elasticsearch_skip_tls_verify,
+            findings=[f.dict(exclude_none=True) for f in ocsf_data],
+            send_only_fails=output_options.send_es_only_fails,
+        )
+
+        connection = elasticsearch.test_connection()
+        if not connection.connected:
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nElasticsearch connection failed: {connection.error_message}{Style.RESET_ALL}"
+            )
+        else:
+            elasticsearch.create_index_if_not_exists()
+            findings_sent = elasticsearch.batch_send_to_elasticsearch()
+            if findings_sent == 0:
+                print(
+                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to Elasticsearch.{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent} findings sent to Elasticsearch index '{output_options.elasticsearch_index}'!{Style.RESET_ALL}"
+                )
+
     # Display summary table
     if not args.only_logs:
         display_summary_table(

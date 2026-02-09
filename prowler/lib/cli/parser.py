@@ -16,6 +16,7 @@ from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
+    validate_elasticsearch_arguments,
     validate_provider_arguments,
 )
 
@@ -79,6 +80,7 @@ Detailed documentation at https://docs.prowler.com
         self.__init_config_parser__()
         self.__init_custom_checks_metadata_parser__()
         self.__init_third_party_integrations_parser__()
+        self.__init_elasticsearch_parser__()
 
         # Init Providers Arguments
         init_providers_parser(self)
@@ -144,6 +146,11 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        # Validate Elasticsearch arguments
+        es_is_valid, es_error = validate_elasticsearch_arguments(args)
+        if not es_is_valid:
+            self.parser.error(es_error)
 
         return args
 
@@ -413,4 +420,61 @@ Detailed documentation at https://docs.prowler.com
             "--slack",
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack/).",
+        )
+
+    def __init_elasticsearch_parser__(self):
+        """Init the Elasticsearch integration CLI parser"""
+        elasticsearch_parser = self.common_providers_parser.add_argument_group(
+            "Elasticsearch Integration"
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch",
+            "-E",
+            action="store_true",
+            help="Send findings in OCSF format to Elasticsearch",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-url",
+            nargs="?",
+            type=str,
+            default=None,
+            help="Elasticsearch server URL (e.g., https://localhost:9200). Can also use ELASTICSEARCH_URL env var.",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-index",
+            nargs="?",
+            type=str,
+            default="prowler-findings",
+            help="Elasticsearch index name (default: prowler-findings)",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-api-key",
+            nargs="?",
+            type=str,
+            default=None,
+            help="Elasticsearch API key for authentication. Can also use ELASTICSEARCH_API_KEY env var.",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-username",
+            nargs="?",
+            type=str,
+            default=None,
+            help="Elasticsearch username for basic auth. Can also use ELASTICSEARCH_USERNAME env var.",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-password",
+            nargs="?",
+            type=str,
+            default=None,
+            help="Elasticsearch password for basic auth. Can also use ELASTICSEARCH_PASSWORD env var.",
+        )
+        elasticsearch_parser.add_argument(
+            "--elasticsearch-skip-tls-verify",
+            action="store_true",
+            help="Skip TLS certificate verification (not recommended for production)",
+        )
+        elasticsearch_parser.add_argument(
+            "--send-es-only-fails",
+            action="store_true",
+            help="Send only failed findings to Elasticsearch",
         )
