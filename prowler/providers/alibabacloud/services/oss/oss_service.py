@@ -6,7 +6,7 @@ from datetime import datetime
 from email.utils import formatdate
 from threading import Lock
 from typing import Optional
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 import requests
 from pydantic.v1 import BaseModel
