@@ -120,7 +120,7 @@ CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
         r._module_version = $prowler_version
     ON MATCH SET
         r.lastupdated = $last_updated
-    RETURN COUNT(r) AS relationships_created
+    RETURN COUNT(r) AS relationships_merged
 """
 
 # Sync queries (used by sync.py)

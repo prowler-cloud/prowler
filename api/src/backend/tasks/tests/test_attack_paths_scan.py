@@ -776,7 +776,7 @@ class TestInternetAnalysis:
         """Verify both Cypher statements are executed and relationship count returned."""
         mock_session = MagicMock()
         mock_result = MagicMock()
-        mock_result.single.return_value = {"relationships_created": 3}
+        mock_result.single.return_value = {"relationships_merged": 3}
         mock_session.run.side_effect = [None, mock_result]
         provider, config = self._make_provider_and_config()
 
@@ -793,7 +793,7 @@ class TestInternetAnalysis:
         """When no resources are exposed, zero relationships are created."""
         mock_session = MagicMock()
         mock_result = MagicMock()
-        mock_result.single.return_value = {"relationships_created": 0}
+        mock_result.single.return_value = {"relationships_merged": 0}
         mock_session.run.side_effect = [None, mock_result]
         provider, config = self._make_provider_and_config()
 

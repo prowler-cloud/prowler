@@ -59,9 +59,9 @@ def analysis(
         f"Creating CAN_ACCESS relationships from Internet to exposed resources for {provider_uid}"
     )
     result = neo4j_session.run(query, parameters)
-    relationships_created = result.single().get("relationships_created", 0)
+    relationships_merged = result.single().get("relationships_merged", 0)
 
     logger.info(
-        f"Created {relationships_created} CAN_ACCESS relationships for provider {provider_uid}"
+        f"Created {relationships_merged} CAN_ACCESS relationships for provider {provider_uid}"
     )
-    return relationships_created
+    return relationships_merged
