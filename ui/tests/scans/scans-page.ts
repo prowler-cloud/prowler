@@ -105,6 +105,7 @@ export class ScansPage extends BasePage {
     await expect(this.scanTable).toBeVisible();
 
     // Find a row that contains the account ID (provider UID in Cloud Provider column)
+    // Note: Use a more specific locator strategy if possible in the future
     const rowWithAccountId = this.scanTable
       .locator("tbody tr")
       .filter({ hasText: accountId })
