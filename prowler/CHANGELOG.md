@@ -8,6 +8,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
 
+### 🐞 Fixed
+
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
