@@ -6,10 +6,12 @@ import pytest
 
 from prowler.lib.check.models import CheckReportImage
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidNameError,
     ImageInvalidScannerError,
     ImageInvalidSeverityError,
     ImageInvalidTimeoutError,
     ImageListFileNotFoundError,
+    ImageListFileReadError,
     ImageNoImagesProvidedError,
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
@@ -485,3 +487,60 @@ class TestImageProviderErrorCategorization:
         msg = "some unknown trivy error"
         result = ImageProvider._categorize_trivy_error(msg)
         assert result == msg
+
+
+class TestImageProviderNameValidation:
+    @pytest.mark.parametrize(
+        "bad_name",
+        [
+            "alpine;rm -rf /",
+            "image|cat /etc/passwd",
+            "image&background",
+            "image$VAR",
+            "image`whoami`",
+            "image\ninjected",
+            "image\rinjected",
+        ],
+    )
+    def test_image_provider_invalid_image_name_shell_chars(self, bad_name):
+        """Test that image names with shell metacharacters raise ImageInvalidNameError."""
+        with pytest.raises(ImageInvalidNameError):
+            _make_provider(images=[bad_name])
+
+    def test_image_provider_invalid_image_name_empty(self):
+        """Test that an empty string image name raises ImageInvalidNameError."""
+        with pytest.raises(ImageInvalidNameError):
+            _make_provider(images=[""])
+
+    @pytest.mark.parametrize(
+        "valid_name",
+        [
+            "alpine:3.18",
+            "nginx:latest",
+            "registry.example.com/repo/image:tag",
+            "ghcr.io/owner/image:v1.2.3",
+            "myimage@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+            "localhost:5000/myimage:latest",
+        ],
+    )
+    def test_image_provider_valid_image_names(self, valid_name):
+        """Test that various valid image name formats pass validation."""
+        provider = _make_provider(images=[valid_name])
+        assert valid_name in provider.images
+
+    def test_image_provider_image_name_too_long(self):
+        """Test that a name exceeding 500 chars raises ImageInvalidNameError."""
+        long_name = "a" * 501
+        with pytest.raises(ImageInvalidNameError):
+            _make_provider(images=[long_name])
+
+    def test_image_provider_file_too_many_lines(self):
+        """Test that a file with more than MAX_IMAGE_LIST_LINES raises ImageListFileReadError."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            for i in range(10_001):
+                f.write(f"image{i}:latest\n")
+            f.flush()
+            file_path = f.name
+
+        with pytest.raises(ImageListFileReadError):
+            _make_provider(images=None, image_list_file=file_path)

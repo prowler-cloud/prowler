@@ -42,6 +42,10 @@ class ImageBaseException(ProwlerException):
             "message": "Invalid severity level.",
             "remediation": "Use valid severities: CRITICAL, HIGH, MEDIUM, LOW, UNKNOWN.",
         },
+        (9009, "ImageInvalidNameError"): {
+            "message": "Invalid container image name.",
+            "remediation": "Use a valid image reference (e.g., 'alpine:3.18', 'registry.example.com/repo/image:tag').",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -135,4 +139,13 @@ class ImageInvalidSeverityError(ImageBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidNameError(ImageBaseException):
+    """Exception raised when an invalid container image name is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9009, file=file, original_exception=original_exception, message=message
         )

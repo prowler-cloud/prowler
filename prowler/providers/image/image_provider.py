@@ -20,6 +20,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidNameError,
     ImageInvalidScannerError,
     ImageInvalidSeverityError,
     ImageInvalidTimeoutError,
@@ -45,6 +46,10 @@ class ImageProvider(Provider):
 
     _type: str = "image"
     FINDING_BATCH_SIZE: int = 100
+    MAX_IMAGE_LIST_LINES: int = 10_000
+    MAX_IMAGE_NAME_LENGTH: int = 500
+    _IMAGE_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.\-_/:@]+$")
+    _SHELL_METACHARACTERS = frozenset(";|&$`\n\r")
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -78,6 +83,9 @@ class ImageProvider(Provider):
         # Load images from file if provided
         if image_list_file:
             self._load_images_from_file(image_list_file)
+
+        for image in self.images:
+            self._validate_image_name(image)
 
         if not self.images:
             raise ImageNoImagesProvidedError(
@@ -115,17 +123,32 @@ class ImageProvider(Provider):
     def _load_images_from_file(self, file_path: str) -> None:
         """Load image names from a file (one per line)."""
         try:
+            line_count = 0
             with open(file_path, "r") as f:
                 for line in f:
+                    line_count += 1
+                    if line_count > self.MAX_IMAGE_LIST_LINES:
+                        raise ImageListFileReadError(
+                            file=file_path,
+                            message=f"Image list file exceeds maximum of {self.MAX_IMAGE_LIST_LINES} lines.",
+                        )
                     line = line.strip()
-                    if line and not line.startswith("#"):
-                        self.images.append(line)
+                    if not line or line.startswith("#"):
+                        continue
+                    if len(line) > self.MAX_IMAGE_NAME_LENGTH:
+                        logger.warning(
+                            f"Skipping image name exceeding {self.MAX_IMAGE_NAME_LENGTH} chars at line {line_count} in {file_path}"
+                        )
+                        continue
+                    self.images.append(line)
             logger.info(f"Loaded {len(self.images)} images from {file_path}")
         except FileNotFoundError:
             raise ImageListFileNotFoundError(
                 file=file_path,
                 message=f"Image list file not found: {file_path}",
             )
+        except (ImageListFileReadError, ImageListFileNotFoundError):
+            raise
         except Exception as error:
             raise ImageListFileReadError(
                 file=file_path,
@@ -154,6 +177,32 @@ class ImageProvider(Provider):
                     file=__file__,
                     message=f"Invalid severity: '{severity}'. Valid options: {', '.join(SEVERITY_CHOICES)}.",
                 )
+
+    def _validate_image_name(self, name: str) -> None:
+        """Validate a container image name for safety and correctness."""
+        if not name:
+            raise ImageInvalidNameError(
+                file=__file__,
+                message="Image name must not be empty.",
+            )
+
+        if len(name) > self.MAX_IMAGE_NAME_LENGTH:
+            raise ImageInvalidNameError(
+                file=__file__,
+                message=f"Image name exceeds maximum length of {self.MAX_IMAGE_NAME_LENGTH} characters: '{name[:50]}...'",
+            )
+
+        if any(c in self._SHELL_METACHARACTERS for c in name):
+            raise ImageInvalidNameError(
+                file=__file__,
+                message=f"Image name contains invalid characters: '{name}'",
+            )
+
+        if not self._IMAGE_NAME_PATTERN.fullmatch(name):
+            raise ImageInvalidNameError(
+                file=__file__,
+                message=f"Image name does not match valid OCI reference format: '{name}'",
+            )
 
     @property
     def auth_method(self) -> str:
