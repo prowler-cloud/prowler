@@ -91,7 +91,7 @@ export function ActionDropdownItem({
   return (
     <DropdownMenuItem
       className={cn(
-        "flex cursor-pointer items-center gap-2",
+        "flex cursor-pointer items-start gap-2",
         destructive && "text-destructive focus:text-destructive",
         className,
       )}
@@ -100,7 +100,7 @@ export function ActionDropdownItem({
       {icon && (
         <span
           className={cn(
-            "text-muted-foreground shrink-0 [&>svg]:size-5",
+            "text-muted-foreground mt-0.5 shrink-0 [&>svg]:size-4",
             destructive && "text-destructive",
           )}
         >
