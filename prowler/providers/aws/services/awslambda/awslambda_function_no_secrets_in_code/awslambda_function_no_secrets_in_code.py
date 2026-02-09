@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import detect_secrets_scan, safe_extract_zip
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
@@ -24,7 +24,7 @@ class awslambda_function_no_secrets_in_code(Check):
                         f"No secrets found in Lambda function {function.name} code."
                     )
                     with tempfile.TemporaryDirectory() as tmp_dir_name:
-                        function_code.code_zip.extractall(tmp_dir_name)
+                        safe_extract_zip(function_code.code_zip, tmp_dir_name)
                         # List all files
                         files_in_zip = next(os.walk(tmp_dir_name))[2]
                         secrets_findings = []
