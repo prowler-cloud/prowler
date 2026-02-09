@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "OpenStackSubnet",
   "ResourceGroup": "network",
-  "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP (Dynamic Host Configuration Protocol) automatically assigns IP addresses, DNS servers, and gateway information to instances when they boot. Subnets with DHCP disabled require manual IP configuration on each instance, increasing operational complexity and the risk of IP conflicts. While some environments intentionally disable DHCP for security or to use static IP assignments, most general-purpose subnets should have DHCP enabled to simplify instance deployment and network management.",
-  "Risk": "Subnets with DHCP disabled prevent instances from automatically obtaining network configuration, causing connectivity failures during instance boot. New instances fail to acquire IP addresses and cannot communicate on the network without manual intervention, breaking automated deployment pipelines and orchestration tools like Heat, Terraform, and Ansible. Disabled DHCP increases operational burden as operators must manually configure each instance's network settings, increasing deployment time and error rates. IP address conflicts become more likely when instances are manually configured with static IPs without centralized DHCP lease tracking. Cloud-init depends on DHCP for metadata service discovery; instances without DHCP cannot retrieve SSH keys, user-data scripts, or vendor-data from the metadata API, breaking bootstrapping processes.",
+  "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP automatically assigns IP addresses, DNS servers, and gateway information to instances at boot. Subnets with DHCP disabled require manual configuration, increasing operational complexity and IP conflict risk. Enable DHCP to simplify deployment and ensure cloud-init functionality.",
+  "Risk": "Instances fail to acquire IP addresses and cannot communicate without manual intervention, breaking automated deployment pipelines (Heat, Terraform, Ansible). Manual configuration increases deployment time, error rates, and IP conflict risk. Cloud-init depends on DHCP for metadata service discovery; without DHCP, instances cannot retrieve SSH keys or user-data, breaking bootstrapping.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "# List subnets with DHCP disabled\nopenstack subnet list --long | grep -i \"enable_dhcp.*false\"\n\n# Enable DHCP on a specific subnet\nopenstack subnet set --dhcp <subnet_id>\n\n# Verify DHCP is enabled\nopenstack subnet show <subnet_id> -f json | jq -r '.enable_dhcp'",
+      "CLI": "openstack subnet set --dhcp <subnet_id>",
       "NativeIaC": "",
       "Other": "**Enable DHCP via Horizon Dashboard:**\n1. Navigate to **Project > Network > Networks**\n2. Click on the network containing the subnet\n3. Click the **Subnets** tab\n4. For each subnet, click **Edit Subnet**\n5. In the **Subnet Details** tab:\n   - Ensure **Enable DHCP** checkbox is **checked**\n6. Click **Save**",
       "Terraform": "```hcl\nresource \"openstack_networking_subnet_v2\" \"subnet\" {\n  name            = \"app-subnet\"\n  network_id      = openstack_networking_network_v2.network.id\n  cidr            = \"192.168.1.0/24\"\n  ip_version      = 4\n  enable_dhcp     = true  # GOOD: DHCP enabled\n  dns_nameservers = [\"8.8.8.8\", \"8.8.4.4\"]\n}\n```"
