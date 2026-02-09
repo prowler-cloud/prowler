@@ -33,6 +33,9 @@ class Test_appinsights_ensure_is_configured:
     def test_no_appinsights(self):
         appinsights_client = mock.MagicMock
         appinsights_client.components = {AZURE_SUBSCRIPTION_ID: {}}
+        appinsights_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
+        }
 
         with (
             mock.patch(
@@ -53,20 +56,20 @@ class Test_appinsights_ensure_is_configured:
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].status == "FAIL"
-            assert result[0].resource_id == "AppInsights"
-            assert result[0].resource_name == "AppInsights"
-            assert result[0].location == "global"
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].status_extended
-                == f"There are no AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There are no AppInsights configured in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_appinsights_configured(self):
+        resource_id = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/test-rg/providers/microsoft.insights/components/AppInsightsTest"
         appinsights_client = mock.MagicMock
         appinsights_client.components = {
             AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": Component(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=resource_id,
                     resource_name="AppInsightsTest",
                     location="westeurope",
                     instrumentation_key="",
@@ -93,10 +96,10 @@ class Test_appinsights_ensure_is_configured:
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].status == "PASS"
-            assert result[0].resource_id == "AppInsights"
-            assert result[0].resource_name == "AppInsights"
-            assert result[0].location == "global"
+            assert result[0].resource_id == resource_id
+            assert result[0].resource_name == "AppInsightsTest"
+            assert result[0].location == "westeurope"
             assert (
                 result[0].status_extended
-                == f"There is at least one AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"AppInsight AppInsightsTest is configured in subscription {AZURE_SUBSCRIPTION_ID}."
             )
