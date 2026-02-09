@@ -1,6 +1,9 @@
 from prowler.providers.image.exceptions.exceptions import (
     ImageBaseException,
     ImageFindingProcessingError,
+    ImageInvalidScannerError,
+    ImageInvalidSeverityError,
+    ImageInvalidTimeoutError,
     ImageListFileNotFoundError,
     ImageListFileReadError,
     ImageNoImagesProvidedError,
@@ -11,6 +14,9 @@ from prowler.providers.image.exceptions.exceptions import (
 __all__ = [
     "ImageBaseException",
     "ImageFindingProcessingError",
+    "ImageInvalidScannerError",
+    "ImageInvalidSeverityError",
+    "ImageInvalidTimeoutError",
     "ImageListFileNotFoundError",
     "ImageListFileReadError",
     "ImageNoImagesProvidedError",

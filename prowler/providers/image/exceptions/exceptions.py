@@ -30,6 +30,22 @@ class ImageBaseException(ProwlerException):
             "message": "Error scanning container image.",
             "remediation": "Check the image name and ensure it is accessible.",
         },
+        (9006, "ImageInvalidTimeoutError"): {
+            "message": "Invalid timeout format.",
+            "remediation": "Use a valid timeout like '5m', '300s', or '1h'.",
+        },
+        (9007, "ImageInvalidScannerError"): {
+            "message": "Invalid scanner type.",
+            "remediation": "Use valid scanners: vuln, secret, misconfig, license.",
+        },
+        (9008, "ImageInvalidSeverityError"): {
+            "message": "Invalid severity level.",
+            "remediation": "Use valid severities: CRITICAL, HIGH, MEDIUM, LOW, UNKNOWN.",
+        },
+        (9009, "ImageInvalidNameError"): {
+            "message": "Invalid container image name.",
+            "remediation": "Use a valid image reference (e.g., 'alpine:3.18', 'registry.example.com/repo/image:tag').",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -96,4 +112,40 @@ class ImageScanError(ImageBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9005, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidTimeoutError(ImageBaseException):
+    """Exception raised when an invalid timeout format is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidScannerError(ImageBaseException):
+    """Exception raised when an invalid scanner type is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9007, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidSeverityError(ImageBaseException):
+    """Exception raised when an invalid severity level is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidNameError(ImageBaseException):
+    """Exception raised when an invalid container image name is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9009, file=file, original_exception=original_exception, message=message
         )

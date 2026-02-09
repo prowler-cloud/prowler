@@ -897,7 +897,6 @@ class CheckReportImage(Check_Report):
             finding = {}
         super().__init__(metadata, finding)
 
-        self.resource = finding
         self.resource_name = image_name
         self.image_digest = finding.get("PkgID", "")
         self.package_name = finding.get("PkgName", "")

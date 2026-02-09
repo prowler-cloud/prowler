@@ -63,6 +63,7 @@ class Provider(str, Enum):
     ORACLECLOUD = "oraclecloud"
     ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
+    IMAGE = "image"
 
 
 # Compliance

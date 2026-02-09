@@ -43,7 +43,7 @@ Available Cloud Providers:
     alibabacloud        Alibaba Cloud Provider
     iac                 IaC Provider (Beta)
     llm                 LLM Provider (Beta)
-    image               Container Image Provider (PoC)
+    image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider (Beta)
 
