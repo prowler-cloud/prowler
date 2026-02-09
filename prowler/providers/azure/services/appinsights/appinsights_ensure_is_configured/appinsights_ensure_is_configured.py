@@ -9,22 +9,19 @@ class appinsights_ensure_is_configured(Check):
         findings = []
 
         for subscription_name, components in appinsights_client.components.items():
-            if not components:
-                report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription_name
-                report.resource_name = subscription_name
-                report.resource_id = f"/subscriptions/{appinsights_client.subscriptions[subscription_name]}"
+            report = Check_Report_Azure(metadata=self.metadata(), resource={})
+            report.status = "PASS"
+            report.subscription = subscription_name
+            report.resource_name = subscription_name
+            report.resource_id = (
+                f"/subscriptions/{appinsights_client.subscriptions[subscription_name]}"
+            )
+            report.status_extended = f"There is at least one AppInsight configured in subscription {subscription_name}."
+
+            if len(components) < 1:
                 report.status = "FAIL"
-                report.status_extended = f"There are no AppInsights configured in subscription {subscription_name}."
-                findings.append(report)
-            else:
-                for component in components.values():
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=component
-                    )
-                    report.subscription = subscription_name
-                    report.status = "PASS"
-                    report.status_extended = f"AppInsight {component.resource_name} is configured in subscription {subscription_name}."
-                    findings.append(report)
+                report.status_extended = f"There are no AppInsight configured in subscription {subscription_name}."
+
+            findings.append(report)
 
         return findings
