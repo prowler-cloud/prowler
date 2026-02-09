@@ -392,7 +392,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.19.0"
+        spectacular_settings.VERSION = "1.20.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2287,7 +2287,7 @@ class TaskViewSet(BaseRLSViewSet):
     ),
     attack_paths_queries=extend_schema(
         tags=["Attack Paths"],
-        summary="List attack paths queries",
+        summary="List Attack Paths queries",
         description="Retrieve the catalog of Attack Paths queries available for this Attack Paths scan.",
         responses={
             200: OpenApiResponse(AttackPathsQuerySerializer(many=True)),
@@ -2307,7 +2307,7 @@ class TaskViewSet(BaseRLSViewSet):
                 description="Bad request (e.g., Unknown Attack Paths query for the selected provider)"
             ),
             404: OpenApiResponse(
-                description="No attack paths found for the given query and parameters"
+                description="No Attack Paths found for the given query and parameters"
             ),
             500: OpenApiResponse(
                 description="Attack Paths query execution failed due to a database error"

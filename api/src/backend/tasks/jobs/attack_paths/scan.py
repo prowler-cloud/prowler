@@ -1,8 +1,7 @@
 import logging
 import time
-import asyncio
 
-from typing import Any, Callable
+from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
@@ -17,21 +16,14 @@ from api.models import (
     StateChoices,
 )
 from api.utils import initialize_prowler_provider
-from tasks.jobs.attack_paths import aws, db_utils, prowler, utils
+from tasks.jobs.attack_paths import db_utils, findings, sync, utils
+from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
 
 logger = get_task_logger(__name__)
-
-CARTOGRAPHY_INGESTION_FUNCTIONS: dict[str, Callable] = {
-    "aws": aws.start_aws_ingestion,
-}
-
-
-def get_cartography_ingestion_function(provider_type: str) -> Callable | None:
-    return CARTOGRAPHY_INGESTION_FUNCTIONS.get(provider_type)
 
 
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
@@ -76,22 +68,36 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 tenant_id, scan_id, prowler_api_provider.id
             )
 
+    tmp_database_name = graph_database.get_database_name(
+        attack_paths_scan.id, temporary=True
+    )
+    tenant_database_name = graph_database.get_database_name(
+        prowler_api_provider.tenant_id
+    )
+
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
-    cartography_config = CartographyConfig(
+    tmp_cartography_config = CartographyConfig(
         neo4j_uri=graph_database.get_uri(),
-        neo4j_database=graph_database.get_database_name(attack_paths_scan.id),
+        neo4j_database=tmp_database_name,
         update_tag=int(time.time()),
+    )
+    tenant_cartography_config = CartographyConfig(
+        neo4j_uri=tmp_cartography_config.neo4j_uri,
+        neo4j_database=tenant_database_name,
+        update_tag=tmp_cartography_config.update_tag,
     )
 
     # Starting the Attack Paths scan
-    db_utils.starting_attack_paths_scan(attack_paths_scan, task_id, cartography_config)
+    db_utils.starting_attack_paths_scan(
+        attack_paths_scan, task_id, tenant_cartography_config
+    )
 
     try:
         logger.info(
-            f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
+            f"Creating Neo4j database {tmp_cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
 
-        graph_database.create_database(cartography_config.neo4j_database)
+        graph_database.create_database(tmp_cartography_config.neo4j_database)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
         logger.info(
@@ -99,18 +105,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
         with graph_database.get_session(
-            cartography_config.neo4j_database
-        ) as neo4j_session:
+            tmp_cartography_config.neo4j_database
+        ) as tmp_neo4j_session:
             # Indexes creation
-            cartography_create_indexes.run(neo4j_session, cartography_config)
-            prowler.create_indexes(neo4j_session)
+            cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
+            findings.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
-            ingestion_exceptions = _call_within_event_loop(
+            ingestion_exceptions = utils.call_within_event_loop(
                 cartography_ingestion_function,
-                neo4j_session,
-                cartography_config,
+                tmp_neo4j_session,
+                tmp_cartography_config,
                 prowler_api_provider,
                 prowler_sdk_provider,
                 attack_paths_scan,
@@ -120,42 +126,91 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             logger.info(
                 f"Syncing Cartography ontology for AWS account {prowler_api_provider.uid}"
             )
-            cartography_ontology.run(neo4j_session, cartography_config)
+            cartography_ontology.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             logger.info(
                 f"Syncing Cartography analysis for AWS account {prowler_api_provider.uid}"
             )
-            cartography_analysis.run(neo4j_session, cartography_config)
+            cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler nodes and relationships
             logger.info(
                 f"Syncing Prowler analysis for AWS account {prowler_api_provider.uid}"
             )
-            prowler.analysis(
-                neo4j_session, prowler_api_provider, scan_id, cartography_config
+            findings.analysis(
+                tmp_neo4j_session, prowler_api_provider, scan_id, tmp_cartography_config
             )
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
 
         logger.info(
-            f"Clearing Neo4j cache for database {cartography_config.neo4j_database}"
+            f"Clearing Neo4j cache for database {tmp_cartography_config.neo4j_database}"
         )
-        graph_database.clear_cache(cartography_config.neo4j_database)
+        graph_database.clear_cache(tmp_cartography_config.neo4j_database)
+
+        logger.info(
+            f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
+        )
+        graph_database.create_database(tenant_database_name)
+        with graph_database.get_session(tenant_database_name) as tenant_neo4j_session:
+            cartography_create_indexes.run(
+                tenant_neo4j_session, tenant_cartography_config
+            )
+            findings.create_findings_indexes(tenant_neo4j_session)
+            sync.create_sync_indexes(tenant_neo4j_session)
+
+        logger.info(f"Deleting existing provider graph in {tenant_database_name}")
+        graph_database.drop_subgraph(
+            database=tenant_database_name,
+            provider_id=str(prowler_api_provider.id),
+        )
+        db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
+
+        logger.info(
+            f"Syncing graph from {tmp_database_name} into {tenant_database_name}"
+        )
+        sync.sync_graph(
+            source_database=tmp_database_name,
+            target_database=tenant_database_name,
+            provider_id=str(prowler_api_provider.id),
+        )
+        db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
+
+        logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
+        graph_database.clear_cache(tenant_database_name)
 
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
 
-        # Handling databases changes
+        # TODO
+        # This piece of code delete old Neo4j databases for this tenant's provider
+        # When we clean all of these databases we need to:
+        #   - Delete this block
+        #   - Delete function from `db_utils` the functions get_old_attack_paths_scans` & `update_old_attack_paths_scan`
+        #   - Remove `graph_database` & `is_graph_database_deleted` from the AttackPathsScan model:
+        #     - Check indexes
+        #     - Create migration
+        #     - The use of `attack_paths_scan.graph_database` on `views` and `views_helpers`
+        #     - Tests
         old_attack_paths_scans = db_utils.get_old_attack_paths_scans(
             prowler_api_provider.tenant_id,
             prowler_api_provider.id,
             attack_paths_scan.id,
         )
         for old_attack_paths_scan in old_attack_paths_scans:
-            graph_database.drop_database(old_attack_paths_scan.graph_database)
+            old_graph_database = old_attack_paths_scan.graph_database
+            if old_graph_database and old_graph_database != tenant_database_name:
+                logger.info(
+                    f"Dropping old Neo4j database {old_graph_database} for provider {prowler_api_provider.id}"
+                )
+                graph_database.drop_database(old_graph_database)
             db_utils.update_old_attack_paths_scan(old_attack_paths_scan)
+
+        logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
+        graph_database.drop_database(tmp_database_name)
 
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
@@ -168,30 +223,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         ingestion_exceptions["global_cartography_error"] = exception_message
 
         # Handling databases changes
-        graph_database.drop_database(cartography_config.neo4j_database)
+        graph_database.drop_database(tmp_cartography_config.neo4j_database)
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )
         raise
-
-
-def _call_within_event_loop(fn, *args, **kwargs):
-    """
-    Cartography needs a running event loop, so assuming there is none (Celery task or even regular DRF endpoint),
-    let's create a new one and set it as the current event loop for this thread.
-    """
-
-    loop = asyncio.new_event_loop()
-    try:
-        asyncio.set_event_loop(loop)
-        return fn(*args, **kwargs)
-
-    finally:
-        try:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-
-        except Exception as e:
-            logger.warning(f"Failed to shutdown async generators cleanly: {e}")
-
-        loop.close()
-        asyncio.set_event_loop(None)

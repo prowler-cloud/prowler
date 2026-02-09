@@ -1,12 +1,13 @@
 import logging
 
-from typing import Any
+from typing import Any, Iterable
 
 from rest_framework.exceptions import APIException, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
 from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
+from tasks.jobs.attack_paths.config import INTERNAL_LABELS
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -101,7 +102,7 @@ def _serialize_graph(graph):
         nodes.append(
             {
                 "id": node.element_id,
-                "labels": list(node.labels),
+                "labels": _filter_labels(node.labels),
                 "properties": _serialize_properties(node._properties),
             },
         )
@@ -122,6 +123,10 @@ def _serialize_graph(graph):
         "nodes": nodes,
         "relationships": relationships,
     }
+
+
+def _filter_labels(labels: Iterable[str]) -> list[str]:
+    return [label for label in labels if label not in INTERNAL_LABELS]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:
