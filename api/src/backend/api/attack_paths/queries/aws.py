@@ -324,6 +324,86 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 # https://github.com/DataDog/pathfinding.cloud
 # -------------------------------------------------------------------
 
+# APPRUNNER-001
+AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
+    id="aws-apprunner-privesc-passrole-create-service",
+    name="App Runner Service Creation with Privileged Role (APPRUNNER-001)",
+    short_description="Create an App Runner service with a privileged IAM role to gain its permissions.",
+    description="Detect principals who can pass IAM roles and create App Runner services. This allows creating a service with a privileged role attached, gaining that role's permissions via StartCommand execution, a container web shell, or a malicious apprunner.yaml configuration.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - APPRUNNER-001 - iam:PassRole + apprunner:CreateService",
+        link="https://pathfinding.cloud/paths/apprunner-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+        WHERE stmt_passrole.effect = 'Allow'
+            AND any(action IN stmt_passrole.action WHERE
+                toLower(action) = 'iam:passrole'
+                OR toLower(action) = 'iam:*'
+                OR action = '*'
+            )
+
+        // Find apprunner:CreateService permission
+        MATCH (principal)--(apprunner_policy:AWSPolicy)--(stmt_apprunner:AWSPolicyStatement)
+        WHERE stmt_apprunner.effect = 'Allow'
+            AND any(action IN stmt_apprunner.action WHERE
+                toLower(action) = 'apprunner:createservice'
+                OR toLower(action) = 'apprunner:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust App Runner tasks service (can be passed to App Runner)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
+        WHERE any(resource IN stmt_passrole.resource WHERE
+            resource = '*'
+            OR target_role.arn CONTAINS resource
+            OR resource CONTAINS target_role.name
+        )
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# APPRUNNER-002
+AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
+    id="aws-apprunner-privesc-update-service",
+    name="App Runner Service Update for Role Access (APPRUNNER-002)",
+    short_description="Update an existing App Runner service to leverage its already-attached privileged role.",
+    description="Detect principals who can update existing App Runner services. This allows modifying a service's configuration to execute arbitrary code with the service's already-attached IAM role, without requiring iam:PassRole. Exploitation methods include injecting a malicious StartCommand, updating to a container image with a web shell, or pointing to a repository with a malicious apprunner.yaml file.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - APPRUNNER-002 - apprunner:UpdateService",
+        link="https://pathfinding.cloud/paths/apprunner-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with apprunner:UpdateService permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement)
+        WHERE stmt_update.effect = 'Allow'
+            AND any(action IN stmt_update.action WHERE
+                toLower(action) = 'apprunner:updateservice'
+                OR toLower(action) = 'apprunner:*'
+                OR action = '*'
+            )
+
+        // Find existing App Runner services with roles attached (potential targets)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # BEDROCK-001
 AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     id="aws-bedrock-privesc-passrole-code-interpreter",
@@ -361,6 +441,273 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
             OR target_role.arn CONTAINS resource
             OR resource CONTAINS target_role.name
         )
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# BEDROCK-002
+AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
+    id="aws-bedrock-privesc-invoke-code-interpreter",
+    name="Bedrock Code Interpreter Session Hijacking (BEDROCK-002)",
+    short_description="Start a session on an existing Bedrock code interpreter to exfiltrate its privileged role credentials.",
+    description="Detect principals who can start sessions and invoke code on existing Bedrock AgentCore code interpreters. This allows executing arbitrary Python code within an interpreter that has a privileged role attached, gaining that role's credentials via the MicroVM Metadata Service without requiring iam:PassRole.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - BEDROCK-002 - bedrock-agentcore:StartCodeInterpreterSession + bedrock-agentcore:InvokeCodeInterpreter",
+        link="https://pathfinding.cloud/paths/bedrock-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with bedrock-agentcore:StartCodeInterpreterSession permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement)
+        WHERE stmt_session.effect = 'Allow'
+            AND any(action IN stmt_session.action WHERE
+                toLower(action) = 'bedrock-agentcore:startcodeinterpretersession'
+                OR toLower(action) = 'bedrock-agentcore:*'
+                OR action = '*'
+            )
+
+        // Find bedrock-agentcore:InvokeCodeInterpreter permission
+        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement)
+        WHERE stmt_invoke.effect = 'Allow'
+            AND any(action IN stmt_invoke.action WHERE
+                toLower(action) = 'bedrock-agentcore:invokecodeinterpreter'
+                OR toLower(action) = 'bedrock-agentcore:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust Bedrock service (already attached to existing code interpreters)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock.amazonaws.com'}})
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CLOUDFORMATION-001
+AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
+    id="aws-cloudformation-privesc-passrole-create-stack",
+    name="CloudFormation Stack Creation with Privileged Role (CLOUDFORMATION-001)",
+    short_description="Create a CloudFormation stack with a privileged role to provision arbitrary AWS resources.",
+    description="Detect principals who can pass IAM roles and create CloudFormation stacks. This allows launching a stack with a malicious template that executes with the passed role's permissions, enabling creation of resources like IAM users, Lambda functions, or EC2 instances controlled by the attacker.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CLOUDFORMATION-001 - iam:PassRole + cloudformation:CreateStack",
+        link="https://pathfinding.cloud/paths/cloudformation-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+        WHERE stmt_passrole.effect = 'Allow'
+            AND any(action IN stmt_passrole.action WHERE
+                toLower(action) = 'iam:passrole'
+                OR toLower(action) = 'iam:*'
+                OR action = '*'
+            )
+
+        // Find cloudformation:CreateStack permission
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
+        WHERE stmt_cfn.effect = 'Allow'
+            AND any(action IN stmt_cfn.action WHERE
+                toLower(action) = 'cloudformation:createstack'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust CloudFormation service (can be passed to CloudFormation)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
+        WHERE any(resource IN stmt_passrole.resource WHERE
+            resource = '*'
+            OR target_role.arn CONTAINS resource
+            OR resource CONTAINS target_role.name
+        )
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CLOUDFORMATION-002
+AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
+    id="aws-cloudformation-privesc-update-stack",
+    name="CloudFormation Stack Update for Role Access (CLOUDFORMATION-002)",
+    short_description="Update an existing CloudFormation stack to leverage its already-attached privileged service role.",
+    description="Detect principals who can update existing CloudFormation stacks. This allows modifying a stack's template to add new resources (such as IAM roles with admin access) that are created with the stack's already-attached service role permissions, without requiring iam:PassRole.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CLOUDFORMATION-002 - cloudformation:UpdateStack",
+        link="https://pathfinding.cloud/paths/cloudformation-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with cloudformation:UpdateStack permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement)
+        WHERE stmt_update.effect = 'Allow'
+            AND any(action IN stmt_update.action WHERE
+                toLower(action) = 'cloudformation:updatestack'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust CloudFormation service (already attached to existing stacks)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CLOUDFORMATION-003
+AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition(
+    id="aws-cloudformation-privesc-passrole-create-stackset",
+    name="CloudFormation StackSet Creation with Privileged Role (CLOUDFORMATION-003)",
+    short_description="Create a CloudFormation StackSet with a privileged execution role to provision arbitrary resources across accounts.",
+    description="Detect principals who can pass IAM roles, create CloudFormation StackSets, and deploy stack instances. This allows creating a StackSet with a malicious template and a privileged execution role, then deploying instances that create resources (such as IAM roles with admin access) using that role's permissions.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CLOUDFORMATION-003 - iam:PassRole + cloudformation:CreateStackSet + cloudformation:CreateStackInstances",
+        link="https://pathfinding.cloud/paths/cloudformation-003",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+        WHERE stmt_passrole.effect = 'Allow'
+            AND any(action IN stmt_passrole.action WHERE
+                toLower(action) = 'iam:passrole'
+                OR toLower(action) = 'iam:*'
+                OR action = '*'
+            )
+
+        // Find cloudformation:CreateStackSet permission
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
+        WHERE stmt_cfn.effect = 'Allow'
+            AND any(action IN stmt_cfn.action WHERE
+                toLower(action) = 'cloudformation:createstackset'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find cloudformation:CreateStackInstances permission
+        MATCH (principal)--(cfn_instances_policy:AWSPolicy)--(stmt_cfn_instances:AWSPolicyStatement)
+        WHERE stmt_cfn_instances.effect = 'Allow'
+            AND any(action IN stmt_cfn_instances.action WHERE
+                toLower(action) = 'cloudformation:createstackinstances'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust CloudFormation service (can be passed as execution role)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
+        WHERE any(resource IN stmt_passrole.resource WHERE
+            resource = '*'
+            OR target_role.arn CONTAINS resource
+            OR resource CONTAINS target_role.name
+        )
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CLOUDFORMATION-004
+AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition(
+    id="aws-cloudformation-privesc-passrole-update-stackset",
+    name="CloudFormation StackSet Update with Privileged Role (CLOUDFORMATION-004)",
+    short_description="Update an existing CloudFormation StackSet to inject malicious resources using a privileged execution role.",
+    description="Detect principals who can pass IAM roles and update CloudFormation StackSets. This allows modifying an existing StackSet's template to add resources (such as IAM roles with admin access) that are provisioned by the StackSet's privileged execution role across target accounts.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CLOUDFORMATION-004 - iam:PassRole + cloudformation:UpdateStackSet",
+        link="https://pathfinding.cloud/paths/cloudformation-004",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
+        WHERE stmt_passrole.effect = 'Allow'
+            AND any(action IN stmt_passrole.action WHERE
+                toLower(action) = 'iam:passrole'
+                OR toLower(action) = 'iam:*'
+                OR action = '*'
+            )
+
+        // Find cloudformation:UpdateStackSet permission
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
+        WHERE stmt_cfn.effect = 'Allow'
+            AND any(action IN stmt_cfn.action WHERE
+                toLower(action) = 'cloudformation:updatestackset'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust CloudFormation service (can be passed as execution role)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
+        WHERE any(resource IN stmt_passrole.resource WHERE
+            resource = '*'
+            OR target_role.arn CONTAINS resource
+            OR resource CONTAINS target_role.name
+        )
+
+        UNWIND nodes(path_principal) + nodes(path_target) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path_principal, path_target,
+            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CLOUDFORMATION-005
+AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
+    id="aws-cloudformation-privesc-changeset",
+    name="CloudFormation Change Set Privilege Escalation (CLOUDFORMATION-005)",
+    short_description="Create and execute a change set on an existing stack to leverage its privileged service role.",
+    description="Detect principals who can create and execute CloudFormation change sets. This allows modifying an existing stack's template through a staged change set, inheriting the stack's already-attached service role permissions to provision arbitrary resources without requiring iam:PassRole.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CLOUDFORMATION-005 - cloudformation:CreateChangeSet + cloudformation:ExecuteChangeSet",
+        link="https://pathfinding.cloud/paths/cloudformation-005",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with cloudformation:CreateChangeSet permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
+        WHERE stmt_create.effect = 'Allow'
+            AND any(action IN stmt_create.action WHERE
+                toLower(action) = 'cloudformation:createchangeset'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find cloudformation:ExecuteChangeSet permission
+        MATCH (principal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement)
+        WHERE stmt_exec.effect = 'Allow'
+            AND any(action IN stmt_exec.action WHERE
+                toLower(action) = 'cloudformation:executechangeset'
+                OR toLower(action) = 'cloudformation:*'
+                OR action = '*'
+            )
+
+        // Find roles that trust CloudFormation service (already attached to existing stacks)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
 
         UNWIND nodes(path_principal) + nodes(path_target) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -916,7 +1263,15 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_CLASSIC_ELB_INTERNET_EXPOSED,
     AWS_ELBV2_INTERNET_EXPOSED,
     AWS_PUBLIC_IP_RESOURCE_LOOKUP,
+    AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE,
+    AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE,
     AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER,
+    AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER,
+    AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK,
+    AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK,
+    AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET,
+    AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET,
+    AWS_CLOUDFORMATION_PRIVESC_CHANGESET,
     AWS_EC2_PRIVESC_PASSROLE_IAM,
     AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE,
     AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES,
