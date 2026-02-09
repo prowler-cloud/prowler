@@ -1,0 +1,39 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_on_host_maintenance_migrate",
+  "CheckTitle": "Compute Engine VM instance has On Host Maintenance set to MIGRATE",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "**Compute Engine VM instances** should have their **On Host Maintenance** setting configured to `MIGRATE` for live migration during host maintenance events, ensuring continuous availability without downtime.",
+  "Risk": "VM instances configured with On Host Maintenance set to `TERMINATE` will be shut down during host maintenance events, causing **service interruptions** and **unplanned downtime**. This can impact application availability and may require manual intervention to restart services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/configure-maintenance-behavior.html",
+    "https://cloud.google.com/compute/docs/instances/setting-instance-scheduling-options"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances set-scheduling <INSTANCE_NAME> --maintenance-policy=MIGRATE --zone=<ZONE>",
+      "NativeIaC": "",
+      "Other": "1. Open Google Cloud Console and navigate to Compute Engine > VM instances\n2. Click on the instance name to view details\n3. Click 'Edit' at the top of the page\n4. Under 'Availability policies', set 'On host maintenance' to 'Migrate VM instance (recommended)'\n5. Click 'Save' at the bottom of the page",
+      "Terraform": "```hcl\n# Example: configure On Host Maintenance to MIGRATE for a Compute Engine VM instance\nresource \"google_compute_instance\" \"example\" {\n  name         = var.instance_name\n  machine_type = var.machine_type\n  zone         = var.zone\n\n  scheduling {\n    # Live migrate during host maintenance events\n    on_host_maintenance = \"MIGRATE\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure VM instances to use **live migration** during host maintenance events to ensure continuous availability. This is the recommended setting for production workloads that require high availability.",
+      "Url": "https://hub.prowler.com/check/compute_instance_on_host_maintenance_migrate"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "compute_instance_automatic_restart_enabled"
+  ],
+  "Notes": "Preemptible and Spot VMs cannot use MIGRATE and will always be TERMINATE. The default value for this setting is MIGRATE."
+}
