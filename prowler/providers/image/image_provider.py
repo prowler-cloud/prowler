@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
-from typing import Generator, List
+from typing import Generator
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -19,11 +20,18 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidScannerError,
+    ImageInvalidSeverityError,
+    ImageInvalidTimeoutError,
     ImageListFileNotFoundError,
     ImageListFileReadError,
     ImageNoImagesProvidedError,
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
+)
+from prowler.providers.image.lib.arguments.arguments import (
+    SCANNERS_CHOICES,
+    SEVERITY_CHOICES,
 )
 
 
@@ -36,18 +44,19 @@ class ImageProvider(Provider):
     """
 
     _type: str = "image"
+    FINDING_BATCH_SIZE: int = 100
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
         images: list[str] | None = None,
-        image_list_file: str = None,
+        image_list_file: str | None = None,
         scanners: list[str] | None = None,
         trivy_severity: list[str] | None = None,
         ignore_unfixed: bool = False,
         timeout: str = "5m",
-        config_path: str = None,
-        config_content: dict = None,
+        config_path: str | None = None,
+        config_content: dict | None = None,
         fixer_config: dict | None = None,
     ):
         logger.info("Instantiating Image Provider...")
@@ -63,6 +72,8 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._auth_method = "No auth"
+
+        self._validate_inputs()
 
         # Load images from file if provided
         if image_list_file:
@@ -121,6 +132,28 @@ class ImageProvider(Provider):
                 original_exception=error,
                 message=f"Error reading image list file: {error}",
             )
+
+    def _validate_inputs(self) -> None:
+        """Validate timeout, scanners, and severity inputs."""
+        if not re.fullmatch(r"\d+[smh]", self.timeout):
+            raise ImageInvalidTimeoutError(
+                file=__file__,
+                message=f"Invalid timeout format: '{self.timeout}'. Expected pattern like '5m', '300s', or '1h'.",
+            )
+
+        for scanner in self.scanners:
+            if scanner not in SCANNERS_CHOICES:
+                raise ImageInvalidScannerError(
+                    file=__file__,
+                    message=f"Invalid scanner: '{scanner}'. Valid options: {', '.join(SCANNERS_CHOICES)}.",
+                )
+
+        for severity in self.trivy_severity:
+            if severity not in SEVERITY_CHOICES:
+                raise ImageInvalidSeverityError(
+                    file=__file__,
+                    message=f"Invalid severity: '{severity}'. Valid options: {', '.join(SEVERITY_CHOICES)}.",
+                )
 
     @property
     def auth_method(self) -> str:
@@ -243,7 +276,7 @@ class ImageProvider(Provider):
             raise ImageFindingProcessingError(
                 file=__file__,
                 original_exception=error,
-                message=f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}",
+                message=f"Error processing finding: {error}",
             )
 
     def _build_status_extended(self, finding: dict) -> str:
@@ -271,19 +304,19 @@ class ImageProvider(Provider):
             " ".join(parts) if parts else finding.get("Description", "Finding detected")
         )
 
-    def run(self) -> List[CheckReportImage]:
+    def run(self) -> list[CheckReportImage]:
         """Execute the container image scan."""
         reports = []
         for batch in self.run_scan():
             reports.extend(batch)
         return reports
 
-    def run_scan(self) -> Generator[List[CheckReportImage], None, None]:
+    def run_scan(self) -> Generator[list[CheckReportImage], None, None]:
         """
         Run Trivy scan on all configured images.
 
         Yields:
-            List[CheckReportImage]: Batches of findings
+            list[CheckReportImage]: Batches of findings
         """
         for image in self.images:
             try:
@@ -296,7 +329,7 @@ class ImageProvider(Provider):
 
     def _scan_single_image(
         self, image: str
-    ) -> Generator[List[CheckReportImage], None, None]:
+    ) -> Generator[list[CheckReportImage], None, None]:
         """
         Scan a single container image with Trivy.
 
@@ -304,7 +337,7 @@ class ImageProvider(Provider):
             image: The container image name/tag to scan
 
         Yields:
-            List[CheckReportImage]: Batches of findings
+            list[CheckReportImage]: Batches of findings
         """
         try:
             logger.info(f"Scanning container image: {image}")
@@ -339,9 +372,10 @@ class ImageProvider(Provider):
             # Check for Trivy failure
             if process.returncode != 0:
                 error_msg = self._extract_trivy_errors(process.stderr)
+                categorized_msg = self._categorize_trivy_error(error_msg)
                 raise ImageScanError(
                     file=__file__,
-                    message=f"Trivy scan failed for {image}: {error_msg}",
+                    message=f"Trivy scan failed for {image}: {categorized_msg}",
                 )
 
             # Parse JSON output
@@ -360,7 +394,6 @@ class ImageProvider(Provider):
 
             # Process findings in batches
             batch = []
-            batch_size = 100
 
             for result in results:
                 target = result.get("Target", image)
@@ -370,7 +403,7 @@ class ImageProvider(Provider):
                 for vuln in result.get("Vulnerabilities", []):
                     report = self._process_finding(vuln, target, result_type)
                     batch.append(report)
-                    if len(batch) >= batch_size:
+                    if len(batch) >= self.FINDING_BATCH_SIZE:
                         yield batch
                         batch = []
 
@@ -378,7 +411,7 @@ class ImageProvider(Provider):
                 for secret in result.get("Secrets", []):
                     report = self._process_finding(secret, target, "secret")
                     batch.append(report)
-                    if len(batch) >= batch_size:
+                    if len(batch) >= self.FINDING_BATCH_SIZE:
                         yield batch
                         batch = []
 
@@ -388,7 +421,7 @@ class ImageProvider(Provider):
                         misconfig, target, "misconfiguration"
                     )
                     batch.append(report)
-                    if len(batch) >= batch_size:
+                    if len(batch) >= self.FINDING_BATCH_SIZE:
                         yield batch
                         batch = []
 
@@ -480,6 +513,22 @@ class ImageProvider(Provider):
                 return line.strip()[:500]
         return "Unknown error"
 
+    @staticmethod
+    def _categorize_trivy_error(error_msg: str) -> str:
+        """Categorize a Trivy error message to provide actionable guidance."""
+        lower = error_msg.lower()
+
+        if any(kw in lower for kw in ("401", "403", "unauthorized", "denied")):
+            return f"Auth failure — check `docker login`: {error_msg}"
+        if any(kw in lower for kw in ("404", "manifest unknown", "not found")):
+            return f"Image not found — check name/tag/registry: {error_msg}"
+        if any(kw in lower for kw in ("429", "rate limit", "too many requests")):
+            return f"Rate limited — wait or authenticate: {error_msg}"
+        if any(kw in lower for kw in ("timeout", "connection refused", "no such host")):
+            return f"Network issue — check connectivity: {error_msg}"
+
+        return error_msg
+
     def print_credentials(self) -> None:
         """Print scan configuration."""
         report_title = f"{Style.BRIGHT}Scanning container images:{Style.RESET_ALL}"
@@ -511,9 +560,9 @@ class ImageProvider(Provider):
 
     @staticmethod
     def test_connection(
-        image: str = None,
+        image: str | None = None,
         raise_on_exception: bool = True,
-        provider_id: str = None,
+        provider_id: str | None = None,
     ) -> "Connection":
         """
         Test connection to container registry by attempting to inspect an image.

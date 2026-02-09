@@ -6,6 +6,9 @@ import pytest
 
 from prowler.lib.check.models import CheckReportImage
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidScannerError,
+    ImageInvalidSeverityError,
+    ImageInvalidTimeoutError,
     ImageListFileNotFoundError,
     ImageNoImagesProvidedError,
     ImageScanError,
@@ -395,3 +398,90 @@ class TestImageProvider:
         with pytest.raises(ImageScanError):
             for _ in provider.run_scan():
                 pass
+
+
+class TestImageProviderInputValidation:
+    def test_invalid_timeout_format_raises_error(self):
+        """Test that a non-matching timeout string raises ImageInvalidTimeoutError."""
+        with pytest.raises(ImageInvalidTimeoutError):
+            _make_provider(timeout="invalid")
+
+    def test_invalid_timeout_no_unit_raises_error(self):
+        """Test that a numeric timeout without a unit raises ImageInvalidTimeoutError."""
+        with pytest.raises(ImageInvalidTimeoutError):
+            _make_provider(timeout="300")
+
+    def test_invalid_timeout_wrong_unit_raises_error(self):
+        """Test that a timeout with an unsupported unit raises ImageInvalidTimeoutError."""
+        with pytest.raises(ImageInvalidTimeoutError):
+            _make_provider(timeout="5d")
+
+    def test_valid_timeout_seconds(self):
+        """Test that a seconds-based timeout is accepted."""
+        provider = _make_provider(timeout="300s")
+        assert provider.timeout == "300s"
+
+    def test_valid_timeout_hours(self):
+        """Test that an hours-based timeout is accepted."""
+        provider = _make_provider(timeout="1h")
+        assert provider.timeout == "1h"
+
+    def test_invalid_scanner_raises_error(self):
+        """Test that an invalid scanner name raises ImageInvalidScannerError."""
+        with pytest.raises(ImageInvalidScannerError):
+            _make_provider(scanners=["vuln", "bad"])
+
+    def test_invalid_severity_raises_error(self):
+        """Test that an invalid severity level raises ImageInvalidSeverityError."""
+        with pytest.raises(ImageInvalidSeverityError):
+            _make_provider(trivy_severity=["HIGH", "SUPER_HIGH"])
+
+    def test_valid_all_scanners(self):
+        """Test that all valid scanner choices are accepted."""
+        provider = _make_provider(scanners=["vuln", "secret", "misconfig", "license"])
+        assert provider.scanners == ["vuln", "secret", "misconfig", "license"]
+
+    def test_valid_all_severities(self):
+        """Test that all valid severity choices are accepted."""
+        provider = _make_provider(
+            trivy_severity=["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
+        )
+        assert provider.trivy_severity == [
+            "CRITICAL",
+            "HIGH",
+            "MEDIUM",
+            "LOW",
+            "UNKNOWN",
+        ]
+
+
+class TestImageProviderErrorCategorization:
+    def test_categorize_auth_failure(self):
+        """Test that auth-related errors are categorized correctly."""
+        result = ImageProvider._categorize_trivy_error(
+            "401 unauthorized: access denied"
+        )
+        assert "Auth failure" in result
+
+    def test_categorize_not_found(self):
+        """Test that not-found errors are categorized correctly."""
+        result = ImageProvider._categorize_trivy_error(
+            "manifest unknown: image not found"
+        )
+        assert "Image not found" in result
+
+    def test_categorize_rate_limit(self):
+        """Test that rate-limit errors are categorized correctly."""
+        result = ImageProvider._categorize_trivy_error("429 too many requests")
+        assert "Rate limited" in result
+
+    def test_categorize_network_issue(self):
+        """Test that network errors are categorized correctly."""
+        result = ImageProvider._categorize_trivy_error("connection refused to registry")
+        assert "Network issue" in result
+
+    def test_categorize_unknown_error(self):
+        """Test that unrecognized errors are returned as-is."""
+        msg = "some unknown trivy error"
+        result = ImageProvider._categorize_trivy_error(msg)
+        assert result == msg
