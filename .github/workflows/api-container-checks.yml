@@ -74,6 +74,7 @@ jobs:
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/AGENTS.md
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'

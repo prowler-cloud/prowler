@@ -2,11 +2,18 @@
 name: prowler-pr
 description: >
   Creates Pull Requests for Prowler following the project template and conventions.
-  Trigger: When user asks to create a PR, submit changes, or open a pull request.
+  Trigger: When working on pull request requirements or creation (PR template sections, PR title Conventional Commits check, changelog gate/no-changelog label), or when inspecting PR-related GitHub workflows like conventional-commit.yml, pr-check-changelog.yml, pr-conflict-checker.yml, labeler.yml, or CODEOWNERS.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root]
+  auto_invoke:
+    - "Create a PR with gh pr create"
+    - "Review PR requirements: template, title conventions, changelog gate"
+    - "Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist)"
+    - "Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler"
+    - "Understand review ownership with CODEOWNERS"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 

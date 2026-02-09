@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_mcas_is_enabled",
-  "CheckTitle": "Ensure that Microsoft Defender for Cloud Apps integration with Microsoft Defender for Cloud is Selected",
+  "CheckTitle": "Defender for Cloud Apps is enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DefenderSettings",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "This integration setting enables Microsoft Defender for Cloud Apps (formerly 'Microsoft Cloud App Security' or 'MCAS' - see additional info) to communicate with Microsoft Defender for Cloud.",
-  "Risk": "Microsoft Defender for Cloud offers an additional layer of protection by using Azure Resource Manager events, which is considered to be the control plane for Azure. By analyzing the Azure Resource Manager records, Microsoft Defender for Cloud detects unusual or potentially harmful operations in the Azure subscription environment. Several of the preceding analytics are powered by Microsoft Defender for Cloud Apps. To benefit from these analytics, subscription must have a Cloud App Security license. Microsoft Defender for Cloud Apps works only with Standard Tier subscriptions.",
-  "RelatedUrl": "https://learn.microsoft.com/en-in/azure/defender-for-cloud/defender-for-cloud-introduction#secure-cloud-applications",
+  "Description": "**Subscription settings** contain the `MCAS` integration for **Microsoft Defender for Cloud Apps**, and the setting is `enabled`.",
+  "Risk": "Missing integration leaves **Defender for Cloud** blind to SaaS context, weakening correlation of control-plane activity with app usage. Attackers can hide data exfiltration via cloud apps, abuse OAuth grants, or mask unauthorized ARM changes-impacting confidentiality and integrity and slowing incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-in/azure/defender-for-cloud/defender-for-cloud-introduction#secure-cloud-applications",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-cloud-apps-integration.html#",
+    "https://learn.microsoft.com/en-us/answers/questions/2045272/integrating-microsoft-defender-for-cloud-apps-with"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-cloud-apps-integration.html#",
-      "Terraform": ""
+      "CLI": "az rest --method PUT --uri https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/settings/MCAS?api-version=2021-06-01 --body '{\"properties\":{\"enabled\":true}}'",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Cloud Apps (MCAS) at subscription scope\ntargetScope = 'subscription'\n\nresource mcas 'Microsoft.Security/settings@2021-06-01' = {\n  name: 'MCAS'\n  properties: {\n    enabled: true // Critical: turns on MCAS integration for the subscription\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open Microsoft Defender for Cloud\n2. Go to Environment settings and select your subscription\n3. Open Settings & monitoring (or Integrations)\n4. Turn on \"Allow Microsoft Defender for Cloud Apps to access my data\"\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Cloud Apps (MCAS)\nresource \"azurerm_security_center_setting\" \"example\" {\n  setting_name = \"MCAS\"\n  enabled      = true  # Critical: enables MCAS integration for the subscription\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu. 2. Select Microsoft Defender for Cloud. 3. Select Environment Settings blade. 4. Select the subscription. 5. Check App Service Defender Plan to On. 6. Select Save.",
-      "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/settings/list"
+      "Text": "Enable and keep the `MCAS` integration consistent across subscriptions.\n- Apply **least privilege** to integration roles and data access\n- Use policy to enforce the setting and prevent drift\n- Practice **defense in depth** by correlating SaaS and cloud signals\n- Review licensing and validate alert coverage regularly",
+      "Url": "https://hub.prowler.com/check/defender_ensure_mcas_is_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Microsoft Defender for Cloud Apps works with Standard pricing tier Subscription. Choosing the Standard pricing tier of Microsoft Defender for Cloud incurs an additional cost per resource."

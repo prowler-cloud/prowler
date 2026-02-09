@@ -10,6 +10,7 @@ export interface ResourceProps {
     service: string;
     tags: Record<string, string>;
     type: string;
+    groups: string[] | null;
     failed_findings_count: number;
     details: string | null;
     partition: string | null;

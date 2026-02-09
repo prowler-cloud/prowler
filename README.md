@@ -80,6 +80,23 @@ prowler dashboard
 ```
 ![Prowler Dashboard](docs/images/products/dashboard.png)
 
+
+## Attack Paths
+
+Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+
+- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
+- The following environment variables so Django and Celery can connect:
+
+  | Variable | Description | Default |
+  | --- | --- | --- |
+  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
+
+
 # Prowler at a Glance
 > [!Tip]
 > For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
@@ -87,17 +104,19 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 584 | 85 | 40 | 17 | Official | UI, API, CLI |
-| GCP | 89 | 17 | 14 | 5 | Official | UI, API, CLI |
-| Azure | 169 | 22 | 15 | 8 | Official | UI, API, CLI |
-| Kubernetes | 84 | 7 | 6 | 9 | Official | UI, API, CLI |
+| AWS | 585 | 84 | 40 | 17 | Official | UI, API, CLI |
+| Azure | 169 | 22 | 17 | 13 | Official | UI, API, CLI |
+| GCP | 100 | 17 | 14 | 7 | Official | UI, API, CLI |
+| Kubernetes | 84 | 7 | 7 | 9 | Official | UI, API, CLI |
 | GitHub | 20 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
-| OCI | 52 | 15 | 1 | 12 | Official | UI, API, CLI |
-| Alibaba Cloud | 63 | 10 | 1 | 9 | Official | CLI |
+| M365 | 72 | 7 | 4 | 4 | Official | UI, API, CLI |
+| OCI | 52 | 14 | 1 | 12 | Official | UI, API, CLI |
+| Alibaba Cloud | 64 | 9 | 2 | 9 | Official | UI, API, CLI |
+| Cloudflare | 29 | 3 | 0 | 5 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 4 | 0 | 3 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
+| OpenStack | 1 | 1 | 0 | 2 | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]

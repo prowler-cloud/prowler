@@ -85,7 +85,7 @@ const TableHead = forwardRef<
     className={cn(
       "bg-bg-neutral-tertiary border-border-neutral-tertiary text-text-neutral-secondary border-y backdrop-blur-[46px]",
       "h-11 px-1.5 text-left align-middle text-xs font-medium whitespace-nowrap outline-none",
-      "first:rounded-l-full first:border-l first:pl-1",
+      "first:rounded-l-full first:border-l first:pl-3",
       "last:rounded-r-full last:border-r last:pr-3",
       "data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-focus",
       "data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2",

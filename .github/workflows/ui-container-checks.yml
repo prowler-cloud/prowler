@@ -73,6 +73,7 @@ jobs:
           files_ignore: |
             ui/CHANGELOG.md
             ui/README.md
+            ui/AGENTS.md
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'

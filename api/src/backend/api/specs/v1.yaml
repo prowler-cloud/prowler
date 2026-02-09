@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.18.0
+  version: 1.20.0
   description: |-
     Prowler API specification.
 
@@ -280,6 +280,443 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: API key was successfully revoked
+  /api/v1/attack-paths-scans:
+    get:
+      operationId: attack_paths_scans_list
+      description: Retrieve Attack Paths scans for the tenant with support for filtering,
+        ordering, and pagination.
+      summary: List Attack Paths scans
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[completed_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 2d8d323e9cc0044b
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 2d8d323e9cc0044b
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[started_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+          x-spec-enum-id: d38ba07264e1ed34
+          enum:
+          - available
+          - cancelled
+          - completed
+          - executing
+          - failed
+          - scheduled
+        description: |-
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: d38ba07264e1ed34
+            enum:
+            - available
+            - cancelled
+            - completed
+            - executing
+            - failed
+            - scheduled
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+        explode: false
+        style: form
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - started_at
+            - -started_at
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsScanList'
+          description: ''
+  /api/v1/attack-paths-scans/{id}:
+    get:
+      operationId: attack_paths_scans_retrieve
+      description: Fetch full details for a specific Attack Paths scan.
+      summary: Retrieve Attack Paths scan details
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AttackPathsScanResponse'
+          description: ''
+  /api/v1/attack-paths-scans/{id}/queries:
+    get:
+      operationId: attack_paths_scans_queries_retrieve
+      description: Retrieve the catalog of Attack Paths queries available for this
+        Attack Paths scan.
+      summary: List attack paths queries
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsQueryList'
+          description: ''
+        '404':
+          description: No queries found for the selected provider
+  /api/v1/attack-paths-scans/{id}/queries/run:
+    post:
+      operationId: attack_paths_scans_queries_run_create
+      description: Execute the selected Attack Paths query against the Attack Paths
+        graph and return the resulting subgraph.
+      summary: Execute an Attack Paths query
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      tags:
+      - Attack Paths
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+        '400':
+          description: Bad request (e.g., Unknown Attack Paths query for the selected
+            provider)
+        '404':
+          description: No attack paths found for the given query and parameters
+        '500':
+          description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
@@ -712,6 +1149,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -898,11 +1336,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -921,17 +1360,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -952,6 +1393,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -981,6 +1423,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -1239,6 +1694,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1470,11 +1926,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -1493,17 +1950,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -1524,6 +1983,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -1553,6 +2013,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -1789,6 +2262,7 @@ paths:
             - check_id
             - check_metadata
             - categories
+            - resource_groups
             - raw_result
             - inserted_at
             - updated_at
@@ -1950,11 +2424,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -1973,17 +2448,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -2004,6 +2481,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -2033,6 +2511,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2251,6 +2742,7 @@ paths:
             - regions
             - resource_types
             - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2428,11 +2920,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -2451,17 +2944,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -2482,6 +2977,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -2511,6 +3007,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -2742,6 +3251,7 @@ paths:
             - regions
             - resource_types
             - categories
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -2894,11 +3404,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -2917,17 +3428,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -2948,6 +3461,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -2977,6 +3491,19 @@ paths:
           type: string
       - in: query
         name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
         schema:
           type: array
           items:
@@ -4702,11 +5229,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -4725,17 +5253,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -4756,6 +5286,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -4861,11 +5392,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -4884,17 +5416,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -4915,6 +5449,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -4968,12 +5503,12 @@ paths:
           description: ''
   /api/v1/overviews/compliance-watchlist:
     get:
-      operationId: overviews_compliance_watchlist_retrieve
-      description: |-
-        Get compliance watchlist overview with FAIL-dominant aggregation.
-
-        Without filters: uses pre-aggregated TenantComplianceSummary (~70 rows).
-        With provider filters: queries ProviderComplianceScore with FAIL-dominant logic.
+      operationId: overviews_compliance_watchlist_list
+      description: 'Retrieve compliance metrics with FAIL-dominant aggregation. Without
+        filters: uses pre-aggregated TenantComplianceSummary. With provider filters:
+        queries ProviderComplianceScore with FAIL-dominant logic where any FAIL in
+        a requirement marks it as failed.'
+      summary: Get compliance watchlist overview
       parameters:
       - in: query
         name: fields[compliance-watchlist-overviews]
@@ -4991,6 +5526,123 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - compliance_id
+            - -compliance_id
+            - requirements_passed
+            - -requirements_passed
+            - requirements_failed
+            - -requirements_failed
+            - requirements_manual
+            - -requirements_manual
+            - total_requirements
+            - -total_requirements
+        explode: false
       tags:
       - Overview
       security:
@@ -5000,7 +5652,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ComplianceWatchlistOverviewResponse'
+                $ref: '#/components/schemas/PaginatedComplianceWatchlistOverviewList'
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -5075,11 +5727,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5098,17 +5751,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5129,6 +5784,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -5268,11 +5924,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5291,17 +5948,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5322,6 +5981,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -5460,6 +6120,7 @@ paths:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5478,6 +6139,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5488,6 +6150,7 @@ paths:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5508,6 +6171,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -5683,11 +6347,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5706,17 +6371,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5737,6 +6404,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -5796,6 +6464,174 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewRegionResponse'
+          description: ''
+  /api/v1/overviews/resource-groups:
+    get:
+      operationId: overviews_resource_groups_list
+      description: Retrieve aggregated resource group metrics from latest completed
+        scans per provider. Returns one row per resource group with total, failed,
+        and new failed findings counts, plus a severity breakdown showing failed findings
+        per severity level, and a count of distinct resources evaluated per group.
+      summary: Get resource group overview
+      parameters:
+      - in: query
+        name: fields[resource-group-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - new_failed_findings
+            - resources_count
+            - severity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 2d8d323e9cc0044b
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 2d8d323e9cc0044b
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_group]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_group__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total_findings
+            - -total_findings
+            - failed_findings
+            - -failed_findings
+            - new_failed_findings
+            - -new_failed_findings
+            - resources_count
+            - -resources_count
+            - severity
+            - -severity
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceGroupOverviewList'
           description: ''
   /api/v1/overviews/services:
     get:
@@ -5859,11 +6695,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -5882,17 +6719,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -5913,6 +6752,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -6682,11 +7522,12 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6705,17 +7546,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6736,17 +7579,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -6765,17 +7610,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -6796,6 +7643,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - name: filter[search]
@@ -7333,10 +8181,24 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -7393,14 +8255,30 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -7419,17 +8297,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -7450,6 +8330,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -7673,6 +8554,7 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7707,6 +8589,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceResponse'
           description: ''
+  /api/v1/resources/{id}/events:
+    get:
+      operationId: resources_events_list
+      description: |-
+        Retrieve events showing modification history for a resource. Returns who modified the resource and when. Currently only available for AWS resources.
+
+        **Note:** Some events may not appear due to CloudTrail indexing limitations. Not all AWS API calls record the resource identifier in a searchable format.
+      summary: Get events for a resource
+      parameters:
+      - in: query
+        name: fields[resource-events]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - event_time
+            - event_name
+            - event_source
+            - actor
+            - actor_uid
+            - actor_type
+            - source_ip_address
+            - user_agent
+            - request_data
+            - response_data
+            - error_code
+            - error_message
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this resource.
+        required: true
+      - in: query
+        name: include_read_events
+        schema:
+          type: boolean
+        description: 'Include read-only events (Describe*, Get*, List*, etc.). Default:
+          false. Set to true to include all events.'
+      - in: query
+        name: lookback_days
+        schema:
+          type: integer
+        description: 'Number of days to look back (default: 90, min: 1, max: 90).'
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: page[size]
+        schema:
+          type: integer
+        description: 'Maximum number of events to return (default: 50, min: 1, max:
+          50).'
+      tags:
+      - Resource
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceEventList'
+          description: ''
+        '400':
+          description: Invalid provider or parameters
+        '500':
+          description: Unexpected error retrieving events
+        '502':
+          description: Provider credentials invalid, expired, or lack required permissions
+        '503':
+          description: Provider service unavailable
   /api/v1/resources/latest:
     get:
       operationId: resources_latest_retrieve
@@ -7735,10 +8698,24 @@ paths:
             - metadata
             - details
             - partition
+            - groups
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -7780,14 +8757,30 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -7806,17 +8799,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -7837,6 +8832,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -8003,9 +8999,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -8062,14 +9072,30 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -8088,17 +9114,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -8119,6 +9147,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -8306,9 +9335,23 @@ paths:
             - services
             - regions
             - types
+            - groups
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[name]
         schema:
@@ -8350,14 +9393,30 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -8376,17 +9435,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -8407,6 +9468,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -9204,11 +10266,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 684bf4173d2b754f
+          x-spec-enum-id: 2d8d323e9cc0044b
           enum:
           - alibabacloud
           - aws
           - azure
+          - cloudflare
           - gcp
           - github
           - iac
@@ -9227,17 +10290,19 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 684bf4173d2b754f
+            x-spec-enum-id: 2d8d323e9cc0044b
             enum:
             - alibabacloud
             - aws
             - azure
+            - cloudflare
             - gcp
             - github
             - iac
@@ -9258,6 +10323,7 @@ paths:
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
         explode: false
         style: form
       - in: query
@@ -11321,6 +12387,349 @@ paths:
           description: ''
 components:
   schemas:
+    AttackPathsNode:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-nodes
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            labels:
+              type: array
+              items:
+                type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - labels
+          - properties
+    AttackPathsQuery:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-queries
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            provider:
+              type: string
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsQueryParameter'
+          required:
+          - id
+          - name
+          - description
+          - provider
+          - parameters
+    AttackPathsQueryParameter:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-parameters
+        id: {}
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            label:
+              type: string
+            data_type:
+              type: string
+              default: string
+            description:
+              type: string
+              nullable: true
+            placeholder:
+              type: string
+              nullable: true
+          required:
+          - name
+          - label
+    AttackPathsQueryResult:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-results
+        attributes:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsNode'
+            relationships:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsRelationship'
+          required:
+          - nodes
+          - relationships
+    AttackPathsQueryRunRequestRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - attack-paths-query-run-requests
+            attributes:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 1
+                parameters:
+                  type: object
+                  additionalProperties: {}
+              required:
+              - id
+      required:
+      - data
+    AttackPathsRelationship:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-relationships
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            label:
+              type: string
+            source:
+              type: string
+            target:
+              type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - label
+          - source
+          - target
+          - properties
+    AttackPathsScan:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-scans
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            state:
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              type: string
+              description: |-
+                * `available` - Available
+                * `scheduled` - Scheduled
+                * `executing` - Executing
+                * `completed` - Completed
+                * `failed` - Failed
+                * `cancelled` - Cancelled
+              x-spec-enum-id: d38ba07264e1ed34
+              readOnly: true
+            progress:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+            provider_alias:
+              type: string
+              readOnly: true
+            provider_type:
+              type: string
+              readOnly: true
+            provider_uid:
+              type: string
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+            duration:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              nullable: true
+              description: Duration in seconds
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+            task:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - tasks
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+          required:
+          - provider
+    AttackPathsScanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttackPathsScan'
+      required:
+      - data
     AttackSurfaceOverview:
       type: object
       required:
@@ -11573,13 +12982,6 @@ components:
           - requirements_failed
           - requirements_manual
           - total_requirements
-    ComplianceWatchlistOverviewResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ComplianceWatchlistOverview'
-      required:
-      - data
     Finding:
       type: object
       required:
@@ -11654,6 +13056,10 @@ components:
                 maxLength: 100
               nullable: true
               description: Categories from check metadata for efficient filtering
+            resource_groups:
+              type: string
+              nullable: true
+              description: Resource group from check metadata for efficient filtering
             raw_result: {}
             inserted_at:
               type: string
@@ -11805,6 +13211,10 @@ components:
               items:
                 type: string
             categories:
+              type: array
+              items:
+                type: string
+            groups:
               type: array
               items:
                 type: string
@@ -14515,6 +15925,24 @@ components:
           $ref: '#/components/schemas/OverviewSeverity'
       required:
       - data
+    PaginatedAttackPathsQueryList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsQuery'
+      required:
+      - data
+    PaginatedAttackPathsScanList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsScan'
+      required:
+      - data
     PaginatedAttackSurfaceOverviewList:
       type: object
       properties:
@@ -14558,6 +15986,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ComplianceOverview'
+      required:
+      - data
+    PaginatedComplianceWatchlistOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceWatchlistOverview'
       required:
       - data
     PaginatedFindingList:
@@ -14675,6 +16112,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProviderSecret'
+      required:
+      - data
+    PaginatedResourceEventList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceEvent'
+      required:
+      - data
+    PaginatedResourceGroupOverviewList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceGroupOverview'
       required:
       - data
     PaginatedResourceList:
@@ -15838,6 +17293,29 @@ components:
                     - role_arn
                     - access_key_id
                     - access_key_secret
+                  - type: object
+                    title: Cloudflare API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Cloudflare API Token for authentication (recommended).
+                    required:
+                    - api_token
+                  - type: object
+                    title: Cloudflare API Key + Email
+                    properties:
+                      api_key:
+                        type: string
+                        description: Cloudflare Global API Key for authentication
+                          (legacy).
+                      api_email:
+                        type: string
+                        format: email
+                        description: Email address associated with the Cloudflare
+                          account.
+                    required:
+                    - api_key
+                    - api_email
                   writeOnly: true
               required:
               - secret
@@ -16836,6 +18314,7 @@ components:
               - iac
               - oraclecloud
               - alibabacloud
+              - cloudflare
               type: string
               description: |-
                 * `aws` - AWS
@@ -16848,7 +18327,8 @@ components:
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
-              x-spec-enum-id: 684bf4173d2b754f
+                * `cloudflare` - Cloudflare
+              x-spec-enum-id: 2d8d323e9cc0044b
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -16964,8 +18444,9 @@ components:
               - iac
               - oraclecloud
               - alibabacloud
+              - cloudflare
               type: string
-              x-spec-enum-id: 684bf4173d2b754f
+              x-spec-enum-id: 2d8d323e9cc0044b
               description: |-
                 Type of provider to create.
 
@@ -16979,6 +18460,7 @@ components:
                 * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
+                * `cloudflare` - Cloudflare
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -17026,8 +18508,9 @@ components:
                   - iac
                   - oraclecloud
                   - alibabacloud
+                  - cloudflare
                   type: string
-                  x-spec-enum-id: 684bf4173d2b754f
+                  x-spec-enum-id: 2d8d323e9cc0044b
                   description: |-
                     Type of provider to create.
 
@@ -17041,6 +18524,7 @@ components:
                     * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
                     * `alibabacloud` - Alibaba Cloud
+                    * `cloudflare` - Cloudflare
                 uid:
                   type: string
                   minLength: 3
@@ -17841,6 +19325,27 @@ components:
                 - role_arn
                 - access_key_id
                 - access_key_secret
+              - type: object
+                title: Cloudflare API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Cloudflare API Token for authentication (recommended).
+                required:
+                - api_token
+              - type: object
+                title: Cloudflare API Key + Email
+                properties:
+                  api_key:
+                    type: string
+                    description: Cloudflare Global API Key for authentication (legacy).
+                  api_email:
+                    type: string
+                    format: email
+                    description: Email address associated with the Cloudflare account.
+                required:
+                - api_key
+                - api_email
               writeOnly: true
           required:
           - secret_type
@@ -18204,6 +19709,29 @@ components:
                     - role_arn
                     - access_key_id
                     - access_key_secret
+                  - type: object
+                    title: Cloudflare API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Cloudflare API Token for authentication (recommended).
+                    required:
+                    - api_token
+                  - type: object
+                    title: Cloudflare API Key + Email
+                    properties:
+                      api_key:
+                        type: string
+                        description: Cloudflare Global API Key for authentication
+                          (legacy).
+                      api_email:
+                        type: string
+                        format: email
+                        description: Email address associated with the Cloudflare
+                          account.
+                    required:
+                    - api_key
+                    - api_email
                   writeOnly: true
               required:
               - secret_type
@@ -18581,6 +20109,27 @@ components:
                 - role_arn
                 - access_key_id
                 - access_key_secret
+              - type: object
+                title: Cloudflare API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Cloudflare API Token for authentication (recommended).
+                required:
+                - api_token
+              - type: object
+                title: Cloudflare API Key + Email
+                properties:
+                  api_key:
+                    type: string
+                    description: Cloudflare Global API Key for authentication (legacy).
+                  api_email:
+                    type: string
+                    format: email
+                    description: Email address associated with the Cloudflare account.
+                required:
+                - api_key
+                - api_email
               writeOnly: true
           required:
           - secret
@@ -18681,6 +20230,14 @@ components:
               type: string
               readOnly: true
               nullable: true
+            groups:
+              type: array
+              items:
+                type: string
+                maxLength: 100
+              readOnly: true
+              nullable: true
+              description: Groups for categorization (e.g., compute, storage, IAM)
             type:
               type: string
               readOnly: true
@@ -18742,6 +20299,101 @@ components:
               readOnly: true
           required:
           - provider
+    ResourceEvent:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-events
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            event_time:
+              type: string
+              format: date-time
+            event_name:
+              type: string
+            event_source:
+              type: string
+            actor:
+              type: string
+            actor_uid:
+              type: string
+              nullable: true
+            actor_type:
+              type: string
+              nullable: true
+            source_ip_address:
+              type: string
+              nullable: true
+            user_agent:
+              type: string
+              nullable: true
+            request_data:
+              nullable: true
+            response_data:
+              nullable: true
+            error_code:
+              type: string
+              nullable: true
+            error_message:
+              type: string
+              nullable: true
+          required:
+          - id
+          - event_time
+          - event_name
+          - event_source
+          - actor
+    ResourceGroupOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-group-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            new_failed_findings:
+              type: integer
+            resources_count:
+              type: integer
+            severity:
+              description: 'Severity breakdown: {informational, low, medium, high,
+                critical}'
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - new_failed_findings
+          - resources_count
+          - severity
     ResourceMetadata:
       type: object
       required:
@@ -18772,10 +20424,15 @@ components:
               type: array
               items:
                 type: string
+            groups:
+              type: array
+              items:
+                type: string
           required:
           - services
           - regions
           - types
+          - groups
     ResourceMetadataResponse:
       type: object
       properties:
@@ -20795,6 +22452,8 @@ tags:
     revoking tasks that have not started.
 - name: Scan
   description: Endpoints for triggering manual scans and viewing scan results.
+- name: Attack Paths
+  description: Endpoints for Attack Paths scan status and executing Attack Paths queries.
 - name: Schedule
   description: Endpoints for managing scan schedules, allowing configuration of automated
     scans with different scheduling options.

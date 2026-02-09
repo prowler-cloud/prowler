@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { InvitationsPage } from "./invitations-page";
 import { makeSuffix } from "../helpers";
 import { SignUpPage } from "../sign-up/sign-up-page";
-import { SignInPage } from "../sign-in/sign-in-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { UserProfilePage } from "../profile/profile-page";
 
 test.describe("New user invitation", () => {

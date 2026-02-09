@@ -1,4 +1,5 @@
 import { jwtDecode, type JwtPayload } from "jwt-decode";
+import { NextResponse } from "next/server";
 import NextAuth, {
   type DefaultSession,
   type NextAuthConfig,
@@ -277,6 +278,7 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const sessionError = auth?.error;
       const isSignUpPage = nextUrl.pathname === "/sign-up";
       const isSignInPage = nextUrl.pathname === "/sign-in";
 
@@ -284,8 +286,15 @@ export const authConfig = {
       if (isSignUpPage || isSignInPage) return true;
 
       // For all other routes, require authentication
+      // Return NextResponse.redirect to preserve callbackUrl for post-login redirect
       if (!isLoggedIn) {
-        return false; // Will redirect to signIn page defined in pages config
+        const signInUrl = new URL("/sign-in", nextUrl.origin);
+        signInUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+        // Include session error if present (e.g., RefreshAccessTokenError)
+        if (sessionError) {
+          signInUrl.searchParams.set("error", sessionError);
+        }
+        return NextResponse.redirect(signInUrl);
       }
 
       return true;

@@ -249,6 +249,13 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
@@ -259,6 +266,13 @@
                 "pages": [
                   "user-guide/providers/oci/getting-started-oci",
                   "user-guide/providers/oci/authentication"
+                ]
+              },
+              {
+                "group": "OpenStack",
+                "pages": [
+                  "user-guide/providers/openstack/getting-started-openstack",
+                  "user-guide/providers/openstack/authentication"
                 ]
               }
             ]
@@ -324,14 +338,28 @@
       },
       {
         "tab": "Security",
-        "pages": [
-          "security"
+        "groups": [
+          {
+            "group": "Security & Compliance",
+            "pages": [
+              "security/index",
+              "security/software-security"
+            ]
+          },
+          {
+            "group": "Prowler Cloud",
+            "pages": [
+              "security/encryption",
+              "security/data-regions",
+              "security/networking"
+            ]
+          }
         ]
       },
       {
-        "tab": "Contact Us",
+        "tab": "Support",
         "pages": [
-          "contact"
+          "support"
         ]
       },
       {
@@ -452,6 +480,10 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
+    },
+    {
+      "source": "/contact",
+      "destination": "/support"
     }
   ]
 }

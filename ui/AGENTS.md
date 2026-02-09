@@ -12,6 +12,33 @@
 > - [`ai-sdk-5`](../skills/ai-sdk-5/SKILL.md) - UIMessage, sendMessage
 > - [`playwright`](../skills/playwright/SKILL.md) - Page Object Model, selectors
 
+### Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Add changelog entry for a PR or feature | `prowler-changelog` |
+| App Router / Server Actions | `nextjs-15` |
+| Building AI chat features | `ai-sdk-5` |
+| Committing changes | `prowler-commit` |
+| Create PR that requires changelog entry | `prowler-changelog` |
+| Creating Zod schemas | `zod-4` |
+| Creating a git commit | `prowler-commit` |
+| Creating/modifying Prowler UI components | `prowler-ui` |
+| Review changelog format and conventions | `prowler-changelog` |
+| Update CHANGELOG.md in any component | `prowler-changelog` |
+| Using Zustand stores | `zustand-5` |
+| Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working with Prowler UI test helpers/pages | `prowler-test-ui` |
+| Working with Tailwind classes | `tailwind-4` |
+| Writing Playwright E2E tests | `playwright` |
+| Writing Prowler UI E2E tests | `prowler-test-ui` |
+| Writing React components | `react-19` |
+| Writing TypeScript types/interfaces | `typescript` |
+
+---
+
 ## CRITICAL RULES - NON-NEGOTIABLE
 
 ### React

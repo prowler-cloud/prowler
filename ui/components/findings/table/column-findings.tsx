@@ -4,12 +4,11 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-import {
-  DataTableRowActions,
-  FindingDetail,
-} from "@/components/findings/table";
+import { FindingDetail } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime, SnippetChip } from "@/components/ui/entities";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/ui/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -57,23 +56,10 @@ const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
   const isOpen = findingId === row.original.id;
   const { checktitle } = row.original.attributes.check_metadata;
 
-  const handleOpenChange = (open: boolean) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (open) {
-      params.set("id", row.original.id);
-    } else {
-      params.delete("id");
-    }
-
-    window.history.pushState({}, "", `?${params.toString()}`);
-  };
-
   return (
     <FindingDetail
       findingDetails={row.original}
       defaultOpen={isOpen}
-      onOpenChange={handleOpenChange}
       trigger={
         <div className="max-w-[500px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
@@ -201,7 +187,7 @@ export function getColumnFindings(
         const resourceName = getResourceData(row, "name");
 
         return (
-          <SnippetChip
+          <CodeSnippet
             value={resourceName as string}
             formatter={(value: string) => `...${value.slice(-10)}`}
             icon={<Database size={16} />}
@@ -251,6 +237,23 @@ export function getColumnFindings(
         return (
           <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
             {servicename}
+          </p>
+        );
+      },
+      enableSorting: false,
+    },
+    // Region column
+    {
+      accessorKey: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => {
+        const region = getResourceData(row, "region");
+        const regionText = typeof region === "string" ? region : "-";
+        return (
+          <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
+            {regionText}
           </p>
         );
       },

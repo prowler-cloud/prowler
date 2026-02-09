@@ -342,6 +342,14 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "cloudflare":
+                output_data["auth_method"] = "api_token"
+                output_data["account_uid"] = check_output.account_id
+                output_data["account_name"] = check_output.account_id
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.zone_name
+
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
                     provider, "identity.identity_arn"
@@ -356,6 +364,20 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = getattr(
                     check_output, "resource_arn", check_output.resource_id
                 )
+                output_data["region"] = check_output.region
+
+            elif provider.type == "openstack":
+                output_data["auth_method"] = (
+                    f"Username: {get_nested_attribute(provider, 'identity.username')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.project_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.project_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
             # check_output Unique ID
@@ -434,6 +456,9 @@ class Finding(BaseModel):
             finding.resource_line_range = ""  # Set empty for compatibility
         elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
+        elif provider.type == "cloudflare":
+            finding.zone_name = getattr(resource, "zone_name", resource.name)
+            finding.account_id = getattr(finding, "account_id", "")
 
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],
