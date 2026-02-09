@@ -20,6 +20,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidConfigScannerError,
     ImageInvalidNameError,
     ImageInvalidScannerError,
     ImageInvalidSeverityError,
@@ -31,6 +32,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageTrivyBinaryNotFoundError,
 )
 from prowler.providers.image.lib.arguments.arguments import (
+    IMAGE_CONFIG_SCANNERS_CHOICES,
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
 )
@@ -57,6 +59,7 @@ class ImageProvider(Provider):
         images: list[str] | None = None,
         image_list_file: str | None = None,
         scanners: list[str] | None = None,
+        image_config_scanners: list[str] | None = None,
         trivy_severity: list[str] | None = None,
         ignore_unfixed: bool = False,
         timeout: str = "5m",
@@ -69,6 +72,9 @@ class ImageProvider(Provider):
         self.images = images if images is not None else []
         self.image_list_file = image_list_file
         self.scanners = scanners if scanners is not None else ["vuln", "secret"]
+        self.image_config_scanners = (
+            image_config_scanners if image_config_scanners is not None else []
+        )
         self.trivy_severity = trivy_severity if trivy_severity is not None else []
         self.ignore_unfixed = ignore_unfixed
         self.timeout = timeout
@@ -169,6 +175,13 @@ class ImageProvider(Provider):
                 raise ImageInvalidScannerError(
                     file=__file__,
                     message=f"Invalid scanner: '{scanner}'. Valid options: {', '.join(SCANNERS_CHOICES)}.",
+                )
+
+        for config_scanner in self.image_config_scanners:
+            if config_scanner not in IMAGE_CONFIG_SCANNERS_CHOICES:
+                raise ImageInvalidConfigScannerError(
+                    file=__file__,
+                    message=f"Invalid image config scanner: '{config_scanner}'. Valid options: {', '.join(IMAGE_CONFIG_SCANNERS_CHOICES)}.",
                 )
 
         for severity in self.trivy_severity:
@@ -403,6 +416,11 @@ class ImageProvider(Provider):
                 self.timeout,
             ]
 
+            if self.image_config_scanners:
+                trivy_command.extend(
+                    ["--image-config-scanners", ",".join(self.image_config_scanners)]
+                )
+
             if self.trivy_severity:
                 trivy_command.extend(["--severity", ",".join(self.trivy_severity)])
 
@@ -594,6 +612,11 @@ class ImageProvider(Provider):
         report_lines.append(
             f"Scanners: {Fore.YELLOW}{', '.join(self.scanners)}{Style.RESET_ALL}"
         )
+
+        if self.image_config_scanners:
+            report_lines.append(
+                f"Image config scanners: {Fore.YELLOW}{', '.join(self.image_config_scanners)}{Style.RESET_ALL}"
+            )
 
         if self.trivy_severity:
             report_lines.append(

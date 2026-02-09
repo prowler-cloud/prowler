@@ -279,6 +279,7 @@ class Provider(ABC):
                         images=arguments.images,
                         image_list_file=arguments.image_list_file,
                         scanners=arguments.scanners,
+                        image_config_scanners=arguments.image_config_scanners,
                         trivy_severity=arguments.trivy_severity,
                         ignore_unfixed=arguments.ignore_unfixed,
                         timeout=arguments.timeout,

@@ -46,6 +46,10 @@ class ImageBaseException(ProwlerException):
             "message": "Invalid container image name.",
             "remediation": "Use a valid image reference (e.g., 'alpine:3.18', 'registry.example.com/repo/image:tag').",
         },
+        (9010, "ImageInvalidConfigScannerError"): {
+            "message": "Invalid image config scanner type.",
+            "remediation": "Use valid image config scanners: misconfig, secret.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -148,4 +152,13 @@ class ImageInvalidNameError(ImageBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9009, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidConfigScannerError(ImageBaseException):
+    """Exception raised when an invalid image config scanner type is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9010, file=file, original_exception=original_exception, message=message
         )
