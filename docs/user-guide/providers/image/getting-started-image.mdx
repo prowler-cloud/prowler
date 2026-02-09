@@ -128,6 +128,27 @@ Available scanners:
 - **misconfig**: Checks Dockerfile best practices and configuration issues
 - **license**: Scans for software license compliance
 
+#### Image Config Scanners
+
+To scan Dockerfile-level metadata for misconfigurations or embedded secrets, use the `--image-config-scanners` option:
+
+```bash
+# Scan Dockerfile for misconfigurations
+prowler image -I alpine:3.18 --image-config-scanners misconfig
+
+# Scan Dockerfile for both misconfigurations and secrets
+prowler image -I alpine:3.18 --image-config-scanners misconfig secret
+```
+
+Available image config scanners:
+
+- **misconfig**: Detects Dockerfile misconfigurations (e.g., running as root, missing health checks)
+- **secret**: Identifies secrets embedded in Dockerfile instructions
+
+<Note>
+Image config scanners are disabled by default. This option is independent from `--scanners` and specifically targets the image configuration (Dockerfile) rather than the image filesystem.
+</Note>
+
 #### Severity Filtering
 
 To filter findings by severity level, use the `--trivy-severity` option:
