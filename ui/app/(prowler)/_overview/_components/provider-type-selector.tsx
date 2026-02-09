@@ -153,7 +153,7 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ) as ProviderType[];
+  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
