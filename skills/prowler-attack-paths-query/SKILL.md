@@ -18,9 +18,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, Task
 
 ## Overview
 
-Attack Paths queries are openCypher queries that analyze cloud infrastructure graphs
-(ingested via Cartography) to detect security risks like privilege escalation paths,
-network exposure, and misconfigurations.
+Attack Paths queries are openCypher queries that analyze cloud infrastructure graphs (ingested via Cartography) to detect security risks like privilege escalation paths, network exposure, and misconfigurations.
 
 Queries are written in **openCypher Version 9** to ensure compatibility with both Neo4j and Amazon Neptune.
 
@@ -122,7 +120,7 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
                 OR action = '*'
             )
 
-        // Find target resources
+        // Find target resources (MUST chain from `aws` for provider isolation)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: '{service}.amazonaws.com'}})
         WHERE any(resource IN stmt.resource WHERE
             resource = '*'
@@ -406,6 +404,16 @@ parameters=[
 5. **Comment the query purpose**: Add inline comments explaining each MATCH clause
 
 6. **Validate schema first**: Ensure all node labels and properties exist in Cartography schema
+
+7. **Chain all MATCHes from the root account node**: Every `MATCH` clause must connect to the `aws` variable (or another variable already bound to the account's subgraph). The tenant database contains data from multiple providers — an unanchored `MATCH` would return nodes from all providers, breaking provider isolation.
+
+   ```cypher
+   // WRONG: matches ALL AWSRoles across all providers in the tenant DB
+   MATCH (role:AWSRole) WHERE role.name = 'admin'
+
+   // CORRECT: scoped to the specific account's subgraph
+   MATCH (aws)--(role:AWSRole) WHERE role.name = 'admin'
+   ```
 
 ---
 
