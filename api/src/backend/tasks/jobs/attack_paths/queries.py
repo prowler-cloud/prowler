@@ -1,5 +1,6 @@
 # Cypher query templates for Attack Paths operations
 from tasks.jobs.attack_paths.config import (
+    INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
     PROVIDER_RESOURCE_LABEL,
 )
@@ -89,6 +90,37 @@ CLEANUP_FINDINGS_TEMPLATE = f"""
     DETACH DELETE finding
 
     RETURN COUNT(finding) AS deleted_findings_count
+"""
+
+# Internet queries (used by internet.py)
+# ---------------------------------------
+
+CREATE_INTERNET_NODE = f"""
+    MERGE (internet:{INTERNET_NODE_LABEL} {{id: 'Internet'}})
+    ON CREATE SET
+        internet.name = 'Internet',
+        internet.firstseen = timestamp(),
+        internet.lastupdated = $last_updated,
+        internet._module_name = 'cartography:prowler',
+        internet._module_version = $prowler_version
+    ON MATCH SET
+        internet.lastupdated = $last_updated
+"""
+
+CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
+    MATCH (account:__ROOT_LABEL__ {{id: $provider_uid}})-->(resource)
+    WHERE resource.exposed_internet = true
+    WITH resource
+    MATCH (internet:{INTERNET_NODE_LABEL} {{id: 'Internet'}})
+    MERGE (internet)-[r:CAN_ACCESS]->(resource)
+    ON CREATE SET
+        r.firstseen = timestamp(),
+        r.lastupdated = $last_updated,
+        r._module_name = 'cartography:prowler',
+        r._module_version = $prowler_version
+    ON MATCH SET
+        r.lastupdated = $last_updated
+    RETURN COUNT(r) AS relationships_merged
 """
 
 # Sync queries (used by sync.py)

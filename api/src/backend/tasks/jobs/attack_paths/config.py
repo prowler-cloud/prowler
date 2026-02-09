@@ -12,8 +12,10 @@ BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
 # Neo4j internal labels (Prowler-specific, not provider-specific)
 # - `ProwlerFinding`: Label for finding nodes created by Prowler and linked to cloud resources.
 # - `ProviderResource`: Added to ALL synced nodes for provider isolation and drop/query ops.
+# - `Internet`: Singleton node representing external internet access for exposed-resource queries.
 PROWLER_FINDING_LABEL = "ProwlerFinding"
 PROVIDER_RESOURCE_LABEL = "ProviderResource"
+INTERNET_NODE_LABEL = "Internet"
 
 
 @dataclass(frozen=True)
