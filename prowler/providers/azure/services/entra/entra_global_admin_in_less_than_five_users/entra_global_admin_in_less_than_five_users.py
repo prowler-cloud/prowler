@@ -16,7 +16,11 @@ class entra_global_admin_in_less_than_five_users(Check):
             report.resource_name = "Global Administrator"
 
             if "Global Administrator" in directory_roles:
-                report.resource_id = directory_roles["Global Administrator"].id
+                report.resource_id = getattr(
+                    directory_roles["Global Administrator"],
+                    "id",
+                    "Global Administrator",
+                )
 
                 num_global_admins = len(
                     getattr(directory_roles["Global Administrator"], "members", [])
