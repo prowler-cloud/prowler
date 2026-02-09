@@ -8,7 +8,7 @@ Prowler's Image provider enables comprehensive container image security scanning
 
 ## Prowler CLI
 
-<VersionBadge version="5.18.0" />
+<VersionBadge version="5.19.0" />
 
 <Note>
 The Image provider is currently available in Prowler CLI only.
@@ -18,7 +18,7 @@ The Image provider is currently available in Prowler CLI only.
 
 Before using the Image provider, ensure the following requirements are met:
 
-- **Prowler CLI**: Version 5.18.0 or later
+- **Prowler CLI**: Version 5.19.0 or later
 - **Trivy installed**: Trivy must be installed and available in the system PATH
 - **Container images accessible**: Images must be pullable from container registries or available locally
 - **Registry authentication** (for private registries): Valid Docker credentials configured via `docker login`
@@ -89,6 +89,23 @@ redis:7-alpine
 python:3.12-slim
 node:20-bookworm
 ```
+
+<Note>
+Image list files are limited to a maximum of 10,000 lines. Individual image names exceeding 500 characters are automatically skipped with a warning.
+</Note>
+
+#### Image Name Requirements
+
+Image names must follow the OCI reference format. Valid names start with an alphanumeric character and contain only letters, digits, periods, hyphens, underscores, slashes, colons, and `@` symbols.
+
+Valid examples:
+* `alpine:3.18`
+* `myregistry.io/myapp:v1.0`
+* `ghcr.io/org/image@sha256:abc123...`
+
+<Warning>
+Image names containing shell metacharacters (`;`, `|`, `&`, `$`, `` ` ``) are rejected to prevent command injection.
+</Warning>
 
 ### Scan Configuration
 
@@ -168,3 +185,12 @@ prowler image -I myregistry.io/myapp:v1.0
 ```
 
 Trivy automatically uses credentials from Docker's credential store (`~/.docker/config.json`).
+
+### Troubleshooting
+
+The Image provider categorizes common Trivy errors with actionable guidance:
+
+* **Authentication failure (401/403):** Registry credentials are missing or invalid. Run `docker login` for the target registry and retry the scan.
+* **Image not found (404):** The specified image name, tag, or registry is incorrect. Verify the image reference exists and is accessible.
+* **Rate limited (429):** The container registry is throttling requests. Wait before retrying, or authenticate to increase rate limits.
+* **Network issue:** Trivy cannot reach the registry due to connectivity problems. Check network access, DNS resolution, and firewall rules.
