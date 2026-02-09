@@ -14,8 +14,10 @@ class defender_ensure_iot_hub_defender_is_on(Check):
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.status = "FAIL"
                 report.subscription = subscription_name
-                report.resource_name = "IoT Hub Defender"
-                report.resource_id = "IoT Hub Defender"
+                report.resource_name = subscription_name
+                report.resource_id = (
+                    f"/subscriptions/{defender_client.subscriptions[subscription_name]}"
+                )
                 report.status_extended = f"No IoT Security Solutions found in the subscription {subscription_name}."
                 findings.append(report)
             else:

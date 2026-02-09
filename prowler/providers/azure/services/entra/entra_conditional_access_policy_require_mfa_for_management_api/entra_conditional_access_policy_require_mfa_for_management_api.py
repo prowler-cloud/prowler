@@ -32,13 +32,10 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
                     )
                     break
             else:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(),
-                    resource=conditional_access_policies,
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = f"Tenant: {tenant_name}"
-                report.resource_name = "Conditional Access Policy"
-                report.resource_id = "Conditional Access Policy"
+                report.resource_name = tenant_name
+                report.resource_id = tenant_name
                 report.status = "FAIL"
                 report.status_extended = (
                     "Conditional Access Policy does not require MFA for management API."
