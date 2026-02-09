@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
-    "https://docs.openstack.org/neutron/latest/admin/config-dhcp-ha.html"
+    "https://docs.openstack.org/neutron/2023.2/admin/config-dhcp-ha.html"
   ],
   "Remediation": {
     "Code": {

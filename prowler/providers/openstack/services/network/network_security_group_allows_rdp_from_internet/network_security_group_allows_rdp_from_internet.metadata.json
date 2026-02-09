@@ -16,7 +16,7 @@
     "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
     "https://docs.openstack.org/security-guide/networking/architecture.html",
     "https://docs.openstack.org/api-ref/network/v2/",
-    "https://www.cisa.gov/news-events/alerts/2019/05/14/microsoft-releases-advisory-rdp-vulnerability-cve-2019-0708",
+    "https://www.cisa.gov/news-events/cybersecurity-advisories/aa19-168a",
     "https://www.ncsc.gov.uk/guidance/preventing-lateral-movement"
   ],
   "Remediation": {

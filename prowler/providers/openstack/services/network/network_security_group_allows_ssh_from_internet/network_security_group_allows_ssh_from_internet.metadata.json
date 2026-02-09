@@ -16,8 +16,7 @@
     "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
     "https://docs.openstack.org/security-guide/networking/architecture.html",
     "https://docs.openstack.org/api-ref/network/v2/",
-    "https://docs.openstack.org/neutron/latest/admin/config-rbac.html",
-    "https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-215a"
+    "https://docs.openstack.org/neutron/latest/admin/config-rbac.html"
   ],
   "Remediation": {
     "Code": {
