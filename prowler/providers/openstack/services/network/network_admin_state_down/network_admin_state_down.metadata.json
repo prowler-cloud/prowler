@@ -28,7 +28,7 @@
     }
   },
   "Categories": [
-    "infrastructure-availability"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

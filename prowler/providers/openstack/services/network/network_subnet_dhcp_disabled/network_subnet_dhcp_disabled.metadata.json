@@ -10,7 +10,7 @@
   "ResourceType": "OpenStackSubnet",
   "ResourceGroup": "network",
   "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP (Dynamic Host Configuration Protocol) automatically assigns IP addresses, DNS servers, and gateway information to instances when they boot. Subnets with DHCP disabled require manual IP configuration on each instance, increasing operational complexity and the risk of IP conflicts. While some environments intentionally disable DHCP for security or to use static IP assignments, most general-purpose subnets should have DHCP enabled to simplify instance deployment and network management.",
-  "Risk": "Subnets with DHCP disabled prevent instances from automatically obtaining network configuration, causing connectivity failures during instance boot. New instances fail to acquire IP addresses and cannot communicate on the network without manual intervention, breaking automated deployment pipelines and orchestration tools like Heat, Terraform, and Ansible. Disabled DHCP increases operational burden as operators must manually configure each instance's network settings via cloud-init user-data or post-boot scripts, increasing deployment time and error rates. IP address conflicts become more likely when instances are manually configured with static IPs without centralized DHCP lease tracking. Instances may be misconfigured with incorrect gateway addresses or DNS servers, causing intermittent connectivity issues that are difficult to troubleshoot. Cloud-init depends on DHCP for metadata service discovery; instances without DHCP cannot retrieve SSH keys, user-data scripts, or vendor-data from the metadata API. High availability and auto-scaling become impossible when instances cannot self-configure their network settings, as manual configuration doesn't scale.",
+  "Risk": "Subnets with DHCP disabled prevent instances from automatically obtaining network configuration, causing connectivity failures during instance boot. New instances fail to acquire IP addresses and cannot communicate on the network without manual intervention, breaking automated deployment pipelines and orchestration tools like Heat, Terraform, and Ansible. Disabled DHCP increases operational burden as operators must manually configure each instance's network settings, increasing deployment time and error rates. IP address conflicts become more likely when instances are manually configured with static IPs without centralized DHCP lease tracking. Cloud-init depends on DHCP for metadata service discovery; instances without DHCP cannot retrieve SSH keys, user-data scripts, or vendor-data from the metadata API, breaking bootstrapping processes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
@@ -29,7 +29,7 @@
     }
   },
   "Categories": [
-    "network-configuration"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
