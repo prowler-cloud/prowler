@@ -15,6 +15,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - ProviderTypeSelector crash when an unknown provider type is not present in PROVIDER_DATA [(#9991)](https://github.com/prowler-cloud/prowler/pull/9991)
+- Infinite memory loop when opening modals from table row action dropdowns caused by HeroUI (React Aria) and Radix Dialog overlay conflict [(#9996)](https://github.com/prowler-cloud/prowler/pull/9996)
 
 ---
 
