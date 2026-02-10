@@ -127,4 +127,18 @@ Include PowerShell module initialization to run every check:
 prowler m365 --sp-env-auth --init-modules
 ```
 
+### Region Selection
+
+By default, Prowler connects to the global Microsoft 365 environment (`M365Global`). To target a different cloud environment, use the `--region` flag:
+
+```console
+prowler m365 --sp-env-auth --region M365USGovernment
+```
+
+Available regions:
+
+* **M365Global** (default): Standard commercial cloud
+* **M365GlobalChina**: China-operated cloud (21Vianet)
+* **M365USGovernment**: US Government cloud (GCC High)
+
 ---
