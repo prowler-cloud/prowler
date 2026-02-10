@@ -1,6 +1,10 @@
 from unittest import mock
 
-from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
+from tests.providers.azure.azure_fixtures import (
+    DOMAIN,
+    TENANT_IDS,
+    set_mocked_azure_provider,
+)
 
 
 class Test_entra_trusted_named_locations_exists:
@@ -22,6 +26,7 @@ class Test_entra_trusted_named_locations_exists:
             )
 
             entra_client.named_locations = {}
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_trusted_named_locations_exists()
             result = check.execute()
@@ -46,6 +51,7 @@ class Test_entra_trusted_named_locations_exists:
 
             # No named locations configured
             entra_client.named_locations = {DOMAIN: {}}
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_trusted_named_locations_exists()
             result = check.execute()
@@ -57,7 +63,7 @@ class Test_entra_trusted_named_locations_exists:
             )
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == TENANT_IDS[0]
 
     def test_entra_named_location_with_ip_ranges(self):
         entra_client = mock.MagicMock
@@ -89,6 +95,7 @@ class Test_entra_trusted_named_locations_exists:
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_trusted_named_locations_exists()
             result = check.execute()
@@ -132,6 +139,7 @@ class Test_entra_trusted_named_locations_exists:
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_trusted_named_locations_exists()
             result = check.execute()
@@ -144,7 +152,7 @@ class Test_entra_trusted_named_locations_exists:
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             # When no trusted location found, resource defaults to tenant
             assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == TENANT_IDS[0]
 
     def test_entra_new_named_location_with_ip_ranges_not_trusted(self):
         entra_client = mock.MagicMock
@@ -176,6 +184,7 @@ class Test_entra_trusted_named_locations_exists:
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_trusted_named_locations_exists()
             result = check.execute()
@@ -188,4 +197,4 @@ class Test_entra_trusted_named_locations_exists:
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             # When location exists but is not trusted, resource defaults to tenant
             assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == TENANT_IDS[0]

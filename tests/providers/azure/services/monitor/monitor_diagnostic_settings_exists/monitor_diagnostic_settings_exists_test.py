@@ -188,7 +188,8 @@ class Test_monitor_diagnostic_settings_exists:
                 }
                 check = monitor_diagnostic_settings_exists()
                 result = check.execute()
-                assert len(result) == 2
+                # Now returns only one finding per subscription (first diagnostic setting found)
+                assert len(result) == 1
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[0].status == "PASS"
                 assert result[0].resource_name == "name"
@@ -197,7 +198,3 @@ class Test_monitor_diagnostic_settings_exists:
                     result[0].status_extended
                     == f"Diagnostic setting name found in subscription {AZURE_SUBSCRIPTION_ID}."
                 )
-                assert result[1].subscription == AZURE_SUBSCRIPTION_ID
-                assert result[1].status == "PASS"
-                assert result[1].resource_name == "name2"
-                assert result[1].resource_id == "id2"

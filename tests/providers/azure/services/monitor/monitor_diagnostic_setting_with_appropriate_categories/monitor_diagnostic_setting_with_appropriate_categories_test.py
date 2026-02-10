@@ -58,7 +58,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].status_extended
-                == f"There are no diagnostic settings capturing appropriate categories in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"No diagnostic setting captures all appropriate categories (Administrative, Security, Alert, Policy) in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_diagnostic_settings_configured(self):
@@ -119,8 +119,8 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             }
             check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
-            # Now generates one finding per diagnostic setting
-            assert len(result) == 2
+            # Now returns only one finding per subscription (first compliant setting found)
+            assert len(result) == 1
             # First diagnostic setting has all required categories enabled
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].status == "PASS"
@@ -129,13 +129,4 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             assert (
                 result[0].status_extended
                 == f"Diagnostic setting name captures appropriate categories in subscription {AZURE_SUBSCRIPTION_ID}."
-            )
-            # Second diagnostic setting is missing Administrative category
-            assert result[1].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[1].status == "FAIL"
-            assert result[1].resource_id == "id2"
-            assert result[1].resource_name == "name2"
-            assert (
-                result[1].status_extended
-                == f"Diagnostic setting name2 does not capture appropriate categories in subscription {AZURE_SUBSCRIPTION_ID}."
             )
