@@ -2,8 +2,6 @@ export {
   ActionDropdown,
   ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "./action-dropdown";
 export {
   DropdownMenu,

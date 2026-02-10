@@ -9,7 +9,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown";
@@ -130,9 +129,3 @@ export function ActionDropdownDangerZone({
     </>
   );
 }
-
-// Re-export commonly used components for convenience
-export {
-  DropdownMenuLabel as ActionDropdownLabel,
-  DropdownMenuSeparator as ActionDropdownSeparator,
-} from "./dropdown";

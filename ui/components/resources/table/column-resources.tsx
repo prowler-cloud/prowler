@@ -83,7 +83,6 @@ const FailedFindingsBadge = ({ count }: { count: number }) => {
 // Row actions dropdown
 const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const resourceName = row.original.attributes?.name || "Resource";
 
   return (
     <>
