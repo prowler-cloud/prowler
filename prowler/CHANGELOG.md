@@ -10,7 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Standardize resource_id values across Azure checks to use actual Azure resource IDs [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 
 ### 🔄 Changed
 
