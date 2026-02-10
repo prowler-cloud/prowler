@@ -11,6 +11,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.19.2] (Prowler v5.18.2)
+
+### 🐞 Fixed
+
+- SAML role mapping now prevents removing the last MANAGE_ACCOUNT user [(#10007)](https://github.com/prowler-cloud/prowler/pull/10007)
+
+---
+
 ## [1.19.0] (Prowler v5.18.0)
 
 ### 🚀 Added
