@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.18.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
+
+---
+
 ## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
