@@ -1,0 +1,91 @@
+name: 'SDK: Check Duplicate Test Names'
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-duplicate-test-names:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Check for duplicate test names across providers
+        run: |
+          python3 << 'EOF'
+          import sys
+          from collections import defaultdict
+          from pathlib import Path
+
+          def find_duplicate_test_names():
+              """Find test files with the same name across different providers."""
+              tests_dir = Path("tests/providers")
+
+              if not tests_dir.exists():
+                  print("tests/providers directory not found")
+                  sys.exit(0)
+
+              # Dictionary: filename -> list of (provider, full_path)
+              test_files = defaultdict(list)
+
+              # Find all *_test.py files
+              for test_file in tests_dir.rglob("*_test.py"):
+                  relative_path = test_file.relative_to(tests_dir)
+                  provider = relative_path.parts[0]
+                  filename = test_file.name
+                  test_files[filename].append((provider, str(test_file)))
+
+              # Find duplicates (files appearing in multiple providers)
+              duplicates = {
+                  filename: locations
+                  for filename, locations in test_files.items()
+                  if len(set(loc[0] for loc in locations)) > 1
+              }
+
+              if not duplicates:
+                  print("No duplicate test file names found across providers.")
+                  print("All test names are unique within the repository.")
+                  sys.exit(0)
+
+              # Report duplicates
+              print("::error::Duplicate test file names found across providers!")
+              print()
+              print("=" * 70)
+              print("DUPLICATE TEST NAMES DETECTED")
+              print("=" * 70)
+              print()
+              print("The following test files have the same name in multiple providers.")
+              print("Please rename YOUR new test file by adding the provider prefix.")
+              print()
+              print("Example: 'kms_service_test.py' -> 'oraclecloud_kms_service_test.py'")
+              print()
+
+              for filename, locations in sorted(duplicates.items()):
+                  print(f"### {filename}")
+                  print(f"  Found in {len(locations)} providers:")
+                  for provider, path in sorted(locations):
+                      print(f"    - {provider}: {path}")
+                  print()
+                  print(f"  Suggested fix: Rename your new file to '<provider>_{filename}'")
+                  print()
+
+              print("=" * 70)
+              print()
+              print("See: tests/providers/TESTING.md for naming conventions.")
+              sys.exit(1)
+
+          if __name__ == "__main__":
+              find_duplicate_test_names()
+          EOF

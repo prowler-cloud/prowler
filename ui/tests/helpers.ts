@@ -1,4 +1,4 @@
-import { Locator, Page, expect } from "@playwright/test";
+import { Locator, Page, expect, request } from "@playwright/test";
 import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
 
@@ -45,6 +45,20 @@ export function makeSuffix(len: number): string {
 export async function getSession(page: Page) {
   const response = await page.request.get("/api/auth/session");
   return response.json();
+}
+
+export async function getSessionWithoutCookies(page: Page) {
+  const currentUrl = page.url();
+  const baseUrl = currentUrl.startsWith("http")
+    ? new URL(currentUrl).origin
+    : process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  const apiContext = await request.newContext({ baseURL: baseUrl });
+  const response = await apiContext.get("/api/auth/session");
+  const session = await response.json();
+  await apiContext.dispose();
+
+  return session;
 }
 
 export async function verifySessionValid(page: Page) {

@@ -14,7 +14,7 @@ ignored:
     - "*.md"
     - "**/*.md"
     - mkdocs.yml
-    
+
     # Config files that don't affect runtime
     - .gitignore
     - .gitattributes
@@ -23,7 +23,7 @@ ignored:
     - .backportrc.json
     - CODEOWNERS
     - LICENSE
-    
+
     # IDE/Editor configs
     - .vscode/**
     - .idea/**
@@ -31,10 +31,13 @@ ignored:
     # Examples and contrib (not production code)
     - examples/**
     - contrib/**
-    
+
     # Skills (AI agent configs, not runtime)
     - skills/**
-    
+
+    # E2E setup helpers (not runnable tests)
+    - ui/tests/setups/**
+
     # Permissions docs
     - permissions/**
 
@@ -47,18 +50,18 @@ critical:
     - prowler/config/**
     - prowler/exceptions/**
     - prowler/providers/common/**
-    
+
     # API Core
     - api/src/backend/api/models.py
     - api/src/backend/config/**
     - api/src/backend/conftest.py
-    
+
     # UI Core
     - ui/lib/**
     - ui/types/**
     - ui/config/**
     - ui/middleware.ts
-    
+
     # CI/CD changes
     - .github/workflows/**
     - .github/test-impact.yml

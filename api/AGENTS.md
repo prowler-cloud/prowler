@@ -3,6 +3,7 @@
 > **Skills Reference**: For detailed patterns, use these skills:
 > - [`prowler-api`](../skills/prowler-api/SKILL.md) - Models, Serializers, Views, RLS patterns
 > - [`prowler-test-api`](../skills/prowler-test-api/SKILL.md) - Testing patterns (pytest-django)
+> - [`prowler-attack-paths-query`](../skills/prowler-attack-paths-query/SKILL.md) - Attack Paths openCypher queries
 > - [`django-drf`](../skills/django-drf/SKILL.md) - Generic DRF patterns
 > - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
@@ -15,9 +16,11 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
+| Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating API endpoints | `jsonapi` |
+| Creating Attack Paths queries | `prowler-attack-paths-query` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating a git commit | `prowler-commit` |
 | Creating/modifying models, views, serializers | `prowler-api` |
@@ -27,6 +30,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Reviewing JSON:API compliance | `jsonapi` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
+| Updating existing Attack Paths queries | `prowler-attack-paths-query` |
 | Writing Prowler API tests | `prowler-test-api` |
 | Writing Python tests with pytest | `pytest` |
 
