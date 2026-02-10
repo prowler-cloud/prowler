@@ -4,13 +4,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.19.0] (Prowler UNRELEASED)
 
-### 🔄 Changed
-
-- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
-
 ### 🚀 Added
 
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
+
+### 🔄 Changed
+
+- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 
 ## [5.18.2] (Prowler UNRELEASED)
 
