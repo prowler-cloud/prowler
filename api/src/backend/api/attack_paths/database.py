@@ -1,15 +1,18 @@
 import atexit
 import logging
 import threading
+
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
+
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
+from tasks.jobs.attack_paths.config import BATCH_SIZE, PROVIDER_RESOURCE_LABEL
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -83,7 +86,8 @@ def get_session(database: str | None = None) -> Iterator[RetryableSession]:
         yield session_wrapper
 
     except neo4j.exceptions.Neo4jError as exc:
-        raise GraphDatabaseQueryException(message=exc.message, code=exc.code)
+        message = exc.message if exc.message is not None else str(exc)
+        raise GraphDatabaseQueryException(message=message, code=exc.code)
 
     finally:
         if session_wrapper is not None:
@@ -105,24 +109,41 @@ def drop_database(database: str) -> None:
         session.run(query)
 
 
-def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int:
-    query = """
-        MATCH (a:__ROOT_NODE_LABEL__ {id: $root_node_id})
-        CALL apoc.path.subgraphNodes(a, {})
-        YIELD node
-        DETACH DELETE node
-        RETURN COUNT(node) AS deleted_nodes_count
-    """.replace("__ROOT_NODE_LABEL__", root_node_label)
-    parameters = {"root_node_id": root_node_id}
+def drop_subgraph(database: str, provider_id: str) -> int:
+    """
+    Delete all nodes for a provider from the tenant database.
 
-    with get_session(database) as session:
-        result = session.run(query, parameters)
+    Uses batched deletion to avoid memory issues with large graphs.
+    Silently returns 0 if the database doesn't exist.
+    """
+    deleted_nodes = 0
+    parameters = {
+        "provider_id": provider_id,
+        "batch_size": BATCH_SIZE,
+    }
 
-        try:
-            return result.single()["deleted_nodes_count"]
+    try:
+        with get_session(database) as session:
+            deleted_count = 1
+            while deleted_count > 0:
+                result = session.run(
+                    f"""
+                    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{provider_id: $provider_id}})
+                    WITH n LIMIT $batch_size
+                    DETACH DELETE n
+                    RETURN COUNT(n) AS deleted_nodes_count
+                    """,
+                    parameters,
+                )
+                deleted_count = result.single().get("deleted_nodes_count", 0)
+                deleted_nodes += deleted_count
 
-        except neo4j.exceptions.ResultConsumedError:
-            return 0  # As there are no nodes to delete, the result is empty
+    except GraphDatabaseQueryException as exc:
+        if exc.code == "Neo.ClientError.Database.DatabaseNotFound":
+            return 0
+        raise
+
+    return deleted_nodes
 
 
 def clear_cache(database: str) -> None:
@@ -137,12 +158,11 @@ def clear_cache(database: str) -> None:
 
 
 # Neo4j functions related to Prowler + Cartography
-DATABASE_NAME_TEMPLATE = "db-{attack_paths_scan_id}"
 
 
-def get_database_name(attack_paths_scan_id: UUID) -> str:
-    attack_paths_scan_id_str = str(attack_paths_scan_id).lower()
-    return DATABASE_NAME_TEMPLATE.format(attack_paths_scan_id=attack_paths_scan_id_str)
+def get_database_name(entity_id: str | UUID, temporary: bool = False) -> str:
+    prefix = "tmp-scan" if temporary else "tenant"
+    return f"db-{prefix}-{str(entity_id).lower()}"
 
 
 # Exceptions
