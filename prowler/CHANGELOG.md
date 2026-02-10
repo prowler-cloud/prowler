@@ -7,7 +7,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
-- Resource owner guidance to GitHub fine-grained PAT setup in authentication docs [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
 
 ## [5.18.2] (Prowler UNRELEASED)
 
