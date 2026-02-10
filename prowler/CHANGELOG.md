@@ -2,6 +2,27 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [5.19.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
+
+### 🔄 Changed
+
+- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
+
+## [5.18.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
+
+---
+
+>>>>>>> dde42b6a8 (fix(github): combine --repository and --organization flags for scan scoping (#10001))
 ## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
