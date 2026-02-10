@@ -1,3 +1,5 @@
+from typing import List
+
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
@@ -6,94 +8,105 @@ class defender_safe_attachments_policy_enabled(Check):
     """
     Check if Safe Attachments policy is properly configured in Microsoft Defender for Office 365.
 
-    This check verifies that the Built-In Protection Policy has:
+    This check verifies that Safe Attachments policies have the following settings
+    configured according to CIS Microsoft 365 Foundations Benchmark:
+
     - Enable = True
     - Action = Block
     - QuarantineTag = AdminOnlyAccessPolicy
 
-    Attributes:
-        metadata: Metadata associated with the check (inherited from Check).
+    Note: The Built-in Protection Policy has fixed settings that cannot be changed
+    and always provides baseline protection.
     """
 
-    def execute(self) -> list[CheckReportM365]:
-        """
-        Execute the check for Safe Attachments policy configuration.
-
-        This method evaluates the Safe Attachments policies in Microsoft Defender
-        for Office 365 to ensure the Built-In Protection Policy is properly configured.
-
-        Returns:
-            List[CheckReportM365]: A list of reports containing the result of the check.
-        """
+    def execute(self) -> List[CheckReportM365]:
         findings = []
 
-        # Case 1: No Safe Attachments policies exist
-        if not defender_client.safe_attachments_policies:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=defender_client,
-                resource_name="Safe Attachments",
-                resource_id="safe_attachments_policies",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "No Safe Attachments policies found. Safe Attachments provides "
-                "protection against malicious email attachments and requires "
-                "Microsoft Defender for Office 365 (Plan 1 or Plan 2) licensing."
-            )
-            findings.append(report)
-            return findings
+        if defender_client.safe_attachments_policies:
+            # Only Built-in Protection Policy exists (no custom policies with rules)
+            if not defender_client.safe_attachments_rules:
+                policy = next(iter(defender_client.safe_attachments_policies.values()))
 
-        for policy in defender_client.safe_attachments_policies:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=policy,
-                resource_name=policy.name,
-                resource_id=policy.identity,
-            )
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=policy,
+                    resource_name=policy.name,
+                    resource_id=policy.identity,
+                )
 
-            # Check if this is the Built-In Protection Policy
-            if policy.name == "Built-In Protection Policy":
-                misconfigured_settings = []
+                # Case 1: Only Built-in policy exists - always PASS (fixed settings)
+                report.status = "PASS"
+                report.status_extended = f"{policy.name} is the only Safe Attachments policy and provides baseline protection for all users."
+                findings.append(report)
 
-                if not policy.enable:
-                    misconfigured_settings.append("Enable is not True")
-
-                if policy.action != "Block":
-                    misconfigured_settings.append(
-                        f"Action is {policy.action}, not Block"
-                    )
-
-                if policy.quarantine_tag != "AdminOnlyAccessPolicy":
-                    misconfigured_settings.append(
-                        f"QuarantineTag is {policy.quarantine_tag}, not AdminOnlyAccessPolicy"
-                    )
-
-                if misconfigured_settings:
-                    # Case 2: Built-In Protection Policy exists but is not properly configured
-                    report.status = "FAIL"
-                    report.status_extended = f"Safe Attachments Built-In Protection Policy is not properly configured: {'; '.join(misconfigured_settings)}."
-                else:
-                    # Case 3: Built-In Protection Policy exists and is properly configured
-                    report.status = "PASS"
-                    report.status_extended = "Safe Attachments Built-In Protection Policy is properly configured with Enable=True, Action=Block, and QuarantineTag=AdminOnlyAccessPolicy."
+            # Multiple Safe Attachments Policies (Built-in + custom policies)
             else:
-                # For other policies, check if they have secure settings
-                if policy.enable and policy.action == "Block":
-                    # Case 4: Custom policy is enabled with secure settings
-                    report.status = "PASS"
-                    report.status_extended = f"Safe Attachments policy {policy.name} is enabled with Action=Block."
-                elif not policy.enable:
-                    # Case 5: Custom policy is not enabled
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Safe Attachments policy {policy.name} is not enabled."
+                for (
+                    policy_name,
+                    policy,
+                ) in defender_client.safe_attachments_policies.items():
+                    report = CheckReportM365(
+                        metadata=self.metadata(),
+                        resource=policy,
+                        resource_name=policy_name,
+                        resource_id=policy.identity,
                     )
-                else:
-                    # Case 6: Custom policy is enabled but with less secure action
-                    report.status = "FAIL"
-                    report.status_extended = f"Safe Attachments policy {policy.name} has Action={policy.action}, which is less secure than Block."
 
-            findings.append(report)
+                    if policy.is_built_in_protection:
+                        # Case 2: Built-in policy with custom policies - always PASS
+                        report.status = "PASS"
+                        report.status_extended = (
+                            f"{policy_name} provides baseline Safe Attachments protection, "
+                            f"but could be overridden by a misconfigured custom policy for specific users."
+                        )
+                        findings.append(report)
+                    else:
+                        # Custom policy - check configuration
+                        rule = defender_client.safe_attachments_rules.get(policy_name)
+                        if not rule:
+                            continue
+
+                        included_resources = []
+                        if rule.users:
+                            included_resources.append(f"users: {', '.join(rule.users)}")
+                        if rule.groups:
+                            included_resources.append(
+                                f"groups: {', '.join(rule.groups)}"
+                            )
+                        if rule.domains:
+                            included_resources.append(
+                                f"domains: {', '.join(rule.domains)}"
+                            )
+                        # If no users, groups, or domains specified, the policy applies to all recipients
+                        included_resources_str = (
+                            "; ".join(included_resources)
+                            if included_resources
+                            else "all users"
+                        )
+
+                        if self._is_policy_properly_configured(policy, rule):
+                            # Case 2: Custom policy is properly configured
+                            report.status = "PASS"
+                            report.status_extended = (
+                                f"Custom Safe Attachments policy {policy_name} is properly configured and includes {included_resources_str}, "
+                                f"with priority {rule.priority} (0 is the highest)."
+                            )
+                        else:
+                            # Case 3: Custom policy is not properly configured
+                            report.status = "FAIL"
+                            report.status_extended = (
+                                f"Custom Safe Attachments policy {policy_name} is not properly configured and includes {included_resources_str}, "
+                                f"with priority {rule.priority} (0 is the highest)."
+                            )
+                        findings.append(report)
 
         return findings
+
+    def _is_policy_properly_configured(self, policy, rule) -> bool:
+        """Check if a custom policy is properly configured according to CIS recommendations."""
+        return (
+            rule.state.lower() == "enabled"
+            and policy.enable
+            and policy.action == "Block"
+            and policy.quarantine_tag == "AdminOnlyAccessPolicy"
+        )

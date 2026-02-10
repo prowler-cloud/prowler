@@ -871,6 +871,32 @@ class M365PowerShell(PowerShellSession):
             "Get-SafeAttachmentPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_safe_attachments_rule(self) -> dict:
+        """
+        Get Safe Attachments Rules.
+
+        Retrieves the Safe Attachments rules that define which users, groups,
+        and domains are targeted by Safe Attachments policies.
+
+        Returns:
+            dict: Safe Attachments rules in JSON format.
+
+        Example:
+            >>> get_safe_attachments_rule()
+            {
+                "Name": "Custom Safe Attachments Rule",
+                "SafeAttachmentPolicy": "Custom Policy",
+                "State": "Enabled",
+                "Priority": 0,
+                "SentTo": ["user@contoso.com"],
+                "SentToMemberOf": ["group@contoso.com"],
+                "RecipientDomainIs": ["contoso.com"]
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_teams_protection_policy(self) -> dict:
         """
         Get Teams Protection Policy.

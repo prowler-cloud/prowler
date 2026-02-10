@@ -33,7 +33,8 @@ class Defender(M365Service):
         self.inbound_spam_policies = []
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
-        self.safe_attachments_policies = []
+        self.safe_attachments_policies = {}
+        self.safe_attachments_rules = {}
         self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -49,6 +50,7 @@ class Defender(M365Service):
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
                 self.safe_attachments_policies = self._get_safe_attachments_policies()
+                self.safe_attachments_rules = self._get_safe_attachments_rules()
                 self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
@@ -415,10 +417,10 @@ class Defender(M365Service):
         Retrieve Safe Attachments policies from Microsoft Defender for Office 365.
 
         Returns:
-            list[SafeAttachmentsPolicy]: A list of Safe Attachments policy objects.
+            dict[str, SafeAttachmentsPolicy]: A dictionary of Safe Attachments policies keyed by name.
         """
         logger.info("Microsoft365 - Getting Defender Safe Attachments policies...")
-        safe_attachments_policies = []
+        safe_attachments_policies = {}
         try:
             policies_data = self.powershell.get_safe_attachments_policy()
             if not policies_data:
@@ -427,22 +429,54 @@ class Defender(M365Service):
                 policies_data = [policies_data]
             for policy in policies_data:
                 if policy:
-                    safe_attachments_policies.append(
-                        SafeAttachmentsPolicy(
-                            name=policy.get("Name", ""),
-                            identity=policy.get("Identity", ""),
-                            enable=policy.get("Enable", False),
-                            action=policy.get("Action", ""),
-                            quarantine_tag=policy.get("QuarantineTag", ""),
-                            redirect=policy.get("Redirect", False),
-                            redirect_address=policy.get("RedirectAddress", ""),
-                        )
+                    policy_name = policy.get("Name", "")
+                    is_built_in = policy_name == "Built-In Protection Policy"
+                    safe_attachments_policies[policy_name] = SafeAttachmentsPolicy(
+                        name=policy_name,
+                        identity=policy.get("Identity", ""),
+                        enable=policy.get("Enable", False),
+                        action=policy.get("Action", ""),
+                        quarantine_tag=policy.get("QuarantineTag", ""),
+                        redirect=policy.get("Redirect", False),
+                        redirect_address=policy.get("RedirectAddress", ""),
+                        is_built_in_protection=is_built_in,
                     )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return safe_attachments_policies
+
+    def _get_safe_attachments_rules(self):
+        """
+        Retrieve Safe Attachments rules from Microsoft Defender for Office 365.
+
+        Returns:
+            dict[str, SafeAttachmentsRule]: A dictionary of Safe Attachments rules keyed by policy name.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Attachments rules...")
+        safe_attachments_rules = {}
+        try:
+            rules_data = self.powershell.get_safe_attachments_rule()
+            if not rules_data:
+                return safe_attachments_rules
+            if isinstance(rules_data, dict):
+                rules_data = [rules_data]
+            for rule in rules_data:
+                if rule:
+                    policy_name = rule.get("SafeAttachmentPolicy", "")
+                    safe_attachments_rules[policy_name] = SafeAttachmentsRule(
+                        state=rule.get("State", ""),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo"),
+                        groups=rule.get("SentToMemberOf"),
+                        domains=rule.get("RecipientDomainIs"),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_attachments_rules
 
     def _get_teams_protection_policy(self):
         """
@@ -573,6 +607,7 @@ class SafeAttachmentsPolicy(BaseModel):
         quarantine_tag: The quarantine policy applied to detected messages.
         redirect: Whether to redirect messages with detected attachments.
         redirect_address: The email address to redirect messages to.
+        is_built_in_protection: Whether this is the Built-in Protection Policy.
     """
 
     name: str
@@ -582,6 +617,26 @@ class SafeAttachmentsPolicy(BaseModel):
     quarantine_tag: str
     redirect: bool
     redirect_address: str
+    is_built_in_protection: bool = False
+
+
+class SafeAttachmentsRule(BaseModel):
+    """
+    Data model for Safe Attachments rule settings.
+
+    Attributes:
+        state: The state of the rule (Enabled/Disabled).
+        priority: The priority of the rule (0 is highest).
+        users: List of users the rule applies to.
+        groups: List of groups the rule applies to.
+        domains: List of domains the rule applies to.
+    """
+
+    state: str
+    priority: int
+    users: Optional[list[str]]
+    groups: Optional[list[str]]
+    domains: Optional[list[str]]
 
 
 class TeamsProtectionPolicy(BaseModel):

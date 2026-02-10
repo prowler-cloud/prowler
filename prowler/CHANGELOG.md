@@ -2,21 +2,36 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.18.0] (Prowler UNRELEASED)
+## [5.19.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
+- AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
+
+### 🔄 Changed
+
+- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
+
+---
+
+## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
 
 - `defender_zap_for_teams_enabled` check for M365 provider [(#9838)](https://github.com/prowler-cloud/prowler/pull/9838)
 - `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
 - `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)
-- `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
 - `exchange_shared_mailbox_sign_in_disabled` check for M365 provider [(#9828)](https://github.com/prowler-cloud/prowler/pull/9828)
 - CloudTrail Timeline abstraction for querying resource modification history [(#9101)](https://github.com/prowler-cloud/prowler/pull/9101)
 - Cloudflare `--account-id` filter argument [(#9894)](https://github.com/prowler-cloud/prowler/pull/9894)
 - `rds_instance_extended_support` check for AWS provider [(#9865)](https://github.com/prowler-cloud/prowler/pull/9865)
+- `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+- `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
+- Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
+- Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
 
-
-### Changed
+### 🔄 Changed
 
 - Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
 - Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
@@ -28,6 +43,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Policy service metadata to new format [(#9625)](https://github.com/prowler-cloud/prowler/pull/9625)
 - Update Azure MySQL service metadata to new format [(#9623)](https://github.com/prowler-cloud/prowler/pull/9623)
 - Update Azure Defender service metadata to new format [(#9618)](https://github.com/prowler-cloud/prowler/pull/9618)
+- Make AWS cross-account checks configurable through `trusted_account_ids` config parameter [(#9692)](https://github.com/prowler-cloud/prowler/pull/9692)
+- Update Azure PostgreSQL service metadata to new format [(#9626)](https://github.com/prowler-cloud/prowler/pull/9626)
+- Update Azure SQL Server service metadata to new format [(#9627)](https://github.com/prowler-cloud/prowler/pull/9627)
+- Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
+- Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
+
+### 🐞 Fixed
+
+- Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
+- Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
+- CSV/XLSX download failure in dashboard [(#9946)](https://github.com/prowler-cloud/prowler/pull/9946)
 
 ---
 
