@@ -1613,11 +1613,11 @@ class TestProviderViewSet:
                     "openstack-uid",
                     "uid",
                 ),
-                # OpenStack UID validation - empty string (too short)
+                # OpenStack UID validation - too short (below min_length)
                 (
                     {
                         "provider": "openstack",
-                        "uid": "",
+                        "uid": "ab",
                         "alias": "test",
                     },
                     "min_length",
