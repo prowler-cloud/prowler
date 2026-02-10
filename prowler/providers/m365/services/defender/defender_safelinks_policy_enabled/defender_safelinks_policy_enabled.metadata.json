@@ -11,7 +11,7 @@
   "ResourceGroup": "security",
   "Description": "Safe Links is a Microsoft Defender for Office 365 feature that provides URL scanning and rewriting of inbound email messages, as well as time-of-click verification of URLs and links in email messages, Teams, and Office apps.\n\nThis check verifies that the Safe Links policy is properly configured with all recommended settings enabled.",
   "Risk": "Without properly configured Safe Links protection, users may be vulnerable to **phishing attacks** and **malicious URLs** in emails, Teams messages, and Office documents.\n\nAttackers could bypass security by using URLs that redirect to malicious content after initial scanning.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/safe-links-about",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/defender-office-365/safe-links-about",
     "https://learn.microsoft.com/en-us/defender-office-365/safe-links-policies-configure"

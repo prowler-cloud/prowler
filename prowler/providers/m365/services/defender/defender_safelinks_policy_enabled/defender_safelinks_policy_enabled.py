@@ -8,8 +8,8 @@ class defender_safelinks_policy_enabled(Check):
     """
     Check if Safe Links policy is enabled and properly configured in Microsoft Defender for Office 365.
 
-    This check verifies that the Safe Links policy (Priority 0 or Built-In Protection) has the
-    following settings configured according to CIS Microsoft 365 Foundations Benchmark v5.0.0:
+    This check verifies that Safe Links policies have the following settings
+    configured according to CIS Microsoft 365 Foundations Benchmark:
 
     - EnableSafeLinksForEmail = True
     - EnableSafeLinksForTeams = True
@@ -21,23 +21,16 @@ class defender_safelinks_policy_enabled(Check):
     - DeliverMessageAfterScan = True
     - DisableUrlRewrite = False
 
-    - PASS: Safe Links policy is properly configured with all required settings.
-    - FAIL: Safe Links policy is missing or not properly configured.
+    Note: The Built-in Protection Policy has fixed settings that cannot be changed
+    and always provides baseline protection.
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """
-        Execute the check to verify if Safe Links policy is properly configured.
-
-        Returns:
-            List[CheckReportM365]: A list of reports containing the result of the check.
-        """
         findings = []
 
         if defender_client.safe_links_policies:
-            # Check if there are custom rules (non-built-in policies)
+            # Only Built-in Protection Policy exists (no custom policies with rules)
             if not defender_client.safe_links_rules:
-                # Only Built-In Protection Policy exists
                 policy = next(iter(defender_client.safe_links_policies.values()))
 
                 report = CheckReportM365(
@@ -47,23 +40,13 @@ class defender_safelinks_policy_enabled(Check):
                     resource_id=policy.identity,
                 )
 
-                if self._is_policy_properly_configured(policy):
-                    # Case 1: Built-in policy exists and is properly configured
-                    report.status = "PASS"
-                    report.status_extended = f"Safe Links policy {policy.name} is properly configured with all recommended settings."
-                else:
-                    # Case 5: Built-in policy exists but is not properly configured
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Safe Links policy {policy.name} is not properly configured."
-                    )
-
+                # Case 1: Only Built-in policy exists - always PASS (fixed settings)
+                report.status = "PASS"
+                report.status_extended = f"{policy.name} is the only Safe Links policy and provides baseline protection for all users."
                 findings.append(report)
 
-            # Multiple Safe Links Policies
+            # Multiple Safe Links Policies (Built-in + custom policies)
             else:
-                builtin_policy_configured = False
-
                 for policy_name, policy in defender_client.safe_links_policies.items():
                     report = CheckReportM365(
                         metadata=self.metadata(),
@@ -72,82 +55,60 @@ class defender_safelinks_policy_enabled(Check):
                         resource_id=policy.identity,
                     )
 
-                    if policy.is_built_in_protection or policy.is_default:
-                        if not self._is_policy_properly_configured(policy):
-                            # Case 4: Built-in policy is not properly configured and there are custom policies
-                            report.status = "FAIL"
-                            report.status_extended = f"Built-in Safe Links policy {policy_name} is not properly configured. Custom policies may override these settings for specific users."
-                        else:
-                            # Case 2: Built-in policy is properly configured and there are custom policies
-                            report.status = "PASS"
-                            report.status_extended = f"Built-in Safe Links policy {policy_name} is properly configured. Custom policies may override these settings for specific users."
-                            builtin_policy_configured = True
+                    if policy.is_built_in_protection:
+                        # Case 2: Built-in policy with custom policies - always PASS
+                        report.status = "PASS"
+                        report.status_extended = (
+                            f"{policy_name} provides baseline Safe Links protection, "
+                            f"but could be overridden by a misconfigured custom policy for specific users."
+                        )
                         findings.append(report)
                     else:
-                        # Custom policy
-                        included_resources = self._get_included_resources(policy_name)
+                        # Custom policy - check configuration
+                        rule = defender_client.safe_links_rules.get(policy_name)
+                        if not rule:
+                            continue
+
+                        included_resources = []
+                        if rule.users:
+                            included_resources.append(f"users: {', '.join(rule.users)}")
+                        if rule.groups:
+                            included_resources.append(
+                                f"groups: {', '.join(rule.groups)}"
+                            )
+                        if rule.domains:
+                            included_resources.append(
+                                f"domains: {', '.join(rule.domains)}"
+                            )
+                        # If no users, groups, or domains specified, the policy applies to all recipients
                         included_resources_str = (
                             "; ".join(included_resources)
                             if included_resources
-                            else "unknown scope"
+                            else "all users"
                         )
 
-                        rule = defender_client.safe_links_rules.get(policy_name)
-                        priority = rule.priority if rule else "unknown"
-
-                        if not self._is_policy_properly_configured(policy):
-                            if builtin_policy_configured:
-                                # Case 3: Built-in policy is properly configured but custom policy is not
-                                report.status = "FAIL"
-                                report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} is not properly configured. "
-                                    f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
-                                    f"The built-in policy is properly configured, so entities not covered by this custom policy may still be protected."
-                                )
-                            else:
-                                # Case 5: Both built-in and custom policies are not properly configured
-                                report.status = "FAIL"
-                                report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} is not properly configured. "
-                                    f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
-                                    f"The built-in policy is also not properly configured."
-                                )
+                        if self._is_policy_properly_configured(policy, rule):
+                            # Case 2: Custom policy is properly configured
+                            report.status = "PASS"
+                            report.status_extended = (
+                                f"Custom Safe Links policy {policy_name} is properly configured and includes {included_resources_str}, "
+                                f"with priority {rule.priority} (0 is the highest)."
+                            )
                         else:
-                            if builtin_policy_configured:
-                                # Case 2: Both built-in and custom policies are properly configured
-                                report.status = "PASS"
-                                report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} is properly configured. "
-                                    f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
-                                    f"The built-in policy is also properly configured."
-                                )
-                            else:
-                                # Case 6: Built-in policy is not properly configured but custom policy is
-                                report.status = "PASS"
-                                report.status_extended = (
-                                    f"Custom Safe Links policy {policy_name} is properly configured. "
-                                    f"Policy includes {included_resources_str} with priority {priority} (0 is highest). "
-                                    f"However, the built-in policy is not properly configured, so entities not covered by this custom policy may not be protected."
-                                )
+                            # Case 3: Custom policy is not properly configured
+                            report.status = "FAIL"
+                            report.status_extended = (
+                                f"Custom Safe Links policy {policy_name} is not properly configured and includes {included_resources_str}, "
+                                f"with priority {rule.priority} (0 is the highest)."
+                            )
                         findings.append(report)
 
         return findings
 
-    def _is_policy_properly_configured(self, policy) -> bool:
-        """
-        Check if a policy is properly configured according to CIS recommendations.
-
-        Args:
-            policy: The Safe Links policy to check.
-
-        Returns:
-            bool: True if the policy is properly configured, False otherwise.
-        """
-        rule = defender_client.safe_links_rules.get(policy.name)
-        rule_enabled = rule.state.lower() == "enabled" if rule else False
-
+    def _is_policy_properly_configured(self, policy, rule) -> bool:
+        """Check if a custom policy is properly configured according to CIS recommendations."""
         return (
-            (policy.is_built_in_protection or policy.is_default or rule_enabled)
+            rule.state.lower() == "enabled"
             and policy.enable_safe_links_for_email
             and policy.enable_safe_links_for_teams
             and policy.enable_safe_links_for_office
@@ -158,26 +119,3 @@ class defender_safelinks_policy_enabled(Check):
             and policy.deliver_message_after_scan
             and not policy.disable_url_rewrite
         )
-
-    def _get_included_resources(self, policy_name: str) -> list[str]:
-        """
-        Get the resources (users, groups, domains) included in a custom policy.
-
-        Args:
-            policy_name: The name of the policy.
-
-        Returns:
-            list: A list of strings describing the included resources.
-        """
-        included_resources = []
-
-        rule = defender_client.safe_links_rules.get(policy_name)
-        if rule:
-            if rule.users:
-                included_resources.append(f"users: {', '.join(rule.users)}")
-            if rule.groups:
-                included_resources.append(f"groups: {', '.join(rule.groups)}")
-            if rule.domains:
-                included_resources.append(f"domains: {', '.join(rule.domains)}")
-
-        return included_resources
