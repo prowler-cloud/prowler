@@ -13,7 +13,7 @@ import {
 } from "@/components/providers/table";
 import { ContentLayout } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
-import { ProviderProps, SearchParamsProps } from "@/types";
+import { PROVIDER_TYPES, ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
@@ -89,15 +89,22 @@ const ProvidersTable = async ({
         return acc;
       }, {}) || {};
 
+  // Exclude provider types not yet supported in the UI
   const enrichedProviders =
-    providersData?.data?.map((provider: ProviderProps) => {
-      const groupNames =
-        provider.relationships?.provider_groups?.data?.map(
-          (group: { id: string }) =>
-            providerGroupDict[group.id] || "Unknown Group",
-        ) || [];
-      return { ...provider, groupNames };
-    }) || [];
+    providersData?.data
+      ?.filter((provider: ProviderProps) =>
+        (PROVIDER_TYPES as readonly string[]).includes(
+          provider.attributes.provider,
+        ),
+      )
+      .map((provider: ProviderProps) => {
+        const groupNames =
+          provider.relationships?.provider_groups?.data?.map(
+            (group: { id: string }) =>
+              providerGroupDict[group.id] || "Unknown Group",
+          ) || [];
+        return { ...provider, groupNames };
+      }) || [];
 
   return (
     <>

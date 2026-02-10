@@ -2,6 +2,14 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class AttackPathsQueryAttribution:
+    """Source attribution for an Attack Path query."""
+
+    text: str
+    link: str
+
+
+@dataclass
 class AttackPathsQueryParameterDefinition:
     """
     Metadata describing a parameter that must be provided to an Attack Paths query.
@@ -23,7 +31,9 @@ class AttackPathsQueryDefinition:
 
     id: str
     name: str
+    short_description: str
     description: str
     provider: str
     cypher: str
+    attribution: AttackPathsQueryAttribution | None = None
     parameters: list[AttackPathsQueryParameterDefinition] = field(default_factory=list)
