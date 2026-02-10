@@ -17,8 +17,6 @@ import {
 interface ActionDropdownProps {
   /** The dropdown trigger element. Defaults to a vertical dots icon button */
   trigger?: ReactNode;
-  /** Label shown at the top of the dropdown */
-  label?: string;
   /** Alignment of the dropdown content */
   align?: "start" | "center" | "end";
   /** Additional className for the content */
@@ -30,7 +28,6 @@ interface ActionDropdownProps {
 
 export function ActionDropdown({
   trigger,
-  label = "Actions",
   align = "end",
   className,
   ariaLabel = "Open actions menu",
@@ -52,16 +49,10 @@ export function ActionDropdown({
       <DropdownMenuContent
         align={align}
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary w-56",
+          "border-border-neutral-secondary bg-bg-neutral-secondary w-56 rounded-xl",
           className,
         )}
       >
-        {label && (
-          <>
-            <DropdownMenuLabel>{label}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
-        )}
         {children}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -92,7 +83,7 @@ export function ActionDropdownItem({
     <DropdownMenuItem
       className={cn(
         "flex cursor-pointer items-start gap-2",
-        destructive && "text-destructive focus:text-destructive",
+        destructive && "text-text-error-primary focus:text-text-error-primary",
         className,
       )}
       {...props}
@@ -101,7 +92,7 @@ export function ActionDropdownItem({
         <span
           className={cn(
             "text-muted-foreground mt-0.5 shrink-0 [&>svg]:size-4",
-            destructive && "text-destructive",
+            destructive && "text-text-error-primary",
           )}
         >
           {icon}
@@ -113,7 +104,7 @@ export function ActionDropdownItem({
           <span
             className={cn(
               "text-muted-foreground text-xs",
-              destructive && "text-destructive/70",
+              destructive && "text-text-error-primary/70",
             )}
           >
             {description}
@@ -121,6 +112,22 @@ export function ActionDropdownItem({
         )}
       </div>
     </DropdownMenuItem>
+  );
+}
+
+export function ActionDropdownDangerZone({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <span className="text-text-neutral-tertiary px-2 py-1.5 text-xs">
+        Danger zone
+      </span>
+      {children}
+    </>
   );
 }
 

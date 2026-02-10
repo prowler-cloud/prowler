@@ -1,5 +1,6 @@
 export {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
   ActionDropdownLabel,
   ActionDropdownSeparator,
