@@ -37,14 +37,14 @@ def init_parser(self):
         nargs="+",
         default=["misconfig", "secret"],
         choices=SCANNERS_CHOICES,
-        help="Comma-separated list of scanners to scan. Default: misconfig, secret",
+        help="Space-separated list of scanners to scan. Default: misconfig secret",
     )
     iac_scan_subparser.add_argument(
         "--exclude-path",
         dest="exclude_path",
         nargs="+",
         default=[],
-        help="Comma-separated list of paths to exclude from the scan. Default: none",
+        help="Space-separated list of paths to exclude from the scan. Default: none",
     )
 
     iac_scan_subparser.add_argument(
