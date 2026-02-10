@@ -8,6 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
 - Attack Paths: Internet node is created while scan [(#9992)](https://github.com/prowler-cloud/prowler/pull/9992)
+- Attack Paths: Add full paths set from [pathfinding.cloud](https://pathfinding.cloud/) [(#10008)](https://github.com/prowler-cloud/prowler/pull/10008)
 
 ---
 
