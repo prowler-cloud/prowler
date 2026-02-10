@@ -29,6 +29,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.18.0] (Prowler v5.18.0)
 
+### 🚀 Added
+
+- Setup Vitest with React Testing Library for unit testing with targeted test execution [(#9925)](https://github.com/prowler-cloud/prowler/pull/9925)
+
 ### 🔄 Changed
 
 - Restyle resources view with improved resource detail drawer [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
