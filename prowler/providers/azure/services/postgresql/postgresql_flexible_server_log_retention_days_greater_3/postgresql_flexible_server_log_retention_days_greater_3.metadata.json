@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_log_retention_days_greater_3",
-  "CheckTitle": "Ensure Server Parameter 'log_retention_days' is greater than 3 days for PostgreSQL Database Server",
+  "CheckTitle": "PostgreSQL flexible server log_retention_days is between 4 and 7 days",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Ensure log_retention_days on PostgreSQL Servers is set to an appropriate value.",
-  "Risk": "Configuring log_retention_days determines the duration in days that Azure Database for PostgreSQL retains log files. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/postgresql/howto-configure-server-parameters-using-portal",
+  "Description": "Log retention on **Azure Database for PostgreSQL Flexible Server** is governed by `log_retention_days`. Configuration is assessed as set and within `4-7` days versus unset or outside this range.",
+  "Risk": "**Insufficient or disabled log retention** limits the audit trail needed to detect brute-force, SQL injection, or insider misuse, impeding investigation. **Excessive retention** enlarges exposure if logs are accessed, risking sensitive query data leakage and policy violations. This reduces visibility and weakens confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/monitor/concepts-logging",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-retention-days.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name log_retention_days --value <4-7>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-retention-days.html",
-      "Terraform": ""
+      "CLI": "az postgres flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name logfiles.retention_days --value 7",
+      "NativeIaC": "```bicep\n// Set log retention to a compliant value (4-7 days) for an existing Flexible Server\nresource cfg 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-03-01-preview' = {\n  name: '<example_resource_name>/logfiles.retention_days'\n  properties: {\n    value: '7' // Critical: sets logfiles.retention_days within 4-7 to pass the check\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Azure Database for PostgreSQL > Flexible servers and open your server\n2. Select Server parameters\n3. Search for logfiles.retention_days\n4. Set the value to a number between 4 and 7 (e.g., 7)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  server_id = \"<example_resource_id>\"\n  name      = \"logfiles.retention_days\"\n  value     = \"7\" # Critical: sets retention within 4-7 to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. From Azure Home select the Portal Menu. 2. Go to Azure Database for PostgreSQL servers. 3. For each database, click on Server parameters. 4. Search for log_retention_days. 5. Input a value between 4 and 7 (inclusive) and click Save. From Azure CLI Use the below command to update log_retention_days configuration. az postgres server configuration set --resource-group <resourceGroupName> -- server-name <serverName> --name log_retention_days --value <4-7> From Powershell Use the below command to update log_retention_days configuration. Update-AzPostgreSqlConfiguration -ResourceGroupName <ResourceGroupName> - ServerName <ServerName> -Name log_retention_days -Value <4-7>",
-      "Url": "https://learn.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server?view=rest-postgresql-singleserver-2017-12-01&tabs=HTTP"
+      "Text": "Set `log_retention_days` to `4-7` to balance visibility and exposure. Export logs to centralized SIEM or secure storage for longer retention and analysis. Enforce **least privilege**, encryption, and immutability on log data, and monitor for gaps. Apply **defense in depth** with alerts on anomalous queries and failed logins.",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_log_retention_days_greater_3"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Configuring this setting will result in logs being retained for the specified number of days. If this is configured on a high traffic server, the log may grow quickly to occupy a large amount of disk space. In this case you may want to set this to a lower number."
