@@ -1,4 +1,4 @@
-"""Tests for compute_instance_security_groups_attached check."""
+"""Tests for compute_instance_trusted_image_certificates check."""
 
 from unittest import mock
 
@@ -10,8 +10,8 @@ from tests.providers.openstack.openstack_fixtures import (
 )
 
 
-class Test_compute_instance_security_groups_attached:
-    """Test suite for compute_instance_security_groups_attached check."""
+class Test_compute_instance_trusted_image_certificates:
+    """Test suite for compute_instance_trusted_image_certificates check."""
 
     def test_no_instances(self):
         """Test when no instances exist."""
@@ -24,29 +24,29 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates import (
+                compute_instance_trusted_image_certificates,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_trusted_image_certificates()
             result = check.execute()
 
             assert len(result) == 0
 
-    def test_instance_with_security_groups(self):
-        """Test instance with security groups attached (PASS)."""
+    def test_instance_with_trusted_certificates(self):
+        """Test instance with trusted image certificates (PASS)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-1",
-                name="Instance One",
+                name="Trusted Instance",
                 status="ACTIVE",
                 flavor_id="flavor-1",
-                security_groups=["default", "web"],
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -63,7 +63,7 @@ class Test_compute_instance_security_groups_attached:
                 has_config_drive=False,
                 metadata={},
                 user_data="",
-                trusted_image_certificates=[],
+                trusted_image_certificates=["cert-123", "cert-456"],
             )
         ]
 
@@ -73,38 +73,38 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates import (
+                compute_instance_trusted_image_certificates,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_trusted_image_certificates()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Instance Instance One (instance-1) has security groups attached: default, web."
+            assert result[0].status_extended.startswith(
+                "Instance Trusted Instance (instance-1) uses trusted image certificates:"
             )
+            assert "cert-123" in result[0].status_extended
             assert result[0].resource_id == "instance-1"
-            assert result[0].resource_name == "Instance One"
+            assert result[0].resource_name == "Trusted Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
-    def test_instance_without_security_groups(self):
-        """Test instance without security groups attached (FAIL)."""
+    def test_instance_without_trusted_certificates(self):
+        """Test instance without trusted image certificates (FAIL)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-2",
-                name="Instance Two",
+                name="Untrusted Instance",
                 status="ACTIVE",
-                flavor_id="flavor-2",
-                security_groups=[],
+                flavor_id="flavor-1",
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -131,38 +131,38 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates import (
+                compute_instance_trusted_image_certificates,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_trusted_image_certificates()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Instance Instance Two (instance-2) does not have any security groups attached."
+                == "Instance Untrusted Instance (instance-2) does not use trusted image certificates (image signature validation not enforced)."
             )
             assert result[0].resource_id == "instance-2"
-            assert result[0].resource_name == "Instance Two"
+            assert result[0].resource_name == "Untrusted Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
     def test_multiple_instances_mixed(self):
-        """Test multiple instances with mixed results."""
+        """Test multiple instances with mixed certificate configuration."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-pass",
-                name="Instance Pass",
+                name="Pass",
                 status="ACTIVE",
                 flavor_id="flavor-1",
-                security_groups=["default"],
+                security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -179,13 +179,13 @@ class Test_compute_instance_security_groups_attached:
                 has_config_drive=False,
                 metadata={},
                 user_data="",
-                trusted_image_certificates=[],
+                trusted_image_certificates=["cert-789"],
             ),
             ComputeInstance(
                 id="instance-fail",
-                name="Instance Fail",
+                name="Fail",
                 status="ACTIVE",
-                flavor_id="flavor-2",
+                flavor_id="flavor-1",
                 security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
@@ -213,75 +213,17 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_trusted_image_certificates.compute_instance_trusted_image_certificates import (
+                compute_instance_trusted_image_certificates,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_trusted_image_certificates()
             result = check.execute()
 
             assert len(result) == 2
             assert len([r for r in result if r.status == "PASS"]) == 1
             assert len([r for r in result if r.status == "FAIL"]) == 1
-
-    def test_instance_without_name_uses_id(self):
-        """Test instance without name still reports using its ID."""
-        compute_client = mock.MagicMock()
-        compute_client.instances = [
-            ComputeInstance(
-                id="instance-3",
-                name="",
-                status="ACTIVE",
-                flavor_id="flavor-3",
-                security_groups=["default"],
-                region=OPENSTACK_REGION,
-                project_id=OPENSTACK_PROJECT_ID,
-                is_locked=False,
-                locked_reason="",
-                key_name="",
-                user_id="",
-                access_ipv4="",
-                access_ipv6="",
-                public_v4="",
-                public_v6="",
-                private_v4="",
-                private_v6="",
-                networks={},
-                has_config_drive=False,
-                metadata={},
-                user_data="",
-                trusted_image_certificates=[],
-            )
-        ]
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_openstack_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
-                new=compute_client,
-            ),
-        ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
-            )
-
-            check = compute_instance_security_groups_attached()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Instance  (instance-3) has security groups attached: default."
-            )
-            assert result[0].resource_id == "instance-3"
-            assert result[0].resource_name == ""
-            assert result[0].region == OPENSTACK_REGION
-            assert result[0].project_id == OPENSTACK_PROJECT_ID
