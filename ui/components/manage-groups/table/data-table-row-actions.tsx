@@ -9,9 +9,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 
@@ -47,23 +46,20 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Actions"
         >
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Provider Group"
-            description="Allows you to edit the provider group"
             onSelect={() => router.push(`/manage-groups?groupId=${groupId}`)}
           />
-          <ActionDropdownSeparator />
-          <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-          <ActionDropdownItem
-            icon={<Trash2 />}
-            label="Delete Provider Group"
-            description="Delete the provider group permanently"
-            destructive
-            onSelect={() => setIsDeleteOpen(true)}
-          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete Provider Group"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>

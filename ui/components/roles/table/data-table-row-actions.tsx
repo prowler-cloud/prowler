@@ -9,9 +9,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 
@@ -43,23 +42,20 @@ export function DataTableRowActions<RoleProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Actions"
         >
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Role"
-            description="Edit the role details"
             onSelect={() => router.push(`/roles/edit?roleId=${roleId}`)}
           />
-          <ActionDropdownSeparator />
-          <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-          <ActionDropdownItem
-            icon={<Trash2 />}
-            label="Delete Role"
-            description="Delete the role permanently"
-            destructive
-            onSelect={() => setIsDeleteOpen(true)}
-          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete Role"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>

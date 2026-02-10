@@ -7,9 +7,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 
 interface MuteRuleRowActionsProps {
@@ -38,23 +37,20 @@ export function MuteRuleRowActions({
             />
           </Button>
         }
-        label="Actions"
       >
         <ActionDropdownItem
           icon={<Pencil />}
-          label="Edit"
-          description="Edit rule name and reason"
+          label="Edit Mute Rule"
           onSelect={() => onEdit(muteRule)}
         />
-        <ActionDropdownSeparator />
-        <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-        <ActionDropdownItem
-          icon={<Trash2 />}
-          label="Delete"
-          description="Delete this mute rule"
-          destructive
-          onSelect={() => onDelete(muteRule)}
-        />
+        <ActionDropdownDangerZone>
+          <ActionDropdownItem
+            icon={<Trash2 />}
+            label="Delete Mute Rule"
+            destructive
+            onSelect={() => onDelete(muteRule)}
+          />
+        </ActionDropdownDangerZone>
       </ActionDropdown>
     </div>
   );

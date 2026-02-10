@@ -7,9 +7,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 
 import { EnrichedApiKey } from "./types";
@@ -38,26 +37,21 @@ export function DataTableRowActions({
             <VerticalDotsIcon className="text-slate-400" />
           </Button>
         }
-        label="Actions"
       >
         <ActionDropdownItem
           icon={<Pencil />}
-          label="Edit name"
-          description="Edit the API key name"
+          label="Edit API Key"
           onSelect={() => onEdit(apiKey)}
         />
         {canRevoke && (
-          <>
-            <ActionDropdownSeparator />
-            <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
+          <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<Trash2 />}
-              label="Revoke"
-              description="Revoke this API key permanently"
+              label="Revoke API Key"
               destructive
               onSelect={() => onRevoke(apiKey)}
             />
-          </>
+          </ActionDropdownDangerZone>
         )}
       </ActionDropdown>
     </div>

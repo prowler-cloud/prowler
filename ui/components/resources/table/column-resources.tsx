@@ -102,8 +102,7 @@ const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
         >
           <ActionDropdownItem
             icon={<Eye className="size-5" />}
-            label="View details"
-            description={`View details for ${resourceName}`}
+            label="View Details"
             onSelect={() => setIsDrawerOpen(true)}
           />
         </ActionDropdown>

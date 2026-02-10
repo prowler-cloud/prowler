@@ -10,9 +10,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 
@@ -75,16 +74,10 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Actions"
         >
           <ActionDropdownItem
             icon={<Pencil />}
             label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            description={
-              hasSecret
-                ? "Update the provider credentials"
-                : "Add the provider credentials"
-            }
             onSelect={() =>
               router.push(
                 `/providers/${hasSecret ? "update" : "add"}-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
@@ -110,18 +103,16 @@ export function DataTableRowActions<ProviderProps>({
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Provider Alias"
-            description="Allows you to edit the provider"
             onSelect={() => setIsEditOpen(true)}
           />
-          <ActionDropdownSeparator />
-          <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-          <ActionDropdownItem
-            icon={<Trash2 />}
-            label="Delete Provider"
-            description="Delete the provider permanently"
-            destructive
-            onSelect={() => setIsDeleteOpen(true)}
-          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete Provider"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>

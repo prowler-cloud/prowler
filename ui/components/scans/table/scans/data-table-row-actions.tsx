@@ -9,7 +9,6 @@ import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
@@ -51,7 +50,6 @@ export function DataTableRowActions<ScanProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Download reports"
         >
           <ActionDropdownItem
             icon={<Download />}
@@ -60,11 +58,9 @@ export function DataTableRowActions<ScanProps>({
             onSelect={() => downloadScanZip(scanId, toast)}
             disabled={scanState !== "completed"}
           />
-          <ActionDropdownSeparator />
           <ActionDropdownItem
             icon={<Pencil />}
-            label="Edit scan name"
-            description="Allows you to edit the scan name"
+            label="Edit Scan Name"
             onSelect={() => setIsEditOpen(true)}
           />
         </ActionDropdown>

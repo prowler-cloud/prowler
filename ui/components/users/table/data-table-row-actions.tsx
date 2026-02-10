@@ -8,9 +8,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 
@@ -66,23 +65,20 @@ export function DataTableRowActions<UserProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Actions"
         >
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit User"
-            description="Allows you to edit the user"
             onSelect={() => setIsEditOpen(true)}
           />
-          <ActionDropdownSeparator />
-          <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-          <ActionDropdownItem
-            icon={<Trash2 />}
-            label="Delete User"
-            description="Delete the user permanently"
-            destructive
-            onSelect={() => setIsDeleteOpen(true)}
-          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete User"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>

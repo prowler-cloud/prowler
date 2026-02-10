@@ -9,9 +9,8 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
+  ActionDropdownDangerZone,
   ActionDropdownItem,
-  ActionDropdownLabel,
-  ActionDropdownSeparator,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 
@@ -66,12 +65,10 @@ export function DataTableRowActions<InvitationProps>({
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
           }
-          label="Actions"
         >
           <ActionDropdownItem
             icon={<Eye />}
             label="Check Details"
-            description="View invitation details"
             onSelect={() =>
               router.push(`/invitations/check-details?id=${invitationId}`)
             }
@@ -79,20 +76,18 @@ export function DataTableRowActions<InvitationProps>({
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Invitation"
-            description="Allows you to edit the invitation"
             onSelect={() => setIsEditOpen(true)}
             disabled={invitationAccepted === "accepted"}
           />
-          <ActionDropdownSeparator />
-          <ActionDropdownLabel>Danger zone</ActionDropdownLabel>
-          <ActionDropdownItem
-            icon={<Trash2 />}
-            label="Revoke Invitation"
-            description="Delete the invitation permanently"
-            destructive
-            onSelect={() => setIsDeleteOpen(true)}
-            disabled={invitationAccepted === "accepted"}
-          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Revoke Invitation"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+              disabled={invitationAccepted === "accepted"}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>
