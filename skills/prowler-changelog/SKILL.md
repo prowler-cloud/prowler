@@ -74,6 +74,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 - One entry per PR (can link multiple PRs for related changes)
 - No period at the end
 - Do NOT start with redundant verbs (section header already provides the action)
+- **CRITICAL: Preserve section order** — when adding a new section to the UNRELEASED block, insert it in the correct position relative to existing sections (Added → Changed → Deprecated → Removed → Fixed → Security). Never append a new section at the top or bottom without checking order
 
 ### Semantic Versioning Rules
 
@@ -177,6 +178,13 @@ This maintains chronological order within each section (oldest at top, newest at
 ### Bad Entries
 
 ```markdown
+# BAD - Wrong section order (Fixed before Added)
+### 🐞 Fixed
+- Some bug fix [(#123)](...)
+
+### 🚀 Added
+- Some new feature [(#456)](...)
+
 - Fixed bug.                              # Too vague, has period
 - Added new feature for users             # Missing PR link, redundant verb
 - Add search bar [(#123)]                 # Redundant verb (section already says "Added")
