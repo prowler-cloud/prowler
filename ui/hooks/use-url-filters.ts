@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useFilterTransitionOptional } from "@/contexts";
+
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
@@ -13,11 +15,14 @@ export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const isPending = false;
+  const filterTransition = useFilterTransitionOptional();
 
   const navigate = (params: URLSearchParams) => {
     const queryString = params.toString();
+    if (queryString === searchParams.toString()) return;
+
     const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    filterTransition?.signalFilterChange();
     router.push(targetUrl, { scroll: false });
   };
 
@@ -38,10 +43,9 @@ export const useUrlFilters = () => {
     // If effective value is unchanged, do nothing (avoids redundant fetches)
     if (currentValue === nextValue) return;
 
-    // Only reset page to 1 if page parameter already exists
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
+    // Always reset to first page when filters change.
+    // This also guarantees a query-string change on page 1 (no existing page param).
+    params.set("page", "1");
 
     if (nextValue === null) {
       params.delete(filterKey);
@@ -58,10 +62,8 @@ export const useUrlFilters = () => {
 
     params.delete(filterKey);
 
-    // Only reset page to 1 if page parameter already exists
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
+    // Always reset to first page when filters change.
+    params.set("page", "1");
 
     navigate(params);
   };
@@ -96,10 +98,8 @@ export const useUrlFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     modifier(params);
 
-    // Only reset page to 1 if page parameter already exists
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
+    // Always reset to first page when filters change.
+    params.set("page", "1");
 
     navigate(params);
   };
@@ -109,7 +109,6 @@ export const useUrlFilters = () => {
     clearFilter,
     clearAllFilters,
     hasFilters,
-    isPending,
     navigateWithParams,
   };
 };
