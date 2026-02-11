@@ -1,0 +1,32 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_verified_badge",
+  "CheckTitle": "GitHub organization has a verified badge",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:github:organization::{OrganizationName}",
+  "Severity": "medium",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Checks whether a GitHub organization has a verified badge.",
+  "Risk": "Unverified organizations may be easier to impersonate, increasing the risk of phishing or trust abuse.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization",
+  "Remediation": {
+    "Recommendation": {
+      "Text": "Verify the organization identity by completing GitHub organization verification.",
+      "Url": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization"
+    },
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses the GitHub API field is_verified from organization metadata."
+}
