@@ -231,7 +231,7 @@ class TestGetProwlerProviderKwargs:
             ),
             (
                 Provider.ProviderChoices.OPENSTACK.value,
-                {"project_id": "provider_uid"},
+                {},
             ),
         ],
     )
