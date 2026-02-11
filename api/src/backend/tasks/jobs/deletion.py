@@ -1,4 +1,5 @@
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from django.db import DatabaseError
 
 from api.attack_paths import database as graph_database
@@ -33,13 +34,14 @@ def delete_provider(tenant_id: str, pk: str):
         Provider.DoesNotExist: If no instance with the provided primary key exists.
     """
     # Delete the Attack Paths' graph data related to the provider
-    tenant_database_name = graph_database.get_database_name(tenant_id)
-    try:
-        graph_database.drop_subgraph(tenant_database_name, str(pk))
+    if settings.ATTACK_PATHS_ENABLED:
+        tenant_database_name = graph_database.get_database_name(tenant_id)
+        try:
+            graph_database.drop_subgraph(tenant_database_name, str(pk))
 
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Provider graph data: {gdb_error}")
-        raise
+        except graph_database.GraphDatabaseQueryException as gdb_error:
+            logger.error(f"Error deleting Provider graph data: {gdb_error}")
+            raise
 
     # Get all provider related data and delete them in batches
     with rls_transaction(tenant_id):
@@ -89,12 +91,13 @@ def delete_tenant(pk: str):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 
-    try:
-        tenant_database_name = graph_database.get_database_name(pk)
-        graph_database.drop_database(tenant_database_name)
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error dropping Tenant graph database: {gdb_error}")
-        raise
+    if settings.ATTACK_PATHS_ENABLED:
+        try:
+            tenant_database_name = graph_database.get_database_name(pk)
+            graph_database.drop_database(tenant_database_name)
+        except graph_database.GraphDatabaseQueryException as gdb_error:
+            logger.error(f"Error dropping Tenant graph database: {gdb_error}")
+            raise
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

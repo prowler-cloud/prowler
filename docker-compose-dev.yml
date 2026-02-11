@@ -25,8 +25,6 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
-      neo4j:
-        condition: service_healthy
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "dev"
@@ -142,8 +140,6 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      neo4j:
-        condition: service_healthy
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "worker"
@@ -163,8 +159,6 @@ services:
       valkey:
         condition: service_healthy
       postgres:
-        condition: service_healthy
-      neo4j:
         condition: service_healthy
     entrypoint:
       - "../docker-entrypoint.sh"

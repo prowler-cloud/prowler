@@ -3,6 +3,8 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 
+from django.conf import settings
+
 from api.db_utils import rls_transaction
 from api.models import (
     AttackPathsScan as ProwlerAPIAttackPathsScan,
@@ -13,6 +15,9 @@ from tasks.jobs.attack_paths.config import is_provider_available
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
+    if not settings.ATTACK_PATHS_ENABLED:
+        return False
+
     with rls_transaction(tenant_id):
         prowler_api_provider = ProwlerAPIProvider.objects.get(id=provider_id)
 

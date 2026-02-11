@@ -83,13 +83,16 @@ prowler dashboard
 
 ## Attack Paths
 
-Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature is controlled by `ATTACK_PATHS_ENABLED` (default `True`). Set it to `False` to run the API without Neo4j.
 
-- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
+When enabled, the feature runs in the API worker after each scan and requires:
+
+- An accessible Neo4j instance (the Docker Compose files already ship a `neo4j` service).
 - The following environment variables so Django and Celery can connect:
 
   | Variable | Description | Default |
   | --- | --- | --- |
+  | `ATTACK_PATHS_ENABLED` | Enable/disable Attack Paths and the Neo4j dependency. | `True` |
   | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
   | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
   | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |

@@ -2456,13 +2456,15 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             attack_paths_scan.provider.uid,
         )
 
-        graph = attack_paths_views_helpers.execute_attack_paths_query(
-            attack_paths_scan, query_definition, parameters
-        )
-        graph_database.clear_cache(attack_paths_scan.graph_database)
+        graph = None
+        if django_settings.ATTACK_PATHS_ENABLED:
+            graph = attack_paths_views_helpers.execute_attack_paths_query(
+                attack_paths_scan, query_definition, parameters
+            )
+            graph_database.clear_cache(attack_paths_scan.graph_database)
 
         status_code = status.HTTP_200_OK
-        if not graph.get("nodes"):
+        if not graph or not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
         response_serializer = AttackPathsQueryResultSerializer(graph)

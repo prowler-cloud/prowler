@@ -21,8 +21,6 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
-      neo4j:
-        condition: service_healthy
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "prod"

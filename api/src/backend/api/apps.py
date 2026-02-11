@@ -52,19 +52,23 @@ class ApiConfig(AppConfig):
             "check_and_fix_socialaccount_sites_migration",
         ]
 
-        # Skip Neo4j initialization during tests, some Django commands, and Celery
-        if getattr(settings, "TESTING", False) or (
-            len(sys.argv) > 1
-            and (
-                (
-                    "manage.py" in sys.argv[0]
-                    and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+        # Skip Neo4j initialization during tests, some Django commands, Celery, or when Attack Paths is disabled
+        if (
+            getattr(settings, "TESTING", False)
+            or not getattr(settings, "ATTACK_PATHS_ENABLED", True)
+            or (
+                len(sys.argv) > 1
+                and (
+                    (
+                        "manage.py" in sys.argv[0]
+                        and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+                    )
+                    or "celery" in sys.argv[0]
                 )
-                or "celery" in sys.argv[0]
             )
         ):
             logger.info(
-                "Skipping Neo4j initialization because tests, some Django commands or Celery"
+                "Skipping Neo4j initialization because tests, Attack Paths disabled, some Django commands or Celery"
             )
 
         else:
