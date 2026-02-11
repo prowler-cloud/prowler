@@ -7,10 +7,9 @@ class GoogleWorkspaceMutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: CheckReportGoogleWorkspace,
-        customer_id: str,
     ) -> bool:
         return self.is_muted(
-            customer_id,
+            finding.customer_id,
             finding.check_metadata.CheckID,
             finding.location,  # Google Workspace resources are typically "global"
             finding.resource_name,
