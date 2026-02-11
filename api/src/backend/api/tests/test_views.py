@@ -2426,17 +2426,6 @@ class TestProviderSecretViewSet:
                     "clouds_yaml_cloud": "mycloud",
                 },
             ),
-            # OpenStack with explicit credentials
-            (
-                Provider.ProviderChoices.OPENSTACK.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "auth_url": "https://openstack.example.com:5000/v3",
-                    "username": "admin",
-                    "password": "secret",
-                    "region_name": "RegionOne",
-                },
-            ),
         ],
     )
     def test_provider_secrets_create_valid(

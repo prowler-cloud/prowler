@@ -216,11 +216,7 @@ def get_prowler_provider_kwargs(
             "filter_accounts": [provider.uid],
         }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
-        if "clouds_yaml_content" not in prowler_provider_kwargs:
-            prowler_provider_kwargs = {
-                **prowler_provider_kwargs,
-                "project_id": provider.uid,
-            }
+        pass
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -291,17 +287,11 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
             iac_test_kwargs["access_token"] = prowler_provider_kwargs["access_token"]
         return prowler_provider.test_connection(**iac_test_kwargs)
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
-        openstack_kwargs = {"raise_on_exception": False}
-        if "clouds_yaml_content" in prowler_provider_kwargs:
-            openstack_kwargs["clouds_yaml_content"] = prowler_provider_kwargs[
-                "clouds_yaml_content"
-            ]
-            openstack_kwargs["clouds_yaml_cloud"] = prowler_provider_kwargs[
-                "clouds_yaml_cloud"
-            ]
-        else:
-            openstack_kwargs.update(prowler_provider_kwargs)
-            openstack_kwargs["project_id"] = provider.uid
+        openstack_kwargs = {
+            "clouds_yaml_content": prowler_provider_kwargs["clouds_yaml_content"],
+            "clouds_yaml_cloud": prowler_provider_kwargs["clouds_yaml_cloud"],
+            "raise_on_exception": False,
+        }
         return prowler_provider.test_connection(**openstack_kwargs)
     else:
         return prowler_provider.test_connection(

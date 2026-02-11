@@ -1526,10 +1526,7 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                         }
                     )
             elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
-                if "clouds_yaml_content" in secret:
-                    serializer = OpenStackCloudsYamlProviderSecret(data=secret)
-                else:
-                    serializer = OpenStackExplicitProviderSecret(data=secret)
+                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1699,19 +1696,6 @@ class CloudflareApiKeyProviderSecret(serializers.Serializer):
 class OpenStackCloudsYamlProviderSecret(serializers.Serializer):
     clouds_yaml_content = serializers.CharField()
     clouds_yaml_cloud = serializers.CharField()
-
-    class Meta:
-        resource_name = "provider-secrets"
-
-
-class OpenStackExplicitProviderSecret(serializers.Serializer):
-    auth_url = serializers.CharField()
-    username = serializers.CharField()
-    password = serializers.CharField()
-    region_name = serializers.CharField()
-    identity_api_version = serializers.CharField(required=False)
-    user_domain_name = serializers.CharField(required=False)
-    project_domain_name = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
