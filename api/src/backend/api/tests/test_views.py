@@ -1823,11 +1823,7 @@ class TestProviderViewSet:
         filter_name,
         filter_value,
         expected_count,
-        settings,
     ):
-        # Override page size to fit all providers from the fixture (currently 11).
-        # Update this value when adding new providers to providers_fixture.
-        settings.REST_FRAMEWORK["PAGE_SIZE"] = 11
         response = authenticated_client.get(
             reverse("provider-list"),
             {f"filter[{filter_name}]": filter_value},

@@ -18,6 +18,10 @@ DATABASES = {
 
 DATABASE_ROUTERS = []
 TESTING = True
+# Override page size to match the number of providers in the test fixture (currently 11).
+# Update this value when adding new providers to providers_fixture in conftest.py.
+# Using the exact fixture count instead of a large value to avoid masking pagination bugs.
+REST_FRAMEWORK["PAGE_SIZE"] = 11  # noqa: F405
 SECRETS_ENCRYPTION_KEY = "ZMiYVo7m4Fbe2eXXPyrwxdJss2WSalXSv3xHBcJkPl0="
 
 # DRF Simple API Key settings
