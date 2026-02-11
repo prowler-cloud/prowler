@@ -35,6 +35,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 - Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
 - Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
+- CIS 3.1 for the Oracle Cloud provider [(#9971)](https://github.com/prowler-cloud/prowler/pull/9971)
 
 ### 🔄 Changed
 
