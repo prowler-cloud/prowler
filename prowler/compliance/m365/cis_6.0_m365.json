@@ -339,7 +339,9 @@
     {
       "Id": "2.1.1",
       "Description": "Safe Links for Office Applications is a feature in Microsoft 365 that provides URL scanning and rewriting of inbound email messages in mail flow, and time-of-click verification of URLs and links in email messages, other Microsoft 365 applications such as Teams, and other locations such as SharePoint Online. It can help protect organizations from malicious links used in phishing and other attacks.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -404,7 +406,9 @@
     {
       "Id": "2.1.4",
       "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
-      "Checks": [],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -425,7 +429,9 @@
     {
       "Id": "2.1.5",
       "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
-      "Checks": [],
+      "Checks": [
+        "defender_atp_safe_attachments_and_docs_configured"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

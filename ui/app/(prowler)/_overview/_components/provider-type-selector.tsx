@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { lazy, Suspense, useTransition } from "react";
 
 import {
   MultiSelect,
@@ -10,6 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useFilterTransitionOptional } from "@/contexts";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -123,7 +124,12 @@ export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Signal shared pending state for DataTable loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const [, startTransition] = useTransition();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -144,7 +150,15 @@ export const ProviderTypeSelector = ({
     // User should manually select accounts if they want to filter by specific accounts
     params.delete("filter[provider_id__in]");
 
-    router.push(`?${params.toString()}`, { scroll: false });
+    // Reset to page 1 when changing filter
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
+
+    filterTransition?.signalFilterChange();
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const availableTypes = Array.from(
