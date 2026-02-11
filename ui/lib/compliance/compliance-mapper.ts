@@ -37,11 +37,11 @@ import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
 } from "./cis";
+import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapCSAComplianceData,
   toAccordionItems as toCSAAccordionItems,
 } from "./csa";
-import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
