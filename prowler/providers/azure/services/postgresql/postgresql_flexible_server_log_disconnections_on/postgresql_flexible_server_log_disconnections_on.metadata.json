@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_log_disconnections_on",
-  "CheckTitle": "Ensure server parameter 'log_disconnections' is set to 'ON' for PostgreSQL Database Server",
+  "CheckTitle": "PostgreSQL Flexible Server has disconnection logging enabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable log_disconnections on PostgreSQL Servers.",
-  "Risk": "Enabling log_disconnections helps PostgreSQL Database to Logs end of a session, including duration, which in turn generates query and error logs. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server",
+  "Description": "**Azure Database for PostgreSQL Flexible Server** uses the `log_disconnections` setting to record when client sessions end and how long they lasted.",
+  "Risk": "Without **disconnection logs**, session timelines and user activity are opaque, weakening **auditability** and **forensics**.\n\nAbuse such as stolen credentials, short-lived access, or hijacked sessions can go unnoticed, enabling data exfiltration and privilege misuse, impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/security/security-audit?tabs=portal",
+    "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name log_disconnections --value on",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/log-disconnections.html",
-      "Terraform": ""
+      "CLI": "az postgres flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name log_disconnections --value on",
+      "NativeIaC": "```bicep\n// Enable log_disconnections on an existing PostgreSQL Flexible Server\nresource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource logDisconnections 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2022-12-01' = {\n  name: 'log_disconnections'\n  parent: server\n  properties: {\n    value: 'on' // Critical: turns log_disconnections ON to pass the check\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Azure Database for PostgreSQL flexible servers\n2. Select your server\n3. Under Settings, open Server parameters\n4. Search for log_disconnections\n5. Set it to ON\n6. Click Save",
+      "Terraform": "```hcl\n# Enable log_disconnections on a PostgreSQL Flexible Server\nresource \"azurerm_postgresql_flexible_server_configuration\" \"log_disconnections\" {\n  server_id = \"<example_resource_id>\"\n  name      = \"log_disconnections\"\n  value     = \"on\" # Critical: turns log_disconnections ON to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Go to Azure Database for PostgreSQL servers 3. For each database, click on Server parameters 4. Search for log_disconnections. 5. Click ON and save. From Azure CLI Use the below command to update log_disconnections configuration. az postgres server configuration set --resource-group <resourceGroupName> -- server-name <serverName> --name log_disconnections --value on From PowerShell Use the below command to update log_disconnections configuration. Update-AzPostgreSqlConfiguration -ResourceGroupName <ResourceGr",
-      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal"
+      "Text": "Enable `log_disconnections` on all Flexible Servers. Complement with `log_connections` and appropriate duration/statement logging, centralize and retain logs, and alert on abnormal connect/disconnect patterns. Restrict log access. This enforces **accountability**, supports **defense in depth**, and speeds incident response.",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_log_disconnections_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling this setting will enable a log of all disconnections. If this is enabled for a high traffic server, the log may grow exponentially."

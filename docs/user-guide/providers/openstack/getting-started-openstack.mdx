@@ -1,0 +1,285 @@
+---
+title: 'Getting Started With OpenStack'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.18.0" />
+
+Prowler for OpenStack allows you to audit your OpenStack cloud infrastructure for security misconfigurations, including compute instances, networking, identity and access management, storage, and more.
+
+<Warning>
+Prowler currently supports **public cloud OpenStack providers** (OVH, Infomaniak, Vexxhost, etc.). Support for self-deployed OpenStack environments is not yet available, if you are interested in this feature, please [open an issue](https://github.com/prowler-cloud/prowler/issues/new) or [contact us](https://prowler.com/contact).
+</Warning>
+
+## Prerequisites
+
+Before running Prowler with the OpenStack provider, ensure you have:
+
+1. An OpenStack public cloud account with at least one project
+2. Access to the Horizon dashboard or provider control panel
+3. An OpenStack user with the **Reader** role assigned to your project (see detailed instructions in the [Authentication guide](/user-guide/providers/openstack/authentication#creating-a-user-with-reader-role))
+4. Access to Prowler CLI (see [Installation](/getting-started/installation/prowler-cli)) or an account created in [Prowler Cloud](https://cloud.prowler.com)
+
+<CardGroup cols={2}>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Run OpenStack security audits with Prowler CLI
+  </Card>
+  <Card title="Authentication Methods" icon="key" href="/user-guide/providers/openstack/authentication">
+    Learn about OpenStack authentication options
+  </Card>
+</CardGroup>
+
+## Prowler CLI
+
+### Step 1: Set Up Authentication
+
+Download the `clouds.yaml` file from your OpenStack provider (see [Authentication guide](/user-guide/providers/openstack/authentication) for detailed instructions) and save it to `~/.config/openstack/clouds.yaml`:
+
+```bash
+# Create the directory
+mkdir -p ~/.config/openstack
+
+# Move the downloaded file
+mv ~/Downloads/clouds.yaml ~/.config/openstack/clouds.yaml
+
+# Set secure permissions
+chmod 600 ~/.config/openstack/clouds.yaml
+```
+
+Prowler supports multiple authentication methods:
+
+**Option 1: Using clouds.yaml (Recommended)**
+
+```bash
+# Default location (~/.config/openstack/clouds.yaml)
+prowler openstack --clouds-yaml-cloud openstack
+
+# Custom location
+prowler openstack --clouds-yaml-file /path/to/clouds.yaml --clouds-yaml-cloud openstack
+```
+
+**Option 2: Using Environment Variables**
+
+```bash
+export OS_AUTH_URL=https://auth.example.com:5000/v3
+export OS_USERNAME=user-xxxxxxxxxx
+export OS_PASSWORD=your-password
+export OS_PROJECT_ID=your-project-id
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_IDENTITY_API_VERSION=3
+
+prowler openstack
+```
+
+**Option 3: Using Flags (CLI Arguments)**
+
+```bash
+prowler openstack \
+  --os-auth-url https://auth.example.com:5000/v3 \
+  --os-username user-xxxxxxxxxx \
+  --os-password your-password \
+  --os-project-id your-project-id \
+  --os-user-domain-name Default \
+  --os-project-domain-name Default \
+  --os-identity-api-version 3
+```
+
+<Note>
+For detailed step-by-step instructions with screenshots, see the [OpenStack Authentication guide](/user-guide/providers/openstack/authentication).
+</Note>
+
+### Step 2: Run Your First Scan
+
+Run a baseline scan of your OpenStack cloud:
+
+```bash
+prowler openstack --clouds-yaml-cloud openstack
+```
+
+Replace `openstack` with your cloud name if you customized it in the `clouds.yaml` file (e.g., `ovh-production`).
+
+Prowler will automatically discover and audit all supported OpenStack services in your project.
+
+**Scan a specific OpenStack service:**
+
+```bash
+# Audit only compute (Nova) resources
+prowler openstack --services compute
+
+# Audit only networking (Neutron) resources
+prowler openstack --services network
+
+# Audit only identity (Keystone) resources
+prowler openstack --services identity
+```
+
+**Run specific security checks:**
+
+```bash
+# Execute specific checks by name
+prowler openstack --checks compute_instance_public_ip_associated
+
+# List all available checks
+prowler openstack --list-checks
+```
+
+**Filter by check severity:**
+
+```bash
+# Run only high or critical severity checks
+prowler openstack --severity critical high
+```
+
+**Generate specific output formats:**
+
+```bash
+# JSON only
+prowler openstack --output-modes json
+
+# CSV and HTML
+prowler openstack --output-modes csv html
+
+# All formats
+prowler openstack --output-modes csv json html json-asff
+
+# Custom output directory
+prowler openstack --output-directory /path/to/reports/
+```
+
+**Scan multiple OpenStack clouds:**
+
+Configure `clouds.yaml` with multiple cloud configurations:
+
+```yaml
+clouds:
+  production:
+    auth:
+      auth_url: https://prod.example.com:5000/v3
+      username: prod-user
+      password: prod-password
+      project_id: prod-project-id
+    region_name: RegionOne
+    identity_api_version: "3"
+
+  staging:
+    auth:
+      auth_url: https://staging.example.com:5000/v3
+      username: staging-user
+      password: staging-password
+      project_id: staging-project-id
+    region_name: RegionOne
+    identity_api_version: "3"
+```
+
+Run audits against each environment:
+
+```bash
+prowler openstack --clouds-yaml-cloud production --output-directory ./reports/production/
+prowler openstack --clouds-yaml-cloud staging --output-directory ./reports/staging/
+```
+
+**Use mutelist to suppress findings:**
+
+Create a mutelist file to suppress known findings:
+
+```yaml
+# mutelist.yaml
+Mutelist:
+  Accounts:
+    "*":
+      Checks:
+        compute_instance_public_ip_associated:
+          Resources:
+            - "instance-id-1"
+            - "instance-id-2"
+          Reason: "Public IPs required for web servers"
+```
+
+Run with mutelist:
+
+```bash
+prowler openstack --mutelist-file mutelist.yaml
+```
+
+### Step 3: Review the Results
+
+Prowler outputs findings to the console and generates reports in multiple formats.
+
+By default, Prowler generates reports in the `output/` directory:
+- CSV format: `output/prowler-output-{timestamp}.csv`
+- JSON format: `output/prowler-output-{timestamp}.json`
+- HTML dashboard: `output/prowler-output-{timestamp}.html`
+
+## Supported OpenStack Services
+
+Prowler currently supports security checks for the following OpenStack services:
+
+| Common Name | OpenStack Service | Description | Example Checks |
+|-------------|-------------------|-------------|----------------|
+| **Compute** | Nova | Virtual machine instances | Public IP associations, security group usage |
+| **Networking** | Neutron | Virtual networks and security | Security group rules, network isolation |
+| **Identity** | Keystone | Authentication and authorization | Password policies, MFA configuration |
+| **Image** | Glance | Virtual machine images | Image visibility, image encryption |
+| **Block Storage** | Cinder | Persistent block storage | Volume encryption, backup policies |
+| **Object Storage** | Swift | Object storage service | Container ACLs, public access |
+
+<Note>
+Support for additional OpenStack services will be added in future releases. Check the [release notes](https://github.com/prowler-cloud/prowler/releases) for updates.
+</Note>
+
+## Troubleshooting
+
+### Authentication Errors
+
+If encountering authentication errors:
+
+1. Verify credentials are correct:
+   ```bash
+   # Test OpenStack CLI with the same credentials
+   openstack --os-cloud openstack server list
+   ```
+
+2. Check network connectivity to the authentication endpoint:
+   ```bash
+   curl https://openstack.example.com:5000/v3
+   ```
+
+3. Verify the Identity API version is v3:
+   ```bash
+   echo $OS_IDENTITY_API_VERSION
+   # Should output: 3
+   ```
+
+For detailed troubleshooting, see the [Authentication guide](/user-guide/providers/openstack/authentication#troubleshooting).
+
+### Permission Errors
+
+If checks are failing due to insufficient permissions:
+
+- Ensure your OpenStack user has the **Reader** role assigned to the project
+- Check role assignments in your provider's control panel or Horizon dashboard
+- Verify that your user has access to all required services (Compute, Networking, Identity, etc.)
+- Contact your OpenStack provider support if you need additional permissions
+
+### Keystone/Identity Service Limitations
+
+<Warning>
+Public cloud OpenStack providers (OVH, Infomaniak, Vexxhost, etc.) typically **do not expose** the Keystone/Identity service API to customers for security reasons. This means that Identity-related security checks may not be available or may return limited information.
+
+This is expected behavior, not an error. This limitation explains why those checks are not currently available in Prowler.
+</Warning>
+
+If you see errors related to the Identity service:
+
+- This is expected behavior for public cloud providers
+- Identity-related checks will be added for self-deployed OpenStack environments in future releases
+- Focus on other available services (Compute, Networking, Storage, etc.)
+
+## OpenStack Additional Resources
+
+- **Supported OpenStack versions**: Stein (2019.1) and later
+- **Minimum Identity API version**: v3
+- **Tested providers**: OVH Public Cloud, OpenStack-Ansible, DevStack
+- **Cloud compatibility**: Fully compatible with standard OpenStack APIs

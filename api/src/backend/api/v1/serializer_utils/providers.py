@@ -346,6 +346,33 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["role_arn", "access_key_id", "access_key_secret"],
             },
+            {
+                "type": "object",
+                "title": "Cloudflare API Token",
+                "properties": {
+                    "api_token": {
+                        "type": "string",
+                        "description": "Cloudflare API Token for authentication (recommended).",
+                    },
+                },
+                "required": ["api_token"],
+            },
+            {
+                "type": "object",
+                "title": "Cloudflare API Key + Email",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "Cloudflare Global API Key for authentication (legacy).",
+                    },
+                    "api_email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Email address associated with the Cloudflare account.",
+                    },
+                },
+                "required": ["api_key", "api_email"],
+            },
         ]
     }
 )

@@ -2,13 +2,46 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.18.0] (Prowler UNRELEASED)
+## [1.19.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Query list now shows their name and short description, when one is selected it also shows a longer description and an attribution if it has it [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
+
+---
+
+## [1.18.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- ProviderTypeSelector crash when an unknown provider type is not present in PROVIDER_DATA [(#9991)](https://github.com/prowler-cloud/prowler/pull/9991)
+- Infinite memory loop when opening modals from table row action dropdowns caused by HeroUI (React Aria) and Radix Dialog overlay conflict [(#9996)](https://github.com/prowler-cloud/prowler/pull/9996)
+- Filter navigations not coordinating with Suspense boundaries due to missing startTransition in ProviderTypeSelector, AccountsSelector, and muted findings checkbox [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Scans page pagination not updating table data because ScansTableWithPolling kept stale state from initial mount [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Duplicate `filter[search]` parameter in findings and scans API calls [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Filter navigations silently reverting in production due to shared `useTransition()` context wrapping `router.push()` — each filter now uses a local transition while signaling the shared context for the DataTable loading indicator [(#10017)](https://github.com/prowler-cloud/prowler/pull/10017)
+
+---
+
+## [1.18.1] (Prowler v5.18.1)
+
+### 🐞 Fixed
+
+- Scans page polling now only refreshes scan table data instead of re-rendering the entire server component tree, eliminating redundant API calls to providers, findings, and compliance endpoints every 5 seconds
+
+---
+
+## [1.18.0] (Prowler v5.18.0)
 
 ### 🔄 Changed
 
 - Restyle resources view with improved resource detail drawer [(#9864)](https://github.com/prowler-cloud/prowler/pull/9864)
 - Launch Scan page now displays all providers without pagination limit [(#9700)](https://github.com/prowler-cloud/prowler/pull/9700)
 - Upgrade Next.js from 15.5.9 to 16.1.3 with ESLint 9 flat config migration [(#9826)](https://github.com/prowler-cloud/prowler/pull/9826)
+
+### 🔐 Security
+
+- React from 19.2.3 to 19.2.4 and Next.js from 16.1.3 to 16.1.6, patching DoS vulnerability in React Server Components (GHSA-83fc-fqcc-2hmg) [(#9917)](https://github.com/prowler-cloud/prowler/pull/9917)
 
 ---
 

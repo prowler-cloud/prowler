@@ -32,10 +32,10 @@ class Defender(M365Service):
 
     def __init__(self, provider: M365Provider):
         """
-        Initialize the Defender service.
+        Initialize the Defender service client.
 
         Args:
-            provider (M365Provider): The Microsoft 365 provider instance.
+            provider: The M365Provider instance for authentication and connection.
         """
         super().__init__(provider)
         self.malware_policies = []
@@ -49,6 +49,8 @@ class Defender(M365Service):
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
         self.advanced_threat_protection_policy = None
+        self.safe_links_policies = {}
+        self.safe_links_rules = {}
         self.teams_protection_policy = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -66,6 +68,8 @@ class Defender(M365Service):
                 self.advanced_threat_protection_policy = (
                     self._get_advanced_threat_protection_policy()
                 )
+                self.safe_links_policies = self._get_safe_links_policy()
+                self.safe_links_rules = self._get_safe_links_rule()
                 self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
 
@@ -388,7 +392,7 @@ class Defender(M365Service):
         Get the Defender report submission policy.
 
         Returns:
-            ReportSubmissionPolicy: The report submission policy configuration.
+            ReportSubmissionPolicy: The report submission policy configuration or None.
         """
         logger.info("Microsoft365 - Getting Defender report submission policy...")
         report_submission_policy = None
@@ -455,6 +459,84 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return atp_policy
+
+    def _get_safe_links_policy(self):
+        """
+        Get Safe Links policies from Microsoft Defender for Office 365.
+
+        Returns:
+            dict: A dictionary mapping policy names to SafeLinksPolicy objects.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Links policies...")
+        safe_links_policies = {}
+        try:
+            safe_links_policy_data = self.powershell.get_safe_links_policy()
+            if not safe_links_policy_data:
+                return safe_links_policies
+            if isinstance(safe_links_policy_data, dict):
+                safe_links_policy_data = [safe_links_policy_data]
+            for policy in safe_links_policy_data:
+                if policy:
+                    safe_links_policies[policy.get("Name", "")] = SafeLinksPolicy(
+                        name=policy.get("Name", ""),
+                        identity=policy.get("Identity", ""),
+                        enable_safe_links_for_email=policy.get(
+                            "EnableSafeLinksForEmail", False
+                        ),
+                        enable_safe_links_for_teams=policy.get(
+                            "EnableSafeLinksForTeams", False
+                        ),
+                        enable_safe_links_for_office=policy.get(
+                            "EnableSafeLinksForOffice", False
+                        ),
+                        track_clicks=policy.get("TrackClicks", False),
+                        allow_click_through=policy.get("AllowClickThrough", True),
+                        scan_urls=policy.get("ScanUrls", False),
+                        enable_for_internal_senders=policy.get(
+                            "EnableForInternalSenders", False
+                        ),
+                        deliver_message_after_scan=policy.get(
+                            "DeliverMessageAfterScan", False
+                        ),
+                        disable_url_rewrite=policy.get("DisableUrlRewrite", True),
+                        is_built_in_protection=policy.get("IsBuiltInProtection", False),
+                        is_default=policy.get("IsDefault", False),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_links_policies
+
+    def _get_safe_links_rule(self):
+        """
+        Get Safe Links rules from Microsoft Defender for Office 365.
+
+        Returns:
+            dict: A dictionary mapping policy names to SafeLinksRule objects.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Links rules...")
+        safe_links_rules = {}
+        try:
+            safe_links_rule_data = self.powershell.get_safe_links_rule()
+            if not safe_links_rule_data:
+                return safe_links_rules
+            if isinstance(safe_links_rule_data, dict):
+                safe_links_rule_data = [safe_links_rule_data]
+            for rule in safe_links_rule_data:
+                if rule:
+                    safe_links_rules[rule.get("SafeLinksPolicy", "")] = SafeLinksRule(
+                        state=rule.get("State", "Disabled"),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo", None),
+                        groups=rule.get("SentToMemberOf", None),
+                        domains=rule.get("RecipientDomainIs", None),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_links_rules
 
     def _get_teams_protection_policy(self):
         """
@@ -590,6 +672,34 @@ class AdvancedThreatProtectionPolicy(BaseModel):
     enable_atp_for_spo_teams_odb: bool
     enable_safe_docs: bool
     allow_safe_docs_open: bool
+
+
+class SafeLinksPolicy(BaseModel):
+    """Model for Defender Safe Links Policy configuration."""
+
+    name: str
+    identity: str
+    enable_safe_links_for_email: bool
+    enable_safe_links_for_teams: bool
+    enable_safe_links_for_office: bool
+    track_clicks: bool
+    allow_click_through: bool
+    scan_urls: bool
+    enable_for_internal_senders: bool
+    deliver_message_after_scan: bool
+    disable_url_rewrite: bool
+    is_built_in_protection: bool
+    is_default: bool
+
+
+class SafeLinksRule(BaseModel):
+    """Model for Defender Safe Links Rule configuration."""
+
+    state: str
+    priority: int
+    users: Optional[list[str]]
+    groups: Optional[list[str]]
+    domains: Optional[list[str]]
 
 
 class TeamsProtectionPolicy(BaseModel):
