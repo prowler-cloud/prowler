@@ -43,8 +43,12 @@ interface FilterTransitionProviderProps {
 /**
  * Provides a shared pending state for filter changes.
  *
- * Filter navigation calls signalFilterChange() before router.push().
- * The pending state auto-resets when searchParams change.
+ * Filter components signal the start of navigation via signalFilterChange(),
+ * and use their own local useTransition() for the actual router.push().
+ * This avoids a known Next.js production bug where a shared useTransition()
+ * wrapping router.push() causes the navigation to be silently reverted.
+ *
+ * The pending state auto-resets when searchParams change (navigation completed).
  */
 export const FilterTransitionProvider = ({
   children,
